@@ -66,13 +66,11 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
     const int nparts = particles.last_index.back();
 
+#if defined( _GPU )
     const int sizeofEx = EMfields->Jx_->globalDims_;
     const int sizeofEy = EMfields->Jy_->globalDims_;
     const int sizeofEz = EMfields->Jz_->globalDims_;
-
-    SMILEI_UNUSED( sizeofEx );
-    SMILEI_UNUSED( sizeofEy );
-    SMILEI_UNUSED( sizeofEz );
+#endif
 
     if( iend == istart ) {
         return;
@@ -122,7 +120,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         const int istart_pack       = istart + ipack * packsize;
         const int iend_pack         = std::min( iend - istart,
                                                 istart_pack + packsize );
-        const int current_pack_size = iend_pack - istart_pack;
+        // const int current_pack_size = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                         \

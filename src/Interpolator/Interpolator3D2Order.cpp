@@ -151,12 +151,14 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
+#if defined(_GPU)
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
     const int sizeofEz = EMfields->Ez_->globalDims_;
     const int sizeofBx = EMfields->Bx_m->globalDims_;
     const int sizeofBy = EMfields->By_m->globalDims_;
     const int sizeofBz = EMfields->Bz_m->globalDims_;
+#endif
 
     const int nx_p = EMfields->Bx_m->dims_[0];
     const int ny_p = EMfields->By_m->dims_[1];

@@ -7,6 +7,7 @@ void Field::put_to( double val )
     // If openmp or openacc are enabled in smilei, it'll return false (data_ == nullptr) or (data_ is not mapped).
     // If not (openmp or openacc) are enabled, it'll be equivalent to  data_ != nullptr.
     const bool is_hostptr_mapped_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data_ );
+    SMILEI_UNUSED( is_hostptr_mapped_on_device );
 
     if( data_ ) {
         // OpenACC needs that redundant pointeur value

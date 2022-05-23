@@ -560,10 +560,9 @@ class Validation(object):
     
     # DEFINE A CLASS TO CREATE A REFERENCE
     class CreateReference(object):
-        def __init__(self, references_path, bench_name, options):
+        def __init__(self, references_path, bench_name):
             self.reference_file = references_path+bench_name+".txt"
             self.data = {}
-            self.options = options
 
         def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
             self.data[data_name] = data

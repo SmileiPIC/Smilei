@@ -54,7 +54,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-#if defined(SMILEI_ACCELERATOR_GPU_OMP)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const int istart_offset   = istart - ipart_buffer_offset;
     const int particle_number = iend - istart;
 

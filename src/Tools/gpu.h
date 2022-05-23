@@ -439,6 +439,9 @@ namespace smilei {
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
     #pragma acc exit data delete( a_pointer [0:a_size] )
+#else
+                SMILEI_UNUSED( a_pointer );
+                SMILEI_UNUSED( a_size );
 #endif
             }
 
@@ -480,6 +483,7 @@ namespace smilei {
             template <typename T>
             bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
             {
+                // We could optimize the omp version by only using ::omp_target_is_present()
                 return GetDevicePointer( a_pointer ) != nullptr;
             }
 

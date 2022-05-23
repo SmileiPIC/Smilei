@@ -70,7 +70,7 @@ export OMP_PLACES=cores
 LaunchSRun() {{
     module list
 
-    srun $1 ${{@:2}} > {the_output_file} 2>&1
+    srun "$@" > {the_output_file} 2>&1
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
@@ -92,12 +92,10 @@ LaunchSRunPatProfile() {{
 LaunchRocmProfile() {{
     # Kernel stats
     echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
-    LaunchSRun bash –c "rocprof -i hw_counters.txt --stat $1 ${{@:2}}"
-    # LaunchSRun          rocprof -i hw_counters.txt --stat $1 ${{@:2}}
+    LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
     # hip RT tracing, --trace-period 30s:30s:1m is bugged
-    # LaunchSRun bash –c "rocprof --hip-trace --stat -o \${SLURM_JOBID}-\${SLURM_PROCID}.csv $1 ${{@:2}}"
-    # LaunchSRun          rocprof --hip-trace --stat -o ${SLURM_JOBID}-${SLURM_PROCID}.csv   $1 ${{@:2}}
+    # LaunchSRun bash -c "rocprof --hip-trace --stats -o hip_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
