@@ -99,13 +99,8 @@ datetime = datetime.datetime.now()
 random_seed = datetime.microsecond
 
 # We get the name of the simulation directory
-path = os.path.abspath("./").split("/")
-directory = path[-1]
 
-# We decompose the name into words
-properties = directory.split("_")
-
-if ("gpu" in directory):
+if ("gpu" in os.path.abspath("./")):
     
     gpu_computing = True
     vectorization = "off"
