@@ -36,15 +36,22 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 
 # We should need only that to run the rest is loaded by default
+module purge
+module load craype-network-ofi craype-x86-rome libfabric/1.13.1
+module load PrgEnv-cray/8.1.0 cce/13.0.1
+module load cray-mpich/8.1.13
 module load rocm/4.5.0
+module load craype-accel-amd-gfx908 # MI100
+# module load craype-accel-amd-gfx90a # MI250X
+module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
 
 # Info on the node
 rocm-smi
 rocminfo
 
 # MPICH Gpu support
-export MPICH_GPU_SUPPORT_ENABLED=1
-export MPICH_GPU_IPC_ENABLED=1
+# export MPICH_GPU_SUPPORT_ENABLED=1
+# export MPICH_GPU_IPC_ENABLED=1
 # export MPICH_OPTIMIZED_MEMCPY=2
 
 # MPI to GPU binding
@@ -63,6 +70,9 @@ export OMP_SCHEDULE=dynamic
 # You may want to change "cores", to "threads". But hyperthreading, for an well 
 # optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores
+
+export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
+export CRAY_OMP_CHECK_AFFINITY=TRUE
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
@@ -124,7 +134,7 @@ exit $kRETVAL
         self.options = options
 
         # Use the config flag "gpu_amd" to compile for GPU or remove it for CPU only
-        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + '" -j'
+        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -j'
         self.COMPILE_COMMAND = the_make_command + ' > ' + self.smilei_path.COMPILE_OUT + ' 2> '+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 

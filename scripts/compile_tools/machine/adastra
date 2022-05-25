@@ -33,6 +33,7 @@
 # SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
 SMILEICXX := $(CC)
 SMILEICXX.DEPS := $(SMILEICXX)
+# THRUSTCXX := hipcc
 THRUSTCXX := $(SMILEICXX)
 
 ################################################################################
@@ -79,9 +80,10 @@ ifneq (,$(call parse_config,gpu_amd))
     ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # When using hip/cuda to build kernels
+    # When you ask CCE to drive the hip compilation
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_TARGET) # Same behaviour (a priori) than offload-arch
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
+	# When you use hipcc directly
+	# ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 endif
 
 ################################################################################

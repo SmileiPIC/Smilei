@@ -369,7 +369,9 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db1, b1_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db2, b2_size );
+        if( !vecLaser.empty() ) {
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db1, b1_size );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db2, b2_size );
+        }
     }
 }

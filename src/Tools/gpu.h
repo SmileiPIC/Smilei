@@ -457,6 +457,12 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int device_num = ::omp_get_default_device();
 
+    #if defined( __NVCOMPILER )
+                // No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
+                // https://forums.developer.nvidia.com/t/nvc-v21-3-omp-target-is-present-crashes-the-program/215585
+                DeviceAllocateAndCopyHostToDevice( a_host_pointer, 0 );
+    #endif
+
                 // Omp Std 5.0: A list item in a use_device_ptr clause must hold
                 // the address of an object that has a corresponding list item
                 // in the device data environment.
@@ -472,6 +478,7 @@ namespace smilei {
                 {
                     a_device_pointer = a_host_pointer;
                 }
+
                 return a_device_pointer;
 #elif defined( _GPU )
                 return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );
@@ -481,10 +488,10 @@ namespace smilei {
             }
 
             template <typename T>
-            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
+            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_host_pointer )
             {
                 // We could optimize the omp version by only using ::omp_target_is_present()
-                return GetDevicePointer( a_pointer ) != nullptr;
+                return GetDevicePointer( a_host_pointer ) != nullptr;
             }
 
             template <typename T>

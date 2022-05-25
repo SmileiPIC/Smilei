@@ -9,7 +9,7 @@ void Field::put_to( double val )
     const bool is_hostptr_mapped_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data_ );
     SMILEI_UNUSED( is_hostptr_mapped_on_device );
 
-    if( data_ ) {
+    if( data_ != nullptr ) {
         // OpenACC needs that redundant pointeur value
         double* an_other_data_pointer = data_;
 #if defined( _GPU )
