@@ -30,10 +30,10 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
 
     pml_solver_envelope_ = SolverFactory::createPMLenvelope( params );
     if (params.envelope_solver == "explicit"){
-        nsolver=2;
+        nsolver=4;
     }
     else if (params.envelope_solver == "explicit_reduced_dispersion"){
-        nsolver=2;
+        nsolver=4;
     }
     else {
         WARNING("The solver you use in the main domain for envelope is not the same as in the PML region.");
@@ -158,6 +158,8 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
         // Ponderomoteur Potential
         Phi_ = new Field2D( dimPrim, "Phi_pml" );
     }
+
+    std::cout << nsolver << std::endl;
 }
 
 

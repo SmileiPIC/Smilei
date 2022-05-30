@@ -521,8 +521,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // source_term_y = source_term_y - pow(c_yx_kappa*kappa_x_p[i],2)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     // source_term_y = dt*dt*source_term_y / pow(c_yx_kappa*kappa_x_p[i],2) ;
                     // ----
-                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
-                    //( *A_np1_pml )( i, j ) = 0;
+                    // ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
+                    ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
@@ -657,8 +657,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
                     // ----
-                    ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
-                    // ( *A_np1_pml )( i, j ) = 0;
+                    // ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
+                    ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;

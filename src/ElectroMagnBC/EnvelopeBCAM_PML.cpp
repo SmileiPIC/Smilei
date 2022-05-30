@@ -166,6 +166,10 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
     }
 
     j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
+    // To do for Ymax in order to be coherent with the solver
+    // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-3;
+    // std::cout << j_glob_pml << std::endl;
+
 }
 
 
