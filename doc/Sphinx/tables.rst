@@ -26,7 +26,7 @@ Required dependencies are the following:
 * A C++11 compiler
 * A MPI library
 * HDF5 installed at least in serial
-* Boost
+* `Boost <https://www.boost.org/>`_
 
 Boost is a C++ library that provides efficient advanced mathematical functions.
 This is the only dependency not required to install :program:`Smilei`.
@@ -133,13 +133,13 @@ This set of tables is the one included by default in the sources of :program:`Sm
 
   mpirun -np <number of processes> ./smilei_tables nics -s 256 256 -b 1e-4 1e3
   
-`tables_256/radiation_tables.h5 <mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/radiation_tables.h5>`_
+`tables_256/radiation_tables.h5 <http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/radiation_tables.h5>`_
 
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables mbw -s 256 256 -b 1e-2 1e2
 
-`tables_256/multiphoton_breit_wheeler_tables.h5 <mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/multiphoton_Breit_Wheeler_tables.h5>`_
+`tables_256/multiphoton_breit_wheeler_tables.h5 <http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/multiphoton_Breit_Wheeler_tables.h5>`_
 
 These tables can be generated on a normal desktop computer in few minutes.
 

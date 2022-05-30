@@ -151,7 +151,9 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 // Radiation process
-                ( *Radiate )( *particles, this->photon_species_, smpi,
+                ( *Radiate )( *particles,
+                              *radiated_photons_,
+                              smpi,
                               RadiationTables, nrj_radiated_,
                               particles->first_index[scell], particles->last_index[scell], ithread );
 

@@ -3,4 +3,4 @@
 # Compilation with the Intel compiler
 # __________________________________________________________
 
-CXXFLAGS += -xCORE-AVX2 -ip -inline-factor=1000 -D__INTEL_HSW_E5_2680_v3 -fno-alias #-ipo
+CXXFLAGS += -march=haswell -xCORE-AVX2 -ip -inline-factor=1000 -D__INTEL_HSW_E5_2680_v3 -fno-alias #-ipo

@@ -1,0 +1,7 @@
+#
+# Machine file for Ruche (Cascadelake processors)
+# Compilation with the GNU compiler
+# __________________________________________________________
+
+CXXFLAGS += -mtune=cascadelake -march=cascadelake
+LDFLAGS += -mtune=cascadelake -march=cascadelake -lz -fno-lto

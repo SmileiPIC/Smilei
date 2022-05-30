@@ -67,7 +67,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
     if( params.hasMultiphotonBreitWheeler ) {
         // Computation of the normalized Compton wavelength
         normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
-                                         / ( params.electron_mass*params.c_vacuum*params.c_vacuum );
+                                         / ( params.electron_mass*params.c_vacuum_*params.c_vacuum_ );
         // Computation of the factor factor_dNBW_dt_
         factor_dNBW_dt_ = params.fine_struct_cst/( normalized_Compton_wavelength_ * M_PI*std::sqrt( 3.0 ) );
     }
