@@ -164,6 +164,15 @@ namespace smilei {
                 ///                                      else return nullptr
                 /// else return a_pointer (untouched)
                 ///
+                /// Note:
+                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this 
+                /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
+                ///
+                /// #if defined( __NVCOMPILER )
+                ///     No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
+                ///     https://forums.developer.nvidia.com/t/nvc-v21-3-omp-target-is-present-crashes-the-program/215585
+                /// #else
+                ///
                 template <typename T>
                 static T* GetDevicePointer( T* a_pointer );
 
@@ -456,12 +465,6 @@ namespace smilei {
             {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int device_num = ::omp_get_default_device();
-
-    #if defined( __NVCOMPILER )
-                // No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
-                // https://forums.developer.nvidia.com/t/nvc-v21-3-omp-target-is-present-crashes-the-program/215585
-                DeviceAllocateAndCopyHostToDevice( a_host_pointer, 0 );
-    #endif
 
                 // Omp Std 5.0: A list item in a use_device_ptr clause must hold
                 // the address of an object that has a corresponding list item

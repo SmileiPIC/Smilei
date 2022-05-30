@@ -40,6 +40,11 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
         B_val[axis0_] = new Field2D( dims0, "B_val" );
         B_val[axis1_] = new Field2D( dims1, "B_val" );
         B_val[axis2_] = new Field2D( dims2, "B_val" );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[0]->data_, B_val[0]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[1]->data_, B_val[1]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[2]->data_, B_val[2]->globalDims_ );
+
         B_val[0]->put_to( 0. );
         B_val[1]->put_to( 0. );
         B_val[2]->put_to( 0. );
@@ -69,13 +74,17 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
 ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
 {
     if( B_val[0] ) {
-        delete B_val[0] ;
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
+        delete B_val[0];
     }
     if( B_val[1] ) {
-        delete B_val[1] ;
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
+
+        delete B_val[1];
     }
     if( B_val[2] ) {
-        delete B_val[2] ;
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
+        delete B_val[2];
     }
 }
 
@@ -113,6 +122,9 @@ void ElectroMagnBC3D_SM::save_fields( Field *my_field, Patch *patch )
 
 void ElectroMagnBC3D_SM::disableExternalFields()
 {
+    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
     delete B_val[0];
     B_val[0] = NULL;
     delete B_val[1];
@@ -180,20 +192,11 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         const int sizeofB0 = B[axis0_]->globalDims_;
         const int sizeofB1 = B[axis1_]->globalDims_;
         const int sizeofB2 = B[axis2_]->globalDims_;
-#endif
 
         const int B_ext_size0 = B_val[axis0_]->globalDims_;
         const int B_ext_size1 = B_val[axis1_]->globalDims_;
         const int B_ext_size2 = B_val[axis2_]->globalDims_;
-
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext0, B_ext_size0 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext1, B_ext_size1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext2, B_ext_size2 );
-
-        if( vecLaser.empty() ) {
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db1, b1_size );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
-        }
+#endif
 
         // Component along axis 1
         // Lasers
@@ -207,13 +210,14 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     }
                 }
             }
-
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db1, b1_size );
         }
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db1, b1_size );
+
         // B1
         if( axis0_ == 0 ) {
 #ifdef _GPU
-            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -236,7 +240,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         } else if( axis0_ == 1 ) {
 #ifdef _GPU
-            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -259,7 +263,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         } else {
 #ifdef _GPU
-            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -282,6 +286,8 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
         
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db1, b1_size );
+
         // Component along axis 2
         // Lasers
         if( !vecLaser.empty() ) {
@@ -294,13 +300,14 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     }
                 }
             }
-
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
         }
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
+
         // B2
         if( axis0_ == 0 ) {
 #ifdef _GPU
-            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -323,7 +330,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         } else if( axis0_ == 1 ) {
 #ifdef _GPU
-            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -346,7 +353,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         } else {
 #ifdef _GPU
-            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -369,9 +376,6 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
 
-        if( !vecLaser.empty() ) {
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db1, b1_size );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db2, b2_size );
-        }
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db2, b2_size );
     }
 }
