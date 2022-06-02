@@ -838,7 +838,7 @@ Each species has to be defined in a ``Species`` block::
 
   :type: float or :doc:`profile <profiles>`
 
-  The absolute value of the number density or charge density (choose one only)
+  The absolute value of the charge density or number density (choose one only)
   of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
 
 
