@@ -157,9 +157,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
 
         // Ponderomoteur Potential
         Phi_ = new Field2D( dimPrim, "Phi_pml" );
-    }
-
-    std::cout << nsolver << std::endl;
+    } 
 }
 
 

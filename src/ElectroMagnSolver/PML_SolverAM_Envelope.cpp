@@ -22,9 +22,9 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_alpha_l = 1.;
     // Abs
     kappa_l_max       = 1.00 ;
-    sigma_l_max       = 1.20 ; // Ok for 20 cells PML, but not stable for more PML cells
+    sigma_l_max       = 0.90 ; // Ok for 20 cells PML, but not stable for more PML cells
     alpha_l_max       = 0.00 ;
-    alpha_cl          = 1.30 ;
+    alpha_cl          = 0.90 ;
     power_pml_kappa_l = 1.;
     power_pml_sigma_l = 2.;
     power_pml_alpha_l = 1.;
@@ -80,11 +80,13 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         else if (min_or_max==1) {
             // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1-1; // For norder=2
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1-2; // For norder=4
+            // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1-2; // For norder=4
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-2; // For norder=4
         }
         // Redifine length of pml region
         nr_p = ncells_pml_domain;
-        nl_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
+        // nl_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
+        nl_p += ncells_pml_min[0] + ncells_pml_max[0];
     }
 
     isYmin = (patch->isYmin());
@@ -194,7 +196,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
             // integrate_kappa_r_p[j] = ( rmax + j*dr - r0 - 1.*dr ) ; // For norder=2
-            integrate_kappa_r_p[j] = 1*( rmax + j*dr - r0  - 2.*dr) ; // For norder=4
+            integrate_kappa_r_p[j] = 1*( rmax + j*dr - r0  - 1.*dr) ; // For norder=4
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
@@ -267,7 +269,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
             //integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ; // For norder=2
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 2.*dr ) ; // For norder=4
+            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ; // For norder=4
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
@@ -285,7 +287,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_r_p[j] = -alpha_r_max * power_pml_alpha_r * pow( (j-startpml)*dr , power_pml_alpha_r-1 ) / pow( length_r_pml , power_pml_alpha_r ) ;
             // Integrates
             //integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ; // For norder=2
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 2.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ; // For norder=4
+            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ; // For norder=4
             //integrate_kappa_r_p[j] = ( rmax + j*dr - r0 - 1.*dr ) - (kappa_r_max) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
             integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_sigma_r ) * pow( (j-startpml)*dr , power_pml_sigma_r+1 ) / ( power_pml_sigma_r+1 ) ;
             integrate_alpha_r_p[j] = 1*alpha_r_p[j] ;
@@ -425,6 +427,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j )*dt*dt;
                     // ( *A_np1_pml )( i, j ) += 2.*( *A_n_pml )( i, j )-(1.+i1*k0*dt)*( *A_nm1_pml )( i, j );
                     // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j )*(1.+i1*k0*dt)/(1.+k0*k0*dt*dt);
+                    // ====
                     // 1. update u3
                     ( *u3_np1_l_pml )( i, j ) = -kappa_prime_l_p[i]*sigma_l_p[i] ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + sigma_prime_l_p[i]*kappa_l_p[i] ;
@@ -525,8 +528,8 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *G_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G_np1_pml )( i, j );
                     // ----
                     ( *A_np1_pml )( i, j ) = ( *G_np1_pml )( i, j+1 )/dr;
-                    // ( *A_np1_pml )( i, j-1 ) = +( *A_np1_pml )( i, j+1 );
-                    // ( *G_np1_pml )( i, j-1 ) = -( *G_np1_pml )( i, j+1 );
+                    //( *A_np1_pml )( i, j-1 ) = +( *A_np1_pml )( i, j+1 );
+                    //( *G_np1_pml )( i, j-1 ) = -( *G_np1_pml )( i, j+1 );
                 }
             }
 
@@ -555,7 +558,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
         // A (p,p,p) Remind that in PML, there no current
         for( unsigned int k=0 ; k<1 ; k++ ) {
             // explicit solver
-            for( unsigned int i=1 ; i<nl_p-1; i++ ) { // x loop
+            for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
                 for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
                     // dA/dx = dA/dx + ik0 A
                     std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) ;
@@ -689,7 +692,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     //         + ( *G_np1_pml )( i, j ) * ( 1. - dt*( i1*k0 ) )
                     //         - ( *G_nm1_pml )( i, j ) * ( 1. + dt*( i1*k0 ) )
                     //     ) / ( (r0 + integrate_kappa_r_p[j]) - dt*( i1*k0*(r0 + integrate_kappa_r_p[j]) ) ) ;
-                    //std::cout << ( (double) ( j_glob_pml+j )*dr ) - (r0 + integrate_kappa_r_p[j]) << std::endl;
+                    // std::cout << ( (double) ( j_glob_pml+j )*dr ) - (r0 + integrate_kappa_r_p[j]) << std::endl;
                     ( *A_np1_pml )( i, j ) = (
                             ( (r0 + integrate_kappa_r_p[j]) + dt*( alpha_r_p[j]*(r0 + integrate_kappa_r_p[j]) + integrate_sigma_r_p[j] + i1*k0*(r0 + integrate_kappa_r_p[j]) ) )*( *A_nm1_pml )( i, j )
                             + ( *G_np1_pml )( i, j ) * ( 1. - dt*( alpha_r_p[j] + i1*k0 ) )
