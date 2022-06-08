@@ -853,7 +853,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   Please refer to
   `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
 
-.. rubric:: For the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``,
+.. rubric:: For the axes frame: ``aspect``, ``axis_facecolor``, ``frame_on``, ``position``,
   ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
   ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 

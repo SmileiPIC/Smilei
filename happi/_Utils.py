@@ -178,6 +178,8 @@ class Options(object):
 			elif kwa in ["aspect","axis_bgcolor","frame_on","position","visible",
 					     "xscale","xticks","yscale","yticks","zorder"]:
 				self.axes[kwa] = val
+			elif kwa in ["axis_facecolor"]:
+				self.axes[kwa[5:]] = val
 			# labels
 			elif kwa in ["title","xlabel","ylabel"]:
 				self.labels[kwa] = val
