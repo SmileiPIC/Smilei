@@ -16,10 +16,10 @@ using namespace std;
 Interpolator3D4Order::Interpolator3D4Order( Params &params, Patch *patch ) : Interpolator3D( params, patch )
 {
 
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
-    dz_inv_ = 1.0/params.cell_length[2];
-    
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
+    d_inv_[2] = 1.0/params.cell_length[2];
+
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_48 = 1.0/48.0;
@@ -32,7 +32,7 @@ Interpolator3D4Order::Interpolator3D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -47,14 +47,14 @@ void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
     Field3D *By3D = static_cast<Field3D *>( EMfields->By_m );
     Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
-    
+
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
-    double zpn = particles.position( 2, ipart )*dz_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
+    double zpn = particles.position( 2, ipart )*d_inv_[2];
     // Calculate coeffs
     coeffs( xpn, ypn, zpn );
-    
+
     // Interpolation of Ex^(d,p,p)
     *( ELoc+0*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Ex3D, id_, jp_, kp_ );
     // Interpolation of Ey^(p,d,p)
@@ -67,17 +67,17 @@ void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+1*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], &coeffzd_[2], By3D, id_, jp_, kd_ );
     // Interpolation of Bz^(d,d,p)
     *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], &coeffzp_[2], Bz3D, id_, jd_, kp_ );
-    
+
 } // END Interpolator3D4Order
 
 
 void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
-    
+
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
-    
+
     // Interpolate E, B
     // Compute coefficient for ipart position
     // Static cast of the electromagnetic fields
@@ -91,16 +91,16 @@ void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field3D *Jy3D = static_cast<Field3D *>( EMfields->Jy_ );
     Field3D *Jz3D = static_cast<Field3D *>( EMfields->Jz_ );
     Field3D *Rho3D= static_cast<Field3D *>( EMfields->rho_ );
-    
+
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
-    double zpn = particles.position( 2, ipart )*dz_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
+    double zpn = particles.position( 2, ipart )*d_inv_[2];
     // Calculate coeffs
     coeffs( xpn, ypn, zpn );
-    
+
     int nparts( particles.size() );
-    
+
     // Interpolation of Ex^(d,p,p)
     *( ELoc+0*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Ex3D, id_, jp_, kp_ );
     // Interpolation of Ey^(p,d,p)
@@ -133,23 +133,23 @@ void Interpolator3D4Order::oneField( Field **field, Particles &particles, int *i
     int *i = F->isDual( 0 ) ? &id_ : &ip_;
     int *j = F->isDual( 1 ) ? &jd_ : &jp_;
     int *k = F->isDual( 2 ) ? &kd_ : &kp_;
-    
+
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
-        double zpn = particles.position( 2, ipart )*dz_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
+        double zpn = particles.position( 2, ipart )*d_inv_[2];
         coeffs( xpn, ypn, zpn );
         FieldLoc[ipart] = compute( coeffx, coeffy, coeffz, F, *i, *j, *k );
     }
 }
 
-void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    
+
     //Loop on bin particles
     int nparts( particles.size() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
@@ -163,7 +163,7 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         ( *delta )[ipart+1*nparts] = deltay;
         ( *delta )[ipart+2*nparts] = deltaz;
     }
-    
+
 }
 
 
@@ -171,19 +171,19 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 void Interpolator3D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
 {
     if( selection ) {
-    
+
         int nsel_tot = selection->size();
         for( int isel=0 ; isel<nsel_tot; isel++ ) {
             fields( EMfields, particles, ( *selection )[isel], offset, buffer+isel, buffer+isel+3*offset );
         }
-        
+
     } else {
-    
+
         int npart_tot = particles.size();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
-        
+
     }
 }
 

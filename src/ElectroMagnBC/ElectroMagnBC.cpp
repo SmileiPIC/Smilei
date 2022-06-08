@@ -41,6 +41,8 @@ ElectroMagnBC::ElectroMagnBC( Params &params, Patch *patch, unsigned int i_bound
         d[i] = params.cell_length[i];
         dt_ov_d[i] = dt / d[i];
     }
+
+    pml_solver_ = NULL;
 }
 
 // Destructor for ElectromagnBC

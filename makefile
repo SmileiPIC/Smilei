@@ -49,7 +49,7 @@ COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -Wno-reorder
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -Wdeprecated-register
+    CXXFLAGS += -Wdeprecated-register 
 endif
 
 
@@ -77,7 +77,20 @@ TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall #-Wshadow
+ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+    CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    CXXFLAGS += -std=c++11 -Wall -Wextra
+else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+    CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+    CXXFLAGS += -std=c++11
+else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)
+    CXXFLAGS += -std=c++11
+else
+    CXXFLAGS += -std=c++11 -Wall
+endif
+
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
@@ -133,13 +146,38 @@ else ifneq (,$(call parse_config,inspector))
     CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
     LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
 
-# Optimization report
-else ifneq (,$(call parse_config,opt-report))
-    CXXFLAGS += -O3 -qopt-report5
-
 # Default configuration
 else
-    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
+    ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    	CXXFLAGS += -Ofast -g  -fno-math-errno
+    else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+        CXXFLAGS += -Ofast -g
+    else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        CXXFLAGS += -O3 -Kfast -g
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
+        CXXFLAGS += -O3 -Kfast -g
+    else
+        CXXFLAGS += -O3 -g
+    endif
+endif
+
+# Optimization report
+ifneq (,$(call parse_config,opt-report))
+    # Clang compiler
+    ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+        CXXFLAGS += -fsave-optimization-record -Rpass-analysis=loop-vectorize
+    else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+        CXXFLAGS += -fsave-optimization-record -Rpass-analysis=loop-vectorize
+    else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        CXXFLAGS += -Koptmsg=2 -Nlst=t
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
+        CXXFLAGS += -Koptmsg=2 -Nlst=t
+    else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+        CXXFLAGS += -fopt-info
+    # Intel compiler
+    else ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
+        CXXFLAGS += -qopt-report5
+    endif
 endif
 
 # Manage options in the "config" parameter
@@ -148,8 +186,15 @@ ifneq (,$(call parse_config,detailed_timers))
 endif
 
 #activate openmp unless noopenmp flag
+# For Fujitsu compiler: -Kopenmp
 ifeq (,$(call parse_config,noopenmp))
-    OPENMP_FLAG ?= -fopenmp
+    ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
+        OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
+    else
+    	OPENMP_FLAG ?= -fopenmp
+    endif
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
@@ -226,9 +271,13 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
+
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
+
+endif
 
 $(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
@@ -330,7 +379,7 @@ env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-
 TABLES_EXEC = smilei_tables
 
 tables: tables_folder $(TABLES_EXEC)
-	
+
 tables_folder:
 	@echo "Installing smilei_tables tool"
 	@mkdir -p $(TABLES_BUILD_DIR)

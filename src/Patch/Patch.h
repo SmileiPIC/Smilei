@@ -16,9 +16,9 @@
 #include "Projector.h"
 
 class DomainDecomposition;
-class Collisions;
 class Diagnostic;
 class SimWindow;
+class BinaryProcesses;
 
 //! Class Patch :
 //!   - data container
@@ -66,8 +66,8 @@ public:
     
     //! Optional internal boundary condifion on Particles
     PartWalls *partWalls;
-    //! Optional binary collisions operators
-    std::vector<Collisions *> vecCollisions;
+    //! Optional binary processes operators
+    std::vector<BinaryProcesses *> vecBPs;
     
     //! Injectors of the current patch
     std::vector<ParticleInjector *> particle_injector_vector_;
@@ -270,16 +270,16 @@ public:
     
     
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
-    //! @see min_local
+    //! @see min_local_
     inline double getDomainLocalMin( int i ) const
     {
-        return min_local[i];
+        return min_local_[i];
     }
     //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
-    //! @see min_local
+    //! @see min_local_
     inline double getDomainLocalMax( int i ) const
     {
-        return max_local[i];
+        return max_local_[i];
     }
     //! Return global starting (including oversize, ex : rank 0 returns -oversize) index for direction i
     //! \param i direction
@@ -295,22 +295,22 @@ public:
         return cell_starting_global_index[i];
     }
     //! Set real min coordinate for direction i
-    //! @see min_local
+    //! @see min_local_
     inline double &getDomainLocalMin( int i )
     {
-        return min_local[i];
+        return min_local_[i];
     }
     //! Set real max coordinate for direction i
-    //! @see max_local
+    //! @see max_local_
     inline double &getDomainLocalMax( int i )
     {
-        return max_local[i];
+        return max_local_[i];
     }
     //! Return real (excluding oversize) min coordinates (ex : rank 0 retourn 0.) for direction i
-    //! @see min_local
+    //! @see min_local_
     inline std::vector<double> getDomainLocalMin() const
     {
-        return min_local;
+        return min_local_;
     }
     
     //! Return the volume (or surface or length depending on simulation dimension)
@@ -324,8 +324,8 @@ public:
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
     //inline void updateMvWinLimits(double x_moved, int idx_moved) {
-    //    min_local[0] += x_moved;
-    //    max_local[0] += x_moved;
+    //    min_local_[0] += x_moved;
+    //    max_local_[0] += x_moved;
     //    //cell_starting_global_index[0] = (idx_moved-oversize[0]);
     //    cell_starting_global_index[0] += (idx_moved);
     //}
@@ -340,7 +340,7 @@ public:
     std::vector<double> debye_length_squared;
     
     //! The patch geometrical center
-    std::vector<double> center;
+    std::vector<double> center_;
     //! The patch geometrical maximal radius (from its center)
     double radius;
     
@@ -368,9 +368,9 @@ protected:
     
     //! "Real" min limit of local sub-subdomain (ghost data not concerned)
     //!     - "0." on rank 0
-    std::vector<double> min_local;
+    std::vector<double> min_local_;
     //! "Real" max limit of local sub-subdomain (ghost data not concerned)
-    std::vector<double> max_local;
+    std::vector<double> max_local_;
     //! cell_starting_global_index : index of 1st cell of local sub-subdomain in the global domain.
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0

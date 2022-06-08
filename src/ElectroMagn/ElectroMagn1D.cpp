@@ -867,9 +867,11 @@ void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
             antennas[i].field = new Field1D( dimPrim, 1, false, "Jy" );
         } else if( antennas[i].fieldName == "Jz" ) {
             antennas[i].field = new Field1D( dimPrim, 2, false, "Jz" );
+        } else {
+            ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }
         
-        if( antennas[i].field ) {
+        if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }

@@ -169,7 +169,6 @@ void ElectroMagnBCAM_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-
     //This condition can only be applied to Rmax
     
     // Loop on imode

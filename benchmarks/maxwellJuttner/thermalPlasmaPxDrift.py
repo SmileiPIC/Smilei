@@ -30,7 +30,7 @@ Main(
      cell_length = [dx],
      grid_length  = [Lx],
      number_of_patches=[1],
-     clrw=1,
+     cluster_width=1,
      timestep = dt,
      simulation_time = 0.,
      EM_boundary_conditions = [ ['periodic'] ],

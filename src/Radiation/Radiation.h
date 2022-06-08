@@ -34,6 +34,7 @@ public:
     //! Overloading of () operator
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
+    //! \param photons     Particles object that will received the emitted photons
     //! \param smpi        MPI properties
     //! \param RadiationTables Cross-section data tables and useful functions
     //                     for nonlinear inverse Compton scattering
@@ -43,7 +44,7 @@ public:
     //! \param radiated_energy     overall energy radiated during the call to this method
     virtual void operator()(
         Particles       &particles,
-        Species         *photon_species,
+        Particles       &photons,
         SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,
@@ -66,7 +67,7 @@ public:
     //! \param By y component of the particle magnetic field
     //! \param Bz z component of the particle magnetic field
     //#pragma omp declare simd
-    double inline computeParticleChi( double charge_over_mass2,
+    inline double __attribute__((always_inline)) computeParticleChi( double charge_over_mass2,
                                       double px, double py, double pz,
                                       double gamma,
                                       double Ex, double Ey, double Ez,
@@ -95,7 +96,7 @@ public:
                               int ipart_ref = 0 );
 
     // Local array of new photons
-    Particles new_photons_;
+    // Particles new_photons_;
 
 protected:
 

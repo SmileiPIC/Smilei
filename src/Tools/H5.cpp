@@ -3,6 +3,11 @@
 //! Open HDF5 file + location
 H5::H5( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
 {
+    init( file, access, comm, _raise );
+}
+
+void H5::init( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
+{
     
     // Analyse file string : separate file name and tree inside hdf5 file
     size_t l = file.length();
@@ -92,7 +97,9 @@ H5::~H5()
     if( fid_ >= 0 ) {
         H5Pclose( dxpl_ );
         H5Pclose( dcr_ );
-        if( H5Fclose( fid_ ) < 0 ) {
+        herr_t err = H5Fclose( fid_ );
+        if( err < 0 ) {
+            H5Eprint2( H5E_DEFAULT, NULL );
             ERROR( "Can't close file " << filepath );
         }
     }

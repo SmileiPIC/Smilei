@@ -47,7 +47,7 @@ public:
     void reconfigure_particle_importation();
     
     //! Compute cell_keys for all particles of the current species
-    void computeParticleCellKeys( Params &params ) override;
+    // void computeParticleCellKeys( Params &params ) override;
     
     //! Method to import particles in this species while conserving the sorting among bins
     void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & )override;

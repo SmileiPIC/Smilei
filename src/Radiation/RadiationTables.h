@@ -96,7 +96,7 @@ public:
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
     //#pragma omp declare simd
-    inline double getRidgersCorrectedRadiatedEnergy( double particle_chi,
+    inline double __attribute__((always_inline)) getRidgersCorrectedRadiatedEnergy( double particle_chi,
             double dt )
     {
         return RadiationTools::computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
@@ -105,31 +105,31 @@ public:
     //! Get of the classical continuous radiated energy during dt
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
-    inline double getClassicalRadiatedEnergy( double particle_chi, double dt )
+    inline double __attribute__((always_inline)) getClassicalRadiatedEnergy( double particle_chi, double dt )
     {
         return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
     };
 
     //! Return the minimum_chi_discontinuous_ value
     //! Under this value, no discontinuous radiation reaction
-    inline double getMinimumChiDiscontinuous()
+    inline double __attribute__((always_inline)) getMinimumChiDiscontinuous()
     {
         return minimum_chi_discontinuous_;
     }
 
     //! Return the minimum_chi_continuous_ value
     //! Under this value, no continuous radiation reaction
-    inline double getMinimumChiContinuous()
+    inline double __attribute__((always_inline)) getMinimumChiContinuous()
     {
         return minimum_chi_continuous_;
     }
 
-    inline std::string getNielHComputationMethod()
+    inline std::string __attribute__((always_inline)) getNielHComputationMethod()
     {
         return this->niel_.computation_method_;
     }
 
-    inline int getNielHComputationMethodIndex()
+    inline int __attribute__((always_inline)) getNielHComputationMethodIndex()
     {
         return this->niel_.computation_method_index_;
     }
@@ -137,7 +137,7 @@ public:
     // -----------------------------------------------------------------------------
     //! Return the classical power factor factor_classical_radiated_power_.
     // -----------------------------------------------------------------------------
-    inline double getFactorClassicalRadiatedPower()
+    inline double __attribute__((always_inline)) getFactorClassicalRadiatedPower()
     {
         return factor_classical_radiated_power_;
     }

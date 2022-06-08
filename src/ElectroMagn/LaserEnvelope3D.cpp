@@ -213,9 +213,6 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
     // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
     
-    // For an envelope moving from right to left, replace the imaginary unit i with its opposite (-i)
-    // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
-    
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
     // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
     //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
@@ -270,9 +267,6 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
     // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
     // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
-    
-    // For an envelope moving from right to left, replace the imaginary unit i with its opposite (-i)
-    // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
     // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx

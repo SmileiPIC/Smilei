@@ -19,6 +19,7 @@
 #include "SpeciesVAdaptive.h"
 #endif
 
+#include "ParticlesFactory.h"
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -57,11 +58,13 @@ public:
         }
 
         if( species_name.size() < 2 ) {
-            ERROR("For species #" << ispec << ", name cannot be only 1 character");
+            ERROR_NAMELIST("For species #" << ispec << ", name cannot be only 1 character",
+            LINK_NAMELIST + std::string("#name"));
         }
 
         if( species_name.substr(0,2) == "m_" ) {
-            ERROR("For species #" << ispec << ", name cannot start  with `m_`");
+            ERROR_NAMELIST("For species #" << ispec << ", name cannot start  with `m_`",
+            LINK_NAMELIST + std::string("#name"));
         }
 
         // Extract type of species dynamics from namelist
@@ -92,6 +95,20 @@ public:
         // Create species object
         Species *this_species = NULL;
 
+        // Species type
+        if ( params.vectorization_mode == "off" ) {
+            this_species = new Species( params, patch );
+        } 
+        #ifdef _VECTO
+        else if( params.vectorization_mode == "on" ) {
+            this_species = new SpeciesV( params, patch );
+        } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
+            this_species = new SpeciesVAdaptiveMixedSort( params, patch );
+        } else if( params.vectorization_mode == "adaptive" ) {
+            this_species = new SpeciesVAdaptive( params, patch );
+        }
+        #endif
+
         // Particles
         if( mass > 0. ) {
             // Dynamics of the species
@@ -104,21 +121,9 @@ public:
                 // Species with nonrelativistic Boris pusher == 'borisnr'
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
-                if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-                    this_species = new Species( params, patch );
-                }
-
-#ifdef _VECTO
-                else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
-                    this_species = new SpeciesV( params, patch );
-                } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                    this_species = new SpeciesVAdaptiveMixedSort( params, patch );
-                } else if( params.vectorization_mode == "adaptive" ) {
-                    this_species = new SpeciesVAdaptive( params, patch );
-                }
-#endif
             } else {
-                ERROR( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'" );
+                ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'",
+                LINK_NAMELIST + std::string("#pusher") );
             }
             this_species->pusher_name_ = pusher;
             MESSAGE( 2, "> Pusher: " << this_species->pusher_name_ );
@@ -140,11 +145,12 @@ public:
                     this_species->particles->isQuantumParameter = true;
                     this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << " radiation_model must be 'none',"
                        << " 'Landau-Lifshitz' ('ll'),"
                        << " 'corrected-Landau-Lifshitz' ('cll'),"
-                       << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')" );
+                       << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')",
+                       LINK_NAMELIST + std::string("#radiation_model") );
             }
 
             this_species->radiation_model_ = radiation_model;
@@ -170,11 +176,12 @@ public:
                          || radiation_model=="cll"
                          || radiation_model=="niel"
                          || radiation_model=="diagradiationspectrum") ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model
                        << "` is not compatible with pusher "
-                       << pusher );
+                       << pusher,
+                   LINK_NAMELIST + std::string("#radiation_model") );
 
             }
 
@@ -185,10 +192,11 @@ public:
                          || radiation_model=="cll"
                          || radiation_model=="niel"
                          || radiation_model=="diagradiationspectrum") ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model
-                       << "` is only compatible with electron and positron species (charge <= 1).");
+                       << "` is only compatible with electron and positron species (charge <= 1).",
+                    LINK_NAMELIST + std::string("#radiation_model"));
 
             }
 
@@ -196,18 +204,6 @@ public:
 
         // Photon species
         else if( mass == 0 ) {
-            if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-                this_species = new Species( params, patch );
-            }
-#ifdef _VECTO
-            else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
-                this_species = new SpeciesV( params, patch );
-            } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                this_species = new SpeciesVAdaptiveMixedSort( params, patch );
-            } else if( params.vectorization_mode == "adaptive" ) {
-                this_species = new SpeciesVAdaptive( params, patch );
-            }
-#endif
             // Photon can not radiate
             this_species->radiation_model_ = "none";
             this_species-> pusher_name_ = "norm";
@@ -241,15 +237,17 @@ public:
                     if( !this_species->radiation_photon_species.empty() ) {
                         MESSAGE( 3, "| Emitted photon species set to `" << this_species->radiation_photon_species << "`" );
                     } else {
-                        ERROR( " The radiation photon species is not specified." )
+                        ERROR_NAMELIST( " The radiation photon species (`radiation_photon_species`) is not specified.",
+                        LINK_NAMELIST + std::string("#radiation_photon_species"))
                     }
 
                     // Number of photons emitted per Monte-Carlo event
                     PyTools::extract( "radiation_photon_sampling",
                         this_species->radiation_photon_sampling_, "Species", ispec );
                     if( this_species->radiation_photon_sampling_ < 1 ) {
-                        ERROR( "For species '" << species_name
-                               << "' radiation_photon_sampling should be > 1" );
+                        ERROR_NAMELIST( "For species '" << species_name
+                               << "' radiation_photon_sampling should be > 1",
+                           LINK_NAMELIST + std::string("#radiation_photon_sampling") );
                     }
                     MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << this_species->radiation_photon_sampling_ );
@@ -260,8 +258,18 @@ public:
 
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
+                    
+                    // Creation of the photon particles object to receive the emitted photons
+                    if( !this_species->radiation_photon_species.empty() ) {
+                        this_species->radiated_photons_ = ParticlesFactory::create( params );
+                    }
+                             
+                    
+                // else, no emitted macro-photons
                 } else {
                     MESSAGE( 3, "| Macro-photon emission not activated" );
+                    this_species->radiated_photons_ = NULL;
+                    this_species->photon_species_   = NULL;
                 }
 
             }
@@ -269,13 +277,18 @@ public:
 
         // Multiphoton Breit-Wheeler
         if( mass == 0 ) {
+            
+            //Photons can not radiate
+            this_species->radiated_photons_ = NULL;
+            
             // If this_species->multiphoton_Breit_Wheeler
             if( PyTools::extractV( "multiphoton_Breit_Wheeler", this_species->multiphoton_Breit_Wheeler_, "Species", ispec ) ) {
                 // If one of the species is empty
                 if( this_species->multiphoton_Breit_Wheeler_[1].empty() || this_species->multiphoton_Breit_Wheeler_[0].empty() ) {
-                    ERROR( "For species '" << species_name
-                           << "' multiphoton_Breit_Wheeler can not be empty,"
-                           << " select electron and positron species." );
+                    ERROR_NAMELIST(  "For species '" << species_name
+                            << "' multiphoton_Breit_Wheeler can not be empty,"
+                            << " select electron and positron species.",
+                            LINK_NAMELIST + std::string("#multiphoton_Breit_Wheeler"));
                 } else {
                     // Activation of the additional variables
                     this_species->particles->isQuantumParameter = true;
@@ -315,12 +328,13 @@ public:
         if( ( this_species->merging_method_ != "vranic_spherical" ) &&
             ( this_species->merging_method_ != "vranic_cartesian" ) &&
             ( this_species->merging_method_ != "none" ) ) {
-            ERROR( "In Species " << this_species->name_
-                   << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
+            ERROR_NAMELIST( "In Species " << this_species->name_
+                            << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`",
+                            LINK_NAMELIST + std::string("#particle-merging") );
         }
 
         // if( params.vectorization_mode == "off" && this_species->merging_method_ != "none" ) {
-        //     ERROR( "In Species " << this_species->name_
+        //     ERROR_NAMELIST( "In Species " << this_species->name_
         //            << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
         // }
 
@@ -338,43 +352,48 @@ public:
             PyTools::extract( "merge_min_packet_size", this_species->merge_min_packet_size_ , "Species", ispec );
             if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ > 0)
             {
-                ERROR( "In Species " << this_species->name_
+                ERROR_NAMELIST( "In Species " << this_species->name_
                        << ": minimum number of particles per merging packet "
                        << "(`merge_min_packet_size`)"
-                       << "must be above or equal to 4.");
+                       << "must be above or equal to 4.",
+                       LINK_NAMELIST + std::string("#particle-merging"));
             }
             if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ == 0)
             {
-                ERROR( "In Species " << this_species->name_
+                ERROR_NAMELIST( "In Species " << this_species->name_
                        << " of type photon"
                        << ": minimum number of particles per merging packet "
                        << "(`merge_min_packet_size`)"
-                       << "must be above or equal to 4.");
+                       << "must be above or equal to 4.",
+                       LINK_NAMELIST + std::string("#particle-merging"));
             }
 
             // Maximum particle number per packet to merge
             PyTools::extract( "merge_max_packet_size", this_species->merge_max_packet_size_ , "Species", ispec );
             if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ > 0)
             {
-                ERROR( "In Species " << this_species->name_
+                ERROR_NAMELIST( "In Species " << this_species->name_
                        << ": maximum number of particles per merging packet "
                        << "(`merge_max_packet_size`)"
-                       << "must be above or equal to 4.");
+                       << "must be above or equal to 4.",
+                       LINK_NAMELIST + std::string("#particle-merging"));
             }
             if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ == 0)
             {
-                ERROR( "In Species " << this_species->name_
+                ERROR_NAMELIST( "In Species " << this_species->name_
                        << " of type photon"
                        << ": maximum number of particles per merging packet "
                        << "(`merge_max_packet_size`)"
-                       << "must be above or equal to 4.");
+                       << "must be above or equal to 4.",
+                       LINK_NAMELIST + std::string("#particle-merging"));
             }
             if (this_species->merge_max_packet_size_ < this_species->merge_min_packet_size_) {
-                ERROR( "In Species " << this_species->name_
+                ERROR_NAMELIST( "In Species " << this_species->name_
                        << ": maximum number of particles per merging packet "
                        << "(`merge_max_packet_size`)"
                        << "must be below or equal to the minimum particle number"
-                       << " per merging packet (`merge_min_packet_size`)");
+                       << " per merging packet (`merge_min_packet_size`)",
+                       LINK_NAMELIST + std::string("#particle-merging"));
             }
 
             // Minimum momentum cell length for the momentum discretization
@@ -383,25 +402,33 @@ public:
                                   "Species", ispec ) ) {
                 for (unsigned int i = 0 ; i < 3 ; i++) {
                     if (this_species->merge_min_momentum_cell_length_[i] <= 0) {
-                        ERROR( "In Species " << this_species->name_
+                        ERROR_NAMELIST( "In Species " << this_species->name_
                                  << ": The minimal momentum cell length "
                                  << "(`merge_min_particles_per_cell`)"
                                  << " must be above 0 ("
                                  << this_species->merge_min_momentum_cell_length_[i]
-                                 << ")");
+                                 << ")",
+                             LINK_NAMELIST + std::string("#particle-merging"));
                     }
                 }
             } else {
-                ERROR( "In Species " << this_species->name_ << ": merge_min_momentum_cell_length should be a list of floats" );
+                ERROR_NAMELIST(
+                    "In Species " << this_species->name_ 
+                    << ": merge_min_momentum_cell_length should be a list of floats",
+                    LINK_NAMELIST + std::string("#particle-merging")
+                );
             }
 
             // Read and check the threshold on the number of particles per cell
             PyTools::extract( "merge_min_particles_per_cell", this_species->merge_min_particles_per_cell_ , "Species", ispec );
             if (this_species->merge_min_particles_per_cell_ < 4) {
-                ERROR( "In Species " << this_species->name_
-                       << ": The threshold on the number of particles per cell "
-                       << "(`merge_min_particles_per_cell`)"
-                       << "must be above or equal to 4");
+                ERROR_NAMELIST(
+                    "In Species " << this_species->name_
+                    << ": The threshold on the number of particles per cell "
+                    << "(`merge_min_particles_per_cell`)"
+                    << "must be above or equal to 4",
+                    LINK_NAMELIST + std::string("#particle-merging")
+                );
             }
 
             // Read flag to activate the accumulation correction
@@ -413,13 +440,20 @@ public:
                                   "Species", ispec ) ) {
                 for (unsigned int i = 0 ; i < 3 ; i++) {
                     if (this_species->merge_momentum_cell_size_[i] <= 0) {
-                        ERROR( "In Species " << this_species->name_
-                               << ": The momentum cell discretization can not be equal or below 0 "
-                               << "(`merge_momentum_cell_size_`).");
+                        ERROR_NAMELIST(
+                            "In Species " << this_species->name_
+                            << ": The momentum cell discretization can not be equal or below 0 "
+                            << "(`merge_momentum_cell_size_`).",
+                            LINK_NAMELIST + std::string("#particle-merging")
+                        );
                     }
                 }
             } else {
-                ERROR( "In Species " << this_species->name_ << ": merge_momentum_cell_size should be a list of integers" );
+                ERROR_NAMELIST( 
+                    "In Species " << this_species->name_ 
+                    << ": merge_momentum_cell_size should be a list of integers",
+                    LINK_NAMELIST + std::string("#particle-merging")
+                );
             }
 
 
@@ -436,8 +470,11 @@ public:
                     this_species->merge_accumulation_correction_ = false;
                 }
             } else {
-                ERROR( "In Species " << this_species->name_
-                       << ": discretization_scale should be `linear` or `log`");
+                ERROR_NAMELIST(
+                    "In Species " << this_species->name_
+                    << ": discretization_scale should be `linear` or `log`",
+                    LINK_NAMELIST + std::string("#particle-merging")
+                );
             }
 
             // Minimum momentum in log scale
@@ -445,8 +482,11 @@ public:
                               this_species->merge_min_momentum_log_scale_,
                               "Species", ispec );
             if (this_species->merge_min_momentum_log_scale_ <= 0) {
-                ERROR( "In Species " << this_species->name_
-                       << ": merge_min_momentum should be above 0.");
+                ERROR_NAMELIST(
+                    "In Species " << this_species->name_
+                    << ": merge_min_momentum should be above 0.",
+                    LINK_NAMELIST + std::string("#particle-merging")
+                );
             }
 
             // We activate the merging
@@ -493,10 +533,17 @@ public:
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
         if( PyTools::py2scalar( py_pos_init, this_species->position_initialization_ ) ) {
             if( this_species->position_initialization_.empty() ) {
-                ERROR( "For species '" << species_name << "' empty position_initialization." );
+                ERROR_NAMELIST(
+                    "For species '" << species_name << "' empty position_initialization.",
+                    LINK_NAMELIST + std::string("#species")
+                );
             // Regular, random, centered
-            } else if(    this_species->position_initialization_=="centered" and params.geometry == "AMcylindrical"){ 
-                ERROR( "For species '" << species_name << "' centered position_initialization is not supported in AM geometry." );
+            } else if(    this_species->position_initialization_=="centered" and params.geometry == "AMcylindrical"){
+                ERROR_NAMELIST(
+                    "For species '" << species_name 
+                    << "' centered position_initialization is not supported in AM geometry.",
+                    LINK_NAMELIST + std::string("#species")
+                );
             } else if(    this_species->position_initialization_=="regular"
                        || this_species->position_initialization_=="random"
                        || this_species->position_initialization_=="centered" ) {
@@ -516,7 +563,13 @@ public:
                 //           << std::endl;
                 // The link species must already exist
                 if( ok == false ) {
-                    ERROR( "For species '" << species_name << "' cannot initialize positions on a species ('"<<this_species->position_initialization_<<"') defined afterwards");
+                    ERROR_NAMELIST( 
+                        "For species '" << species_name 
+                        << "' cannot initialize positions on a species ('"
+                        <<this_species->position_initialization_
+                        <<"') defined afterwards",
+                        LINK_NAMELIST + std::string("#species")
+                    );
                 }
                 this_species->position_initialization_on_species_ = true;
             // HDF5 file where arrays are stored
@@ -526,16 +579,32 @@ public:
                 for( unsigned int i=0; i<params.nDim_particle+1; i++ ) {
                     std::vector<hsize_t> shape = f.shape( ax[i] );
                     if( shape.size() == 0 ) {
-                        ERROR( "For species '" << species_name << "': " << ax[i] << " not found in file " << this_species->position_initialization_ );
+                        ERROR_NAMELIST(
+                            "For species '" << species_name 
+                            << "': " << ax[i] 
+                            << " not found in file " 
+                            << this_species->position_initialization_,
+                            LINK_NAMELIST + std::string("#species")
+                        );
                     }
                     if( this_species->file_position_npart_ == 0 ) {
                         if( shape[0] == 0 ) {
-                            ERROR( "For species '" << species_name << "': " << ax[i] << " is empty in file " << this_species->position_initialization_ );
+                            ERROR_NAMELIST( 
+                                "For species '" << species_name << "': " 
+                                << ax[i] << " is empty in file " 
+                                << this_species->position_initialization_ ,
+                                LINK_NAMELIST + std::string("#species")
+                            );
                         }
                         this_species->file_position_npart_ = shape[0];
                     }
                     if( shape.size() > 1 || shape[0] != this_species->file_position_npart_ ) {
-                        ERROR( "For species '" << species_name << "': wrong size for " << ax[i] << " in file " << this_species->position_initialization_ );
+                        ERROR_NAMELIST( 
+                            "For species '" << species_name 
+                            << "': wrong size for " << ax[i] 
+                            << " in file " << this_species->position_initialization_,
+                            LINK_NAMELIST + std::string("#species") 
+                        );
                     }
                 }
             }
@@ -548,13 +617,22 @@ public:
             //Check dimensions
             unsigned int ndim_local = PyArray_NDIM( np_ret );
             if( ndim_local != 2 ) {
-                ERROR( "For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array." );
+                ERROR_NAMELIST(
+                    "For species '" << species_name 
+                    << "' Provide a 2-dimensional array in order to init particle position from a numpy array." ,
+                    LINK_NAMELIST + std::string("#species") 
+                );
             }
 
             //Check number of coordinates provided
             ndim_local = PyArray_SHAPE( np_ret )[0];
             if( ndim_local != params.nDim_particle + 1 ) {
-                ERROR( "For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." );
+                ERROR_NAMELIST(
+                    "For species '" << species_name
+                    << "' position_initializtion must provide a 2-dimensional array with " 
+                    <<  params.nDim_particle + 1 << " columns.",
+                    LINK_NAMELIST + std::string("#species")  
+                );
             }
 
             //Get number of particles. Do not initialize any more if this is a restart.
@@ -570,17 +648,28 @@ public:
         }
 #endif
         else {
-            ERROR( "For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array." );
+            ERROR_NAMELIST(
+                "For species '" << species_name 
+                << "' non valid position_initialization. It must be either a string or a numpy array.",
+                LINK_NAMELIST + std::string("#species") 
+            );
         }
         Py_DECREF( py_pos_init );
 
         if( PyTools::extractV( "regular_number", this_species->regular_number_array_, "Species", ispec )){
-             if( this_species->position_initialization_ != "regular" ) {
-                 ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
-             }
-             if( this_species->regular_number_array_.size() != this_species->nDim_particle ) {
-                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< this_species->nDim_particle <<").");
-             }
+            if( this_species->position_initialization_ != "regular" ) {
+                ERROR_NAMELIST(
+                    "regular_number may not be provided if species position_initialization is not set to 'regular'.",
+                    LINK_NAMELIST + std::string("#species") 
+                );
+            }
+            if( this_species->regular_number_array_.size() != this_species->nDim_particle ) {
+                ERROR_NAMELIST(
+                    "Please provide as many regular numbers of particles as there are particle dimensions in the domain ("
+                    << this_species->nDim_particle <<").",
+                    LINK_NAMELIST + std::string("#species") 
+                );
+            }
         }
 
         // Momentum initialisation types
@@ -597,8 +686,11 @@ public:
             // Maxwell-juettner
             } else if( this_species->momentum_initialization_=="maxwell-juettner" ) {
                 if( this_species->mass_ == 0 ) {
-                    ERROR( "For photon species '" << species_name
-                        << "' momentum_initialization cannot be maxwell-juettner");
+                    ERROR_NAMELIST(
+                        "For photon species '" << species_name
+                        << "' momentum_initialization cannot be maxwell-juettner",
+                        LINK_NAMELIST + std::string("#species")
+                    );
                 }
             // HDF5 file where arrays are stored
             } else if( this_species->file_position_npart_ > 0 ) {
@@ -607,43 +699,73 @@ public:
                 for( unsigned int i=0; i<ax.size(); i++ ) {
                     std::vector<hsize_t> shape = f.shape( ax[i] );
                     if( shape.size() == 0 ) {
-                        ERROR( "For species '" << species_name << "': " << ax[i] << " not found in file " << this_species->momentum_initialization_ );
+                        ERROR_NAMELIST(
+                            "For species '" << species_name 
+                            << "': " << ax[i] << " not found in file " 
+                            << this_species->momentum_initialization_,
+                            LINK_NAMELIST + std::string("#species")
+                        );
                     }
                     if( shape.size() > 1 || shape[0] != this_species->file_position_npart_ ) {
-                        ERROR( "For species '" << species_name << "': wrong shape for " << ax[i] << " in file " << this_species->momentum_initialization_ );
+                        ERROR_NAMELIST(
+                            "For species '" << species_name 
+                            << "': wrong shape for " << ax[i] 
+                            << " in file " << this_species->momentum_initialization_,
+                            LINK_NAMELIST + std::string("#species")
+                        );
                     }
                     this_species->file_momentum_npart_ = shape[0];
                 }
             // Otherwise, error
             } else {
-                ERROR( "For species '" << species_name
+                ERROR_NAMELIST( 
+                    "For species '" << species_name
                     << "' unknown momentum_initialization: "
-                    << this_species->momentum_initialization_ );
+                    << this_species->momentum_initialization_,
+                    LINK_NAMELIST + std::string("#species")
+                );
             }
         }
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_mom_init ) ) {
 
             if( !this_species->position_initialization_array_ ) {
-                ERROR( "For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. " );
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ",
+                    LINK_NAMELIST + std::string("#species")
+                );
             }
 
             PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject *>( py_mom_init );
             //Check dimensions
             unsigned int ndim_local = PyArray_NDIM( np_ret_mom ) ; //Ok
             if( ndim_local != 2 ) {
-                ERROR( "For species '" << species_name << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array." );
+                ERROR_NAMELIST(
+                    "For species '" << species_name 
+                    << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.",
+                    LINK_NAMELIST + std::string("#species")
+                );
             }
 
             //Check number of coordinates provided
             ndim_local =  PyArray_SHAPE( np_ret_mom )[0]; // ok
             if( ndim_local != 3 ) {
-                ERROR( "For species '" << species_name << "' momentum_initialization must provide a 2-dimensional array with " <<  3 << " columns." );
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "' momentum_initialization must provide a 2-dimensional array with " 
+                    <<  3 << " columns.",
+                    LINK_NAMELIST + std::string("#species")
+                );
             }
 
             //Get number of particles
             if( !params.restart && this_species->n_numpy_particles_ != PyArray_SHAPE( np_ret_mom )[1] ) {
-                ERROR( "For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." );
+                ERROR_NAMELIST(
+                    "For species '" << species_name 
+                    << "' momentum_initialization must provide as many particles as position_initialization.",
+                    LINK_NAMELIST + std::string("#species") 
+                );
             }
             this_species->momentum_initialization_array_ = new double[ndim_local*this_species->n_numpy_particles_] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
@@ -654,7 +776,11 @@ public:
         }
 #endif
         else {
-            ERROR( "For species '" << species_name << "' invalid momentum_initialization. It must be either a string or a numpy array." );
+            ERROR_NAMELIST( 
+                "For species '" << species_name 
+                << "' invalid momentum_initialization. It must be either a string or a numpy array." ,
+                LINK_NAMELIST + std::string("#species")
+            );
         }
         Py_DECREF( py_mom_init );
 
@@ -666,67 +792,124 @@ public:
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
         }
+        if (this_species->time_frozen_ > 0) {
+            MESSAGE( 2, "> Species frozen until time: " << this_species->time_frozen_ );
+        }
+
         // iteration when the relativistic field initialization is applied, if enabled
         this_species->iter_relativistic_initialization_ = ( int )( this_species->time_frozen_/params.timestep );
 
-        if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
-            ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
+        if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions_, "Species", ispec ) ) {
+            ERROR_NAMELIST(
+                "For species '" << species_name 
+                << "', boundary_conditions not defined",
+                LINK_NAMELIST + std::string("#species")
+            );
         }
 
         unsigned int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
 
-        if( this_species->boundary_conditions.size() == 0 ) {
-            ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
-        } else if( this_species->boundary_conditions.size() == 1 ) {
-            while( this_species->boundary_conditions.size() < number_of_boundaries ) {
-                this_species->boundary_conditions.push_back( this_species->boundary_conditions[0] );
+        if( this_species->boundary_conditions_.size() == 0 ) {
+            ERROR_NAMELIST(
+                "For species '" << species_name 
+                << "', boundary_conditions cannot be empty" ,
+                LINK_NAMELIST + std::string("#species")
+            );
+        } else if( this_species->boundary_conditions_.size() == 1 ) {
+            while( this_species->boundary_conditions_.size() < number_of_boundaries ) {
+                this_species->boundary_conditions_.push_back( this_species->boundary_conditions_[0] );
             }
-        } else if( this_species->boundary_conditions.size() != number_of_boundaries ) {
-            ERROR( "For species '" << species_name << "', boundary_conditions must be of size "<< number_of_boundaries <<"." );
+        } else if( this_species->boundary_conditions_.size() != number_of_boundaries ) {
+            ERROR_NAMELIST( 
+                "For species '" << species_name 
+                << "', boundary_conditions must be of size "
+                << number_of_boundaries <<"." ,
+                LINK_NAMELIST + std::string("#species")
+            );
         }
 
 
         bool has_thermalize = false;
-
+        std::ostringstream t;
         for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
-            if( this_species->boundary_conditions[iDim].size() == 1 ) {
-                this_species->boundary_conditions[iDim].push_back( this_species->boundary_conditions[iDim][0] );
+            if( this_species->boundary_conditions_[iDim].size() == 1 ) {
+                this_species->boundary_conditions_[iDim].push_back( this_species->boundary_conditions_[iDim][0] );
             }
-            if( this_species->boundary_conditions[iDim].size() != 2 )
-                ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" )
-            if( this_species->boundary_conditions[iDim][0] == "thermalize"
-                    || this_species->boundary_conditions[iDim][1] == "thermalize" ) {
-                has_thermalize = true;
-                if( this_species->mass_ == 0 ) {
-                    ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
+            if( this_species->boundary_conditions_[iDim].size() != 2 ) {
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "', boundary_conditions["<<iDim
+                    <<"] must have one or two arguments" ,
+                    LINK_NAMELIST + std::string("#species")
+                );
+            }
+            for( unsigned int ii=0; ii<2; ii++ ) {
+                if( this_species->boundary_conditions_[iDim][ii] == "thermalize" ) {
+                    has_thermalize = true;
+                    if( this_species->mass_ == 0 ) {
+                        ERROR_NAMELIST( 
+                            "For photon species '" << species_name 
+                            << "' Thermalizing BCs are not available." ,
+                            LINK_NAMELIST + std::string("#species")
+                        );
+                    }
+                } else if( this_species->boundary_conditions_[iDim][ii] == "stop" ) {
+                    if( this_species->mass_ == 0 ) {
+                        ERROR_NAMELIST( 
+                            "For photon species '" << species_name
+                             << "' stop BCs are not physical.",
+                             LINK_NAMELIST + std::string("#species") 
+                         );
+                    }
+                } else if( this_species->boundary_conditions_[iDim][ii] == "periodic" && params.EM_BCs[iDim][ii] != "periodic" ) {
+                    ERROR_NAMELIST( 
+                        "For species '" << species_name 
+                        << "',  boundary_conditions["<<iDim
+                        <<"] cannot be periodic as the EM boundary conditions are not periodic",
+                        LINK_NAMELIST + std::string("#species")  
+                    );
                 }
-            }
-            if( this_species->boundary_conditions[iDim][0] == "stop"
-                    || this_species->boundary_conditions[iDim][1] == "stop" ) {
-                if( this_species->mass_ == 0 ) {
-                    ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
-                }
+                t << " " << this_species->boundary_conditions_[iDim][ii];
             }
         }
-        if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions[1][1] != "remove" ) && ( this_species->boundary_conditions[1][1] != "stop" ) ) {
-            ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
+        if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions_[1][1] != "remove" ) && ( this_species->boundary_conditions_[1][1] != "stop" ) ) {
+            ERROR_NAMELIST(
+                " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ",
+                LINK_NAMELIST + std::string("#species") 
+            );
         }
-        if( (params.hasWindow) && (( this_species->boundary_conditions[0][1] != "remove" ) || ( this_species->boundary_conditions[0][0] != "remove" ) )) {
-            ERROR( " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. " );
+        if( (params.hasWindow) && (( this_species->boundary_conditions_[0][1] != "remove" ) || ( this_species->boundary_conditions_[0][0] != "remove" ) )) {
+            ERROR_NAMELIST(
+                " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. ",
+                LINK_NAMELIST + std::string("#species")
+            );
         }
+        MESSAGE( 2, "> Boundary conditions:" << t.str() );
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
         bool has_velocity    = PyTools::extractV( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
         if( has_thermalize ) {
             if( !has_temperature ) {
-                ERROR( "For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats" );
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats",
+                    LINK_NAMELIST + std::string("#species") 
+                );
             }
             if( !has_velocity ) {
-                ERROR( "For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should be a list of floats" );
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "' thermal_boundary_velocity (thermalizing BC) should be a list of floats",
+                    LINK_NAMELIST + std::string("#species") 
+                );
             }
             if( this_species->thermal_boundary_velocity_.size()!=3 ) {
-                ERROR( "For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should have 3 components" );
+                ERROR_NAMELIST( 
+                    "For species '" << species_name 
+                    << "' thermal_boundary_velocity (thermalizing BC) should have 3 components",
+                    LINK_NAMELIST + std::string("#species") 
+                );
             }
             if( this_species->thermal_boundary_temperature_.size()==1 ) {
                 WARNING( "For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions" );
@@ -743,7 +926,11 @@ public:
                 this_species->thermal_momentum_[i] = this_species->thermal_velocity_[i];
                 // Caution: momentum in SMILEI actually correspond to p/m
                 if( this_species->thermal_velocity_[i]>0.3 ) {
-                    ERROR( "For species '" << species_name << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature" );
+                    ERROR_NAMELIST(
+                        "For species '" << species_name 
+                        << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature",
+                        LINK_NAMELIST + std::string("#species") 
+                    );
                 }
             }
         }
@@ -763,20 +950,30 @@ public:
                 this_species->ionization_model = model;
 
                 if( this_species->particles->is_test ) {
-                    ERROR( "For species '" << species_name << ": cannot ionize test species" );
+                    ERROR_NAMELIST( 
+                        "For species '" << species_name 
+                        << ": cannot ionize test species",
+                        LINK_NAMELIST + std::string("#species") );
                 }
 
                 if( ( this_species->atomic_number_==0 )&&( this_species->maximum_charge_state_==0 ) ) {
-                    ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
+                    ERROR_NAMELIST( 
+                        "For species '" << species_name 
+                        << ": undefined atomic_number & maximum_charge_state (required for ionization)",
+                        LINK_NAMELIST + std::string("#species") );
                 }
 
                 if( model == "tunnel" ){
                     if (params.Laser_Envelope_model){
-                        ERROR("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name);
+                        ERROR_NAMELIST("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name,
+                        LINK_NAMELIST + std::string("#species"));
                     }
                 }else if ( model == "tunnel_envelope_averaged" ){
 
-                    if (!params.Laser_Envelope_model) ERROR("An envelope ionization model has been selected but no envelope is present");
+                    if (!params.Laser_Envelope_model) {
+                        ERROR_NAMELIST("An envelope ionization model has been selected but no envelope is present",
+                        LINK_NAMELIST + std::string("#laser-envelope-model"));
+                    }
 
                 }else if( model == "from_rate" ) {
 
@@ -786,7 +983,8 @@ public:
                     }
                     this_species->ionization_rate_ = PyTools::extract_py( "ionization_rate", "Species", ispec );
                     if( this_species->ionization_rate_ == Py_None ) {
-                        ERROR( "For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' " );
+                        ERROR_NAMELIST( "For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' ",
+                        LINK_NAMELIST + std::string("#species") );
                     } else {
 #ifdef SMILEI_USE_NUMPY
                         // Test the ionization_rate function with temporary, "fake" particles
@@ -795,12 +993,14 @@ public:
                         double *dummy = NULL;
                         ParticleData test( params.nDim_particle, this_species->ionization_rate_, name.str(), dummy );
 #else
-                        ERROR( "For species '" << species_name << " ionization 'from_rate' requires Numpy" );
+                        ERROR_NAMELIST( "For species '" << species_name << " ionization 'from_rate' requires Numpy",
+                        LINK_NAMELIST + std::string("#species") );
 #endif
                     }
 
                 } else if( model != "none" ) {
-                    ERROR( "For species " << species_name << ": unknown ionization model `" << model );
+                    ERROR_NAMELIST( "For species " << species_name << ": unknown ionization model `" << model,
+                    LINK_NAMELIST + std::string("#species") );
                 }
 
                 if( params.vectorization_mode != "off" ) {
@@ -835,10 +1035,12 @@ public:
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
             if( this_species->mass_ > 0 ) {
                 if( ok1 &&  ok2 ) {
-                    ERROR( "For species '" << species_name << "', cannot define both `number_density ` and `charge_density`." );
+                    ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `number_density ` and `charge_density`.",
+                    LINK_NAMELIST + std::string("#species") );
                 }
                 if( !ok1 && !ok2 ) {
-                    ERROR( "For species '" << species_name << "', must define `number_density ` or `charge_density`." );
+                    ERROR_NAMELIST( "For species '" << species_name << "', must define `number_density ` or `charge_density`.",
+                    LINK_NAMELIST + std::string("#species") );
                 }
                 if( ok1 ) {
                     this_species->density_profile_type_ = "nb";
@@ -851,11 +1053,13 @@ public:
             // Photons
             else if( this_species->mass_ == 0 ) {
                 if( ok2 ) {
-                    ERROR( "For photon species '" << species_name << "', `charge_density` has no meaning."
-                            << "You must use `number_density`." );
+                    ERROR_NAMELIST( "For photon species '" << species_name << "', `charge_density` has no meaning."
+                            << "You must use `number_density`.",
+                            LINK_NAMELIST + std::string("#species") );
                 }
                 if( !ok1 ) {
-                    ERROR( "For photon species '" << species_name << "', must define `number_density`." );
+                    ERROR_NAMELIST( "For photon species '" << species_name << "', must define `number_density`.",
+                    LINK_NAMELIST + std::string("#species") );
                 }
                 this_species->density_profile_type_ = "nb";
             }
@@ -865,23 +1069,27 @@ public:
 
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
-                ERROR( "For species '" << species_name << "', particles_per_cell not found or not understood" );
+                ERROR_NAMELIST( "For species '" << species_name << "', particles_per_cell not found or not understood",
+                LINK_NAMELIST + std::string("#species") );
             }
             this_species->particles_per_cell_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "particles_per_cell ", species_name ), params, true, true );
         } else {
             if( PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
-                ERROR( "For species '" << species_name << "', cannot define both `particles_per_cell` and  `position_initialization` array." );
+                ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `particles_per_cell` and  `position_initialization` array.",
+                LINK_NAMELIST + std::string("#species") );
             }
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
             if( ok1 ||  ok2 ) {
-                ERROR( "For species '" << species_name << "', cannot define both `density` and `position_initialization` array." );
+                ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `density` and `position_initialization` array.",
+                LINK_NAMELIST + std::string("#species") );
             }
         }
 
         // Charge
         if( !PyTools::extract_pyProfile( "charge", profile1, "Species", ispec ) ) {
-            ERROR( "For species '" << species_name << "', charge not found or not understood" );
+            ERROR_NAMELIST( "For species '" << species_name << "', charge not found or not understood",
+            LINK_NAMELIST + std::string("#species") );
         }
         this_species->charge_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), params, true, true );
 
@@ -904,10 +1112,12 @@ public:
             ok1 = PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ;
             ok2 = PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ;
             if( ok1 ) {
-                ERROR( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array." );
+                ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array.",
+                LINK_NAMELIST + std::string("#species") );
             }
             if( ok2 ) {
-                ERROR( "For species '" << species_name << "', cannot define both `temperature` and `momentum_initialization` array." );
+                ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `temperature` and `momentum_initialization` array.",
+                LINK_NAMELIST + std::string("#species") );
             }
         }
 
@@ -920,7 +1130,8 @@ public:
             PyTools::extract( "species", track_species, "DiagTrackParticles", itrack );
             if( track_species==species_name ) {
                 if( this_species->particles->tracked ) {
-                    ERROR( "In this version, species '" << species_name << "' cannot be tracked by two DiagTrackParticles" );
+                    ERROR_NAMELIST( "In this version, species '" << species_name << "' cannot be tracked by two DiagTrackParticles",
+                    LINK_NAMELIST + std::string("#species") );
                 }
                 this_species->particles->tracked  = true;
             }
@@ -931,7 +1142,8 @@ public:
 
         // Verify they don't ionize
         if( this_species->ionization_model!="none" && this_species->particles->is_test ) {
-            ERROR( "For species '" << species_name << "' test & ionized is currently impossible" );
+            ERROR_NAMELIST( "For species '" << species_name << "' test & ionized is currently impossible",
+            LINK_NAMELIST + std::string("#species") );
         }
 
         return this_species;
@@ -946,12 +1158,13 @@ public:
         // Create new species object
         Species *new_species = NULL;
 
-        // Boris, Vay or Higuera-Cary
-        if ( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
+
+        // Type of species
+        if ( params.vectorization_mode == "off" ) {
             new_species = new Species( params, patch );
         }
 #ifdef _VECTO
-        else if( ( params.vectorization_mode == "on" ) || params.cell_sorting  ) {
+        else if( params.vectorization_mode == "on" ) {
             new_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
             new_species = new SpeciesVAdaptive( params, patch );
@@ -967,7 +1180,7 @@ public:
         new_species->radiation_photon_species                  = species->radiation_photon_species;
         new_species->radiation_photon_sampling_                = species->radiation_photon_sampling_;
         new_species->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
-        new_species->photon_species_                            = species->photon_species_;
+        new_species->photon_species_                           = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
         new_species->position_initialization_on_species_index  = species->position_initialization_on_species_index;
@@ -985,7 +1198,7 @@ public:
         new_species->radiating_                                = species->radiating_;
         new_species->relativistic_field_initialization_        = species->relativistic_field_initialization_;
         new_species->iter_relativistic_initialization_         = species->iter_relativistic_initialization_;
-        new_species->boundary_conditions                      = species->boundary_conditions;
+        new_species->boundary_conditions_                      = species->boundary_conditions_;
         new_species->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         new_species->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
         new_species->thermal_velocity_                          = species->thermal_velocity_;
@@ -1067,7 +1280,8 @@ public:
             // Verify the new species does not have the same name as a previous one
             for( unsigned int i = 0; i < ispec; i++ ) {
                 if( this_species->name_ == patch->vecSpecies[i]->name_ ) {
-                    ERROR("Two species cannot have the same name `"<<this_species->name_<<"`");
+                    ERROR_NAMELIST("Two species cannot have the same name `"<<this_species->name_<<"`",
+                    LINK_NAMELIST + std::string("#species"));
                 }
             }
             // Put the newly created species in the vector of species
@@ -1089,10 +1303,12 @@ public:
                 for( unsigned int ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
                     if( patch->vecSpecies[ispec1]->ionization_electrons == patch->vecSpecies[ispec2]->name_ ) {
                         if( ispec1==ispec2 ) {
-                            ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a distinct species" );
+                            ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a distinct species",
+                            LINK_NAMELIST + std::string("#species") );
                         }
                         if( patch->vecSpecies[ispec2]->mass_!=1 ) {
-                            ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a species with mass==1" );
+                            ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a species with mass==1",
+                            LINK_NAMELIST + std::string("#species") );
                         }
                         patch->vecSpecies[ispec1]->electron_species_index = ispec2;
                         patch->vecSpecies[ispec1]->electron_species = patch->vecSpecies[ispec2];
@@ -1107,7 +1323,10 @@ public:
                     }
                 }
                 if( patch->vecSpecies[ispec1]->electron_species_index==-1 ) {
-                    ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons named " << patch->vecSpecies[ispec1]->ionization_electrons << " could not be found" );
+                    ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                    <<"' ionization_electrons named " << patch->vecSpecies[ispec1]->ionization_electrons 
+                    << " could not be found",
+                    LINK_NAMELIST + std::string("#species") );
                 }
             }
 
@@ -1117,6 +1336,7 @@ public:
                 if( patch->vecSpecies[ispec1]->radiation_photon_species.empty() ) {
                     patch->vecSpecies[ispec1]->photon_species_index = -1;
                     patch->vecSpecies[ispec1]->photon_species_ = NULL;
+                    patch->vecSpecies[ispec1]->radiated_photons_ = NULL;
                 }
                 // Else, there will be emission of macro-photons.
                 else {
@@ -1124,14 +1344,18 @@ public:
                     for( ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
                         if( patch->vecSpecies[ispec1]->radiation_photon_species == patch->vecSpecies[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
-                                ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' radiation_photon_species must be a distinct photon species" );
+                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                                <<"' radiation_photon_species must be a distinct photon species",
+                                LINK_NAMELIST + std::string("#species") );
                             }
                             if( patch->vecSpecies[ispec2]->mass_!=0 ) {
-                                ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
+                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                                <<"' radiation_photon_species must be a photon species with mass==0",
+                                LINK_NAMELIST + std::string("#species") );
                             }
                             patch->vecSpecies[ispec1]->photon_species_index = ispec2;
                             patch->vecSpecies[ispec1]->photon_species_ = patch->vecSpecies[ispec2];
-                            patch->vecSpecies[ispec1]->Radiate->new_photons_.initializeReserve(
+                            patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
@@ -1139,7 +1363,9 @@ public:
                         }
                     }
                     if( ispec2 == patch->vecSpecies.size() ) {
-                        ERROR( "Species '" << patch->vecSpecies[ispec1]->radiation_photon_species << "' does not exist." )
+                        ERROR_NAMELIST( "Species '" << patch->vecSpecies[ispec1]->radiation_photon_species 
+                        << "' does not exist.",
+                        LINK_NAMELIST + std::string("#species") )
                     }
                 }
             }
@@ -1153,12 +1379,14 @@ public:
                         // We look for the pair species multiphoton_Breit_Wheeler_[k]
                         if( patch->vecSpecies[ispec1]->multiphoton_Breit_Wheeler_[k] == patch->vecSpecies[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
-                                ERROR( "For species '" << patch->vecSpecies[ispec1]->name_
-                                       << "' pair species must be a distinct particle species" );
+                                ERROR_NAMELIST( "For species '" << patch->vecSpecies[ispec1]->name_
+                                       << "' pair species must be a distinct particle species",
+                                       LINK_NAMELIST + std::string("#species") );
                             }
                             if( patch->vecSpecies[ispec2]->mass_ != 1 ) {
-                                ERROR( "For species '"<<patch->vecSpecies[ispec1]->name_
-                                  <<"' pair species must be an electron and positron species (mass = 1)" );
+                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                                  <<"' pair species must be an electron and positron species (mass = 1)",
+                                  LINK_NAMELIST + std::string("#species") );
                             }
                             patch->vecSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
                             patch->vecSpecies[ispec1]->mBW_pair_species[k] = patch->vecSpecies[ispec2];
@@ -1172,9 +1400,10 @@ public:
                     }
                     // This means that one of the pair species has not been fould
                     if( ispec2 == patch->vecSpecies.size() ) {
-                        ERROR( "In Species `" << patch->vecSpecies[ispec1]->name_ << "`"
+                        ERROR_NAMELIST( "In Species `" << patch->vecSpecies[ispec1]->name_ << "`"
                            << " the pair species `" << patch->vecSpecies[ispec1]->multiphoton_Breit_Wheeler_[k]
-                           << "` does not exist." )
+                           << "` does not exist.",
+                           LINK_NAMELIST + std::string("#species") )
                     }
                 }
             }
@@ -1217,16 +1446,19 @@ public:
             if( patch->vecSpecies[i]->Radiate ) {
                 patch->vecSpecies[i]->radiation_photon_species = vector_species[i]->radiation_photon_species;
                 patch->vecSpecies[i]->photon_species_index = vector_species[i]->photon_species_index;
+                // Photon emission activated:
                 if( vector_species[i]->photon_species_ ) {
                     patch->vecSpecies[i]->photon_species_ = patch->vecSpecies[patch->vecSpecies[i]->photon_species_index];
-                    patch->vecSpecies[i]->Radiate->new_photons_.tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
-                    patch->vecSpecies[i]->Radiate->new_photons_.isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
-                    patch->vecSpecies[i]->Radiate->new_photons_.isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
                     //patch->vecSpecies[i]->Radiate->new_photons_.initialize(patch->vecSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    patch->vecSpecies[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle, params.keep_position_old );
+                    patch->vecSpecies[i]->radiated_photons_ = ParticlesFactory::create( params );
+                    patch->vecSpecies[i]->radiated_photons_->tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
+                    patch->vecSpecies[i]->radiated_photons_->isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
+                    patch->vecSpecies[i]->radiated_photons_->isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
+                    patch->vecSpecies[i]->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old );
                 } else {
                     patch->vecSpecies[i]->photon_species_ = NULL;
+                    patch->vecSpecies[i]->radiated_photons_ = NULL;
                 }
             }
         }

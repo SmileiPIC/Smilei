@@ -15,13 +15,13 @@ public:
     Function() {};
     //! Default destructor
     virtual ~Function() {};
-    
+
     //! Gets the value of a N-D function at a point located by its coordinates in a vector
     virtual double valueAt( std::vector<double> )
     {
         return 0.; // virtual => will be redefined
     };
-    
+
     //! Gets the value of a 1-D function at a point located by a double
     virtual double valueAt( double x )
     {
@@ -30,35 +30,35 @@ public:
         v[0] = x;
         return valueAt( v );
     };
-    
+
     //! Gets the value of a N-D function from both a vector and a double. The double is the last argument.
     virtual double valueAt( std::vector<double>, double )
     {
         ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
-    
+
     //! Gets the complex value of a N-D function from both a vector and a double. The double is the last argument.
     virtual std::complex<double> complexValueAt( std::vector<double>, double )
     {
         ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
-    
+
     //! Gets the complex value of a N-D function from a vector.
     virtual std::complex<double> complexValueAt( std::vector<double> )
     {
         ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
-    
+
     //! Provide information about the function
     virtual std::string getInfo()
     {
         std::string info = "";
         return info; // virtual => will be redefined
     };
-    
+
 #ifdef SMILEI_USE_NUMPY
     //! Gets the value of an N-D function at points specified as numpy arrays
     virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> )
@@ -75,7 +75,7 @@ public:
     {
         return NULL;
     };
-    
+
     // time dependent
     //! Gets the value of an N-D function at points specified as numpy arrays
     virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> , double )
@@ -88,7 +88,7 @@ public:
     {
         return NULL;
     };
-    
+
 #endif
 };
 
@@ -885,8 +885,8 @@ public:
         zphi       = f->zphi      ;
         znumber2pi = f->znumber2pi;
     };
-    double valueAt( std::vector<double> );
-    std::string getInfo ()
+    double valueAt( std::vector<double> ) override;
+    std::string getInfo () override
     {
         std::string info = "";
         info += " (base: " + std::to_string(base);

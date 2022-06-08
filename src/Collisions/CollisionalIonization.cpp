@@ -149,23 +149,23 @@ void CollisionalIonization::assignDatabase( unsigned int index )
 }
 
 // Method to apply the ionization
-void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2, double coeff )
+void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
 {
-    double gamma1 = p1->LorentzFactor( i1 );
-    double gamma2 = p2->LorentzFactor( i2 );
+    D.gamma1 = D.p1->LorentzFactor( D.i1 );
+    D.gamma2 = D.p2->LorentzFactor( D.i2 );
     // Calculate lorentz factor in the frame of ion
-    double gamma_s = gamma1*gamma2
-                     - p1->momentum( 0, i1 )*p2->momentum( 0, i2 )
-                     - p1->momentum( 1, i1 )*p2->momentum( 1, i2 )
-                     - p1->momentum( 2, i1 )*p2->momentum( 2, i2 );
+    double gamma_s = D.gamma1*D.gamma2
+        - D.p1->momentum( 0, D.i1 )*D.p2->momentum( 0, D.i2 )
+        - D.p1->momentum( 1, D.i1 )*D.p2->momentum( 1, D.i2 )
+        - D.p1->momentum( 2, D.i1 )*D.p2->momentum( 2, D.i2 );
     // Random numbers
-    double U1  = patch->rand_->uniform();
-    double U2  = patch->rand_->uniform();
+    double U1 = random->uniform();
+    double U2 = random->uniform();
     // Calculate the rest of the stuff
-    if( electronFirst ) {
-        calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2, coeff );
+    if( D.electronFirst ) {
+        calculate( gamma_s, D.gamma1, D.gamma2, D.p1, D.i1, D.p2, D.i2, U1, U2, D.dt_correction );
     } else {
-        calculate( gamma_s, gamma2, gamma1, p2, i2, p1, i1, U1, U2, coeff );
+        calculate( gamma_s, D.gamma2, D.gamma1, D.p2, D.i2, D.p1, D.i1, U1, U2, D.dt_correction );
     }
 }
 
@@ -294,7 +294,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags )
+void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime )
 {
     patch->vecSpecies[ionization_electrons_]->importParticles( params, patch, new_electrons, localDiags );
 }

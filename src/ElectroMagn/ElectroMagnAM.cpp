@@ -1892,7 +1892,7 @@ void ElectroMagnAM::initAntennas( Patch *patch, Params& params )
             ERROR( "Antenna cannot be applied to field "<<antennas[i].fieldName );
         }
         
-        if( antennas[i].field ) {
+        if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }

@@ -36,7 +36,7 @@ Main(
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
     number_of_patches = [npatch_x, npatch_trans, npatch_trans],
-    clrw = 14,
+    cluster_width = 14,
     EM_boundary_conditions = [ ["silver-muller"] ],
     EM_boundary_conditions_k = [ [1., 0., 0.],[-1., 0., 0.],[1., 0.005, 0.],[1., -0.005, 0.],[1., 0., 0.005],[1., 0., -0.005] ],
     random_seed = 0,

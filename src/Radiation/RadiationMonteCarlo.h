@@ -47,7 +47,7 @@ public:
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
-        Species *photon_species,
+        Particles &photons,
         SmileiMPI *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,
@@ -69,17 +69,19 @@ public:
     //                        for nonlinear inverse Compton scattering
     // ---------------------------------------------------------------------
     double photonEmission( int ipart,
-                         double &particle_chi,
-                         double &particle_gamma,
-                         double *position_x,
-                         double *position_y,
-                         double *position_z,
-                         double *momentum_x,
-                         double *momentum_y,
-                         double *momentum_z,
-                         double *weight,
-                         Species *photon_species,
-                         RadiationTables &RadiationTables );
+        const double particle_chi,
+        const double particle_gamma,
+        double * position_x,
+        double * position_y,
+        double * position_z,
+        double * momentum_x,
+        double * momentum_y,
+        double * momentum_z,
+        const double *const weight,
+        const double *const table_min_photon_chi,
+        const double *const table_xi,
+        Particles * photons,
+        RadiationTables &RadiationTables);
 
 protected:
 

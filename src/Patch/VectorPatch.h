@@ -74,7 +74,10 @@ public :
     //! Resize vector of field*
     void updateFieldList( SmileiMPI *smpi );
     void updateFieldList( int ispec, SmileiMPI *smpi );
-    
+
+    void buildPMLList( std::string fieldname, int idim, int min_or_max, SmileiMPI *smpi );
+    void buildPMLList( std::string fieldname, int idim, int min_or_max, SmileiMPI *smpi, int imode );
+
     //! Create the diagnostic list
     void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &, RadiationTables * radiation_tables_ );
     
@@ -205,7 +208,7 @@ public :
     void applyAntennas( double time );
     
     //! For all patches, apply collisions
-    void applyCollisions( Params &params, int itime, Timers &timer );
+    void applyBinaryProcesses( Params &params, int itime, Timers &timer );
     
     //! For all patches, allocate a field if not allocated
     void allocateField( unsigned int ifield, Params &params );
@@ -282,6 +285,7 @@ public :
     std::vector<Field *> listBx_;
     std::vector<Field *> listBy_;
     std::vector<Field *> listBz_;
+    std::vector<Field *> listForPML_;
     
     std::vector<Field *> listA_;
     std::vector<Field *> listA0_;
@@ -416,9 +420,9 @@ private :
     std::vector<int> send_patch_id_;
     
     //! Current intensity of antennas
-    double antenna_intensity;
+    double antenna_intensity_;
     
-    std::vector<Timer *> diag_timers;
+    std::vector<Timer *> diag_timers_;
 };
 
 

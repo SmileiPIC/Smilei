@@ -1,4 +1,6 @@
-CXXFLAGS += -mavx2 -mfma  -march=broadwell
-# -march=native
-# -mavx2
-# -mfma
+#
+# Machine file for the GNU compiler on a Linux system
+# 
+# __________________________________________________________
+
+CXXFLAGS += -march=native -mfma

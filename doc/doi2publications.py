@@ -2,6 +2,42 @@ from requests import get
 from json import loads
 
 DOIs = [
+"10.1017/S0022377821001070",
+"10.1063/5.0062503",
+"10.1088/1361-6587/ac318d",
+"10.3847/2041-8213/ac30e0",
+"10.1016/j.physrep.2021.09.001",
+"10.1088/1361-6587/ac2996",
+"10.3847/2041-8213/ac1795",
+"10.1088/1367-2630/ac1a97",
+"10.1063/5.0055169",
+"10.1063/5.0052599",
+"10.1063/5.0052003",
+"10.1364/OL.432817",
+"10.1002/ctpp.202000219",
+"10.24200/nst.2021.1197",
+"10.1088/1367-2630/ac1975",
+"10.1103/PhysRevApplied.15.054053",
+"10.1103/PhysRevLett.126.234801",
+"10.1103/PhysRevE.103.053202",
+"10.1088/1361-6587/ac2614",
+"10.1088/1361-6587/abf448",
+"10.1038/s41467-021-24006-x",
+"10.1038/s41567-021-01325-w",
+"10.1051/0004-6361/202141049",
+"10.1088/1361-6587/ac0352",
+"10.1103/PhysRevA.103.053114",
+"10.1063/5.0031313",
+"10.1039/D0NR07025D",
+"10.1016/j.cjph.2021.02.010",
+"10.1063/5.0031555",
+"10.1038/s41598-021-84264-z",
+"10.1063/5.0037028",
+"10.1063/5.0040374",
+"10.1103/PhysRevLett.126.044801",
+"10.1103/PhysRevLett.126.064801",
+"10.1103/PhysRevE.103.L021201",
+
 
     # '10.1063/5.0037028',
     # ['10.1088/1367-2630/ac1a97', '1907.02621'],
@@ -41,6 +77,19 @@ abbrv = {
     "Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment":"Nucl. Inst. Meth. in Phys. Res. A",
 }
 
+import unicodedata
+
+def strip_accents(text):
+    try:
+        text = unicode(text, 'utf-8')
+    except NameError: # unicode is a default on python 3 
+        pass
+
+    text = unicodedata.normalize('NFD', text)\
+           .encode('ascii', 'ignore')\
+           .decode("utf-8")
+
+    return str(text)
 
 # Get publication list from DOI numbers
 keys = []
@@ -70,7 +119,11 @@ for doi in DOIs:
         journal = a["container-title"]
     if journal in abbrv:
         journal = abbrv[journal]
-    volume = a["volume"]
+    if "volume" in a:
+        volume = a["volume"]
+    else:
+        volume = "???"
+        print("WARNING missing volume "+url)
     if "page" in a:
         page = a["page"]
     elif "article-number" in a:
@@ -109,5 +162,5 @@ for i in range(len(keys)):
 # Print results
 print("---- copy-paste the following ----")
 for k,c in zip(keys, citations):
-    print(".. [%s]"%k)
+    print(".. [%s]"% strip_accents(k))
     print(c)

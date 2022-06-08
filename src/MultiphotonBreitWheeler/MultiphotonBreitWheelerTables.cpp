@@ -10,7 +10,7 @@
 //! The implementation is adapted from the thesis results of M. Lobet
 //! See http://www.theses.fr/2015BORD0361
 // ----------------------------------------------------------------------------
-
+ 
 #include "MultiphotonBreitWheelerTables.h"
 #include "MultiphotonBreitWheelerTablesDefault.h"
 #include "H5.h"
@@ -24,9 +24,9 @@
 // -----------------------------------------------------------------------------
 MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 {
-    
+
     MultiphotonBreitWheelerTablesDefault::setDefault( T_, xi_ );
-    
+
 }
 
 // -----------------------------------------------------------------------------
@@ -62,16 +62,16 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
         // Path to the databases
         PyTools::extract( "table_path", table_path_, "MultiphotonBreitWheeler"  );
     }
-    
+
     // Computation of some parameters
     if( params.hasMultiphotonBreitWheeler ) {
         // Computation of the normalized Compton wavelength
         normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
-                                         / ( params.electron_mass*params.c_vacuum*params.c_vacuum );
+                                         / ( params.electron_mass*params.c_vacuum_*params.c_vacuum_ );
         // Computation of the factor factor_dNBW_dt_
         factor_dNBW_dt_ = params.fine_struct_cst/( normalized_Compton_wavelength_ * M_PI*std::sqrt( 3.0 ) );
     }
-    
+
     // Messages and checks
     if( params.hasMultiphotonBreitWheeler ) {
         if (table_path_.size() > 0) {
@@ -80,7 +80,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
         } else {
             MESSAGE(1,"Default tables (stored in the code) are used:");
         }
-        
+
         MESSAGE( "" )
         MESSAGE( 1,"--- Table `integration_dt_dchi`:" );
         MESSAGE( 2,"Dimension quantum parameter: "
@@ -89,14 +89,14 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
                  << T_.min_photon_chi_ );
         MESSAGE( 2,"Maximum photon quantum parameter chi: "
                  << T_.max_photon_chi_ );
-        
+
         MESSAGE( "" )
         MESSAGE( 1,"--- Table `min_particle_chi_for_xi` and `xi`:" );
         MESSAGE( 2,"Dimension photon chi: " << xi_.size_photon_chi_ );
         MESSAGE( 2,"Dimension particle chi: " << xi_.size_particle_chi_ );
         MESSAGE( 2,"Minimum photon chi: " << xi_.min_photon_chi_ );
         MESSAGE( 2,"Maximum photon chi: " << xi_.max_photon_chi_ );
-        
+
     }
 
 }
@@ -273,21 +273,21 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 {
     std::string file = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
     if( Tools::fileExists( file ) ) {
-        
+
         if( smpi->isMaster() ) {
-            
+
             H5Read f( file );
-            
+
             // First, we read attributes
             H5Read d = f.dataset( "integration_dt_dchi" );
             d.attr( "size_photon_chi", T_.size_photon_chi_ );
             d.attr( "min_photon_chi", T_.min_photon_chi_ );
             d.attr( "max_photon_chi", T_.max_photon_chi_ );
-            
+
             // Resize and read table
             T_.table_.resize( T_.size_photon_chi_ );
             f.vect( "integration_dt_dchi", T_.table_ );
-            
+
         }
     }
     else
@@ -310,24 +310,24 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
 {
     std::string file = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
     if( Tools::fileExists( file ) ) {
-        
+
         if( smpi->isMaster() ) {
-            
+
             H5Read f( file );
-            
+
             // First, we read attributes
             H5Read xi = f.dataset( "xi" );
             xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
             xi.attr( "min_photon_chi", xi_.min_photon_chi_ );
             xi.attr( "max_photon_chi", xi_.max_photon_chi_ );
-            
+
             // Allocate and read arrays
             xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
             xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
             f.vect( "min_particle_chi_for_xi", xi_.min_particle_chi_ );
             f.vect( "xi", xi_.table_ );
-            
+
         }
     }
     else
@@ -336,7 +336,7 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
               << " process could not be read from the provided path: `"
               << table_path_<<"`. Please check that the path is correct.")
     }
-    
+
     // Bcast the table to all MPI ranks
     MultiphotonBreitWheelerTables::bcastTableXi( smpi );
 

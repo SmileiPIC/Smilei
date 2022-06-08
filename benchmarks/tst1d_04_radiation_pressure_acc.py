@@ -33,7 +33,7 @@ Main(
      
     EM_boundary_conditions = [ ['silver-muller'] ],
      
-    clrw = 1
+    cluster_width = 1
 )
 
 Species(

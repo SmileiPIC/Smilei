@@ -21,7 +21,7 @@ Main(
     timestep = L/rest,
     simulation_time = 10.0 * math.pi,
     
-    clrw = 1,
+    cluster_width = 1,
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     

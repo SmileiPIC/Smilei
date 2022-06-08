@@ -1,0 +1,36 @@
+#
+# Machine file for Irene Joliot-Curie A64FX using ARM compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load arm-compiler
+# module load flavor/buildcompiler/armclang/21
+# module load licsrv/arm
+# module load c++/arm/21.0.0
+# module load c/arm/21.0.0
+# module load arm-compiler/21.0.0
+# module load mpi/openmpi
+# module load python3/3.8.10
+#
+# You have to install your own hdf5:
+# export HDF5_ROOT=<path to your installation folder>
+# export PATH=${HDF5_ROOT}/bin:${PATH}
+# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+#
+# List of ARM flags for optimization on A64FX
+# -ffast-math : Allow aggressive, lossy floating-point optimizations.
+# -ffinite-math-only : Enable optimizations that ignore the possibility of NaN and +/-Inf.
+# -ffp-contract={fast|on|off} : Controls when the compiler is permitted to form fused floating-point
+# operations (e.g. FMAs).
+# -fsimdmath : Enable use of vectorized libm library (libsimdmath) to aid vectorization of loops containing
+# calls to libm.
+# -fopenmp : Enable OpenMP and link in the OpenMP library, libomp.
+# -march=armv8.2-a+sve : Select which CPU architecture to optimize for. -mcpu=native causes the
+# compiler to auto-detect the CPU architecture from the build computer.
+
+CXXFLAGS += -march=armv8.2-a+sve -Rpass-analysis=loop-vectorize -ffinite-math-only -fsimdmath -fopenmp-simd -ffp-contract=fast -ffast-math
+LDFLAGS += -march=armv8.2-a+sve -Rpass-analysis=loop-vectorize
+
+LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm

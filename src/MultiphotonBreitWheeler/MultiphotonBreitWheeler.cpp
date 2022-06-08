@@ -9,7 +9,7 @@
 
 #include "MultiphotonBreitWheeler.h"
 #include "Species.h"
-
+ 
 // -----------------------------------------------------------------------------
 //! Constructor for Radiation
 // input: simulation parameters & Species index
@@ -25,7 +25,7 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     dt_    = params.timestep;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
+    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum_*params.c_vacuum_
                         / ( params.red_planck_cst*params.reference_angular_frequency_SI );
 
     // Inverse of norm_E_Schwinger_
@@ -393,9 +393,9 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
 
-    std::vector<double> *thetaold = NULL;
-    if ( smpi->dynamics_thetaold.size() )
-        thetaold = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = &( smpi->dynamics_eithetaold[ithread] );
 
     int nparts = Epart->size()/3;
 

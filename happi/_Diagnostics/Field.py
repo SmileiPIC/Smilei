@@ -261,7 +261,7 @@ class Field(Diagnostic):
 				z = self._np.arange(*build3d[2])
 				if len(x)==0 or len(y)==0 or len(z)==0:
 					raise Exception("Error: The array shape to be constructed seems to be empty")
-				y2, z2 = self._np.meshgrid(y,z)
+				z2, y2 = self._np.meshgrid(z,y)
 				r2 = self._np.sqrt(y2**2 + z2**2)
 				self._theta = self._np.arctan2(z2, y2)
 				del y2, z2
@@ -274,7 +274,7 @@ class Field(Diagnostic):
 		# Build units
 		units = {}
 		for f in self._fieldname:
-			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"N_r"}[f[0]] })
+			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r"}[f[0]] })
 		# Make total units and title
 		self._vunits = self.operation
 		self._title  = self.operation

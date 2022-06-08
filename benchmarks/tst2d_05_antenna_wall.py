@@ -43,7 +43,7 @@ Species(
 	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
 	boundary_conditions = [
 		["reflective", "reflective"],
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	mean_velocity=[0.9,0.01,0]
 )
@@ -57,7 +57,7 @@ Species(
 	number_density = trapezoidal(1.0,xvacuum=1.*l0,xplateau=4.*l0,yvacuum=5.*l0,yplateau=10.*l0),
 	boundary_conditions = [
 		["reflective", "reflective"],
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	mean_velocity=[0.9,0.01,0]
 )

@@ -7,7 +7,6 @@
 
 #include "Particles.h"
 
-using namespace std;
 // Pushes only momentum of particles interacting with envelope, not their position
 PusherPonderomotiveBoris::PusherPonderomotiveBoris( Params &params, Species *species )
     : Pusher( params, species )
@@ -36,28 +35,24 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double pxsm, pysm, pzsm;
     //double one_ov_gamma_ponderomotive;
     
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
     
     short *charge = particles.getPtrCharge();
     
-    int nparts;
-    if (vecto) {
-        nparts = Epart->size()/3;
-    } else {
-        nparts = particles.size();
-    }
+    const int nparts = vecto ? Epart->size() / 3 :
+                               particles.size(); // particles.size()
     
-    double *Ex       = &( ( *Epart )[0*nparts] );
-    double *Ey       = &( ( *Epart )[1*nparts] );
-    double *Ez       = &( ( *Epart )[2*nparts] );
-    double *Bx       = &( ( *Bpart )[0*nparts] );
-    double *By       = &( ( *Bpart )[1*nparts] );
-    double *Bz       = &( ( *Bpart )[2*nparts] );
-    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
-    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
-    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const double *const __restrict__ GradPhix = &( ( *GradPhipart )[0*nparts] );
+    const double *const __restrict__ GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    const double *const __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
     //double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
     #pragma omp simd
@@ -71,9 +66,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         // one_ov_gamma_ponderomotive = dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
         
         // init Half-acceleration in the electric field and ponderomotive force
-        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
-        pysm = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
-        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pxsm = charge_over_mass_dts2 * ( Ex[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhix[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pysm = charge_over_mass_dts2 * ( Ey[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhiy[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pzsm = charge_over_mass_dts2 * ( Ez[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhiz[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
         
         umx = momentum_x[ipart] + pxsm;
         umy = momentum_y[ipart] + pysm;
@@ -81,9 +76,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
-        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
+        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;

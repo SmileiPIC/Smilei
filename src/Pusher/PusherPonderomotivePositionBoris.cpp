@@ -7,7 +7,6 @@
 
 #include "Particles.h"
 
-using namespace std;
 // Pushes only position of particles interacting with envelope, not their momentum
 PusherPonderomotivePositionBoris::PusherPonderomotivePositionBoris( Params &params, Species *species )
     : Pusher( params, species )
@@ -34,33 +33,23 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     double gamma0, gamma0_sq, gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
     
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
     
-    short *charge = particles.getPtrCharge( ) ;
+    const short *const charge = particles.getPtrCharge( ) ;
     
-    int nparts;
-    if (vecto) {
-        nparts = GradPhi_mpart->size()/3;
-    } else {
-        nparts = particles.size();
-    }
+    const int nparts = vecto ? GradPhi_mpart->size()/3 :
+                               particles.size(); // particles.size()
     
-    double *Phi_m      = &( ( *Phi_mpart )[0*nparts] );
-    double *GradPhi_mx = &( ( *GradPhi_mpart )[0*nparts] );
-    double *GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
-    double *GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
+    const double *const __restrict__ Phi_m      = &( ( *Phi_mpart )[0*nparts] );
+    const double *const __restrict__ GradPhi_mx = &( ( *GradPhi_mpart )[0*nparts] );
+    const double *const __restrict__ GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
+    const double *const __restrict__ GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
@@ -71,12 +60,12 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
         charge_sq_over_mass_sq      = ( double )( charge[ipart] )*one_over_mass_*( charge[ipart] )*one_over_mass_;
         
         // compute initial ponderomotive gamma
-        gamma0_sq = 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] + ( *( Phi_m+ipart-ipart_buffer_offset ) )*charge_sq_over_mass_sq ;
+        gamma0_sq = 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] + ( Phi_m[ipart-ipart_buffer_offset] )*charge_sq_over_mass_sq ;
         gamma0    = sqrt( gamma0_sq ) ;
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mx+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
-        pysm = charge_sq_over_mass_dts4 * ( *( GradPhi_my+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
-        pzsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mz+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
+        pxsm = charge_sq_over_mass_dts4 * ( GradPhi_mx[ipart-ipart_buffer_offset] ) / gamma0_sq ;
+        pysm = charge_sq_over_mass_dts4 * ( GradPhi_my[ipart-ipart_buffer_offset] ) / gamma0_sq ;
+        pzsm = charge_sq_over_mass_dts4 * ( GradPhi_mz[ipart-ipart_buffer_offset] ) / gamma0_sq ;
         
         // update of gamma ponderomotive
         gamma_ponderomotive = gamma0 + ( pxsm*momentum_x[ipart]+pysm*momentum_y[ipart]+pzsm*momentum_z[ipart] ) ;

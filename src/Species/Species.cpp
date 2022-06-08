@@ -16,6 +16,7 @@
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
+#include "ParticlesFactory.h"
 #include "MergingFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
@@ -30,6 +31,7 @@
 #include "Projector.h"
 #include "ProjectorFactory.h"
 #include "ParticleCreator.h"
+#include "PartCompTimeFactory.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -67,7 +69,7 @@ Species::Species( Params &params, Patch *patch ) :
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
-    particles( &particles_sorted[0] ),
+    // particles( &particles_sorted[0] ),
     file_position_npart_( 0 ),
     file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
@@ -80,8 +82,9 @@ Species::Species( Params &params, Patch *patch ) :
     photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
+    radiated_photons_( NULL ),
     mBW_pair_creation_sampling_( 2, 1 ),
-    clrw( params.clrw ),
+    cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
     min_loc_vec( patch->getDomainLocalMin() ),
@@ -90,6 +93,10 @@ Species::Species( Params &params, Patch *patch ) :
     nDim_field(    params.nDim_field  ),
     merging_time_selection_( 0 )
 {
+    
+    particles         = ParticlesFactory::create( params );
+    particles_to_move = ParticlesFactory::create( params );
+    
     regular_number_array_.clear();
     partBoundCond = NULL;
     min_loc = patch->getDomainLocalMin( 0 );
@@ -113,15 +120,15 @@ Species::Species( Params &params, Patch *patch ) :
 
     merge_min_momentum_cell_length_.resize(3);
 
-    particles_to_move = new Particles();
+    // particles_to_move = new Particles();
 
 }//END Species creator
 
 void Species::initCluster( Params &params )
 {
     // Arrays of the min and max indices of the particle bins
-    particles->first_index.resize( params.n_space[0]/clrw );
-    particles->last_index.resize( params.n_space[0]/clrw );
+    particles->first_index.resize( params.n_space[0]/cluster_width_ );
+    particles->last_index.resize( params.n_space[0]/cluster_width_ );
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -133,17 +140,17 @@ void Species::initCluster( Params &params )
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_particle == 1 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
     }
     if( nDim_particle == 2 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
     }
     if( nDim_particle == 3 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
@@ -168,7 +175,7 @@ void Species::resizeCluster( Params &params )
 
     // We keep the current number of particles
     int npart = particles->size();
-    int size = params.n_space[0]/clrw;
+    int size = params.n_space[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( size );
@@ -258,6 +265,11 @@ void Species::initOperators( Params &params, Patch *patch )
     // assign the correct Merging method to Merge
     Merge = MergingFactory::create( params, this, patch->rand_ );
 
+    // Evaluation of the particle computation time
+    if (params.has_adaptive_vectorization ) {
+        part_comp_time_ = PartCompTimeFactory::create( params );
+    }
+
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, this, patch );
     for( unsigned int iDim=0 ; iDim < nDim_field ; iDim++ ) {
@@ -282,6 +294,8 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
+    
+    delete particles;
     delete particles_to_move;
 
     delete Push;
@@ -297,6 +311,9 @@ Species::~Species()
     }
     if( Radiate ) {
         delete Radiate;
+    }
+    if( part_comp_time_ ) {
+        delete part_comp_time_;
     }
     if( Multiphoton_Breit_Wheeler_process ) {
         delete Multiphoton_Breit_Wheeler_process;
@@ -321,6 +338,10 @@ Species::~Species()
     }
     if( ionization_rate_!=Py_None ) {
         Py_DECREF( ionization_rate_ );
+    }
+
+    if (radiated_photons_) {
+        delete radiated_photons_;
     }
 
 }
@@ -406,7 +427,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Radiation process
-                ( *Radiate )( *particles, photon_species_, smpi,
+                ( *Radiate )( *particles,
+                              *radiated_photons_,
+                              smpi,
                               RadiationTables,
                               nrj_radiated_,
                               particles->first_index[ibin],
@@ -694,7 +717,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             if( photon_species_ ) {
                 photon_species_->importParticles( params,
                                                  patch,
-                                                 Radiate->new_photons_,
+                                                 *radiated_photons_,
                                                  localDiags );
             }
         }
@@ -872,7 +895,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     int shift[particles->last_index.size()+1];//how much we need to shift each bin in order to leave room for the new particle
     double dbin;
 
-    dbin = params.cell_length[0]*params.clrw; //width of a bin.
+    dbin = params.cell_length[0]*params.cluster_width_; //width of a bin.
     for( unsigned int j=0; j<particles->last_index.size()+1 ; j++ ) {
         shift[j]=0;
     }
@@ -953,7 +976,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     }
 
 
-    //The width of one bin is cell_length[0] * clrw.
+    //The width of one bin is cell_length[0] * cluster_width_.
 
     int p1, p2, first_index_init;
     unsigned int bin;
@@ -962,7 +985,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     //Backward pass
     for( bin=0; bin<particles->first_index.size()-1; bin++ ) { //Loop on the bins.
-        limit = min_loc + ( bin+1 )*cell_length[0]*clrw;
+        limit = min_loc + ( bin+1 )*cell_length[0]*cluster_width_;
         p1 = particles->last_index[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while( p1 == particles->last_index[bin]-1 && p1 >= particles->first_index[bin] ) {
@@ -982,7 +1005,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     }
     //Forward pass + Rebracketting
     for( bin=1; bin<particles->first_index.size(); bin++ ) { //Loop on the bins.
-        limit = min_loc + bin*cell_length[0]*clrw;
+        limit = min_loc + bin*cell_length[0]*cluster_width_;
         first_index_init = particles->first_index[bin];
         p1 = particles->first_index[bin];
         while( p1 == particles->first_index[bin] && p1 < particles->last_index[bin] ) {
@@ -1114,7 +1137,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         src_bin_keys[i] = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
-        src_bin_keys[i] /= params.clrw;
+        src_bin_keys[i] /= params.cluster_width_;
     }
 
     vector<int> bin_count( nbin, 0 );
@@ -1465,7 +1488,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             if( params.geometry != "AMcylindrical" ) {
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    for( unsigned int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                    for( unsigned int iPart= (unsigned int)(particles->first_index[ibin]) ; (unsigned int)(iPart<particles->last_index[ibin]); iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
                 }//End loop on bins
