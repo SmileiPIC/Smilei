@@ -14,7 +14,6 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
     latest_timestep( -1 )
 {
     // patch  == NULL else error
-    filename = "scalars.txt";
     
     if( PyTools::nComponents( "DiagScalar" ) > 1 ) {
         ERROR( "Only one DiagScalar can be specified" );
@@ -28,7 +27,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
             "Scalars"
         );
         
-        precision=10;
+        precision = 10;
         PyTools::extract( "precision", precision, "DiagScalar"  );
         PyTools::extractV( "vars", vars, "DiagScalar" );
         
@@ -38,8 +37,11 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
         cell_volume    = params.cell_volume;
         n_space        = params.n_space;
         n_space_global = params.n_space_global;
+        
+        filename = "scalars.txt";
     } else {
         timeSelection = new TimeSelection();
+        filename = "";
     }
     
 } // END DiagnosticScalar::DiagnosticScalar
@@ -331,7 +333,9 @@ void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
     // Must keep track of Poynting flux even without diag
-    patch->computePoynting();
+    if( ! filename.empty() ) {
+        patch->computePoynting();
+    }
     
     // Compute all scalars when needed
     if( timeSelection->theTimeIsNow( itime ) && itime>latest_timestep ) {
