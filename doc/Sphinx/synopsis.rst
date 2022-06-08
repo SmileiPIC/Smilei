@@ -1,16 +1,22 @@
 Synopsis
 --------
 
-Smilei is a collaborative project providing the scientific community with an open-source,
-user-friendly, high-performance and multi-purpose Particle-In-Cell (PIC) code
+Smilei is a collaborative project providing physicists with an open-source,
+user-friendly, high-performance and multi-purpose electromagnetic Particle-In-Cell (PIC) code
 for plasma simulation.
 
-To face the diverse needs of the Smilei community, the code is developed in C++,
-based on an object-oriented architecture. Its modularity and user-friendly Python
-interface allow to run simulations in various geometries (Cartesian 1D, 2D, 3D or cylindrical with decomposition into azimuthal modes),
-to implement a laser or a plasma profile with any Python function, 
-to choose between various Maxwell solvers, particle pushers, interpolators, projectors and more!
-A whole set of run-time diagnostics (outputs in HDF5) and user-friendly (Python)
+The code is developed in C++ based on an object-oriented architecture.
+To face the diverse needs of the Smilei community, it offers modularity:
+
+* various geometries (Cartesian 1D, 2D, 3D or cylindrical with decomposition into azimuthal modes),
+* arbitrary laser or plasma profiles (any Python function), 
+* various Maxwell solvers, particle pushers, interpolators, projectors
+* an envelope solver, including in the cylindrical geometry
+* advanced boundary conditions (e.g. Perfectly-Matched Layers)
+* etc.
+
+The user-friendly interface consists in input files written in the Python language,
+and a whole set of run-time diagnostics (outputs in HDF5) and user-friendly (Python)
 :doc:`post-processing <post-processing>` tools complement the code.
 
 Co-developed by HPC specialists and physicists, Smilei is designed for high performances
@@ -34,6 +40,6 @@ on the electron dynamics, as well as
 :doc:`pair production <multiphoton_Breit_Wheeler>` through the Breit-Wheeler
 process, are also included.
 
-A detailed account of Smilei's capabilities is given in
+An initial detailed account (as of 2018) of Smilei's capabilities is given in
 `this article <https://doi.org/10.1016/j.cpc.2017.09.024>`_.
 For publications on more advanced features, please refer to the :doc:`material` section of this documentation. 
