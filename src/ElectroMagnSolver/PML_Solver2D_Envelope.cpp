@@ -13,12 +13,12 @@ PML_Solver2D_Envelope::PML_Solver2D_Envelope( Params &params )
 {
     // X-PML
     kappa_x_max = 1.0 ;
-    sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    sigma_x_max = 0.9 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
     alpha_x_max = 0.0 ;
     power_pml_kappa_x = 3.;
     power_pml_sigma_x = 2.;
     power_pml_alpha_x = 1.;
-    alpha_cx = 1.01 ; // Try to use a more practical timestep !
+    alpha_cx = 0.9 ; // Try to use a more practical timestep !
     // Y-PML
     kappa_y_max = 1. ;
     sigma_y_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
@@ -45,13 +45,10 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
 {
     if ( iDim == 0 ) {
         nx_p = ncells_pml_domain;
-        nx_d = ncells_pml_domain+1;
     }
     else if ( iDim == 1 ) {
         ny_p = ncells_pml_domain;
-        ny_d = ncells_pml_domain+1;
-        nx_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
-        nx_d += ncells_pml_min[0] + ncells_pml_max[0];
+        nx_p += ncells_pml_min[0] + ncells_pml_max[0];
     }
 
     //PML Coeffs Kappa,Sigma ...
@@ -521,8 +518,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // source_term_y = source_term_y - pow(c_yx_kappa*kappa_x_p[i],2)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     // source_term_y = dt*dt*source_term_y / pow(c_yx_kappa*kappa_x_p[i],2) ;
                     // ----
-                    // ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
-                    ( *A_np1_pml )( i, j ) = 0;
+                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
+                    // ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
@@ -556,7 +553,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
         // A (p,p,p) Remind that in PML, there no current
         for( unsigned int k=0 ; k<1 ; k++ ) {
             //// explicit solver
-            for( unsigned int i=1 ; i<nx_p-1; i++ ) { // x loop
+            for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
                 for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
                     // ====
                     // STD Solver for propagation in vacuum
@@ -657,8 +654,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
                     // ----
-                    // ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
-                    ( *A_np1_pml )( i, j ) = 0;
+                    ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
+                    // ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;

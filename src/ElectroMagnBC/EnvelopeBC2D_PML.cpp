@@ -37,7 +37,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
     }
     else {
         WARNING("The solver you use in the main domain for envelope is not the same as in the PML region.");
-        nsolver=2;
+        nsolver=4;
     }
 
     if ( ( i_boundary_ == 0 && patch->isXmin() )
@@ -100,15 +100,15 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
             max2exchange = 2*nsolver/2 ;
             // Solver
             solvermin = nsolver/2 ;
-            solvermax = ncells_pml_domain - 1 - oversize[iDim] ;
+            solvermax = ncells_pml_domain - oversize[iDim] ;
         }
         else if (min_or_max==1){
             // if max border : Exchange of data (for domain to pml-domain)
             // min2exchange <= i < max2exchange
-            min2exchange = 1*nsolver/2 ;
-            max2exchange = 2*nsolver/2 ;
+            min2exchange = 1*nsolver/2+1 ;
+            max2exchange = 2*nsolver/2+1 ;
             // Solver
-            solvermin = oversize[iDim] + nsolver/2 - nsolver/2 + 1 ;
+            solvermin = oversize[iDim];
             solvermax = ncells_pml_domain-nsolver/2 ;
         }
 
@@ -122,7 +122,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
         }
         dimPrim[iDim] = ncells_pml_domain;
         if ( iDim==1 ){
-            dimPrim[iDim-1] += (ncells_pml_xmin-1*(patch->isXmin())) + (ncells_pml_xmax-1*(patch->isXmax())) ;
+            dimPrim[iDim-1] += ncells_pml_xmin + ncells_pml_xmax ;
             ypml_size_in_x = dimPrim[iDim-1] ;
             //std::cout << "size : " << ypml_size_in_x << ".";
         }
@@ -157,7 +157,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
 
         // Ponderomoteur Potential
         Phi_ = new Field2D( dimPrim, "Phi_pml" );
-    } 
+    }
 }
 
 
@@ -218,8 +218,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field PML <- Domain
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=1 ; j<ny_p-1 ; j++ ) {
-                (*A_n_)(ncells_pml_domain-1-domain_oversize_x-nsolver/2+i,j) = (*A_n_domain)(i,j);
+            for ( int j=0 ; j<ny_p ; j++ ) {
+                (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j) = (*A_n_domain)(i,j);
             }
         }
 
@@ -230,8 +230,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
             for ( int j=0 ; j<ny_p ; j++ ) {
-                (*A_np1_domain)(i,j) = (*A_n_)(ncells_pml_domain-1-domain_oversize_x-nsolver/2+i,j);
-                (*A_n_domain)(i,j) = (*A_nm1_)(ncells_pml_domain-1-domain_oversize_x-nsolver/2+i,j);
+                (*A_np1_domain)(i,j) = (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j);
+                (*A_n_domain)(i,j) = (*A_nm1_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j);
                 (*Phi_domain)(i,j) = 0.5*ellipticity_factor*std::abs(  (*A_np1_domain)(i,j) )*std::abs(  (*A_np1_domain)(i,j) );
             }
         }
@@ -241,8 +241,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field Domain -> PML
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=1 ; j<ny_p-1 ; j++ ) {
-                (*A_n_)(domain_oversize_x+nsolver/2-i,j) = (*A_n_domain)(nx_p-1-i,j);
+            for ( int j=0 ; j<ny_p ; j++ ) {
+                (*A_n_)(domain_oversize_x+nsolver/2-i,j) = (*A_n_domain)(nx_p-i,j);
             }
         }
 
@@ -253,8 +253,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
             for ( int j=0 ; j<ny_p ; j++ ) {
-                (*A_np1_domain)(nx_p-1-i,j) = (*A_n_)(domain_oversize_x+nsolver/2-i,j);
-                (*A_n_domain)(nx_p-1-i,j) = (*A_nm1_)(domain_oversize_x+nsolver/2-i,j);
+                (*A_np1_domain)(nx_p-1-i,j) = (*A_n_)(domain_oversize_x+nsolver/2-1-i,j);
+                (*A_n_domain)(nx_p-1-i,j) = (*A_nm1_)(domain_oversize_x+nsolver/2-1-i,j);
                 (*Phi_domain)(nx_p-1-i,j) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(nx_p-1-i,j) )*std::abs( (*A_np1_domain)(nx_p-1-i,j) ) ;
             }
         }
@@ -292,19 +292,19 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
                         int idx_start = 0;
                         // Les qtes Primals
-                        (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j) = (*A_n_pml_xmin)(i,j);
+                        (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j) = (*A_n_pml_xmin)(i,j);
                     }
                 }
             }
-            for ( int i=1 ; i<nx_p-1 ; i++ ) {
-                int idx_start = ncells_pml_xmin-1*(patch->isXmin());
-                (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j) = (*A_n_domain)(i,j);
+            for ( int i=0 ; i<nx_p ; i++ ) {
+                int idx_start = ncells_pml_xmin;
+                (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j) = (*A_n_domain)(i,j);
             }
             if (patch->isXmax()) {
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
                         int idx_start = (ypml_size_in_x-1)-(ncells_pml_xmax-1) ;
-                        (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,j);
+                        (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,j);
 
                     }
                 }
@@ -319,10 +319,10 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=1 ; i<nx_p-1 ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
-                int idx_start = ncells_pml_xmin-1*(patch->isXmin());
-                (*A_np1_domain)(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
-                (*A_n_domain)(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
+            for ( int i=0 ; i<nx_p ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
+                int idx_start = ncells_pml_xmin;
+                (*A_np1_domain)(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
+                (*A_n_domain)(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
                 (*Phi_domain)(i,j) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,j) )*std::abs( (*A_np1_domain)(i,j) );
             }
         }
@@ -336,8 +336,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
                         int idx_start = 0;
                         // Primals
-                        (*A_np1_pml_xmin)(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
-                        (*A_n_pml_xmin)(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
+                        (*A_np1_pml_xmin)(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
+                        (*A_n_pml_xmin)(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
                     }
                 }
             }
@@ -352,8 +352,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_domain_xmax ;
                         // Les qtes Primals
-                        (*A_np1_pml_xmax  )(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
-                        (*A_n_pml_xmax  )(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-1-domain_oversize_y-nsolver/2+j);
+                        (*A_np1_pml_xmax  )(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
+                        (*A_n_pml_xmax  )(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
                     }
                 }
             }
@@ -396,19 +396,19 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
                         int idx_start = 0;
                         // Les qtes Primals
-                        (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_pml_xmin)(i,ny_p-1-j);
+                        (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_pml_xmin)(i,ny_p-j);
                     }
                 }
             }
-            for ( int i=1 ; i<nx_p-1 ; i++ ) {
-                int idx_start = ncells_pml_xmin-1*(patch->isXmin());
-                (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_domain)(i,ny_p-1-j);
+            for ( int i=0 ; i<nx_p ; i++ ) {
+                int idx_start = ncells_pml_xmin;
+                (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_domain)(i,ny_p-j);
             }
             if (patch->isXmax()) {
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
                         int idx_start = (ypml_size_in_x-1)-(ncells_pml_xmax-1) ;
-                        (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,ny_p-1-j);
+                        (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,ny_p-j);
 
                     }
                 }
@@ -421,10 +421,10 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=1 ; i<nx_p-1 ; i++ ) {
-                int idx_start = ncells_pml_xmin-1*(patch->isXmin());
-                (*A_np1_domain)(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j);
-                (*A_n_domain)(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-j);
+            for ( int i=0 ; i<nx_p ; i++ ) {
+                int idx_start = ncells_pml_xmin;
+                (*A_np1_domain)(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
+                (*A_n_domain)(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
                 (*Phi_domain)(i,ny_p-1-j) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,ny_p-1-j) )*std::abs( (*A_np1_domain)(i,ny_p-1-j) );
             }
         }
@@ -438,8 +438,8 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
                         int idx_start = 0;
                         // Primals
-                        (*A_np1_pml_xmin)(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j);
-                        (*A_n_pml_xmin)(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-j);
+                        (*A_np1_pml_xmin)(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
+                        (*A_n_pml_xmin)(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
                     }
                 }
             }
@@ -448,14 +448,14 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 6. Exchange PML y -> PML x MAX
         // Primals in y-direction
         // Duals in y-direction
-        for (int j=0 ; j < nsolver/2 ; j++){
+        for (int j=0 ; j < nsolver/2; j++){
             if (patch->isXmax()) {
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_domain_xmax ;
                         // Les qtes Primals
-                        (*A_np1_pml_xmax  )(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j);
-                        (*A_n_pml_xmax  )(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-j);
+                        (*A_np1_pml_xmax  )(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
+                        (*A_n_pml_xmax  )(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
                     }
                 }
             }

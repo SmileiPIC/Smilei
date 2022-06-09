@@ -38,7 +38,7 @@ PML_Solver3D_Envelope::PML_Solver3D_Envelope( Params &params )
 
     // X-PML
     kappa_x_max = 1.0 ;
-    sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    sigma_x_max = 2.01 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
     alpha_x_max = 0.0 ;
     power_pml_kappa_x = 3.;
     power_pml_sigma_x = 2.;
@@ -81,12 +81,12 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     }
     else if ( iDim == 1 ) {
         ny_p = ncells_pml_domain;
-        nx_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
+        nx_p += ncells_pml_min[0]+ ncells_pml_max[0];
     }
     else if ( iDim == 2 ) {
         nz_p = ncells_pml_domain;
-        nx_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
-        ny_p += ncells_pml_min[1]-1*(patch->isYmin()) + ncells_pml_max[1]-1*(patch->isYmax());
+        nx_p += ncells_pml_min[0] + ncells_pml_max[0];
+        ny_p += ncells_pml_min[1] + ncells_pml_max[1];
     }
 
     //PML Coeffs Kappa,Sigma ...
@@ -636,9 +636,9 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
 
     else if (iDim == 1) {
         // A (p,p,p) Remind that in PML, there no current
-        for( unsigned int i=1 ; i<nx_p-1; i++ ) { // x loop
+        for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
             for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
-                for( unsigned int k=1 ; k < nz_p-1 ; k++ ) { // z loop
+                for( unsigned int k=2 ; k < nz_p-2 ; k++ ) { // z loop
                     // ====
                     // STD Solver for propagation in vacuum
                     // ====
@@ -775,8 +775,8 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     }
     else if (iDim == 2) {
         // A (p,p,p) Remind that in PML, there no current
-        for( unsigned int i=1 ; i<nx_p-1; i++ ) { // x loop
-            for( unsigned int j=1 ; j < ny_p-1 ; j++ ) { // y loop
+        for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
+            for( unsigned int j=2 ; j < ny_p-2 ; j++ ) { // y loop
                 for( unsigned int k=solvermin ; k < solvermax ; k++ ) { // z loop
                     // ====
                     // STD Solver for propagation in vacuum

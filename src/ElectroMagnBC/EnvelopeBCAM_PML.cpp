@@ -274,6 +274,10 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 // (*G_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-1-i,j)*( (double) (j_glob_pml+j)*dr );
                 (*A_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-i,j);
                 (*G_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-i,j)*( (double) (j_glob_pml+j)*dr );
+                // std::cout << "jglob" << j_glob_pml << std::endl;
+                // std::cout << "j" << j << std::endl;
+                // std::cout << "tot" << j_glob_pml+j << std::endl;
+                // std::cout << "qte" << (*A_n_domain)(nl_p-i,j)*( (double) (j_glob_pml+j)*dr ) << std::endl;
             }
         }
 
@@ -283,7 +287,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange Domain -> PML
         // Primals in x-direction
         // for (int i=0 ; i < nsolver/2 ; i++){
-        for (int i=0 ; i < nsolver/2-1 ; i++){
+        for (int i=0 ; i < nsolver/2 ; i++){
             for ( int j=0 ; j<nr_p ; j++ ) {
                 // (*A_np1_domain)(nl_p-1-i,j) = (*A_n_)(domain_oversize_l+nsolver/2-i,j);
                 // (*A_n_domain)(nl_p-1-i,j) = (*A_nm1_)(domain_oversize_l+nsolver/2-i,j);
@@ -379,7 +383,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         // for (int j=0 ; j < nsolver/2 ; j++){
-        for (int j=0 ; j < nsolver/2-1 ; j++){
+        for (int j=0 ; j < nsolver/2 ; j++){
             // for ( int i=1 ; i<nl_p-1 ; i++ ) {
             for ( int i=0 ; i<nl_p ; i++ ) {
                 // int idx_start = ncells_pml_lmin-1*(patch->isXmin());
@@ -396,7 +400,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // Primals in y-direction
         // Dual in y-direction
         // for (int j=0 ; j < nsolver/2 ; j++){
-        for (int j=0 ; j < nsolver/2-1 ; j++){
+        for (int j=0 ; j < nsolver/2 ; j++){
             if (patch->isXmin()) {
                 if(ncells_pml_lmin != 0){
                     for ( int i=0 ; i<ncells_pml_domain_lmin ; i++ ) {
@@ -415,7 +419,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // Primals in y-direction
         // Duals in y-direction
         // for (int j=0 ; j < nsolver/2 ; j++){
-        for (int j=0 ; j < nsolver/2-1 ; j++){
+        for (int j=0 ; j < nsolver/2 ; j++){
             if (patch->isXmax()) {
                 if(ncells_pml_lmax != 0){
                     for ( int i=0 ; i<ncells_pml_domain_lmax ; i++ ) {

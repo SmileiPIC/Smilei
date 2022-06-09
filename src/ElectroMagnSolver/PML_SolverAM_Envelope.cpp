@@ -22,7 +22,7 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_alpha_l = 1.;
     // Abs
     kappa_l_max       = 1.00 ;
-    sigma_l_max       = 0.90 ; // Ok for 20 cells PML, but not stable for more PML cells
+    sigma_l_max       = 0.90 ; // Ok for 20 cells PML, but not stable for more PML cells for dt -> dx
     alpha_l_max       = 0.00 ;
     alpha_cl          = 0.90 ;
     power_pml_kappa_l = 1.;
@@ -75,14 +75,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     else if ( iDim == 1 ) {
         // Global radial index where begin the PML domain
         // because j_glob is not define for this region
-        if (min_or_max==0) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain+oversize[iDim]+1;
-        }
-        else if (min_or_max==1) {
-            // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1-1; // For norder=2
-            // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1-2; // For norder=4
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-2; // For norder=4
-        }
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-2; // For norder=4
         // Redifine length of pml region
         nr_p = ncells_pml_domain;
         // nl_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
@@ -99,9 +92,6 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     kappa_prime_l_p.resize( nl_p );
     sigma_prime_l_p.resize( nl_p );
     alpha_prime_l_p.resize( nl_p );
-    // integrate_kappa_l_p.resize( nl_p ) ;
-    // integrate_sigma_l_p.resize( nl_p ) ;
-    // integrate_alpha_l_p.resize( nl_p ) ;
 
     kappa_r_p.resize( nr_p );
     sigma_r_p.resize( nr_p );
@@ -137,9 +127,6 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             kappa_prime_l_p[i] = 0. ;
             sigma_prime_l_p[i] = 0. ;
             alpha_prime_l_p[i] = 0. ;
-            // integrate_kappa_l_p[i] = 0. ;
-            // integrate_sigma_l_p[i] = 0. ;
-            // integrate_alpha_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
         for ( int i=startpml; i<nl_p ; i++ ) {
@@ -195,8 +182,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             kappa_prime_r_p[j] = 0. ;
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
-            // integrate_kappa_r_p[j] = ( rmax + j*dr - r0 - 1.*dr ) ; // For norder=2
-            integrate_kappa_r_p[j] = 1*( rmax + j*dr - r0  - 1.*dr) ; // For norder=4
+            integrate_kappa_r_p[j] = 1*( rmax + j*dr - r0  - 1.*dr) ;
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
@@ -214,9 +200,6 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             kappa_prime_l_p[i] = 0. ;
             sigma_prime_l_p[i] = 0. ;
             alpha_prime_l_p[i] = 0. ;
-            // integrate_kappa_l_p[i] = 0. ;
-            // integrate_sigma_l_p[i] = 0. ;
-            // integrate_alpha_l_p[i] = 0. ;
         }
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
@@ -268,8 +251,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             kappa_prime_r_p[j] = 0. ;
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
-            //integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ; // For norder=2
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ; // For norder=4
+            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ;
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
@@ -277,18 +259,14 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         for ( int j=startpml; j<nr_p ; j++ ) {
             // Parameters
             kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
-            //kappa_r_p[j] = 1. - (kappa_r_max) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_r_p[j] = alpha_cr + alpha_r_max * (1. - pow( (j-startpml)*dr , power_pml_alpha_r ) / pow( length_r_pml , power_pml_alpha_r ) );
             // Derivatives
             kappa_prime_r_p[j] = (kappa_r_max-1.) * power_pml_kappa_r * pow( (j-startpml)*dr , power_pml_kappa_r-1 ) / pow( length_r_pml , power_pml_kappa_r ) ;
-            //kappa_prime_r_p[j] = -(kappa_r_max) * power_pml_kappa_r * pow( (j-startpml)*dr , power_pml_kappa_r-1 ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_prime_r_p[j] = sigma_r_max * power_pml_sigma_r * pow( (j-startpml)*dr , power_pml_sigma_r-1 ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_prime_r_p[j] = -alpha_r_max * power_pml_alpha_r * pow( (j-startpml)*dr , power_pml_alpha_r-1 ) / pow( length_r_pml , power_pml_alpha_r ) ;
             // Integrates
-            //integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ; // For norder=2
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ; // For norder=4
-            //integrate_kappa_r_p[j] = ( rmax + j*dr - r0 - 1.*dr ) - (kappa_r_max) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
+            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
             integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_sigma_r ) * pow( (j-startpml)*dr , power_pml_sigma_r+1 ) / ( power_pml_sigma_r+1 ) ;
             integrate_alpha_r_p[j] = 1*alpha_r_p[j] ;
         }
@@ -475,36 +453,59 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
             } // end x loop
 
             if (isYmin){
+                // For the moment, STD AM FDTD is use on the axis without G variable (No PML in this region for sure)
+                // Maybe it could be interesting to find boundary axis condition for G propagation equation
                 for( unsigned int i=solvermin ; i<solvermax; i++ ) {
                     unsigned int j = 2; // j_p = 2 corresponds to r=0
+                    // ====
+                    // On this axis G = rA = 0.
                     // At r = 0 we have dG/dr = A + r dA/dr = A. This is the new relation between A and G. In FDTD : A = 2*G(i,j+1)/2dr (difference centrale)
                     // Moreover = d2G/dr2 = dA/dr and it simplify with previous dA/dr which 0 anyway on axis.
                     // Equation for G is only d2G/dx2 = d2G/dt2 on axis
+                    // ====
+                    // dA/dx = dA/dx + ik0 A
+                    // r dA/dx = r dA/dx + ik0 rA <=> dG/dx = dG/dx + ik0 G
+                    std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) ;
                     std::complex<double> dG_over_dx_fdtd = ( ( *G_n_pml )( i+1, j )-( *G_n_pml )( i-1, j ) )/(2.*dl) ;
-                    std::complex<double> dG_over_dx = dG_over_dx_fdtd
-                                                      + i1*k0*( *G_n_pml )( i, j ) ;
+                    std::complex<double> dA_over_dx = dA_over_dx_fdtd + i1*k0*( *A_n_pml )( i, j ) ;
+                    std::complex<double> dG_over_dx = dG_over_dx_fdtd + i1*k0*( *G_n_pml )( i, j ) ;
+                    // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
+                    // r d2A/dx^2 = r d2A/dx^2 + r 2ik0 dA/dx - r k0^2 A <=> d2G/dx^2 = d2G/dx^2 + 2ik0 dG/dx - k0^2 G
+                    std::complex<double> d2A_over_dx2_fdtd = ( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dl*dl) ;
                     std::complex<double> d2G_over_dx2_fdtd = ( ( *G_n_pml )( i-1, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+1, j ) )/(dl*dl) ;
+                    std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
+                                                        + 2.*i1*k0*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl)
+                                                        - k0*k0*( *A_n_pml )( i, j ) ;
                     std::complex<double> d2G_over_dx2 = d2G_over_dx2_fdtd
                                                         + 2.*i1*k0*( ( *G_n_pml )( i+1, j )-( *G_n_pml )( i-1, j ) )/(2.*dl)
                                                         - k0*k0*( *G_n_pml )( i, j ) ;
+                    // dA/dy = dA/dy
+                    std::complex<double> dA_over_dy = ( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j-1 ) )/(2.*dr) ;
+                    std::complex<double> dG_over_dy = ( ( *G_n_pml )( i, j+1 )-( *G_n_pml )( i, j-1 ) )/(2.*dr) ;
+                    // d2G/dy^2 = d2G/dy^2
+                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dr*dr) ;
+                    std::complex<double> d2G_over_dy2 = ( ( *G_n_pml )( i, j-1 )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i, j+1 ) )/(dr*dr) ;
+                    // ====
+                    // STD Solver for propagation in vacuum with or without PML source
+                    // ====
                     // 1. update u3
                     ( *u3_np1_l_pml )( i, j ) = -kappa_prime_l_p[i]*sigma_l_p[i] ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + sigma_prime_l_p[i]*kappa_l_p[i] ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + alpha_prime_l_p[i]*pow(kappa_l_p[i],2) ;
-                    ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) * pow(sigma_l_p[i],2) * dG_over_dx / pow(kappa_l_p[i],4) ;
+                    ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) * pow(sigma_l_p[i],2) * dA_over_dx / pow(kappa_l_p[i],4) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_l_pml )( i, j ) = ( ( *u3_np1_l_pml )( i, j ) - ( *u3_nm1_l_pml )( i, j )*( 1. + 0.5*dt*( i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_l_pml )( i, j ) = (2.*sigma_prime_l_p[i]*kappa_l_p[i]+pow(kappa_l_p[i],2)*alpha_prime_l_p[i]-3.*kappa_prime_l_p[i]*sigma_l_p[i])*dG_over_dx ;
-                    ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) + sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
+                    ( *u2_np1_l_pml )( i, j ) = (2.*sigma_prime_l_p[i]*kappa_l_p[i]+pow(kappa_l_p[i],2)*alpha_prime_l_p[i]-3.*kappa_prime_l_p[i]*sigma_l_p[i])*dA_over_dx ;
+                    ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) + sigma_l_p[i]*kappa_l_p[i]*d2A_over_dx2 ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) * sigma_l_p[i] ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u3_np1_l_pml )( i, j ) + ( *u3_nm1_l_pml )( i, j ) ) ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_l_pml )( i, j ) = ( ( *u2_np1_l_pml )( i, j ) - ( *u2_nm1_l_pml )( i, j )*( 1. + 0.5*dt*( i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i]) - 1. ) ;
                     // 3. update u1
-                    ( *u1_np1_l_pml )( i, j ) = ( sigma_prime_l_p[i]*kappa_l_p[i] - 3*kappa_prime_l_p[i]*sigma_l_p[i] ) * dG_over_dx ;
-                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
+                    ( *u1_np1_l_pml )( i, j ) = ( sigma_prime_l_p[i]*kappa_l_p[i] - 3*kappa_prime_l_p[i]*sigma_l_p[i] ) * dA_over_dx ;
+                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2A_over_dx2 ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u2_np1_l_pml )( i, j ) + ( *u2_nm1_l_pml )( i, j ) ) ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
@@ -513,23 +514,66 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Envelop udpate with correction/source terms
                     // ----
                     // 4.a update A : Correction/source terms
-                    source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2G_over_dx2 ;
-                    source_term_x = source_term_x - kappa_prime_l_p[i]*dG_over_dx ;
+                    source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2A_over_dx2 ;
+                    source_term_x = source_term_x - kappa_prime_l_p[i]*dA_over_dx ;
                     source_term_x = source_term_x - pow(kappa_l_p[i],3)*0.5*( ( *u1_np1_l_pml )( i, j ) + ( *u1_nm1_l_pml )( i, j ) ) ;
-                    source_term_x = dt*dt*source_term_x / pow(kappa_l_p[i],3) ;
-                    // Test ADE Scheme
-                    // ( *G_np1_pml )( i, j ) = 0. ;
-                    ( *G_np1_pml )( i, j ) = 1.*source_term_x ;
+                    source_term_x = source_term_x / pow(kappa_l_p[i],3) ;
+                    // ( *A_np1_pml )( i, j ) = 0. ;
                     // 4.b Envelope FDTD with intermediate variable
-                    ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dx2 ;
-                    ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*k0*k0*( *G_n_pml )( i, j ) ;
-                    ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *G_nm1_pml )( i, j ) ;
-                    ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + 2.*( *G_n_pml )( i, j ) ;
-                    ( *G_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G_np1_pml )( i, j );
-                    // ----
-                    ( *A_np1_pml )( i, j ) = ( *G_np1_pml )( i, j+1 )/dr;
-                    //( *A_np1_pml )( i, j-1 ) = +( *A_np1_pml )( i, j+1 );
-                    //( *G_np1_pml )( i, j-1 ) = -( *G_np1_pml )( i, j+1 );
+                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ;
+                    ( *A_np1_pml )( i, j ) += 4.*( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j ) )/(dr*dr) ;
+                    ( *A_np1_pml )( i, j ) += d2A_over_dx2_fdtd;
+                    ( *A_np1_pml )( i, j ) += 2.*i1*k0*dA_over_dx_fdtd;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j )*dt*dt;
+                    ( *A_np1_pml )( i, j ) += 2.*( *A_n_pml )( i, j )-(1.+i1*k0*dt)*( *A_nm1_pml )( i, j );
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j )*(1.+i1*k0*dt)/(1.+k0*k0*dt*dt);
+                    // Update G on the axis
+                    ( *G_np1_pml )( i, j ) = 0. ;
+                    // // // // // 1. update u3
+                    // // // // ( *u3_np1_l_pml )( i, j ) = -kappa_prime_l_p[i]*sigma_l_p[i] ;
+                    // // // // ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + sigma_prime_l_p[i]*kappa_l_p[i] ;
+                    // // // // ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + alpha_prime_l_p[i]*pow(kappa_l_p[i],2) ;
+                    // // // // ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) * pow(sigma_l_p[i],2) * dG_over_dx / pow(kappa_l_p[i],4) ;
+                    // // // // // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
+                    // // // // ( *u3_np1_l_pml )( i, j ) = ( ( *u3_np1_l_pml )( i, j ) - ( *u3_nm1_l_pml )( i, j )*( 1. + 0.5*dt*( i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i]) - 1. ) ;
+                    // // // // // 2. update u2
+                    // // // // ( *u2_np1_l_pml )( i, j ) = (2.*sigma_prime_l_p[i]*kappa_l_p[i]+pow(kappa_l_p[i],2)*alpha_prime_l_p[i]-3.*kappa_prime_l_p[i]*sigma_l_p[i])*dG_over_dx ;
+                    // // // // ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) + sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
+                    // // // // ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) * sigma_l_p[i] ;
+                    // // // // ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u3_np1_l_pml )( i, j ) + ( *u3_nm1_l_pml )( i, j ) ) ;
+                    // // // // ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
+                    // // // // // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
+                    // // // // ( *u2_np1_l_pml )( i, j ) = ( ( *u2_np1_l_pml )( i, j ) - ( *u2_nm1_l_pml )( i, j )*( 1. + 0.5*dt*( i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i]) - 1. ) ;
+                    // // // // // 3. update u1
+                    // // // // ( *u1_np1_l_pml )( i, j ) = ( sigma_prime_l_p[i]*kappa_l_p[i] - 3*kappa_prime_l_p[i]*sigma_l_p[i] ) * dG_over_dx ;
+                    // // // // ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
+                    // // // // ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u2_np1_l_pml )( i, j ) + ( *u2_nm1_l_pml )( i, j ) ) ;
+                    // // // // ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
+                    // // // // // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
+                    // // // // ( *u1_np1_l_pml )( i, j ) = ( ( *u1_np1_l_pml )( i, j ) - ( *u1_nm1_l_pml )( i, j )*( 1. + 0.5*dt*( i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i]) - 1. ) ;
+                    // // // // // ----
+                    // // // // // Envelop udpate with correction/source terms
+                    // // // // // ----
+                    // // // // // 4.a update A : Correction/source terms
+                    // // // // source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2G_over_dx2 ;
+                    // // // // source_term_x = source_term_x - kappa_prime_l_p[i]*dG_over_dx ;
+                    // // // // source_term_x = source_term_x - pow(kappa_l_p[i],3)*0.5*( ( *u1_np1_l_pml )( i, j ) + ( *u1_nm1_l_pml )( i, j ) ) ;
+                    // // // // source_term_x = dt*dt*source_term_x / pow(kappa_l_p[i],3) ;
+                    // // // // // Test ADE Scheme
+                    // // // // ( *G_np1_pml )( i, j ) = 0. ;
+                    // // // // ( *G_np1_pml )( i, j ) = 1.*source_term_x ;
+                    // // // // // 4.b Envelope FDTD with intermediate variable
+                    // // // // // ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dx2 ;
+                    // // // // // ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*k0*k0*( *G_n_pml )( i, j ) ;
+                    // // // // // ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *G_nm1_pml )( i, j ) ;
+                    // // // // // ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + 2.*( *G_n_pml )( i, j ) ;
+                    // // // // // ( *G_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G_np1_pml )( i, j );
+                    // // // // // ====
+                    // // // // // ( *G_np1_pml )( i, j ) = 0. ;
+                    // // // // // ( *A_np1_pml )( i, j ) = ( *G_np1_pml )( i, j+1 )/dr;
+                    // // // // // We assume A even and G odd ; but unessary
+                    // // // // // ( *A_np1_pml )( i, j-1 ) = +( *A_np1_pml )( i, j+1 );
+                    // // // // // ( *G_np1_pml )( i, j-1 ) = -( *G_np1_pml )( i, j+1 );
                 }
             }
 
@@ -605,6 +649,8 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // In order to take account the M-PML method sigma(x) -> sigma (x,y) <=> sigma_l(x) -> sigma_l(x)+sigma_l(y) = sigma_l(x)+0.1*sigma_r(y)
                     // Derivative are on x direction, so sigma_l_prime is unchanged 
                     // ====
+                    // ADE Scheme for X-PML (depend only on x (i index))
+                    // ====
                     // 1. update u3
                     ( *u3_np1_l_pml )( i, j ) = -kappa_prime_l_p[i]*(sigma_l_p[i]+mpml_ratio*sigma_r_p[j]) ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + sigma_prime_l_p[i]*kappa_l_p[i] ;
@@ -668,8 +714,8 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = dt*dt*source_term_y / pow(kappa_r_p[j],3) ;
                     // ----
                     // Test ADE Scheme
-                    // ( *G_np1_pml )( i, j ) = 0 ;
-                    // ( *G_np1_pml )( i, j ) = 1.*source_term_y ;
+                    // ( *G_np1_pml )( i, j ) = 0 ; // No decay
+                    // ( *G_np1_pml )( i, j ) = 1.*source_term_y ; // Only y decay
                     ( *G_np1_pml )( i, j ) = 1.*source_term_x + 1.*source_term_y ;
                     // 4.b Envelope FDTD with intermediate variable
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dy2 ;

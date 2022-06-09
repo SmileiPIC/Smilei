@@ -15,6 +15,7 @@ class Params;
 class ElectroMagn;
 class LaserEnvelope;
 class PML_SolverAM_Envelope;
+class PML_SolverAM_EnvelopeReducedDispersion;
 
 class EnvelopeBCAM_PML : public EnvelopeBC
 {

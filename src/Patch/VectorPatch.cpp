@@ -3820,7 +3820,7 @@ void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, Smil
     else if ( fieldname == "A_np1_pml" ) {
         for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             //emfields(ipatch) and not envelope(ipatch) ?
-            listForPML_.push_back( static_cast<EnvelopeBC2D_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnp1PML() );
+            listForPML_.push_back( ( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnp1PML() );
             if(listForPML_.back()){
                 listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
             }
@@ -3829,7 +3829,7 @@ void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, Smil
     else if ( fieldname == "A_nm1_pml" ) {
         for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             //emfields(ipatch) and not envelope(ipatch) ?
-            listForPML_.push_back( static_cast<EnvelopeBC2D_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnm1PML() );
+            listForPML_.push_back( ( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnm1PML() );
             if(listForPML_.back()){
                 listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
             }
@@ -3838,7 +3838,7 @@ void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, Smil
     else if ( fieldname == "A_n_pml" ) {
         for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             //emfields(ipatch) and not envelope(ipatch) ?
-            listForPML_.push_back( static_cast<EnvelopeBC2D_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnPML() );
+            listForPML_.push_back( ( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getAnPML() );
             if(listForPML_.back()){
                 listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
             }
