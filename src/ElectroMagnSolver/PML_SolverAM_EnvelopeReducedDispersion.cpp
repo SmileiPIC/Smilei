@@ -22,11 +22,11 @@ PML_SolverAM_EnvelopeReducedDispersion::PML_SolverAM_EnvelopeReducedDispersion( 
     // power_pml_sigma_l = 1.;
     // power_pml_alpha_l = 1.;
     // Abs
-    kappa_l_max       = 1.10 ;
-    sigma_l_max       = 2.00 ; // Ok for 20 cells PML, but not stable for more PML cells for dt -> dx
-    alpha_l_max       = 0.00 ;
-    alpha_cl          = 1.00 ;
-    power_pml_kappa_l = 1.;
+    kappa_l_max       = 1.20 ;
+    sigma_l_max       = 2.80 ; 
+    alpha_l_max       = 0.60 ;
+    alpha_cl          = 0.60 ;
+    power_pml_kappa_l = 2.;
     power_pml_sigma_l = 2.;
     power_pml_alpha_l = 1.;
     //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
@@ -135,11 +135,13 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             // kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
-            alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( (i-startpml)*dl , power_pml_alpha_l ) / pow( length_l_pml , power_pml_alpha_l ) );
+            //alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( (i-startpml)*dl , power_pml_alpha_l ) / pow( length_l_pml , power_pml_alpha_l ) );
+            alpha_l_p[i] = alpha_cl + (alpha_l_max - alpha_cl) * pow( (i-startpml)*dl , power_pml_alpha_l ) / pow( length_l_pml , power_pml_alpha_l ) ;
             // Derivatives
             kappa_prime_l_p[i] = -(kappa_l_max - 1.) * power_pml_kappa_l * pow( (i-startpml)*dl , power_pml_kappa_l-1 ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( (i-startpml)*dl , power_pml_sigma_l-1 ) / pow( length_l_pml , power_pml_sigma_l ) ;
-            alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( (i-startpml)*dl , power_pml_alpha_l-1 ) / pow( length_l_pml , power_pml_alpha_l ) ;
+            // alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( (i-startpml)*dl , power_pml_alpha_l-1 ) / pow( length_l_pml , power_pml_alpha_l ) ;
+            alpha_prime_l_p[i] = (alpha_l_max - alpha_cl) * power_pml_alpha_l * pow( (i-startpml)*dl , power_pml_alpha_l-1 ) / pow( length_l_pml , power_pml_alpha_l ) ;
         }
         if (min_or_max==0) {
             std::reverse(kappa_l_p.begin(), kappa_l_p.end());
@@ -209,11 +211,13 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
                 // kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
-                alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                // alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                alpha_l_p[i] = alpha_cl + (alpha_l_max-alpha_cl) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l );
                 // Derivatives
                 kappa_prime_l_p[i] = -(kappa_l_max - 1.) * power_pml_kappa_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
-                alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmin , power_pml_alpha_l ) ;
+                // alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmin , power_pml_alpha_l ) ;
+                alpha_prime_l_p[i] = (alpha_l_max-alpha_cl) * power_pml_alpha_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmin , power_pml_alpha_l ) ;
                 // Convention Envelop Smilei
                 kappa_l_p[i] *= +1 ;
                 sigma_l_p[i] *= -1 ;
@@ -232,11 +236,13 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
                 // kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
-                alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                // alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                alpha_l_p[i] = alpha_cl + (alpha_l_max-alpha_cl) *  pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l );
                 // Derivatives
                 kappa_prime_l_p[i] = -(kappa_l_max - 1.) * power_pml_kappa_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmax , power_pml_sigma_l ) ;
-                alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmax , power_pml_alpha_l ) ;
+                // alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmax , power_pml_alpha_l ) ;
+                alpha_prime_l_p[i] = (alpha_l_max-alpha_cl) * power_pml_alpha_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmax , power_pml_alpha_l ) ;
                 // Convention Envelop Smilei
                 kappa_l_p[i] *= +1 ;
                 sigma_l_p[i] *= -1 ;
