@@ -482,6 +482,8 @@ namespace smilei {
                     a_device_pointer = a_host_pointer;
                 }
 
+                SMILEI_ASSERT( a_device_pointer != nullptr );
+
                 return a_device_pointer;
 #elif defined( _GPU )
                 return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );

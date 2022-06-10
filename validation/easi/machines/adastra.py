@@ -16,6 +16,8 @@ class MachineAdastra(Machine):
 # #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
+# #SBATCH --gres=gpu:2                           # Number of gpu per node
+# #SBATCH --gpu-bind=closest
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
 #SBATCH --time={the_maximum_task_duration}
@@ -35,7 +37,7 @@ echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
 echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 
-# We should need only that to run the rest is loaded by default
+# Build  the environment (delegating this to a script would be better)
 module purge
 module load craype-network-ofi craype-x86-rome libfabric/1.13.1
 module load PrgEnv-cray/8.1.0 cce/13.0.1
@@ -52,7 +54,6 @@ rocminfo
 # MPICH Gpu support
 # export MPICH_GPU_SUPPORT_ENABLED=1
 # export MPICH_GPU_IPC_ENABLED=1
-# export MPICH_OPTIMIZED_MEMCPY=2
 
 # MPI to GPU binding
 # #!/bin/bash
@@ -77,10 +78,16 @@ export CRAY_OMP_CHECK_AFFINITY=TRUE
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
 
+# Amd runtime debug
+# export AMD_LOG_LEVEL=4
+
 LaunchSRun() {{
     module list
 
     srun "$@" > {the_output_file} 2>&1
+    # srun strace "$@" > {the_output_file} 2>&1
+    # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
+    # srun bash -c "$kCmd" > {the_output_file} 2>&1
 }}
 
 # You must have built smilei with the 'perftools' module loaded!

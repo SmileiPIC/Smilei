@@ -79,7 +79,6 @@ ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
     }
     if( B_val[1] ) {
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
-
         delete B_val[1];
     }
     if( B_val[2] ) {
