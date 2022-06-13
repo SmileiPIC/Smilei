@@ -54,7 +54,7 @@ cells_per_patch = [8 , 8, 8]                    # Cells per patch
 
 number_of_patches = [0, 0, 0]
 
-number_of_patches[0] = 2
+number_of_patches[0] = 2 # 8 # As of 2022/06/07, We have a problem on the adastra porting machines' environment. 
 number_of_patches[1] = int(grid_length[1] / (cell_length[1] * cells_per_patch[1]))
 number_of_patches[2] = int(grid_length[2] / (cell_length[2] * cells_per_patch[2]))
 

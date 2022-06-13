@@ -47,9 +47,12 @@ ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown
 # Optimization flags
 ################################################################################
 
-# ADASTRA_OPTIMIZATION_LTO_FLAGS   += -flto=thin
-# ADASTRA_OPTIMIZATION_OTHER_FLAGS += -mcmodel=large
-ADASTRA_OPTIMIZATION_FLAGS       := -Ofast $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
+# Lto and mcmodel lead to an "unclosed quote" linker script error: https://reviews.llvm.org/D26795
+# ADASTRA_OPTIMIZATION_LTO_FLAGS   := -flto=thin
+# ADASTRA_OPTIMIZATION_OTHER_FLAGS := -mcmodel=large
+ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
+# More FP optimizations at the cost of non strict IEEE compliance
+ADASTRA_OPTIMIZATION_FLAGS       += -ffast-math 
 
 ################################################################################
 # Debug flags
@@ -137,3 +140,7 @@ LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
 LDFLAGS += $(ADASTRA_LIBS)
 # We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
 LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
+# Without Ofast/O3 at link time, the kernel'll not be optimized ~~. 
+# Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
+# -v to dump omp kernel info (register alloc/spill etc.)
+LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v

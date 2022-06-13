@@ -14,6 +14,7 @@ class MachineAdastra(Machine):
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
 # #SBATCH --ntasks-per-node=8
+#SBATCH --threads-per-core=1
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
 # #SBATCH --gres=gpu:2                           # Number of gpu per node
@@ -51,10 +52,6 @@ module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
 rocm-smi
 rocminfo
 
-# MPICH Gpu support
-# export MPICH_GPU_SUPPORT_ENABLED=1
-# export MPICH_GPU_IPC_ENABLED=1
-
 # MPI to GPU binding
 # #!/bin/bash
 # # The following script could be useful to bind a mpiproc to a given gpu on a given node https://slurm.schedmd.com/sbatch.html
@@ -74,6 +71,12 @@ export OMP_PLACES=cores
 
 export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
 export CRAY_OMP_CHECK_AFFINITY=TRUE
+
+# MPICH Gpu support
+export MPICH_ENV_DISPLAY=1
+# export MPICH_GPU_SUPPORT_ENABLED=1
+# export MPICH_GPU_IPC_ENABLED=1
+# export MPICH_ABORT_ON_ERROR=0
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
@@ -100,7 +103,7 @@ LaunchSRunPatProfile() {{
     export PAT_RT_MPI_THREAD_REQUIRED=3
 
     # Assuming "$1" is an executable
-    pat_build -g hip,io,mpi,cuda -w -f $1 -o instrumented_executable
+    pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
 
     LaunchSRun instrumented_executable ${{@:2}}
 }}
