@@ -37,6 +37,12 @@ SMILEICXX.DEPS := $(SMILEICXX)
 THRUSTCXX := $(SMILEICXX)
 
 ################################################################################
+# Feature flags
+################################################################################
+
+ADASTRA_FEATURE_FLAGS := -std=c++14
+
+################################################################################
 # Warning flags
 ################################################################################
 
@@ -119,6 +125,7 @@ ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 # Inherit of all the typical *.cpp compilation options
 # ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesnt work as expected
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_DEBUG_FLAGS)
@@ -128,6 +135,7 @@ ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_INCLUDES)
 
+CXXFLAGS += $(ADASTRA_FEATURE_FLAGS)
 CXXFLAGS += $(ADASTRA_WARNING_FLAGS)
 CXXFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
 CXXFLAGS += $(ADASTRA_DEBUG_FLAGS)
