@@ -11,7 +11,24 @@
 PML_SolverAM_EnvelopeReducedDispersion::PML_SolverAM_EnvelopeReducedDispersion( Params &params )
     : SolverAM( params )
 {
-    delta = (1.-(dt/dl)*(dt/dl))/3. ;
+    delta = 0. ;
+    // For now, there is stability issue with Reduced-Dispersion Stencil. So delta = 1.
+    // All other parameter are the same th standard stencil
+    // delta = (1.-(dt/dl)*(dt/dl))/3. ;
+
+    // Parameters fixed for :
+    // dx = 1. and dy=4*dx
+    // dt = 0.8*dx
+    // 20 cells PMLs
+
+    /*
+     * If you decrease dx (/2), then you have to multiply sigma_max by the same factor (*2) in order to keep the same efficiency
+     * If you use step smaller than dx=1, then you can use greater sigma without losing stability
+     * If you use step smaller than dx=1, then you can use dt -> dx
+     */
+
+    // Absorption efficiency in x for 1 pass in PML A -> A/100
+
     //Define here the value of coefficient kappa_l_max, power_kappa_l, sigma_l_max, power_sigma_l
     // Vaccum
     // kappa_l_max = 1.0 ;
@@ -22,13 +39,14 @@ PML_SolverAM_EnvelopeReducedDispersion::PML_SolverAM_EnvelopeReducedDispersion( 
     // power_pml_sigma_l = 1.;
     // power_pml_alpha_l = 1.;
     // Abs
-    kappa_l_max       = 1.20 ;
-    sigma_l_max       = 2.80 ; 
-    alpha_l_max       = 0.60 ;
-    alpha_cl          = 0.60 ;
-    power_pml_kappa_l = 2.;
+    kappa_l_max       = 1.00 ; // Increase kappa near 1.1, 1.2 increase stability
+    sigma_l_max       = 0.90 ;
+    alpha_l_max       = 0.90 ;
+    alpha_cl          = 0.90 ; 
+    power_pml_kappa_l = 1.;
     power_pml_sigma_l = 2.;
-    power_pml_alpha_l = 1.;
+    power_pml_alpha_l = 1.;    
+
     //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
     // Vaccum
     // kappa_r_max = 1. ;
@@ -48,8 +66,7 @@ PML_SolverAM_EnvelopeReducedDispersion::PML_SolverAM_EnvelopeReducedDispersion( 
     power_pml_alpha_r = 1.000 ;
 }
 
-PML_SolverAM_EnvelopeReducedDispersion::~PML_SolverAM_EnvelopeReducedDispersion()
-{
+PML_SolverAM_EnvelopeReducedDispersion::~PML_SolverAM_EnvelopeReducedDispersion(){
 }
 
 void PML_SolverAM_EnvelopeReducedDispersion::operator()( ElectroMagn *fields )

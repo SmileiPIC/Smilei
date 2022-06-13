@@ -11,6 +11,19 @@
 PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     : SolverAM( params )
 {
+    // Parameters fixed for :
+    // dx = 1. and dy=4*dx
+    // dt = 0.8*dx
+    // 20 cells PMLs
+
+    /*
+     * If you decrease dx (/2), then you have to multiply sigma_max by the same factor (*2) in order to keep the same efficiency
+     * If you use step smaller than dx=1, then you can use greater sigma without losing stability
+     * If you use step smaller than dx=1, then you can use dt -> dx
+     */
+
+    // Absorption efficiency in x for 1 pass in PML A -> A/100
+
     //Define here the value of coefficient kappa_l_max, power_kappa_l, sigma_l_max, power_sigma_l
     // Vaccum
     // kappa_l_max = 1.0 ;
