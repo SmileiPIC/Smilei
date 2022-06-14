@@ -307,14 +307,14 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
     else if( i_boundary_ == 3 && patch->isYmax() ) {
 
         EnvelopeBCAM_PML* pml_fields_lmin = NULL;
-        EnvelopeBCAM_PML* pml_fields_lmax = NULL;
+        EnvelopeBCAM_PML* pml_fields_lmax = NULL; 
 
         if(ncells_pml_lmin != 0){
-            EnvelopeBCAM_PML* pml_fields_lmin = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[0] );
+            pml_fields_lmin = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[0] );
         }
 
         if(ncells_pml_lmax != 0){
-            EnvelopeBCAM_PML* pml_fields_lmax = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[1] );
+            pml_fields_lmax = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[1] );
         }
 
         cField2D* A_np1_pml_lmin = NULL;
