@@ -272,20 +272,20 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
         // R-direction
         for ( int j=0 ; j<startpml ; j++ ) {
             // Coeffs for the first cell
-            kappa_r_p[j] = 1. ;
+            kappa_r_p[j] = 0.8 ;
             sigma_r_p[j] = 0. ;
-            alpha_r_p[j] = 0. ;
+            alpha_r_p[j] = 0.75 ;
             kappa_prime_r_p[j] = 0. ;
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ;
+            integrate_kappa_r_p[j] = 0.8*( rmax + j*dr - r0 - 1.*dr ) ;
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
         for ( int j=startpml; j<nr_p ; j++ ) {
             // Parameters
-            kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
+            kappa_r_p[j] = 0.8 + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_r_p[j] = alpha_cr + alpha_r_max * (1. - pow( (j-startpml)*dr , power_pml_alpha_r ) / pow( length_r_pml , power_pml_alpha_r ) );
             // Derivatives
@@ -293,7 +293,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             sigma_prime_r_p[j] = sigma_r_max * power_pml_sigma_r * pow( (j-startpml)*dr , power_pml_sigma_r-1 ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_prime_r_p[j] = -alpha_r_max * power_pml_alpha_r * pow( (j-startpml)*dr , power_pml_alpha_r-1 ) / pow( length_r_pml , power_pml_alpha_r ) ;
             // Integrates
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
+            integrate_kappa_r_p[j] = 0.8*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
             integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_sigma_r ) * pow( (j-startpml)*dr , power_pml_sigma_r+1 ) / ( power_pml_sigma_r+1 ) ;
             integrate_alpha_r_p[j] = 1*alpha_r_p[j] ;
         }
