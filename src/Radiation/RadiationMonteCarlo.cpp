@@ -144,7 +144,7 @@ void RadiationMonteCarlo::operator()(
                           + momentum_y[ipart]*momentum_y[ipart]
                           + momentum_z[ipart]*momentum_z[ipart] );
 
-            if( gamma==1. ){ // does not apply the MC routine for particles with 0 kinetic energy
+            if( gamma < 1.1 ){ // does not apply the MC routine for particles with 0 kinetic energy
                 break;
             }
 
@@ -224,10 +224,9 @@ void RadiationMonteCarlo::operator()(
             // particle_chi needs to be above the continuous thresholdF
             // No discontiuous emission is in progress:
             // tau[ipart] <= epsilon_tau_
-            else if( ( particle_chi <=  RadiationTables.getMinimumChiDiscontinuous() )
-                     && ( tau[ipart] <= epsilon_tau_ )
-                     && ( particle_chi >  RadiationTables.getMinimumChiContinuous() )
-                     && ( gamma > 1. ) ) {
+            else if( particle_chi <=  RadiationTables.getMinimumChiDiscontinuous()
+                     && tau[ipart] <= epsilon_tau_
+                     && particle_chi >  RadiationTables.getMinimumChiContinuous() ) {
 
                 // Remaining time of the iteration
                 emission_time = dt_ - local_it_time;
