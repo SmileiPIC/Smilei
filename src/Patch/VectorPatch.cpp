@@ -637,9 +637,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 // Shift to update the positions
                 double position_shift[3] = {0., 0., 0.};
                 if( min_max == 0 ) {
-                    position_shift[axis] = params.cell_length[axis];
-                } else {
                     position_shift[axis] = -params.cell_length[axis];
+                } else {
+                    position_shift[axis] = params.cell_length[axis];
                 }
                 
                 double * __restrict__ position_x = particles->position_x;
@@ -756,7 +756,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     }
                     injector_species->nrj_new_part_ += energy;
                 }
-                MESSAGE(particles->size()<<" "<<new_particle_number);
+                
                 // Insertion of the particles as a group in the vector of species
                 if( new_particle_number > 0 ) {
                     
