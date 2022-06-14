@@ -3,7 +3,7 @@ from . import Machine
 
 class MachineAdastra(Machine):
     """
-    As of 17 of march 22, this class, while named Adastra, instead targets the 
+    As of 22/03/17, this class, while named Adastra, instead targets the 
     Adastra porting machines. The real Adastra environment should not change much.
     """
 
@@ -73,7 +73,7 @@ export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
 export CRAY_OMP_CHECK_AFFINITY=TRUE
 
 # MPICH Gpu support
-export MPICH_ENV_DISPLAY=1
+# export MPICH_ENV_DISPLAY=1
 # export MPICH_GPU_SUPPORT_ENABLED=1
 # export MPICH_GPU_IPC_ENABLED=1
 # export MPICH_ABORT_ON_ERROR=0

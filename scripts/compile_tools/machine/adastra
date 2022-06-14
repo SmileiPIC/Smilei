@@ -58,7 +58,7 @@ ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown
 # ADASTRA_OPTIMIZATION_OTHER_FLAGS := -mcmodel=large
 ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
 # More FP optimizations at the cost of non strict IEEE compliance
-ADASTRA_OPTIMIZATION_FLAGS       += -ffast-math 
+# ADASTRA_OPTIMIZATION_FLAGS       += -ffast-math 
 
 ################################################################################
 # Debug flags
