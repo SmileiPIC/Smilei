@@ -487,13 +487,13 @@ public:
         return nrj;
     }
 
-    inline int getMemFootPrint()
+    inline std::size_t getMemFootPrint()
     {
         /*int speciesSize  = ( 2*nDim_particle + 3 + 1 )*sizeof(double) + sizeof(short);
         if ( particles->is_test )
             speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
-        int speciesSize( 0 );
+        std::size_t speciesSize = 0;
         speciesSize += particles->double_prop_.size()*sizeof( double );
         speciesSize += particles->short_prop_.size()*sizeof( short );
         speciesSize += particles->uint64_prop_.size()*sizeof( uint64_t );
