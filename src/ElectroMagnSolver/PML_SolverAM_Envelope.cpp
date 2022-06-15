@@ -729,7 +729,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Test ADE Scheme
                     // ( *G_np1_pml )( i, j ) = 0 ; // No decay
                     // ( *G_np1_pml )( i, j ) = 1.*source_term_y ; // Only y decay
-                    ( *G_np1_pml )( i, j ) = 1.*source_term_x + 1.*source_term_y ;
+                    ( *G_np1_pml )( i, j ) += 1.*source_term_x + 1.*source_term_y ;
                     // 4.b Envelope FDTD with intermediate variable
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dy2 ;
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - dt*dt*dA_over_dy ;

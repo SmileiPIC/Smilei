@@ -233,6 +233,8 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
     cField2D *A_n_domain    = static_cast<cField2D *>( envelope->A0_ ); // A0_ is the envelope at timestep n-1 BUT at this point A0_ is already update so in fact its A_n_domain
     Field2D  *Phi_domain    = static_cast<Field2D *>( envelope->Phi_ ); // the ponderomotive potential Phi=|A|^2/2 at timestep n
 
+    Field2D *Env_Chi_domain  = static_cast<Field2D *>( EMfields->Env_Chi_ );
+
     double ellipticity_factor = envelope->ellipticity_factor;
 
     if( i_boundary_ == 0 && patch->isXmin() ) {
@@ -249,7 +251,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Primals in x-direction
@@ -282,7 +284,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange Domain -> PML
         // Primals in x-direction
@@ -364,7 +366,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 }
             }
             // for ( int i=1 ; i<nl_p-1 ; i++ ) {
-                for ( int i=0 ; i<nl_p ; i++ ) {
+            for ( int i=0 ; i<nl_p ; i++ ) {
                 // int idx_start = ncells_pml_lmin-1*(patch->isXmin());
                 int idx_start = ncells_pml_lmin;
                 // (*A_n_)(idx_start+i,domain_oversize_r+nsolver/2-j) = (*A_n_domain)(i,nr_p-1-j);
@@ -385,8 +387,34 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             }
         }
 
+        // Add source term for PML in order to smooth plasma/vaccum interface
+        for ( int j=solvermin ; j<solvermax ; j++ ) {
+            if (patch->isXmin()) {
+                if(ncells_pml_lmin != 0){
+                    for ( int i=0 ; i<ncells_pml_lmin ; i++ ) {
+                        int idx_start = 0;
+                        (*G_np1_)(idx_start+i,j) = 0.; // No plasma in xmin PML
+                    }
+                }
+            }   
+            for ( int i=0 ; i<nl_p ; i++ ) {
+                int idx_start = ncells_pml_lmin;
+                // Here for all j in ymax PML (where field is update) we take Env_Chi in domain at last radial cell where there is plasma
+                // and we considere it is a source term
+                (*G_np1_)(idx_start+i,j) = -dt*dt*(*Env_Chi_domain)(i,nr_p-min2exchange-1)*(*G_n_)(idx_start+i,j);
+            }
+            if (patch->isXmax()) {
+                if(ncells_pml_lmax != 0){
+                    for ( int i=0 ; i<ncells_pml_lmax ; i++ ) {
+                        int idx_start = (rpml_size_in_l-1)-(ncells_pml_lmax-1) ;
+                        (*G_np1_)(idx_start+i,j) = 0.; // No plasma in xmax PML
+                    }
+                }
+            }          
+        }
+    
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Duals in y-direction
