@@ -199,11 +199,20 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
   
     int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+    bool isYmax = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmax;
   
 
     // temporary variable for updated envelope
     cField2D *A2Dcylnew;
     A2Dcylnew  = new cField2D( A_->dims_ );
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                ( *Env_Chi2Dcyl )( i, j ) = 1.*( *Env_Chi2Dcyl )( i, A_->dims_[1]-5 );
+            }
+        }
+    }
  
     //// explicit solver
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
@@ -284,12 +293,21 @@ void LaserEnvelopeAM::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
   
     int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+    bool isYmax = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmax;
 
 
     // temporary variable for updated envelope
     cField2D *A2Dcylnew;
     A2Dcylnew  = new cField2D( A_->dims_ );
- 
+
+    if (isYmax){
+        for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                ( *Env_Chi2Dcyl )( i, j ) = 1.*( *Env_Chi2Dcyl )( i, A_->dims_[1]-5 );
+            }
+        }
+    }
+
     //// explicit solver
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // l loop
         for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1 ; j++ ) { // r loop

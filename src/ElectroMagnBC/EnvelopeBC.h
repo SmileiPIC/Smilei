@@ -30,6 +30,7 @@ public:
     virtual cField* getGnm1PML() { ERROR("Not using PML");return NULL;}
 
     virtual Field* getPhiPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getChiPML() { ERROR("Not using PML");return NULL;}
 
     virtual cField* getu1np1xPML() { ERROR("Not using PML");return NULL;}
     virtual cField* getu2np1xPML() { ERROR("Not using PML");return NULL;}
