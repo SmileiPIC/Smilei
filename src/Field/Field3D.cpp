@@ -439,7 +439,9 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     const int  fSize     = globalDims_;
     const bool fieldName = name.substr( 0, 1 ) == "B";
 
-    #pragma omp target if( fieldName )
+    #pragma omp target if( fieldName ) \
+        map( tofrom                    \
+             : field [0:fSize] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
@@ -492,7 +494,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const bool fieldName = name.substr( 0, 1 ) == "J";
 
     #pragma omp target if( fieldName ) \
-        map( tofrom                    \
+        map( to                        \
              : field [0:fSize] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
