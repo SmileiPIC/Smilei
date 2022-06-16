@@ -29,6 +29,7 @@
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
+#include "EnvelopeBC_Factory.h"
 #include "DiagnosticFactory.h"
 #include "BinaryProcessesFactory.h"
 
@@ -257,6 +258,16 @@ void Patch::finalizeMPIenvironment( Params &params )
         } else if (dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] ))// && dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] )->Hl_[0] ){
         {
             nb_comms += 12*( params.nmodes );
+        }
+        if( params.Laser_Envelope_model ) {
+            if (dynamic_cast<EnvelopeBCAM_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                if(bcId == 3){
+                    nb_comms += 10;
+                }
+                else{
+                    nb_comms += 7;
+                }
+            }
         }
     }
     requests_.resize( nb_comms, MPI_REQUEST_NULL );
