@@ -9,13 +9,14 @@ import numpy as np
 # HPC settings
 ###############################
 
-# (kPatchDimensionInCell * kNodeDimensionInPatch * kGridDimensionInNode)^3
+# Patches that can fit in cache/device.
+# On CPU, it may not be a bad idea to slightly oversubscribe the cores with more patches.
+# On GPU, large patches work better.
+kGridDimensionInCell   = [128, 128, 128]
+kCellPerPatchDimension = [kGridDimensionInCell[i]//16 for i in range(3)]
+kPatchPerGridDimension = [kGridDimensionInCell[i]//kCellPerPatchDimension[i] for i in range(3)]
 
-kPatchDimensionInCell = 8
-kNodeDimensionInPatch = 8
-kGridDimensionInNode  = 2
-
-# Smilei conf 2022 recommands cell length < 4 * Debye length
+# Smilei conf 2022 recommends cell length < 4 * Debye length
 kCellLengthFactor = 1.0 / 2.0 # / 4.0
 
 ###############################
@@ -54,23 +55,7 @@ kCellLength = [Lde * kCellLengthFactor,
                Lde * kCellLengthFactor,
                Lde * kCellLengthFactor]
 
-# Small patches that can fit in cache
-kPatchDimensionsInCells = [kPatchDimensionInCell,
-                           kPatchDimensionInCell,
-                           kPatchDimensionInCell]
-
-# At least as much patches as there is core (potentialy hyper threased) on the 
-# node (a single numa/socket)
-kNodeDimensionsInPatches = [kNodeDimensionInPatch,
-                            kNodeDimensionInPatch,
-                            kNodeDimensionInPatch]
-
-kGridDimensionsInNodes = [kGridDimensionInNode,
-                          kGridDimensionInNode,
-                          kGridDimensionInNode]
-
-kGridDimensionInPatch = [kGridDimensionsInNodes[i] * kNodeDimensionsInPatches[i] for i in range(3)]
-kGridLength           = [kGridDimensionInPatch[i] * kPatchDimensionsInCells[i] * kCellLength[i] for i in range(3)]
+kGridLength = [kGridDimensionInCell[i] * kCellLength[i] for i in range(3)]
 
 Main(gpu_computing = False,
      geometry = "3Dcartesian",
@@ -79,7 +64,7 @@ Main(gpu_computing = False,
      simulation_time = kSimulationTime,
      cell_length  = kCellLength,
      grid_length = kGridLength,
-     number_of_patches = kGridDimensionInPatch,
+     number_of_patches = kPatchPerGridDimension,
      EM_boundary_conditions = [ ["periodic"] ],
      print_every = 10,
      random_seed = smilei_mpi_rank)
