@@ -342,6 +342,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
 
     cField2D* A_n_pml = NULL;
     cField2D* G_n_pml = NULL;
+    Field2D* Chi_n_pml = NULL;
 
     cField2D* A_np1_pml = NULL;
     cField2D* G_np1_pml = NULL;
@@ -363,6 +364,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
 
     A_n_pml = pml_fields->A_n_;
     G_n_pml = pml_fields->G_n_;
+    Chi_n_pml = pml_fields->Chi_;
 
     A_np1_pml = pml_fields->A_np1_;
     G_np1_pml = pml_fields->G_np1_;
@@ -451,7 +453,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_x = dt*dt*source_term_x / pow(kappa_l_p[i],3) ;
                     // // Test ADE Scheme
                     // ( *G_np1_pml )( i, j ) = 0. ;
-                    ( *G_np1_pml )( i, j ) = 1.*source_term_x ;
+                    ( *G_np1_pml )( i, j ) = 1.*source_term_x - dt*dt*( *G_n_pml )( i, j )*( *Chi_n_pml )(i, j) ;
                     // 4.b Envelope FDTD with intermediate variable
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dy2 ;
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - dt*dt*dA_over_dy ;
@@ -533,7 +535,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_x = source_term_x / pow(kappa_l_p[i],3) ;
                     // ( *A_np1_pml )( i, j ) = 0. ;
                     // 4.b Envelope FDTD with intermediate variable
-                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ;
+                    ( *A_np1_pml )( i, j ) = 1.*source_term_x - dt*dt*( *A_n_pml )( i, j )*( *Chi_n_pml )(i, j) ;
                     ( *A_np1_pml )( i, j ) += 4.*( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j ) )/(dr*dr) ;
                     ( *A_np1_pml )( i, j ) += d2A_over_dx2_fdtd;
                     ( *A_np1_pml )( i, j ) += 2.*i1*k0*dA_over_dx_fdtd;
@@ -729,7 +731,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Test ADE Scheme
                     // ( *G_np1_pml )( i, j ) = 0 ; // No decay
                     // ( *G_np1_pml )( i, j ) = 1.*source_term_y ; // Only y decay
-                    ( *G_np1_pml )( i, j ) += 1.*source_term_x + 1.*source_term_y ;
+                    ( *G_np1_pml )( i, j ) = 1.*source_term_x + 1.*source_term_y - dt*dt*( *G_n_pml )( i, j )*( *Chi_n_pml )(i, j) ;
                     // 4.b Envelope FDTD with intermediate variable
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + dt*dt*d2G_over_dy2 ;
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - dt*dt*dA_over_dy ;

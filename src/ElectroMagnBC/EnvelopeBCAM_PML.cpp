@@ -168,6 +168,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
 
         // Ponderomoteur Potential
         Phi_ = new Field2D( dimPrim, "Phi_pml" );
+        Chi_ = new Field2D( dimPrim, "Chi_pml" );
     }
 
     j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
@@ -203,6 +204,7 @@ EnvelopeBCAM_PML::~EnvelopeBCAM_PML()
     delete u3_nm1_r_;
     // ----
     delete Phi_;
+    delete Chi_;
 
     if (pml_solver_envelope_!=NULL) {
         delete pml_solver_envelope_;
@@ -232,8 +234,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
     cField2D *A_np1_domain  = static_cast<cField2D *>( envelope->A_ );  // A_ is the envelope at timestep n BUT at this point A_ is already update so in fact its correspond to A_np1_domain
     cField2D *A_n_domain    = static_cast<cField2D *>( envelope->A0_ ); // A0_ is the envelope at timestep n-1 BUT at this point A0_ is already update so in fact its A_n_domain
     Field2D  *Phi_domain    = static_cast<Field2D *>( envelope->Phi_ ); // the ponderomotive potential Phi=|A|^2/2 at timestep n
-
-    Field2D *Env_Chi_domain  = static_cast<Field2D *>( EMfields->Env_Chi_ );
+    Field2D  *Chi_domain    = static_cast<Field2D *>( EMfields->Env_Chi_ );
 
     double ellipticity_factor = envelope->ellipticity_factor;
 
@@ -247,6 +248,13 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 // (*G_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j)*( (double) (j_glob_pml+j)*dr );
                 (*A_n_)(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j);
                 (*G_n_)(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j)*( (double) (j_glob_pml+j)*dr );
+            }
+        }
+
+        // Source Chi Update (1 cells after xmin)
+        for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
+            for ( int j=0 ; j<nr_p ; j++ ) {
+                (*Chi_)(i,j) = (*Chi_domain)(domain_oversize_l+1,j);
             }
         }
 
@@ -282,6 +290,12 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 // std::cout << "qte" << (*A_n_domain)(nl_p-i,j)*( (double) (j_glob_pml+j)*dr ) << std::endl;
             }
         }
+        // Source Chi Update (1 cells before xmax)
+        for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
+            for ( int j=0 ; j<nr_p ; j++ ) {
+                (*Chi_)(i,j) = (*Chi_domain)(nl_p-2-domain_oversize_l,j);
+            }
+        }
 
         // 3. Solve Maxwell_PML for A-field :
         pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
@@ -309,7 +323,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
     else if( i_boundary_ == 3 && patch->isYmax() ) {
 
         EnvelopeBCAM_PML* pml_fields_lmin = NULL;
-        EnvelopeBCAM_PML* pml_fields_lmax = NULL; 
+        EnvelopeBCAM_PML* pml_fields_lmax = NULL;
 
         if(ncells_pml_lmin != 0){
             pml_fields_lmin = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[0] );
@@ -324,12 +338,14 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         cField2D* G_np1_pml_lmin = NULL;
         cField2D* G_n_pml_lmin   = NULL;
         Field2D*  Phi_pml_lmin   = NULL;
+        Field2D*  Chi_pml_lmin   = NULL;
 
         cField2D* A_np1_pml_lmax = NULL;
         cField2D* A_n_pml_lmax   = NULL;
         cField2D* G_np1_pml_lmax = NULL;
         cField2D* G_n_pml_lmax   = NULL;
         Field2D*  Phi_pml_lmax   = NULL;
+        Field2D*  Chi_pml_lmax   = NULL;
 
         if(ncells_pml_lmin != 0){
             A_np1_pml_lmin = pml_fields_lmin->A_n_;
@@ -337,6 +353,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             G_np1_pml_lmin = pml_fields_lmin->G_n_;
             G_n_pml_lmin   = pml_fields_lmin->G_nm1_;
             Phi_pml_lmin   = pml_fields_lmin->Phi_;
+            Chi_pml_lmin   = pml_fields_lmin->Chi_;
         }
 
         if(ncells_pml_lmax != 0){
@@ -345,6 +362,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             G_np1_pml_lmax = pml_fields_lmax->G_n_;
             G_n_pml_lmax   = pml_fields_lmax->G_nm1_;
             Phi_pml_lmax   = pml_fields_lmax->Phi_;
+            Chi_pml_lmax   = pml_fields_lmax->Chi_;
         }
 
         // Attention à la gestion des pas de temps
@@ -386,33 +404,32 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 }
             }
         }
-
-        // Add source term for PML in order to smooth plasma/vaccum interface
-        for ( int j=solvermin ; j<solvermax ; j++ ) {
-            if (patch->isXmin()) {
-                if(ncells_pml_lmin != 0){
-                    for ( int i=0 ; i<ncells_pml_lmin ; i++ ) {
-                        int idx_start = 0;
-                        (*G_np1_)(idx_start+i,j) = 0.; // No plasma in xmin PML
-                    }
-                }
-            }   
+ 
+        // Source Chi Update (1 cells before rmax)
+        for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
             for ( int i=0 ; i<nl_p ; i++ ) {
                 int idx_start = ncells_pml_lmin;
-                // Here for all j in ymax PML (where field is update) we take Env_Chi in domain at last radial cell where there is plasma
-                // and we considere it is a source term
-                (*G_np1_)(idx_start+i,j) = -dt*dt*(*Env_Chi_domain)(i,nr_p-min2exchange-1)*(*G_n_)(idx_start+i,j);
+                (*Chi_)(idx_start+i,j) = 1*(*Chi_domain)(i,nr_p-2-domain_oversize_r);
+            }
+            if (patch->isXmin()) {
+                if(ncells_pml_lmin != 0){
+                    for ( int i=0 ; i<ncells_pml_lmin+domain_oversize_l ; i++ ) {
+                        int idx_start = 0 ;
+                        (*Chi_)(idx_start+i,j) = 1*(*Chi_pml_lmin)(i,nr_p-2-domain_oversize_r);
+                    }
+                }
             }
             if (patch->isXmax()) {
                 if(ncells_pml_lmax != 0){
-                    for ( int i=0 ; i<ncells_pml_lmax ; i++ ) {
-                        int idx_start = (rpml_size_in_l-1)-(ncells_pml_lmax-1) ;
-                        (*G_np1_)(idx_start+i,j) = 0.; // No plasma in xmax PML
+                    for ( int i=0 ; i<ncells_pml_lmax+domain_oversize_l ; i++ ) {
+                        int idx_start = rpml_size_in_l-ncells_pml_lmax-domain_oversize_l ;
+                        (*Chi_)(idx_start+i,j) = 1*(*Chi_pml_lmax)(i,nr_p-2-domain_oversize_r);
                     }
                 }
-            }          
+            }
         }
-    
+
+
         // 3. Solve Maxwell_PML for A-field :
         pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
 
