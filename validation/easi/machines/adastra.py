@@ -80,6 +80,7 @@ export CRAY_OMP_CHECK_AFFINITY=TRUE
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
+# export CRAY_ACC_TIME=1
 
 # Amd runtime debug
 # export AMD_LOG_LEVEL=4
@@ -110,12 +111,19 @@ LaunchSRunPatProfile() {{
 
 # Try to use this profiling on only one GPU
 LaunchRocmProfile() {{
-    # Kernel stats
-    echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
-    LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
+    # LaunchSRun bash -c "rocprof --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
-    # hip RT tracing, --trace-period 30s:30s:1m is bugged
+    # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completly broken)
+    # echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
+    # LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+
+    # HIP RT tracing + consolidated kernel stats
     # LaunchSRun bash -c "rocprof --hip-trace --stats -o hip_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # ROCm RT (low level) tracing + consolidated kernel stats
+    # LaunchSRun bash -c "rocprof --hsa-trace --stats -o hsa_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # HIP/HSA tracing + consolidated kernel stats
+    LaunchSRun bash -c "rocprof --sys-trace --stats -o sys_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
