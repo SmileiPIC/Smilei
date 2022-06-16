@@ -167,11 +167,29 @@ void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    
+
+    bool isYmin = ( static_cast<ElectroMagn2D *>( EMfields ) )->isYmin;
+    bool isYmax = ( static_cast<ElectroMagn2D *>( EMfields ) )->isYmax;
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;
     A2Dnew  = new cField2D( A_->dims_ );
+
+    if (isYmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < 4 ; j++ ) {
+                ( *Env_Chi2D )( i, j ) = 1.*( *Env_Chi2D )( i, 4 );
+            }
+        }
+    }
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                ( *Env_Chi2D )( i, j ) = 1.*( *Env_Chi2D )( i, A_->dims_[1]-5 );
+            }
+        }
+    }
     
     //// explicit solver
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
@@ -229,12 +247,29 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    
+    bool isYmin = ( static_cast<ElectroMagn2D *>( EMfields ) )->isYmin;
+    bool isYmax = ( static_cast<ElectroMagn2D *>( EMfields ) )->isYmax;    
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;
     A2Dnew  = new cField2D( A_->dims_ );
-    
+
+    if (isYmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < 4 ; j++ ) {
+                ( *Env_Chi2D )( i, j ) = 1.*( *Env_Chi2D )( i, 4 );
+            }
+        }
+    }
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                ( *Env_Chi2D )( i, j ) = 1.*( *Env_Chi2D )( i, A_->dims_[1]-5 );
+            }
+        }
+    }
+ 
     //// explicit solver
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // y loop

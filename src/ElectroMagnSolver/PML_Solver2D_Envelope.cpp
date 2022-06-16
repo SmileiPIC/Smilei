@@ -387,6 +387,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     cField2D* u3_nm1_y_pml = NULL;
 
     cField2D* A_n_pml = NULL;
+    Field2D* Chi_n_pml = NULL;
 
     cField2D* A_np1_pml = NULL;
     cField2D* u1_np1_x_pml = NULL;
@@ -405,6 +406,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     u3_nm1_y_pml = pml_fields->u3_nm1_y_;
 
     A_n_pml = pml_fields->A_n_;
+    Chi_n_pml = pml_fields->Chi_;
 
     A_np1_pml = pml_fields->A_np1_;
     u1_np1_x_pml = pml_fields->u1_np1_x_;
@@ -518,7 +520,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // source_term_y = source_term_y - pow(c_yx_kappa*kappa_x_p[i],2)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     // source_term_y = dt*dt*source_term_y / pow(c_yx_kappa*kappa_x_p[i],2) ;
                     // ----
-                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
+                    ( *A_np1_pml )( i, j ) = 1.*source_term_x -dt*dt*( *Chi_n_pml )( i, j )*( *A_n_pml )( i, j ) ; // + 1.*source_term_y ;
                     // ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
@@ -654,7 +656,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
                     // ----
-                    ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
+                    ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y - dt*dt*( *Chi_n_pml )( i, j )*( *A_n_pml )( i, j ) ;
                     // ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;

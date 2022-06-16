@@ -47,6 +47,7 @@ public:
     cField2D* u3_nm1_y_ = NULL;
 
     Field2D* Phi_ = NULL;
+    Field2D* Chi_ = NULL;
 
     cField* getAnp1PML() override { return A_np1_; };
     cField* getAnPML() override { return A_n_; };
@@ -67,6 +68,7 @@ public:
     cField* getu3nm1yPML() override { return u3_nm1_y_; };
 
     Field* getPhiPML() override { return Phi_; };
+    Field* getChiPML() override { return Chi_; };
 
     int domain_oversize_x;
     int domain_oversize_y;
