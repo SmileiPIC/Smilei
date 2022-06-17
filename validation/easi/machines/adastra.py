@@ -112,7 +112,7 @@ LaunchSRunPatProfile() {{
 # Try to use this profiling on only one GPU
 LaunchRocmProfile() {{
     # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
-    # LaunchSRun bash -c "rocprof --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
     # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completly broken)
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt

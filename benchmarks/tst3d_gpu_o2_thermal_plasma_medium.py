@@ -13,7 +13,7 @@ import numpy as np
 # On CPU, it may not be a bad idea to slightly oversubscribe the cores with more patches.
 # On GPU, large patches work better.
 kGridDimensionInCell   = [128, 128, 128]
-kCellPerPatchDimension = [kGridDimensionInCell[i]//1 for i in range(3)] # Tuned for 1 GPU only (with one GPU per MPI)
+kCellPerPatchDimension = [kGridDimensionInCell[i]//16 for i in range(3)] # Tuned for 1 GPU only (with one GPU per MPI)
 kPatchPerGridDimension = [kGridDimensionInCell[i]//kCellPerPatchDimension[i] for i in range(3)]
 
 # Smilei conf 2022 recommends cell length < 4 * Debye length
