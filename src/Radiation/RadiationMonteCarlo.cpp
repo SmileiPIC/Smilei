@@ -154,14 +154,15 @@ void RadiationMonteCarlo::operator()(
     int nphotons;
     
     if (photons) {
+        const double photon_buffer_size_per_particles = radiation_photon_sampling_ * max_photon_emissions_;
 #ifdef _GPU
-            nphotons = photons->gpu_size();
+            nphotons_start = photons->gpu_size();
             // We reserve a large number of potential photons on device since we can't reallocate
-            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
+            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particles );
 #else 
             nphotons = photons->size();
             // We reserve a large number of photons
-            photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
+            photons->reserve( nphotons + (iend - istart) * photon_buffer_size_per_particles );
 #endif
     } else {
         nphotons = 0;
@@ -187,6 +188,9 @@ void RadiationMonteCarlo::operator()(
     double *const __restrict__ photon_chi_array = photons ? (photons->isQuantumParameter ? photons->getPtrChi() : nullptr) : nullptr;
     
     double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
+    
+    // Cell keys as a mask
+    int *const __restrict__ photon_cell_keys = photons ? photons->getPtrCellKeys() : nullptr;
 
     // Table properties ----------------------------------------------------------------
 #ifdef _GPU
@@ -205,7 +209,7 @@ void RadiationMonteCarlo::operator()(
 
     // _______________________________________________________________
     // Computation
-    #ifdef _GPU
+#ifdef _GPU
     // Management of the data on GPU though this data region
     int np = iend-istart;
     
@@ -240,7 +244,7 @@ void RadiationMonteCarlo::operator()(
             photon_tau, \
             ) 
     {
-    #endif
+#endif
 
 
 #ifdef _GPU
@@ -285,7 +289,7 @@ void RadiationMonteCarlo::operator()(
         int mc_it_nb = 0;
         
         // Number of emitted photons per particles
-        int i_photon_emission = 0;
+        int emission_count_per_particle = 0;
 
         // Monte-Carlo Manager inside the time step
         while( ( local_it_time < dt_ )
@@ -403,8 +407,9 @@ void RadiationMonteCarlo::operator()(
                     // Check that the photon_species is defined and the threshold on the energy
                     if(          photons
                             && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
-                            && ( i_photon_emission < max_photon_emissions_)) {
+                            && ( emission_count_per_particle < max_photon_emissions_)) {
                                 
+// CPU implementation (non-threaded implementation)
 #ifndef _GPU                                 
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );
@@ -418,6 +423,7 @@ void RadiationMonteCarlo::operator()(
                                                   + momentum_z[ipart]*momentum_z[ipart] );
 
                         // For all new photons
+                        #pragma omp simd
                         for( auto iphoton=nphotons-radiation_photon_sampling_; iphoton<nphotons; iphoton++ ) {
 
                             // std::cerr  << photons << " "
@@ -444,7 +450,6 @@ void RadiationMonteCarlo::operator()(
                             photon_momentum_z[iphoton] =
                                 photon_gamma*momentum_z[ipart]*inv_old_norm_p;
 
-
                             photon_weight[iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
                             photon_charge[iphoton] = 0;
 
@@ -459,7 +464,61 @@ void RadiationMonteCarlo::operator()(
                         } // end for iphoton
                         
                         // Number of emitted photons
-                        i_photon_emission += 1;
+                        emission_count_per_particle += 1;
+                        
+// GPU optimized implementation (SIMT compatible implementation)
+// Each particle has a buffer of `max_photon_emissions_` possible emission
+// meaning `ax_photon_emissions_`*radiation_photon_sampling_` photons
+#else
+
+                        // Inverse of the momentum norm
+                        inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
+                                                  + momentum_y[ipart]*momentum_y[ipart]
+                                                  + momentum_z[ipart]*momentum_z[ipart] );
+
+                        const int iphoton_start = nphotons_start // initial number of photons
+                                  + (ipart - istart) * photon_buffer_size_per_particles // beginning of the buffer for ipart
+                                  + emission_count_per_particle * radiation_photon_sampling_; // already emitted photons (i.e. buffer usage)
+
+                        // For all new photons
+                        for( auto iphoton=0; iphoton<radiation_photon_sampling_; iphoton++ ) {
+                            
+                            // Photon positions at particle positions
+                            photon_position_x[iphoton_start + iphoton]=position_x[ipart];
+                            if (nDim_>1) {
+                                photon_position_y[iphoton_start + iphoton]=position_y[ipart];
+                                if (nDim_>2) {
+                                    photon_position_z[iphoton_start + iphoton]=position_z[ipart];
+                                }
+                            }
+                            
+                            // Photon momentum
+                            photon_momentum_x[iphoton_start + iphoton] =
+                                photon_gamma*momentum_x[ipart]*inv_old_norm_p;
+                            photon_momentum_y[iphoton_start + iphoton] =
+                                photon_gamma*momentum_y[ipart]*inv_old_norm_p;
+                            photon_momentum_z[iphoton_start + iphoton] =
+                                photon_gamma*momentum_z[ipart]*inv_old_norm_p;
+                                
+                            photon_weight[iphoton_start + iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
+                            photon_charge[iphoton_start + iphoton] = 0;
+
+                            if( photons->isQuantumParameter ) {
+                                photon_chi_array[iphoton_start + iphoton] = photon_chi;
+                            }
+
+                            if( photons->isMonteCarlo ) {
+                                photon_tau[iphoton_start + iphoton] = -1.;
+                            }
+                                
+                            // cell_keys plays the role of a mask here
+                            // If the photon is created, then cell_keys is True
+                            photon_cell_keys[iphoton_start + iphoton] = 1;
+                            
+                        }
+                        
+                        emission_count_per_particle += 1;
+                        
 #endif                        
                     }
                     // If no emiision of a macro-photon:
