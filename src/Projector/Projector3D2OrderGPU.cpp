@@ -267,7 +267,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams num_teams( ( iend_pack - istart_pack ) / ( 64 * 16 ) ) thread_limit( 64 )
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
@@ -292,13 +292,6 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crx_p = dx_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex0 = iold[ipart+0*packsize]*yz_size0+iold[ipart+1*packsize]*z_size0+iold[ipart+2*packsize];
-
-            const double sumX_scratch_space[5 - 1]{ sumX[ipart_pack + 1 * packsize],
-                                                    sumX[ipart_pack + 2 * packsize],
-                                                    sumX[ipart_pack + 3 * packsize],
-                                                    sumX[ipart_pack + 4 * packsize] };
-            // #pragma omp allocate( sumX_scratch_space ) allocator( omp_pteam_mem_alloc )
-
 #ifdef _GPU
             #pragma acc loop vector
 #endif
@@ -310,7 +303,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                                  one_third*DSy[ipart_pack+j*packsize]*DSz[ipart_pack+k*packsize] );
                     const int idx = linindex0 + j*z_size0 + k;
                     for( int i=1 ; i<5 ; i++ ) {
-                        const double val = sumX_scratch_space[i] * tmp;
+                        const double val = sumX[ipart_pack+(i)*packsize] * tmp;
                         const int    jdx = idx + i * yz_size0;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -354,7 +347,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams num_teams( ( iend_pack - istart_pack ) / ( 64 * 16 ) ) thread_limit( 64 )
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
@@ -379,13 +372,6 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double cry_p = dy_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex1 = iold[ipart+0*packsize]*yz_size1+iold[ipart+1*packsize]*z_size1+iold[ipart+2*packsize];
-
-            const double sumX_scratch_space[5 - 1]{ sumX[ipart_pack + 1 * packsize],
-                                                    sumX[ipart_pack + 2 * packsize],
-                                                    sumX[ipart_pack + 3 * packsize],
-                                                    sumX[ipart_pack + 4 * packsize] };
-            // #pragma omp allocate( sumX_scratch_space ) allocator( omp_pteam_mem_alloc )
-
 #ifdef _GPU
             #pragma acc loop vector
 #endif
@@ -397,7 +383,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                                  one_third*DSz[ipart_pack+k*packsize]*DSx[ipart_pack+i*packsize] );
                     const int idx = linindex1 + i*yz_size1 + k;
                     for( int j=1 ; j<5 ; j++ ) {
-                        const double val = sumX_scratch_space[j] * tmp;
+                        const double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         const int    jdx = idx + j * z_size1;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -441,7 +427,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams num_teams( ( iend_pack - istart_pack ) / ( 64 * 16 ) ) thread_limit( 64 )
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
@@ -466,14 +452,6 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crz_p = dz_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
-
-
-            const double sumX_scratch_space[5 - 1]{ sumX[ipart_pack + 1 * packsize],
-                                                    sumX[ipart_pack + 2 * packsize],
-                                                    sumX[ipart_pack + 3 * packsize],
-                                                    sumX[ipart_pack + 4 * packsize] };
-            // #pragma omp allocate( sumX_scratch_space ) allocator( omp_pteam_mem_alloc )
-
 #ifdef _GPU
             #pragma acc loop vector
 #endif
@@ -485,7 +463,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                                  one_third*DSx[ipart_pack+i*packsize]*DSy[ipart_pack+j*packsize] );
                     const int idx = linindex2 + j*z_size2 + i*yz_size2;
                     for( int k=1 ; k<5 ; k++ ) {
-                        const double val = sumX_scratch_space[k] * tmp;
+                        const double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         const int    jdx = idx + k;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
