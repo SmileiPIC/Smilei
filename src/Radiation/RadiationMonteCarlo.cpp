@@ -261,7 +261,10 @@ void RadiationMonteCarlo::operator()(
     Bx[istart:np],By[istart:np],Bz[istart:np], \
     table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
     table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
-    deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
+    deviceptr(position_x, \
+            position_y, \
+            position_z, \
+            momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
             photon_position_x, \
             photon_position_y, \
             photon_position_z, \
@@ -274,13 +277,14 @@ void RadiationMonteCarlo::operator()(
             photon_tau, \
     ) 
     {
-        #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, particle_gamma) \
+        
+        smilei::tools::gpu::Random prng_state_1;
+        smilei::tools::gpu::Random prng_state_2;
+        //curandState_t state_1;
+        //curandState_t state_2;
+        
+        #pragma acc loop independent gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, particle_gamma) \
     reduction(+:radiated_energy_loc) 
-    
-    smilei::tools::gpu::Random prng_state_1;
-    smilei::tools::gpu::Random prng_state_2;
-    //curandState_t state_1;
-    //curandState_t state_2;
 
 #endif
 
