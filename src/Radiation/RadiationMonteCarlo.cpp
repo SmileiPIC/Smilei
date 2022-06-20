@@ -151,21 +151,24 @@ void RadiationMonteCarlo::operator()(
     // Photon properties ----------------------------------------------------------------
     
     // Number of photons
+
     int nphotons;
 #ifdef _GPU
     int nphotons_start;
 #endif
     
+    // Buffer size for each particle
+    const double photon_buffer_size_per_particle = radiation_photon_sampling_ * max_photon_emissions_;
+    
     if (photons) {
-        const double photon_buffer_size_per_particles = radiation_photon_sampling_ * max_photon_emissions_;
 #ifdef _GPU
             // We reserve a large number of potential photons on device since we can't 
             nphotons_start = photons->gpu_size();
-            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particles );
+            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
 #else 
             nphotons = photons->size();
             // We reserve a large number of photons
-            photons->reserve( nphotons + (iend - istart) * photon_buffer_size_per_particles );
+            photons->reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
 #endif
     } else {
         nphotons = 0;
@@ -482,7 +485,7 @@ void RadiationMonteCarlo::operator()(
                                                   + momentum_z[ipart]*momentum_z[ipart] );
 
                         const int iphoton_start = nphotons_start // initial number of photons
-                                  + (ipart - istart) * photon_buffer_size_per_particles // beginning of the buffer for ipart
+                                  + (ipart - istart) * photon_buffer_size_per_particle // beginning of the buffer for ipart
                                   + emission_count_per_particle * radiation_photon_sampling_; // already emitted photons (i.e. buffer usage)
 
                         // For all new photons
