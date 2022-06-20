@@ -46,7 +46,7 @@ public:
     void device_reserve( unsigned int reserved_particles );
 
     //! Reset Particles vectors
-    void device_clear();
+    void deviceClear();
 
     //! Initialize the particle properties on devide as a mirror of the host definition
     // 

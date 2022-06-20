@@ -730,6 +730,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 
 #ifdef _GPU
                 // We first erase empty slots in the buffer of photons
+                // radiation_photons_->cell_keys is used as a mask
                 static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
 #endif
 
@@ -739,7 +740,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                                                  localDiags );
 #ifdef _GPU
                 // We explicitely clear the device Particles
-                static_cast<nvidiaParticles*>(radiated_photons_)->device_clear();
+                static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
 #endif
             }
         }

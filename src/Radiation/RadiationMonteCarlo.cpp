@@ -152,12 +152,15 @@ void RadiationMonteCarlo::operator()(
     
     // Number of photons
     int nphotons;
+#ifdef _GPU
+    int nphotons_start;
+#endif
     
     if (photons) {
         const double photon_buffer_size_per_particles = radiation_photon_sampling_ * max_photon_emissions_;
 #ifdef _GPU
+            // We reserve a large number of potential photons on device since we can't 
             nphotons_start = photons->gpu_size();
-            // We reserve a large number of potential photons on device since we can't reallocate
             static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particles );
 #else 
             nphotons = photons->size();
@@ -188,9 +191,11 @@ void RadiationMonteCarlo::operator()(
     double *const __restrict__ photon_chi_array = photons ? (photons->isQuantumParameter ? photons->getPtrChi() : nullptr) : nullptr;
     
     double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
-    
+
+#ifdef _GPU
     // Cell keys as a mask
     int *const __restrict__ photon_cell_keys = photons ? photons->getPtrCellKeys() : nullptr;
+#endif
 
     // Table properties ----------------------------------------------------------------
 #ifdef _GPU

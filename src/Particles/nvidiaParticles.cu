@@ -71,7 +71,7 @@ void nvidiaParticles::device_reserve( unsigned int reserved_particles )
 // Reset of Particles vectors
 // Cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void nvidiaParticles::device_clear()
+void nvidiaParticles::deviceClear()
 {
     for( unsigned int iprop=0 ; iprop<nvidia_double_prop_.size() ; iprop++ ) {
         nvidia_double_prop_[iprop]->clear();
