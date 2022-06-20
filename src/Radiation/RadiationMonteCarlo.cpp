@@ -248,8 +248,9 @@ void RadiationMonteCarlo::operator()(
             photon_momentum_z, \
             photon_weight, \
             photon_charge, \
-            photon_chi, \
+            photon_chi_array, \
             photon_tau, \
+            photon_cell_keys \
             ) 
     {
 #endif
@@ -273,8 +274,9 @@ void RadiationMonteCarlo::operator()(
             photon_momentum_z, \
             photon_weight, \
             photon_charge, \
-            photon_chi, \
+            photon_chi_array, \
             photon_tau, \
+            photon_cell_keys, \
     ) 
     {
         
@@ -283,8 +285,9 @@ void RadiationMonteCarlo::operator()(
         //curandState_t state_1;
         //curandState_t state_2;
         
-        #pragma acc loop independent gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, particle_gamma) \
-    reduction(+:radiated_energy_loc) 
+        #pragma acc loop independent gang worker vector \
+        private(random_number, seed_curand_1, seed_curand_2, particle_chi, particle_gamma) \
+        reduction(+:radiated_energy_loc) 
 
 #endif
 
