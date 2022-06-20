@@ -455,14 +455,14 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #ifdef _GPU
             #pragma acc loop vector
 #endif
-            for( int i=0 ; i<5 ; i++ ) {
-                for( int j=0 ; j<5 ; j++ ) {
-                    const double tmp = crz_p * ( Sx0[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] +
-                                                 0.5*DSx[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] +
-                                                 0.5*DSy[ipart_pack+j*packsize]*Sx0[ipart_pack+i*packsize] +
-                                                 one_third*DSx[ipart_pack+i*packsize]*DSy[ipart_pack+j*packsize] );
-                    const int idx = linindex2 + j*z_size2 + i*yz_size2;
-                    for( int k=1 ; k<5 ; k++ ) {
+            for( int k=1 ; k<5 ; k++ ) {
+                for( int i=0 ; i<5 ; i++ ) {
+                    for( int j=0 ; j<5 ; j++ ) {
+                        const double tmp = crz_p * ( Sx0[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] +
+                                                     0.5*DSx[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] +
+                                                     0.5*DSy[ipart_pack+j*packsize]*Sx0[ipart_pack+i*packsize] +
+                                                     one_third*DSx[ipart_pack+i*packsize]*DSy[ipart_pack+j*packsize] );
+                        const int idx = linindex2 + j*z_size2 + i*yz_size2;
                         const double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         const int    jdx = idx + k;
 
