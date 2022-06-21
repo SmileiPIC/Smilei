@@ -12,6 +12,11 @@ Validate("Ey field at iteration 2000", Ey, 0.01)
 Jy = S.Probe(0, "Jy", timesteps=2000.).getData()[0]
 Validate("Jy field at iteration 2000", Jy, 0.0005)
 
+for sc in ["Ubal","Uelm","Uexp","Uelm_bnd"]:
+    Validate("Scalar "+sc, S.Scalar(sc).getData(), 1e4)
+for sc in ["Uelm_inj_mvw","Uelm_out_mvw"]:
+    Validate("Scalar "+sc, S.Scalar(sc).getData(), 100.)
+
 ## Performances non regression
 #timer_particle = S.Performances(raw="timer_particles").getData()[-1].mean()
 #Validate("Mean time spent in particles", timer_particle, 2.)

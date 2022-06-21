@@ -783,38 +783,28 @@ void ElectroMagn1D::computeTotalEnvChi()
     }//END loop on species ispec
     
 } // END computeTotalEnvChi
+
 // --------------------------------------------------------------------------
 // Compute Poynting (return the electromagnetic energy injected at the border
 // --------------------------------------------------------------------------
-void ElectroMagn1D::computePoynting()
+void ElectroMagn1D::computePoynting( unsigned int axis, unsigned int side )
 {
-
-    // Xmin border (Energy injected = +Poynting)
-    if( isXmin ) {
-        unsigned int iEy=istart[0][Ey_->isDual( 0 )];
-        unsigned int iBz=istart[0][Bz_m->isDual( 0 )];
-        unsigned int iEz=istart[0][Ez_->isDual( 0 )];
-        unsigned int iBy=istart[0][By_m->isDual( 0 )];
-        
-        poynting_inst[0][0]=0.5*timestep*( ( *Ey_ )( iEy ) * ( ( *Bz_m )( iBz ) + ( *Bz_m )( iBz+1 ) ) -
-                                           ( *Ez_ )( iEz ) * ( ( *By_m )( iBy ) + ( *By_m )( iBy+1 ) ) );
-        poynting[0][0] += poynting_inst[0][0];
+    unsigned int offset = 0.;
+    double sign = 1.;
+    if( side > 0 ) {
+        offset = bufsize[0][Ey_->isDual( 0 )];
+        sign = -1;
     }
     
-    // Xmax border (Energy injected = -Poynting)
-    if( isXmax ) {
-        unsigned int offset = bufsize[0][Ey_->isDual( 0 )];
-        
-        unsigned int iEy=istart[0][Ey_ ->isDual( 0 )] + offset;
-        unsigned int iBz=istart[0][Bz_m->isDual( 0 )] + offset;
-        unsigned int iEz=istart[0][Ez_ ->isDual( 0 )] + offset;
-        unsigned int iBy=istart[0][By_m->isDual( 0 )] + offset;
-        
-        poynting_inst[1][0]=0.5*timestep*( ( *Ey_ )( iEy ) * ( ( *Bz_m )( iBz ) + ( *Bz_m )( iBz+1 ) ) -
-                                           ( *Ez_ )( iEz ) * ( ( *By_m )( iBy ) + ( *By_m )( iBy+1 ) ) );
-        poynting[1][0] -= poynting_inst[1][0];
-        
-    }
+    unsigned int iEy = istart[0][Ey_ ->isDual( 0 )] + offset;
+    unsigned int iBz = istart[0][Bz_m->isDual( 0 )] + offset;
+    unsigned int iEz = istart[0][Ez_ ->isDual( 0 )] + offset;
+    unsigned int iBy = istart[0][By_m->isDual( 0 )] + offset;
+    
+    poynting_inst[side][axis] = 0.5 * timestep *(
+        ( *Ey_ )( iEy ) * ( ( *Bz_m )( iBz ) + ( *Bz_m )( iBz+1 ) ) -
+        ( *Ez_ )( iEz ) * ( ( *By_m )( iBy ) + ( *By_m )( iBy+1 ) ) );
+    poynting[side][axis] += sign * poynting_inst[side][axis];
 }
 
 void ElectroMagn1D::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
