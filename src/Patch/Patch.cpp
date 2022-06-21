@@ -1430,6 +1430,7 @@ void Patch::finalizeSumField( Field *field, int iDim )
 
 } // END finalizeSumField
 
+
 void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params, bool diag_flag)
 {   // in this patch, for the species ispec, for all its bins, 
     // copy the current/charge densities in the patch grid
@@ -1468,4 +1469,16 @@ void Patch::copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &pa
             EMfields->copyInLocalSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
         }
     } // ibin
+}
+
+
+void Patch::computePoynting() {
+    for( unsigned int axis = 0; axis < (unsigned int) nDim_fields_; axis++ ) {
+        if( isBoundary( axis, 0 ) ) {
+            EMfields->computePoynting( axis, 0 );
+        }
+        if( isBoundary( axis, 1 ) ) {
+            EMfields->computePoynting( axis, 1 );
+        }
+    }
 }

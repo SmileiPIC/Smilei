@@ -166,7 +166,7 @@ public:
     double dz_ov_dt;
     
     //! compute Poynting on borders
-    void computePoynting();
+    void computePoynting( unsigned int axis, unsigned int side );
     
     //! Method used to impose external fields
     void applyExternalField( Field *, Profile *, Patch * );
@@ -178,17 +178,7 @@ public:
     
     void initAntennas( Patch* patch, Params& params );
     
-    //! from smpi is ymax
-    const bool isYmin;
-    
-    //! from smpi is ymin
-    const bool isYmax;
-    
-    //! from smpi is zmax
-    const bool isZmax;
-    
-    //! from smpi is zmin
-    const bool isZmin;
+    const bool isYmin, isYmax, isZmin, isZmax;
 
     // copy currents projected on sub-buffers to global currents
     void copyInLocalDensities(int ispec, int ibin, 

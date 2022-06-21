@@ -34,6 +34,7 @@ public:
     //! Overloading of () operator
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
+    //! \param photons     Particles object that will received the emitted photons
     //! \param smpi        MPI properties
     //! \param RadiationTables Cross-section data tables and useful functions
     //                     for nonlinear inverse Compton scattering
@@ -43,7 +44,7 @@ public:
     //! \param radiated_energy     overall energy radiated during the call to this method
     virtual void operator()(
         Particles       &particles,
-        Species         *photon_species,
+        Particles       &photons,
         SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,
@@ -96,11 +97,13 @@ public:
                               int ipart_ref = 0 );
 
     // join the lists of photons created through Monte Carlo when tasks are used
-    void joinNewPhotons(unsigned int Nbins);
+    void joinNewPhotons(Particles * photons,unsigned int Nbins);
                               
     // Local array of new photons
-    Particles new_photons_;
     Particles *new_photons_per_bin_;
+
+    // Particles new_photons_;
+
 
     
 protected:

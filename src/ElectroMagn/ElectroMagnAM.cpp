@@ -1648,8 +1648,68 @@ void ElectroMagnAM::computeTotalEnvChi()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnAM::computePoynting()
+void ElectroMagnAM::computePoynting( unsigned int axis, unsigned int side )
 {
+    double sign = ( side == 0 ) ? 1. : -1;
+    
+    if( axis == 0 ) {
+        
+        unsigned int offset = ( side == 0 ) ? 0 : bufsize[0][Er_[0]->isDual( 0 )];
+        
+        unsigned int iEr = istart[0][Er_ [0]->isDual( 0 )] + offset;
+        unsigned int iBt = istart[0][Bt_m[0]->isDual( 0 )] + offset;
+        unsigned int iEt = istart[0][Et_ [0]->isDual( 0 )] + offset;
+        unsigned int iBr = istart[0][Br_m[0]->isDual( 0 )] + offset;
+        
+        unsigned int jEr = istart[1][Er_ [0]->isDual( 1 )];
+        unsigned int jBt = istart[1][Bt_m[0]->isDual( 1 )];
+        unsigned int jEt = istart[1][Et_ [0]->isDual( 1 )];
+        unsigned int jBr = istart[1][Br_m[0]->isDual( 1 )];
+        
+        poynting_inst[side][0] = 0.;
+        for( unsigned int imode=0; imode<nmodes; imode++ ) {
+            for( unsigned int j=0; j<bufsize[1][Et_[imode]->isDual( 1 )]; j++ ) {
+                complex<double> Er__ = 0.5*( ( *Er_[imode] )( iEr, jEr+j ) + ( *Er_[imode] )( iEr, jEr+j+1 ) );
+                complex<double> Bt__ = 0.25*( ( *Bt_m[imode] )( iBt, jBt+j )+( *Bt_m[imode] )( iBt+1, jBt+j )+( *Bt_m[imode] )( iBt, jBt+j+1 )+( *Bt_m[imode] )( iBt+1, jBt+j+1 ) );
+                complex<double> Et__ = ( *Et_[imode] )( iEt, jEt+j );
+                complex<double> Br__ = 0.5*( ( *Br_m[imode] )( iBr, jBr+j ) + ( *Br_m[imode] )( iBr+1, jBr+j ) );
+                poynting_inst[side][0] += ( j_glob_ + jEt + j ) * ( Er__.real()*Bt__.real() + Er__.imag()*Bt__.imag() - Et__.real()*Br__.real() - Et__.imag()*Br__.imag() );
+            }
+            if( imode == 0 ) {
+                poynting_inst[side][0] *= 2; // mode 0 contribution is double
+            }
+        }
+        poynting_inst[side][0] *= M_PI * dr * dr * timestep;
+        poynting[side][0] += sign * poynting_inst[side][0];
+        
+    } else if( axis == 1 ) {
+        
+        unsigned int offset = ( side == 0 ) ? 0 : bufsize[1][Et_[0]->isDual( 1 )];
+        
+        unsigned int iEt = istart[0][Et_ [0]->isDual( 0 )];
+        unsigned int iBl = istart[0][Bl_m[0]->isDual( 0 )];
+        unsigned int iEl = istart[0][El_ [0]->isDual( 0 )];
+        unsigned int iBt = istart[0][Bt_m[0]->isDual( 0 )];
+        
+        unsigned int jEt = istart[1][Et_ [0]->isDual( 1 )] + offset;
+        unsigned int jBl = istart[1][Bl_m[0]->isDual( 1 )] + offset;
+        unsigned int jEl = istart[1][El_ [0]->isDual( 1 )] + offset;
+        unsigned int jBt = istart[1][Bt_m[0]->isDual( 1 )] + offset;
+        
+        poynting_inst[side][1] = 0.;
+        for( unsigned int imode=0; imode<nmodes; imode++ ) {
+            for( unsigned int i=0; i<bufsize[0][Et_[imode]->isDual( 0 )]; i++ ) {
+                complex<double> Et__ = ( *Et_[imode] )( iEt+i, jEt );
+                complex<double> Bl__ = 0.5*( ( *Bl_m[imode] )( iBl+i, jBl ) + ( *Bl_m[imode] )( iBl+i, jBl+1 ) );
+                complex<double> El__ = 0.5*( ( *El_[imode] )( iEl+i, jEl ) + ( *El_[imode] )( iEl+i+1, jEl ) );
+                complex<double> Bt__ = 0.25*( ( *Bt_m[imode] )( iBt+i, jBt )+( *Bt_m[imode] )( iBt+i+1, jBt )+( *Bt_m[imode] )( iBt+i, jBt+1 )+( *Bt_m[imode] )( iBt+i+1, jBt+1 ) );
+                poynting_inst[side][1] += Et__.real()*Bl__.real() + Et__.imag()*Bl__.imag() - El__.real()*Bt__.real() - El__.imag()*Bt__.imag();
+            }
+        }
+        poynting_inst[side][1] *= M_PI * ( j_glob_ + jEt ) * dr * dl * timestep;
+        poynting[side][1] += sign * poynting_inst[side][1];
+        
+    }
 }
 
 void ElectroMagnAM::applyExternalFields( Patch *patch )

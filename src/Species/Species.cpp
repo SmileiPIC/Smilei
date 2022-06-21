@@ -16,6 +16,7 @@
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
+#include "ParticlesFactory.h"
 #include "MergingFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
@@ -71,7 +72,7 @@ Species::Species( Params &params, Patch *patch ) :
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
-    particles( &particles_sorted[0] ),
+    // particles( &particles_sorted[0] ),
     file_position_npart_( 0 ),
     file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
@@ -84,6 +85,7 @@ Species::Species( Params &params, Patch *patch ) :
     photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
+    radiated_photons_( NULL ),
     mBW_pair_creation_sampling_( 2, 1 ),
     cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
@@ -94,6 +96,10 @@ Species::Species( Params &params, Patch *patch ) :
     nDim_field(    params.nDim_field  ),
     merging_time_selection_( 0 )
 {
+
+    particles         = ParticlesFactory::create( params );
+    particles_to_move = ParticlesFactory::create( params );
+
     regular_number_array_.clear();
     partBoundCond = NULL;
     min_loc = patch->getDomainLocalMin( 0 );
@@ -117,7 +123,7 @@ Species::Species( Params &params, Patch *patch ) :
 
     merge_min_momentum_cell_length_.resize(3);
 
-    particles_to_move = new Particles();
+    // particles_to_move = new Particles();
 
     // this variable is used for tasks
     geometry = params.geometry;
@@ -386,6 +392,8 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
+
+    delete particles;
     delete particles_to_move;
 
     delete Push;
@@ -428,6 +436,10 @@ Species::~Species()
     }
     if( ionization_rate_!=Py_None ) {
         Py_DECREF( ionization_rate_ );
+    }
+
+    if (radiated_photons_) {
+        delete radiated_photons_;
     }
 
 #ifdef _OMPTASKS
@@ -504,6 +516,7 @@ Species::~Species()
         }
     }
 #endif
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -601,7 +614,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                 #  endif
                 // Radiation process
-                ( *Radiate )( *particles, photon_species_, smpi,
+                ( *Radiate )( *particles,
+                              *radiated_photons_,
+                              smpi,
                               RadiationTables,
                               nrj_radiated_,
                               particles->first_index[ibin],
@@ -1478,7 +1493,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             if( photon_species_ ) {
                 photon_species_->importParticles( params,
                                                  patch,
-                                                 Radiate->new_photons_,
+                                                 *radiated_photons_,
                                                  localDiags );
             }
         }

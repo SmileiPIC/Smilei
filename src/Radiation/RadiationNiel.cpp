@@ -48,7 +48,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       &photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -65,18 +65,15 @@ void RadiationNiel::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
     int nparts = Epart->size()/3;
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // Used to store gamma directly
-    double * __restrict__ gamma = &( smpi->dynamics_invgf[ithread][0] );
-
-    // Charge divided by the square of the mass
-    double charge_over_mass_square = 0.;
+    double *const __restrict__ gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // 1/mass^2
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
@@ -96,29 +93,29 @@ void RadiationNiel::operator()(
     // Radiated energy
     double rad_energy;
 
-    // Stochastic diffusive term fo Niel et al.
+    // Stochastic diffusive term for Niel et al.
     double diffusion[nbparticles];
 
     // Random Number
     double random_numbers[nbparticles];
 
     // Momentum shortcut
-    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double*const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double*const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double*const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short* __restrict__ charge = particles.getPtrCharge();
+    const short*const __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double* __restrict__ weight = particles.getPtrWeight();
+    const double*const __restrict__ weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double* __restrict__ particle_chi = particles.getPtrChi();
+    double*const __restrict__ particle_chi = particles.getPtrChi();
 
-    const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
-    const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
-    const int niel_computation_method = RadiationTables.getNielHComputationMethodIndex();
+    const double minimum_chi_continuous           = RadiationTables.getMinimumChiContinuous();
+    const double factor_classical_radiated_power  = RadiationTables.getFactorClassicalRadiatedPower();
+    const int niel_computation_method             = RadiationTables.getNielHComputationMethodIndex();
 
     // _______________________________________________________________
     // Computation
@@ -129,7 +126,7 @@ void RadiationNiel::operator()(
     #pragma omp simd
     for( ipart=istart ; ipart< iend; ipart++ ) {
 
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
         gamma[ipart-ipart_ref] = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
@@ -165,7 +162,7 @@ void RadiationNiel::operator()(
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-        if( particle_chi[ipart+istart] > minimum_chi_continuous_ ) {
+        if( particle_chi[ipart+istart] > minimum_chi_continuous ) {
 
             // Pick a random number in the normal distribution of standard
             // deviation sqrt(dt_) (variance dt_)
@@ -183,7 +180,7 @@ void RadiationNiel::operator()(
     #pragma omp simd private(p,temp)
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-        if( particle_chi[ipart+istart] > minimum_chi_continuous_ ) {
+        if( particle_chi[ipart+istart] > minimum_chi_continuous ) {
             temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
             if( temp < 5.000000 ) {
@@ -225,13 +222,13 @@ void RadiationNiel::operator()(
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipart+istart] > minimum_chi_continuous_ ) {
+            if( particle_chi[ipart+istart] > minimum_chi_continuous ) {
 
                 //h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
                 //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
                 temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart] );
 
-                diffusion[ipart] = std::sqrt( factor_classical_radiated_power_*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -243,11 +240,11 @@ void RadiationNiel::operator()(
             int ipartp = ipart + istart;
 
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipartp] > minimum_chi_continuous_ ) {
+            if( particle_chi[ipartp] > minimum_chi_continuous ) {
 
                 temp = RadiationTools::getHNielFitOrder5( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -259,11 +256,11 @@ void RadiationNiel::operator()(
             int ipartp = ipart + istart;
 
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipartp] > minimum_chi_continuous_ ) {
+            if( particle_chi[ipartp] > minimum_chi_continuous ) {
 
                 temp = RadiationTools::getHNielFitOrder10( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -276,11 +273,11 @@ void RadiationNiel::operator()(
             int ipartp = ipart + istart;
 
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipartp] > minimum_chi_continuous_ ) {
+            if( particle_chi[ipartp] > minimum_chi_continuous ) {
 
                 temp = RadiationTools::getHNielFitRidgers( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -290,7 +287,7 @@ void RadiationNiel::operator()(
     #pragma omp simd private(temp,rad_energy)
     for( ipart=istart ; ipart<iend; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-        if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+        if( gamma[ipart-ipart_ref] > 1.1 && particle_chi[ipart] > minimum_chi_continuous ) {
 
             // Radiated energy during the time step
             rad_energy =
@@ -321,7 +318,7 @@ void RadiationNiel::operator()(
     #pragma omp simd private(new_gamma) reduction(+:radiated_energy_loc)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-	charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+    const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         new_gamma = sqrt( 1.0
                        + momentum_x[ipart]*momentum_x[ipart]

@@ -229,6 +229,14 @@ Large-scale simulations
 
 Adaptive vectorization has been validated on large-scale simulations with
 different benchmarks.
+The following video enables to visualize on different scenarii the behavior of the adaptive vectorization.
+
+.. _video_adaptive_vecto_3d:
+
+.. raw:: html
+
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="https://mdls.fr/wp-content/uploads/2022/04/vecto_study_3d.mp4" width="100%">
+  </video>
 
 Mildly-relativistic collisionless shock
 """""""""""""""""""""""""""""""""""""""
@@ -261,8 +269,10 @@ The following video shows how the patches are dynamically switched in vectorized
 
 .. raw:: html
 
-  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="https://mdls.fr/wp-content/uploads/2022/04/weibel_interp.mp4" width="100%">
   </video>
 
 For this specific benchmark, the speed-up obtained with vectorization is of x2.
 Adaptive vectorization brinds a small additional speed-up in some cases.
+
+

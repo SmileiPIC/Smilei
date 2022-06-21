@@ -212,7 +212,43 @@ double cField2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     
     for( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
         for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
-            nrj += ( data_2D[i][j] ).real()*( data_2D[i][j] ).real()+ ( data_2D[i][j] ).imag()*( data_2D[i][j] ).imag();
+            nrj += data_2D[i][j].real()*data_2D[i][j].real() + data_2D[i][j].imag()*data_2D[i][j].imag();
+        }
+    }
+    
+    return nrj;
+}
+
+double cField2D::norm2_cylindrical( unsigned int istart[3][2], unsigned int bufsize[3][2], int j_ref )
+{
+    double nrj( 0. );
+    
+    int idxlocalstart[2];
+    int idxlocalend[2];
+    for( int i=0 ; i<2 ; i++ ) {
+        idxlocalstart[i] = istart[i][isDual_[i]];
+        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+    }
+    
+    // Special case: cells on axis
+    if( j_ref + idxlocalstart[1] < 0 ) {
+        ERROR("IMPOSSIBLE");
+    } else if( j_ref + idxlocalstart[1] == 0 ) {
+        if( ! isDual_[1] ) {
+            double sum = 0.;
+            for( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+                unsigned int j = idxlocalstart[1];
+                sum += data_2D[i][j].real()*data_2D[i][j].real() + data_2D[i][j].imag()*data_2D[i][j].imag();
+            }
+            nrj *= sum / 8.; // volume factor for on-axis cells is 1./8.
+        }
+        idxlocalstart[1]++;
+    }
+    // Remaining cells
+    for( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+        for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
+            double volume_factor = (double)(j_ref + j) - 0.5 * isDual_[1];
+            nrj += volume_factor * ( data_2D[i][j].real()*data_2D[i][j].real() + data_2D[i][j].imag()*data_2D[i][j].imag() );
         }
     }
     
