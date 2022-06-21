@@ -361,8 +361,10 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     ( *Radiate )( *particles,
                                   *radiated_photons_,
                                   smpi,
-                                  RadiationTables, nrj_radiated_,
-                                  particles->first_index[scell], particles->last_index[scell], ithread );
+                                  RadiationTables,
+                                  nrj_radiated_,
+                                  particles->first_index[scell],
+                                  particles->last_index[scell], ithread );
 
                     // // Update scalar variable for diagnostics
                     // nrj_radiated_ += Radiate->getRadiatedEnergy();
@@ -817,7 +819,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                  if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                  #  endif
                  // Radiation process
-                 ( *Radiate )( *particles, photon_species_, smpi,
+                 ( *Radiate )( *particles, *radiated_photons_, smpi,
                                RadiationTables,
                                radiated_energy_per_bin[ibin],
                                particles->first_index[first_cell_of_bin[ibin]],

@@ -953,12 +953,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                         #  endif
                         // Radiation process
-                        ( *Radiate )( *particles, photon_species_, smpi,
+                        ( *Radiate )( *particles,
+                                      *radiated_photons_,
+                                      smpi,
                                       RadiationTables,
                                       radiated_energy_per_bin[ibin],
                                       particles->first_index[ibin],
                                       particles->last_index[ibin], buffer_id, ibin );
-
+                        
                         #  ifdef _PARTEVENTTRACING
                         if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
                         #  endif
