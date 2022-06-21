@@ -206,7 +206,7 @@ LaserEnvelope3D::~LaserEnvelope3D()
 {
 }
 
-void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
+void LaserEnvelope3D::updateEnvelope( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -221,12 +221,12 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
-    Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    Field3D *Env_Chi3D     = static_cast<Field3D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
 
-    bool isYmin = ( static_cast<ElectroMagn3D *>( EMfields ) )->isYmin;
-    bool isYmax = ( static_cast<ElectroMagn3D *>( EMfields ) )->isYmax;
-    bool isZmin = ( static_cast<ElectroMagn3D *>( EMfields ) )->isZmin;
-    bool isZmax = ( static_cast<ElectroMagn3D *>( EMfields ) )->isZmax;
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
+    bool isZmin = patch->isBoundary( 2, 0 );
+    bool isZmax = patch->isBoundary( 2, 1 );
  
     // temporary variable for updated envelope
     cField3D *A3Dnew;
@@ -306,7 +306,7 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     delete A3Dnew;
 } // end LaserEnvelope3D::updateEnvelope
 
-void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
+void LaserEnvelope3D::updateEnvelopeReducedDispersion( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -328,7 +328,7 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
-    Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    Field3D *Env_Chi3D     = static_cast<Field3D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
   
     
     // temporary variable for updated envelope

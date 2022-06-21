@@ -1094,9 +1094,11 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
             // Computes A in all points, choosing the right solver for the envelope equation
             if ( ( *this )( ipatch )->EMfields->envelope->envelope_solver == "explicit" ){
-                ( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch )->EMfields );
+                //( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch )->EMfields );
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch ) );
             } else if ( ( *this )( ipatch )->EMfields->envelope->envelope_solver == "explicit_reduced_dispersion" ) {
-                ( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch )->EMfields );
+                //( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch )->EMfields );
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch ) );
             }
 
             // Apply boundary conditions for envelope and |A|, |E|
