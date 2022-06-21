@@ -545,7 +545,7 @@ double RadiationMonteCarlo::photonEmissionForTasks( int ipart, int ibin,
         new_photons_per_bin_[ibin].createParticles( radiation_photon_sampling_ );
 
         // Final size
-        int npart = photons->size();
+        int npart = new_photons_per_bin_[ibin].size();
 
         // Inverse of the momentum norm
         inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
