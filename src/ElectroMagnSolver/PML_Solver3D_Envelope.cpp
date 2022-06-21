@@ -174,12 +174,12 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         // Y-direction
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             kappa_y_p[j] = 1. ;
             sigma_y_p[j] = 0. ;
         }
         // Z-direction
-        for ( int k=0 ; k<nz_p ; k++ ) {
+        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
             kappa_z_p[k] = 1. ;
             sigma_z_p[k] = 0. ;
         }
@@ -190,7 +190,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         length_y_pml = (ncells_pml_domain-startpml+0.5)*dy ;
         length_x_pml_xmax = (ncells_pml_max[0]+0.5)*dx ;
         length_x_pml_xmin = (ncells_pml_min[0]+0.5)*dx ;
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. ;
             sigma_x_p[i] = 0. ;
             alpha_x_p[i] = 0. ;
@@ -294,7 +294,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         // Z-direction
-        for ( int k=0 ; k<nz_p ; k++ ) {
+        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
             kappa_z_p[k] = 1. ;
             sigma_z_p[k] = 0. ;
         }
@@ -307,7 +307,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         length_x_pml_xmin = (ncells_pml_min[0]+0.5)*dx ;
         length_y_pml_ymax = (ncells_pml_max[1]+0.5)*dy ;
         length_y_pml_ymin = (ncells_pml_min[1]+0.5)*dy ;
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. ;
             sigma_x_p[i] = 0. ;
             alpha_x_p[i] = 0. ;
@@ -357,7 +357,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         // Y-direction
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             // Coeffs for the first cell
             kappa_y_p[j] = 1. ;
             sigma_y_p[j] = 0. ;

@@ -132,7 +132,7 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
 
         std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( int i=0 ; i<params.nDim_field ; i++ ) {
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
             dimPrim[i] = n_space[i]+1+2*oversize[i];
         }
         dimPrim[iDim] = ncells_pml_domain;
@@ -168,8 +168,8 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
 
     //Laser parameter
-    double pyKx, pyKy; //, pyKz;
-    double kl, kr; //, kz;
+    double pyKx, pyKy;
+    double kl;
     double Knorm;
     double omega = 1. ;
 
@@ -180,7 +180,6 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
     pyKy = 0.;
     Knorm = sqrt( pyKx*pyKx + pyKy*pyKy ) ;
     kl = omega*pyKx/Knorm;
-    kr = omega*pyKy/Knorm;
 
     factor_laser_angle_W = kl/Knorm;
 
@@ -189,7 +188,6 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
     pyKy = 0.;
     Knorm = sqrt( pyKx*pyKx + pyKy*pyKy ) ;
     kl = omega*pyKx/Knorm;
-    kr = omega*pyKy/Knorm;
 
     factor_laser_angle_E = kl/Knorm;
 
@@ -253,7 +251,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
 
             // 2. Exchange field PML <- Domain
             for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Er_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Er_domain)(i,j);
                     (*Dr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Er_domain)(i,j);
                     (*Hl_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bl_domain)(i,j);
@@ -261,7 +259,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bt_domain)(i,j);
                     (*Bt_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bt_domain)(i,j);
                 }
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*Br_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Br_domain)(i,j);
                     (*Hr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Br_domain)(i,j);
                     (*El_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*El_domain)(i,j);
@@ -354,21 +352,21 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // Primals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*Et_domain)(i,j) = (*Et_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Er_domain)(i,j) = (*Er_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                     (*Bl_domain)(i,j) = (*Hl_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
             }
             // Duals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*El_domain)(i,j) = (*El_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                     (*Br_domain)(i,j) = (*Hr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Bt_domain)(i,j) = (*Ht_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
             }
@@ -390,7 +388,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
 
             for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Er_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Er_domain)(n_p[0]-i,j);
                     (*Dr_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Er_domain)(n_p[0]-i,j);
                     (*Hl_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bl_domain)(n_p[0]-i,j);
@@ -398,7 +396,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bt_domain)(n_p[0]-i,j);
                     (*Bt_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bt_domain)(n_p[0]-i,j);
                 }
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*Br_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Br_domain)(n_p[0]-i,j);
                     (*Hr_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Br_domain)(n_p[0]-i,j);
                     (*El_[imode])(domain_oversize_l+nsolver/2-i,j) = (*El_domain)(n_p[0]-i,j);
@@ -492,21 +490,21 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // Primals in x-direction
             for (int i=0 ; i < nsolver/2-1 ; i++){
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*Et_domain)(n_p[0]-1-i,j) = (*Et_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                 }
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Er_domain)(n_p[0]-1-i,j) = (*Er_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                     (*Bl_domain)(n_p[0]-1-i,j) = (*Hl_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                 }
             }
             // Duals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( int j=0 ; j<n_p[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     (*El_domain)(n_d[0]-1-i,j) = (*El_[imode])(domain_oversize_l+nsolver/2-i,j);
                     (*Br_domain)(n_d[0]-1-i,j) = (*Hr_[imode])(domain_oversize_l+nsolver/2-i,j);
                 }
-                for ( int j=0 ; j<n_d[1] ; j++ ) {
+                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                     (*Bt_domain)(n_d[0]-1-i,j) = (*Ht_[imode])(domain_oversize_l+nsolver/2-i,j);
                 }
             }
@@ -617,7 +615,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //                 }
         //             }
         //         }
-        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
         //             (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
@@ -626,7 +624,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //             (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
         //             (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
         //         }
-        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
         //             (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
@@ -708,11 +706,11 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //     // 4. Exchange PML -> Domain
         //     // Primals in y-direction
         //     for (int j=0 ; j < nsolver/2 ; j++){
-        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*Et_domain)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
         //         }
-        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*El_domain)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
         //             (*Br_domain)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
@@ -720,12 +718,12 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //     }
         //     // Duals in y-direction
         //     for (int j=0 ; j < nsolver/2 ; j++){
-        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*Er_domain)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
         //             (*Bl_domain)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
         //         }
-        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*Bt_domain)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
         //         }
@@ -911,7 +909,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                         }
                     }
                 }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*El_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*El_domain)(i,n_p[1]-j);
                     (*Dl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*El_domain)(i,n_p[1]-j);
@@ -920,7 +918,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bt_domain)(i,n_p[1]-j);
                     (*Bt_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bt_domain)(i,n_p[1]-j);
                 }
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Hl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bl_domain)(i,n_p[1]-j);
                     (*Bl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bl_domain)(i,n_p[1]-j);
@@ -1002,11 +1000,11 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             // 4. Exchange PML -> Domain
             // Primals in y-direction
             for (int j=0 ; j < nsolver/2-1 ; j++){
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Et_domain)(i,n_p[1]-1-j) = (*Et_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
                 }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*El_domain)(i,n_p[1]-1-j) = (*El_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
                     (*Br_domain)(i,n_p[1]-1-j) = (*Hr_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
@@ -1014,12 +1012,12 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             }
             // Duals in y-direction
             for (int j=0 ; j < nsolver/2 ; j++){
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Er_domain)(i,n_d[1]-1-j) = (*Er_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                     (*Bl_domain)(i,n_d[1]-1-j) = (*Hl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                 }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
+                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Bt_domain)(i,n_d[1]-1-j) = (*Ht_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                 }

@@ -187,7 +187,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // }
         // std::cout << "]" << std::endl;
         // Y-direction
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             kappa_y_p[j] = 1. ;
             sigma_y_p[j] = 0. ;
         }
@@ -198,7 +198,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         length_y_pml = (ncells_pml_domain-startpml+0.5)*dy ;
         length_x_pml_xmax = (ncells_pml_max[0]+0.5)*dx ;
         length_x_pml_xmin = (ncells_pml_min[0]+0.5)*dx ;
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. ;
             sigma_x_p[i] = 0. ;
             alpha_x_p[i] = 0. ;

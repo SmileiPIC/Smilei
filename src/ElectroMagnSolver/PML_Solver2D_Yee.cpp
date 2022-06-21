@@ -133,12 +133,12 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             sigma_x_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( int i=startpml; i<nx_p ; i++ ) {
+        for ( unsigned int i=startpml; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
             sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
         }
         // Y-direction
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             kappa_y_p[j] = 1. ;
             sigma_y_p[j] = 0. ;
         }
@@ -156,12 +156,12 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             sigma_x_d[i] = 0. ;
         }
         // Params for other cells (PML Media) when j>=4
-        for ( int i=startpml+1 ; i<nx_d ; i++ ) {
+        for ( unsigned int i=startpml+1 ; i<nx_d ; i++ ) {
             kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml-0.5)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
             sigma_x_d[i] = sigma_x_max * pow( (i-startpml-0.5)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
         }
         // Y-direction
-        for ( int j=0 ; j<ny_d ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_d ; j++ ) {
             kappa_y_d[j] = 1. ;
             sigma_y_d[j] = 0. ;
         }
@@ -180,7 +180,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         length_x_pml_xmin = (ncells_pml_min[0]+0.5)*dx ;
         // Primal grid
         // X-direction
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. ;
             sigma_x_p[i] = 0. ;
         }
@@ -191,7 +191,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
+            for ( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
                 kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
                 sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
             }
@@ -204,7 +204,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             sigma_y_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when j>=3
-        for ( int j=startpml ; j<ny_p ; j++ ) {
+        for ( unsigned int j=startpml ; j<ny_p ; j++ ) {
             kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
             sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
         }
@@ -215,7 +215,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         // Dual grid
         // X-direction
-        for ( int i=0 ; i<nx_d ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_d ; i++ ) {
             kappa_x_d[i] = 1. ;
             sigma_x_d[i] = 0. ;
         }
@@ -226,7 +226,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nx_p-1)-(ncells_pml_max[0]-1)+1 ; i<nx_d ; i++ ) {
+            for ( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1)+1 ; i<nx_d ; i++ ) {
                 kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
                 sigma_x_d[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
             }
@@ -239,7 +239,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             sigma_y_d[j] = 0. ;
         }
         // Params for other cells (PML Media) when j>=4
-        for ( int j=startpml+1 ; j<ny_d ; j++ ) {
+        for ( unsigned int j=startpml+1 ; j<ny_d ; j++ ) {
             kappa_y_d[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml-0.5)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
             sigma_y_d[j] = sigma_y_max * pow( (j-startpml-0.5)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
         }
@@ -251,7 +251,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
     }
 
     if ((min_or_max==0)&&(iDim==0)){
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             c1_p_zfield[i] = ( 2.*kappa_x_p[(nx_p-1)-i] - dt*sigma_x_p[(nx_p-1)-i] ) / ( 2.*kappa_x_p[(nx_p-1)-i] + dt*sigma_x_p[(nx_p-1)-i] ) ;
             c2_p_zfield[i] = ( 2*dt ) / ( 2.*kappa_x_p[(nx_p-1)-i] + dt*sigma_x_p[(nx_p-1)-i] ) ;
             c3_p_yfield[i] = ( 2.*kappa_x_p[(nx_p-1)-i] - dt*sigma_x_p[(nx_p-1)-i] ) / ( 2.*kappa_x_p[(nx_p-1)-i] + dt*sigma_x_p[(nx_p-1)-i] ) ;
@@ -260,7 +260,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             c6_p_xfield[i] = ( 2.*kappa_x_p[(nx_p-1)-i] - dt*sigma_x_p[(nx_p-1)-i] ) ;
         }
 
-        for ( int i=0 ; i<nx_d ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_d ; i++ ) {
             c1_d_zfield[i] = ( 2.*kappa_x_d[(nx_d-1)-i] - dt*sigma_x_d[(nx_d-1)-i] ) / ( 2.*kappa_x_d[(nx_d-1)-i] + dt*sigma_x_d[(nx_d-1)-i] ) ;
             c2_d_zfield[i] = ( 2*dt ) / ( 2.*kappa_x_d[(nx_d-1)-i] + dt*sigma_x_d[(nx_d-1)-i] ) ;
             c3_d_yfield[i] = ( 2.*kappa_x_d[(nx_d-1)-i] - dt*sigma_x_d[(nx_d-1)-i] ) / ( 2.*kappa_x_d[(nx_d-1)-i] + dt*sigma_x_d[(nx_d-1)-i] ) ;
@@ -270,7 +270,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
     }
     else {
-        for ( int i=0 ; i<nx_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_p ; i++ ) {
             c1_p_zfield[i] = ( 2.*kappa_x_p[i] - dt*sigma_x_p[i] ) / ( 2.*kappa_x_p[i] + dt*sigma_x_p[i] ) ;
             c2_p_zfield[i] = ( 2*dt ) / ( 2.*kappa_x_p[i] + dt*sigma_x_p[i] ) ;
             c3_p_yfield[i] = ( 2.*kappa_x_p[i] - dt*sigma_x_p[i] ) / ( 2.*kappa_x_p[i] + dt*sigma_x_p[i] ) ;
@@ -279,7 +279,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             c6_p_xfield[i] = ( 2.*kappa_x_p[i] - dt*sigma_x_p[i] ) ;
         }
 
-        for ( int i=0 ; i<nx_d ; i++ ) {
+        for ( unsigned int i=0 ; i<nx_d ; i++ ) {
             c1_d_zfield[i] = ( 2.*kappa_x_d[i] - dt*sigma_x_d[i] ) / ( 2.*kappa_x_d[i] + dt*sigma_x_d[i] ) ;
             c2_d_zfield[i] = ( 2*dt ) / ( 2.*kappa_x_d[i] + dt*sigma_x_d[i] ) ;
             c3_d_yfield[i] = ( 2.*kappa_x_d[i] - dt*sigma_x_d[i] ) / ( 2.*kappa_x_d[i] + dt*sigma_x_d[i] ) ;
@@ -290,7 +290,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
     } // End X
 
     if (min_or_max==0){
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             c1_p_xfield[j] = ( 2.*kappa_y_p[(ny_p-1)-j] - dt*sigma_y_p[(ny_p-1)-j] ) / ( 2.*kappa_y_p[(ny_p-1)-j] + dt*sigma_y_p[(ny_p-1)-j] ) ;
             c2_p_xfield[j] = ( 2*dt ) / ( 2.*kappa_y_p[(ny_p-1)-j] + dt*sigma_y_p[(ny_p-1)-j] ) ;
             c3_p_zfield[j] = ( 2.*kappa_y_p[(ny_p-1)-j] - dt*sigma_y_p[(ny_p-1)-j] ) / ( 2.*kappa_y_p[(ny_p-1)-j] + dt*sigma_y_p[(ny_p-1)-j] ) ;
@@ -299,7 +299,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             c6_p_yfield[j] = ( 2.*kappa_y_p[(ny_p-1)-j] - dt*sigma_y_p[(ny_p-1)-j] ) ;
         }
 
-        for ( int j=0 ; j<ny_d ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_d ; j++ ) {
             c1_d_xfield[j] = ( 2.*kappa_y_d[(ny_d-1)-j] - dt*sigma_y_d[(ny_d-1)-j] ) / ( 2.*kappa_y_d[(ny_d-1)-j] + dt*sigma_y_d[(ny_d-1)-j] ) ;
             c2_d_xfield[j] = ( 2*dt ) / ( 2.*kappa_y_d[(ny_d-1)-j] + dt*sigma_y_d[(ny_d-1)-j] ) ;
             c3_d_zfield[j] = ( 2.*kappa_y_d[(ny_d-1)-j] - dt*sigma_y_d[(ny_d-1)-j] ) / ( 2.*kappa_y_d[(ny_d-1)-j] + dt*sigma_y_d[(ny_d-1)-j] ) ;
@@ -309,7 +309,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
     }
     else if (min_or_max==1){
-        for ( int j=0 ; j<ny_p ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
             c1_p_xfield[j] = ( 2.*kappa_y_p[j] - dt*sigma_y_p[j] ) / ( 2.*kappa_y_p[j] + dt*sigma_y_p[j] ) ;
             c2_p_xfield[j] = ( 2*dt ) / ( 2.*kappa_y_p[j] + dt*sigma_y_p[j] ) ;
             c3_p_zfield[j] = ( 2.*kappa_y_p[j] - dt*sigma_y_p[j] ) / ( 2.*kappa_y_p[j] + dt*sigma_y_p[j] ) ;
@@ -318,7 +318,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             c6_p_yfield[j] = ( 2.*kappa_y_p[j] - dt*sigma_y_p[j] ) ;
         }
 
-        for ( int j=0 ; j<ny_d ; j++ ) {
+        for ( unsigned int j=0 ; j<ny_d ; j++ ) {
             c1_d_xfield[j] = ( 2.*kappa_y_d[j] - dt*sigma_y_d[j] ) / ( 2.*kappa_y_d[j] + dt*sigma_y_d[j] ) ;
             c2_d_xfield[j] = ( 2*dt ) / ( 2.*kappa_y_d[j] + dt*sigma_y_d[j] ) ;
             c3_d_zfield[j] = ( 2.*kappa_y_d[j] - dt*sigma_y_d[j] ) / ( 2.*kappa_y_d[j] + dt*sigma_y_d[j] ) ;
@@ -368,7 +368,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
     } // End Z
 }
 
-void PML_Solver2D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_Solver2D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBC2D_PML* pml_fields = static_cast<ElectroMagnBC2D_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     Field2D* Ex_pml = NULL;
@@ -508,7 +508,7 @@ void PML_Solver2D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_
     }
 }
 
-void PML_Solver2D_Yee::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_Solver2D_Yee::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBC2D_PML* pml_fields = static_cast<ElectroMagnBC2D_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     Field2D* Ex_pml = NULL;
