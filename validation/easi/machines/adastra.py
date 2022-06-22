@@ -107,7 +107,7 @@ LaunchSRunPatProfile() {{
     # Assuming "$1" is an executable
 
     # GPU profiling
-    pat_build -u -g hip,io,mpi -w -f $1 -o instrumented_executable
+    pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
 
     # CPU profiling
     # export PAT_RT_SAMPLING_INTERVAL=1000; # 1ms interval
