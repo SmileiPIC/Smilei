@@ -39,6 +39,7 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params)
     alpha_y =  alpha;
     alpha_x =  alpha;
 
+    // Use in order to test extended stencil without PML coefficient
     // Ax    = alpha_x*dt/dx;
     // Ay    = alpha_y*dt/dy;
     // Bx    = beta_xy*dt/dx;
@@ -46,11 +47,12 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params)
     // Dx    = delta_x*dt/dy;
     // Dy    = delta_y*dt/dy;
 
+    // Use in order to test extended stencil with PML coefficient
     Ax    = alpha_x/dx;
     Ay    = alpha_y/dy;
     Bx    = beta_xy/dx;
     By    = beta_yx/dy;
-    Dx    = delta_x/dy;
+    Dx    = delta_x/dx;
     Dy    = delta_y/dy;
 
     //Define here the value of coefficient kappa_x_max, power_kappa_x, sigma_x_max, power_sigma_x
@@ -586,8 +588,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *Bx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j )
                     //                       - dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i, j-1 ) )/dy;
+                    // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
                     // NS FDTD
-                    // (*Bx2D)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
+                    // (*Bx_pml)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
                     //       + By * (( *Ez_pml )(i+1,j-1)-( *Ez_pml )(i+1,j) + ( *Ez_pml )(i-1,j-1)-( *Ez_pml )(i-1,j))
                     //       + Dy * (( *Ez_pml )(i,j-2)-( *Ez_pml )(i,j+1));
                     // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
@@ -611,8 +614,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *By_pml )( i, j ) = + 1 * ( *By_pml )( i, j )
                     //                       + dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i-1, j ) )/dx;
+                    // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
                     // NS FDTD
-                    // (*By2D)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
+                    // (*By_pml)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
                     //       + Bx * (( *Ez_pml )(i,j+1)-( *Ez_pml )(i-1,j+1) + ( *Ez_pml )(i,j-1)-( *Ez_pml )(i-1,j-1))
                     //       + Dx * (( *Ez_pml )(i+1,j) - ( *Ez_pml )(i-2,j));
                     // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
@@ -636,8 +640,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *Bz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j )
                     //                       + dt * ( ( ( *Ex_pml )( i, j ) - ( *Ex_pml )( i, j-1 ) )/dy - ( ( *Ey_pml )( i, j ) - ( *Ey_pml )( i-1, j ) )/dx );
+                    // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
                     // NS FDTD
-                    // (*Bz2D)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
+                    // (*Bz_pml)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
                     //             + By * (( *Ex_pml )(i+1,j)-( *Ex_pml )(i+1,j-1) + ( *Ex_pml )(i-1,j)-( *Ex_pml )(i-1,j-1))
                     //             + Dy * (( *Ex_pml )(i,j+1)-( *Ex_pml )(i,j-2))
                     //             + Ax * (( *Ey_pml )(i-1,j)-( *Ey_pml )(i,j))
@@ -670,6 +675,11 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *Bx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j )
                     //                       - dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i, j-1 ) )/dy;
                     // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
+                    // NS FDTD
+                    // (*Bx_pml)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
+                    //       + By * (( *Ez_pml )(i+1,j-1)-( *Ez_pml )(i+1,j) + ( *Ez_pml )(i-1,j-1)-( *Ez_pml )(i-1,j))
+                    //       + Dy * (( *Ez_pml )(i,j-2)-( *Ez_pml )(i,j+1));
+                    // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
                     // PML FDTD
                     Bx_pml_old = 1*( *Bx_pml )( i, j ) ;
                     ( *Bx_pml )( i, j ) = + c1_d_xfield[j] * ( *Bx_pml )( i, j )
@@ -691,7 +701,12 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *By_pml )( i, j ) = + 1 * ( *By_pml )( i, j )
                     //                       + dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i-1, j ) )/dx;
                     // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
-                    // PML FDTD
+                    // NS FDTD
+                    // (*By_pml)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
+                    //       + Bx * (( *Ez_pml )(i,j+1)-( *Ez_pml )(i-1,j+1) + ( *Ez_pml )(i,j-1)-( *Ez_pml )(i-1,j-1))
+                    //       + Dx * (( *Ez_pml )(i+1,j) - ( *Ez_pml )(i-2,j));
+                    // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
+                    // // PML FDTD
                     By_pml_old = 1*( *By_pml )( i, j ) ;
                     ( *By_pml )( i, j ) = + c1_d_yfield[k] * ( *By_pml )( i, j )
                                           + c2_d_yfield[k] * (
@@ -712,7 +727,15 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *Bz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j )
                     //                       + dt * ( ( ( *Ex_pml )( i, j ) - ( *Ex_pml )( i, j-1 ) )/dy - ( ( *Ey_pml )( i, j ) - ( *Ey_pml )( i-1, j ) )/dx );
                     // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
-                    // PML FDTD
+                    // NS FDTD
+                    // (*Bz_pml)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
+                    //             + By * (( *Ex_pml )(i+1,j)-( *Ex_pml )(i+1,j-1) + ( *Ex_pml )(i-1,j)-( *Ex_pml )(i-1,j-1))
+                    //             + Dy * (( *Ex_pml )(i,j+1)-( *Ex_pml )(i,j-2))
+                    //             + Ax * (( *Ey_pml )(i-1,j)-( *Ey_pml )(i,j))
+                    //             + Bx * (( *Ey_pml )(i-1,j+1)-( *Ey_pml )(i,j+1) + ( *Ey_pml )(i-1,j-1)-( *Ey_pml )(i,j-1))
+                    //             + Dx * (( *Ey_pml )(i-2,j)-( *Ey_pml )(i+1,j));
+                    // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
+                    // // PML FDTD
                     Bz_pml_old = 1*( *Bz_pml )( i, j ) ;
                     ( *Bz_pml )( i, j ) = + c1_d_zfield[i] * ( *Bz_pml )( i, j )
                                           + c2_d_zfield[i] * (
