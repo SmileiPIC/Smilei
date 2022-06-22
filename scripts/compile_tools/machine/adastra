@@ -18,6 +18,8 @@
 # module load PrgEnv-cray/8.1.0 cce/13.0.1
 # module load cray-mpich/8.1.13
 # module load rocm/4.5.0
+# # module load craype-accel-amd-gfx908 # MI100
+# module load craype-accel-amd-gfx90a # MI250X
 # module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
 # module load perftools-base/21.12.0
 #
@@ -29,9 +31,16 @@
 ################################################################################
 
 # SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
-SMILEICXX := CC
+SMILEICXX := $(CC)
 SMILEICXX.DEPS := $(SMILEICXX)
+# THRUSTCXX := hipcc
 THRUSTCXX := $(SMILEICXX)
+
+################################################################################
+# Feature flags
+################################################################################
+
+ADASTRA_FEATURE_FLAGS := -std=c++14
 
 ################################################################################
 # Warning flags
@@ -44,9 +53,13 @@ ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown
 # Optimization flags
 ################################################################################
 
-# ADASTRA_OPTIMIZATION_LTO_FLAGS   += -flto=thin
-# ADASTRA_OPTIMIZATION_OTHER_FLAGS += -mcmodel=large
-ADASTRA_OPTIMIZATION_FLAGS       := -Ofast $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
+# TODO(Etienne M): Thin LTO and mcmodel lead to an "unclosed quote" linker script error: https://reviews.llvm.org/D26795
+# ADASTRA_OPTIMIZATION_LTO_FLAGS   := -flto=thin
+# ADASTRA_OPTIMIZATION_OTHER_FLAGS := -mcmodel=large
+# -march=native is not required, the PrgEnv will set the appropriate CPU arch flags
+ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
+# More FP optimizations at the cost of non strict IEEE compliance
+# ADASTRA_OPTIMIZATION_FLAGS       += -ffast-math 
 
 ################################################################################
 # Debug flags
@@ -72,14 +85,18 @@ ifneq (,$(call parse_config,gpu_amd))
 	ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
     # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
 
+    # TODO(Etienne M): This should be disabled right ?
+	# ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
+
     # When using OMP
 	ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP
     ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # When using hip/cuda to build kernels
+    # When you ask CCE to drive the hip compilation
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_TARGET) # Same behaviour (a priori) than offload-arch
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
+	# When you use hipcc directly
+	# ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 endif
 
 ################################################################################
@@ -101,7 +118,7 @@ ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -
 # ADASTRA_MPI_gfx90a_LIB := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
 # ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_MPI_gfx908_LIB) $(ADASTRA_MPI_gfx90a_LIB)
 
-# ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
+# ADASTRA_HIP := -L$(ROCM_PATH)/lib -lamdhip64
 
 ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 
@@ -112,6 +129,7 @@ ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 # Inherit of all the typical *.cpp compilation options
 # ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesnt work as expected
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_DEBUG_FLAGS)
@@ -121,6 +139,7 @@ ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_INCLUDES)
 
+CXXFLAGS += $(ADASTRA_FEATURE_FLAGS)
 CXXFLAGS += $(ADASTRA_WARNING_FLAGS)
 CXXFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
 CXXFLAGS += $(ADASTRA_DEBUG_FLAGS)
@@ -133,3 +152,7 @@ LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
 LDFLAGS += $(ADASTRA_LIBS)
 # We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
 LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
+# Without Ofast/O3 at link time, the kernel'll not be optimized ~~. 
+# Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
+# -v to dump omp kernel info (register alloc/spill etc.)
+LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v

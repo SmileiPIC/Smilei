@@ -164,6 +164,15 @@ namespace smilei {
                 ///                                      else return nullptr
                 /// else return a_pointer (untouched)
                 ///
+                /// Note:
+                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this 
+                /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
+                ///
+                /// #if defined( __NVCOMPILER )
+                ///     No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
+                ///     https://forums.developer.nvidia.com/t/nvc-v21-3-omp-target-is-present-crashes-the-program/215585
+                /// #else
+                ///
                 template <typename T>
                 static T* GetDevicePointer( T* a_pointer );
 
@@ -439,6 +448,9 @@ namespace smilei {
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
     #pragma acc exit data delete( a_pointer [0:a_size] )
+#else
+                SMILEI_UNUSED( a_pointer );
+                SMILEI_UNUSED( a_size );
 #endif
             }
 
@@ -469,6 +481,9 @@ namespace smilei {
                 {
                     a_device_pointer = a_host_pointer;
                 }
+
+                SMILEI_ASSERT( a_device_pointer != nullptr );
+
                 return a_device_pointer;
 #elif defined( _GPU )
                 return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );
@@ -478,9 +493,10 @@ namespace smilei {
             }
 
             template <typename T>
-            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
+            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_host_pointer )
             {
-                return GetDevicePointer( a_pointer ) != nullptr;
+                // We could optimize the omp version by only using ::omp_target_is_present()
+                return GetDevicePointer( a_host_pointer ) != nullptr;
             }
 
             template <typename T>

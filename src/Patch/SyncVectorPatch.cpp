@@ -327,13 +327,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int ptsize = gsp[0] * ny_ * nz_;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [0:1], ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target 
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #endif
                 for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
@@ -458,13 +453,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + (gsp[1] * nz_);
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [1:1], nx_, ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse(2)
 #endif
                     for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += ny_*nz_ ) {
@@ -591,13 +581,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                         const int ptsize = ( nx_ * ny_ * nz_ ) - nz_ + gsp[2];
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [2:1], nx_, ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 2 )
 #endif
                         for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += nz_ ) {
@@ -1633,13 +1618,8 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + oversize * nz_ + gsp * nz_;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp, nx_, ny_, nz_, oversize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 2 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {
@@ -1767,13 +1747,8 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + ( ny_ * nz_ ) - nz_ + oversize;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp, nx_, ny_, nz_, oversize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {

@@ -388,14 +388,8 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     const int  fSize     = globalDims_;
     const bool fieldName = name.substr( 0, 1 ) == "B";
 
-    #pragma omp target if( fieldName ) defaultmap( none ) \
-        map( to                                           \
-             : field [0:fSize] )                          \
-            map( from                                     \
-                 : sub [0:subSize] )                      \
-                map( to                                   \
-                     : NX, NY, NZ, ix, iy, iz, dimY, dimZ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target if( fieldName )
+    #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
@@ -445,14 +439,10 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     const int  fSize     = globalDims_;
     const bool fieldName = name.substr( 0, 1 ) == "B";
 
-    #pragma omp target if( fieldName ) defaultmap( none ) \
-        map( to                                           \
-             : sub [0:subSize] )                          \
-            map( tofrom                                   \
-                 : field [0:fSize] )                      \
-                map( to                                   \
-                     : NX, NY, NZ, ix, iy, iz, dimY, dimZ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target if( fieldName ) \
+        map( tofrom                    \
+             : field [0:fSize] )
+    #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
@@ -503,14 +493,10 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const int  fSize     = globalDims_;
     const bool fieldName = name.substr( 0, 1 ) == "J";
 
-    #pragma omp target if( fieldName ) defaultmap( none ) \
-        map( to                                           \
-             : field [0:fSize] )                          \
-            map( from                                     \
-                 : sub [0:subSize] )                      \
-                map( to                                   \
-                     : NX, NY, NZ, ix, iy, iz, dimY, dimZ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target if( fieldName ) \
+        map( to                        \
+             : field [0:fSize] )
+    #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
@@ -561,14 +547,10 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     const int  fSize     = globalDims_;
     const bool fieldName = name.substr( 0, 1 ) == "J";
 
-    #pragma omp target if( fieldName ) defaultmap( none ) \
-        map( to                                           \
-             : sub [0:subSize] )                          \
-            map( tofrom                                   \
-                 : field [0:fSize] )                      \
-                map( to                                   \
-                     : NX, NY, NZ, ix, iy, iz, dimY, dimZ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target if( fieldName ) \
+        map( tofrom                    \
+             : field [0:fSize] )
+    #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;

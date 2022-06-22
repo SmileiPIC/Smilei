@@ -1155,13 +1155,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none ) \
-        map( to                           \
-             : Bx3D [0:sizeofBx] )        \
-            map( tofrom                   \
-                 : Bx3D_m [0:sizeofBx] )  \
-                map( to                   \
-                     : nx_p, ny_d, nz_d )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -1184,13 +1178,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none ) \
-        map( to                           \
-             : By3D [0:sizeofBy] )        \
-            map( tofrom                   \
-                 : By3D_m [0:sizeofBy] )  \
-                map( to                   \
-                     : nx_d, ny_p, nz_d )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -1213,13 +1201,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none ) \
-        map( to                           \
-             : Bz3D [0:sizeofBz] )        \
-            map( tofrom                   \
-                 : Bz3D_m [0:sizeofBz] )  \
-                map( to                   \
-                     : nx_d, ny_d, nz_d, nz_p )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif

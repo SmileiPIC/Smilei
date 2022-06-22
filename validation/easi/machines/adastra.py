@@ -3,7 +3,7 @@ from . import Machine
 
 class MachineAdastra(Machine):
     """
-    As of 17 of march 22, this class, while named Adastra, instead targets the 
+    As of 22/03/17, this class, while named Adastra, instead targets the 
     Adastra porting machines. The real Adastra environment should not change much.
     """
 
@@ -13,8 +13,13 @@ class MachineAdastra(Machine):
 #SBATCH --job-name=smilei_validation
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
+# #SBATCH --ntasks-per-node=8
+#SBATCH --threads-per-core=1
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
+# #SBATCH --gres=gpu:2                           # Number of gpu per node
+# #SBATCH --gpu-bind=closest
+# #SBATCH --distribution=block:block
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
 #SBATCH --time={the_maximum_task_duration}
@@ -34,12 +39,29 @@ echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
 echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 
-# We should need only that to run the rest is loaded by default
+# Build  the environment (delegating this to a script would be better)
+module purge
+module load craype-network-ofi craype-x86-rome libfabric/1.13.1
+module load PrgEnv-cray/8.1.0 cce/13.0.1
+module load cray-mpich/8.1.13
 module load rocm/4.5.0
+module load craype-accel-amd-gfx908 # MI100
+# module load craype-accel-amd-gfx90a # MI250X
+module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
 
 # Info on the node
 rocm-smi
 rocminfo
+
+# MPI to GPU binding
+# #!/bin/bash
+# # The following script could be useful to bind a mpiproc to a given gpu on a given node https://slurm.schedmd.com/sbatch.html
+# # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration
+# # One may check that it works: $ ROCR_VISIBLE_DEVICES=none rocminfo
+# # rocm-smi ignores the env variable
+#
+# export ROCR_VISIBLE_DEVICES=$SLURM_LOCALID
+# exec $*
 
 # Omp tuning
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
@@ -48,13 +70,29 @@ export OMP_SCHEDULE=dynamic
 # optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores
 
+export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
+export CRAY_OMP_CHECK_AFFINITY=TRUE
+
+# MPICH Gpu support
+# export MPICH_ENV_DISPLAY=1
+# export MPICH_GPU_SUPPORT_ENABLED=1
+# export MPICH_GPU_IPC_ENABLED=1
+# export MPICH_ABORT_ON_ERROR=0
+
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
+# export CRAY_ACC_TIME=1
+
+# Amd runtime debug
+# export AMD_LOG_LEVEL=4
 
 LaunchSRun() {{
     module list
 
-    srun $1 ${{@:2}} > {the_output_file} 2>&1
+    srun "$@" > {the_output_file} 2>&1
+    # srun strace "$@" > {the_output_file} 2>&1
+    # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
+    # srun bash -c "$kCmd" > {the_output_file} 2>&1
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
@@ -62,24 +100,41 @@ LaunchSRunPatProfile() {{
     module load perftools-base/21.12.0
     module load perftools
 
+    # # Enable extra verbose tracing, can be very useful, produces a lot of data
+    # export PAT_RT_SUMMARY=0
     export PAT_RT_MPI_THREAD_REQUIRED=3
 
     # Assuming "$1" is an executable
-    pat_build -g hip,io,mpi,cuda -w -f $1 -o instrumented_executable
+
+    # GPU profiling
+    pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
+
+    # CPU profiling
+    # export PAT_RT_SAMPLING_INTERVAL=1000; # 1ms interval
+    # export PAT_RT_SAMPLING_MODE=3
+    # export PAT_RT_EXPERIMENT=samp_cs_time
+    # # export PAT_RT_PERFCTR=default # PAPI_get_component_info segfault in rsmi_func_iter_value_get
+    # # -u make the program crash (abi break) or silently corrupts it state
+    # pat_build -g mpi,syscall,io,omp,hdf5 -w -f $1 -o instrumented_executable
 
     LaunchSRun instrumented_executable ${{@:2}}
 }}
 
 # Try to use this profiling on only one GPU
 LaunchRocmProfile() {{
-    # Kernel stats
-    echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
-    LaunchSRun rocprof -i hw_counters.txt      $1 ${{@:2}}
-    #            rocprof -i hw_counters.txt srun $1 ${{@:2}} > {the_output_file} 2>&1
+    # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
+    # LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
-    # hip RT tracing
-    # LaunchSRun rocprof --hip-trace --trace-period 30s:30s:1m      $1 ${{@:2}}
-    #            rocprof --hip-trace --trace-period 30s:30s:1m srun $1 ${{@:2}} > {the_output_file} 2>&1
+    # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completly broken)
+    # echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
+    # LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+
+    # HIP RT tracing + consolidated kernel stats
+    # LaunchSRun bash -c "rocprof --hip-trace --stats -o hip_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # ROCm RT (low level) tracing + consolidated kernel stats
+    # LaunchSRun bash -c "rocprof --hsa-trace --stats -o hsa_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # HIP/HSA tracing + consolidated kernel stats
+    LaunchSRun bash -c "rocprof --sys-trace --stats -o sys_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
@@ -108,7 +163,7 @@ exit $kRETVAL
         self.options = options
 
         # Use the config flag "gpu_amd" to compile for GPU or remove it for CPU only
-        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + '" -j'
+        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -j'
         self.COMPILE_COMMAND = the_make_command + ' > ' + self.smilei_path.COMPILE_OUT + ' 2> '+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 
