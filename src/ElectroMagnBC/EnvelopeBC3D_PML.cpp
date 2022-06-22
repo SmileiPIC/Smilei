@@ -138,7 +138,7 @@ EnvelopeBC3D_PML::EnvelopeBC3D_PML( Params &params, Patch *patch, unsigned int i
         }
 
         std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( int i=0 ; i<params.nDim_field ; i++ ) {
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
             dimPrim[i] = n_space[i]+1+2*oversize[i];
         }
         dimPrim[iDim] = ncells_pml_domain;
@@ -264,8 +264,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field PML <- Domain
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j,k) = (*A_n_domain)(i,j,k);
                 }
             }
@@ -273,8 +273,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the xmin border
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*Chi_)(i,j,k) = (*Chi_domain)(domain_oversize_x+1,j,k);
                 }
             }
@@ -286,8 +286,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_np1_domain)(i,j,k) = (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j,k);
                     (*A_n_domain)(i,j,k) = (*A_nm1_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j,k);
                     (*Phi_domain)(i,j,k) = 0.5*ellipticity_factor*std::abs(  (*A_np1_domain)(i,j,k) )*std::abs(  (*A_np1_domain)(i,j,k) );
@@ -300,8 +300,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field Domain -> PML
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_n_)(domain_oversize_x+nsolver/2-i,j,k) = (*A_n_domain)(nx_p-i,j,k);
                 }
             }
@@ -309,8 +309,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the xmax border
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*Chi_)(i,j,k) = (*Chi_domain)(nx_p-2-domain_oversize_x,j,k);
                 }
             }
@@ -322,8 +322,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange Domain -> PML
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<ny_p ; j++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_np1_domain)(nx_p-1-i,j,k) = (*A_n_)(domain_oversize_x+nsolver/2-1-i,j,k);
                     (*A_n_domain)(nx_p-1-i,j,k) = (*A_nm1_)(domain_oversize_x+nsolver/2-1-i,j,k);
                     (*Phi_domain)(nx_p-1-i,j,k) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(nx_p-1-i,j,k) )*std::abs( (*A_np1_domain)(nx_p-1-i,j,k) ) ;
@@ -339,25 +339,21 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField3D* A_np1_pml_xmin = NULL;
         cField3D* A_n_pml_xmin   = NULL;
-        Field3D*  Phi_pml_xmin   = NULL;
         Field3D*  Chi_pml_xmin   = NULL;
 
         cField3D* A_np1_pml_xmax = NULL;
         cField3D* A_n_pml_xmax   = NULL;
-        Field3D*  Phi_pml_xmax   = NULL;
         Field3D*  Chi_pml_xmax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
@@ -367,14 +363,14 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
                         int idx_start = 0;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k) = (*A_n_pml_xmin)(i,j,k);
                         }
                     }
                 }
             }
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int k=0 ; k<nz_p ; k++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     int idx_start = ncells_pml_xmin;
                     (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k) = (*A_n_domain)(i,j,k);
                 }
@@ -383,7 +379,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
                         int idx_start = (ypml_size_in_x-1)-(ncells_pml_xmax-1) ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,j,k);
                         }
                     }
@@ -393,9 +389,9 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the ymin border
         for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
-                for ( int k=0 ; k<nz_p ; k++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*Chi_)(idx_start+i,j,k) = (*Chi_domain)(i,domain_oversize_y+1,k);
                 }
             }
@@ -403,7 +399,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_xmin+domain_oversize_x ; i++ ) {
                         int idx_start = 0 ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*Chi_)(idx_start+i,j,k) = (*Chi_pml_xmin)(i,domain_oversize_y+1,k);
                         }
                     }
@@ -413,7 +409,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax+domain_oversize_x ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_xmax-domain_oversize_x ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*Chi_)(idx_start+i,j,k) = (*Chi_pml_xmax)(i,domain_oversize_y+1,k);
                         }
                     }
@@ -429,9 +425,9 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=0 ; i<nx_p ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
                 int idx_start = ncells_pml_xmin;
-                for ( int k=0 ; k<nz_p ; k++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_np1_domain)(i,j,k) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                     (*A_n_domain)(i,j,k) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                     (*Phi_domain)(i,j,k) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,j,k) )*std::abs( (*A_np1_domain)(i,j,k) );
@@ -446,7 +442,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
                         int idx_start = 0;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_np1_pml_xmin)(i,j,k) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                             (*A_n_pml_xmin)(i,j,k) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                         }
@@ -463,7 +459,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_domain_xmax ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_np1_pml_xmax  )(i,j,k) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                             (*A_n_pml_xmax  )(i,j,k) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j,k);
                         }
@@ -480,25 +476,21 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField3D* A_np1_pml_xmin = NULL;
         cField3D* A_n_pml_xmin   = NULL;
-        Field3D*  Phi_pml_xmin   = NULL;
         Field3D*  Chi_pml_xmin   = NULL;
 
         cField3D* A_np1_pml_xmax = NULL;
         cField3D* A_n_pml_xmax   = NULL;
-        Field3D*  Phi_pml_xmax   = NULL;
         Field3D*  Chi_pml_xmax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
@@ -512,15 +504,15 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
                         int idx_start = 0;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j,k) = (*A_n_pml_xmin)(i,ny_p-j,k);
                         }
                     }
                 }
             }
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
-                for ( int k=0 ; k<nz_p ; k++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j,k) = (*A_n_domain)(i,ny_p-j,k);
                 }
             }
@@ -528,7 +520,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
                         int idx_start = (ypml_size_in_x-1)-(ncells_pml_xmax-1) ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j,k) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,ny_p-j,k);
                         }
                     }
@@ -538,9 +530,9 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the ymax border
         for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
-                for ( int k=0 ; k<nz_p ; k++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*Chi_)(idx_start+i,j,k) = (*Chi_domain)(i,ny_p-2-domain_oversize_y,k);
                 }
             }
@@ -548,7 +540,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_xmin+domain_oversize_x ; i++ ) {
                         int idx_start = 0 ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*Chi_)(idx_start+i,j,k) = (*Chi_pml_xmin)(i,ny_p-2-domain_oversize_y,k);
                         }
                     }
@@ -558,7 +550,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_xmax+domain_oversize_x ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_xmax-domain_oversize_x ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*Chi_)(idx_start+i,j,k) = (*Chi_pml_xmax)(i,ny_p-2-domain_oversize_y,k);
                         }
                     }
@@ -572,9 +564,9 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
-                for ( int k=0 ; k<nz_p ; k++ ) {
+                for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                     (*A_np1_domain)(i,ny_p-1-j,k) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                     (*A_n_domain)(i,ny_p-1-j,k) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                     (*Phi_domain)(i,ny_p-1-j,k) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,ny_p-1-j,k) )*std::abs( (*A_np1_domain)(i,ny_p-1-j,k) );
@@ -590,7 +582,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmin != 0){
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
                         int idx_start = 0;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_np1_pml_xmin)(i,ny_p-1-j,k) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                             (*A_n_pml_xmin)(i,ny_p-1-j,k) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                         }
@@ -607,7 +599,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_xmax != 0){
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
                         int idx_start = ypml_size_in_x-ncells_pml_domain_xmax ;
-                        for ( int k=0 ; k<nz_p ; k++ ) {
+                        for ( unsigned int k=0 ; k<nz_p ; k++ ) {
                             (*A_np1_pml_xmax  )(i,ny_p-1-j,k) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                             (*A_n_pml_xmax  )(i,ny_p-1-j,k) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j,k);
                         }
@@ -626,49 +618,41 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField3D* A_np1_pml_xmin = NULL;
         cField3D* A_n_pml_xmin   = NULL;
-        Field3D*  Phi_pml_xmin   = NULL;
         Field3D*  Chi_pml_xmin   = NULL;
 
         cField3D* A_np1_pml_xmax = NULL;
         cField3D* A_n_pml_xmax   = NULL;
-        Field3D*  Phi_pml_xmax   = NULL;
         Field3D*  Chi_pml_xmax   = NULL;
 
         cField3D* A_np1_pml_ymin = NULL;
         cField3D* A_n_pml_ymin   = NULL;
-        Field3D*  Phi_pml_ymin   = NULL;
         Field3D*  Chi_pml_ymin   = NULL;
 
         cField3D* A_np1_pml_ymax = NULL;
         cField3D* A_n_pml_ymax   = NULL;
-        Field3D*  Phi_pml_ymax   = NULL;
         Field3D*  Chi_pml_ymax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
         if(ncells_pml_ymin != 0){
             A_np1_pml_ymin = pml_fields_ymin->A_n_;
             A_n_pml_ymin   = pml_fields_ymin->A_nm1_;
-            Phi_pml_ymin   = pml_fields_ymin->Phi_;
             Chi_pml_ymin   = pml_fields_ymin->Chi_;
         }
 
         if(ncells_pml_ymax != 0){
             A_np1_pml_ymax = pml_fields_ymax->A_n_;
             A_n_pml_ymax   = pml_fields_ymax->A_nm1_;
-            Phi_pml_ymax   = pml_fields_ymax->Phi_;
             Chi_pml_ymax   = pml_fields_ymax->Chi_;
         }
 
@@ -679,7 +663,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k) = (*A_n_pml_xmin)(i,j,k);
                         }
                     }
@@ -688,7 +672,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmin()) {
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymin ; j++ ) {
                             (*A_n_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k) = (*A_n_pml_ymin)(i,j,k);
                         }
@@ -697,8 +681,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             }
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k) = (*A_n_domain)(i,j,k);
                 }
             }
@@ -707,7 +691,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = (zpml_size_in_x-1)-(ncells_pml_xmax-1) ;
                     int jdx_start = ncells_pml_ymin ;
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,j,k);
                         }
                     }
@@ -716,7 +700,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmax()) {
                 if(ncells_pml_ymax != 0){
                     int jdx_start = (zpml_size_in_y-1)-(ncells_pml_ymax-1) ;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymax ; j++ ) {
                             (*A_n_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k) = (*A_n_pml_ymax)(i,domain_oversize_y+nsolver/2+j,k);
                         }
@@ -729,8 +713,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         for ( int k=0 ; k<ncells_pml_domain ; k++ ) {
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*Chi_)(idx_start+i,jdx_start+j,k) = 1*(*Chi_domain)(i,j,domain_oversize_z+1);
                 }
             }
@@ -739,7 +723,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_xmin+domain_oversize_x ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*Chi_)(idx_start+i,jdx_start+j,k) = (*Chi_pml_xmin)(i,j,domain_oversize_z+1);
                         }
                     }
@@ -750,7 +734,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = zpml_size_in_x-ncells_pml_xmax-domain_oversize_x ;
                     int jdx_start = ncells_pml_ymin ;
                     for ( int i=0 ; i<ncells_pml_xmax+domain_oversize_x ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*Chi_)(idx_start+i,jdx_start+j,k) = (*Chi_pml_xmax)(i,j,domain_oversize_z+1);
                         }
                     }
@@ -759,7 +743,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmin()) {
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymin ; j++ ) {
                             (*Chi_)(i,jdx_start+j,k) = (*Chi_pml_ymin)(i,j,domain_oversize_z+1);
                         }
@@ -769,7 +753,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmax()) {
                 if(ncells_pml_ymax != 0){
                     int jdx_start = zpml_size_in_y-ncells_pml_ymax-domain_oversize_y ;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymax+domain_oversize_y ; j++ ) {
                             (*Chi_)(i,jdx_start+j,k) = (*Chi_pml_ymax)(i,j,domain_oversize_z+1);
                         }
@@ -786,8 +770,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         for (int k=0 ; k < nsolver/2 ; k++){
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*A_np1_domain)(i,j,k) = (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                     (*A_n_domain)(i,j,k) = (*A_nm1_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                     (*Phi_domain)(i,j,k) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,j,k) )*std::abs( (*A_np1_domain)(i,j,k) );
@@ -804,7 +788,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_np1_pml_xmin)(i,j,k) = (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                             (*A_n_pml_xmin)(i,j,k) = (*A_nm1_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                         }
@@ -822,7 +806,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = zpml_size_in_x-ncells_pml_domain_xmax ;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_np1_pml_xmax  )(i,j,k) = (*A_n_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                             (*A_n_pml_xmax  )(i,j,k) = (*A_nm1_)(idx_start+i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                         }
@@ -836,7 +820,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
                     for ( int j=0 ; j<ncells_pml_domain_ymin ; j++ ) {
-                        for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                        for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                             (*A_np1_pml_ymin)(i,j,k) = (*A_n_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                             (*A_n_pml_ymin)(i,j,k) = (*A_nm1_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                         }
@@ -850,7 +834,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_ymax != 0){
                     int jdx_start = zpml_size_in_y-ncells_pml_domain_ymax ;
                     for ( int j=0 ; j<ncells_pml_domain_ymax ; j++ ) {
-                        for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                        for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                             (*A_np1_pml_ymax)(i,j,k) = (*A_n_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                             (*A_n_pml_ymax)(i,j,k) = (*A_nm1_)(i,jdx_start+j,ncells_pml_domain-domain_oversize_z-nsolver/2+k);
                         }
@@ -869,49 +853,41 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField3D* A_np1_pml_xmin = NULL;
         cField3D* A_n_pml_xmin   = NULL;
-        Field3D*  Phi_pml_xmin   = NULL;
         Field3D*  Chi_pml_xmin   = NULL;
 
         cField3D* A_np1_pml_xmax = NULL;
         cField3D* A_n_pml_xmax   = NULL;
-        Field3D*  Phi_pml_xmax   = NULL;
         Field3D*  Chi_pml_xmax   = NULL;
 
         cField3D* A_np1_pml_ymin = NULL;
         cField3D* A_n_pml_ymin   = NULL;
-        Field3D*  Phi_pml_ymin   = NULL;
         Field3D*  Chi_pml_ymin   = NULL;
 
         cField3D* A_np1_pml_ymax = NULL;
         cField3D* A_n_pml_ymax   = NULL;
-        Field3D*  Phi_pml_ymax   = NULL;
         Field3D*  Chi_pml_ymax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
         if(ncells_pml_ymin != 0){
             A_np1_pml_ymin = pml_fields_ymin->A_n_;
             A_n_pml_ymin   = pml_fields_ymin->A_nm1_;
-            Phi_pml_ymin   = pml_fields_ymin->Phi_;
             Chi_pml_ymin   = pml_fields_ymin->Chi_;
         }
 
         if(ncells_pml_ymax != 0){
             A_np1_pml_ymax = pml_fields_ymax->A_n_;
             A_n_pml_ymax   = pml_fields_ymax->A_nm1_;
-            Phi_pml_ymax   = pml_fields_ymax->Phi_;
             Chi_pml_ymax   = pml_fields_ymax->Chi_;
         }
 
@@ -926,7 +902,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_xmin ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-k) = (*A_n_pml_xmin)(i,j,nz_p-k);
                         }
                     }
@@ -935,7 +911,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmin()) {
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymin ; j++ ) {
                             (*A_n_)(i,jdx_start+j,domain_oversize_z+nsolver/2-k) = (*A_n_pml_ymin)(i,j,nz_p-k);
                         }
@@ -944,8 +920,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             }
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-k) = (*A_n_domain)(i,j,nz_p-k);
                 }
             }
@@ -954,7 +930,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = (zpml_size_in_x-1)-(ncells_pml_xmax-1) ;
                     int jdx_start = ncells_pml_ymin ;
                     for ( int i=0 ; i<ncells_pml_xmax ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-k) = (*A_n_pml_xmax)(domain_oversize_x+nsolver/2+i,j,nz_p-k);
                         }
                     }
@@ -963,7 +939,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmax()) {
                 if(ncells_pml_ymax != 0){
                     int jdx_start = (zpml_size_in_y-1)-(ncells_pml_ymax-1) ;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymax ; j++ ) {
                             (*A_n_)(i,jdx_start+j,domain_oversize_z+nsolver/2-k) = (*A_n_pml_ymax)(i,domain_oversize_y+nsolver/2+j,nz_p-k);
                         }
@@ -976,8 +952,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         for ( int k=0 ; k<ncells_pml_domain ; k++ ) {
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*Chi_)(idx_start+i,jdx_start+j,k) = 1*(*Chi_domain)(i,j,nz_p-2-domain_oversize_z);
                 }
             }
@@ -986,7 +962,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_xmin+domain_oversize_x ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*Chi_)(idx_start+i,jdx_start+j,k) = (*Chi_pml_xmin)(i,j,nz_p-2-domain_oversize_z);
                         }
                     }
@@ -997,7 +973,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = zpml_size_in_x-ncells_pml_xmax-domain_oversize_x ;
                     int jdx_start = ncells_pml_ymin ;
                     for ( int i=0 ; i<ncells_pml_xmax+domain_oversize_x ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*Chi_)(idx_start+i,jdx_start+j,k) = (*Chi_pml_xmax)(i,j,nz_p-2-domain_oversize_z);
                         }
                     }
@@ -1006,7 +982,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmin()) {
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymin ; j++ ) {
                             (*Chi_)(i,jdx_start+j,k) = (*Chi_pml_ymin)(i,j,nz_p-2-domain_oversize_z);
                         }
@@ -1016,7 +992,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             if (patch->isYmax()) {
                 if(ncells_pml_ymax != 0){
                     int jdx_start = zpml_size_in_y-ncells_pml_ymax-domain_oversize_y ;
-                    for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                    for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                         for ( int j=0 ; j<ncells_pml_ymax+domain_oversize_y ; j++ ) {
                             (*Chi_)(i,jdx_start+j,k) = (*Chi_pml_ymax)(i,j,nz_p-2-domain_oversize_z);
                         }
@@ -1034,8 +1010,8 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             //std::cout << k << std::endl ;
             int idx_start = ncells_pml_xmin;
             int jdx_start = ncells_pml_ymin;
-            for ( int i=0 ; i<nx_p ; i++ ) {
-                for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                     (*A_np1_domain)(i,j,nz_p-1-k) = (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                     (*A_n_domain)(i,j,nz_p-1-k) = (*A_nm1_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                     (*Phi_domain)(i,j,nz_p-1-k) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(i,j,nz_p-1-k) )*std::abs( (*A_np1_domain)(i,j,nz_p-1-k) );
@@ -1056,7 +1032,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = 0;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_domain_xmin ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_np1_pml_xmin)(i,j,nz_p-1-k) = (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                             (*A_n_pml_xmin)(i,j,nz_p-1-k) = (*A_nm1_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                         }
@@ -1074,7 +1050,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     int idx_start = zpml_size_in_x-ncells_pml_domain_xmax ;
                     int jdx_start = ncells_pml_ymin;
                     for ( int i=0 ; i<ncells_pml_domain_xmax ; i++ ) {
-                        for ( int j=0 ; j<ny_p ; j++ ) {
+                        for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                             (*A_np1_pml_xmax  )(i,j,nz_p-1-k) = (*A_n_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                             (*A_n_pml_xmax  )(i,j,nz_p-1-k) = (*A_nm1_)(idx_start+i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                         }
@@ -1088,7 +1064,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_ymin != 0){
                     int jdx_start = 0;
                     for ( int j=0 ; j<ncells_pml_domain_ymin ; j++ ) {
-                        for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
+                        for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax ; i++ ) {
                             (*A_np1_pml_ymin)(i,j,nz_p-1-k) = (*A_n_)(i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                             (*A_n_pml_ymin)(i,j,nz_p-1-k) = (*A_nm1_)(i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                         }
@@ -1102,7 +1078,7 @@ void EnvelopeBC3D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 if(ncells_pml_ymax != 0){
                     int jdx_start = zpml_size_in_y-ncells_pml_domain_ymax ;
                     for ( int j=0 ; j<ncells_pml_domain_ymax ; j++ ) {
-                        for ( int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax; i++ ) {
+                        for ( unsigned int i=0 ; i<nx_p+ncells_pml_xmin+ncells_pml_xmax; i++ ) {
                             (*A_np1_pml_ymax)(i,j,nz_p-1-k) = (*A_n_)(i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                             (*A_n_pml_ymax)(i,j,nz_p-1-k) = (*A_nm1_)(i,jdx_start+j,domain_oversize_z+nsolver/2-1-k);
                         }

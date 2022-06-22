@@ -19,8 +19,8 @@ public:
 
     void setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_lmin, int* ncells_pml_lmax, Patch* patch );
 
-    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax );
-    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax );
+    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax );
+    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax );
 
 protected:
     double sigma_r_max;

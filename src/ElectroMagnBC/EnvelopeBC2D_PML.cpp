@@ -117,7 +117,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
         }
 
         std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( int i=0 ; i<params.nDim_field ; i++ ) {
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
             dimPrim[i] = n_space[i]+1+2*oversize[i];
         }
         dimPrim[iDim] = ncells_pml_domain;
@@ -221,14 +221,14 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field PML <- Domain
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j) = (*A_n_domain)(i,j);
             }
         }
 
         // Here we extrude Chi in PML domain according Chi at the xmin border
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*Chi_)(i,j) = (*Chi_domain)(domain_oversize_x+1,j);
             }
         }
@@ -239,7 +239,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*A_np1_domain)(i,j) = (*A_n_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j);
                 (*A_n_domain)(i,j) = (*A_nm1_)(ncells_pml_domain-domain_oversize_x-nsolver/2+i,j);
                 (*Phi_domain)(i,j) = 0.5*ellipticity_factor*std::abs(  (*A_np1_domain)(i,j) )*std::abs(  (*A_np1_domain)(i,j) );
@@ -251,14 +251,14 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // 2. Exchange field Domain -> PML
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*A_n_)(domain_oversize_x+nsolver/2-i,j) = (*A_n_domain)(nx_p-i,j);
             }
         }
 
         // Here we extrude Chi in PML domain according Chi at the xmax border
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*Chi_)(i,j) = (*Chi_domain)(nx_p-2-domain_oversize_x,j);
             }
         }
@@ -269,7 +269,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange Domain -> PML
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<ny_p ; j++ ) {
+            for ( unsigned int j=0 ; j<ny_p ; j++ ) {
                 (*A_np1_domain)(nx_p-1-i,j) = (*A_n_)(domain_oversize_x+nsolver/2-1-i,j);
                 (*A_n_domain)(nx_p-1-i,j) = (*A_nm1_)(domain_oversize_x+nsolver/2-1-i,j);
                 (*Phi_domain)(nx_p-1-i,j) = 0.5*ellipticity_factor*std::abs( (*A_np1_domain)(nx_p-1-i,j) )*std::abs( (*A_np1_domain)(nx_p-1-i,j) ) ;
@@ -284,25 +284,21 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField2D* A_np1_pml_xmin = NULL;
         cField2D* A_n_pml_xmin   = NULL;
-        Field2D*  Phi_pml_xmin   = NULL;
         Field2D*  Chi_pml_xmin   = NULL;
 
         cField2D* A_np1_pml_xmax = NULL;
         cField2D* A_n_pml_xmax   = NULL;
-        Field2D*  Phi_pml_xmax   = NULL;
         Field2D*  Chi_pml_xmax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
@@ -317,7 +313,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     }
                 }
             }
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
                 (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j) = (*A_n_domain)(i,j);
             }
@@ -334,7 +330,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the ymin border
         for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
                 (*Chi_)(idx_start+i,j) = (*Chi_domain)(i,domain_oversize_y+1);
             }
@@ -364,7 +360,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=0 ; i<nx_p ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) { // From i=0 to i=1028 with ypml_size_in_x=1048
                 int idx_start = ncells_pml_xmin;
                 (*A_np1_domain)(i,j) = (*A_n_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
                 (*A_n_domain)(i,j) = (*A_nm1_)(idx_start+i,ncells_pml_domain-domain_oversize_y-nsolver/2+j);
@@ -412,25 +408,21 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField2D* A_np1_pml_xmin = NULL;
         cField2D* A_n_pml_xmin   = NULL;
-        Field2D*  Phi_pml_xmin   = NULL;
         Field2D*  Chi_pml_xmin   = NULL;
 
         cField2D* A_np1_pml_xmax = NULL;
         cField2D* A_n_pml_xmax   = NULL;
-        Field2D*  Phi_pml_xmax   = NULL;
         Field2D*  Chi_pml_xmax   = NULL;
 
         if(ncells_pml_xmin != 0){
             A_np1_pml_xmin = pml_fields_xmin->A_n_;
             A_n_pml_xmin   = pml_fields_xmin->A_nm1_;
-            Phi_pml_xmin   = pml_fields_xmin->Phi_;
             Chi_pml_xmin   = pml_fields_xmin->Chi_;
         }
 
         if(ncells_pml_xmax != 0){
             A_np1_pml_xmax = pml_fields_xmax->A_n_;
             A_n_pml_xmax   = pml_fields_xmax->A_nm1_;
-            Phi_pml_xmax   = pml_fields_xmax->Phi_;
             Chi_pml_xmax   = pml_fields_xmax->Chi_;
         }
 
@@ -449,7 +441,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                     }
                 }
             }
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
                 (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-j) = (*A_n_domain)(i,ny_p-j);
             }
@@ -466,7 +458,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Here we extrude Chi in PML domain according Chi at the ymax border
         for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
                 (*Chi_)(idx_start+i,j) = (*Chi_domain)(i,ny_p-2-domain_oversize_y);
             }
@@ -494,7 +486,7 @@ void EnvelopeBC2D_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Duals in y-direction
         for (int j=0 ; j < nsolver/2 ; j++){
-            for ( int i=0 ; i<nx_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nx_p ; i++ ) {
                 int idx_start = ncells_pml_xmin;
                 (*A_np1_domain)(i,ny_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);
                 (*A_n_domain)(i,ny_p-1-j) = (*A_nm1_)(idx_start+i,domain_oversize_y+nsolver/2-1-j);

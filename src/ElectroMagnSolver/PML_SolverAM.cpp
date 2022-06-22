@@ -444,7 +444,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     } //  End Y
 }
 
-void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBCAM_PML* pml_fields = static_cast<ElectroMagnBCAM_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     cField2D* El_pml = NULL;
@@ -756,7 +756,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
     }
 }
 
-void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBCAM_PML* pml_fields = static_cast<ElectroMagnBCAM_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     cField2D* El_pml = NULL;

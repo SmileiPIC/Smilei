@@ -60,8 +60,8 @@ public:
 
     int min2exchange;
     int max2exchange;
-    int solvermin;
-    int solvermax;
+    unsigned int solvermin;
+    unsigned int solvermax;
 
     int rpml_size_in_l;
     int startpml;
