@@ -511,6 +511,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
+    PyTools::extractVV( "pml_parameters", pml_parameters, "Main" );
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
