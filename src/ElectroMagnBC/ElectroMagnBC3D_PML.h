@@ -76,8 +76,8 @@ public:
 
     int min2exchange;
     int max2exchange;
-    int solvermin;
-    int solvermax;
+    unsigned int solvermin;
+    unsigned int solvermax;
 
     int ypml_size_in_x;
     int zpml_size_in_x;

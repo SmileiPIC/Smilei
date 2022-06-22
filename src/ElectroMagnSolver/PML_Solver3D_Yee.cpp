@@ -586,7 +586,7 @@ void PML_Solver3D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
     } // End Z
 }
 
-void PML_Solver3D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_Solver3D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBC3D_PML* pml_fields = static_cast<ElectroMagnBC3D_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     Field3D* Ex_pml = NULL;
@@ -797,7 +797,7 @@ void PML_Solver3D_Yee::compute_E_from_D( ElectroMagn *fields, int iDim, int min_
     }
 }
 
-void PML_Solver3D_Yee::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_Solver3D_Yee::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     ElectroMagnBC3D_PML* pml_fields = static_cast<ElectroMagnBC3D_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     Field3D* Ex_pml = NULL;
