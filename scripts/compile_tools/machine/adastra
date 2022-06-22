@@ -118,7 +118,7 @@ ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -
 # ADASTRA_MPI_gfx90a_LIB := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
 # ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_MPI_gfx908_LIB) $(ADASTRA_MPI_gfx90a_LIB)
 
-# ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
+# ADASTRA_HIP := -L$(ROCM_PATH)/lib -lamdhip64
 
 ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 
