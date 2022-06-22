@@ -48,16 +48,16 @@ SizePatch=16 #8*16 #2*8
 #################################
 NumberOfTimeStep=60000
 
-Scalar_save = 'ON'
+Scalar_save = True
 NumberOfTimeStepForSnapshotSCALAR = 10 #-> 6000 sorties # sortie valeurs scalaire tout les NumberOfTimeStepForSnapshotSCALAR pas de temps
 
-Fields_save = 'ON'
+Fields_save = True
 NumberOfTimeStepForSnapshotFIELD = 20 # sortie des fichiers champs tout les NumberOfTimeStepForSnapshotFIELD pas de temps
 
-Particles_save = 'ON'
+Particles_save = True
 NumberOfTimeStepForSnapshotPART = 3000 # -> # sortie des fichiers particules tout les NumberOfTimeStepForSnapshotPART pas de temps
 
-Distribution_save = 'ON' # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
+Distribution_save = True # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
 NumberOfTimeStepForSnapshotDISTRI = 600
 # Velocity limit for the distribution histogram
 Distri_VXmin = -6.*VT
@@ -177,9 +177,9 @@ LoadBalancing(
     frozen_particle_load = 0.1,
 )
 
-#Vectorization(
-#    mode = "on"
-#)
+Vectorization(
+   mode = "on"
+)
 
 Species(
     name = "ion",
@@ -225,7 +225,7 @@ restart_run='initial'
 # initial pour un premier run
 # restart pour lire un fichier restart pour continuer
 # all job have to be in $SCRATCHDIR directory (see below for the eact path)
-chemin_restart='/scratch/cnt0026/lpp0106/ckrafft/SmileiGG12v2_Occi-016'
+chemin_restart='SmileiGG12v2_Occi-016'
 
 
 if (restart_run == 'initial'):
@@ -244,14 +244,14 @@ if (restart_run == 'restart'):
             keep_n_dumps = 2,
 )
 ####### DIAGNOSTICS######
-if (Scalar_save == 'ON'):
+if (Scalar_save):
     DiagScalar(
         every = NumberOfTimeStepForSnapshotSCALAR ,
         vars = ["Utot","Uelm","Ukin","Uelm_Ex","Uelm_Ey","Uelm_Ez","Uelm_Bx_m","Uelm_By_m","Uelm_Bz_m", "Ukin_electron-beam","Ukin_electron", "Ukin_ion"],
         precision = 10
     )
 
-if (Fields_save == 'ON'):
+if (Fields_save):
     DiagFields(
         every = NumberOfTimeStepForSnapshotFIELD,
         flush_every = NumberOfTimeStepForSnapshotFIELD,
@@ -259,7 +259,7 @@ if (Fields_save == 'ON'):
     )
 
 
-if (Distribution_save == 'ON'):
+if (Distribution_save):
     DiagParticleBinning(
         deposited_quantity = "weight",
         every = NumberOfTimeStepForSnapshotDISTRI,
@@ -422,7 +422,7 @@ if (Distribution_save == 'ON'):
         )
 
 
-if (Particles_save=='ON'):
+if (Particles_save):
     DiagTrackParticles(
         species = "electron-beam",
         every = NumberOfTimeStepForSnapshotPART,

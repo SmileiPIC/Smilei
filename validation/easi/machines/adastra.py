@@ -19,6 +19,7 @@ class MachineAdastra(Machine):
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
 # #SBATCH --gres=gpu:2                           # Number of gpu per node
 # #SBATCH --gpu-bind=closest
+# #SBATCH --distribution=block:block
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
 #SBATCH --time={the_maximum_task_duration}
@@ -104,7 +105,17 @@ LaunchSRunPatProfile() {{
     export PAT_RT_MPI_THREAD_REQUIRED=3
 
     # Assuming "$1" is an executable
-    pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
+
+    # GPU profiling
+    pat_build -u -g hip,io,mpi -w -f $1 -o instrumented_executable
+
+    # CPU profiling
+    # export PAT_RT_SAMPLING_INTERVAL=1000; # 1ms interval
+    # export PAT_RT_SAMPLING_MODE=3
+    # export PAT_RT_EXPERIMENT=samp_cs_time
+    # # export PAT_RT_PERFCTR=default # PAPI_get_component_info segfault in rsmi_func_iter_value_get
+    # # -u make the program crash (abi break) or silently corrupts it state
+    # pat_build -g mpi,syscall,io,omp,hdf5 -w -f $1 -o instrumented_executable
 
     LaunchSRun instrumented_executable ${{@:2}}
 }}

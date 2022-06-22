@@ -53,9 +53,10 @@ ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown
 # Optimization flags
 ################################################################################
 
-# Lto and mcmodel lead to an "unclosed quote" linker script error: https://reviews.llvm.org/D26795
+# TODO(Etienne M): Thin LTO and mcmodel lead to an "unclosed quote" linker script error: https://reviews.llvm.org/D26795
 # ADASTRA_OPTIMIZATION_LTO_FLAGS   := -flto=thin
 # ADASTRA_OPTIMIZATION_OTHER_FLAGS := -mcmodel=large
+# -march=native is not required, the PrgEnv will set the appropriate CPU arch flags
 ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
 # More FP optimizations at the cost of non strict IEEE compliance
 # ADASTRA_OPTIMIZATION_FLAGS       += -ffast-math 
