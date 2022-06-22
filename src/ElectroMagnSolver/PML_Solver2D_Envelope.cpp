@@ -374,7 +374,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     }
 }
 
-void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     EnvelopeBC2D_PML* pml_fields = static_cast<EnvelopeBC2D_PML*>( envelope->EnvBoundCond[iDim*2+min_or_max] );
 

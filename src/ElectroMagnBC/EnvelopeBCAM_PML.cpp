@@ -337,14 +337,12 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         cField2D* A_n_pml_lmin   = NULL;
         cField2D* G_np1_pml_lmin = NULL;
         cField2D* G_n_pml_lmin   = NULL;
-        Field2D*  Phi_pml_lmin   = NULL;
         Field2D*  Chi_pml_lmin   = NULL;
 
         cField2D* A_np1_pml_lmax = NULL;
         cField2D* A_n_pml_lmax   = NULL;
         cField2D* G_np1_pml_lmax = NULL;
         cField2D* G_n_pml_lmax   = NULL;
-        Field2D*  Phi_pml_lmax   = NULL;
         Field2D*  Chi_pml_lmax   = NULL;
 
         if(ncells_pml_lmin != 0){
@@ -352,7 +350,6 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             A_n_pml_lmin   = pml_fields_lmin->A_nm1_;
             G_np1_pml_lmin = pml_fields_lmin->G_n_;
             G_n_pml_lmin   = pml_fields_lmin->G_nm1_;
-            Phi_pml_lmin   = pml_fields_lmin->Phi_;
             Chi_pml_lmin   = pml_fields_lmin->Chi_;
         }
 
@@ -361,7 +358,6 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             A_n_pml_lmax   = pml_fields_lmax->A_nm1_;
             G_np1_pml_lmax = pml_fields_lmax->G_n_;
             G_n_pml_lmax   = pml_fields_lmax->G_nm1_;
-            Phi_pml_lmax   = pml_fields_lmax->Phi_;
             Chi_pml_lmax   = pml_fields_lmax->Chi_;
         }
 
