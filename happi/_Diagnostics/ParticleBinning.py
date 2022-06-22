@@ -350,13 +350,15 @@ class ParticleBinning(Diagnostic):
 	
 	# Method to print info on all included diags
 	def _info(self):
-		info = ""
+		info = "\n"
 		for d in self._diags:
-			info += self._printInfo(self._myinfo[d])+"\n"
-		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
+			info += self._printInfo(self._myinfo[d]) + "\n"
+		if len(self.operation)>2:
+			info += "Operation : "+self.operation+"\n"
 		for ax in self._axes:
 			if "averageInfo" in ax: info += ax["averageInfo"]+"\n"
 			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
+		info += self._units_explanation+"\n"
 		return info
 	
 	def _updateAxes(self, timestep):
@@ -437,9 +439,20 @@ class ParticleBinning(Diagnostic):
 		self._selection = tuple(self._selection)
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim_particles>=1 and not self._spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
-		if self._ndim_particles>=2 and not self._spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
-		if self._ndim_particles==3 and not self._spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
+		self._units_explanation = []
+		if self._ndim_particles>=1 and not self._spatialaxes["x"]: 
+			coeff /= self._ncels[ 0]*self._cell_length[ 0]
+			self._units_explanation += ["grid_length[0]"]
+		if self._ndim_particles>=2 and not self._spatialaxes["y"]:
+			coeff /= self._ncels[ 1]*self._cell_length[ 1]
+			self._units_explanation += ["grid_length[1]"]
+		if self._ndim_particles==3 and not self._spatialaxes["z"]:
+			coeff /= self._ncels[-1]*self._cell_length[-1]
+			self._units_explanation += ["grid_length[-1]"]
+		if self._units_explanation:
+			self._units_explanation = " and by " + " * ".join(self._units_explanation)
+		self._units_explanation = "The value in each bin is the sum of the `deposited_quantity` divided by the bin size"\
+			+ self._units_explanation
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
