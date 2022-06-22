@@ -398,6 +398,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
+            //std::cerr << "interpolate " << name_ << std::endl;
+
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
 
@@ -427,6 +429,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
+
+
+            //std::cerr << "radiate" << std::endl;
 
                 // Radiation process
                 ( *Radiate )( *particles,
@@ -490,6 +495,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            //std::cerr << "push" << std::endl;
 
             // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
@@ -728,19 +735,29 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             // If creation of macro-photon, we add them to photon_species
             if( photon_species_ ) {
 
+                //std::cerr << "eraseLeaving" << std::endl;
+
 #ifdef _GPU
                 // We first erase empty slots in the buffer of photons
                 // radiation_photons_->cell_keys is used as a mask
                 static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
 #endif
-
+                //std::cerr << " N photons to import: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->gpu_size() << std::endl;
+                //std::cerr << "import" << std::endl;
                 photon_species_->importParticles( params,
                                                  patch,
                                                  *radiated_photons_,
                                                  localDiags );
+                //std::cerr << " N photons in species: " <<  photon_species_->particles->gpu_size() << std::endl;
+
+                //photon_species_->particles->last_index[0] = photon_species_->particles->gpu_size(); 
+
+
 #ifdef _GPU
                 // We explicitely clear the device Particles
+                //std::cerr << "Clear" << std::endl;
                 static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
+                //std::cerr << " N photons after cleaning: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->gpu_size() << std::endl;
 #endif
             }
         }

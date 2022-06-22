@@ -10,6 +10,7 @@
 #include "Field3D.h"
 #include "LaserEnvelope.h"
 #include "Particles.h"
+#include "nvidiaParticles.h"
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -170,7 +171,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     // Number of particles
     // const int nparts( particles.size() );
     const int nparts = particles.last_index.back();
-    
+   
     // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
     // dereferenced ptrs in the for loop's condition.
     const int first_index = *istart;

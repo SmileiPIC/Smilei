@@ -162,9 +162,14 @@ void RadiationMonteCarlo::operator()(
     
     if (photons) {
 #ifdef _GPU
-            // We reserve a large number of potential photons on device since we can't 
+            // We reserve a large number of potential photons on device since we can't reallocate
             nphotons_start = photons->gpu_size();
-            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
+            //static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
+            static_cast<nvidiaParticles*>(photons)->createParticles( (iend - istart) * photon_buffer_size_per_particle );
+            //std::cerr << "photons size: " << static_cast<nvidiaParticles*>(photons)->gpu_size() 
+            //          << " new: " << (iend - istart)*photon_buffer_size_per_particle
+            //          << std::endl;
+
 #else 
             nphotons = photons->size();
             // We reserve a large number of photons
@@ -285,7 +290,7 @@ void RadiationMonteCarlo::operator()(
         //curandState_t state_1;
         //curandState_t state_2;
         
-        #pragma acc loop independent gang worker vector \
+        #pragma acc loop gang worker vector \
         private(random_number, seed_curand_1, seed_curand_2, particle_chi, particle_gamma) \
         reduction(+:radiated_energy_loc) 
 
@@ -495,6 +500,7 @@ void RadiationMonteCarlo::operator()(
                                   + (ipart - istart) * photon_buffer_size_per_particle // beginning of the buffer for ipart
                                   + emission_count_per_particle * radiation_photon_sampling_; // already emitted photons (i.e. buffer usage)
 
+
                         // For all new photons
                         for( auto iphoton=0; iphoton<radiation_photon_sampling_; iphoton++ ) {
                             
@@ -602,6 +608,8 @@ void RadiationMonteCarlo::operator()(
     #ifdef _GPU
     } // end acc parallel
     #endif
+
+    //if (photons) std::cerr << photons->gpu_size()  << std::endl;
 
     // Update the patch radiated energy
     radiated_energy += radiated_energy_loc;
