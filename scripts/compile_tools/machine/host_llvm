@@ -1,0 +1,7 @@
+#
+# Machine file for any device
+# Compilation with the LLVM compiler
+# __________________________________________________________
+
+CXXFLAGS += -mtune=native -march=native -ffinite-math-only -ffp-contract=fast
+LDFLAGS += -mtune=native -march=native

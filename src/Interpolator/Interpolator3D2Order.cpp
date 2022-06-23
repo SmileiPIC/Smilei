@@ -10,7 +10,6 @@
 #include "Field3D.h"
 #include "LaserEnvelope.h"
 #include "Particles.h"
-#include "nvidiaParticles.h"
 
 
 // ---------------------------------------------------------------------------------------------------------------------

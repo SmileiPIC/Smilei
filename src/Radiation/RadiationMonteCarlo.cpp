@@ -542,7 +542,7 @@ void RadiationMonteCarlo::operator()(
                         
 #endif                        
                     }
-                    // If no emiision of a macro-photon:
+                    // If no emission of a macro-photon:
                     // Addition of the emitted energy in the cumulating parameter
                     // for the scalar diagnostics
                     else {
