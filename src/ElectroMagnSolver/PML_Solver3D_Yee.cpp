@@ -8,20 +8,20 @@ PML_Solver3D_Yee::PML_Solver3D_Yee( Params &params )
     : Solver3D( params )
 {
     //Define here the value of coefficient kappa_x_max, power_kappa_x, sigma_x_max, power_sigma_x
-    sigma_x_max = 20.;
-    kappa_x_max = 80.;
-    sigma_power_pml_x = 2.;
-    kappa_power_pml_x = 4.;
+    sigma_x_max = params.pml_sigma_parameters[0][0];
+    kappa_x_max = params.pml_kappa_parameters[0][0];
+    sigma_power_pml_x = params.pml_sigma_parameters[0][1];
+    kappa_power_pml_x = params.pml_kappa_parameters[0][1];
     //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
-    sigma_y_max = 20.;
-    kappa_y_max = 80.;
-    sigma_power_pml_y = 2.;
-    kappa_power_pml_y = 4.;
+    sigma_y_max = params.pml_sigma_parameters[1][0];
+    kappa_y_max = params.pml_kappa_parameters[1][0];
+    sigma_power_pml_y = params.pml_sigma_parameters[1][1];
+    kappa_power_pml_y = params.pml_kappa_parameters[1][1];
     //Define here the value of coefficient kappa_z_max, power_kappa_z, sigma_z_max, power_sigma_z
-    sigma_z_max = 20.;
-    kappa_z_max = 80.;
-    sigma_power_pml_z = 2.;
-    kappa_power_pml_z = 4.;
+    sigma_z_max = params.pml_sigma_parameters[2][0];
+    kappa_z_max = params.pml_kappa_parameters[2][0];
+    sigma_power_pml_z = params.pml_sigma_parameters[2][1];
+    kappa_power_pml_z = params.pml_kappa_parameters[2][1];
 }
 
 PML_Solver3D_Yee::~PML_Solver3D_Yee()

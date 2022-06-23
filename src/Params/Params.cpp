@@ -511,7 +511,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
-    PyTools::extractVV( "pml_parameters", pml_parameters, "Main" );
+    PyTools::extractVV( "pml_sigma_parameters", pml_sigma_parameters, "Main" );
+    PyTools::extractVV( "pml_kappa_parameters", pml_kappa_parameters, "Main" );
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
@@ -1118,7 +1119,7 @@ void Params::compute()
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         if (maxwell_sol == "Bouchard" && custom_oversize < 4 ) {
-             ERROR_NAMELIST( "With `Bouchard` solver the oversize have to be greater than 4" );
+             ERROR_NAMELIST( "With `Bouchard` solver the oversize have to be greater than 4", LINK_NAMELIST + std::string("#main-variables") );
         }
         if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
