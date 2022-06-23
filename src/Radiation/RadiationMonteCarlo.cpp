@@ -164,7 +164,7 @@ void RadiationMonteCarlo::operator()(
 #ifdef _GPU
             // We reserve a large number of potential photons on device since we can't reallocate
             nphotons_start = photons->gpu_size();
-            //static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
+            //static_cast<nvidiaParticles*>(photons)->deviceReserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
             static_cast<nvidiaParticles*>(photons)->createParticles( (iend - istart) * photon_buffer_size_per_particle );
             //std::cerr << "photons size: " << static_cast<nvidiaParticles*>(photons)->gpu_size() 
             //          << " new: " << (iend - istart)*photon_buffer_size_per_particle

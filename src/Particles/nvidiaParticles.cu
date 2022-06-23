@@ -42,7 +42,7 @@ nvidiaParticles::nvidiaParticles() : Particles()
 
 // -----------------------------------------------------------------------------
 //! Set capacity of Particles vectors
-void nvidiaParticles::device_reserve( unsigned int reserved_particles, unsigned int nDim)
+void nvidiaParticles::deviceReserve( unsigned int reserved_particles, unsigned int nDim)
 {
     for (int idim=0;idim<nvidia_position_.size();idim++)
         nvidia_position_[idim].reserve( reserved_particles );
@@ -62,9 +62,9 @@ void nvidiaParticles::device_reserve( unsigned int reserved_particles, unsigned 
 
 // -----------------------------------------------------------------------------
 //! Set capacity of Particles vectors based on already used dimension on CPU
-void nvidiaParticles::device_reserve( unsigned int reserved_particles )
+void nvidiaParticles::deviceReserve( unsigned int reserved_particles )
 {
-    device_reserve(reserved_particles, (unsigned int) (Position.size()));
+    deviceReserve(reserved_particles, (unsigned int) (Position.size()));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ void nvidiaParticles::initializeDataOnDevice()
     if (gpu_nparts_!=0)
         syncGPU();
     else {
-        device_reserve(100);
+        deviceReserve(100);
 
         /*for (int idim=0;idim<Position.size();idim++)
             nvidia_position_[idim].reserve( 100 );

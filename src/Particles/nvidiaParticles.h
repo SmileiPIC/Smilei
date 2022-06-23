@@ -136,8 +136,8 @@ public:
     // ---------------------------------------------------------------------------------------------------------------------
     void createParticles( int n_additional_particles ) override;
 
+    // Number of particles on device
     int gpu_nparts_;
-    int nparts_to_move_;
 
 };
 
