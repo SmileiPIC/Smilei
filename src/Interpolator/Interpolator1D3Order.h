@@ -59,6 +59,42 @@ private:
         ip_ -= index_domain_begin;
     }
 
+    inline void coeffs( double xpn, int* idx_p, int* idx_d,
+                            double *coeffxp, double *coeffxd, double* delta_p )
+    {
+
+        double xi2, xi3;
+
+        // Dual
+        idx_d[0]   = ( int )( xpn+0.50 );    // position of the 2nd node
+        xi  = xpn - ( double )idx_d[0] + 0.5;  // normalized distance to the central node
+        xi2 = xi*xi;
+        xi3 = xi*xi2;
+
+        // 3rd order interpolation on 4 nodes
+        coeffxd[0] = ( 1.0-xi3 )*dble_1ov6 - 0.5*( xi-xi2 );
+        coeffxd[1]  = dble_2ov3 - xi2 + 0.5*xi3;
+        coeffxd[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
+        coeffxd[3]  = xi3*dble_1ov6;
+
+        idx_d[0] -= index_domain_begin;
+
+        // Primal
+        idx_p[0] = ( int )xpn;          // index of the 2nd node
+        xi  = xpn - ( double )idx_p[0]; //normalized distance to the 2nd node
+        delta_p[0] = xi;
+        xi2 = xi*xi;
+        xi3 = xi2*xi;
+
+        // 3rd order interpolation on 4 nodes
+        coeffxp[0]  = ( 1.0-xi3 )*dble_1ov6 - 0.5*( xi-xi2 );
+        coeffxp[1]  = dble_2ov3 - xi2 + 0.5*xi3;
+        coeffxp[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
+        coeffxp[3]  = xi3*dble_1ov6;
+
+        idx_p[0] -= index_domain_begin;
+            
+    }    
     // Last prim index computed
     int ip_;
     // Last dual index computed
