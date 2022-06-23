@@ -114,20 +114,20 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     int    *iold  = &( smpi->dynamics_iold[ithread][0] );
     double *delta = &( smpi->dynamics_deltaold[ithread][0] );
 
+    // Static cast of the electromagnetic fields
+    Field1D *Ex1D = static_cast<Field1D *>( EMfields->Ex_ );
+    Field1D *Ey1D = static_cast<Field1D *>( EMfields->Ey_ );
+    Field1D *Ez1D = static_cast<Field1D *>( EMfields->Ez_ );
+    Field1D *Bx1D = static_cast<Field1D *>( EMfields->Bx_m );
+    Field1D *By1D = static_cast<Field1D *>( EMfields->By_m );
+    Field1D *Bz1D = static_cast<Field1D *>( EMfields->Bz_m );
+
 
     //Loop on bin particles
     int nparts = particles.size();
 
     for (int ipart=*istart; ipart < *iend; ipart++){
 
-        // Static cast of the electromagnetic fields
-        Field1D *Ex1D = static_cast<Field1D *>( EMfields->Ex_ );
-        Field1D *Ey1D = static_cast<Field1D *>( EMfields->Ey_ );
-        Field1D *Ez1D = static_cast<Field1D *>( EMfields->Ez_ );
-        Field1D *Bx1D = static_cast<Field1D *>( EMfields->Bx_m );
-        Field1D *By1D = static_cast<Field1D *>( EMfields->By_m );
-        Field1D *Bz1D = static_cast<Field1D *>( EMfields->Bz_m );
-        
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
        
