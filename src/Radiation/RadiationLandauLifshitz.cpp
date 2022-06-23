@@ -120,7 +120,7 @@ void RadiationLandauLifshitz::operator()(
                        Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
         // Effect on the momentum
-        if( (gamma>1.) && (particle_chi >= minimum_chi_continuous) ) {
+        if( gamma > 1.1 && particle_chi >= minimum_chi_continuous ) {
 
             // Radiated energy during the time step
             const double temp =

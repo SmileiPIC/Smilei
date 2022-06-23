@@ -425,13 +425,16 @@ and only one mode between those three.
   * ``timer_global``               : global simulation time (only available for proc 0)
   * ``timer_particles``            : time spent computing particles by each proc
   * ``timer_maxwell``              : time spent solving maxwell by each proc
+  * ``timer_envelope``             : time spent solving the envelope propagation by each proc
   * ``timer_densities``            : time spent projecting densities by each proc
   * ``timer_collisions``           : time spent computing collisions by each proc
   * ``timer_movWindow``            : time spent handling the moving window by each proc
   * ``timer_loadBal``              : time spent balancing the load by each proc
+  * ``timer_partMerging``          : time spent merging particles by each proc
   * ``timer_syncPart``             : time spent synchronzing particles by each proc
   * ``timer_syncField``            : time spent synchronzing fields by each proc
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
+  * ``timer_syncSusceptibility``   : time spent synchronzing susceptibility by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
   * ``memory_total``               : the total memory (RSS) used by the process in GB
@@ -850,7 +853,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   Please refer to
   `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
 
-.. rubric:: For the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``,
+.. rubric:: For the axes frame: ``aspect``, ``axis_facecolor``, ``frame_on``, ``position``,
   ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
   ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 

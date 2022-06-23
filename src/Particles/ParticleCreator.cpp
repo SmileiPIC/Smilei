@@ -207,11 +207,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
         density_profile_->valuesAt( xyz, global_origin, density );
         particles_per_cell_profile_->valuesAt( xyz, global_origin, n_part_in_cell );
         // Take into account the time profile
-        double time_amplitude;
-        if (time_profile_) {
-            time_amplitude = time_profile_->valueAt(itime*params.timestep);
-        } else {
-            time_amplitude = 1;
+        double time_amplitude = 1.;
+        if( time_profile_ ) {
+            time_amplitude = time_profile_->valueAt( itime*params.timestep );
         }
         // Loop cells
         double remainder, nppc;
@@ -240,6 +238,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         density( i, j, k ) = 0.;
                     }
                     
+                    // Time amplitude (for injector)
+                    density( i, j, k ) *= time_amplitude;
+                    
                     // If zero or less, zero particles
                     if( n_part_in_cell( i, j, k )<=0. || density( i, j, k )==0. ) {
                         n_part_in_cell( i, j, k ) = 0.;
@@ -256,9 +257,6 @@ int ParticleCreator::create( struct SubSpace sub_space,
                     }
                     
                     density( i, j, k ) = abs( density( i, j, k ) );
-                    
-                    // Time amplitude (for injector)
-                    density( i, j, k ) *= time_amplitude;
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
@@ -860,7 +858,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
     }
     
     // In AM, we have a correction to make : multiply by radius
-    // because the "density" was computed with the cell section, not cell volume
+    // because n_real_particles was computed with the cell section, not cell volume
     // See above : density( i, j, k ) *= params.cell_volume;
     // where params.cell_volume is 2*pi*dR*dL (in AM only)
     if( params.geometry == "AMcylindrical" ) {

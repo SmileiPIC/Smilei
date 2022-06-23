@@ -286,7 +286,7 @@ void RadiationNiel::operator()(
     #pragma omp simd private(temp,rad_energy)
     for( ipart=istart ; ipart<iend; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-        if( particle_chi[ipart] > minimum_chi_continuous ) {
+        if( gamma[ipart-ipart_ref] > 1.1 && particle_chi[ipart] > minimum_chi_continuous ) {
 
             // Radiated energy during the time step
             rad_energy =

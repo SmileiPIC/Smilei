@@ -6,7 +6,7 @@
 
 using namespace std;
 
-const unsigned int n_quantities_double = 16;
+const unsigned int n_quantities_double = 19;
 const unsigned int n_quantities_uint   = 4;
 
 // Constructor
@@ -104,6 +104,9 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi )
     quantities_double[13] = "timer_total"     ;
     quantities_double[14] = "memory_total"    ;
     quantities_double[15] = "memory_peak"    ;
+    quantities_double[16] = "timer_envelope"     ;
+    quantities_double[17] = "timer_syncSusceptibility"     ;
+    quantities_double[18] = "timer_partMerging"     ;
     file_->attr( "quantities_double", quantities_double );
     
     file_->flush();
@@ -217,6 +220,9 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         
         quantities_double[14] = Tools::getMemFootPrint(0);
         quantities_double[15] = Tools::getMemFootPrint(1);
+        quantities_double[16] = timers.envelope         .getTime();
+        quantities_double[17] = timers.susceptibility   .getTime();
+        quantities_double[18] = timers.particleMerging  .getTime();
         
         // Write doubles to file
         iteration_group.array( "quantities_double", quantities_double[0], &filespace_double, &memspace_double );

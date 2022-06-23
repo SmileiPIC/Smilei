@@ -125,7 +125,7 @@ void RadiationCorrLandauLifshitz::operator()(
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if( (gamma>1.) && (particle_chi >= minimum_chi_continuous) ) {
+        if( gamma > 1.1 && particle_chi >= minimum_chi_continuous ) {
 
             // Radiated energy during the time step
             const double temp =
