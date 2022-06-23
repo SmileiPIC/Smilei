@@ -549,7 +549,7 @@ void RadiationMonteCarlo::operator()(
                         photon_gamma = particle_gamma - std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                                                          + momentum_y[ipart]*momentum_y[ipart]
                                                          + momentum_z[ipart]*momentum_z[ipart] );
-                        radiated_energy += weight[ipart]*photon_gamma;
+                        radiated_energy_loc += weight[ipart]*photon_gamma;
                     }
 
                     // Optical depth becomes negative meaning
