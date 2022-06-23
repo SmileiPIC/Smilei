@@ -56,55 +56,6 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], Bz2D, id_, jd_ );
 } // END Interpolator2D2Order
 
-// ---------------------------------------------------------------------------------------------------------------------
-// 2nd Order Interpolation of the fields at a the particle position (3 nodes are used), task-safe
-// ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta)
-{
-    
-    // Static cast of the electromagnetic fields
-    Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
-    Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
-    Field2D *Ez2D = static_cast<Field2D *>( EMfields->Ez_ );
-    Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
-    Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
-    Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
-    
-    
-    // Normalized particle position
-    double xpn = particles.position( 0, ipart )*d_inv_[0];
-    double ypn = particles.position( 1, ipart )*d_inv_[1];
-   
-    // Calculate coeffs
-
-    int idx_p[2], idx_d[2];
-    double delta_p[2];
-    double coeffxp[3], coeffyp[3];
-    double coeffxd[3], coeffyd[3];
-
-    coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
-
-    // Interpolation of Ex^(d,p)
-    *( ELoc+0*nparts ) = compute( &coeffxd[1], &coeffyp[1], Ex2D, idx_d[0], idx_p[1] );
-    // Interpolation of Ey^(p,d)
-    *( ELoc+1*nparts ) = compute( &coeffxp[1], &coeffyd[1], Ey2D, idx_p[0], idx_d[1] );
-    // Interpolation of Ez^(p,p)
-    *( ELoc+2*nparts ) = compute( &coeffxp[1], &coeffyp[1], Ez2D, idx_p[0], idx_p[1] );
-    // Interpolation of Bx^(p,d)
-    *( BLoc+0*nparts ) = compute( &coeffxp[1], &coeffyd[1], Bx2D, idx_p[0], idx_d[1] );
-    // Interpolation of By^(d,p)
-    *( BLoc+1*nparts ) = compute( &coeffxd[1], &coeffyp[1], By2D, idx_d[0], idx_p[1] );
-    // Interpolation of Bz^(d,d)
-    *( BLoc+2*nparts ) = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1] );
-
-    //Buffering of iol and delta
-    *( iold+0*nparts)  = idx_p[0];
-    *( iold+1*nparts)  = idx_p[1];
-    *( delta+0*nparts) = delta_p[0];
-    *( delta+1*nparts) = delta_p[1];
-   
-} // END Interpolator2D2Order
-
 void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
@@ -185,33 +136,58 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                             unsigned int scell,
                                             int ipart_ref )
 {
-    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    double *Epart = &( smpi->dynamics_Epart[ithread][0] );
+    double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );
+    int *iold = &( smpi->dynamics_iold[ithread][0] );
+    double *delta = &( smpi->dynamics_deltaold[ithread][0] );
+
+    // Static cast of the electromagnetic fields
+    Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
+    Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
+    Field2D *Ez2D = static_cast<Field2D *>( EMfields->Ez_ );
+    Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
+    Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
+    Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
 
     //Loop on bin particles
     int nparts( particles.size() );
 
-#ifndef _OMPTASKS
-    // without tasks
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        //Interpolation on current particle
-        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+
+        // Normalized particle position
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
+       
+        // Calculate coeffs
+
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+
+        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+
+        // Interpolation of Ex^(d,p)
+        *( Epart+0*nparts ) = compute( &coeffxd[1], &coeffyp[1], Ex2D, idx_d[0], idx_p[1] );
+        // Interpolation of Ey^(p,d)
+        *( Epart+1*nparts ) = compute( &coeffxp[1], &coeffyd[1], Ey2D, idx_p[0], idx_d[1] );
+        // Interpolation of Ez^(p,p)
+        *( Epart+2*nparts ) = compute( &coeffxp[1], &coeffyp[1], Ez2D, idx_p[0], idx_p[1] );
+        // Interpolation of Bx^(p,d)
+        *( Bpart+0*nparts ) = compute( &coeffxp[1], &coeffyd[1], Bx2D, idx_p[0], idx_d[1] );
+        // Interpolation of By^(d,p)
+        *( Bpart+1*nparts ) = compute( &coeffxd[1], &coeffyp[1], By2D, idx_d[0], idx_p[1] );
+        // Interpolation of Bz^(d,d)
+        *( Bpart+2*nparts ) = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1] );
+
         //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *delta )[ipart+0*nparts] = deltax;
-        ( *delta )[ipart+1*nparts] = deltay;
+        *( iold+0*nparts)  = idx_p[0];
+        *( iold+1*nparts)  = idx_p[1];
+        *( delta+0*nparts) = delta_p[0];
+        *( delta+1*nparts) = delta_p[1];
+        
     }
-#else
-    // with tasks
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        //Interpolation on current particle with locally defined variables to avoid data races between threads
-        fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart] );
-    }
-#endif
-    
+
 }
 
 // -----------------------------------------------------------------------------

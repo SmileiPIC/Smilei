@@ -19,7 +19,6 @@ public:
     
     //! 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
-    inline void __attribute__((always_inline)) fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta );
 
     //! Interpolation of all fields and currents for a single particles located at istart.
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override;
