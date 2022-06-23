@@ -13,13 +13,12 @@ class MachineAdastra(Machine):
 #SBATCH --job-name=smilei_validation
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
-# #SBATCH --ntasks-per-node=8
-#SBATCH --threads-per-core=1
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
-# #SBATCH --gres=gpu:2                           # Number of gpu per node
-# #SBATCH --gpu-bind=closest
-# #SBATCH --distribution=block:block
+# #SBATCH --ntasks-per-gpu=                      # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
+#SBATCH --threads-per-core=1
+# #SBATCH --gpu-bind=closest                     # For a given task and its numa, bind the closest GPU(s) (maybe more than one) to the numa.
+#SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
 #SBATCH --time={the_maximum_task_duration}
@@ -66,18 +65,22 @@ rocminfo
 # Omp tuning
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_SCHEDULE=dynamic
-# You may want to change "cores", to "threads". But hyperthreading, for an well 
-# optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores
 
 export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
 export CRAY_OMP_CHECK_AFFINITY=TRUE
 
-# MPICH Gpu support
-# export MPICH_ENV_DISPLAY=1
+# MPICH info
+export MPICH_VERSION_DISPLAY=1
+export MPICH_ENV_DISPLAY=1
+export MPICH_CPUMASK_DISPLAY=1
+export MPICH_MPIIO_HINTS_DISPLAY=1
+
+# MPICH general
+export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
+
+# MPICH GPU support (pass GPU buffers to the MPI)
 # export MPICH_GPU_SUPPORT_ENABLED=1
-# export MPICH_GPU_IPC_ENABLED=1
-# export MPICH_ABORT_ON_ERROR=0
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
@@ -89,7 +92,7 @@ export CRAY_OMP_CHECK_AFFINITY=TRUE
 LaunchSRun() {{
     module list
 
-    srun "$@" > {the_output_file} 2>&1
+    srun --cpu-bind=verbose "$@" > {the_output_file} 2>&1
     # srun strace "$@" > {the_output_file} 2>&1
     # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
     # srun bash -c "$kCmd" > {the_output_file} 2>&1

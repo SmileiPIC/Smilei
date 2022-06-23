@@ -143,7 +143,6 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
     const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
 
-    // Static cast of the electromagnetic fields
     const double *const __restrict__ Ex3D = EMfields->Ex_->data_;
     const double *const __restrict__ Ey3D = EMfields->Ey_->data_;
     const double *const __restrict__ Ez3D = EMfields->Ez_->data_;
@@ -176,8 +175,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    const int npart_range_size         = last_index - first_index;
-    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
+    // const int npart_range_size         = last_index - first_index;
 
     #pragma omp target map( to                                                 \
                             : i_domain_begin, j_domain_begin, k_domain_begin ) \
@@ -235,7 +233,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         // Interpolation of Bz^(d,d,p)
         BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
 
-        //Buffering of iol and delta
+        // Buffering of iol and delta
         iold[0*nparts+ipart]  = idx_p[0];
         iold[1*nparts+ipart]  = idx_p[1];
         iold[2*nparts+ipart]  = idx_p[2];
