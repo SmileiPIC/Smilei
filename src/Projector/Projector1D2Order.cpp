@@ -33,11 +33,10 @@ Projector1D2Order::~Projector1D2Order()
 {
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *delta )
+void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
 {
     // Declare local variables
     int ipo, ip;
@@ -60,7 +59,7 @@ void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     
     
     // Locate particle old position on the primal grid
-    xj_m_xipo  = *delta;                              // normalized distance to the nearest grid point already stored
+    xj_m_xipo  = *deltaold;                              // normalized distance to the nearest grid point already stored
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
     
     // Locate particle new position on the primal grid
@@ -96,19 +95,20 @@ void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     
     
     // 2nd order projection for the total currents & charge density
-    ipo -= 2; // At the 2nd order, oversize = 2.
+    ipo -= 2 + bin_shift; // At the 2nd order, oversize = 2.
     for( unsigned int i=0; i<5; i++ ) {
         Jx[i + ipo ]  += Jx_p[i];
         Jy[i + ipo ]  += cry_p * Wt[i];
         Jz[i + ipo ]  += crz_p * Wt[i];
     }//i
-}
+    
+} // END Project local current densities (sort)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *delta )
+void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
 {
     // Declare local variables
     int ipo, ip;
@@ -131,7 +131,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     
     
     // Locate particle old position on the primal grid
-    xj_m_xipo  = *delta;                   // normalized distance to the nearest grid point
+    xj_m_xipo  = *deltaold;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
     
     // Locate particle new position on the primal grid
@@ -167,7 +167,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     
     
     // 2nd order projection for the total currents & charge density
-    ipo -= 2;// At the 2nd order, oversize = 2.
+    ipo -= 2 + bin_shift;// At the 2nd order, oversize = 2.
     for( unsigned int i=0; i<5; i++ ) {
         Jx[i + ipo]  += Jx_p[i];
         Jy[i + ipo]  += cry_p * Wt[i];
@@ -176,8 +176,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     }//i
     
     
-} // END Project local current densities (sort)
-
+} // END Project local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
@@ -553,11 +552,11 @@ void Projector1D2Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double
             for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
                 // cerr << ipart << endl;
                 // cerr << ( *iold )[ipart] << endl;
-                currentsForTasks( b_Jx, b_Jy, b_Jz, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+                currents( b_Jx, b_Jy, b_Jz, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
             }
         } else {
             for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
-                currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+                currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
             }
         }
         // Otherwise, the projection may apply to the species-specific arrays
@@ -567,155 +566,10 @@ void Projector1D2Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double
         // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         for( int ipart=istart ; ipart<iend; ipart++ ) {
-            currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+            currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
         }
     }
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project current densities : main projector
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::currentsForTasks( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
-{
-    // Declare local variables
-    int ipo, ip;
-    int ip_m_ipo;
-    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
-    double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
-    double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
-    double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
-    
-    // Initialize variables
-    for( unsigned int i=0; i<5; i++ ) {
-        S0[i]=0.;
-        S1[i]=0.;
-        Wl[i]=0.;
-        Wt[i]=0.;
-        Jx_p[i]=0.;
-    }//i
-    
-    
-    // Locate particle old position on the primal grid
-    xj_m_xipo  = *deltaold;                              // normalized distance to the nearest grid point already stored
-    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    
-    // Locate particle new position on the primal grid
-    xjn       = particles.position( 0, ipart ) * dx_inv_;
-    ip        = round( xjn );                         // index of the central node
-    xj_m_xip  = xjn - ( double )ip;                   // normalized distance to the nearest grid point
-    xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
-    
-    
-    // coefficients 2nd order interpolation on 3 nodes
-    S0[1] = 0.5 * ( xj_m_xipo2-xj_m_xipo+0.25 );
-    S0[2] = ( 0.75-xj_m_xipo2 );
-    S0[3] = 0.5 * ( xj_m_xipo2+xj_m_xipo+0.25 );
-    
-    // coefficients 2nd order interpolation on 3 nodes
-    ipo        = *iold;                          // index of the central node
-    ip_m_ipo = ip-ipo-index_domain_begin;
-    S1[ip_m_ipo+1] = 0.5 * ( xj_m_xip2-xj_m_xip+0.25 );
-    S1[ip_m_ipo+2] = ( 0.75-xj_m_xip2 );
-    S1[ip_m_ipo+3] = 0.5 * ( xj_m_xip2+xj_m_xip+0.25 );
-    
-    // coefficients used in the Esirkepov method
-    for( unsigned int i=0; i<5; i++ ) {
-        Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
-        Wt[i] = 0.5 * ( S0[i] + S1[i] ); // for transverse currents (y,z)
-    }//i
-    
-    // local current created by the particle
-    // calculate using the charge conservation equation
-    for( unsigned int i=1; i<5; i++ ) {
-        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
-    }
-    
-    
-    // 2nd order projection for the total currents & charge density
-    ipo -= 2 + bin_shift; // At the 2nd order, oversize = 2.
-    for( unsigned int i=0; i<5; i++ ) {
-        Jx[i + ipo ]  += Jx_p[i];
-        Jy[i + ipo ]  += cry_p * Wt[i];
-        Jz[i + ipo ]  += crz_p * Wt[i];
-    }//i
-    
-} // END Project local current densities (sort)
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//!  Project current densities & charge : diagFields timstep
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
-{
-    // Declare local variables
-    int ipo, ip;
-    int ip_m_ipo;
-    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
-    double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
-    double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
-    double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
-    
-    // Initialize variables
-    for( unsigned int i=0; i<5; i++ ) {
-        S0[i]=0.;
-        S1[i]=0.;
-        Wl[i]=0.;
-        Wt[i]=0.;
-        Jx_p[i]=0.;
-    }//i
-    
-    
-    // Locate particle old position on the primal grid
-    xj_m_xipo  = *deltaold;                   // normalized distance to the nearest grid point
-    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    
-    // Locate particle new position on the primal grid
-    xjn       = particles.position( 0, ipart ) * dx_inv_;
-    ip        = round( xjn );                         // index of the central node
-    xj_m_xip  = xjn - ( double )ip;                   // normalized distance to the nearest grid point
-    xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
-    
-    
-    // coefficients 2nd order interpolation on 3 nodes
-    S0[1] = 0.5 * ( xj_m_xipo2-xj_m_xipo+0.25 );
-    S0[2] = ( 0.75-xj_m_xipo2 );
-    S0[3] = 0.5 * ( xj_m_xipo2+xj_m_xipo+0.25 );
-    
-    // coefficients 2nd order interpolation on 3 nodes
-    ipo = *iold;
-    ip_m_ipo = ip-ipo-index_domain_begin;
-    S1[ip_m_ipo+1] = 0.5 * ( xj_m_xip2-xj_m_xip+0.25 );
-    S1[ip_m_ipo+2] = ( 0.75-xj_m_xip2 );
-    S1[ip_m_ipo+3] = 0.5 * ( xj_m_xip2+xj_m_xip+0.25 );
-    
-    // coefficients used in the Esirkepov method
-    for( unsigned int i=0; i<5; i++ ) {
-        Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
-        Wt[i] = 0.5 * ( S0[i] + S1[i] ); // for transverse currents (y,z)
-    }//i
-    
-    // local current created by the particle
-    // calculate using the charge conservation equation
-    for( unsigned int i=1; i<5; i++ ) {
-        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
-    }
-    
-    
-    // 2nd order projection for the total currents & charge density
-    ipo -= 2 + bin_shift;// At the 2nd order, oversize = 2.
-    for( unsigned int i=0; i<5; i++ ) {
-        Jx[i + ipo]  += Jx_p[i];
-        Jy[i + ipo]  += cry_p * Wt[i];
-        Jz[i + ipo]  += crz_p * Wt[i];
-        rho[i + ipo] += charge_weight * S1[i];
-    }//i
-    
-    
-} // END Project local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization for tasks

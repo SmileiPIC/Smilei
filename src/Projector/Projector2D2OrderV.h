@@ -23,7 +23,7 @@ public:
                    double * __restrict__ invgf,
                    int    * __restrict__ iold,
                    double * __restrict__ deltaold,
-                   unsigned int buffer_size, int ipart_ref = 0 );
+                   unsigned int buffer_size, int ipart_ref = 0, int bin_shift = 0 );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
@@ -37,12 +37,7 @@ public:
                                                                     int    * __restrict__ iold,
                                                                     double * __restrict__ deltaold,
                                                                     unsigned int buffer_size,
-                                                                    int ipart_ref );
-
-    //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currentsForTasks( double *Jx, double *Jy, double *Jz, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
-    //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+                                                                    int ipart_ref, int bin_shift = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin, int bin_shift = 0 ) override final;

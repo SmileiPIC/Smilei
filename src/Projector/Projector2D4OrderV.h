@@ -21,7 +21,7 @@ public:
                                                          int    * __restrict__ iold,
                                                          double * __restrict__ deltaold,
                                                          unsigned int buffer_size,
-                                                         int ipart_ref = 0 );
+                                                         int ipart_ref = 0, int bin_shift = 0);
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void __attribute__((always_inline)) currentsAndDensity( double * __restrict__ Jx,
@@ -35,7 +35,7 @@ public:
                                                                    int    * __restrict__ iold,
                                                                    double * __restrict__ deltaold,
                                                                    unsigned int buffer_size,
-                                                                   int ipart_ref = 0 );
+                                                                   int ipart_ref = 0, int bin_shift = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;
