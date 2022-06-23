@@ -152,21 +152,21 @@ void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
         // Interpolation of Ex^(d)
-        *( Epart+0*nparts ) = compute( coeffxd, Ex1D, idx_d[0] );
+        *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
         // Interpolation of Ey^(p)
-        *( Epart+1*nparts ) = compute( coeffxp, Ey1D, idx_p[0] );
+        *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
         // Interpolation of Ez^(p)
-        *( Epart+2*nparts ) = compute( coeffxp, Ez1D, idx_p[0] );
+        *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
         // Interpolation of Bx^(p)
-        *( Bpart+0*nparts ) = compute( coeffxp, Bx1D, idx_p[0] );
+        *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
         // Interpolation of By^(d)
-        *( Bpart+1*nparts ) = compute( coeffxd, By1D, idx_d[0] );
+        *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
         // Interpolation of Bz^(d)
-        *( Bpart+2*nparts ) = compute( coeffxd, Bz1D, idx_d[0] );
+        *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
 
         //Buffering of iol and delta
-        *( iold+0*nparts)  = idx_p[0];
-        *( delta+0*nparts) = delta_p[0];
+        *( iold+0*nparts+ipart)  = idx_p[0];
+        *( delta+0*nparts+ipart) = delta_p[0];
     }
 
     

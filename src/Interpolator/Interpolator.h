@@ -28,20 +28,10 @@ public:
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
-
-    virtual void fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
-    {
-        ERROR( "Envelope with tasks not implemented with this geometry and this order" );
-    };
     
     virtual void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
-    };
- 
-    virtual void timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
-    {
-        ERROR( "Envelope with tasks not implemented with this geometry and this order" );
     };
     
     virtual void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
@@ -52,10 +42,6 @@ public:
     virtual void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
-    };
-    virtual void envelopeFieldForIonizationTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
-    {
-        ERROR( "Envelope with tasks not implemented with this geometry and this order" );
     };
     
 private:
