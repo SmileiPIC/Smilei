@@ -40,10 +40,10 @@ public:
     virtual ~nvidiaParticles() {};
 
     //! Set capacity of Particles vectors on GPU
-    void device_reserve( unsigned int reserved_particles, unsigned int nDim ) ;
+    void deviceReserve( unsigned int reserved_particles, unsigned int nDim ) ;
 
     //! Set capacity of Particles vectors based on already used dimension on CPU
-    void device_reserve( unsigned int reserved_particles );
+    void deviceReserve( unsigned int reserved_particles );
 
     //! Reset Particles vectors
     void deviceClear();
