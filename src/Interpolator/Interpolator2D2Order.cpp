@@ -160,7 +160,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const double *const __restrict__ By2D = static_cast<Field2D *>( EMfields->By_m )->data();
     const double *const __restrict__ Bz2D = static_cast<Field2D *>( EMfields->Bz_m )->data();
 
-#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP_PENDING)
+#if defined(SMILEI_ACCELERATOR_GPU_OMP_PENDING)
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
     const int sizeofEz = EMfields->Ez_->globalDims_;
@@ -178,29 +178,30 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const int first_index = *istart;
     const int last_index  = *iend;
 
-#if 0 // defined(SMILEI_ACCELERATOR_GPU_OMP_PENDING)
-    const int npart_range_size         = last_index - first_index;
-    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
+#if defined(SMILEI_ACCELERATOR_GPU_OMP_PENDING)
+    const int npart_range_size            = last_index - first_index;
+    const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
+    const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
 
-    #pragma omp target defaultmap( none )                              \
-        map( to                                                        \
-             : Ex3D [0:sizeofEx],                                      \
-               Ey3D [0:sizeofEy],                                      \
-               Ez3D [0:sizeofEz],                                      \
-               Bx3D [0:sizeofBx],                                      \
-               By3D [0:sizeofBy],                                      \
-               Bz3D [0:sizeofBz] )                                     \
-            map( from                                                  \
-                 : ELoc [first_index:interpolation_range_size],        \
-                   BLoc [first_index:interpolation_range_size],        \
-                   iold [first_index:interpolation_range_size],        \
-                   delta [first_index:interpolation_range_size] )      \
-                map( to                                                \
-                     : i_domain_begin, j_domain_begin, k_domain_begin, \
-                       nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,     \
-                       nparts, first_index, last_index )               \
-                    map( to                                            \
-                         : position_x [first_index:npart_range_size],  \
+    #pragma omp target defaultmap( none )                             \
+        map( to                                                       \
+             : Ex2D [0:sizeofEx],                                     \
+               Ey2D [0:sizeofEy],                                     \
+               Ez2D [0:sizeofEz],                                     \
+               Bx2D [0:sizeofBx],                                     \
+               By2D [0:sizeofBy],                                     \
+               Bz2D [0:sizeofBz] )                                    \
+            map( from                                                 \
+                 : ELoc [first_index:interpolation_range_3D_size],    \
+                   BLoc [first_index:interpolation_range_3D_size],    \
+                   iold [first_index:interpolation_range_2D_size],    \
+                   delta [first_index:interpolation_range_2D_size] )  \
+                map( to                                               \
+                     : i_domain_begin, j_domain_begin,                \
+                       ny_d, ny_p, d_inv_,                            \
+                       nparts, first_index, last_index )              \
+                    map( to                                           \
+                         : position_x [first_index:npart_range_size], \
                            position_y [first_index:npart_range_size] )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
