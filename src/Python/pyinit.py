@@ -451,6 +451,9 @@ class LaserEnvelope(SmileiSingleton):
     envelope_solver = "explicit"
     envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
+    Env_pml_sigma_parameters = [[0.90,2],[10.0,2],[10.0,2]]
+    Env_pml_kappa_parameters = [[1.00,1.00,2],[1.00,1.00,2],[1.00,1.00,2]]
+    Env_pml_alpha_parameters = [[0.90,0.90,1],[0.75,0.75,1],[0.75,0.75,1]]
     polarization_phi = 0.
     ellipticity = 0.
 

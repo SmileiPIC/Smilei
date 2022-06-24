@@ -450,7 +450,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             full_Envelope_exchange = true;
         }
 
-
+        PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_kappa_parameters", envelope_pml_kappa_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_alpha_parameters", envelope_pml_alpha_parameters, "LaserEnvelope" );
     }
 
     open_boundaries.resize( nDim_field );
