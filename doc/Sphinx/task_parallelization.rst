@@ -4,7 +4,7 @@ Task Parallelization
 For enhanced performances on CPUs with non-uniform plasma distributions, :program:`Smilei` exploits
 efficiently task programming using OpenMP.
 
-Task parallelization of macro-particle operations are published in [Massimo2022]_.
+Task parallelization of macro-particle operations is published in [Massimo2022]_.
 
 ----
 
@@ -17,17 +17,22 @@ is generally dependent mostly on the time spent on macro-particle operations,
 a non-uniform macro-particle distribution among the cpu cores creates 
 load-imbalance.
 
-This causes some cpu-cores, charged with less macro-particles, to idly wait for 
-the cpu-cores treating more macro-particles.
+This causes some cpu cores, charged with less macro-particles, to idly wait for 
+the cpu cores treating more macro-particles.
 
-This situation is not efficient, since using more cpu-cores becomes less useful
-when only a few of them are performing most of the work. Thus it is essential 
-to reduce the load imbalance to efficiently run a parallel PIC simulation.
+This situation is not efficient, since using more cpu cores becomes less useful
+when only a few of them are performing most of the work. In this case, the strong
+scaling curve (speed-up vs number of cpu-cores) starts to saturate. Every
+parallelized program's strong scaling curve saturates after a certain number of 
+computing units. However, efficiently exploiting the parallelism increases the 
+number of computing units where the speed-up starts to saturate.
+To do this in a PIC simulation, it is essential to manage the load imbalance given 
+by non-uniform macro-particle distributions.
 
 In :program:`Smilei` the load imbalance at the MPI level is managed through the 
 algorithm described in [Beck2019]_. In most physical set-ups, using small patches
 and the environment variable ``export OMP_SCHEDULE=dynamic`` allows to manage 
-the load balance also at the OpenMP level (see doc:`parallelization`).
+the load balance also at the OpenMP level (see :doc:`parallelization`).
 This environment variable tells the OpenMP scheduler to dynamically assign the 
 patches (and the involved macro-particle operations) to the available OpenMP 
 threads. To be more specific, this choice is applied to the ``omp for`` constructs
@@ -45,14 +50,15 @@ situations, for example if:
     * many `Species` are present, and they are not uniformly distributed in the 
       physical space.
 
-In these cases, decoupling the treatment of the `Species` in the same patch and 
-introducing a finer decomposition than the patch can considerably improve the 
-scaling of simulations if these smaller entities containing macro-particles 
-can be dynamically distributed among the available OpenMP threads.
+In these cases, decoupling the treatment of the different `Species` in the same 
+patch and introducing a finer decomposition than the patch can considerably improve 
+the strong scaling of simulations. This is obtained dynamically distributing
+these smaller entities containing macro-particles to the available OpenMP threads,
+similarly to a dynamically scheduled ``omp for``.
 
-In other words, exposing the parallelism at the finest level is essential 
+Exposing the parallelism at the finest level as described is essential 
 to keep performances using a high number of computing units.
-At the same time, some constructs cannot be easily parallelized with a dynamically
+On the other hand, some constructs cannot be easily parallelized with a dynamically
 scheduled ``omp for`` (e.g. irregularly nested loops, recursion …). The solution
 to this conundrum is the use of task programming. In particular, :program:`Smilei`
 exploits the task parallelization available since OpenMP 4.5.
@@ -62,7 +68,7 @@ direction in smaller physical spaces called bins, whose width in cells is
 controlled by ``cluster_witdh`` in the ``Main`` block of a namelist.
 
 The operations involved in each operator (Interpolation, Push, etc) applied 
-to the macroparticles of each bin, `Species`, patch combinations, and their 
+to the macroparticles of each [bin-`Species`-patch] combinations, and their 
 associated data are defined as tasks to perform. Different tasks may have 
 logical dependencies, e.g. the same macro-particles must first be treated by the
 Interpolator and only then by the Pusher, and so on. 
