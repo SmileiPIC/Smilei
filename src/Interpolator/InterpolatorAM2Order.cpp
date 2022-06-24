@@ -353,8 +353,6 @@ void InterpolatorAM2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 
 void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    
-    
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
@@ -402,23 +400,23 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         // only mode 0 is used
 
         // Interpolation of El^(d,p)
-        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, idx_d[0], idx_p[1] ) );
+        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
         // Interpolation of Er^(p,d)
-        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, idx_p[0], idx_d[1] ) );
+        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
         // Interpolation of Et^(p,p)
-        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, idx_p[0], idx_p[1] ) );
+        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
         // Interpolation of Bl^(p,d)
-        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, idx_p[0], idx_d[1] ) );
+        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
         // Interpolation of Br^(d,p)
-        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, idx_d[0], idx_p[1] ) );
+        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
         // Interpolation of Bt^(d,d)
-        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, idx_d[0], idx_d[1] ) );
+        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
         // Interpolation of Phi^(p,p)
-        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp_[1], &coeffyp_[1], Phi, idx_p[0], idx_p[1] ) ;
+        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp[1], &coeffyp[1], Phi, idx_p[0], idx_p[1] ) ;
         // Interpolation of GradPhil^(p,p)
-        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil, idx_p[0], idx_p[1] ) ;
+        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhil, idx_p[0], idx_p[1] ) ;
         // Interpolation of GradPhir^(p,p)
-        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir, idx_p[0], idx_p[1] ) ;
+        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhir, idx_p[0], idx_p[1] ) ;
         // GradPhit = 0 in cylindrical symmetry
         ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
    
