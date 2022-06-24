@@ -370,7 +370,7 @@ void SpeciesVAdaptiveMixedSort::reconfigure_particle_importation()
     }
     if( this->Multiphoton_Breit_Wheeler_process ) {
         for( int k=0; k<2; k++ ) {
-            this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
+            this->mBW_pair_species_[k]->vectorized_operators = this->vectorized_operators;
         }
     }
 }

@@ -260,8 +260,8 @@ public:
                                << "' radiation_max_emissions should be > 1",
                            LINK_NAMELIST + std::string("#radiation_max_emissions") );
                     }
-                    MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
-                             << this_species->radiation_photon_sampling_ );
+                    MESSAGE( 3, "| Maximum number of emissions per MC event: "
+                             << this_species->radiation_max_emissions_ );
 
                     // Photon energy threshold
                     PyTools::extract( "radiation_photon_gamma_threshold",
@@ -280,8 +280,8 @@ public:
                 // else, no emitted macro-photons
                 } else {
                     MESSAGE( 3, "| Macro-photon emission not activated" );
-                    this_species->radiated_photons_ = NULL;
-                    this_species->photon_species_   = NULL;
+                    this_species->radiated_photons_ = nullptr;
+                    this_species->photon_species_   = nullptr;
                 }
 
             }
@@ -291,8 +291,8 @@ public:
         if( mass == 0 ) {
             
             //Photons can not radiate
-            this_species->radiated_photons_ = NULL;
-            this_species->photon_species_   = NULL;
+            this_species->radiated_photons_ = nullptr;
+            this_species->photon_species_   = nullptr;
             
             // If this_species->multiphoton_Breit_Wheeler
             if( PyTools::extractV( "multiphoton_Breit_Wheeler", this_species->multiphoton_Breit_Wheeler_, "Species", ispec ) ) {
@@ -313,12 +313,12 @@ public:
                              << " & " << this_species->multiphoton_Breit_Wheeler_[1] );
 
                     // Number of emitted particles per MC event
-                    this_species->mBW_pair_creation_sampling_.resize( 2 );
+                    std::vector<double> temp(2,1);
                     if( !PyTools::extractV( "multiphoton_Breit_Wheeler_sampling",
-                                           this_species->mBW_pair_creation_sampling_, "Species", ispec ) ) {
-                        this_species->mBW_pair_creation_sampling_[0] = 1;
-                        this_species->mBW_pair_creation_sampling_[1] = 1;
+                                           temp, "Species", ispec ) ) {
                     }
+                    this_species->mBW_pair_creation_sampling_[0] = temp[0];
+                    this_species->mBW_pair_creation_sampling_[1] = temp[1];
                     MESSAGE( 3, "| Number of emitted macro-particles per MC event: "
                              << this_species->mBW_pair_creation_sampling_[0]
                              << " & " << this_species->mBW_pair_creation_sampling_[1] );
@@ -1406,17 +1406,20 @@ public:
                                   <<"' pair species must be an electron and positron species (mass = 1)",
                                   LINK_NAMELIST + std::string("#species") );
                             }
-                            patch->vecSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
-                            patch->vecSpecies[ispec1]->mBW_pair_species[k] = patch->vecSpecies[ispec2];
-                            patch->vecSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initializeReserve(
+                            patch->vecSpecies[ispec1]->mBW_pair_species_index_[k] = ispec2;
+                            patch->vecSpecies[ispec1]->mBW_pair_species_[k] = patch->vecSpecies[ispec2];
+                            
+                            patch->vecSpecies[ispec1]->mBW_pair_[k] = ParticlesFactory::create( params );
+                            
+                            patch->vecSpecies[ispec1]->mBW_pair_[k]->initializeReserve(
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
-                                *patch->vecSpecies[ispec1]->mBW_pair_species[k]->particles
+                                *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
                             );
                             ispec2 = patch->vecSpecies.size() + 1;
                         }
                         ispec2++ ;
                     }
-                    // This means that one of the pair species has not been fould
+                    // This means that one of the pair species has not been found
                     if( ispec2 == patch->vecSpecies.size() ) {
                         ERROR_NAMELIST( "In Species `" << patch->vecSpecies[ispec1]->name_ << "`"
                            << " the pair species `" << patch->vecSpecies[ispec1]->multiphoton_Breit_Wheeler_[k]
@@ -1477,8 +1480,8 @@ public:
                     //patch->vecSpecies[i]->radiated_photons_->reserve( 10, params.nDim_particle );
                     // patch->vecSpecies[i]->radiated_photons_->initializeReserve( 0, *patch->vecSpecies[i]->photon_species_->particles );
                 } else {
-                    patch->vecSpecies[i]->photon_species_ = NULL;
-                    patch->vecSpecies[i]->radiated_photons_ = NULL;
+                    patch->vecSpecies[i]->photon_species_ = nullptr;
+                    patch->vecSpecies[i]->radiated_photons_ = nullptr;
                 }
             }
         }
@@ -1489,17 +1492,24 @@ public:
                 // Loop on pairs
                 for( int k=0; k<2; k++ ) {
                     patch->vecSpecies[i]->multiphoton_Breit_Wheeler_[k] = vector_species[i]->multiphoton_Breit_Wheeler_[k];
-                    patch->vecSpecies[i]->mBW_pair_species_index[k] = vector_species[i]->mBW_pair_species_index[k];
-                    patch->vecSpecies[i]->mBW_pair_species[k] = patch->vecSpecies[patch->vecSpecies[i]->mBW_pair_species_index[k]];
-                    patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].tracked = patch->vecSpecies[i]->mBW_pair_species[k]->particles->tracked;
-                    patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isQuantumParameter;
-                    patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isMonteCarlo;
-                    patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(
+                    patch->vecSpecies[i]->mBW_pair_species_index_[k] = vector_species[i]->mBW_pair_species_index_[k];
+                    patch->vecSpecies[i]->mBW_pair_species_[k] = patch->vecSpecies[patch->vecSpecies[i]->mBW_pair_species_index_[k]];
+                    
+                    patch->vecSpecies[i]->mBW_pair_[k] = ParticlesFactory::create( params );
+                    
+                    patch->vecSpecies[i]->mBW_pair_[k]->tracked = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->tracked;
+                    patch->vecSpecies[i]->mBW_pair_[k]->isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isQuantumParameter;
+                    patch->vecSpecies[i]->mBW_pair_[k]->isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isMonteCarlo;
+                    patch->vecSpecies[i]->mBW_pair_[k]->initialize(
                         0, params.nDim_particle, params.keep_position_old );
                 }
             } else {
-                patch->vecSpecies[i]->mBW_pair_species[0] = NULL;
-                patch->vecSpecies[i]->mBW_pair_species[1] = NULL;
+                patch->vecSpecies[i]->mBW_pair_species_[0] = nullptr;
+                patch->vecSpecies[i]->mBW_pair_species_[1] = nullptr;
+                patch->vecSpecies[i]->mBW_pair_[0] = nullptr;
+                patch->vecSpecies[i]->mBW_pair_[1] = nullptr;
+                patch->vecSpecies[i]->mBW_pair_species_index_[0] = -1;
+                patch->vecSpecies[i]->mBW_pair_species_index_[1] = -1;
             }
         }
     }

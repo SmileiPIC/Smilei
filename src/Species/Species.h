@@ -186,17 +186,19 @@ public:
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
-    //! Particle object to store emitted photons by radiation at each time step
-    Particles * radiated_photons_ = NULL;
+    //! Particles object to store emitted photons by radiation at each time step
+    Particles * radiated_photons_ = nullptr;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
-    Species *mBW_pair_species[2];
+    Species *mBW_pair_species_[2] = {nullptr, nullptr};
     //! Index of the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
-    int mBW_pair_species_index[2];
+    int mBW_pair_species_index_[2];
     //! Number of created pairs per event and per photons
-    std::vector<int> mBW_pair_creation_sampling_;
+    int mBW_pair_creation_sampling_[2];
+    // Particles object to store created electron-positron pairs
+    Particles * mBW_pair_[2] = {nullptr , nullptr};
 
     //! Cluster width in number of cells
     unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.

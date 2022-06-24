@@ -163,10 +163,9 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( dou
 //
 //! \param photon_chi photon quantum parameter
 // -----------------------------------------------------------------------------
-double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_chi, Random * rand )
+void MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_chi, double * pair_chi, Random * rand )
 {
     // Parameters
-    double *chi = new double[2];
     double logchiph;
     double log10_chipam, log10_chipap;
     double d;
@@ -229,7 +228,7 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
     }
 
     // Delta for the particle_chi dimension
-    delta_chipa = ( log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
+    delta_chipa = ( std::log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
                   * xi_.inv_size_particle_chi_minus_one_;
 
     ixip = ichiph*xi_.size_particle_chi_ + ichipa;
@@ -243,21 +242,19 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
     if( xip > 0.5 ) {
 
         // Positron quantum parameter
-        chi[1] = pow( 10, log10_chipam*( 1.0-d ) + log10_chipap*( d ) );
+        pair_chi[1] = std::pow( 10., log10_chipam*( 1.0-d ) + log10_chipap*( d ) );
 
         // Electron quantum parameter
-        chi[0] = photon_chi - chi[1];
+        pair_chi[0] = photon_chi - pair_chi[1];
     }
     // If xip <= 0.5, the positron will bring more energy than the electron
     else {
         // Electron quantum parameter
-        chi[0] = pow( 10, log10_chipam*( 1.0-d ) + log10_chipap*( d ) );
+        pair_chi[0] = std::pow( 10., log10_chipam*( 1.0-d ) + log10_chipap*( d ) );
 
         // Positron quantum parameter
-        chi[1] = photon_chi - chi[0];
+        pair_chi[1] = photon_chi - pair_chi[0];
     }
-
-    return chi;
 }
 
 // -----------------------------------------------------------------------------

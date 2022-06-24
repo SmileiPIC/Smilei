@@ -56,7 +56,8 @@ public:
     //! Computation of the electron and positron quantum parameters for
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
-    double *computePairQuantumParameter( double photon_chi, Random * rand );
+    //! \param[out] pair_chi quantum parameters of the pair
+    void computePairQuantumParameter( double photon_chi, double * pair_chi, Random * rand );
 
 
     // ---------------------------------------------------------------------

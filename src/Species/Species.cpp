@@ -79,11 +79,11 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
-    photon_species_( NULL ),
+    photon_species_( nullptr ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
-    radiated_photons_( NULL ),
-    mBW_pair_creation_sampling_( 2, 1 ),
+    radiated_photons_( nullptr ),
+    //mBW_pair_creation_sampling_( {1,1} ),
     cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -119,6 +119,12 @@ Species::Species( Params &params, Patch *patch ) :
     merge_momentum_cell_size_.resize(3);
 
     merge_min_momentum_cell_length_.resize(3);
+    
+    mBW_pair_species_index_[0] = -1;
+    mBW_pair_species_index_[1] = -1;
+    
+    mBW_pair_creation_sampling_[0] = 1;
+    mBW_pair_creation_sampling_[1] = 1;
 
     // particles_to_move = new Particles();
 
@@ -343,6 +349,12 @@ Species::~Species()
     if (radiated_photons_) {
         delete radiated_photons_;
     }
+    
+    for (int k=0 ; k<2 ; k++) {
+        if (mBW_pair_[k]) {
+            delete mBW_pair_[k];
+        }
+    }
 
 }
 
@@ -463,13 +475,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
+                                                        mBW_pair_,
                                                         MultiphotonBreitWheelerTables,
                                                         nrj_radiated_,
                                                         particles->first_index[ibin],
                                                         particles->last_index[ibin], ithread );
 
                 // Update the photon quantum parameter chi of all photons
-                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
                         smpi,
                         particles->first_index[ibin],
                         particles->last_index[ibin],
@@ -726,9 +739,9 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         if( Multiphoton_Breit_Wheeler_process ) {
             // Addition of the electron-positron particles
             for( int k=0; k<2; k++ ) {
-                mBW_pair_species[k]->importParticles( params,
+                mBW_pair_species_[k]->importParticles( params,
                                                       patch,
-                                                      Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                                      *mBW_pair_[k],
                                                       localDiags );
             }
         }

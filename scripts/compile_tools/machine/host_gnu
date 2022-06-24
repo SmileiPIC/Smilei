@@ -1,0 +1,7 @@
+#
+# Machine file for any device
+# Compilation with the GNU compiler
+# __________________________________________________________
+
+CXXFLAGS += -mtune=native -march=native
+LDFLAGS += -mtune=native -march=native -lz -fno-lto
