@@ -180,26 +180,26 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
         
         // Interpolation of Ex^(d,p,p)
-        *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], &coeffzp[2], Ex3D, idx_d[0], idx_p[1], idx_p[2] );
+        *( ELoc+0*nparts+ipart ) = compute( &coeffxd[2], &coeffyp[2], &coeffzp[2], Ex3D, idx_d[0], idx_p[1], idx_p[2] );
         // Interpolation of Ey^(p,d,p)
-        *( ELoc+1*nparts ) = compute( &coeffxp[2], &coeffyd[2], &coeffzp[2], Ey3D, idx_p[0], idx_d[1], idx_p[2] );
+        *( ELoc+1*nparts+ipart ) = compute( &coeffxp[2], &coeffyd[2], &coeffzp[2], Ey3D, idx_p[0], idx_d[1], idx_p[2] );
         // Interpolation of Ez^(p,p,d)
-        *( ELoc+2*nparts ) = compute( &coeffxp[2], &coeffyp[2], &coeffzd[2], Ez3D, idx_p[0], idx_p[1], idx_d[2] );
+        *( ELoc+2*nparts+ipart ) = compute( &coeffxp[2], &coeffyp[2], &coeffzd[2], Ez3D, idx_p[0], idx_p[1], idx_d[2] );
         // Interpolation of Bx^(p,d,d)
-        *( BLoc+0*nparts ) = compute( &coeffxp[2], &coeffyd[2], &coeffzd[2], Bx3D, idx_p[0], idx_d[1], idx_d[2] );
+        *( BLoc+0*nparts+ipart ) = compute( &coeffxp[2], &coeffyd[2], &coeffzd[2], Bx3D, idx_p[0], idx_d[1], idx_d[2] );
         // Interpolation of By^(d,p,d)
-        *( BLoc+1*nparts ) = compute( &coeffxd[2], &coeffyp[2], &coeffzd[2], By3D, idx_d[0], idx_p[1], idx_d[2] );
+        *( BLoc+1*nparts+ipart ) = compute( &coeffxd[2], &coeffyp[2], &coeffzd[2], By3D, idx_d[0], idx_p[1], idx_d[2] );
         // Interpolation of Bz^(d,d,p)
-        *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], &coeffzp[2], Bz3D, idx_d[0], idx_d[1], idx_p[2] );
+        *( BLoc+2*nparts+ipart ) = compute( &coeffxd[2], &coeffyd[2], &coeffzp[2], Bz3D, idx_d[0], idx_d[1], idx_p[2] );
 
         //Buffering of iol and delta
         //Buffering of iol and delta
-        *( iold+0*nparts)  = idx_p[0];
-        *( iold+1*nparts)  = idx_p[1];
-        *( iold+2*nparts)  = idx_p[2];
-        *( delta+0*nparts) = delta_p[0];
-        *( delta+1*nparts) = delta_p[1];
-        *( delta+2*nparts) = delta_p[2];
+        *( iold+0*nparts+ipart )  = idx_p[0];
+        *( iold+1*nparts+ipart )  = idx_p[1];
+        *( iold+2*nparts+ipart )  = idx_p[2];
+        *( delta+0*nparts+ipart ) = delta_p[0];
+        *( delta+1*nparts+ipart ) = delta_p[1];
+        *( delta+2*nparts+ipart ) = delta_p[2];
     }
     
 }
