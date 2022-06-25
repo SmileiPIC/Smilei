@@ -10,6 +10,7 @@ Understand
    parallelization
    SDMD
    vectorization
+   task_parallelization
    collisions
    ionization
    radiation_loss
