@@ -191,7 +191,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                Bx2D [0:sizeofBx],                                     \
                By2D [0:sizeofBy],                                     \
                Bz2D [0:sizeofBz] )                                    \
-            map( from                                                 \
+            map( tofrom                                               \
                  : ELoc [first_index:interpolation_range_3D_size],    \
                    BLoc [first_index:interpolation_range_3D_size],    \
                    iold [first_index:interpolation_range_2D_size],    \

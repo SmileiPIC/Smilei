@@ -129,7 +129,7 @@ LaunchRocmProfile() {{
     # LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
     # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completly broken)
-    # echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
+    # echo 'pmc : VALUUtilization VALUBusy SALUBusy GPUBusy MemUnitBusy MemUnitStalled Wavefronts FetchSize WriteSize' > hw_counters.txt
     # LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
     # HIP RT tracing + consolidated kernel stats
