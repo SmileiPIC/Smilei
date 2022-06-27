@@ -1,81 +1,68 @@
 Task Parallelization
 ----------------------
 
-For enhanced performances on CPUs with non-uniform plasma distributions, :program:`Smilei` exploits
-efficiently task programming using OpenMP.
+Task parallelization is a method to spread the computing workload on the many cores
+of a computer. Instead of splitting the *data* accross cores and apply the same task
+to all these pieces, different *tasks* are split accross the cores sharing the same
+data. This approach can often make the computation faster, especially
+with non-uniform plasma distributions.
 
-Task parallelization of macro-particle operations is published in [Massimo2022]_.
+Task parallelization of macro-particle operations in Smilei (using OpenMP) is
+published in [Massimo2022]_.
 
 ----
 
-Motivation and introduction to the Task Parallelization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Motivation
+^^^^^^^^^^
 
-Plasma physics requires large scale Particle in Cell simulations, often with
-spatially non-uniform macro-particle distributions. Since the computation time 
-is generally dependent mostly on the time spent on macro-particle operations,
-a non-uniform macro-particle distribution among the cpu cores creates 
-load-imbalance.
+Usually, most of the computing time is spent on macro-particle operations.
+Consequently, a non-uniform plasma distribution results in load imbalance:
+some cpu cores are loaded with less macro-particles, and idly wait for the
+other cores to finish their work.
 
-This causes some cpu cores, charged with less macro-particles, to idly wait for 
-the cpu cores treating more macro-particles.
+Worse: adding more cpu cores will not result in significant speedup, as only
+a few of them are performing most of the work. This "strong scaling" curve
+(speed-up vs number of cpu-cores) starts to saturate. Several methods for
+parallelism can increase the number of computing units where
+the saturation occurs.
 
-This situation is not efficient, since using more cpu cores becomes less useful
-when only a few of them are performing most of the work. In this case, the strong
-scaling curve (speed-up vs number of cpu-cores) starts to saturate. Every
-parallelized program's strong scaling curve saturates after a certain number of 
-computing units. However, efficiently exploiting the parallelism increases the 
-number of computing units where the speed-up starts to saturate.
-To do this in a PIC simulation, it is essential to manage the load imbalance given 
-by non-uniform macro-particle distributions.
+In :program:`Smilei`, by default, the data is split in *patches* (see
+:doc:`parallelization`) and, when the environment variable ``OMP_SCHEDULE``
+is set to ``dynamic``, the OpenMP scheduler dynamically assigns each patch
+to each core. This provides for some load balancing at the MPI level, as
+cores can work asynchronously on different patches.
 
-In :program:`Smilei` the load imbalance at the MPI level is managed through the 
-algorithm described in [Beck2019]_. In most physical set-ups, using small patches
-and the environment variable ``export OMP_SCHEDULE=dynamic`` allows to manage 
-the load balance also at the OpenMP level (see :doc:`parallelization`).
-This environment variable tells the OpenMP scheduler to dynamically assign the 
-patches (and the involved macro-particle operations) to the available OpenMP 
-threads. To be more specific, this choice is applied to the ``omp for`` constructs
-assigning the patches to the OpenMP threads.
+This strategy implies that only 1 OpenMP thread can work on a given patch,
+which includes potentially several ``Species`` and all the PIC operators
+(interpolation, push, etc). These constraints can considerably slow down the
+simulation in some situations (many species with non-uniform distribution,
+and/or low number of patches per core).
 
-This strategy implies the following constraints on the scheduling of macro-particle
-operations:
-    * All the `Species` in one patch are treated by the same OpenMP thread;
-    * All the PIC operators (Interpolation, Push, etc) applied to the 
-      macro-particles of a given patch are treated by the same OpenMP thread.
+A first solution is to split the data to a finer level: separate the
+treatment of species, and split the patch in smaller structures (in Smilei,
+patches are divided in ``clusters`` along the dimension ``x``). This
+can improve the strong scaling results, but some constructs cannot be
+parallelized with this data splitting (e.g. irregularly nested loops, recursion,
+etc). The task parallelism has been introduced to answer these issues.
 
-These constraints can considerably slow down the simulation in some extreme 
-situations, for example if:
-    * the number of cpu cores is comparable to the number of patches
-    * many `Species` are present, and they are not uniformly distributed in the 
-      physical space.
+----
 
-In these cases, decoupling the treatment of the different `Species` in the same 
-patch and introducing a finer decomposition than the patch can considerably improve 
-the strong scaling of simulations. This is obtained dynamically distributing
-these smaller entities containing macro-particles to the available OpenMP threads,
-similarly to a dynamically scheduled ``omp for``.
+Task approach
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Exposing the parallelism at the finest level as described is essential 
-to keep performances using a high number of computing units.
-On the other hand, some constructs cannot be easily parallelized with a dynamically
-scheduled ``omp for`` (e.g. irregularly nested loops, recursion …). The solution
-to this conundrum is the use of task programming. In particular, :program:`Smilei`
-exploits the task parallelization available since OpenMP 4.5.
+:program:`Smilei` exploits the task parallelization available since OpenMP 4.5.
+The main idea is to split the work in smaller units that can be run asynchronously.
 
-When this parallelization is activated, the patches are decomposed along the `x`
-direction in smaller physical spaces called bins, whose width in cells is 
-controlled by ``cluster_witdh`` in the ``Main`` block of a namelist.
+In addition to separated species treatment and patches split in clusters
+(see :py:data:`cluster_width`), the macro-particle operators (interpolation, push, etc)
+are defined as tasks. All the combinations of [operator-cluster-species-patch]
+correspond to different tasks that can be run in parallel. 
 
-The operations involved in each operator (Interpolation, Push, etc) applied 
-to the macroparticles of each [bin-`Species`-patch] combinations, and their 
-associated data are defined as tasks to perform. Different tasks may have 
-logical dependencies, e.g. the same macro-particles must first be treated by the
-Interpolator and only then by the Pusher, and so on. 
+As some tasks depend on other tasks, the dependency tree is provided to OpenMP so
+that the tasks are dynamically assigned to OpenMP threads, in the correct order
+(preventing race conditions). This is described in [Massimo2022]_.
 
-Afterwards, these tasks are dynamically assigned to the available OpenMP threads,
-respecting the logical dependencies and preventing race conditions, as described
-in [Massimo2022]_.
+----
 
 Performance Results
 ^^^^^^^^^^^^^^^^^^^^^
