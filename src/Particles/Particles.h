@@ -428,6 +428,9 @@ public:
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
     };
+    virtual double* getPtrPositionOld( int idim ) {
+        return Position_old[idim].data();
+    };
     virtual double* getPtrMomentum( int idim ) {
         return &(Momentum[idim][0]);
     };

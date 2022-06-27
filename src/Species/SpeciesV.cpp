@@ -245,7 +245,8 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     // We reuse nrj_radiated_ for the pairs
                     ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                             smpi,
-                                                            mBW_pair_,
+                                                            mBW_pair_particles_,
+                                                            mBW_pair_species_,
                                                             MultiphotonBreitWheelerTables,
                                                             nrj_radiated_,
                                                             particles->first_index[scell], particles->last_index[scell], ithread );

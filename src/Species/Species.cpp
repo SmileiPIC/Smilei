@@ -60,7 +60,7 @@ Species::Species( Params &params, Patch *patch ) :
     radiating_( false ),
     relativistic_field_initialization_( false ),
     iter_relativistic_initialization_( 0 ),
-    multiphoton_Breit_Wheeler_( 2, "" ),
+    mBW_pair_species_names_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
     charge_profile_( NULL ),
@@ -351,8 +351,8 @@ Species::~Species()
     }
     
     for (int k=0 ; k<2 ; k++) {
-        if (mBW_pair_[k]) {
-            delete mBW_pair_[k];
+        if (mBW_pair_particles_[k]) {
+            delete mBW_pair_particles_[k];
         }
     }
 
@@ -475,7 +475,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
-                                                        mBW_pair_,
+                                                        mBW_pair_particles_,
+                                                        mBW_pair_species_,
                                                         MultiphotonBreitWheelerTables,
                                                         nrj_radiated_,
                                                         particles->first_index[ibin],
@@ -741,7 +742,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             for( int k=0; k<2; k++ ) {
                 mBW_pair_species_[k]->importParticles( params,
                                                       patch,
-                                                      *mBW_pair_[k],
+                                                      *mBW_pair_particles_[k],
                                                       localDiags );
             }
         }
@@ -1186,7 +1187,6 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
                 particles->first_index[idx] += bin_count[ibin];
                 particles->last_index[idx]  += bin_count[ibin];
             }
-
         }
         // update istart/istop fot the next cell
         istart += bin_count[ibin];

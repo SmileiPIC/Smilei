@@ -37,6 +37,10 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     mBW_pair_creation_sampling_[1] = species->mBW_pair_creation_sampling_[1];
     mBW_pair_creation_inv_sampling_[1] = 1. / mBW_pair_creation_sampling_[1];
+    
+    // Get the respectiv charge
+    // mBW_pair_species_charge_[0] = species->mBW_pair_species_[0]->max_charge_;
+    // mBW_pair_species_charge_[1] = species->mBW_pair_species_[1]->max_charge_;
 
     // Threshold under which pair creation is not considered
     chiph_threshold_ = 1E-2;
@@ -125,12 +129,13 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
 //! \param ithread     Thread index
 // ---------------------------------------------------------------------------------------------------------------------
 void MultiphotonBreitWheeler::operator()( Particles &particles,
-        SmileiMPI* smpi,
-        Particles** new_pair,
+        SmileiMPI *                   smpi,
+        Particles **                  new_pair,
+        Species **                     new_pair_species,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-        double & pair_energy,
-        int istart,
-        int iend,
+        double &                      pair_energy,
+        int                           istart,
+        int                           iend,
         int ithread, int ipart_ref )
 {
     // _______________________________________________________________
@@ -173,10 +178,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Weight shortcut
-    double* weight = particles.getPtrWeight();
+    double *const __restrict__ weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double *tau = &( particles.tau( 0 ) );
+    double *const __restrict__ tau =  particles.getPtrTau();
 
     // Quantum parameter
     double *const __restrict__ photon_chi = particles.getPtrChi();
@@ -188,6 +193,43 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double np = new_pair[0]->size();
     new_pair[0]->reserve( np + mBW_pair_creation_sampling_[0] * (iend - istart) );
     new_pair[1]->reserve( np + mBW_pair_creation_sampling_[1] * (iend - istart) );
+
+    // Pair shortcut
+    double *const __restrict__ pair0_position_x = new_pair[0]->getPtrPosition( 0 );
+    double *const __restrict__ pair0_position_y = (n_dimensions_ > 1 ? new_pair[0]->getPtrPosition( 1 ) : nullptr) ;
+    double *const __restrict__ pair0_position_z = (n_dimensions_ > 2 ? new_pair[0]->getPtrPosition( 2 ) : nullptr) ;
+    
+    double *const __restrict__ pair0_position_old_x = particles.Position_old.size() > 0 ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair0_position_old_y = (particles.Position_old.size() > 1 ? new_pair[0]->getPtrPositionOld( 1 ) : nullptr) ;
+    double *const __restrict__ pair0_position_old_z = (particles.Position_old.size() > 2 ? new_pair[0]->getPtrPositionOld( 2 ) : nullptr) ;
+    
+    double *const __restrict__ pair0_momentum_x = new_pair[0]->getPtrMomentum( 0 );
+    double *const __restrict__ pair0_momentum_y = new_pair[0]->getPtrMomentum( 1 );
+    double *const __restrict__ pair0_momentum_z = new_pair[0]->getPtrMomentum( 2 );
+    
+    double *const __restrict__ pair0_weight = new_pair[0]->getPtrWeight();
+    short *const __restrict__ pair0_charge = new_pair[0]->getPtrCharge();
+
+    double *const __restrict__ pair0_chi = new_pair[0]->isQuantumParameter ? new_pair[0]->getPtrChi() : nullptr;
+    double *const __restrict__ pair0_tau = new_pair[0]->isMonteCarlo ? new_pair[0]->getPtrTau() : nullptr;
+    
+    double *const __restrict__ pair1_position_x = new_pair[1]->getPtrPosition( 0 );
+    double *const __restrict__ pair1_position_y = (n_dimensions_ > 1 ? new_pair[1]->getPtrPosition( 1 ) : nullptr);
+    double *const __restrict__ pair1_position_z = (n_dimensions_ > 2 ? new_pair[1]->getPtrPosition( 2 ) : nullptr);
+
+    double *const __restrict__ pair1_position_old_x = particles.Position_old.size() > 0 ? new_pair[1]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair1_position_old_y = (particles.Position_old.size() > 1 ? new_pair[1]->getPtrPositionOld( 1 ) : nullptr) ;
+    double *const __restrict__ pair1_position_old_z = (particles.Position_old.size() > 2 ? new_pair[1]->getPtrPositionOld( 2 ) : nullptr) ;
+
+    double *const __restrict__ pair1_momentum_x = new_pair[1]->getPtrMomentum( 0 );
+    double *const __restrict__ pair1_momentum_y = new_pair[1]->getPtrMomentum( 1 );
+    double *const __restrict__ pair1_momentum_z = new_pair[1]->getPtrMomentum( 2 );
+
+    double *const __restrict__ pair1_weight = new_pair[1]->getPtrWeight();
+    short *const __restrict__ pair1_charge = new_pair[1]->getPtrCharge();
+
+    double *const __restrict__ pair1_chi = new_pair[1]->isQuantumParameter ? new_pair[1]->getPtrChi() : nullptr;
+    double *const __restrict__ pair1_tau = new_pair[1]->isMonteCarlo ? new_pair[1]->getPtrTau() : nullptr;
 
     // _______________________________________________________________
     // Computation
@@ -269,62 +311,122 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
                     double inv_chiph_gammaph = ( photon_gamma[ipart]-2. ) / photon_chi[ipart];
 
+                    // pair quantum parameters
                     double pair_chi[2];
 
                     // Get the pair quantum parameters to compute the energy
-                    MultiphotonBreitWheelerTables.computePairQuantumParameter( photon_chi[ipart], pair_chi, rand_ );
+                    MultiphotonBreitWheelerTables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], rand_ );
 
                     // pair propagation direction // direction of the photon
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
                     double uy = momentum_y[ipart]/photon_gamma[ipart];
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
 
-                    // Loop on the pair (2 particles)
-                    for( int k=0 ; k < 2 ; k++ ) {
+                    // Creation of new electrons in the temporary array new_pair[0]
+                    new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
 
-                        // Creation of new electrons in the temporary array new_pair[0]
-                        new_pair[k]->createParticles( mBW_pair_creation_sampling_[k] );
+                    // Final size
+                    int nparticles = new_pair[0]->size();
 
-                        // Final size
-                        const int nparticles = new_pair[k]->size();
+                    // For all new paticles
+                    for( int ipair=nparticles-mBW_pair_creation_sampling_[0]; ipair<nparticles; ipair++ ) {
 
-                        // For all new electrons...
-                        for( int idNew=nparticles-mBW_pair_creation_sampling_[k]; idNew<nparticles; idNew++ ) {
+                        // Momentum
+                        const double p = std::sqrt( std::pow( 1.+pair_chi[0]*inv_chiph_gammaph, 2 )-1 );
+                        pair0_momentum_x[ipair] = p*ux;
+                        pair0_momentum_y[ipair] = p*uy;
+                        pair0_momentum_z[ipair] = p*uz;
 
-                            // Momentum
-                            const double p = std::sqrt( std::pow( 1.+pair_chi[k]*inv_chiph_gammaph, 2 )-1 );
-                            new_pair[k]->momentum( 0, idNew ) = p*ux;
-                            new_pair[k]->momentum( 1, idNew ) = p*uy;
-                            new_pair[k]->momentum( 2, idNew ) = p*uz;
+                        // gamma
+                        //inv_gamma = 1./sqrt(1.+p*p);
 
-                            // gamma
-                            //inv_gamma = 1./sqrt(1.+p*p);
+                        // Positions
 
-                            // Positions
-                            for( int i=0; i<n_dimensions_; i++ ) {
-                                new_pair[k]->position( i, idNew )=particles.position( i, ipart );
-                //               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
-                            }
-
-                            // Old positions
-                            if( particles.Position_old.size() > 0 ) {
-                                for( int i=0; i<n_dimensions_; i++ ) {
-                                    new_pair[k]->position_old( i, idNew )=particles.position( i, ipart ) ;
-                                }
-                            }
-
-                            new_pair[k]->weight( idNew )=weight[ipart]*mBW_pair_creation_inv_sampling_[k];
-                            new_pair[k]->charge( idNew )= k*2-1;
-
-                            if( new_pair[k]->isQuantumParameter ) {
-                                new_pair[k]->chi( idNew ) = pair_chi[k];
-                            }
-
-                            if( new_pair[k]->isMonteCarlo ) {
-                                new_pair[k]->tau( idNew ) = -1.;
+                        pair0_position_x[ipair]=position_x[ipart];
+                        if (n_dimensions_>1) {
+                            pair0_position_y[ipair]=position_y[ipart];
+                            if (n_dimensions_>2) {
+                                pair0_position_z[ipair]=position_z[ipart];
                             }
                         }
+            //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
+
+
+                        // Old positions
+                        if( particles.Position_old.size() > 0 ) {
+                            pair0_position_old_x[ipair]=position_x[ipart] ;
+                            if (n_dimensions_>1) {
+                                pair0_position_old_y[ipair]=position_y[ipart] ;
+                            }
+                            if (n_dimensions_>2) {
+                                pair0_position_old_z[ipair]=position_z[ipart] ;
+                            }
+                        }
+
+                        pair0_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[0];
+                        pair0_charge[ipair]=new_pair_species[0]->max_charge_;
+
+                        if( new_pair[0]->isQuantumParameter ) {
+                            pair0_chi[ipair] = pair_chi[0];
+                        }
+
+                        if( new_pair[0]->isMonteCarlo ) {
+                            pair0_tau[ipair] = -1.;
+                        }
                     }
+
+                    // Create particle for the second pair species
+                    new_pair[1]->createParticles( mBW_pair_creation_sampling_[1] );
+
+                    // Final size
+                    nparticles = new_pair[1]->size();
+
+                    // For all new paticles
+                    for( int ipair=nparticles-mBW_pair_creation_sampling_[1]; ipair<nparticles; ipair++ ) {
+
+                        // Momentum
+                        const double p = std::sqrt( std::pow( 1.+pair_chi[1]*inv_chiph_gammaph, 2 )-1 );
+                        pair1_momentum_x[ipair] = p*ux;
+                        pair1_momentum_y[ipair] = p*uy;
+                        pair1_momentum_z[ipair] = p*uz;
+
+                        // gamma
+                        //inv_gamma = 1./sqrt(1.+p*p);
+
+                        // Positions
+
+                        pair1_position_x[ipair]=position_x[ipart];
+                        if (n_dimensions_>1) {
+                            pair1_position_y[ipair]=position_y[ipart];
+                            if (n_dimensions_>2) {
+                                pair1_position_z[ipair]=position_z[ipart];
+                            }
+                        }
+            //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
+
+                        // Old positions
+                        if( particles.Position_old.size() > 0 ) {
+                            pair1_position_old_x[ipair]=position_x[ipart] ;
+                            if (n_dimensions_>1) {
+                                pair1_position_old_y[ipair]=position_y[ipart] ;
+                            }
+                            if (n_dimensions_>2) {
+                                pair1_position_old_z[ipair]=position_z[ipart] ;
+                            }
+                        }
+
+                        pair1_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[1];
+                        pair1_charge[ipair]=new_pair_species[1]->max_charge_;
+
+                        if( new_pair[1]->isQuantumParameter ) {
+                            pair1_chi[ipair] = pair_chi[1];
+                        }
+
+                        if( new_pair[1]->isMonteCarlo ) {
+                            pair1_tau[ipair] = -1.;
+                        }
+                    }
+
 
                     // Total energy converted into pairs during the current timestep
                     pair_energy += weight[ipart]*photon_gamma[ipart];

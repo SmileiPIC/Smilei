@@ -43,6 +43,7 @@ public:
     void operator()( Particles &particles,
                      SmileiMPI* smpi,
                      Particles** new_pair,
+                     Species ** new_pair_species,
                      MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                      double & pair_energy,
                      int istart,

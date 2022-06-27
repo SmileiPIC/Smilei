@@ -105,10 +105,7 @@ public:
 
     //! Iteration for which the species field is initialized in case of relativistic initialization
     int iter_relativistic_initialization_;
-
-    //! electron and positron Species for the multiphoton Breit-Wheeler
-    std::vector<std::string> multiphoton_Breit_Wheeler_;
-
+    
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
 
@@ -191,14 +188,16 @@ public:
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
-    Species *mBW_pair_species_[2] = {nullptr, nullptr};
+    Species * mBW_pair_species_[2] = {nullptr, nullptr};
     //! Index of the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
     int mBW_pair_species_index_[2];
     //! Number of created pairs per event and per photons
     int mBW_pair_creation_sampling_[2];
+    //! electron and positron Species for the multiphoton Breit-Wheeler
+    std::vector<std::string> mBW_pair_species_names_;
     // Particles object to store created electron-positron pairs
-    Particles * mBW_pair_[2] = {nullptr , nullptr};
+    Particles * mBW_pair_particles_[2] = {nullptr , nullptr};
 
     //! Cluster width in number of cells
     unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.

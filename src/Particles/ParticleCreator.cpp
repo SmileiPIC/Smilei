@@ -153,7 +153,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
     // Calculate density and number of particles_ for the species_
     // ---------------------------------------------------------
     
-    species_->max_charge_ = 0.;
+    species_->max_charge_ = -1;
     
     // fields containing the profiles values in each cell (always 3d)
     Field3D charge, n_part_in_cell, density, temperature[3], velocity[3];
@@ -196,6 +196,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         }
     } else {
         charge.put_to( 0. );
+        species_->max_charge_ = 0;
     }
     
     // WEIGHT & NPPC PROFILE
@@ -896,7 +897,7 @@ void ParticleCreator::createCharge( Particles * particles, Species * species,
         for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
             particles->charge( p ) = Z;
         }
-        // if charge is not integer, then particles can have two different charges
+    // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
         double rr=r/( 1.-r ), diff;
