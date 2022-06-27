@@ -123,7 +123,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
         }
 
         std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( int i=0 ; i<params.nDim_field ; i++ ) {
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
             dimPrim[i] = n_space[i]+1+2*oversize[i];
         }
         dimPrim[iDim] = ncells_pml_domain;
@@ -243,7 +243,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 2. Exchange field PML <- Domain
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
             // for ( int j=1 ; j<nr_p-1 ; j++ ) {
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 // (*A_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j);
                 // (*G_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j)*( (double) (j_glob_pml+j)*dr );
                 (*A_n_)(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*A_n_domain)(i,j);
@@ -253,7 +253,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         // Source Chi Update (1 cells after xmin)
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 (*Chi_)(i,j) = (*Chi_domain)(domain_oversize_l+1,j);
             }
         }
@@ -264,7 +264,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 4. Exchange PML -> Domain
         // Primals in x-direction
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 // (*A_np1_domain)(i,j) = (*A_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j);
                 // (*A_n_domain)(i,j) = (*A_nm1_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j);
                 (*A_np1_domain)(i,j) = (*A_n_)(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
@@ -279,7 +279,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // 2. Exchange field Domain -> PML
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
             // for ( int j=1 ; j<nr_p-1 ; j++ ) {
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 // (*A_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-1-i,j);
                 // (*G_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-1-i,j)*( (double) (j_glob_pml+j)*dr );
                 (*A_n_)(domain_oversize_l+nsolver/2-i,j) = (*A_n_domain)(nl_p-i,j);
@@ -292,7 +292,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
         // Source Chi Update (1 cells before xmax)
         for ( int i=0 ; i<ncells_pml_domain ; i++ ) {
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 (*Chi_)(i,j) = (*Chi_domain)(nl_p-2-domain_oversize_l,j);
             }
         }
@@ -304,7 +304,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // Primals in x-direction
         // for (int i=0 ; i < nsolver/2 ; i++){
         for (int i=0 ; i < nsolver/2 ; i++){
-            for ( int j=0 ; j<nr_p ; j++ ) {
+            for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                 // (*A_np1_domain)(nl_p-1-i,j) = (*A_n_)(domain_oversize_l+nsolver/2-i,j);
                 // (*A_n_domain)(nl_p-1-i,j) = (*A_nm1_)(domain_oversize_l+nsolver/2-i,j);
                 (*A_np1_domain)(nl_p-1-i,j) = (*A_n_)(domain_oversize_l+nsolver/2-1-i,j);
@@ -380,7 +380,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
                 }
             }
             // for ( int i=1 ; i<nl_p-1 ; i++ ) {
-            for ( int i=0 ; i<nl_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nl_p ; i++ ) {
                 // int idx_start = ncells_pml_lmin-1*(patch->isXmin());
                 int idx_start = ncells_pml_lmin;
                 // (*A_n_)(idx_start+i,domain_oversize_r+nsolver/2-j) = (*A_n_domain)(i,nr_p-1-j);
@@ -403,7 +403,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
  
         // Source Chi Update (1 cells before rmax)
         for ( int j=0 ; j<ncells_pml_domain ; j++ ) {
-            for ( int i=0 ; i<nl_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nl_p ; i++ ) {
                 int idx_start = ncells_pml_lmin;
                 (*Chi_)(idx_start+i,j) = 1*(*Chi_domain)(i,nr_p-2-domain_oversize_r);
             }
@@ -434,7 +434,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         // for (int j=0 ; j < nsolver/2 ; j++){
         for (int j=0 ; j < nsolver/2 ; j++){
             // for ( int i=1 ; i<nl_p-1 ; i++ ) {
-            for ( int i=0 ; i<nl_p ; i++ ) {
+            for ( unsigned int i=0 ; i<nl_p ; i++ ) {
                 // int idx_start = ncells_pml_lmin-1*(patch->isXmin());
                 int idx_start = ncells_pml_lmin;
                 // (*A_np1_domain)(i,nr_p-1-j) = (*A_n_)(idx_start+i,domain_oversize_r+nsolver/2-j);

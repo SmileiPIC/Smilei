@@ -149,7 +149,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             alpha_prime_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( int i=startpml; i<nl_p ; i++ ) {
+        for ( unsigned int i=startpml; i<nl_p ; i++ ) {
             // Parameters
             kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
@@ -166,7 +166,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             std::reverse(kappa_prime_l_p.begin(), kappa_prime_l_p.end());
             std::reverse(sigma_prime_l_p.begin(), sigma_prime_l_p.end());
             std::reverse(alpha_prime_l_p.begin(), alpha_prime_l_p.end());
-            for (int i=0 ; i<nl_p ; i++){
+            for (unsigned int i=0 ; i<nl_p ; i++){
                 // Due to SMILEI convention for propagating wave
                 kappa_l_p[i] *= +1;
                 sigma_l_p[i] *= -1;
@@ -183,7 +183,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             }
         }
         if (min_or_max==1) {
-            for (int i=0 ; i<nl_p ; i++){
+            for (unsigned int i=0 ; i<nl_p ; i++){
                 // Due to SMILEI convention for propagating wave
                 kappa_l_p[i] *= +1;
                 sigma_l_p[i] *= -1;
@@ -195,7 +195,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             }
         }
         // Radial direction
-        for ( int j=0 ; j<nr_p ; j++ ) {
+        for ( unsigned int j=0 ; j<nr_p ; j++ ) {
             kappa_r_p[j] = 1. ;
             sigma_r_p[j] = 0. ;
             alpha_r_p[j] = 0. ;
@@ -213,7 +213,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
         length_r_pml = (ncells_pml_domain-startpml+0.5)*dr ;
         length_l_pml_lmax = (ncells_pml_max[0]+0.5)*dl ;
         length_l_pml_lmin = (ncells_pml_min[0]+0.5)*dl ;
-        for ( int i=0 ; i<nl_p ; i++ ) {
+        for ( unsigned int i=0 ; i<nl_p ; i++ ) {
             kappa_l_p[i] = 1. ;
             sigma_l_p[i] = 0. ;
             alpha_l_p[i] = 0. ;
@@ -244,7 +244,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
+            for ( unsigned int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
                 // Parameters
                 kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
@@ -276,7 +276,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             integrate_alpha_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( int j=startpml; j<nr_p ; j++ ) {
+        for ( unsigned int j=startpml; j<nr_p ; j++ ) {
             // Parameters
             kappa_r_p[j] = kappa_cr + (kappa_r_max - kappa_cr) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
@@ -297,7 +297,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             std::reverse(kappa_prime_r_p.begin(), kappa_prime_r_p.end());
             std::reverse(sigma_prime_r_p.begin(), sigma_prime_r_p.end());
             std::reverse(alpha_prime_r_p.begin(), alpha_prime_r_p.end());
-            for (int j=0 ; j<nr_p ; j++){
+            for (unsigned int j=0 ; j<nr_p ; j++){
                 // Due to SMILEI convention for propagating wave
                 kappa_r_p[j] *= +1;
                 sigma_r_p[j] *= -1;
@@ -316,7 +316,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
             }
         }
         if (min_or_max==1) {
-            for (int j=0 ; j<nr_p ; j++){
+            for (unsigned int j=0 ; j<nr_p ; j++){
                 // Due to SMILEI convention for propagating wave
                 kappa_r_p[j] *= +1;
                 sigma_r_p[j] *= -1;
@@ -334,7 +334,7 @@ void PML_SolverAM_EnvelopeReducedDispersion::setDomainSizeAndCoefficients( int i
     }
 }
 
-void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *envelope,int iDim, int min_or_max, int solvermin, int solvermax )
+void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *envelope,int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
 {
     EnvelopeBCAM_PML* pml_fields = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[iDim*2+min_or_max] );
 
@@ -396,25 +396,17 @@ void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *en
                 for( unsigned int j=std::max(3*isYmin,1) ; j < nr_p-1 ; j++ ) { // y loop
                     // dA/dx = dA/dx + ik0 A
                     // r dA/dx = r dA/dx + ik0 rA <=> dG/dx = dG/dx + ik0 G
-                    std::complex<double> dA_over_dx_fdtd = (1.+delta)*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *A_n_pml )( i+2, j )-( *A_n_pml )( i-2, j ) )/(4.*dl) ;
                     std::complex<double> dG_over_dx_fdtd = (1.+delta)*( ( *G_n_pml )( i+1, j )-( *G_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *G_n_pml )( i+2, j )-( *G_n_pml )( i-2, j ) )/(4.*dl) ;
-                    std::complex<double> dA_over_dx = dA_over_dx_fdtd + i1*k0*( *A_n_pml )( i, j ) ;
                     std::complex<double> dG_over_dx = dG_over_dx_fdtd + i1*k0*( *G_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
                     // r d2A/dx^2 = r d2A/dx^2 + r 2ik0 dA/dx - r k0^2 A <=> d2G/dx^2 = d2G/dx^2 + 2ik0 dG/dx - k0^2 G
-                    std::complex<double> d2A_over_dx2_fdtd = (1.+delta)*( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *A_n_pml )( i-2, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+2, j ) )/(4.*dl*dl) ;
                     std::complex<double> d2G_over_dx2_fdtd = (1.+delta)*( ( *G_n_pml )( i-1, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *G_n_pml )( i-2, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+2, j ) )/(4.*dl*dl) ;
-                    std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
-                                                        + 2.*i1*k0*dA_over_dx_fdtd
-                                                        - k0*k0*( *A_n_pml )( i, j ) ;
                     std::complex<double> d2G_over_dx2 = d2G_over_dx2_fdtd
                                                         + 2.*i1*k0*dG_over_dx_fdtd
                                                         - k0*k0*( *G_n_pml )( i, j ) ;
                     // dA/dy = dA/dy
                     std::complex<double> dA_over_dy = ( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j-1 ) )/(2.*dr) ;
-                    std::complex<double> dG_over_dy = ( ( *G_n_pml )( i, j+1 )-( *G_n_pml )( i, j-1 ) )/(2.*dr) ;
                     // d2G/dy^2 = d2G/dy^2
-                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dr*dr) ;
                     std::complex<double> d2G_over_dy2 = ( ( *G_n_pml )( i, j-1 )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i, j+1 ) )/(dr*dr) ;
                     // ====
                     // STD Solver for propagation in vacuum
@@ -480,25 +472,15 @@ void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *en
                 for( unsigned int i=solvermin ; i<solvermax; i++ ) {
                     unsigned int j = 2; // j_p = 2 corresponds to r=0
                     std::complex<double> dA_over_dx_fdtd = (1.+delta)*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *A_n_pml )( i+2, j )-( *A_n_pml )( i-2, j ) )/(4.*dl) ;
-                    std::complex<double> dG_over_dx_fdtd = (1.+delta)*( ( *G_n_pml )( i+1, j )-( *G_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *G_n_pml )( i+2, j )-( *G_n_pml )( i-2, j ) )/(4.*dl) ;
                     std::complex<double> dA_over_dx = dA_over_dx_fdtd + i1*k0*( *A_n_pml )( i, j ) ;
-                    std::complex<double> dG_over_dx = dG_over_dx_fdtd + i1*k0*( *G_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
                     // r d2A/dx^2 = r d2A/dx^2 + r 2ik0 dA/dx - r k0^2 A <=> d2G/dx^2 = d2G/dx^2 + 2ik0 dG/dx - k0^2 G
                     std::complex<double> d2A_over_dx2_fdtd = (1.+delta)*( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *A_n_pml )( i-2, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+2, j ) )/(4.*dl*dl) ;
-                    std::complex<double> d2G_over_dx2_fdtd = (1.+delta)*( ( *G_n_pml )( i-1, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *G_n_pml )( i-2, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+2, j ) )/(4.*dl*dl) ;
                     std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
                                                         + 2.*i1*k0*dA_over_dx_fdtd
                                                         - k0*k0*( *A_n_pml )( i, j ) ;
-                    std::complex<double> d2G_over_dx2 = d2G_over_dx2_fdtd
-                                                        + 2.*i1*k0*dG_over_dx_fdtd
-                                                        - k0*k0*( *G_n_pml )( i, j ) ;
                     // dA/dy = dA/dy
-                    std::complex<double> dA_over_dy = ( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j-1 ) )/(2.*dr) ;
-                    std::complex<double> dG_over_dy = ( ( *G_n_pml )( i, j+1 )-( *G_n_pml )( i, j-1 ) )/(2.*dr) ;
                     // d2G/dy^2 = d2G/dy^2
-                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dr*dr) ;
-                    std::complex<double> d2G_over_dy2 = ( ( *G_n_pml )( i, j-1 )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i, j+1 ) )/(dr*dr) ;
                     // ====
                     // STD Solver for propagation in vacuum
                     // ====
@@ -585,17 +567,11 @@ void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *en
             // explicit solver
             for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
                 for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
-                    std::complex<double> dA_over_dx_fdtd = (1.+delta)*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *A_n_pml )( i+2, j )-( *A_n_pml )( i-2, j ) )/(4.*dl) ;
                     std::complex<double> dG_over_dx_fdtd = (1.+delta)*( ( *G_n_pml )( i+1, j )-( *G_n_pml )( i-1, j ) )/(2.*dl) - delta*( ( *G_n_pml )( i+2, j )-( *G_n_pml )( i-2, j ) )/(4.*dl) ;
-                    std::complex<double> dA_over_dx = dA_over_dx_fdtd + i1*k0*( *A_n_pml )( i, j ) ;
                     std::complex<double> dG_over_dx = dG_over_dx_fdtd + i1*k0*( *G_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
                     // r d2A/dx^2 = r d2A/dx^2 + r 2ik0 dA/dx - r k0^2 A <=> d2G/dx^2 = d2G/dx^2 + 2ik0 dG/dx - k0^2 G
-                    std::complex<double> d2A_over_dx2_fdtd = (1.+delta)*( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *A_n_pml )( i-2, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+2, j ) )/(4.*dl*dl) ;
                     std::complex<double> d2G_over_dx2_fdtd = (1.+delta)*( ( *G_n_pml )( i-1, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+1, j ) )/(dl*dl)-delta*( ( *G_n_pml )( i-2, j )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i+2, j ) )/(4.*dl*dl) ;
-                    std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
-                                                        + 2.*i1*k0*dA_over_dx_fdtd
-                                                        - k0*k0*( *A_n_pml )( i, j ) ;
                     std::complex<double> d2G_over_dx2 = d2G_over_dx2_fdtd
                                                         + 2.*i1*k0*dG_over_dx_fdtd
                                                         - k0*k0*( *G_n_pml )( i, j ) ;
@@ -603,8 +579,6 @@ void PML_SolverAM_EnvelopeReducedDispersion::compute_A_from_G( LaserEnvelope *en
                     std::complex<double> dA_over_dy = ( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j-1 ) )/(2.*dr) ;
                     // dG/dy = dG/dy
                     std::complex<double> dG_over_dy = ( ( *G_n_pml )( i, j+1 )-( *G_n_pml )( i, j-1 ) )/(2.*dr) ;
-                    // d2A/dy^2 = d2A/dy^2
-                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dr*dr) ;
                     // d2G/dy^2 = d2G/dy^2
                     std::complex<double> d2G_over_dy2 = ( ( *G_n_pml )( i, j-1 )-2.*( *G_n_pml )( i, j )+( *G_n_pml )( i, j+1 ) )/(dr*dr) ;
                     // ====
