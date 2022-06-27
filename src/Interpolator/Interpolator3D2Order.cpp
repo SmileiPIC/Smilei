@@ -136,7 +136,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
 
-    int *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
+    int    *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
     double *const __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
@@ -167,9 +167,10 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int ny_d = ny_p + 1;
     const int nz_d = nz_p + 1;
 
-    // Loop on bin particles
+    // Number of particles
+    // const int nparts( particles.size() );
     const int nparts = particles.last_index.back();
-
+    
     // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
     // dereferenced ptrs in the for loop's condition.
     const int first_index = *istart;

@@ -74,15 +74,15 @@ public:
     // ---------------------------------------------------------------------
     //#pragma acc routine seq
     double photonEmission( int ipart,
-                         double &particle_chi,
-                         double &particle_gamma,
+                         double particle_chi,
+                         double particle_gamma,
                          double *position_x,
                          double *position_y,
                          double *position_z,
                          double *momentum_x,
                          double *momentum_y,
                          double *momentum_z,
-                         double *weight,
+                         const double *const weight,
                          double random_number,
                          double * table_min_photon_chi,
                          double * table_xi,
@@ -116,3 +116,4 @@ private:
 };
 
 #endif
+

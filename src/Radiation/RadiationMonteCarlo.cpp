@@ -14,7 +14,16 @@
 #include <cstring>
 #include <fstream>
 
-#include "gpuRandom.h"
+#if defined(_GPU)
+    #define __HIP_PLATFORM_NVCC__
+    #define __HIP_PLATFORM_NVIDIA__
+    #include "gpuRandom.h"
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #define __HIP_PLATFORM_HCC__
+    #define __HIP_PLATFORM_AMD__
+    #include "gpuRandom.h"
+#endif
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Constructor for RadiationMonteCarlo
@@ -68,41 +77,20 @@ void RadiationMonteCarlo::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     int nparts = Epart->size()/3;
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
-
-    // Charge divided by the square of the mass
-    double charge_over_mass_square;
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     const double one_over_mass_square = pow( one_over_mass_, 2. );
-
-    // Number of particles
-    const int nbparticles = iend-istart;
-    
-    // Temporary quantum parameter
-    double particle_chi;
-
-    // Temporary Lorentz factor
-    double gamma;
 
     // Radiated energy
     double cont_rad_energy;
 
     // Temporary double parameter
     double temp;
-
-    // Time to emission
-    double emission_time;
-
-    // time spent in the iteration
-    double local_it_time;
-
-    // Number of Monte-Carlo iteration
-    int mc_it_nb;
 
     // Momentum shortcut
     double* __restrict__ momentum_x = particles.getPtrMomentum(0);
@@ -121,27 +109,21 @@ void RadiationMonteCarlo::operator()(
                            RadiationTables.xi_.size_photon_chi_;
 
     // Position shortcut
-    double* __restrict__ position_x = particles.getPtrPosition(0);
-    double* __restrict__ position_y = NULL;
-    double* __restrict__ position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
 
     // Charge shortcut
-    short * __restrict__ charge = particles.getPtrCharge();
+    const short *const __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double * __restrict__ weight = particles.getPtrWeight();
+    const double *const __restrict__ weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double * __restrict__ tau = particles.getPtrTau();
+    double *const __restrict__ tau = particles.getPtrTau();
 
     // Quantum parameter
-    double * __restrict__ chi = particles.getPtrChi();
+    double *const __restrict__ chi = particles.getPtrChi();
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
@@ -200,26 +182,30 @@ void RadiationMonteCarlo::operator()(
         table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
         deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) 
         {
-            #pragma acc loop gang worker vector private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma,  random_number, seed_curand_1, seed_curand_2) \
+            #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2) \
         reduction(+:radiated_energy_loc) 
-
+        
         smilei::tools::gpu::Random prng_state_1;
         smilei::tools::gpu::Random prng_state_2;
+
+
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-        // Init local variables
-        emission_time = 0;
-        local_it_time = 0;
-        mc_it_nb = 0;
+        // Time to emission
+        double emission_time = 0;
+        // time spent in the iteration
+        double local_it_time = 0;
+        // Number of Monte-Carlo iterations
+        int mc_it_nb = 0;
 
         // Monte-Carlo Manager inside the time step
         while( ( local_it_time < dt_ )
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
 
             // Gamma
-            gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+            const double gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                           + momentum_y[ipart]*momentum_y[ipart]
                           + momentum_z[ipart]*momentum_z[ipart] );
 
@@ -228,7 +214,7 @@ void RadiationMonteCarlo::operator()(
             }
 
             // Computation of the Lorentz invariant quantum parameter
-            particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
+            const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                            gamma,
                            Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
@@ -249,16 +235,20 @@ void RadiationMonteCarlo::operator()(
                     #ifndef _GPU
                         tau[ipart] = -log( 1.-rand_->uniform() );
                     #else
-			            seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
-                	    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
-
-                        prng_state_1.init( seed_curand_1, seq, offset ); // Cuda generator initialization
-                        random_number = prng_state_1.uniform();          // Generating number
-
+                        seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
+                        seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
+               		
+                        prng_state_1.init( seed_curand_1, seq, offset ); //Cuda generator initialization
+                        // hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        
+                        random_number = prng_state_1.uniform(); //Generating number
+                        // random_number = hiprand_uniform(&state_1); //Generating number
+                        
                         tau[ipart] = -log( 1.- random_number );
-			            initial_seed_1 = random_number;
+                        initial_seed_1 = random_number;
                     #endif
                 }
+
             }
 
             // Discontinuous emission: emission under progress
@@ -284,12 +274,17 @@ void RadiationMonteCarlo::operator()(
                     #ifndef _GPU
                         random_number = rand_->uniform();
                     #else
-			            seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
-              		    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
+                        seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
+                        seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
 
-                        prng_state_2.init( seed_curand_2, seq, offset ); // Cuda generator initialization
-                        random_number = prng_state_2.uniform();          // Generating number
-
+                        // hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+                        // 
+                        // random_number = hiprand_uniform(&state_2); //Generating number
+                        
+                        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
+	
+                        random_number = prng_state_2.uniform(); //Generating number
+                        
                     #endif
 
                     // Emission of a photon
@@ -385,10 +380,10 @@ void RadiationMonteCarlo::operator()(
         #pragma acc loop gang worker vector
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 
@@ -423,15 +418,15 @@ void RadiationMonteCarlo::operator()(
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
 double RadiationMonteCarlo::photonEmission( int ipart,
-        double &particle_chi,
-        double &particle_gamma,
+        const double particle_chi,
+        const double particle_gamma,
         double * position_x,
         double * position_y,
         double * position_z,
         double * momentum_x,
         double * momentum_y,
         double * momentum_z,
-        double *weight,
+        const double *const weight,
         double random_number,
         double * table_min_photon_chi,
         double * table_xi,
@@ -567,4 +562,5 @@ double RadiationMonteCarlo::photonEmission( int ipart,
 
     return radiated_energy;
 }
+
 

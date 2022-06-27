@@ -61,7 +61,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
     const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
-    const short *const __restrict__ charge      = particles.getPtrCharge();
+    const short  *const __restrict__ charge     = particles.getPtrCharge();
     const double *const __restrict__ weight     = particles.getPtrWeight();
 
     const int nparts = particles.last_index.back();
