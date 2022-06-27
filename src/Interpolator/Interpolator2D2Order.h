@@ -66,6 +66,7 @@ public:
             for( int jloc = -1; jloc < 2; jloc++ ) {
                 interp_res += coeffx[iloc] *
                               coeffy[jloc] *
+                              // Smilei uses an indexing favouring linear access in z
                               // ( *f )( x_grid_coordinate + iloc, y_grid_coordinate + jloc );
                               a_field[( x_grid_coordinate + iloc ) * y_grid_extent + ( y_grid_coordinate + jloc )];
             }
@@ -158,26 +159,26 @@ private:
         double delta;
         double delta2;
 
-        delta      = xpn - ( double )idx_d[0] + 0.5;
+        delta      = xpn - static_cast<double>( idx_d[0] ) + 0.5;
         delta2     = delta * delta;
         coeffxd[0] = 0.5 * ( delta2 - delta + 0.25 );
         coeffxd[1] = 0.75 - delta2;
         coeffxd[2] = 0.5 * ( delta2 + delta + 0.25 );
 
-        delta      = xpn - ( double )idx_p[0];
+        delta      = xpn - static_cast<double>( idx_p[0] );
         delta2     = delta * delta;
         coeffxp[0] = 0.5 * ( delta2 - delta + 0.25 );
         coeffxp[1] = 0.75 - delta2;
         coeffxp[2] = 0.5 * ( delta2 + delta + 0.25 );
         delta_p[0] = delta;
 
-        delta      = ypn - ( double )idx_d[1] + 0.5;
+        delta      = ypn - static_cast<double>( idx_d[1] ) + 0.5;
         delta2     = delta * delta;
         coeffyd[0] = 0.5 * ( delta2 - delta + 0.25 );
         coeffyd[1] = 0.75 - delta2;
         coeffyd[2] = 0.5 * ( delta2 + delta + 0.25 );
 
-        delta      = ypn - ( double )idx_p[1];
+        delta      = ypn - static_cast<double>( idx_p[1] );
         delta2     = delta * delta;
         coeffyp[0] = 0.5 * ( delta2 - delta + 0.25 );
         coeffyp[1] = 0.75 - delta2;
