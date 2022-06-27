@@ -27,6 +27,7 @@ protected:
     double alpha_cl ;
     double sigma_l_max ;
     double kappa_l_max ;
+    double kappa_cl ;
     double power_pml_kappa_l ;
     double power_pml_sigma_l ;
     double power_pml_alpha_l ;
@@ -34,6 +35,7 @@ protected:
     double alpha_cr ;
     double sigma_r_max ;
     double kappa_r_max ;
+    double kappa_cr ;
     double power_pml_kappa_r ;
     double power_pml_sigma_r ;
     double power_pml_alpha_r ;

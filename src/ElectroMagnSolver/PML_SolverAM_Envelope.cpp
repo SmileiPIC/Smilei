@@ -34,13 +34,15 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_sigma_l = 1.;
     // power_pml_alpha_l = 1.;
     // Abs
-    kappa_l_max       = 1.00 ;
-    sigma_l_max       = 0.90 ; // Ok for 20 cells PML, but not stable for more PML cells for dt -> dx
-    alpha_l_max       = 0.00 ;
-    alpha_cl          = 0.90 ;
-    power_pml_kappa_l = 1.;
-    power_pml_sigma_l = 2.;
-    power_pml_alpha_l = 1.;
+    kappa_cl          = params.envelope_pml_kappa_parameters[0][0] ;
+    kappa_l_max       = params.envelope_pml_kappa_parameters[0][1] ; // Increase kappa near 1.1, 1.2 increase stability
+    power_pml_kappa_l = params.envelope_pml_kappa_parameters[0][2] ;
+    sigma_l_max       = params.envelope_pml_sigma_parameters[0][0] ;
+    power_pml_sigma_l = params.envelope_pml_sigma_parameters[0][1] ;
+    alpha_cl          = params.envelope_pml_alpha_parameters[0][0] ;
+    alpha_l_max       = params.envelope_pml_alpha_parameters[0][1] ;
+    power_pml_alpha_l = params.envelope_pml_alpha_parameters[0][2] ;
+
     //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
     // Vaccum
     // kappa_r_max = 1. ;
@@ -51,13 +53,14 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_sigma_r = 1.;
     // power_pml_alpha_r = 1.;
     // Abs
-    kappa_r_max       = 1.000 ;
-    sigma_r_max       = 10.00 ; // 10 for 20 cells dx = 1 ; 20 for 20 cells dx = 0.5 
-    alpha_r_max       = 0.000 ;
-    alpha_cr          = 0.750 ;
-    power_pml_kappa_r = 1.000 ;
-    power_pml_sigma_r = 2.000 ;
-    power_pml_alpha_r = 1.000 ;
+    kappa_cr          = params.envelope_pml_kappa_parameters[1][0] ;
+    kappa_r_max       = params.envelope_pml_kappa_parameters[1][1] ;
+    power_pml_kappa_r = params.envelope_pml_kappa_parameters[1][2] ;
+    sigma_r_max       = params.envelope_pml_sigma_parameters[1][0] ; // 10 for 20 cells dx = 1 ; 20 for 20 cells dx = 0.5
+    power_pml_sigma_r = params.envelope_pml_sigma_parameters[1][1] ;
+    alpha_cr          = params.envelope_pml_alpha_parameters[1][0] ;
+    alpha_r_max       = params.envelope_pml_alpha_parameters[1][1] ;
+    power_pml_alpha_r = params.envelope_pml_alpha_parameters[1][2] ;
 }
 
 PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
@@ -144,13 +147,13 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // Params for other cells (PML Media) when i>=3
         for ( int i=startpml; i<nl_p ; i++ ) {
             // Parameters
-            kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
+            kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
-            alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( (i-startpml)*dl , power_pml_alpha_l ) / pow( length_l_pml , power_pml_alpha_l ) );
+            alpha_l_p[i] = alpha_cl + (alpha_l_max-alpha_cl) * pow(1. - (i-startpml)*dl/length_l_pml  , power_pml_alpha_l );
             // Derivatives
-            kappa_prime_l_p[i] = (kappa_l_max - 1.) * power_pml_kappa_l * pow( (i-startpml)*dl , power_pml_kappa_l-1 ) / pow( length_l_pml , power_pml_kappa_l ) ;
+            kappa_prime_l_p[i] = (kappa_l_max - kappa_cl) * power_pml_kappa_l * pow( (i-startpml)*dl , power_pml_kappa_l-1 ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( (i-startpml)*dl , power_pml_sigma_l-1 ) / pow( length_l_pml , power_pml_sigma_l ) ;
-            alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( (i-startpml)*dl , power_pml_alpha_l-1 ) / pow( length_l_pml , power_pml_alpha_l ) ;
+            alpha_prime_l_p[i] = - power_pml_alpha_l*(alpha_l_max-alpha_cl)/length_l_pml* pow(1. - (i-startpml)*dl/length_l_pml , power_pml_alpha_l-1 );
         }
         if (min_or_max==0) {
             std::reverse(kappa_l_p.begin(), kappa_l_p.end());
@@ -217,13 +220,13 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 // Parameters
-                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
+                kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
-                alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                alpha_l_p[i] = alpha_cl + (alpha_l_max-alpha_cl) * pow (1. - ( ncells_pml_min[0] - 1 - i )*dl/length_l_pml_lmin , power_pml_alpha_l );
                 // Derivatives
-                kappa_prime_l_p[i] = (kappa_l_max - 1.) * power_pml_kappa_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
+                kappa_prime_l_p[i] = (kappa_l_max - kappa_cl) * power_pml_kappa_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
-                alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmin , power_pml_alpha_l ) ;
+                alpha_prime_l_p[i] = - (alpha_l_max-alpha_cl) * power_pml_alpha_l / length_l_pml_lmin * pow( 1. - ( ncells_pml_min[0] - 1 - i )*dl/length_l_pml_lmin , power_pml_alpha_l-1 ) ;
                 // Convention Envelop Smilei
                 kappa_l_p[i] *= +1 ;
                 sigma_l_p[i] *= -1 ;
@@ -239,13 +242,13 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
                 // Parameters
-                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
+                kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
-                alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
+                alpha_l_p[i] = alpha_cl + alpha_l_max * pow(1. - ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl/length_l_pml_lmax , power_pml_alpha_l );
                 // Derivatives
-                kappa_prime_l_p[i] = (kappa_l_max - 1.) * power_pml_kappa_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
+                kappa_prime_l_p[i] = (kappa_l_max - kappa_cl) * power_pml_kappa_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmax , power_pml_sigma_l ) ;
-                alpha_prime_l_p[i] = -alpha_l_max * power_pml_alpha_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l-1 ) / pow( length_l_pml_lmax , power_pml_alpha_l ) ;
+                alpha_prime_l_p[i] = -(alpha_l_max-alpha_cl) * power_pml_alpha_l / length_l_pml_lmax * pow( 1. - ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl / length_l_pml_lmax , power_pml_alpha_l-1 ) ;
                 // Convention Envelop Smilei
                 kappa_l_p[i] *= +1 ;
                 sigma_l_p[i] *= -1 ;
@@ -258,28 +261,28 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // R-direction
         for ( int j=0 ; j<startpml ; j++ ) {
             // Coeffs for the first cell
-            kappa_r_p[j] = 1. ;
+            kappa_r_p[j] = kappa_cr ;
             sigma_r_p[j] = 0. ;
             alpha_r_p[j] = 0. ;
             kappa_prime_r_p[j] = 0. ;
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) ;
+            integrate_kappa_r_p[j] = kappa_cr*( rmax + j*dr - r0 - 1.*dr ) ;
             integrate_sigma_r_p[j] = 0. ;
             integrate_alpha_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
         for ( int j=startpml; j<nr_p ; j++ ) {
             // Parameters
-            kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
+            kappa_r_p[j] = kappa_cr + (kappa_r_max - kappa_cr) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
-            alpha_r_p[j] = alpha_cr + alpha_r_max * (1. - pow( (j-startpml)*dr , power_pml_alpha_r ) / pow( length_r_pml , power_pml_alpha_r ) );
+            alpha_r_p[j] = alpha_cr + (alpha_r_max-alpha_cr) * pow(1. - (j-startpml)*dr / length_r_pml , power_pml_alpha_r );
             // Derivatives
-            kappa_prime_r_p[j] = (kappa_r_max-1.) * power_pml_kappa_r * pow( (j-startpml)*dr , power_pml_kappa_r-1 ) / pow( length_r_pml , power_pml_kappa_r ) ;
+            kappa_prime_r_p[j] = (kappa_r_max-kappa_cr) * power_pml_kappa_r * pow( (j-startpml)*dr , power_pml_kappa_r-1 ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_prime_r_p[j] = sigma_r_max * power_pml_sigma_r * pow( (j-startpml)*dr , power_pml_sigma_r-1 ) / pow( length_r_pml , power_pml_sigma_r ) ;
-            alpha_prime_r_p[j] = -alpha_r_max * power_pml_alpha_r * pow( (j-startpml)*dr , power_pml_alpha_r-1 ) / pow( length_r_pml , power_pml_alpha_r ) ;
+            alpha_prime_r_p[j] = -(alpha_r_max-alpha_cr) * power_pml_alpha_r / length_r_pml * pow( 1. - (j-startpml)*dr / length_r_pml , power_pml_alpha_r-1 ) ;
             // Integrates
-            integrate_kappa_r_p[j] = 1.*( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
+            integrate_kappa_r_p[j] = kappa_cr *( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - kappa_cr ) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
             integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_sigma_r ) * pow( (j-startpml)*dr , power_pml_sigma_r+1 ) / ( power_pml_sigma_r+1 ) ;
             integrate_alpha_r_p[j] = 1*alpha_r_p[j] ;
         }
@@ -662,7 +665,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ADE Scheme for X-PML (depend only on x (i index))
                     // Present on iDim = 1 in order to be able to treat corner
                     // In order to take account the M-PML method sigma(x) -> sigma (x,y) <=> sigma_l(x) -> sigma_l(x)+sigma_l(y) = sigma_l(x)+0.1*sigma_r(y)
-                    // Derivative are on x direction, so sigma_l_prime is unchanged 
+                    // Derivative are on x direction, so sigma_l_prime is unchanged
                     // ====
                     // ADE Scheme for X-PML (depend only on x (i index))
                     // ====

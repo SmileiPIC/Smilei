@@ -450,7 +450,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             full_Envelope_exchange = true;
         }
 
-
+        PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_kappa_parameters", envelope_pml_kappa_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_alpha_parameters", envelope_pml_alpha_parameters, "LaserEnvelope" );
     }
 
     open_boundaries.resize( nDim_field );
@@ -511,6 +513,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
+    PyTools::extractVV( "pml_sigma_parameters", pml_sigma_parameters, "Main" );
+    PyTools::extractVV( "pml_kappa_parameters", pml_kappa_parameters, "Main" );
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
@@ -1116,6 +1120,9 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
+        if (maxwell_sol == "Bouchard" && custom_oversize < 4 ) {
+             ERROR_NAMELIST( "With `Bouchard` solver the oversize have to be greater than 4", LINK_NAMELIST + std::string("#main-variables") );
+        }
         if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
             if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {

@@ -131,6 +131,12 @@ public:
     std::vector< std::vector<bool> > open_boundaries;
     bool save_magnectic_fields_for_SM;
     std::vector< std::vector<int> > number_of_pml_cells;
+    std::vector< std::vector<double> > pml_sigma_parameters;
+    std::vector< std::vector<double> > pml_kappa_parameters;
+    std::vector< std::vector<double> > envelope_pml_sigma_parameters;
+    std::vector< std::vector<double> > envelope_pml_kappa_parameters;
+    std::vector< std::vector<double> > envelope_pml_alpha_parameters;
+
 
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;

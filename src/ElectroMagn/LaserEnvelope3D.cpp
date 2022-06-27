@@ -329,11 +329,57 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( Patch *patch )
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
     Field3D *Env_Chi3D     = static_cast<Field3D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
-  
+
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
+    bool isZmin = patch->isBoundary( 2, 0 );
+    bool isZmax = patch->isBoundary( 2, 1 );
+ 
     
     // temporary variable for updated envelope
     cField3D *A3Dnew;
     A3Dnew  = new cField3D( A_->dims_ );
+
+    if (isYmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < 4 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, 4, k );
+                }
+            }
+        }
+    }
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, A_->dims_[1]-5,k );
+                }
+            }
+        }
+    }
+
+    if (isZmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < 4 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, 4);
+                }
+            }
+        }
+    }
+
+    if (isZmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for ( unsigned int k=A_->dims_[2]-4 ; k < A_->dims_[2]-1 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, A_->dims_[2]-5 );
+                }
+            }
+        }
+    }
+
     
     //// explicit solver
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop

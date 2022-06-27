@@ -25,10 +25,12 @@ public:
 protected:
     double sigma_r_max;
     double kappa_r_max;
-    double power_pml_r;
+    double sigma_power_pml_r;
+    double kappa_power_pml_r;
     double sigma_l_max;
     double kappa_l_max;
-    double power_pml_l;
+    double sigma_power_pml_l;
+    double kappa_power_pml_l;
 
     std::vector<double> kappa_r_p;
     std::vector<double> sigma_r_p;

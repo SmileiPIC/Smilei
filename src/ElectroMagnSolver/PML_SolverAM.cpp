@@ -9,6 +9,16 @@
 PML_SolverAM::PML_SolverAM( Params &params )
     : SolverAM( params )
 {
+    //Define here the value of coefficient kappa_l_max, power_kappa_l, sigma_l_max, power_sigma_l
+    sigma_l_max = params.pml_sigma_parameters[0][0];
+    kappa_l_max = params.pml_kappa_parameters[0][0];
+    sigma_power_pml_l = params.pml_sigma_parameters[0][1];
+    kappa_power_pml_l = params.pml_kappa_parameters[0][1];
+    //Define here the value of coefficient kappa_r_max, power_kappa_r, sigma_r_max, power_sigma_r
+    sigma_r_max = params.pml_sigma_parameters[1][0];
+    kappa_r_max = params.pml_kappa_parameters[1][0];
+    sigma_power_pml_r = params.pml_sigma_parameters[1][1];
+    kappa_power_pml_r = params.pml_kappa_parameters[1][1];
 }
 
 PML_SolverAM::~PML_SolverAM()
@@ -160,15 +170,9 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        sigma_l_max = 80.;
-        kappa_l_max = 80.;
-        power_pml_l = 4.;
-        // sigma_l_max = 0.;
-        // kappa_l_max = 1.;
-        // power_pml_l = 0.;
         for ( int i=startpml ; i<nl_p ; i++ ) {
-                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_l ) / pow( length_l_pml , power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_l ) / pow( length_l_pml , power_pml_l ) ;
+                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , kappa_power_pml_l ) / pow( length_l_pml , kappa_power_pml_l ) ;
+                sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
         }
         // Radial
         for ( int j=0 ; j<nr_p ; j++ ) {
@@ -186,15 +190,9 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_d[i] = 0 ;
         }
         // Params for other cells (PML Media) when j>=4
-        sigma_l_max = 80.;
-        kappa_l_max = 80.;
-        power_pml_r = 4.;
-        // sigma_l_max = 0.;
-        // kappa_l_max = 1.;
-        // power_pml_l = 0.;
         for ( int i=startpml+1 ; i<nl_d ; i++ ) {
-            kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml-0.5)*dl , power_pml_l ) / pow( length_l_pml , power_pml_l ) ;
-            sigma_l_d[i] = sigma_l_max * pow( (i-startpml-0.5)*dl , power_pml_l ) / pow( length_l_pml , power_pml_l ) ;
+            kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml-0.5)*dl , kappa_power_pml_l ) / pow( length_l_pml , kappa_power_pml_l ) ;
+            sigma_l_d[i] = sigma_l_max * pow( (i-startpml-0.5)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
         }
         // Radial
         for ( int j=0 ; j<nr_d ; j++ ) {
@@ -218,27 +216,15 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_p[i] = 0. ;
         }
         if (ncells_pml_min[0] != 0 ){
-            sigma_l_max = 80.;
-            kappa_l_max = 80.;
-            power_pml_l = 4.;
-            // sigma_l_max = 0.;
-            // kappa_l_max = 1.;
-            // power_pml_l = 0.;
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_l ) / pow( length_l_pml_lmin , power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_l ) / pow( length_l_pml_lmin , power_pml_l ) ;
+                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmin , kappa_power_pml_l ) ;
+                sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            sigma_l_max = 80.;
-            kappa_l_max = 80.;
-            power_pml_l = 4.;
-            // sigma_l_max = 0.;
-            // kappa_l_max = 1.;
-            // power_pml_l = 0.;
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
-                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_l ) / pow( length_l_pml_lmax , power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_l ) / pow( length_l_pml_lmax , power_pml_l ) ;
+                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmax , kappa_power_pml_l ) ;
+                sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
             }
         }
         // Radial
@@ -251,17 +237,11 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             integrate_sigma_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when j>=3
-        sigma_r_max = 80.;
-        kappa_r_max = 80.;
-        power_pml_r = 4.;
-        // sigma_r_max = 0. ;
-        // kappa_r_max = 1. ;
-        // power_pml_r = 0. ;
         for ( int j=startpml ; j<nr_p ; j++) {
-            kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_r ) / pow( length_r_pml , power_pml_r ) ;
-            sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_r ) / pow( length_r_pml , power_pml_r ) ;
-            integrate_kappa_r_p[j] = ( rmax + j*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_r ) * pow( (j-startpml)*dr , power_pml_r+1 ) / (power_pml_r+1) ;
-            integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_r ) * pow( (j-startpml)*dr , power_pml_r+1 ) / ( power_pml_r+1 ) ;
+            kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , kappa_power_pml_r ) / pow( length_r_pml , kappa_power_pml_r ) ;
+            sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            integrate_kappa_r_p[j] = ( rmax + j*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
+            integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
         }
         // Dual grid
         // Longitudinal
@@ -270,27 +250,15 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_d[i] = 0. ;
         }
         if (ncells_pml_min[0] != 0 ){
-            sigma_l_max = 80.;
-            kappa_l_max = 80.;
-            power_pml_l = 4.;
-            // sigma_l_max = 0. ;
-            // kappa_l_max = 1. ;
-            // power_pml_l = 0. ;
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , power_pml_l ) / pow( length_l_pml_lmin , power_pml_l ) ;
-                sigma_l_d[i] = sigma_l_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , power_pml_l ) / pow( length_l_pml_lmin , power_pml_l ) ;
+                kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmin , kappa_power_pml_l ) ;
+                sigma_l_d[i] = sigma_l_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            sigma_l_max = 80.;
-            kappa_l_max = 80.;
-            power_pml_l = 4.;
-            // sigma_l_max = 0. ;
-            // kappa_l_max = 1. ;
-            // power_pml_l = 0. ;
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1)+1 ; i<nl_d ; i++ ) {
-                kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , power_pml_l ) / pow( length_l_pml_lmax , power_pml_l ) ;
-                sigma_l_d[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , power_pml_l ) / pow( length_l_pml_lmax , power_pml_l ) ;
+                kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmax , kappa_power_pml_l ) ;
+                sigma_l_d[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
             }
         }
         // Radial
@@ -303,17 +271,11 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             integrate_sigma_r_d[j] = 0 ;
         }
         // Params for other cells (PML Media) when j>=4
-        sigma_r_max = 80.;
-        kappa_r_max = 80.;
-        power_pml_r = 4.;
-        // sigma_r_max = 0.;
-        // kappa_r_max = 1.;
-        // power_pml_r = 0.;
         for ( int j=startpml+1 ; j<nr_d ; j++) {
-            kappa_r_d[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml-0.5)*dr , power_pml_r ) / pow( length_r_pml , power_pml_r ) ;
-            sigma_r_d[j] = sigma_r_max * pow( (j-startpml-0.5)*dr , power_pml_r ) / pow( length_r_pml , power_pml_r ) ;
-            integrate_kappa_r_d[j] = ( rmax + (j-0.5)*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_r ) * pow( (j-startpml-0.5)*dr , power_pml_r+1 ) / (power_pml_r+1) ;
-            integrate_sigma_r_d[j] = sigma_r_max / pow( length_r_pml , power_pml_r ) * pow( (j-startpml-0.5)*dr , power_pml_r+1 ) / ( power_pml_r+1 ) ;
+            kappa_r_d[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml-0.5)*dr , kappa_power_pml_r ) / pow( length_r_pml , kappa_power_pml_r ) ;
+            sigma_r_d[j] = sigma_r_max * pow( (j-startpml-0.5)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            integrate_kappa_r_d[j] = ( rmax + (j-0.5)*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml-0.5)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
+            integrate_sigma_r_d[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml-0.5)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
         }
     }
 
