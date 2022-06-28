@@ -73,7 +73,14 @@ public:
         return data_2D[i][j];
     };
     
-    
+    Field* clone() override {
+        auto newInstance = new cField2D(dims_);
+        newInstance->name = name;
+        newInstance->copyFrom(this);
+        return newInstance;
+    }
+
+
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
     
     inline std::complex<double> &operator()( unsigned int i )
@@ -90,14 +97,6 @@ public:
             for( unsigned int i=0; i<globalDims_; i++ ) {
                 cdata_[i] = val;
             }
-    }
-    void copyFrom( Field *from_field )
-    {
-        cField2D *from_cfield = static_cast<cField2D *>( from_field );
-        DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
-        for( unsigned int i=0; i< globalDims_; i++ ) {
-            ( *this )( i )=( *from_cfield )( i );
-        }
     }
     
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;

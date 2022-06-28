@@ -124,16 +124,7 @@ public:
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
                 if( EMfields->allFields[ifield]
                         && fieldName==EMfields->allFields[ifield]->name ) {
-                    
-                    if (params.nDim_field == 1) {
-                        extField.savedField = new Field1D(EMfields->allFields[ifield]->dims());
-                    } else if (params.nDim_field == 2){
-                        extField.savedField = new Field2D(EMfields->allFields[ifield]->dims());
-                    } else if (params.nDim_field == 3){
-                        extField.savedField = new Field3D(EMfields->allFields[ifield]->dims());
-                    }
-                    extField.savedField->copyFrom(EMfields->allFields[ifield]);
-                    extField.savedField->name = EMfields->allFields[ifield]->name;
+                    extField.savedField = EMfields->allFields[ifield]->clone();
                     extField.index =  ifield;
                     break;
                 }
@@ -304,14 +295,7 @@ public:
             PrescribedField newpf;
             newpf.profile = EMfields->prescribedFields[n_extfield].profile;
             newpf.index   = EMfields->prescribedFields[n_extfield].index;
-            if (params.nDim_field == 1) {
-                newpf.savedField = new Field1D(EMfields->prescribedFields[n_extfield].savedField->dims());
-            } else if (params.nDim_field == 2){
-                newpf.savedField = new Field2D(EMfields->prescribedFields[n_extfield].savedField->dims());
-            } else if (params.nDim_field == 3){
-                newpf.savedField = new Field3D(EMfields->prescribedFields[n_extfield].savedField->dims());
-            }
-            newpf.savedField->copyFrom(EMfields->allFields[newpf.index]);
+            newpf.savedField = EMfields->prescribedFields[n_extfield].savedField->clone();
             newEMfields->prescribedFields.push_back( newpf );
         }
         
