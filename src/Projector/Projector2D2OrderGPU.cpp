@@ -2,6 +2,7 @@
 
 #include "ElectroMagn.h"
 #include "Patch.h"
+#include "gpu.h"
 
 Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     : Projector2D{ parameters, a_patch }
@@ -61,6 +62,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         }
 
         const int nparts              = particles.size();
+        const int particle_to_process = iend - istart;
 
         const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
         const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -68,15 +70,27 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         const short *const __restrict__ charge      = particles.getPtrCharge();
         const double *const __restrict__ weight     = particles.getPtrWeight();
 
+        // Arrays used for the Esirkepov projection method
+        static constexpr bool kAutoDeviceFree = true;
+        const std::size_t     kTmpArraySize   = particle_to_process * 5;
+
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
+
+        std::memset( Sx1_buffer.data(), 0, sizeof( double ) * Sx1_buffer.size() );
+        std::memset( Sy1_buffer.data(), 0, sizeof( double ) * Sy1_buffer.size() );
+
         for( int ipart = istart; ipart < iend; ++ipart ) {
             const double invgf                        = invgf_[ipart];
             const int *const __restrict__ iold        = &iold_[ipart];
             const double *const __restrict__ deltaold = &deltaold_[ipart];
 
-            double Sx0[5];
-            double Sx1[5]{};
-            double Sy0[5];
-            double Sy1[5]{};
+            double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
 
             // -------------------------------------
             // Variable declaration & initialization
@@ -113,7 +127,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             // Locate the particle on the primal grid at current time-step & calculate coeff. S1
             const double xpn      = position_x[ipart] * dx_inv;
             const int    ip       = std::round( xpn );
-            int          ipo      = iold[0 * nparts];
+            const int    ipo      = iold[0 * nparts];
             const int    ip_m_ipo = ip - ipo - i_domain_begin;
             const double xdelta   = xpn - static_cast<double>( ip );
             const double xdelta2  = xdelta * xdelta;
@@ -123,19 +137,36 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 
             const double ypn      = position_y[ipart] * dy_inv;
             const int    jp       = std::round( ypn );
-            int          jpo      = iold[1 * nparts];
+            const int    jpo      = iold[1 * nparts];
             const int    jp_m_jpo = jp - jpo - j_domain_begin;
             const double ydelta   = ypn - static_cast<double>( jp );
             const double ydelta2  = ydelta * ydelta;
             Sy1[jp_m_jpo + 1]     = 0.5 * ( ydelta2 - ydelta + 0.25 );
             Sy1[jp_m_jpo + 2]     = 0.75 - ydelta2;
             Sy1[jp_m_jpo + 3]     = 0.5 * ( ydelta2 + ydelta + 0.25 );
+        }
+
+        // Charge deposition on the grid
+
+        for( int ipart = istart; ipart < iend; ++ipart ) {
+            const double invgf                        = invgf_[ipart];
+            const int *const __restrict__ iold        = &iold_[ipart];
+            const double *const __restrict__ deltaold = &deltaold_[ipart];
+
+            double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
+            double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
+
+            // (x,y,z) components of the current density for the macro-particle
+            const double charge_weight = inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
+            const double crx_p         = charge_weight * dx_ov_dt;
+            const double cry_p         = charge_weight * dy_ov_dt;
+            const double crz_p         = charge_weight * one_third * momentum_z[ipart] * invgf;
 
             // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-            ipo -= 2;
-            jpo -= 2;
-
-            // Charge deposition on the grid
+            const int ipo = iold[0 * nparts] - 2;
+            const int jpo = iold[1 * nparts] - 2;
 
             for( unsigned int i = 0; i < 1; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
