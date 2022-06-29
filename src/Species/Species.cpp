@@ -60,7 +60,6 @@ Species::Species( Params &params, Patch *patch ) :
     radiating_( false ),
     relativistic_field_initialization_( false ),
     iter_relativistic_initialization_( 0 ),
-    mBW_pair_species_names_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
     charge_profile_( NULL ),
@@ -84,6 +83,7 @@ Species::Species( Params &params, Patch *patch ) :
     radiation_photon_species( "" ),
     radiated_photons_( nullptr ),
     //mBW_pair_creation_sampling_( {1,1} ),
+    mBW_pair_species_names_( 2, "" ),
     cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -211,6 +211,22 @@ void Species::resizeCluster( Params &params )
 // Create the particles once the namelist is read
 void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
 {
+    
+    // Area for particle creation
+    struct SubSpace init_space;
+    init_space.cell_index_[0] = 0;
+    init_space.cell_index_[1] = 0;
+    init_space.cell_index_[2] = 0;
+    init_space.box_size_[0]   = params.n_space[0];
+    init_space.box_size_[1]   = params.n_space[1];
+    init_space.box_size_[2]   = params.n_space[2];
+
+    // Creation of the particle creator
+    ParticleCreator particle_creator;
+    // Associate the ceator to the current species (this)
+    particle_creator.associate(this);
+
+    // If restart from a checkpoint or without particle creation
     if( params.restart || !with_particles ) {
 
         if( like_particles ) {
@@ -219,20 +235,12 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
             particles->initialize( 0, params.nDim_particle, params.keep_position_old );
         }
 
+        // Compute only `max_charge_`
+        particle_creator.createChargeProfile( init_space, patch);
+
     } else {
 
-        // Area for particle creation
-        struct SubSpace init_space;
-        init_space.cell_index_[0] = 0;
-        init_space.cell_index_[1] = 0;
-        init_space.cell_index_[2] = 0;
-        init_space.box_size_[0]   = params.n_space[0];
-        init_space.box_size_[1]   = params.n_space[1];
-        init_space.box_size_[2]   = params.n_space[2];
-
-        // Creation of the particle creator and association to the new species
-        ParticleCreator particle_creator;
-        particle_creator.associate(this);
+        // Create profiles and particles
         particle_creator.create( init_space, params, patch, 0 );
 
     }

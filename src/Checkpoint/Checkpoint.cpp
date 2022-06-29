@@ -237,9 +237,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     dump_number++;
 
 #ifdef  __DEBUG
-    MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
+    //MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
+    MESSAGEALL( " Checkpoint #" << dumpName << "at iteration " << itime << " dumped" );
 #else
-    MESSAGE( "Step " << itime << " : DUMP fields and particles " << num_dump );
+    MESSAGE( " Checkpoint #" << num_dump << "at iteration " << itime << " dumped" );
 #endif
 
 
