@@ -54,6 +54,10 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
 {
+    if( iend == istart ) {
+        return;
+    }
+
     double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
     double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
     double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
@@ -71,10 +75,6 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const int sizeofEy = EMfields->Jy_->globalDims_;
     const int sizeofEz = EMfields->Jz_->globalDims_;
 #endif
-
-    if( iend == istart ) {
-        return;
-    }
 
     const int packsize = nparts;
     const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.

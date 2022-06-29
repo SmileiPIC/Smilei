@@ -28,6 +28,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
 
 Projector2D2OrderGPU::~Projector2D2OrderGPU()
 {
+    // EMPTY
 }
 
 namespace { // Unnamed namespace == static == internal linkage == no exported symbols
@@ -38,11 +39,12 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     currents( double *__restrict__ Jx,
               double *__restrict__ Jy,
               double *__restrict__ Jz,
-              const Particles &particles,
-              unsigned int     ipart,
-              double           invgf,
-              const int *__restrict__ iold,
-              const double *__restrict__ deltaold,
+              Particles &particles,
+              int        istart,
+              int        iend,
+              const double *__restrict__ invgf_,
+              const int *__restrict__ iold_,
+              const double *__restrict__ deltaold_,
               double inv_cell_volume,
               double dx_inv,
               double dy_inv,
@@ -54,178 +56,122 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               double one_third,
               int    pxr )
     {
-        // ERROR( "currents(): Not implemented !" );
-
-        int nparts = particles.size();
-
-        // -------------------------------------
-        // Variable declaration & initialization
-        // -------------------------------------
-
-        int iloc;
-        // (x,y,z) components of the current density for the macro-particle
-        double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-        double crx_p = charge_weight*dx_ov_dt;
-        double cry_p = charge_weight*dy_ov_dt;
-        double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
-
-        // variable declaration
-        double xpn, ypn;
-        double delta, delta2;
-        // arrays used for the Esirkepov projection method
-        double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5], tmpJx[5];
-
-        for( unsigned int i=0; i<5; i++ ) {
-            Sx1[i] = 0.;
-            Sy1[i] = 0.;
-            tmpJx[i] = 0.;
-        }
-        Sx0[0] = 0.;
-        Sx0[4] = 0.;
-        Sy0[0] = 0.;
-        Sy0[4] = 0.;
-
-        // --------------------------------------------------------
-        // Locate particles & Calculate Esirkepov coef. S, DS and W
-        // --------------------------------------------------------
-
-        // locate the particle on the primal grid at former time-step & calculate coeff. S0
-        delta = deltaold[0*nparts];
-        delta2 = delta*delta;
-        Sx0[1] = 0.5 * ( delta2-delta+0.25 );
-        Sx0[2] = 0.75-delta2;
-        Sx0[3] = 0.5 * ( delta2+delta+0.25 );
-
-        delta = deltaold[1*nparts];
-        delta2 = delta*delta;
-        Sy0[1] = 0.5 * ( delta2-delta+0.25 );
-        Sy0[2] = 0.75-delta2;
-        Sy0[3] = 0.5 * ( delta2+delta+0.25 );
-
-
-        // locate the particle on the primal grid at current time-step & calculate coeff. S1
-        xpn = particles.position( 0, ipart ) * dx_inv;
-        int ip = std::round( xpn );
-        int ipo = iold[0*nparts];
-        int ip_m_ipo = ip-ipo-i_domain_begin;
-        delta  = xpn - ( double )ip;
-        delta2 = delta*delta;
-        Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
-        Sx1[ip_m_ipo+2] = 0.75-delta2;
-        Sx1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
-
-        ypn = particles.position( 1, ipart ) * dy_inv;
-        int jp = std::round( ypn );
-        int jpo = iold[1*nparts];
-        int jp_m_jpo = jp-jpo-j_domain_begin;
-        delta  = ypn - ( double )jp;
-        delta2 = delta*delta;
-        // cerr << " ipart: " << ipart
-        //      << " nparts: " << nparts
-        //      << " iold[0]: " << iold[0*nparts]
-        //      << " iold[1]: " << iold[1*nparts]
-        //      << " ip_m_ipo: " << ip_m_ipo
-        //      << " jp_m_jpo: " << jp_m_jpo
-        //      << " ypn: " << ypn
-        //      << endl;
-
-        Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
-        Sy1[jp_m_jpo+2] = 0.75-delta2;
-        Sy1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
-
-        for( unsigned int i=0; i < 5; i++ ) {
-            DSx[i] = Sx1[i] - Sx0[i];
-            DSy[i] = Sy1[i] - Sy0[i];
+        if( iend == istart ) {
+            return;
         }
 
-        // calculate Esirkepov coeff. Wx, Wy, Wz when used
-        double tmp, tmp2, tmp3, tmpY;
-        //Do not compute useless weights.
-        // ------------------------------------------------
-        // Local current created by the particle
-        // calculate using the charge conservation equation
-        // ------------------------------------------------
+        const int nparts              = particles.size();
 
-        // ---------------------------
-        // Calculate the total current
-        // ---------------------------
-        ipo -= 2; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-        jpo -= 2;
-        // i =0
-        {
-            iloc = ipo*nprimy+jpo;
-            tmp2 = 0.5*Sx1[0];
-            tmp3 =     Sx1[0];
-            Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
-            tmp = 0;
-            tmpY = Sx0[0] + 0.5*DSx[0];
-            for( unsigned int j=1 ; j<5 ; j++ ) {
-                tmp -= cry_p * DSy[j-1] * tmpY;
-                Jy[iloc+j+pxr*ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-                Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
-                // cerr << " iloc+j+ipo: " << iloc+j+ipo
-                //      << " iloc: " << iloc
-                //      << " ipo: " << ipo
-                //      << endl;
+        const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+        const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+        const double *const __restrict__ momentum_z = particles.getPtrMomentum( 2 );
+        const short *const __restrict__ charge      = particles.getPtrCharge();
+        const double *const __restrict__ weight     = particles.getPtrWeight();
+
+        for( int ipart = istart; ipart < iend; ++ipart ) {
+            const double invgf                        = invgf_[ipart];
+            const int *const __restrict__ iold        = &iold_[ipart];
+            const double *const __restrict__ deltaold = &deltaold_[ipart];
+
+            double Sx0[5];
+            double Sx1[5]{};
+            double Sy0[5];
+            double Sy1[5]{};
+
+            // -------------------------------------
+            // Variable declaration & initialization
+            // -------------------------------------
+
+            // (x,y,z) components of the current density for the macro-particle
+            const double charge_weight = inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
+            const double crx_p         = charge_weight * dx_ov_dt;
+            const double cry_p         = charge_weight * dy_ov_dt;
+            const double crz_p         = charge_weight * one_third * momentum_z[ipart] * invgf;
+
+            // Locate particles & Calculate Esirkepov coef. S, DS and W
+
+            // Locate the particle on the primal grid at former time-step & calculate coeff. S0
+            {
+                const double delta  = deltaold[0 * nparts];
+                const double delta2 = delta * delta;
+                Sx0[0]              = 0.0;
+                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+                Sx0[2]              = 0.75 - delta2;
+                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+                Sx0[4]              = 0.0;
             }
-        }//i
-
-        for( unsigned int i=1 ; i<5 ; i++ ) {
-            iloc = ( i+ipo )*nprimy+jpo;
-            // cerr << " iloc: " << iloc
-            //      << endl;
-            tmpJx[0] -= crx_p *  DSx[i-1] * ( 0.5*DSy[0] );
-            Jx[iloc]  += tmpJx[0];
-            tmp2 = 0.5*Sx1[i] + Sx0[i];
-            tmp3 = 0.5*Sx0[i] + Sx1[i];
-            Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
-            tmp = 0;
-            tmpY = Sx0[i] + 0.5*DSx[i];
-            for( unsigned int j=1 ; j<5 ; j++ ) {
-                tmpJx[j] -= crx_p * DSx[i-1] * ( Sy0[j] + 0.5*DSy[j] );
-                Jx[iloc+j]  += tmpJx[j];
-                tmp -= cry_p * DSy[j-1] * tmpY;
-                Jy[iloc+j+pxr*(i+ipo)]  += tmp; //Because size of Jy in Y is nprimy+1.
-                Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            {
+                const double delta  = deltaold[1 * nparts];
+                const double delta2 = delta * delta;
+                Sy0[0]              = 0.0;
+                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+                Sy0[2]              = 0.75 - delta2;
+                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+                Sy0[4]              = 0.0;
             }
-        }//i
-    }
 
-    void currents( double *__restrict__ Jx,
-                   double *__restrict__ Jy,
-                   double *__restrict__ Jz,
-                   const Particles &particles,
-                   unsigned int     istart,
-                   unsigned int     iend,
-                   const double *__restrict__ invgf,
-                   const int *__restrict__ iold,
-                   const double *__restrict__ deltaold,
-                   double inv_cell_volume,
-                   double dx_inv,
-                   double dy_inv,
-                   double dx_ov_dt,
-                   double dy_ov_dt,
-                   int    i_domain_begin,
-                   int    j_domain_begin,
-                   int    nprimy,
-                   double one_third,
-                   int    pxr )
-    {
-        for( unsigned int ipart = istart; ipart < iend; ipart++ ) {
-            currents( Jx, Jy, Jz,
-                      particles, ipart,
-                      invgf[ipart], &iold[ipart], &deltaold[ipart],
-                      inv_cell_volume,
-                      dx_inv, dy_inv,
-                      dx_ov_dt, dy_ov_dt,
-                      i_domain_begin, j_domain_begin,
-                      nprimy,
-                      one_third,
-                      pxr );
+            // Locate the particle on the primal grid at current time-step & calculate coeff. S1
+            const double xpn      = position_x[ipart] * dx_inv;
+            const int    ip       = std::round( xpn );
+            int          ipo      = iold[0 * nparts];
+            const int    ip_m_ipo = ip - ipo - i_domain_begin;
+            const double xdelta   = xpn - static_cast<double>( ip );
+            const double xdelta2  = xdelta * xdelta;
+            Sx1[ip_m_ipo + 1]     = 0.5 * ( xdelta2 - xdelta + 0.25 );
+            Sx1[ip_m_ipo + 2]     = 0.75 - xdelta2;
+            Sx1[ip_m_ipo + 3]     = 0.5 * ( xdelta2 + xdelta + 0.25 );
+
+            const double ypn      = position_y[ipart] * dy_inv;
+            const int    jp       = std::round( ypn );
+            int          jpo      = iold[1 * nparts];
+            const int    jp_m_jpo = jp - jpo - j_domain_begin;
+            const double ydelta   = ypn - static_cast<double>( jp );
+            const double ydelta2  = ydelta * ydelta;
+            Sy1[jp_m_jpo + 1]     = 0.5 * ( ydelta2 - ydelta + 0.25 );
+            Sy1[jp_m_jpo + 2]     = 0.75 - ydelta2;
+            Sy1[jp_m_jpo + 3]     = 0.5 * ( ydelta2 + ydelta + 0.25 );
+
+            // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+            ipo -= 2;
+            jpo -= 2;
+
+            // Charge deposition on the grid
+
+            for( unsigned int i = 0; i < 1; ++i ) {
+                const int iloc = ( i + ipo ) * nprimy + jpo;
+                /* Jx[iloc] += tmpJx[0]; */
+                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+                double tmp = 0.0;
+                for( unsigned int j = 1; j < 5; j++ ) {
+                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                    Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
+                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+                }
+            }
+
+            double tmpJx[5]{};
+
+            for( unsigned int i = 1; i < 5; ++i ) {
+                const int iloc = ( i + ipo ) * nprimy + jpo;
+                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
+                Jx[iloc] += tmpJx[0];
+                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+                double tmp = 0.0;
+                for( unsigned int j = 1; j < 5; ++j ) {
+                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+                    Jx[iloc + j] += tmpJx[j];
+                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                    Jy[iloc + j + pxr * ( i + ipo )] += tmp;
+                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
+                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+                }
+            }
         }
     }
 
-    /// Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
+    /// Like currents(), project the particle current on the grid (Jx_/Jy_/Jz_)
+    /// but also compute global current densities rho used for diagFields timestep
     ///
     /* inline */ void
     currentsAndDensity( double      *Jx,
@@ -382,7 +328,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         //                         pxr );
         // }
 
-        // Does not comoute Rho !
+        // Does not compute Rho !
 
         currents( Jx_, Jy_, Jz_,
                   particles, istart, iend,
