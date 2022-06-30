@@ -501,6 +501,11 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
             }
 
+            // Monte-Carlo process
+            if (spec->particles->isMonteCarlo) {
+                s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
+            }
+
             s.vect( "first_index", spec->particles->first_index );
             s.vect( "last_index", spec->particles->last_index );
 
@@ -886,6 +891,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
             if( spec->particles->tracked ) {
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
+            }
+
+            if (spec->particles->isMonteCarlo) {
+                s.vect( "Tau", spec->particles->Tau );
             }
 
             if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting_ ) {
