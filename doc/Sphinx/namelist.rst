@@ -218,6 +218,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
+  .. warning::
+
+    The size of clusters becomes particularly important when :doc:`task_parallelization` is used.
+
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
