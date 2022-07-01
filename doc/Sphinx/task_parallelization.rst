@@ -61,10 +61,6 @@ operators (interpolation, push, etc) are defined as tasks.
 All the combinations of [operator-cluster-species-patch]
 correspond to different tasks that can be run in parallel. 
 
-As some tasks depend on other tasks, the dependency graph is provided to OpenMP so
-that the tasks are dynamically assigned to OpenMP threads, in the correct order
-(preventing race conditions). This is described in [Massimo2022]_.
-
 .. _Cluster_definition_doc:
 
 .. figure:: _static/Cluster_definition_doc.png
@@ -74,6 +70,34 @@ that the tasks are dynamically assigned to OpenMP threads, in the correct order
     Definition of clusters in a patch. The depicted 2D patch’s size is 16 × 6 cells 
     in the `x` and `y` directions respectively. In the Figure each cluster has an `x` 
     extension equal to ``cluster_width = 4`` cells in the `x` direction.
+
+----
+
+Task dependency graph
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some tasks logically depend on other tasks, e.g. the position and momenta of the 
+macro-particles of a certain [cluster-species-patch] combination can be 
+advanced in a given iteration only after that the electromagnetic force acting 
+on them in that iteration has been interpolated from the grid.
+
+The combinations [operator-cluster-species-patch] are defined as tasks, with 
+dependencies respecting the PIC macro-particle operator sequence 
+(Interpolation, Push, Projection) on the respective [cluster-species-patch] 
+combinations.
+
+In task programming, the task dependencies of an algorithm are represented by 
+a task dependency graph, where each task is a node of the graph and the directed 
+edges between nodes are the task dependencies. If in this graph an arrow spawns 
+from task A to task B, then task B logically depends on task A. 
+
+In the code, the dependency graph is provided to OpenMP in form of ``depend``
+clauses in the ``omp task`` directives. This way, the tasks are dynamically assigned 
+to OpenMP threads, in the correct order (preventing data race conditions). 
+The user does not have to worry about the assignment of tasks to 
+the available threads, as this operation is done dynamically by the OpenMP scheduler.
+
+This is described in [Massimo2022]_.
 
 ----
 
