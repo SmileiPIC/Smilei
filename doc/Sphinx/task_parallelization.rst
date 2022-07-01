@@ -3,9 +3,9 @@ Task Parallelization
 
 Task parallelization is a method to spread the computing workload on the many cores
 of a computer. Instead of splitting the *data* accross cores and apply the same task
-to all these pieces, different *tasks* are split accross the cores sharing the same
-data. This approach can often make the computation faster, especially
-with non-uniform plasma distributions.
+to all these pieces, different *tasks* are split accross the cores with the
+data necessary to complete them. This approach can often make the computation faster, 
+especially with non-uniform plasma distributions.
 
 Task parallelization of macro-particle operations in Smilei (using OpenMP) is
 published in [Massimo2022]_.
@@ -29,7 +29,7 @@ the saturation occurs.
 In :program:`Smilei`, by default, the data is split in *patches* (see
 :doc:`parallelization`) and, when the environment variable ``OMP_SCHEDULE``
 is set to ``dynamic``, the OpenMP scheduler dynamically assigns each patch
-to each core. This provides for some load balancing at the MPI level, as
+to each core. This provides for some load balancing inside each MPI process, as
 cores can work asynchronously on different patches.
 
 This strategy implies that only 1 OpenMP thread can work on a given patch,
@@ -50,15 +50,17 @@ etc). The task parallelism has been introduced to answer these issues.
 Task approach
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:program:`Smilei` exploits the task parallelization available since OpenMP 4.5.
-The main idea is to split the work in smaller units that can be run asynchronously.
+:program:`Smilei` exploits the task parallelization (including task dependencies)
+available with OpenMP 4.5.
+The main idea is to split the work in smaller units that can be run asynchronously,
+respecting the logical order in which these units of work must be completed.
 
 In addition to separated species treatment and patches split in clusters
 (see :py:data:`cluster_width`), the macro-particle operators (interpolation, push, etc)
 are defined as tasks. All the combinations of [operator-cluster-species-patch]
 correspond to different tasks that can be run in parallel. 
 
-As some tasks depend on other tasks, the dependency tree is provided to OpenMP so
+As some tasks depend on other tasks, the dependency graph is provided to OpenMP so
 that the tasks are dynamically assigned to OpenMP threads, in the correct order
 (preventing race conditions). This is described in [Massimo2022]_.
 
@@ -69,7 +71,7 @@ Performance Results
 
 Some results from [Massimo2022]_ are shown in the following.
 
-A 2D uniform thermal plasma case show that with uniform macro-particle 
+A 2D uniform thermal plasma case shows that with uniform macro-particle 
 distributions the task-parallelization in :program:`Smilei` does not have a 
 performance advantage.
 
