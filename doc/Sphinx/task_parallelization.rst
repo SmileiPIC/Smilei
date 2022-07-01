@@ -71,39 +71,37 @@ Performance Results
 
 Some results from [Massimo2022]_ are shown in the following.
 
-A 2D uniform thermal plasma case shows that with uniform macro-particle 
-distributions the task-parallelization in :program:`Smilei` does not have a 
-performance advantage.
+In the following Figure, a 2D uniform thermal plasma case shows that with 
+uniform macro-particle distributions the task-parallelization in :program:`Smilei` 
+does not have a performance advantage.
+In the same Figure, a 2D radiation pressure acceleration case shows that task
+parallelization can have a performance advantage with non-uniform macro-particle 
+distributions.
 
-.. _uniform_plasma:
+.. _Cluster_width_scan_doc:
 
-.. figure:: _static/Scan_Uniform_Plasma_2D.png
-    :width: 40%
+.. figure:: _static/Cluster_width_scan_doc.png
+    :width: 90%
     :align: center
 
-    Performances with and without task parallelization in a uniform plasma case.
+    Performances with and without task parallelization in a 2D uniform plasma case
+    (left) and in a 2D radiation pressure acceleration case (right).
 
-However, a 2D radiation pressure acceleration is an example of non-uniform 
-macro-particle distribution where the task parallelization yields and advantage.
+Note in the following Figure the non-uniformity of the electrons distribution
+in the radiation pressure acceleration case. The non-uniformity is present since 
+the start of the simulation. A namelist for a similar case can be found in the
+``benchmarks/tst2d_02_radiation_pressure_acc``.
+
 
 .. _radiation_pressure_rho:
 
 .. figure:: _static/Radiation_Pressure_Rho.png
-    :width: 50%
+    :width: 60%
     :align: center
 
     Electron density divided by the critical density in a 2D radiation pressure 
     benchmark at 0 (left) and 1500 iterations (right). The non-uniformity of the 
-    macro-particle distribution is present since the start of the simulation.
-
-.. _radiation_pressure_perf:
-
-.. figure:: _static/Scan_Radiation_Pressure_2D.png
-    :width: 40%
-    :align: center
-
-    Performances with and without task parallelization in a 2D radiation 
-    pressure acceleration case.
+    macro-particle distribution is present since the start of the simulation. 
 
 The scheduling of macro-particle operations without and with task parallelization
 can be seen in the following figures.
@@ -116,24 +114,13 @@ decomposition given by the bins and the relaxation of the constraints involved
 in the assignment of macro-particle operations to threads yields a shorter time
 to the result.
 
-.. _task_tracing_tasks_off:
+.. _task_tracing_tasks:
 
-.. figure:: _static/Radiation_pressure_develop_tracing.png
-    :width: 50%
+.. figure:: _static/Task_tracing_doc.png
+    :width: 100%
     :align: center
 
     Scheduling of macro-particle operations for the 2D radiation pressure benchmark, 
-    4 MPI processes and 4 OpenMP threads, during iteration 1200,
-    without task parallelization.
-
-.. _task_tracing_tasks_on:
-
-.. figure:: _static/Radiation_pressure_task_tracing.png
-    :width: 50%
-    :align: center
-
-    Scheduling of macro-particle operations for the 2D radiation pressure benchmark, 
-    4 MPI processes and 4 OpenMP threads, 4 bins per patch, during iteration 1200, 
-    with task parallelization. The horizontal axis has been extended to the same 
-    maximum value of the horizontal axis of the previous Figure to facilitate 
-    the comparison.
+    4 MPI processes and 4 OpenMP threads, during iteration 1200, 
+    without (left panel) and with task parallelization, 4 bins per patch (right panel). 
+    
