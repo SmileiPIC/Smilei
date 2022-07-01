@@ -56,13 +56,24 @@ The main idea is to split the work in smaller units that can be run asynchronous
 respecting the logical order in which these units of work must be completed.
 
 In addition to separated species treatment and patches split in clusters
-(see :py:data:`cluster_width`), the macro-particle operators (interpolation, push, etc)
-are defined as tasks. All the combinations of [operator-cluster-species-patch]
+(see :py:data:`cluster_width` and the following Figure), the macro-particle 
+operators (interpolation, push, etc) are defined as tasks. 
+All the combinations of [operator-cluster-species-patch]
 correspond to different tasks that can be run in parallel. 
 
 As some tasks depend on other tasks, the dependency graph is provided to OpenMP so
 that the tasks are dynamically assigned to OpenMP threads, in the correct order
 (preventing race conditions). This is described in [Massimo2022]_.
+
+.. _Cluster_definition_doc:
+
+.. figure:: _static/Cluster_definition_doc.png
+    :width: 60%
+    :align: center
+
+    Definition of clusters in a patch. The depicted 2D patch’s size is 16 × 6 cells 
+    in the `x` and `y` directions respectively. In the Figure each cluster has an `x` 
+    extension equal to ``cluster_width = 4`` cells in the `x` direction.
 
 ----
 
@@ -110,7 +121,7 @@ treatment of macro-particle operators (around 0.1 s) is determined by the
 OpenMP thread 0 of the MPI process 0. In the second Figure (with task parallelization),
 the OpemMP thread 2 of MPI process 0 determines the end of the 
 treatment of macro-particle operators (around 0.07 s). In this case, the finer 
-decomposition given by the bins and the relaxation of the constraints involved
+decomposition given by the clusters and the relaxation of the constraints involved
 in the assignment of macro-particle operations to threads yields a shorter time
 to the result.
 
@@ -122,5 +133,5 @@ to the result.
 
     Scheduling of macro-particle operations for the 2D radiation pressure benchmark, 
     4 MPI processes and 4 OpenMP threads, during iteration 1200, 
-    without (left panel) and with task parallelization, 4 bins per patch (right panel). 
+    without (left panel) and with task parallelization, 4 clusters per patch (right panel). 
     
