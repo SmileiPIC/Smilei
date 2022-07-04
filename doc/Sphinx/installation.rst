@@ -33,6 +33,29 @@ The command ``make help`` can give you some information about your environment.
 If you have successfully installed these dependencies on other platforms,
 please :doc:`contact us <partners>` and share!
 
+
+----
+
+Setup environment variables for compilation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several environment variables may be required, depending on your setup.
+
+* ``SMILEICXX``: the MPI-C++ compiler.
+  Defaults to ``mpicxx``.
+* ``HDF5_ROOT_DIR``: the folder for the HDF5 library.
+  Defaults to ``$HDF5_ROOT``.
+* ``BUILD_DIR``: the folder where the compilation should occur.
+  Defaults to ``./build``.
+* ``PYTHONEXE``: the python executable to use in smilei.
+  Defaults to ``python``.
+* ``PICSAR``: set to ``TRUE`` to enable the PSATD solver from picsar.
+  Defaults to ``FALSE``.
+
+The usual ``CXXFLAGS`` and ``LDFLAGS`` can also be used to pass other
+arguments to the compiler and linker.
+
+
 ----
 
 .. _compile:
@@ -117,34 +140,12 @@ be included in the next release of :program:`Smilei`.
 
 ----
 
-Environment variables for compilation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Several environment variables may be required, depending on your setup.
-
-* ``SMILEICXX``: the MPI-C++ compiler.
-  Defaults to ``mpicxx``.
-* ``HDF5_ROOT_DIR``: the folder for the HDF5 library.
-  Defaults to ``$HDF5_ROOT``.
-* ``BUILD_DIR``: the folder where the compilation should occur.
-  Defaults to ``./build``.
-* ``PYTHONEXE``: the python executable to use in smilei.
-  Defaults to ``python``.
-* ``PICSAR``: set to ``TRUE`` to enable the PSATD solver from picsar.
-  Defaults to ``FALSE``.
-
-The usual ``CXXFLAGS`` and ``LDFLAGS`` can also be used to pass other
-arguments to the compiler and linker.
-
-----
-
 .. _vectorization_flags:
 
 Optimization and vectorization options explained
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Machine files use compiler options to activate and tune optimizations of 
-:program:`Smilei` for specific hardware architectures or processor families.
+To tune optimization and vectorization options, :program:`Smilei` uses the *machine files* described above. They contain compiler options for specific hardware architectures or processor families.
 
 This :doc:`page <optimization_flags>` explains in detail optimization flags used in machine files and therefore how to generate your own machine file.
 

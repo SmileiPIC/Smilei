@@ -1,26 +1,25 @@
 Optimization and vectorization compilation options
 -----------------------------------------------------
 
-Modern and mature compilers can automatically deeply optimize the code for specific hardwares.
-Optimization features can be activated and tuned using specific compiler flags.
+Modern and mature compilers can automatically and deeply optimize the code for specific hardware.
+Optimization features can be activated and tuned using compiler flags.
 Among possible optimization capabilities, we can mention loop refactoring (unrolling, reordoring, splitting, etc), inlining, vectorization, pipelining and more.
 Each compiler has its own flags.
-Some of them shares a common syntax.
-Others provide more fine tuning options for specific processors (like Fujitsu for the A64FX).
+While some share a common syntax, others provide more fine tuning options for specific processors (like Fujitsu for the A64FX).
 
-Some optimization flags are automatically used in the makefile.
-Others are specified in the so-called machine files because they are specific to a certain compiler, hardware or processor family.
-This is for instance the case of :doc:`SIMD vectorization <vectorization>` of :program:`Smilei`
-that relies on OpenMP pragma ``#pragma omp simd`` and automatic vectorization.
+Some optimization flags are automatically set in the makefile;
+others are specified in the *machine files* because they are specific to given compilers, hardwares or processor families.
+:doc:`SIMD vectorization <vectorization>` in Smilei, for instance,
+can be automatic, or can rely on OpenMP's directive ``#pragma omp simd``.
 
 
 Options are passed to the compiler through the environment variable ``CXXFLAGS``.
-Most machine files includes appropriate flags to ensure the best performance 
+Most machine files include appropriate flags to ensure the best performance 
 on a given processor type using a given compiler (most often Intel but also GNU, LLVM, ARMCLANG and Fujitsu).
 
 For instance, :program:`Smilei` has been tested on
 Intel processors (Skylake 8168) with an Intel environment.
-The following flags, located in the Skylake machine file, provide a good performance:
+The following flags, located in the ``skylake`` machine file, provide a good performance:
 
 .. code-block:: bash
 
@@ -28,12 +27,12 @@ The following flags, located in the Skylake machine file, provide a good perform
 
 The vectorization must also be activated :ref:`in the namelist <Vectorization>`.
 
-The following explains the meaning of the flags commonly used in our machine file.
-You can use this section to design your own machine file as well.
+The following explains the meaning of the flags commonly used in our machine files.
+You can use this section to design your own machine file.
 
 .. rubric:: Intel compiler flags for optimization and vectorization
 
-The following options are commonly used by Smilei machine files to compile on most modern x86 processors (both Intel and AMD): They enure the best performance of the code, especially for vectorization.
+The following options are commonly used by Smilei's machine files to compile on most modern x86 processors (both Intel and AMD). They enure the best performance of the code, especially for vectorization.
 
 * ``-O3``: this option directly integrated in the makefile tells the compiler to use agressive optimization at compilation
 
@@ -52,7 +51,7 @@ The following options are commonly used by Smilei machine files to compile on mo
 
 * ``-ip``: interprocedural optimizations for single-file compilation. This flag is important for function inline in a single C++ file. This option is not by default in the makefile but is available in many machine files.
          
-* ``-ipo``: Interprocedural optimization, a step that examines function calls between files when the program is linked.  This flag must be used to compile and when linking. Compile times are very long with this flag, however depending on the application there may be appreciable performance improvements when combined with the -O* flags. This flag is not by default in the makefile and is rarely used due to long compilation time.Use this flag for production runs if you do not plan to often recompile.
+* ``-ipo``: Interprocedural optimization, a step that examines function calls between files when the program is linked.  This flag must be used to compile and when linking. Compile times are very long with this flag, however depending on the application there may be appreciable performance improvements when combined with the -O* flags. This flag is not by default in the makefile and is rarely used due to long compilation time. Use this flag for production runs if you do not plan to often recompile.
 
 * ``-inline-factor=1000``: Specifies the percentage multiplier that should be applied to all inlining options that define upper limits. 
  
@@ -90,6 +89,7 @@ More examples:
 .. rubric:: GNU compiler flags for optimization and vectorization
 
 * ``-O3``: this option directly integrated in the makefile tells the compiler to use agressive optimization at compilation
+
 * ``-Ofast``: Disregard strict standards compliance. -Ofast enables all -O3 optimizations. It also enables optimizations that are not valid for all standard-compliant programs.It can result in incorrect output for programs that depend on an exact implementation of IEEE or ISO rules/specifications for math functions. It may, however, yield faster code for programs that do not require the guarantees of these specifications. 
     
 * ``-mtune=cpu-type``: This option specifies that GCC should tune the performance of the code as if the target were of the type specified in this option, here ``cpu-type``.For some ARM implementations better performance can be obtained by using this option. Possible common cpu types are
