@@ -822,6 +822,10 @@ with the new particles.
 Before the synchronisations, a ``#pragma omp taskwait`` directive is used to wait 
 that the tasks are completed.
 
+The same concepts are used for the envelope module and for the vectorized versions
+of ``dynamics``. In particular, for the envelope module the Projector for 
+susceptibility uses a local subgrid.
+
   .. warning::
 
     Without tasks, the number buffer vectors (for each buffer) is equal to the number of OpenMP
@@ -851,8 +855,19 @@ that the tasks are completed.
     these directives, one by one, introducing a barrier like a ``#pragma omp taskwait`` 
     between them and check which task introduces the segfault.
 
+Particle Event Tracing
+---------------------------------------
+To visualize the scheduling of operations, with or without tasks, an macro-particle
+event tracing diagnostic saves the time when each OpenMP thread executes one of these 
+operations and the involved thread's number. The PIC operators (and the advanced ones like 
+Ionization, Radiation) acting on each ``ipatch-ispec-ibin`` combination are 
+included in this diagnostic.
+This way, the macro-particle operations executed by each OpenMP thread in each
+MPI process can be visualized. The information of which bin, ``Species``, patch
+is involved is not stored, since it would be difficult to visualize this level of
+detail. However it can be added to this diagnostic in principle.
 
-
-
+This visualization becomes clearer when a small number of patches, ``Species``, 
+bins is used. In other cases the plot may become unreadable.
 
 
