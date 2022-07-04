@@ -2,7 +2,7 @@
 //! \file MultiphotonBreitWheeler.h
 //
 //! \brief This file contains the class functions for the generic class
-//!  MultiphotonBreitWheeler for the photon decay into pairs via the mutliphoton
+//!  MultiphotonBreitWheeler for the photon decay into pairs via the multiphoton
 //!  Breit-Wheeler process.
 //
 // ----------------------------------------------------------------------------
@@ -16,6 +16,7 @@
 #include <string>
 
 #include "MultiphotonBreitWheelerTables.h"
+#include "MultiphotonBreitWheelerTools.h"
 #include "Params.h"
 #include "Random.h"
 
@@ -44,7 +45,7 @@ public:
                      SmileiMPI* smpi,
                      Particles** new_pair,
                      Species ** new_pair_species,
-                     MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                     MultiphotonBreitWheelerTables &mBW_tables,
                      double & pair_energy,
                      int istart,
                      int iend,
@@ -96,7 +97,7 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
-    void decayed_photon_cleaning(
+    void removeDecayedPhotons(
         Particles &particles,
         SmileiMPI *smpi,
         int ibin, int nbin,

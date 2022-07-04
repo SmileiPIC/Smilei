@@ -3,7 +3,7 @@
 //
 //! \brief This file contains the class methods for the generic class
 //!  MultiphotonBreitWheeler for the photon decay into pairs via the
-//!  mutliphoton Breit-Wheeler process.
+//!  multiphoton Breit-Wheeler process.
 //
 // ----------------------------------------------------------------------------
 
@@ -119,20 +119,22 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
 //! Overloading of the operator (): perform the pair generation
 //! Monte-Carlo process for the multiphoton Breit-Wheeler
 //
-//! \param particles   particle object containing the particle properties
-//! \param smpi        MPI properties
-//! \param MultiphotonBreitWheelerTables Cross-section data tables and useful
-//!                     functions for multiphoton Breit-Wheeler
-//! \param pair_energy energy converted into pairs
-//! \param istart      Index of the first particle
-//! \param iend        Index of the last particle
-//! \param ithread     Thread index
+//! \param particles        particle object containing the particle properties
+//! \param smpi             MPI properties
+//! \param new_pair         Particles object containing the new generated pairs
+//! \param new_pair_species Species object representing the pair species
+//! \param mBW_tables       Cross-section data tables and useful
+//!                         functions for multiphoton Breit-Wheeler
+//! \param pair_energy      Energy converted into pairs
+//! \param istart           Index of the first particle
+//! \param iend             Index of the last particle
+//! \param ithread          Thread index
 // ---------------------------------------------------------------------------------------------------------------------
 void MultiphotonBreitWheeler::operator()( Particles &particles,
         SmileiMPI *                   smpi,
         Particles **                  new_pair,
         Species **                     new_pair_species,
-        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+        MultiphotonBreitWheelerTables &mBW_tables,
         double &                      pair_energy,
         int                           istart,
         int                           iend,
@@ -277,7 +279,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             // If epsilon_tau_ > 0
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart] );
+                temp = MultiphotonBreitWheelerTools::computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart], &mBW_tables );
 
                 // Time to decay
                 // If this time is above the remaining iteration time,
@@ -307,7 +309,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     //                                         particles,
                     //                                         ( *gamma )[ipart],
                     //                                         dt_ - event_time,
-                    //                                         MultiphotonBreitWheelerTables );
+                    //                                         mBW_tables );
 
                     double inv_chiph_gammaph = ( photon_gamma[ipart]-2. ) / photon_chi[ipart];
 
@@ -315,7 +317,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double pair_chi[2];
 
                     // Get the pair quantum parameters to compute the energy
-                    MultiphotonBreitWheelerTables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], rand_ );
+                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], rand_ );
 
                     // pair propagation direction // direction of the photon
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
@@ -452,7 +454,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheeler::decayed_photon_cleaning(
+void MultiphotonBreitWheeler::removeDecayedPhotons(
     Particles &particles,
     SmileiMPI *smpi,
     int ibin, int nbin,

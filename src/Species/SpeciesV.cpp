@@ -259,7 +259,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                             ithread );
 
                     // Suppression of the decayed photons into pairs
-                    Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                    Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                         *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
 
                 }

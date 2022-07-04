@@ -24,7 +24,7 @@
 #include "Random.h"
 
 //------------------------------------------------------------------------------
-//! MutliphotonBreitWheelerTables class: holds parameters, tables and
+//! MultiphotonBreitWheelerTables class: holds parameters, tables and
 //! functions to compute cross-sections,
 //! optical depths and other useful parameters for the pair creation Monte-Carlo
 //! process.
@@ -34,10 +34,10 @@ class MultiphotonBreitWheelerTables
 
 public:
 
-    //! Constructor for MutliphotonBreitWheeler
+    //! Constructor for MultiphotonBreitWheeler
     MultiphotonBreitWheelerTables();
 
-    //! Destructor for MutliphotonBreitWheeler
+    //! Destructor for MultiphotonBreitWheeler
     ~MultiphotonBreitWheelerTables();
 
     //! Initialization of the parmeters
@@ -48,17 +48,16 @@ public:
     // PHYSICAL COMPUTATION
     // ---------------------------------------------------------------------
 
-    //! Computation of the production rate of pairs per photon
-    //! \param photon_chi photon quantum parameter
-    //! \param gamma photon normalized energy
-    double computeBreitWheelerPairProductionRate( double photon_chi, double gamma );
-
     //! Computation of the electron and positron quantum parameters for
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
     //! \param[out] pair_chi quantum parameters of the pair
     void computePairQuantumParameter( double photon_chi, double * pair_chi, Random * rand );
 
+    //! Return factor for dN / dWdt computation
+    inline double  __attribute__((always_inline)) getFactorDNdWdt(void) {
+        return factor_dNBW_dt_;
+    }
 
     // ---------------------------------------------------------------------
     // TABLE READING

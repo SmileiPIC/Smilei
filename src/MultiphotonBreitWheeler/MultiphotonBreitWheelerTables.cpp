@@ -20,7 +20,7 @@
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-// Constructor for MutliphotonBreitWheelerTables
+// Constructor for MultiphotonBreitWheelerTables
 // -----------------------------------------------------------------------------
 MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 {
@@ -30,7 +30,7 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 }
 
 // -----------------------------------------------------------------------------
-// Destructor for MutliphotonBreitWheelerTables
+// Destructor for MultiphotonBreitWheelerTables
 // -----------------------------------------------------------------------------
 MultiphotonBreitWheelerTables::~MultiphotonBreitWheelerTables()
 {
@@ -46,7 +46,7 @@ MultiphotonBreitWheelerTables::~MultiphotonBreitWheelerTables()
 void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *smpi )
 {
     if( params.hasMultiphotonBreitWheeler ) {
-        TITLE( "Initializing mutliphoton Breit-Wheeler" )
+        TITLE( "Initializing multiphoton Breit-Wheeler" )
 
         // Preliminary checks
         if( params.reference_angular_frequency_SI <= 0. ) {
@@ -101,61 +101,6 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
 
 }
 
-// -----------------------------------------------------------------------------
-// PHYSICAL COMPUTATION
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
-//! Computation of the production rate of pairs per photon
-//! \param photon_chi photon quantum parameter
-//! \param gamma photon normalized energy
-// -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( double photon_chi, double gamma )
-{
-    // ________________________________________
-    // Parameters
-
-    // Log of the photon quantum parameter particle_chi
-    double logchiph;
-    double logchiphm;
-    double logchiphp;
-    // Index
-    int ichiph;
-    // final value
-    double dNBWdt;
-
-    // ________________________________________
-    // Computation
-
-    logchiph = log10( photon_chi );
-
-    // Lower index for interpolation in the table integfochi
-    ichiph = int( floor( ( logchiph-T_.log10_min_photon_chi_ )
-                         *T_.photon_chi_inv_delta_ ) );
-
-    // If photon_chi is below the lower bound of the table
-    // An asymptotic approximation is used
-    if( ichiph < 0 ) {
-        ichiph = 0;
-        // 0.2296 * sqrt(3) * pi [MG/correction by Antony]
-        dNBWdt = 1.2493450020845291*exp( -8.0/( 3.0*photon_chi ) ) * photon_chi*photon_chi;
-    }
-    // If photon_chi is above the upper bound of the table
-    // An asymptotic approximation is used
-    else if( ichiph >= T_.size_photon_chi_-1 ) {
-        ichiph = T_.size_photon_chi_-2;
-        dNBWdt = 2.067731275227008*pow( photon_chi, 5.0/3.0 );
-    } else {
-        // Upper and lower values for linear interpolation
-        logchiphm = ichiph*T_.photon_chi_delta_ + T_.log10_min_photon_chi_;
-        logchiphp = logchiphm + T_.photon_chi_delta_;
-
-        // Interpolation
-        dNBWdt = ( T_.table_[ichiph+1]*fabs( logchiph-logchiphm ) +
-                   T_.table_[ichiph]*fabs( logchiphp - logchiph ) )*T_.photon_chi_inv_delta_;
-    }
-    return factor_dNBW_dt_*dNBWdt/(photon_chi*gamma);
-}
 
 // -----------------------------------------------------------------------------
 //! Computation of the electron and positron quantum parameters for
