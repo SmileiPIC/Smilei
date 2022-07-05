@@ -58,7 +58,7 @@ public:
     #pragma acc routine seq
 #endif
     double computePhotonProductionYield( double particle_chi, double particle_gamma, 
-                                         double * integfochi_table );
+                                         const double *const integfochi_table );
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -74,7 +74,7 @@ public:
     #pragma acc routine seq
 #endif
     double computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
-                                 double * table_min_photon_chi, double * table_xi);
+                                 const double *const table_min_photon_chi, double * table_xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre

@@ -337,7 +337,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
 double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
-                                                double * table_min_photon_chi, double * table_xi)
+                                                const double *const table_min_photon_chi, double * table_xi)
 {
     // Log10 of particle_chi
     double log10_particle_chi;
@@ -461,7 +461,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // For integration reasons, we can have table_xi[ixip+1] = table_xi[ixip]
     // In this case, no interpolation
     {
-        photon_chi_1 = ichiph_1*chiph_xip_delta_1;
+        photon_chi_1 = ichiph_1*chiph_xip_delta_1
                           + table_min_photon_chi[ichipa] ;
     }
 
@@ -498,7 +498,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 //! \param particle_gamma particle gamma factor
 // ---------------------------------------------------------------------------------------------------------------------
 double RadiationTables::computePhotonProductionYield( double particle_chi, double particle_gamma, 
-    double * integfochi_table)
+    const double *const integfochi_table)
 {
 
     // Log of the particle quantum parameter particle_chi

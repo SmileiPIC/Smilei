@@ -50,7 +50,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       &photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -124,7 +124,6 @@ void RadiationNiel::operator()(
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
-    double new_gamma = 0;
     
     // Parameters for linear alleatory number generator
     #ifdef _GPU
@@ -382,7 +381,7 @@ void RadiationNiel::operator()(
         #pragma omp simd private(temp,rad_energy)
         for( ipart=istart ; ipart<iend; ipart++ ) {
             // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
-            if( particle_chi[ipart] > minimum_chi_continuous ) {
+            if( gamma[ipart-ipart_ref] > 1.1 && particle_chi[ipart] > minimum_chi_continuous ) {
     #endif
 
                 // Radiated energy during the time step

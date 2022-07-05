@@ -14,8 +14,6 @@
 #include "Species.h"
 #include "Particles.h"
 
-using namespace std;
-
 PusherPhoton::PusherPhoton( Params &params, Species *species )
     : Pusher( params, species )
 {
@@ -32,33 +30,16 @@ PusherPhoton::~PusherPhoton()
 void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
                                int istart, int iend, int ithread, int ipart_ref )
 {
-
-    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-
     // Inverse normalized energy
     double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
-    double* __restrict__ position_x = particles.getPtrPosition(0);
-    double* __restrict__ position_y = NULL;
-    double* __restrict__ position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
-
-    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
-   
-    int nparts;
-    if (vecto) {
-        nparts = Epart->size()/3;
-    } else {
-        nparts = particles.last_index.back();
-        //nparts = particles.size();
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+    
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     #ifndef _GPU
         #pragma omp simd
@@ -69,7 +50,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        invgf[ipart] = 1. / sqrt( momentum_x[ipart]*momentum_x[ipart] +
+        invgf[ipart] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
                                        momentum_y[ipart]*momentum_y[ipart] +
                                        momentum_z[ipart]*momentum_z[ipart] );
 

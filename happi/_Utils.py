@@ -67,7 +67,7 @@ def updateMatplotLibColormaps():
 class ChunkedRange:
 	def __init__(self, size, chunksize):
 		self.size = int(size)
-		self.nchunks = int( (size-1) // int(chunksize) + 1 )
+		self.nchunks = int( max(1,size-1) // int(chunksize) + 1 )
 		self.adjustedchunksize = int( (size-1) // self.nchunks + 1 )
 		self.ichunk = 0
 	def __iter__(self):
@@ -178,6 +178,8 @@ class Options(object):
 			elif kwa in ["aspect","axis_bgcolor","frame_on","position","visible",
 					     "xscale","xticks","yscale","yticks","zorder"]:
 				self.axes[kwa] = val
+			elif kwa in ["axis_facecolor"]:
+				self.axes[kwa[5:]] = val
 			# labels
 			elif kwa in ["title","xlabel","ylabel"]:
 				self.labels[kwa] = val

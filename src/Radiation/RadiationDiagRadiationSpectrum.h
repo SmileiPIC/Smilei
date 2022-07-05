@@ -41,7 +41,7 @@ class RadiationDiagRadiationSpectrum : public Radiation {
         // ---------------------------------------------------------------------
         virtual void operator()(
             Particles &particles,
-            Species *photon_species,
+            Particles &photons,
             SmileiMPI *smpi,
             RadiationTables &RadiationTables,
             double          &radiated_energy,

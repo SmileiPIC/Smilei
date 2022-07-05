@@ -18,7 +18,7 @@ assignees: ''
    git describe --all --long
    make config=verbose
    make env
-   echo $LD_LIBRARY_PATH
+   echo $LD_LIBRARY_PATH # on mac: echo $DYLD_LIBRARY_PATH
    python -m sysconfig
    ldd smilei
 <!-- ------------------------- -->
