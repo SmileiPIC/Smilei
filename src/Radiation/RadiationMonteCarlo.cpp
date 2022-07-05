@@ -41,7 +41,7 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 //! induced by the nonlinear inverse Compton scattering
 //
 //! \param particles   particle object containing the particle properties
-//! \param photon_species species that will receive emitted photons
+//! \param photon      particles object that will receive emitted photons
 //! \param smpi        MPI properties
 //! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
@@ -81,12 +81,6 @@ void RadiationMonteCarlo::operator()(
 
     // 1 / mass^2
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
-
-    // Temporary quantum parameter
-    double particle_chi;
-
-    // Temporary Lorentz factor
-    double particle_gamma;
 
     // Radiated energy
     double cont_rad_energy;
@@ -184,7 +178,7 @@ void RadiationMonteCarlo::operator()(
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
 
             // Gamma
-            particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+            const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                           + momentum_y[ipart]*momentum_y[ipart]
                           + momentum_z[ipart]*momentum_z[ipart] );
             // does not apply the MC routine for particles with 0 kinetic energy
@@ -193,7 +187,7 @@ void RadiationMonteCarlo::operator()(
             }
 
             // Computation of the Lorentz invariant quantum parameter
-            particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
+            const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                            particle_gamma,
                            Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
@@ -266,7 +260,7 @@ void RadiationMonteCarlo::operator()(
                     pz *= new_norm_p * inv_old_norm_p;*/
 
                     // Creation of macro-photons if requested
-                    // Check that the photon_species is defined and the threshold on the energy
+                    // Check that the photons is defined and the threshold on the energy
                     if(          photons
                             && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
                             && ( i_photon_emission < max_photon_emissions_)) {
@@ -399,7 +393,7 @@ void RadiationMonteCarlo::operator()(
         const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 

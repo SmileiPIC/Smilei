@@ -16,31 +16,21 @@
 // -----------------------------------------------------------------------------
 //! Computation of the production rate of pairs per photon
 //! \param photon_chi photon quantum parameter
-//! \param gamma photon normalized energy
+//! \param photon_gamma photon normalized energy
 // -----------------------------------------------------------------------------
 double MultiphotonBreitWheelerTools::computeBreitWheelerPairProductionRate( 
     double photon_chi,
-    double gamma,
+    double photon_gamma,
     MultiphotonBreitWheelerTables * mBW_tables )
 {
-    // ________________________________________
-    // Parameters
-
-    double logchiphm;
-    double logchiphp;
-    // Index
-    int ichiph;
-    // final value
+    // final value to return
     double dNBWdt;
 
-    // ________________________________________
-    // Computation
-
     // Log of the photon quantum parameter particle_chi
-    double logchiph = std::log10( photon_chi );
+    const double logchiph = std::log10( photon_chi );
 
     // Lower index for interpolation in the table integfochi
-    ichiph = int( std::floor( ( logchiph-mBW_tables->T_.log10_min_photon_chi_ )
+    int ichiph = int( std::floor( ( logchiph-mBW_tables->T_.log10_min_photon_chi_ )
                          *mBW_tables->T_.photon_chi_inv_delta_ ) );
 
     // If photon_chi is below the lower bound of the table
@@ -54,15 +44,15 @@ double MultiphotonBreitWheelerTools::computeBreitWheelerPairProductionRate(
     // An asymptotic approximation is used
     else if( ichiph >= mBW_tables->T_.size_photon_chi_-1 ) {
         ichiph = mBW_tables->T_.size_photon_chi_-2;
-        dNBWdt = 2.067731275227008*pow( photon_chi, 5.0/3.0 );
+        dNBWdt = 2.067731275227008*std::pow( photon_chi, 5.0/3.0 );
     } else {
         // Upper and lower values for linear interpolation
-        logchiphm = ichiph*mBW_tables->T_.photon_chi_delta_ + mBW_tables->T_.log10_min_photon_chi_;
-        logchiphp = logchiphm + mBW_tables->T_.photon_chi_delta_;
+        const double logchiphm = ichiph*mBW_tables->T_.photon_chi_delta_ + mBW_tables->T_.log10_min_photon_chi_;
+        const double logchiphp = logchiphm + mBW_tables->T_.photon_chi_delta_;
 
         // Interpolation
-        dNBWdt = ( mBW_tables->T_.table_[ichiph+1]*fabs( logchiph-logchiphm ) +
-                   mBW_tables->T_.table_[ichiph]*fabs( logchiphp - logchiph ) )*mBW_tables->T_.photon_chi_inv_delta_;
+        dNBWdt = ( mBW_tables->T_.table_[ichiph+1]*std::fabs( logchiph-logchiphm ) +
+                   mBW_tables->T_.table_[ichiph]*std::fabs( logchiphp - logchiph ) )*mBW_tables->T_.photon_chi_inv_delta_;
     }
-    return mBW_tables->getFactorDNdWdt()*dNBWdt/(photon_chi*gamma);
+    return mBW_tables->getFactorDNdWdt()*dNBWdt/(photon_chi*photon_gamma);
 }

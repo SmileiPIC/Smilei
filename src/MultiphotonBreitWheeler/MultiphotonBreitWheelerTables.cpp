@@ -110,21 +110,13 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_chi, double * pair_chi, Random * rand )
 {
-    // Parameters
-    double logchiph;
-    double log10_chipam, log10_chipap;
-    double d;
-    double delta_chipa;
-    double xip, xipp;
-    int ichiph;
-    int ichipa;
-    int ixip;
 
     // -----------------------------------------------------------
     // Computation of the index associated to the given photon_chi
     // -----------------------------------------------------------
 
-    logchiph = log10( photon_chi );
+    int ichiph;
+    const double logchiph = std::log10( photon_chi );
 
     // Lower boundary of the table
     if( photon_chi < xi_.min_photon_chi_ ) {
@@ -137,7 +129,7 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_c
     // Inside the table
     else {
         // Use floor so that photon_chi corresponding to ichiph is <= given photon_chi
-        ichiph = int( floor( ( logchiph-xi_.log10_min_photon_chi_ )*( xi_.photon_chi_inv_delta_ ) ) );
+        ichiph = int( std::floor( ( logchiph-xi_.log10_min_photon_chi_ )*( xi_.photon_chi_inv_delta_ ) ) );
     }
 
     // ---------------------------------------
@@ -146,17 +138,16 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_c
 
     // First, we compute a random xip in [0,1[
     // xip = Rand::uniform();
-    xip = rand->uniform();
+    const double xip = rand->uniform();
 
     // The array uses the symmetric properties of the T fonction,
     // Cases xip > or <= 0.5 are treated seperatly
 
     // If xip > 0.5, the electron will bring more energy than the positron
-    if( xip > 0.5 ) {
-        xipp = 1.-xip;
-    } else {
-        xipp = xip;
-    }
+    const double xipp = xip > 0.5 ? 1.0 - xip : xip;    
+
+    // index for particle chi
+    int ichipa;
 
     // check boundaries
     // Lower bound
@@ -173,15 +164,15 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( double photon_c
     }
 
     // Delta for the particle_chi dimension
-    delta_chipa = ( std::log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
+    const double delta_chipa = ( std::log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
                   * xi_.inv_size_particle_chi_minus_one_;
 
-    ixip = ichiph*xi_.size_particle_chi_ + ichipa;
+    const int ixip = ichiph*xi_.size_particle_chi_ + ichipa;
 
-    log10_chipam = ichipa*delta_chipa + xi_.min_particle_chi_[ichiph];
-    log10_chipap = log10_chipam + delta_chipa;
+    const double log10_chipam = ichipa*delta_chipa + xi_.min_particle_chi_[ichiph];
+    const double log10_chipap = log10_chipam + delta_chipa;
 
-    d = ( xipp - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
+    const double d = ( xipp - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
 
     // If xip > 0.5, the electron will bring more energy than the positron
     if( xip > 0.5 ) {
