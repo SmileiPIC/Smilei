@@ -40,6 +40,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     currents( double *__restrict__ Jx,
               double *__restrict__ Jy,
               double *__restrict__ Jz,
+              int        Jx_size,
+              int        Jy_size,
+              int        Jz_size,
               Particles &particles,
               int        istart,
               int        iend,
@@ -91,6 +94,37 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         const int first_index = istart;
         const int last_index  = iend;
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+        const int npart_range_size            = last_index - first_index;
+        const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
+
+    #pragma omp target defaultmap( none )                            \
+        map( to                                                      \
+             : position_x [first_index:npart_range_size],            \
+               position_y [first_index:npart_range_size],            \
+               momentum_z [first_index:npart_range_size],            \ 
+               charge [first_index:npart_range_size],                \
+               weight [first_index:npart_range_size],                \
+               invgf_ [first_index:npart_range_size],                \
+               iold_ [first_index:interpolation_range_2D_size],      \
+               deltaold_ [first_index:interpolation_range_2D_size] ) \
+            map( tofrom                                              \
+                 : Jx [0:Jx_size],                                   \
+                   Jy [0:Jy_size],                                   \
+                   Jz [0:Jz_size] )                                  \
+                map( to                                              \
+                     : i_domain_begin, j_domain_begin,               \
+                       nprimy, dy_ov_dt, pxr, pxr, dx_inv,           \
+                       inv_cell_volume, nparts, dy_inv,              \
+                       dx_ov_dt, one_third, first_index, last_index )
+        //        map( from                                            \
+                    //  : Sx0_buffer_data [0:kTmpArraySize],            \ 
+                    //    Sx1_buffer_data [0:kTmpArraySize],            \
+                    //    Sy0_buffer_data [0:kTmpArraySize],            \
+                    //    Sy1_buffer_data [0:kTmpArraySize] )           
+    #pragma omp teams
+    #pragma omp distribute parallel for
+#endif
         for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
@@ -216,6 +250,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 for( unsigned int j = 0; j < 5; ++j ) {
                     const double W_ij_x = ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
                     tmpJx[j] -= crx_p * W_ij_x;
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp atomic update
+#endif
                     Jx[iloc + j] += tmpJx[j];
                 }
             }
@@ -226,6 +263,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 for( unsigned int j = 1; j < 5; ++j ) {
                     const double W_ij_y = ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
                     tmp -= cry_p * W_ij_y;
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp atomic update
+#endif
                     Jy[iloc + j + pxr * ( i + ipo )] += tmp;
                 }
             }
@@ -235,6 +275,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 for( unsigned int j = 0; j < 5; ++j ) {
                     const double W_ij_z = Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
                                           Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] );
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp atomic update
+#endif
                     Jz[iloc + j] += crz_p * W_ij_z;
                 }
             }
@@ -402,6 +445,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         // Does not compute Rho !
 
         currents( Jx_, Jy_, Jz_,
+                  EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
                   particles, istart, iend,
                   invgf.data(), iold.data(), delta.data(),
                   inv_cell_volume,
@@ -428,6 +472,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
             }
         } else {
             currents( Jx_, Jy_, Jz_,
+                      EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
                       particles, istart, iend,
                       invgf.data(), iold.data(), delta.data(),
                       inv_cell_volume,
