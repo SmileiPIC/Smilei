@@ -81,24 +81,34 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
         // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
 
-        for( int ipart = istart; ipart < iend; ++ipart ) {
-            const double invgf                        = invgf_[ipart];
-            const int *const __restrict__ iold        = &iold_[ipart];
-            const double *const __restrict__ deltaold = &deltaold_[ipart];
+        // double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
+        // double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
+        // double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
+        // double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
+        // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
+        // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
 
-            // double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
-            // double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
-            // double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
-            // double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
-            // // double *const __restrict__ DSx = DSx_buffer.data() + 5 * ( ipart - istart );
-            // // double *const __restrict__ DSy = DSy_buffer.data() + 5 * ( ipart - istart );
+        double Sx0[5];
+        double Sx1[5];
+        double Sy0[5];
+        double Sy1[5];
+        // double DSx[5];
+        // double DSy[5];
 
-            double Sx0[5];
-            double Sx1[5]{};
-            double Sy0[5];
-            double Sy1[5]{};
-            double DSx[5];
-            double DSy[5];
+        const int first_index = istart;
+        const int last_index  = iend;
+
+        for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
+            const double invgf                        = invgf_[particle_index];
+            const int *const __restrict__ iold        = &iold_[particle_index];
+            const double *const __restrict__ deltaold = &deltaold_[particle_index];
+
+            // double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - first_index );
+            // double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - first_index );
+            // double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - first_index );
+            // double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - first_index );
+            // // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - first_index );
+            // // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - first_index );
 
             // Variable declaration & initialization
             // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
@@ -125,7 +135,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 
             // Locate the particle on the primal grid at current time-step & calculate coeff. S1
             {
-                const double xpn      = position_x[ipart] * dx_inv;
+                const double xpn      = position_x[particle_index] * dx_inv;
                 const int    ip       = std::round( xpn );
                 const int    ipo      = iold[0 * nparts];
                 const int    ip_m_ipo = ip - ipo - i_domain_begin;
@@ -143,7 +153,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
             }
             {
-                const double ypn      = position_y[ipart] * dy_inv;
+                const double ypn      = position_y[particle_index] * dy_inv;
                 const int    jp       = std::round( ypn );
                 const int    jpo      = iold[1 * nparts];
                 const int    jp_m_jpo = jp - jpo - j_domain_begin;
@@ -176,24 +186,25 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 
         // // Charge deposition on the grid
 
-        // for( int ipart = istart; ipart < iend; ++ipart ) {
-        //     const double invgf                        = invgf_[ipart];
-        //     const int *const __restrict__ iold        = &iold_[ipart];
-        //     const double *const __restrict__ deltaold = &deltaold_[ipart];
+        // for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
+        //     const double invgf                        = invgf_[particle_index];
+        //     const int *const __restrict__ iold        = &iold_[particle_index];
+        //     const double *const __restrict__ deltaold = &deltaold_[particle_index];
 
-        //     double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
-        //     double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
-        //     double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
-        //     double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
-        //     // double *const __restrict__ DSx = DSx_buffer.data() + 5 * ( ipart - istart );
-        //     // double *const __restrict__ DSy = DSy_buffer.data() + 5 * ( ipart - istart );
+        //     double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - first_index );
+        //     double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - first_index );
+        //     double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - first_index );
+        //     double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - first_index );
+        //     // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - first_index );
+        //     // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - first_index );
 
             // (x,y,z) components of the current density for the macro-particle
-            const double charge_weight = inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
+            const double charge_weight = inv_cell_volume * static_cast<double>( charge[particle_index] ) * weight[particle_index];
             const double crx_p         = charge_weight * dx_ov_dt;
             const double cry_p         = charge_weight * dy_ov_dt;
-            const double crz_p         = charge_weight * one_third * momentum_z[ipart] * invgf;
+            const double crz_p         = charge_weight * one_third * momentum_z[particle_index] * invgf;
 
+            // This is the particle position as grid index
             // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
             const int ipo = iold[0 * nparts] - 2;
             const int jpo = iold[1 * nparts] - 2;

@@ -76,7 +76,7 @@ export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not 
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
-# export CRAY_ACC_TIME=1
+# export CRAY_ACC_TIME=1 # Not viable, the reported times are wrong ?
 
 # Amd runtime debug
 # export AMD_LOG_LEVEL=4
