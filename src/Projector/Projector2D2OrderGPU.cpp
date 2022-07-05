@@ -74,35 +74,34 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         static constexpr bool kAutoDeviceFree = true;
         const std::size_t     kTmpArraySize   = particle_to_process * 5;
 
-        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
-        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
-        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
-        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
-
-        std::memset( Sx1_buffer.data(), 0, sizeof( double ) * Sx1_buffer.size() );
-        std::memset( Sy1_buffer.data(), 0, sizeof( double ) * Sy1_buffer.size() );
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
+        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
+        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
 
         for( int ipart = istart; ipart < iend; ++ipart ) {
             const double invgf                        = invgf_[ipart];
             const int *const __restrict__ iold        = &iold_[ipart];
             const double *const __restrict__ deltaold = &deltaold_[ipart];
 
-            double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
+            // double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
+            // double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
+            // double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
+            // double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
+            // // double *const __restrict__ DSx = DSx_buffer.data() + 5 * ( ipart - istart );
+            // // double *const __restrict__ DSy = DSy_buffer.data() + 5 * ( ipart - istart );
 
-            // -------------------------------------
+            double Sx0[5];
+            double Sx1[5]{};
+            double Sy0[5];
+            double Sy1[5]{};
+            double DSx[5];
+            double DSy[5];
+
             // Variable declaration & initialization
-            // -------------------------------------
-
-            // (x,y,z) components of the current density for the macro-particle
-            const double charge_weight = inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
-            const double crx_p         = charge_weight * dx_ov_dt;
-            const double cry_p         = charge_weight * dy_ov_dt;
-            const double crz_p         = charge_weight * one_third * momentum_z[ipart] * invgf;
-
-            // Locate particles & Calculate Esirkepov coef. S, DS and W
+            // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
 
             // Locate the particle on the primal grid at former time-step & calculate coeff. S0
             {
@@ -125,38 +124,69 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             }
 
             // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-            const double xpn      = position_x[ipart] * dx_inv;
-            const int    ip       = std::round( xpn );
-            const int    ipo      = iold[0 * nparts];
-            const int    ip_m_ipo = ip - ipo - i_domain_begin;
-            const double xdelta   = xpn - static_cast<double>( ip );
-            const double xdelta2  = xdelta * xdelta;
-            Sx1[ip_m_ipo + 1]     = 0.5 * ( xdelta2 - xdelta + 0.25 );
-            Sx1[ip_m_ipo + 2]     = 0.75 - xdelta2;
-            Sx1[ip_m_ipo + 3]     = 0.5 * ( xdelta2 + xdelta + 0.25 );
+            {
+                const double xpn      = position_x[ipart] * dx_inv;
+                const int    ip       = std::round( xpn );
+                const int    ipo      = iold[0 * nparts];
+                const int    ip_m_ipo = ip - ipo - i_domain_begin;
+                const double delta    = xpn - static_cast<double>( ip );
+                const double delta2   = delta * delta;
 
-            const double ypn      = position_y[ipart] * dy_inv;
-            const int    jp       = std::round( ypn );
-            const int    jpo      = iold[1 * nparts];
-            const int    jp_m_jpo = jp - jpo - j_domain_begin;
-            const double ydelta   = ypn - static_cast<double>( jp );
-            const double ydelta2  = ydelta * ydelta;
-            Sy1[jp_m_jpo + 1]     = 0.5 * ( ydelta2 - ydelta + 0.25 );
-            Sy1[jp_m_jpo + 2]     = 0.75 - ydelta2;
-            Sy1[jp_m_jpo + 3]     = 0.5 * ( ydelta2 + ydelta + 0.25 );
-        }
+                Sx1[0] = 0.0;
+                Sx1[1] = 0.0;
+                // Sx1[2] = 0.0; // Always set below
+                Sx1[3] = 0.0;
+                Sx1[4] = 0.0;
 
-        // Charge deposition on the grid
+                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
+                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+            }
+            {
+                const double ypn      = position_y[ipart] * dy_inv;
+                const int    jp       = std::round( ypn );
+                const int    jpo      = iold[1 * nparts];
+                const int    jp_m_jpo = jp - jpo - j_domain_begin;
+                const double delta    = ypn - static_cast<double>( jp );
+                const double delta2   = delta * delta;
 
-        for( int ipart = istart; ipart < iend; ++ipart ) {
-            const double invgf                        = invgf_[ipart];
-            const int *const __restrict__ iold        = &iold_[ipart];
-            const double *const __restrict__ deltaold = &deltaold_[ipart];
+                Sy1[0] = 0.0;
+                Sy1[1] = 0.0;
+                // Sy1[2] = 0.0; // Always set below
+                Sy1[3] = 0.0;
+                Sy1[4] = 0.0;
 
-            double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
-            double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
+                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
+                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+            }
+
+            // DSx[0] = Sx1[0] - Sx0[0];
+            // DSx[1] = Sx1[1] - Sx0[1];
+            // DSx[2] = Sx1[2] - Sx0[2];
+            // DSx[3] = Sx1[3] - Sx0[3];
+            // DSx[4] = Sx1[4] - Sx0[4];
+
+            // DSy[0] = Sy1[0] - Sy0[0];
+            // DSy[1] = Sy1[1] - Sy0[1];
+            // DSy[2] = Sy1[2] - Sy0[2];
+            // DSy[3] = Sy1[3] - Sy0[3];
+            // DSy[4] = Sy1[4] - Sy0[4];
+        // }
+
+        // // Charge deposition on the grid
+
+        // for( int ipart = istart; ipart < iend; ++ipart ) {
+        //     const double invgf                        = invgf_[ipart];
+        //     const int *const __restrict__ iold        = &iold_[ipart];
+        //     const double *const __restrict__ deltaold = &deltaold_[ipart];
+
+        //     double *const __restrict__ Sx0 = Sx0_buffer.data() + 5 * ( ipart - istart );
+        //     double *const __restrict__ Sx1 = Sx1_buffer.data() + 5 * ( ipart - istart );
+        //     double *const __restrict__ Sy0 = Sy0_buffer.data() + 5 * ( ipart - istart );
+        //     double *const __restrict__ Sy1 = Sy1_buffer.data() + 5 * ( ipart - istart );
+        //     // double *const __restrict__ DSx = DSx_buffer.data() + 5 * ( ipart - istart );
+        //     // double *const __restrict__ DSy = DSy_buffer.data() + 5 * ( ipart - istart );
 
             // (x,y,z) components of the current density for the macro-particle
             const double charge_weight = inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
@@ -168,34 +198,33 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             const int ipo = iold[0 * nparts] - 2;
             const int jpo = iold[1 * nparts] - 2;
 
-            for( unsigned int i = 0; i < 1; ++i ) {
-                const int iloc = ( i + ipo ) * nprimy + jpo;
-                /* Jx[iloc] += tmpJx[0]; */
-                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; j++ ) {
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-                    Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
-                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-                }
-            }
-
             double tmpJx[5]{};
 
             for( unsigned int i = 1; i < 5; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
-                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-                Jx[iloc] += tmpJx[0];
-                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; ++j ) {
-                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+                for( unsigned int j = 0; j < 5; ++j ) {
+                    const double W_ij_x = ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+                    tmpJx[j] -= crx_p * W_ij_x;
                     Jx[iloc + j] += tmpJx[j];
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                }
+            }
+
+            for( unsigned int i = 0; i < 5; ++i ) {
+                const int iloc = ( i + ipo ) * nprimy + jpo;
+                double    tmp  = 0.0;
+                for( unsigned int j = 1; j < 5; ++j ) {
+                    const double W_ij_y = ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                    tmp -= cry_p * W_ij_y;
                     Jy[iloc + j + pxr * ( i + ipo )] += tmp;
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+                }
+            }
+
+            for( unsigned int i = 0; i < 5; ++i ) {
+                const int iloc = ( i + ipo ) * nprimy + jpo;
+                for( unsigned int j = 0; j < 5; ++j ) {
+                    const double W_ij_z = Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
+                                          Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] );
+                    Jz[iloc + j] += crz_p * W_ij_z;
                 }
             }
         }
