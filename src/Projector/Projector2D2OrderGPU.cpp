@@ -88,13 +88,6 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
         // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
 
-        double Sx0[5];
-        double Sx1[5];
-        double Sy0[5];
-        double Sy1[5];
-        // double DSx[5];
-        // double DSy[5];
-
         const int first_index = istart;
         const int last_index  = iend;
 
@@ -102,6 +95,13 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
             const double *const __restrict__ deltaold = &deltaold_[particle_index];
+
+            double Sx0[5];
+            double Sx1[5];
+            double Sy0[5];
+            double Sy1[5];
+            // double DSx[5];
+            // double DSy[5];
 
             // double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - first_index );
             // double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - first_index );
