@@ -5,24 +5,24 @@
 #include "Projector1D2Order.h"
 #include "Projector1D4Order.h"
 #include "Projector2D2Order.h"
+#include "Projector2D2OrderGPU.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
 #include "Projector3D2OrderGPU.h"
 #include "Projector3D4Order.h"
-#include "ProjectorAM2Order.h"
 #include "ProjectorAM1Order.h"
+#include "ProjectorAM2Order.h"
 
 #ifdef _VECTO
-#include "Projector2D2OrderV.h"
-#include "Projector2D4OrderV.h"
-#include "Projector3D2OrderV.h"
-#include "Projector3D4OrderV.h"
-#include "ProjectorAM2OrderV.h"
+    #include "Projector2D2OrderV.h"
+    #include "Projector2D4OrderV.h"
+    #include "Projector3D2OrderV.h"
+    #include "Projector3D4OrderV.h"
+    #include "ProjectorAM2OrderV.h"
 #endif
 
 #include "Params.h"
 #include "Patch.h"
-
 #include "Tools.h"
 
 class ProjectorFactory
@@ -44,7 +44,11 @@ public:
         // ---------------
         else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                Proj = new Projector2D2Order( params, patch );
+                if( !params.gpu_computing ) {
+                    Proj = new Projector2D2Order( params, patch );
+                } else {
+                    Proj = new Projector2D2OrderGPU( params, patch );
+                }
             }
 #ifdef _VECTO
             else {

@@ -46,7 +46,7 @@ ADASTRA_FEATURE_FLAGS := -std=c++14
 # Warning flags
 ################################################################################
 
-ADASTRA_WARNING_FLAGS := -Wextra -pedantic
+ADASTRA_WARNING_FLAGS := -Wextra -pedantic -fdiagnostics-show-option -fstrict-aliasing -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-aliasing -Wsuggest-override -Wswitch-default -Wswitch-enum -Wtautological-compare -Wundef -Wunreachable-code
 ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
 ################################################################################

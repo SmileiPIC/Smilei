@@ -14,10 +14,12 @@ class MachineAdastra(Machine):
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
-#SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
-# #SBATCH --ntasks-per-gpu=                      # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
-#SBATCH --threads-per-core=1
-# #SBATCH --gpu-bind=closest                     # For a given task and its numa, bind the closest GPU(s) (maybe more than one) to the numa.
+# #SBATCH --gpus-per-node=8
+# #SBATCH --gres=gpu:8
+# #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank, Dont use that, it create problems with MPICH_GPU_SUPPORT_ENABLED=1 on intra node GPU to GPU coms
+#SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
+#SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to conter the effect
+#SBATCH --threads-per-core=1                   # Dont use hyperthreading
 #SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
@@ -52,16 +54,6 @@ module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
 rocm-smi
 rocminfo
 
-# MPI to GPU binding
-# #!/bin/bash
-# # The following script could be useful to bind a mpiproc to a given gpu on a given node https://slurm.schedmd.com/sbatch.html
-# # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration
-# # One may check that it works: $ ROCR_VISIBLE_DEVICES=none rocminfo
-# # rocm-smi ignores the env variable
-#
-# export ROCR_VISIBLE_DEVICES=$SLURM_LOCALID
-# exec $*
-
 # Omp tuning
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_SCHEDULE=dynamic
@@ -84,7 +76,7 @@ export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not 
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
-# export CRAY_ACC_TIME=1
+# export CRAY_ACC_TIME=1 # Not viable, the reported times are wrong ?
 
 # Amd runtime debug
 # export AMD_LOG_LEVEL=4
@@ -92,7 +84,37 @@ export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not 
 LaunchSRun() {{
     module list
 
-    srun --cpu-bind=verbose "$@" > {the_output_file} 2>&1
+    # Task/GPU binding. This mapping can be automated using Slurm's 
+    # --gpus-per-task but this lead a GPU memory accessibility/visibility  
+    # during MPI coms (process_vm_readv error). The workaround is:
+    # 1): To allocate GPUs using --gres/--gpus-per-node and not define any 
+    # mapping. Or to allocate GPUs using --gpus-per-task and break the mapping
+    # using --gpu-bind=closest.
+    # 2): Use ROCR_VISIBLE_DEVICES to do the mapping, associating a GPU to a 
+    # given, user specified task/rank. This may make things harder when we wanna
+    # map a task to a given GPU based on hardware/NUMA caracteristics.
+    # 
+    # The following script could be useful to bind an mpiproc to a given gpu on 
+    # a given node https://slurm.schedmd.com/sbatch.html
+    # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration
+    # One may check that it works: $ ROCR_VISIBLE_DEVICES=none rocminfo
+    # rocm-smi ignores the env variable
+    #
+    # Note: When not using ROCm, this script should not change the behavior of 
+    # any software component.
+    #
+    cat <<EOF > soft_gpu_visibility_restrict.sh
+#!/bin/bash
+# Note: When not using ROCm, this script should not change the behavior of any 
+# software component.
+
+export ROCR_VISIBLE_DEVICES=\$SLURM_LOCALID
+exec "\$@"
+EOF
+
+    chmod +x soft_gpu_visibility_restrict.sh
+
+    srun --cpu-bind=verbose soft_gpu_visibility_restrict.sh "$@" > {the_output_file} 2>&1
     # srun strace "$@" > {the_output_file} 2>&1
     # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
     # srun bash -c "$kCmd" > {the_output_file} 2>&1
@@ -179,8 +201,9 @@ exit $kRETVAL
             self.NODES = self.options.nodes
         else:
             # 4 MI200~GPUs per node. Each GPU contains 2 GCD
-            kGPUPerNode = 4 * 2
-            self.NODES = int(ceil(self.options.mpi / kGPUPerNode))
+            kMaxGPUPerNode = 4 * 2
+            # self.gpu_per_node = self.options.mpi if self.options.mpi <= kMaxGPUPerNode else kMaxGPUPerNode
+            self.NODES = int(ceil(self.options.mpi / kMaxGPUPerNode))
 
     def run(self, arguments, dir):
         """
