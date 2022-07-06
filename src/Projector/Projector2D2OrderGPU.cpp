@@ -64,8 +64,10 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             return;
         }
 
-        const int nparts              = particles.size();
-        const int particle_to_process = iend - istart;
+        const int nparts           = particles.size();
+        const int first_index      = istart;
+        const int last_index       = iend;
+        const int npart_range_size = last_index - first_index;
 
         const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
         const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -75,96 +77,85 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 
         // Arrays used for the Esirkepov projection method
         static constexpr bool kAutoDeviceFree = true;
-        const std::size_t     kTmpArraySize   = particle_to_process * 5;
+        const std::size_t     kTmpArraySize   = npart_range_size * 5;
 
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
-        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
-        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
+        smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
+        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
 
-        // double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
-        // double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
-        // double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
-        // double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
-        // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
-        // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
-
-        const int first_index = istart;
-        const int last_index  = iend;
+        double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
+        double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
+        double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
+        double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
+        // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
+        // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-        const int npart_range_size            = last_index - first_index;
         const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
 
     #pragma omp target defaultmap( none )                            \
         map( to                                                      \
              : position_x [first_index:npart_range_size],            \
                position_y [first_index:npart_range_size],            \
-               momentum_z [first_index:npart_range_size],            \ 
-               charge [first_index:npart_range_size],                \
-               weight [first_index:npart_range_size],                \
-               invgf_ [first_index:npart_range_size],                \
                iold_ [first_index:interpolation_range_2D_size],      \
                deltaold_ [first_index:interpolation_range_2D_size] ) \
-            map( tofrom                                              \
-                 : Jx [0:Jx_size],                                   \
-                   Jy [0:Jy_size],                                   \
-                   Jz [0:Jz_size] )                                  \
-                map( to                                              \
-                     : i_domain_begin, j_domain_begin,               \
-                       nprimy, dy_ov_dt, pxr, pxr, dx_inv,           \
-                       inv_cell_volume, nparts, dy_inv,              \
-                       dx_ov_dt, one_third, first_index, last_index )
-        //        map( from                                            \
-                    //  : Sx0_buffer_data [0:kTmpArraySize],            \ 
-                    //    Sx1_buffer_data [0:kTmpArraySize],            \
-                    //    Sy0_buffer_data [0:kTmpArraySize],            \
-                    //    Sy1_buffer_data [0:kTmpArraySize] )           
+            map( to                                                  \
+                 : i_domain_begin, j_domain_begin,                   \
+                   dx_inv, dy_inv, npart_range_size,                 \
+                   nparts, first_index, last_index )                 \
+                map( from                                            \
+                     : Sx0_buffer_data [0:kTmpArraySize],            \ 
+                       Sx1_buffer_data [0:kTmpArraySize],            \
+                       Sy0_buffer_data [0:kTmpArraySize],            \
+                       Sy1_buffer_data [0:kTmpArraySize] )
     #pragma omp teams
     #pragma omp distribute parallel for
 #endif
         for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
-            const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
             const double *const __restrict__ deltaold = &deltaold_[particle_index];
 
-            double Sx0[5];
-            double Sx1[5];
-            double Sy0[5];
-            double Sy1[5];
-            // double DSx[5];
-            // double DSy[5];
+            // Offset coeff_particle_index to map [0, npart_range_size)
+            const int coeff_particle_index = particle_index - first_index;
 
-            // double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - first_index );
-            // double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - first_index );
-            // double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - first_index );
-            // double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - first_index );
-            // // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - first_index );
-            // // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - first_index );
+            // double Sx0[5];
+            // double Sx1[5];
+            // double Sy0[5];
+            // double Sy1[5];
+            // // double DSx[5];
+            // // double DSy[5];
+
+            double *const __restrict__ Sx0 = Sx0_buffer_data;
+            double *const __restrict__ Sx1 = Sx1_buffer_data;
+            double *const __restrict__ Sy0 = Sy0_buffer_data;
+            double *const __restrict__ Sy1 = Sy1_buffer_data;
+            // double *const __restrict__ DSx = DSx_buffer_data;
+            // double *const __restrict__ DSy = DSy_buffer_data;
 
             // Variable declaration & initialization
             // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
 
             // Locate the particle on the primal grid at former time-step & calculate coeff. S0
             {
-                const double delta  = deltaold[0 * nparts];
-                const double delta2 = delta * delta;
-                Sx0[0]              = 0.0;
-                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sx0[2]              = 0.75 - delta2;
-                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sx0[4]              = 0.0;
+                const double delta                               = deltaold[0 * nparts];
+                const double delta2                              = delta * delta;
+                Sx0[0 * npart_range_size + coeff_particle_index] = 0.0;
+                Sx0[1 * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 - delta + 0.25 );
+                Sx0[2 * npart_range_size + coeff_particle_index] = 0.75 - delta2;
+                Sx0[3 * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 + delta + 0.25 );
+                Sx0[4 * npart_range_size + coeff_particle_index] = 0.0;
             }
             {
-                const double delta  = deltaold[1 * nparts];
-                const double delta2 = delta * delta;
-                Sy0[0]              = 0.0;
-                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sy0[2]              = 0.75 - delta2;
-                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sy0[4]              = 0.0;
+                const double delta                               = deltaold[1 * nparts];
+                const double delta2                              = delta * delta;
+                Sy0[0 * npart_range_size + coeff_particle_index] = 0.0;
+                Sy0[1 * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 - delta + 0.25 );
+                Sy0[2 * npart_range_size + coeff_particle_index] = 0.75 - delta2;
+                Sy0[3 * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 + delta + 0.25 );
+                Sy0[4 * npart_range_size + coeff_particle_index] = 0.0;
             }
 
             // Locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -176,15 +167,15 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 const double delta    = xpn - static_cast<double>( ip );
                 const double delta2   = delta * delta;
 
-                Sx1[0] = 0.0;
-                Sx1[1] = 0.0;
+                Sx1[0 * npart_range_size + coeff_particle_index] = 0.0;
+                Sx1[1 * npart_range_size + coeff_particle_index] = 0.0;
                 // Sx1[2] = 0.0; // Always set below
-                Sx1[3] = 0.0;
-                Sx1[4] = 0.0;
+                Sx1[3 * npart_range_size + coeff_particle_index] = 0.0;
+                Sx1[4 * npart_range_size + coeff_particle_index] = 0.0;
 
-                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
-                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+                Sx1[( ip_m_ipo + 1 ) * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 - delta + 0.25 );
+                Sx1[( ip_m_ipo + 2 ) * npart_range_size + coeff_particle_index] = 0.75 - delta2;
+                Sx1[( ip_m_ipo + 3 ) * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 + delta + 0.25 );
             }
             {
                 const double ypn      = position_y[particle_index] * dy_inv;
@@ -194,43 +185,70 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 const double delta    = ypn - static_cast<double>( jp );
                 const double delta2   = delta * delta;
 
-                Sy1[0] = 0.0;
-                Sy1[1] = 0.0;
+                Sy1[0 * npart_range_size + coeff_particle_index] = 0.0;
+                Sy1[1 * npart_range_size + coeff_particle_index] = 0.0;
                 // Sy1[2] = 0.0; // Always set below
-                Sy1[3] = 0.0;
-                Sy1[4] = 0.0;
+                Sy1[3 * npart_range_size + coeff_particle_index] = 0.0;
+                Sy1[4 * npart_range_size + coeff_particle_index] = 0.0;
 
-                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
-                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+                Sy1[( jp_m_jpo + 1 ) * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 - delta + 0.25 );
+                Sy1[( jp_m_jpo + 2 ) * npart_range_size + coeff_particle_index] = 0.75 - delta2;
+                Sy1[( jp_m_jpo + 3 ) * npart_range_size + coeff_particle_index] = 0.5 * ( delta2 + delta + 0.25 );
             }
 
-            // DSx[0] = Sx1[0] - Sx0[0];
-            // DSx[1] = Sx1[1] - Sx0[1];
-            // DSx[2] = Sx1[2] - Sx0[2];
-            // DSx[3] = Sx1[3] - Sx0[3];
-            // DSx[4] = Sx1[4] - Sx0[4];
+            // DSx[0 * npart_range_size + coeff_particle_index] = Sx1[0 * npart_range_size + coeff_particle_index] - Sx0[0 * npart_range_size + coeff_particle_index];
+            // DSx[1 * npart_range_size + coeff_particle_index] = Sx1[1 * npart_range_size + coeff_particle_index] - Sx0[1 * npart_range_size + coeff_particle_index];
+            // DSx[2 * npart_range_size + coeff_particle_index] = Sx1[2 * npart_range_size + coeff_particle_index] - Sx0[2 * npart_range_size + coeff_particle_index];
+            // DSx[3 * npart_range_size + coeff_particle_index] = Sx1[3 * npart_range_size + coeff_particle_index] - Sx0[3 * npart_range_size + coeff_particle_index];
+            // DSx[4 * npart_range_size + coeff_particle_index] = Sx1[4 * npart_range_size + coeff_particle_index] - Sx0[4 * npart_range_size + coeff_particle_index];
 
-            // DSy[0] = Sy1[0] - Sy0[0];
-            // DSy[1] = Sy1[1] - Sy0[1];
-            // DSy[2] = Sy1[2] - Sy0[2];
-            // DSy[3] = Sy1[3] - Sy0[3];
-            // DSy[4] = Sy1[4] - Sy0[4];
-        // }
+            // DSy[0 * npart_range_size + coeff_particle_index] = Sy1[0 * npart_range_size + coeff_particle_index] - Sy0[0 * npart_range_size + coeff_particle_index];
+            // DSy[1 * npart_range_size + coeff_particle_index] = Sy1[1 * npart_range_size + coeff_particle_index] - Sy0[1 * npart_range_size + coeff_particle_index];
+            // DSy[2 * npart_range_size + coeff_particle_index] = Sy1[2 * npart_range_size + coeff_particle_index] - Sy0[2 * npart_range_size + coeff_particle_index];
+            // DSy[3 * npart_range_size + coeff_particle_index] = Sy1[3 * npart_range_size + coeff_particle_index] - Sy0[3 * npart_range_size + coeff_particle_index];
+            // DSy[4 * npart_range_size + coeff_particle_index] = Sy1[4 * npart_range_size + coeff_particle_index] - Sy0[4 * npart_range_size + coeff_particle_index];
+        }
 
-        // // Charge deposition on the grid
+        // Charge deposition on the grid
 
-        // for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
-        //     const double invgf                        = invgf_[particle_index];
-        //     const int *const __restrict__ iold        = &iold_[particle_index];
-        //     const double *const __restrict__ deltaold = &deltaold_[particle_index];
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp target defaultmap( none )                        \
+        map( to                                                  \
+             : momentum_z [first_index:npart_range_size],        \ 
+               charge [first_index:npart_range_size],            \
+               weight [first_index:npart_range_size],            \
+               invgf_ [first_index:npart_range_size],            \
+               iold_ [first_index:interpolation_range_2D_size] ) \
+            map( tofrom                                          \
+                 : Jx [0:Jx_size],                               \
+                   Jy [0:Jy_size],                               \
+                   Jz [0:Jz_size] )                              \
+                map( to                                          \
+                     : dx_ov_dt, dy_ov_dt, pxr,                  \
+                       inv_cell_volume, one_third,               \
+                       nparts, nprimy, first_index, last_index,  \
+                       npart_range_size )                        \
+                    map( to                                      \
+                         : Sx0_buffer_data [0:kTmpArraySize],    \ 
+                           Sx1_buffer_data [0:kTmpArraySize],    \
+                           Sy0_buffer_data [0:kTmpArraySize],    \
+                           Sy1_buffer_data [0:kTmpArraySize] )
+    #pragma omp teams thread_limit(64)
+    #pragma omp distribute parallel for
+#endif
+        for( int particle_index = first_index; particle_index < last_index; ++particle_index ) {
+            const double invgf                 = invgf_[particle_index];
+            const int *const __restrict__ iold = &iold_[particle_index];
 
-        //     double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - first_index );
-        //     double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - first_index );
-        //     double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - first_index );
-        //     double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - first_index );
-        //     // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - first_index );
-        //     // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - first_index );
+            // Offset coeff_particle_index to map [0, npart_range_size)
+            const int coeff_particle_index = particle_index - first_index;
+
+            const double *const __restrict__ Sx0 = Sx0_buffer_data;
+            const double *const __restrict__ Sx1 = Sx1_buffer_data;
+            const double *const __restrict__ Sy0 = Sy0_buffer_data;
+            const double *const __restrict__ Sy1 = Sy1_buffer_data;
+            // const double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - first_index );
+            // const double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - first_index );
 
             // (x,y,z) components of the current density for the macro-particle
             const double charge_weight = inv_cell_volume * static_cast<double>( charge[particle_index] ) * weight[particle_index];
@@ -248,7 +266,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             for( unsigned int i = 1; i < 5; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 for( unsigned int j = 0; j < 5; ++j ) {
-                    const double W_ij_x = ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+                    const double W_ij_x = ( Sx1[( i - 1 ) * npart_range_size + coeff_particle_index] - Sx0[( i - 1 ) * npart_range_size + coeff_particle_index] ) * ( Sy0[j * npart_range_size + coeff_particle_index] + 0.5 * ( Sy1[j * npart_range_size + coeff_particle_index] - Sy0[j * npart_range_size + coeff_particle_index] ) );
                     tmpJx[j] -= crx_p * W_ij_x;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
     #pragma omp atomic update
@@ -261,7 +279,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 double    tmp  = 0.0;
                 for( unsigned int j = 1; j < 5; ++j ) {
-                    const double W_ij_y = ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                    const double W_ij_y = ( Sy1[( j - 1 ) * npart_range_size + coeff_particle_index] - Sy0[( j - 1 ) * npart_range_size + coeff_particle_index] ) * ( Sx0[i * npart_range_size + coeff_particle_index] + 0.5 * ( Sx1[i * npart_range_size + coeff_particle_index] - Sx0[i * npart_range_size + coeff_particle_index] ) );
                     tmp -= cry_p * W_ij_y;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
     #pragma omp atomic update
@@ -273,8 +291,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             for( unsigned int i = 0; i < 5; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 for( unsigned int j = 0; j < 5; ++j ) {
-                    const double W_ij_z = Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                          Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] );
+                    const double W_ij_z = Sy0[j * npart_range_size + coeff_particle_index] * ( 0.5 * Sx1[i * npart_range_size + coeff_particle_index] + Sx0[i * npart_range_size + coeff_particle_index] ) +
+                                          Sy1[j * npart_range_size + coeff_particle_index] * ( 0.5 * Sx0[i * npart_range_size + coeff_particle_index] + Sx1[i * npart_range_size + coeff_particle_index] );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
     #pragma omp atomic update
 #endif
