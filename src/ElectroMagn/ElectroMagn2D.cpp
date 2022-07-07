@@ -897,7 +897,7 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
                                                                              smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D ),
                                                                              ( nx_p + 1 /* dual */ ) * ny_d );
         } else {
-            // If we have GPU support enabled and for some reason we have to handle CPU buffer.
+            // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
             // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
             std::memcpy( Bx2D_m, Bx2D, nx_p * ny_d * sizeof( double ) );
             std::memcpy( By2D_m, By2D, ( nx_p + 1 /* dual */ ) * ny_p * sizeof( double ) );
