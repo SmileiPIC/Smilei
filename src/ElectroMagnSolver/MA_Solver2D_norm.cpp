@@ -7,17 +7,19 @@
 MA_Solver2D_norm::MA_Solver2D_norm( Params &params )
     : Solver2D( params )
 {
+    // EMPTY
 }
 
 MA_Solver2D_norm::~MA_Solver2D_norm()
 {
+    // EMPTY
 }
 
 void MA_Solver2D_norm::operator()( ElectroMagn *fields )
 {
     double *const __restrict__ Ex2D       = fields->Ex_->data(); // [x * ny_p + y] : dual in x   primal in y,z
     double *const __restrict__ Ey2D       = fields->Ey_->data(); // [x * ny_d + y] : dual in y   primal in x,z
-    double *const __restrict__ Ez2D       = fields->Ez_->data(); // [x * nz_p + y] : dual in z   primal in x,y
+    double *const __restrict__ Ez2D       = fields->Ez_->data(); // [x * ny_p + y] : dual in z   primal in x,y
     const double *const __restrict__ Bx2D = fields->Bx_->data(); // [x * ny_d + y] : dual in y,z primal in x
     const double *const __restrict__ By2D = fields->By_->data(); // [x * ny_p + y] : dual in x,z primal in y
     const double *const __restrict__ Bz2D = fields->Bz_->data(); // [x * ny_d + y] : dual in x,y primal in z

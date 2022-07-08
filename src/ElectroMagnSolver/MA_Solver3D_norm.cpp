@@ -7,10 +7,12 @@
 MA_Solver3D_norm::MA_Solver3D_norm( Params &params )
     : Solver3D( params )
 {
+    // EMPTY
 }
 
 MA_Solver3D_norm::~MA_Solver3D_norm()
 {
+    // EMPTY
 }
 
 void MA_Solver3D_norm::operator()( ElectroMagn *fields )

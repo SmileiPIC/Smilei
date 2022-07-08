@@ -15,58 +15,39 @@ MF_Solver2D_Yee::MF_Solver2D_Yee( Params &params )
 
 MF_Solver2D_Yee::~MF_Solver2D_Yee()
 {
+    // EMPTY
 }
 
 void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
 {
-    // Static-cast of the fields
-    Field2D *Ex2D;
-    Field2D *Ey2D;
-    if( !isEFilterApplied ) {
-        Ex2D = static_cast<Field2D *>( fields->Ex_ );
-        Ey2D = static_cast<Field2D *>( fields->Ey_ );
-    } else {
-        Ex2D = static_cast<Field2D *>( fields->Exfilter[0] );
-        Ey2D = static_cast<Field2D *>( fields->Eyfilter[0] );
-    }
-    Field2D *Ez2D = static_cast<Field2D *>( fields->Ez_ );
-    Field2D *Bx2D = static_cast<Field2D *>( fields->Bx_ );
-    Field2D *By2D = static_cast<Field2D *>( fields->By_ );
-    Field2D *Bz2D = static_cast<Field2D *>( fields->Bz_ );
-    
-    // Magnetic field Bx^(p,d)
-    //cout << "nx_p,nx_d-1" << nx_p << " " << nx_d-1 ;
-    //{
-    {
-        #pragma omp simd
-        for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-            ( *Bx2D )( 0, j ) -= dt_ov_dy * ( ( *Ez2D )( 0, j ) - ( *Ez2D )( 0, j-1 ) );
-        }
-    }
-    //    for (unsigned int i=0 ; i<nx_p;  i++) {
-    for( unsigned int i=1 ; i<nx_d-1;  i++ ) {
-        #pragma omp simd
-        for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-            ( *Bx2D )( i, j ) -= dt_ov_dy * ( ( *Ez2D )( i, j ) - ( *Ez2D )( i, j-1 ) );
-        }
-        //    }
-        
-        // Magnetic field By^(d,p)
-        //    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        #pragma omp simd
-        for( unsigned int j=0 ; j<ny_p ; j++ ) {
-            ( *By2D )( i, j ) += dt_ov_dx * ( ( *Ez2D )( i, j ) - ( *Ez2D )( i-1, j ) );
-        }
-        //}
-        
-        // Magnetic field Bz^(d,d)
-        //for (unsigned int i=1 ; i<nx_d-1 ; i++) {
-        #pragma omp simd
-        for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-            ( *Bz2D )( i, j ) += dt_ov_dy * ( ( *Ex2D )( i, j ) - ( *Ex2D )( i, j-1 ) )
-                                 -               dt_ov_dx * ( ( *Ey2D )( i, j ) - ( *Ey2D )( i-1, j ) );
-        }
-    }
-    //}// end parallel
-}
+    const double *const __restrict__ Ex2D = isEFilterApplied ? fields->Exfilter[0]->data() :
+                                                               fields->Ex_->data(); // [x * ny_p + y] : dual in x   primal in y,z
+    const double *const __restrict__ Ey2D = isEFilterApplied ? fields->Eyfilter[0]->data() :
+                                                               fields->Ey_->data(); // [x * ny_d + y] : dual in y   primal in x,z
+    const double *const __restrict__ Ez2D = fields->Ez_->data();                    // [x * ny_p + y] : dual in z   primal in x,y
+    double *const __restrict__ Bx2D       = fields->Bx_->data();                    // [x * ny_d + y] : dual in y,z primal in x
+    double *const __restrict__ By2D       = fields->By_->data();                    // [x * ny_p + y] : dual in x,z primal in y
+    double *const __restrict__ Bz2D       = fields->Bz_->data();                    // [x * ny_d + y] : dual in x,y primal in z
 
+    // Magnetic field Bx^(p,d)
+    for( unsigned int x = 0; x < nx_d - 1; ++x ) {
+        for( unsigned int y = 1; y < ny_d - 1; ++y ) {
+            Bx2D[x * ny_d + y] -= dt_ov_dy * ( Ez2D[x * ny_p + y] - Ez2D[x * ny_p + y - 1] );
+        }
+    }
+
+    // Magnetic field By^(d,p)
+    for( unsigned int x = 1; x < nx_d - 1; ++x ) {
+        for( unsigned int y = 0; y < ny_p; ++y ) {
+            By2D[x * ny_p + y] += dt_ov_dx * ( Ez2D[x * ny_p + y] - Ez2D[( x - 1 ) * ny_p + y] );
+        }
+    }
+
+    // Magnetic field Bz^(d,d)
+    for( unsigned int x = 1; x < nx_d - 1; ++x ) {
+        for( unsigned int y = 1; y < ny_d - 1; ++y ) {
+            Bz2D[x * ny_d + y] += dt_ov_dy * ( Ex2D[x * ny_p + y] - Ex2D[x * ny_p + y - 1] ) -
+                                  dt_ov_dx * ( Ey2D[x * ny_d + y] - Ey2D[( x - 1 ) * ny_d + y] );
+        }
+    }
+}
