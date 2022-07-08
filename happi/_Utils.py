@@ -315,26 +315,15 @@ class Units(object):
 
 	def prepare(self, reference_angular_frequency_SI=None):
 		if self.UnitRegistry:
+			self.ureg = self.UnitRegistry()
 			if reference_angular_frequency_SI:
-				# Load pint's default unit registry
-				self.ureg = self.UnitRegistry()
-				# Define code units
-				self.ureg.define("V_r = speed_of_light"                   ) # velocity
 				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-				self.ureg.define("M_r = electron_mass"                    ) # mass
-				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
-				# Make blank unit registry
-				self.ureg = self.UnitRegistry(None)
-				self.ureg.define("V_r = [code_velocity]"                  ) # velocity
-				self.ureg.define("W_r = [code_frequency]"                 ) # frequency
-				self.ureg.define("M_r = [code_mass]"                      ) # mass
-				self.ureg.define("Q_r = [code_charge]"                    ) # charge
-				self.ureg.define("epsilon_0 = 1")
-				# Add radians and degrees
-				self.ureg.define("radian    = [] = rad"               )
-				self.ureg.define("degree    = pi/180*radian = deg"    )
-				self.ureg.define("steradian = radian ** 2 = sr"       )
+				self.ureg.define("W_r = [reference_frequency]"                 ) # frequency
+			self.ureg.define("V_r = speed_of_light"                   ) # velocity
+			self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
+			self.ureg.define("M_r = electron_mass"                    ) # mass
+			self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			self.ureg.define("L_r = V_r / W_r"                        ) # length
 			self.ureg.define("T_r = 1   / W_r"                        ) # time
 			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
@@ -565,17 +554,25 @@ class _multiPlotUtil(object):
 			if "label" in Diag.options.plot:
 				self.nlegends += 1
 	
+	def legend(self):
+		if self.nlegends > 0:
+			if self.sameAxes:
+				self.ax[0].legend(
+					[Diag._plot for Diag in self.Diags if Diag._plot],
+					[Diag.options.plot["label"] for Diag in self.Diags if Diag._plot],
+				)
+	
 	def staticPlot(self):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
-		if self.nlegends > 0:
-			self.plt.legend()
+		self.legend()
 		self.plt.draw()
 		self.plt.pause(0.00001)
 	
 	def twinOptions(self, Diag):
 		if self.sameAxes:
-			Diag._ax.set_xlim(self.xmin,self.xmax)
+			if Diag.dim>0:
+				Diag._ax.set_xlim(self.xmin,self.xmax)
 			if Diag.dim<2 and self.bothsides:
 				color = Diag._plot.get_color()
 				Diag._ax.yaxis.label.set_color(color)

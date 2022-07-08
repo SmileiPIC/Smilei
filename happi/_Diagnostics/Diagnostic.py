@@ -859,9 +859,13 @@ class Diagnostic(object):
 		if not self._os.path.exists(dir): self._os.makedirs(dir)
 	
 	def _dataAtTime(self, t):
-		return self._vfactor*self._getDataAtTime(t)
+		A = self._getDataAtTime(t)
+		# transform if requested
+		if callable(self._data_transform):
+			A = self._data_transform(A)
+		return self._vfactor*A
 	def _dataLogAtTime(self, t):
-		return self._np.log10( self._vfactor*self._getDataAtTime(t) )
+		return self._np.log10( self._dataAtTime(t) )
 	
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
