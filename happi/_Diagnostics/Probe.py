@@ -391,8 +391,6 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
-
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 
 	# We override _prepare4
