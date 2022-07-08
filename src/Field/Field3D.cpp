@@ -336,29 +336,24 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const bool fieldName = ( name.substr( 0, 1 ) == "B" ) || ( name.substr( 0, 1 ) == "J" );
+        if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
+            const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
+            const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
+            const int           dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
 
-        const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data_;
-        const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data_;
-        const int           dSize = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
-
-        if( fieldName ) {
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }
 #endif
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        ERROR( "To Do GPU : envelope" );
+#endif
         delete sendFields_[iDim*2+iNeighbor];
         delete recvFields_[iDim*2+iNeighbor];
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        ERROR( "To Do GPU : envelope" );
-#endif
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        ERROR( "To Do GPU : envelope" );
-#endif
     }
 }
 
@@ -384,11 +379,9 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     double *const       sub   = sendFields_[iDim * 2 + iNeighbor]->data_;
     const double *const field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  subSize   = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
-    const int  fSize     = globalDims_;
-    const bool fieldName = name.substr( 0, 1 ) == "B";
+    const bool is_the_right_field = name[0] == 'B';
 
-    #pragma omp target if( fieldName )
+    #pragma omp target if( is_the_right_field )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
 #elif defined( _GPU )
@@ -435,12 +428,11 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     const double *const sub   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
     double *const       field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  subSize   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->globalDims_;
-    const int  fSize     = globalDims_;
-    const bool fieldName = name.substr( 0, 1 ) == "B";
+    const int  fSize              = globalDims_;
+    const bool is_the_right_field = name[0] == 'B';
 
-    #pragma omp target if( fieldName ) \
-        map( tofrom                    \
+    #pragma omp target if( is_the_right_field ) \
+        map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
@@ -489,12 +481,11 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const double *const field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  subSize   = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
-    const int  fSize     = globalDims_;
-    const bool fieldName = name.substr( 0, 1 ) == "J";
+    const int  fSize              = globalDims_;
+    const bool is_the_right_field = name[0] == 'J';
 
-    #pragma omp target if( fieldName ) \
-        map( to                        \
+    #pragma omp target if( is_the_right_field ) \
+        map( to                                 \
              : field [0:fSize] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )
@@ -543,12 +534,11 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     const double *const sub   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
     double *const       field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  subSize   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->globalDims_;
-    const int  fSize     = globalDims_;
-    const bool fieldName = name.substr( 0, 1 ) == "J";
+    const int  fSize              = globalDims_;
+    const bool is_the_right_field = name[0] == 'J';
 
-    #pragma omp target if( fieldName ) \
-        map( tofrom                    \
+    #pragma omp target if( is_the_right_field ) \
+        map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 3 )

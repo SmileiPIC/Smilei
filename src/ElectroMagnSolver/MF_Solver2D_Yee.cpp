@@ -31,10 +31,15 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
 
     // Magnetic field Bx^(p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                                          \
-                            : Bx2D [1:( nx_d - 1 - 1 ) * ny_d + ny_d - 1] ) \
-        map( to                                                             \
-             : Ez2D [1:(nx_d - 1 - 1) * ny_p + ny_d - 1] )
+    const unsigned Bx_Bx2D_first = 1;
+    const unsigned Bx_Bx2D_last  = ( nx_d - 1 - 1 ) * ny_d + ny_d - 1;
+    const unsigned Bx_Ez2D_first = 1;
+    const unsigned Bx_Ez2D_last  = ( nx_d - 1 - 1 ) * ny_p + ny_d - 1;
+
+    #pragma omp target map( tofrom                                                \
+                            : Bx2D [Bx_Bx2D_first:Bx_Bx2D_last - Bx_Bx2D_first] ) \
+        map( to                                                                   \
+             : Ez2D [Bx_Ez2D_first:Bx_Ez2D_last - Bx_Ez2D_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -46,10 +51,15 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
 
     // Magnetic field By^(d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                                         \
-                            : By2D [ny_p:( nx_d - 1 - 1 ) * ny_p + ny_p] ) \
-        map( to                                                            \
-             : Ez2D [ny_p:( nx_d - 1 - 1 ) * ny_p + ny_p] )
+    const unsigned By_By2D_first = ny_p;
+    const unsigned By_By2D_last  = ( nx_d - 1 - 1 ) * ny_p + ny_p;
+    const unsigned By_Ez2D_first = ny_p;
+    const unsigned By_Ez2D_last  = ( nx_d - 1 - 1 ) * ny_p + ny_p;
+
+    #pragma omp target map( tofrom                                                \
+                            : By2D [By_By2D_first:By_By2D_last - By_By2D_first] ) \
+        map( to                                                                   \
+             : Ez2D [By_Ez2D_first:By_Ez2D_last - By_Ez2D_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -61,11 +71,18 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
 
     // Magnetic field Bz^(d,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                                                 \
-                            : Bz2D [ny_d + 1:( nx_d - 1 - 1 ) * ny_d + ny_d - 1] ) \
-        map( to                                                                    \
-             : Ex2D [ny_p + 1:( nx_d - 1 - 1 ) * ny_p + ny_d - 1],                 \
-               Ey2D [ny_d + 1:( nx_d - 1 - 1 ) * ny_d + ny_d - 1] )
+    const unsigned Bz_Bz2D_first = ny_d + 1;
+    const unsigned Bz_Bz2D_last  = ( nx_d - 1 - 1 ) * ny_d + ny_d - 1;
+    const unsigned Bz_Ex2D_first = ny_p + 1;
+    const unsigned Bz_Ex2D_last  = ( nx_d - 1 - 1 ) * ny_p + ny_d - 1;
+    const unsigned Bz_Ey2D_first = ny_d + 1;
+    const unsigned Bz_Ey2D_last  = ( nx_d - 1 - 1 ) * ny_d + ny_d - 1;
+
+    #pragma omp target map( tofrom                                                \
+                            : Bz2D [Bz_Bz2D_first:Bz_Bz2D_last - Bz_Bz2D_first] ) \
+        map( to                                                                   \
+             : Ex2D [Bz_Ex2D_first:Bz_Ex2D_last - Bz_Ex2D_first],                 \
+               Ey2D [Bz_Ey2D_first:Bz_Ey2D_last - Bz_Ey2D_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif

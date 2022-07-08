@@ -1457,12 +1457,10 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    bool is_memory_on_device = false;
-
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    is_memory_on_device = vecPatches.B_localx.size() > 0 &&
-                          smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
-#endif
+    // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
+    // is_memory_on_device check.
+    const bool is_memory_on_device = vecPatches.B_localx.size() > 0 &&
+                                     smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
     for( int icomp=0 ; icomp<2 ; icomp++ ) {
@@ -1490,7 +1488,6 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 pt2 = &( vecPatches.B_localx[ifield]->data_[0] );
                 //for filter
 
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
                 if( is_memory_on_device ) {
                     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
                                                                                      smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
@@ -1499,12 +1496,11 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
                                                                                      smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
                                                                                      oversize * ny_ * nz_ );
-                }
-#endif
-
-                if (!is_memory_on_device) {
-                    memcpy( pt2, pt1, oversize*ny_*nz_*sizeof( double ) );
-                    memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof( double ) );
+                } else {
+                    // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
+                    // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
+                    std::memcpy( pt2, pt1, oversize * ny_ * nz_ * sizeof( double ) );
+                    std::memcpy( pt1 + gsp * ny_ * nz_, pt2 + gsp * ny_ * nz_, oversize * ny_ * nz_ * sizeof( double ) );
                 }
             } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
 
