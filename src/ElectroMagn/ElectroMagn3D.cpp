@@ -1133,19 +1133,19 @@ Field *ElectroMagn3D::createField( string fieldname, Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::centerMagneticFields()
 {
-    const double *const __restrict__ Bx3D   = &( Bx_->data_[0] );
-    const double *const __restrict__ By3D   = &( By_->data_[0] );
-    const double *const __restrict__ Bz3D   = &( Bz_->data_[0] );
-    double *const __restrict__ Bx3D_m = &( Bx_m->data_[0] );
-    double *const __restrict__ By3D_m = &( By_m->data_[0] );
-    double *const __restrict__ Bz3D_m = &( Bz_m->data_[0] );
+    const double *const __restrict__ Bx3D = Bx_->data();
+    const double *const __restrict__ By3D = By_->data();
+    const double *const __restrict__ Bz3D = Bz_->data();
+    double *const __restrict__ Bx3D_m     = Bx_m->data();
+    double *const __restrict__ By3D_m     = By_m->data();
+    double *const __restrict__ Bz3D_m     = Bz_m->data();
 
+    // Magnetic field Bx^(p,d,d)
+#if defined( _GPU )
     const int sizeofBx = Bx_->globalDims_;
     const int sizeofBy = By_->globalDims_;
     const int sizeofBz = Bz_->globalDims_;
 
-    // Magnetic field Bx^(p,d,d)
-#if defined( _GPU )
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1212,9 +1212,7 @@ void ElectroMagn3D::centerMagneticFields()
             }
         } // end for j
     } // end for i
-    
-    
-}//END centerMagneticFields
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------

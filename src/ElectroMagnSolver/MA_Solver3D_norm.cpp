@@ -15,17 +15,18 @@ MA_Solver3D_norm::~MA_Solver3D_norm()
 
 void MA_Solver3D_norm::operator()( ElectroMagn *fields )
 {
-    // Static-cast of the fields
-    double *const __restrict__ Ex3D       = &( fields->Ex_->data_[0] );
-    double *const __restrict__ Ey3D       = &( fields->Ey_->data_[0] );
-    double *const __restrict__ Ez3D       = &( fields->Ez_->data_[0] );
-    const double *const __restrict__ Bx3D = &( fields->Bx_->data_[0] );
-    const double *const __restrict__ By3D = &( fields->By_->data_[0] );
-    const double *const __restrict__ Bz3D = &( fields->Bz_->data_[0] );
-    const double *const __restrict__ Jx3D = &( fields->Jx_->data_[0] );
-    const double *const __restrict__ Jy3D = &( fields->Jy_->data_[0] );
-    const double *const __restrict__ Jz3D = &( fields->Jz_->data_[0] );
+    double *const __restrict__ Ex3D       = fields->Ex_->data();
+    double *const __restrict__ Ey3D       = fields->Ey_->data();
+    double *const __restrict__ Ez3D       = fields->Ez_->data();
+    const double *const __restrict__ Bx3D = fields->Bx_->data();
+    const double *const __restrict__ By3D = fields->By_->data();
+    const double *const __restrict__ Bz3D = fields->Bz_->data();
+    const double *const __restrict__ Jx3D = fields->Jx_->data();
+    const double *const __restrict__ Jy3D = fields->Jy_->data();
+    const double *const __restrict__ Jz3D = fields->Jz_->data();
 
+    // Electric field Ex^(d,p,p)
+#if defined( _GPU )
     const int sizeofEx = fields->Ex_->globalDims_;
     const int sizeofEy = fields->Ey_->globalDims_;
     const int sizeofEz = fields->Ez_->globalDims_;
@@ -33,8 +34,6 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     const int sizeofBy = fields->By_->globalDims_;
     const int sizeofBz = fields->Bz_->globalDims_;
 
-    // Electric field Ex^(d,p,p)
-#if defined( _GPU )
     #pragma acc parallel present( Ex3D[0:sizeofEx], Jx3D[0:sizeofEx], By3D[0:sizeofBy], Bz3D[0:sizeofBz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -107,6 +106,4 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
             }
         }
     }
-    
 }
-

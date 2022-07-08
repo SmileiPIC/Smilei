@@ -891,17 +891,17 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D_m ),
                                                                              smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D ),
-                                                                             ( nx_p + 1 /* dual */ ) * ny_p );
+                                                                             ( nx_p + 1 ) * ny_p );
 
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D_m ),
                                                                              smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D ),
-                                                                             ( nx_p + 1 /* dual */ ) * ny_d );
+                                                                             ( nx_p + 1 ) * ny_d );
         } else {
             // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
             // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
             std::memcpy( Bx2D_m, Bx2D, nx_p * ny_d * sizeof( double ) );
-            std::memcpy( By2D_m, By2D, ( nx_p + 1 /* dual */ ) * ny_p * sizeof( double ) );
-            std::memcpy( Bz2D_m, Bz2D, ( nx_p + 1 /* dual */ ) * ny_d * sizeof( double ) );
+            std::memcpy( By2D_m, By2D, ( nx_p + 1 ) * ny_p * sizeof( double ) );
+            std::memcpy( Bz2D_m, Bz2D, ( nx_p + 1 ) * ny_d * sizeof( double ) );
         }
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
@@ -1216,7 +1216,7 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
-    for( unsigned int x = 0; x < ( nx_p + 1 /* dual */ ); ++x ) {
+    for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
         for( unsigned int y = 0; y < ny_p; ++y ) {
             By2D_m[x * ny_p + y] = ( By2D[x * ny_p + y] + By2D_m[x * ny_p + y] ) * 0.5;
         }
@@ -1230,7 +1230,7 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
-    for( unsigned int x = 0; x < ( nx_p + 1 /* dual */ ); ++x ) {
+    for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
         for( unsigned int y = 0; y < ny_d; ++y ) {
             Bz2D_m[x * ny_d + y] = ( Bz2D[x * ny_d + y] + Bz2D_m[x * ny_d + y] ) * 0.5;
         }
