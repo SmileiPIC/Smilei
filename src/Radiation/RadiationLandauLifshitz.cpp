@@ -90,8 +90,8 @@ void RadiationLandauLifshitz::operator()(
     double *const __restrict__ chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
-    // double * rad_norm_energy = new double [iend-istart];
-    double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
+    double * rad_norm_energy = new double [iend-istart];
+    //double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
     
     #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
@@ -178,6 +178,7 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Cleaning
 
-    free(rad_norm_energy);
+    //free(rad_norm_energy);
+    delete [] rad_norm_energy;
 
 }
