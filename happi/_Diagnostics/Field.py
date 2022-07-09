@@ -367,8 +367,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# transform if requested
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 	
 	# Method to obtain the data only
@@ -417,9 +415,6 @@ class Field(Diagnostic):
 		for iaxis in range(self._naxes):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
-		# remove averaged axes
-		A = self._np.squeeze(A)
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 	
 	# Method to obtain the data only
@@ -467,7 +462,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 	
 	@staticmethod

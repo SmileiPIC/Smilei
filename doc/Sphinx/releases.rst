@@ -21,6 +21,7 @@ Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Collisions: new parameter ``time_frozen``
+* Performances post-processing: new parameter ``cumulative``
 * Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
