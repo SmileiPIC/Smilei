@@ -21,7 +21,10 @@ Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Collisions: new parameter ``time_frozen``
+* Performances post-processing: new parameter ``cumulative``
 * Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
+* Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
+* Bugfixes: C++11 compilation issue
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
