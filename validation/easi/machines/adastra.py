@@ -16,10 +16,11 @@ class MachineAdastra(Machine):
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 # #SBATCH --gpus-per-node=8
 # #SBATCH --gres=gpu:8
-# #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank, Dont use that, it create problems with MPICH_GPU_SUPPORT_ENABLED=1 on intra node GPU to GPU coms
-#SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
+#SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank, Dont use that, it create problems with MPICH_GPU_SUPPORT_ENABLED=1 on intra node GPU to GPU coms
+# #SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
 #SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to conter the effect
-#SBATCH --threads-per-core=1                   # Dont use hyperthreading
+#SBATCH --threads-per-core=1
+# #SBATCH --hint=memory_bound                    # Maximise memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
 #SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
