@@ -7,7 +7,7 @@
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
-// #include "gpu.h"
+#include "gpu.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Creators for Field2D

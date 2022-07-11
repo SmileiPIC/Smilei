@@ -65,8 +65,8 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
                             : Ez2D [0:( nx_p - 1 ) * ny_p + ny_p] ) \
         map( to                                                     \
              : Jz2D [0:( nx_p - 1 ) * ny_p + ny_p],                 \
-               Bx2D [0:( nx_p - 1 ) * ny_p + ny_p + 1],             \
-               By2D [0:( nx_p - 1 + 1 ) * ny_d + ny_p] )
+               Bx2D [0:( nx_p - 1 ) * ny_d + ny_p + 1],             \
+               By2D [0:( nx_p - 1 + 1 ) * ny_p + ny_p] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
