@@ -157,16 +157,19 @@ void MergingVranicCartesian::operator() (
         // int *cell_keys = &( particles.cell_keys[0] );
 
         // Local vector to store the momentum index in the momentum discretization
-//         std::vector <unsigned int> momentum_cell_index(number_of_particles,0);
-        unsigned int  * momentum_cell_index = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        // std::vector <unsigned int> momentum_cell_index(number_of_particles,0);
+        // unsigned int  * momentum_cell_index = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        unsigned int  momentum_cell_index[number_of_particles];
 
         // Sorted array of particle index
         // std::vector <unsigned int> sorted_particles(number_of_particles,0);
-        unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        // unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        unsigned int  sorted_particles[number_of_particles];
 
         // Particle gamma factor
-//         std::vector <double> gamma(number_of_particles,0);
-        double  * gamma = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
+        // std::vector <double> gamma(number_of_particles,0);
+        // double  * gamma = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
+        double  gamma[number_of_particles];
 
         // Computation of the particle gamma factor
         if (mass == 0) {
@@ -386,13 +389,15 @@ void MergingVranicCartesian::operator() (
                                     * dim[2];
 
         // Array containing the number of particles per momentum cells
-//        std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
-        unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+        // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
+        // unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+        unsigned int particles_per_momentum_cells[momentum_cells];
 
         // Array containing the first particle index of each momentum cell
         // in the sorted particle array
         //std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
-        unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+        // unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+        unsigned int  momentum_cell_particle_index[momentum_cells];
 
         // Initialization when using aligned_alloc
         #pragma omp simd
@@ -817,11 +822,11 @@ void MergingVranicCartesian::operator() (
         }
 
         // Free aligned arrays
-         free(gamma);
-         free(momentum_cell_index);
-         free(sorted_particles);
-         free(particles_per_momentum_cells);
-         free(momentum_cell_particle_index);
+        // free(gamma);
+        // free(momentum_cell_index);
+        // free(sorted_particles);
+        // free(particles_per_momentum_cells);
+        // free(momentum_cell_particle_index);
     }
 
 }
