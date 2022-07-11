@@ -4494,7 +4494,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,

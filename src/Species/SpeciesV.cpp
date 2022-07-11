@@ -620,6 +620,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     } // End projection for frozen particles
 }//END dynamics
 
+#ifdef _OMPTASKS
 void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                          ElectroMagn *EMfields, Params &params, bool diag_flag,
                          PartWalls *partWalls,
@@ -1277,6 +1278,8 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     } // end if moving particle
 
 } // END dynamicsTasks
+
+#endif //endif tasks are used
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
@@ -1955,6 +1958,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 
 } // end ponderomotiveUpdateSusceptibilityAndMomentum
 
+#ifdef _OMPTASKS
 void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
@@ -2135,6 +2139,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 
 
 } // end ponderomotiveUpdateSusceptibilityAndMomentumTasks
+#endif // endif tasks are used
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -2420,6 +2425,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
 } // end ponderomotiveUpdatePositionAndCurrents
 
+#ifdef _OMPTASKS
 void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
@@ -2721,3 +2727,5 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
     } // end if moving particle
 
 } // end ponderomotiveUpdatePositionAndCurrentsTasks
+
+#endif // endif tasks are used

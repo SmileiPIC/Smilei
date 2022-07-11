@@ -375,6 +375,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
 }//END scalarDynamics
 
+#ifdef _OMPTASKS
 void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields, Params &params, bool diag_flag,
         PartWalls *partWalls,
@@ -992,7 +993,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     } // end if moving particle
 
 } // end scalarDynamicsTasks
-
+#endif //endif tasks are used
 
 // -----------------------------------------------------------------------------
 //! Compute part_cell_keys at patch creation.
@@ -1260,6 +1261,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
     } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
+#ifdef _OMPTASKS
 void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
@@ -1435,7 +1437,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
     } // end taskgroup
 
 } // ponderomotiveUpdateSusceptibilityAndMomentumTasks
-
+#endif // endif tasks are used
 
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
@@ -1611,6 +1613,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
 
+#ifdef _OMPTASKS
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
@@ -1909,3 +1912,4 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
 
 
 } // End ponderomotive_position_updateTasks
+#endif // endif tasks are used

@@ -372,15 +372,6 @@ public:
                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                            std::vector<Diagnostic *> &localDiags );
 
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
-    virtual void dynamicsTasks(     double time, unsigned int ispec,
-                            ElectroMagn *EMfields,
-                            Params &params, bool diag_flag,
-                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                            RadiationTables &RadiationTables,
-                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                            std::vector<Diagnostic *> &localDiags, int buffer_id );
-
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
@@ -394,13 +385,6 @@ public:
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
 
-    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id );
-
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
     virtual void ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
@@ -408,14 +392,6 @@ public:
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
-
-    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
-    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
-    virtual void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id );
 
     //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection)
     virtual void scalarDynamics( double time, unsigned int ispec,
@@ -425,15 +401,6 @@ public:
                                   RadiationTables &RadiationTables,
                                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                                   std::vector<Diagnostic *> &localDiags );
-
-    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
-    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
-                                  ElectroMagn *EMfields,
-                                  Params &params, bool diag_flag,
-                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                                  RadiationTables &RadiationTables,
-                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
 
     virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
@@ -452,13 +419,6 @@ public:
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
-
-    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
-
 
     //! Projection method used specifically for the diagnotics
     virtual void projectionForDiags( double time, unsigned int ispec,
@@ -592,6 +552,49 @@ public:
 
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
+
+#ifdef _OMPTASKS
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
+    virtual void dynamicsTasks(     double time, unsigned int ispec,
+                            ElectroMagn *EMfields,
+                            Params &params, bool diag_flag,
+                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                            RadiationTables &RadiationTables,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
+    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                                  RadiationTables &RadiationTables,
+                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+#endif
 
     // ---- Variables for tasks
 

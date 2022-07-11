@@ -809,6 +809,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     } // End projection for frozen particles
 } //END dynamics
 
+#ifdef _OMPTASKS
 void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         ElectroMagn *EMfields,
                         Params &params, bool diag_flag,
@@ -1394,7 +1395,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsTasks
-
+#endif // end if tasks are used
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -2137,6 +2138,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
+#ifdef _OMPTASKS
 void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
@@ -2307,6 +2309,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
  
 
 } // ponderomotiveUpdateSusceptibilityAndMomentumTasks
+#endif // endif tasks are used
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -2529,6 +2532,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
 
+#ifdef _OMPTASKS
 void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
@@ -2800,6 +2804,8 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
      } // end if moving particle
 } // End ponderomotiveUpdatePositionAndCurrentsTasks
+#endif // endif tasks are used
+
 
 void Species::check( Patch *patch, std::string title )
 {
