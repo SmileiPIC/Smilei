@@ -1,15 +1,13 @@
 #include "Field2D.h"
 
+#include <cstring>
 #include <iostream>
 #include <vector>
-#include <cstring>
 
 #include "Params.h"
-#include "SmileiMPI.h"
 #include "Patch.h"
-
-using namespace std;
-
+#include "SmileiMPI.h"
+#include "gpu.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Creators for Field2D
@@ -23,7 +21,7 @@ Field2D::Field2D() : Field()
 }
 
 // with the dimensions as input argument
-Field2D::Field2D( vector<unsigned int> dims ) : Field( dims )
+Field2D::Field2D( std::vector<unsigned int> dims ) : Field( dims )
 {
     allocateDims( dims );
     sendFields_.resize(4,NULL);
@@ -31,7 +29,7 @@ Field2D::Field2D( vector<unsigned int> dims ) : Field( dims )
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field2D::Field2D( vector<unsigned int> dims, string name_in ) : Field( dims, name_in )
+Field2D::Field2D( std::vector<unsigned int> dims, std::string name_in ) : Field( dims, name_in )
 {
     allocateDims( dims );
     sendFields_.resize(4,NULL);
@@ -39,7 +37,7 @@ Field2D::Field2D( vector<unsigned int> dims, string name_in ) : Field( dims, nam
 }
 
 // with the dimensions as input argument
-Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
+Field2D::Field2D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
 {
     allocateDims( dims, mainDim, isPrimal );
     sendFields_.resize(4,NULL);
@@ -47,7 +45,7 @@ Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : Field( dims, mainDim, isPrimal, name_in )
+Field2D::Field2D( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : Field( dims, mainDim, isPrimal, name_in )
 {
     allocateDims( dims, mainDim, isPrimal );
     sendFields_.resize(4,NULL);
@@ -55,7 +53,7 @@ Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 }
 
 // without allocating
-Field2D::Field2D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
+Field2D::Field2D( std::string name_in, std::vector<unsigned int> dims ) : Field( dims, name_in )
 {
     dims_ = dims;
     globalDims_ = dims_[0]*dims_[1];
@@ -129,7 +127,7 @@ void Field2D::deallocateDataAndSetTo( Field* f )
 
 void Field2D::allocateDims( unsigned int dims1, unsigned int dims2 )
 {
-    vector<unsigned int> dims( 2 );
+    std::vector<unsigned int> dims( 2 );
     dims[0]=dims1;
     dims[1]=dims2;
     allocateDims( dims );
@@ -269,18 +267,30 @@ void Field2D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
     
 }
 
-void Field2D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
+void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
 {
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
-    }
-    else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_MEM_PENDING )
+        if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
+            const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
+            const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
+            const int           dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
+
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+        }
+#endif
+    } else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_MEM_PENDING )
+        ERROR( "To Do GPU : envelope" );
+#endif
         delete sendFields_[iDim*2+iNeighbor];
-        sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
+        sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
     }
 }
@@ -290,7 +300,7 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
 
-    vector<int> idx( 2, 0 );
+    std::vector<int> idx( 2, 0 );
     idx[iDim] = 1;
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
     int ix = idx[0]*istart;
@@ -303,6 +313,20 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    const bool is_the_right_field = name[0] == 'B';
+
+    const unsigned field_first = ix * dimY + iy;
+    const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
+
+    #pragma omp target map( to                                                  \
+                            : field [ix * dimY + iy:field_last - field_first] ) \
+        map( from                                                               \
+             : sub [0:( NX - 1 ) * NY + NY] ) if( is_the_right_field )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
@@ -315,7 +339,7 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
 
-    vector<int> idx( 2, 0 );
+    std::vector<int> idx( 2, 0 );
     idx[iDim] = 1;
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
@@ -328,6 +352,19 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    const bool is_the_right_field = name[0] == 'B';
+
+    const unsigned field_first = ix * dimY + iy;
+    const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
+
+    #pragma omp target map( to                               \
+                            : sub [0:( NX - 1 ) * NY + NY] ) \
+        map( tofrom                                          \
+             : field [field_first:field_last - field_first] ) if( is_the_right_field )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] = sub[i*NY+j];
@@ -340,7 +377,7 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
 
-    vector<int> idx( 2, 0 );
+    std::vector<int> idx( 2, 0 );
     idx[iDim] = 1;
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
     int ix = idx[0]*istart;
@@ -353,6 +390,20 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    const bool is_the_right_field = name[0] == 'J';
+
+    const unsigned field_first = ix * dimY + iy;
+    const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
+
+    #pragma omp target map( to                                               \
+                            : field [field_first:field_last - field_first] ) \
+        map( from                                                            \
+             : sub [0:( NX - 1 ) * NY + NY] ) if( is_the_right_field )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
@@ -365,7 +416,7 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
 
-    vector<int> idx( 2, 0 );
+    std::vector<int> idx( 2, 0 );
     idx[iDim] = 1;
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
@@ -378,6 +429,21 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    const bool is_the_right_field = name[0] == 'J';
+
+    const unsigned field_first = ix * dimY + iy;
+    const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
+
+    #pragma omp target map( to                               \
+                            : sub [0:( NX - 1 ) * NY + NY] ) \
+        map( tofrom                                          \
+             : field [field_first:field_last - field_first] ) if( is_the_right_field )
+
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] += sub[i*NY+j];

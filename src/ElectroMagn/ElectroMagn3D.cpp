@@ -1021,18 +1021,15 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        /* const */ double *const Bx3D   = &( Bx_->data_[0] );
-        /* const */ double *const By3D   = &( By_->data_[0] );
-        /* const */ double *const Bz3D   = &( Bz_->data_[0] );
-        double *const             Bx3D_m = &( Bx_m->data_[0] );
-        double *const             By3D_m = &( By_m->data_[0] );
-        double *const             Bz3D_m = &( Bz_m->data_[0] );
+        /* const */ double *const Bx3D   = Bx_->data();
+        /* const */ double *const By3D   = By_->data();
+        /* const */ double *const Bz3D   = Bz_->data();
+        double *const             Bx3D_m = Bx_m->data();
+        double *const             By3D_m = By_m->data();
+        double *const             Bz3D_m = Bz_m->data();
 
-        bool is_memory_on_device = false;
-
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
-        is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
+        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
 
         if( is_memory_on_device ) {
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
@@ -1046,9 +1043,7 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
                                                                              smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
                                                                              nx_d * ny_d * nz_p );
-        }
-#endif
-        if( !is_memory_on_device ) {
+        } else {
             // Magnetic field Bx^(p,d,d)
             memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );
 
@@ -1138,20 +1133,19 @@ Field *ElectroMagn3D::createField( string fieldname, Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::centerMagneticFields()
 {
-    // Static cast of the fields
-    const double *const __restrict__ Bx3D   = &( Bx_->data_[0] );
-    const double *const __restrict__ By3D   = &( By_->data_[0] );
-    const double *const __restrict__ Bz3D   = &( Bz_->data_[0] );
-    double *const __restrict__ Bx3D_m = &( Bx_m->data_[0] );
-    double *const __restrict__ By3D_m = &( By_m->data_[0] );
-    double *const __restrict__ Bz3D_m = &( Bz_m->data_[0] );
+    const double *const __restrict__ Bx3D = Bx_->data();
+    const double *const __restrict__ By3D = By_->data();
+    const double *const __restrict__ Bz3D = Bz_->data();
+    double *const __restrict__ Bx3D_m     = Bx_m->data();
+    double *const __restrict__ By3D_m     = By_m->data();
+    double *const __restrict__ Bz3D_m     = Bz_m->data();
 
+    // Magnetic field Bx^(p,d,d)
+#if defined( _GPU )
     const int sizeofBx = Bx_->globalDims_;
     const int sizeofBy = By_->globalDims_;
     const int sizeofBz = Bz_->globalDims_;
 
-    // Magnetic field Bx^(p,d,d)
-#if defined( _GPU )
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1218,9 +1212,7 @@ void ElectroMagn3D::centerMagneticFields()
             }
         } // end for j
     } // end for i
-    
-    
-}//END centerMagneticFields
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
