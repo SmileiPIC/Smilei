@@ -109,10 +109,10 @@ int main( int argc, char *argv[] )
     RadiationTables radiation_tables_;
 
     // ------------------------------------------------------------------------
-    // Create MultiphotonBreitWheelerTables object for multiphoton
+    // Create multiphoton_Breit_Wheeler_tables_ object for multiphoton
     // Breit-Wheeler pair creation
     // ------------------------------------------------------------------------
-    MultiphotonBreitWheelerTables MultiphotonBreitWheelerTables;
+    MultiphotonBreitWheelerTables multiphoton_Breit_Wheeler_tables_;
 
     // ---------------------------------------------------
     // Special test mode
@@ -131,7 +131,7 @@ int main( int argc, char *argv[] )
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
     // ---------------------------------------------------------------------
-    MultiphotonBreitWheelerTables.initialization( params, &smpi );
+    multiphoton_Breit_Wheeler_tables_.initialization( params, &smpi );
 
     // reading from dumped file the restart values
     if( params.restart ) {
@@ -419,7 +419,7 @@ int main( int argc, char *argv[] )
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
             vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
-                                 MultiphotonBreitWheelerTables,
+                                 multiphoton_Breit_Wheeler_tables_,
                                  time_dual, timers, itime );
 
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop

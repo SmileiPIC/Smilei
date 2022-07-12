@@ -152,7 +152,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
                 // Radiation process
                 ( *Radiate )( *particles,
-                              *radiated_photons_,
+                              radiated_photons_,
                               smpi,
                               RadiationTables, nrj_radiated_,
                               particles->first_index[scell], particles->last_index[scell], ithread );
@@ -180,19 +180,21 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
+                                                        mBW_pair_particles_,
+                                                        mBW_pair_species_,
                                                         MultiphotonBreitWheelerTables,
                                                         nrj_radiated_,
                                                         particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // Update the photon quantum parameter chi of all photons
-                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
                         smpi,
                         particles->first_index[scell],
                         particles->last_index[scell],
                         ithread );
 
                 // Suppression of the decayed photons into pairs
-                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
                     
 #ifdef  __DETAILED_TIMERS
