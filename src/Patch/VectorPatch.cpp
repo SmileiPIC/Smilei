@@ -225,9 +225,6 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 void VectorPatch::configuration( Params &params, Timers &timers, int itime )
 {
 
-    //if (params.has_adaptive_vectorization)
-    //{
-
     timers.reconfiguration.restart();
 
     unsigned int npatches = this->size();
@@ -255,7 +252,6 @@ void VectorPatch::configuration( Params &params, Timers &timers, int itime )
     }
 
     timers.reconfiguration.update( params.printNow( itime ) );
-    //}
 
 }
 
@@ -264,8 +260,6 @@ void VectorPatch::configuration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 {
-    //if (params.has_adaptive_vectorization)
-    //{
 
     timers.reconfiguration.restart();
 
@@ -295,7 +289,6 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
     }
 
     timers.reconfiguration.update( params.printNow( itime ) );
-    //}
 }
 
 
@@ -304,7 +297,6 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::sortAllParticles( Params &params )
 {
-#ifdef _VECTO
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -314,7 +306,6 @@ void VectorPatch::sortAllParticles( Params &params )
             }
         }
     }
-#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -587,9 +578,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // We first get the species id associated to this injector
             unsigned int i_species = particle_injector->getSpeciesNumber();
             Species * injector_species = patch->vecSpecies[i_species];
-            
-            // Pointer to simplify the code
-            // Particles* particles = &local_particles_vector[i_injector];
             
             // No particles at the begining
             local_particles_vector[i_injector].initialize( 0, *injector_species->particles );
@@ -2947,7 +2935,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 
     }
 
-#ifdef _VECTO
     if( params.vectorization_mode == "on" ) {
         // vectorization or cell sorting
         // Recompute the cell keys and sort  frozen particles
@@ -2980,7 +2967,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             }
         }
     }
-#endif
 
     //Put received patches in the global vecPatches
     for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {

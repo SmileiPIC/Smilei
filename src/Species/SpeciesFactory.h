@@ -13,11 +13,9 @@
 
 #include "Species.h"
 
-#ifdef _VECTO
 #include "SpeciesV.h"
 #include "SpeciesVAdaptiveMixedSort.h"
 #include "SpeciesVAdaptive.h"
-#endif
 
 #include "ParticlesFactory.h"
 #include "PusherFactory.h"
@@ -99,7 +97,6 @@ public:
         if ( params.vectorization_mode == "off" ) {
             this_species = new Species( params, patch );
         } 
-        #ifdef _VECTO
         else if( params.vectorization_mode == "on" ) {
             this_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
@@ -107,7 +104,6 @@ public:
         } else if( params.vectorization_mode == "adaptive" ) {
             this_species = new SpeciesVAdaptive( params, patch );
         }
-        #endif
 
         // Particles
         if( mass > 0. ) {
@@ -1176,7 +1172,6 @@ public:
         if ( params.vectorization_mode == "off" ) {
             new_species = new Species( params, patch );
         }
-#ifdef _VECTO
         else if( params.vectorization_mode == "on" ) {
             new_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
@@ -1184,7 +1179,6 @@ public:
         } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
             new_species = new SpeciesVAdaptiveMixedSort( params, patch );
         }
-#endif
 
         // Copy members
         new_species->name_                                     = species->name_;
