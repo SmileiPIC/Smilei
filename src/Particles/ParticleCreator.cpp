@@ -858,7 +858,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
     }
     
     // In AM, we have a correction to make : multiply by radius
-    // because the "density" was computed with the cell section, not cell volume
+    // because n_real_particles was computed with the cell section, not cell volume
     // See above : density( i, j, k ) *= params.cell_volume;
     // where params.cell_volume is 2*pi*dR*dL (in AM only)
     if( params.geometry == "AMcylindrical" ) {

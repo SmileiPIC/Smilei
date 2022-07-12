@@ -402,16 +402,18 @@ The post-processing of the *performances* diagnostic may be achieved in three di
 modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
 and only one mode between those three.
 
-.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, data_transform=None, species=None, **kwargs)
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, data_transform=None, species=None, cumulative=True, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
-  * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
+  * ``raw``: The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
-  * ``map`` : The name of a quantity, or an operation between them (see quantities below).
+  * ``map``: The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is mapped vs. space coordinates (1D and 2D only).
-  * ``histogram`` : the list ``["quantity", min, max, nsteps]``.
+  * ``histogram``: the list ``["quantity", min, max, nsteps]``.
     Makes a histogram of the requested quantity between ``min`` an ``max``, with ``nsteps`` bins.
     The ``"quantity"`` may be an operation between the quantities listed further below.
+  * ``cumulative``: may be ``True`` for timers accumulated for the duration of the simulation,
+    or ``False`` for timers reset to 0 at each output.
   * See also :ref:`otherkwargs`
 
 
@@ -438,7 +440,7 @@ and only one mode between those three.
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
   * ``memory_total``               : the total memory (RSS) used by the process in GB
-  * ``memory_peak``               : the peak memory (peak RSS) used by the process in GB
+  * ``memory_peak``                : the peak memory (peak RSS) used by the process in GB
 
   **WARNING**: The timers ``loadBal`` and ``diags`` include *global* communications.
   This means they might contain time doing nothing, waiting for other processes.
