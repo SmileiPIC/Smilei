@@ -125,6 +125,7 @@ void nvidiaParticles::initializeDataOnDevice()
     }
 }
 
+// Copy device to host
 void nvidiaParticles::syncCPU()
 {
     for (int idim=0;idim<Position.size();idim++) {
@@ -150,6 +151,7 @@ void nvidiaParticles::syncCPU()
 
 }
 
+// Copy host to device
 void nvidiaParticles::syncGPU()
 {
     for (int idim=0;idim<Position.size();idim++) {
@@ -244,17 +246,14 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                      destination_iterator_first,
                      count_if_out() );
 
-    // Copy the other position values depending on the simulation's dimensions
+    // Copy the other position values depending on the simulation's grid
+    // dimensions
     for( int i = 1; i < position_dimension_count; ++i ) {
-        const auto source_iterator_first      = std::cbegin( nvidia_position_[i] );
-        const auto source_iterator_last       = source_iterator_first + nparts;
-        const auto destination_iterator_first = std::begin( cp_parts.nvidia_position_[i] );
-
         thrust::copy_if( thrust::device,
-                         source_iterator_first,
-                         source_iterator_last,
+                         std::cbegin( nvidia_position_[i] ),
+                         std::cbegin( nvidia_position_[i] ) + nparts,
                          std::cbegin( nvidia_cell_keys_ ),
-                         destination_iterator_first,
+                         std::begin( cp_parts.nvidia_position_[i] ),
                          count_if_out() );
     }
 
@@ -280,143 +279,150 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     particles_to_move->syncCPU();
 }
 
-
 int nvidiaParticles::injectParticles( Particles* particles_to_move )
 {
-    using Diter = thrust::device_vector<double>::iterator;
-    using Siter = thrust::device_vector<short>::iterator;
-    // typedef a tuple of these iterators
-    typedef thrust::tuple<Diter, Diter, Diter, Diter, Diter, Diter, Diter, Siter> IteratorParticles;
+    const int position_dimension_count = nvidia_position_.size();
 
-    // typedef the zip_iterator of this tuple
-    using ZipIterParts = thrust::zip_iterator<IteratorParticles>;
+    {
+        const int nparts = gpu_nparts_;
 
-    int nparts = gpu_nparts_;
-    // Remove particles which leaves current patch
-    thrust::remove_if(thrust::device,
-                      thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidia_position_[0].begin(),
-                                                                   nvidia_position_[1].begin(),
-                                                                   nvidia_position_[2].begin(),
-                                                                   nvidia_momentum_[0].begin(),
-                                                                   nvidia_momentum_[1].begin(),
-                                                                   nvidia_momentum_[2].begin(),
-                                                                   nvidia_weight_.begin(),
-                                                                   nvidia_charge_.begin()
-                                                                  // , nvidia_cell_keys_.begin()
-                                                                   )
-                                                ),
-                      thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidia_position_[0].begin()+nparts,
-                                                                   nvidia_position_[1].begin()+nparts,
-                                                                   nvidia_position_[2].begin()+nparts,
-                                                                   nvidia_momentum_[0].begin()+nparts,
-                                                                   nvidia_momentum_[1].begin()+nparts,
-                                                                   nvidia_momentum_[2].begin()+nparts,
-                                                                   nvidia_weight_.begin()+nparts,
-                                                                   nvidia_charge_.begin()+nparts
-                                                                //,   nvidia_cell_keys_.begin()+nparts
-                                                                   )
-                                                ),
-                      nvidia_cell_keys_.begin(),
-                      count_if_out()
-                      );
-                      
-    if (isQuantumParameter) {
-        thrust::remove_if(thrust::device,
-                          nvidia_chi_.begin(),
-                          nvidia_chi_.begin()+nparts,
-                          nvidia_cell_keys_.begin(),
-                          count_if_out()
-        );
+        const auto first_particle = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
+                                                                                   std::begin( nvidia_momentum_[0] ),
+                                                                                   std::begin( nvidia_momentum_[1] ),
+                                                                                   std::begin( nvidia_momentum_[2] ),
+                                                                                   std::begin( nvidia_weight_ ),
+                                                                                   std::begin( nvidia_charge_ ) ) );
+        const auto last_particle  = first_particle + nparts;
+
+        // Remove particles which leaves current patch
+        thrust::remove_if( thrust::device,
+                           first_particle,
+                           last_particle,
+                           std::cbegin( nvidia_cell_keys_ ),
+                           count_if_out() );
+
+        // Remove the other position values depending on the simulation's grid
+        // dimensions
+        for( int i = 1; i < position_dimension_count; ++i ) {
+            thrust::remove_if( thrust::device,
+                               std::begin( nvidia_position_[i] ),
+                               std::begin( nvidia_position_[i] ) + nparts,
+                               std::cbegin( nvidia_cell_keys_ ),
+                               count_if_out() );
+        }
+
+        if( isQuantumParameter ) {
+            thrust::remove_if( thrust::device,
+                               std::begin( nvidia_chi_ ),
+                               std::begin( nvidia_chi_ ) + nparts,
+                               std::cbegin( nvidia_cell_keys_ ),
+                               count_if_out() );
+        }
+        if( isMonteCarlo ) {
+            thrust::remove_if( thrust::device,
+                               std::begin( nvidia_tau_ ),
+                               std::begin( nvidia_tau_ ) + nparts,
+                               std::cbegin( nvidia_cell_keys_ ),
+                               count_if_out() );
+        }
     }
-    if (isMonteCarlo) {
-        thrust::remove_if(thrust::device,
-                          nvidia_tau_.begin(),
-                          nvidia_tau_.begin()+nparts,
-                          nvidia_cell_keys_.begin(),
-                          count_if_out()
-        );
-    }
-    
+
     // Update current number of particles
     gpu_nparts_ -= nparts_to_move_;
-    nparts = gpu_nparts_;
+
+    const int nparts = gpu_nparts_;
 
     // Just resize cell keys, no need to remove
     // nvidia_cell_keys_.resize(gpu_nparts_);
 
     // Manage the recv data structure
-    nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
+    nvidiaParticles& cp_parts = *static_cast<nvidiaParticles*>( particles_to_move );
 
-    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidia_position_[0].begin(),
-                                              cp_parts->nvidia_position_[1].begin(),
-                                              cp_parts->nvidia_position_[2].begin(),
-                                              cp_parts->nvidia_momentum_[0].begin(),
-                                              cp_parts->nvidia_momentum_[1].begin(),
-                                              cp_parts->nvidia_momentum_[2].begin(),
-                                              cp_parts->nvidia_weight_.begin(),
-                                              cp_parts->nvidia_charge_.begin() ) );
-    int nparts_add = cp_parts->gpu_nparts_;
-    int tot_parts = nparts + nparts_add;
- 
+    const int nparts_add = cp_parts.gpu_nparts_;
+    const int tot_parts  = nparts + nparts_add;
+
     // Resize main data structure, if too small (copy_n do not resize)
-    if ( tot_parts > nvidia_weight_.size() ) {
-        nvidia_position_[0].resize( tot_parts, 0. );
-        nvidia_position_[1].resize( tot_parts, 0. );
-        nvidia_position_[2].resize( tot_parts, 0. );
-        nvidia_momentum_[0].resize( tot_parts, 0. );
-        nvidia_momentum_[1].resize( tot_parts, 0. );
-        nvidia_momentum_[2].resize( tot_parts, 0. );
-        nvidia_weight_.resize( tot_parts, 0. );
-        nvidia_charge_.resize( tot_parts, 0 );
-        nvidia_cell_keys_.resize( tot_parts, 0 );
-        if (isQuantumParameter) {
-            nvidia_chi_.resize(  tot_parts, 0 );
+    if( tot_parts > nvidia_weight_.size() ) {
+        for( int i = 0; i < position_dimension_count; ++i ) {
+            nvidia_position_[i].resize( tot_parts );
         }
-        if (isMonteCarlo) {
-            nvidia_tau_.resize(  tot_parts, 0 );
+
+        nvidia_momentum_[0].resize( tot_parts );
+        nvidia_momentum_[1].resize( tot_parts );
+        nvidia_momentum_[2].resize( tot_parts );
+        nvidia_weight_.resize( tot_parts );
+        nvidia_charge_.resize( tot_parts );
+        nvidia_cell_keys_.resize( tot_parts );
+
+        if( isQuantumParameter ) {
+            nvidia_chi_.resize( tot_parts );
         }
-    }
-    // Iterator of the main data structure (once it has been resized)
-    ZipIterParts iter(thrust::make_tuple(nvidia_position_[0].begin(),
-                                         nvidia_position_[1].begin(),
-                                         nvidia_position_[2].begin(),
-                                         nvidia_momentum_[0].begin(),
-                                         nvidia_momentum_[1].begin(),
-                                         nvidia_momentum_[2].begin(),
-                                         nvidia_weight_.begin(),
-                                         nvidia_charge_.begin() ) );
- 
- 
-    // Copy recv particles in main data structure
-    thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts);
-    
-    if (isQuantumParameter) {
-        thrust::copy_n(thrust::device,
-                       cp_parts->nvidia_chi_.begin(),
-                       nparts_add,
-                       nvidia_chi_.begin()+nparts);
+
+        if( isMonteCarlo ) {
+            nvidia_tau_.resize( tot_parts );
+        }
     }
 
-    if (isMonteCarlo) {
-        thrust::copy_n(thrust::device,
-                       cp_parts->nvidia_tau_.begin(),
-                       nparts_add,
-                       nvidia_tau_.begin()+nparts);
+    const auto source_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( std::cbegin( cp_parts.nvidia_position_[0] ),
+                                                                                      std::cbegin( cp_parts.nvidia_momentum_[0] ),
+                                                                                      std::cbegin( cp_parts.nvidia_momentum_[1] ),
+                                                                                      std::cbegin( cp_parts.nvidia_momentum_[2] ),
+                                                                                      std::cbegin( cp_parts.nvidia_weight_ ),
+                                                                                      std::cbegin( cp_parts.nvidia_charge_ ) ) );
+
+    // Iterator of the main data structure (once it has been resized)
+    const auto destination_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
+                                                                                           std::begin( nvidia_momentum_[0] ),
+                                                                                           std::begin( nvidia_momentum_[1] ),
+                                                                                           std::begin( nvidia_momentum_[2] ),
+                                                                                           std::begin( nvidia_weight_ ),
+                                                                                           std::begin( nvidia_charge_ ) ) ) +
+                                            // /!\ Note the advance by nparts
+                                            nparts;
+
+    // Copy recv particles in main data structure
+    thrust::copy_n( thrust::device,
+                    source_iterator_first,
+                    nparts_add,
+                    destination_iterator_first );
+
+    // Remove the other position values depending on the simulation's grid
+    // dimensions
+    for( int i = 1; i < position_dimension_count; ++i ) {
+        thrust::copy_n( thrust::device,
+                        std::cbegin( cp_parts.nvidia_position_[i] ),
+                        nparts_add,
+                        std::begin( nvidia_position_[i] ) + nparts );
+    }
+
+    if( isQuantumParameter ) {
+        thrust::copy_n( thrust::device,
+                        std::cbegin( cp_parts.nvidia_chi_ ),
+                        nparts_add,
+                        std::begin( nvidia_chi_ ) + nparts );
+    }
+
+    if( isMonteCarlo ) {
+        thrust::copy_n( thrust::device,
+                        std::cbegin( cp_parts.nvidia_tau_ ),
+                        nparts_add,
+                        std::begin( nvidia_tau_ ) + nparts );
     }
 
     gpu_nparts_ += nparts_add;
 
     // Resize below useless : nvidia_cell_keys_ resized if necessary above, cell_keys not used on cpu
-    //nvidia_cell_keys_.resize( gpu_nparts_ );
-    //cell_keys.resize       ( gpu_nparts_ );
- 
-    cp_parts->gpu_nparts_ = 0;
-    nparts_add -= nparts_to_move_; // update return value to update last_index
+    // nvidia_cell_keys_.resize( gpu_nparts_ );
+    // cell_keys.resize       ( gpu_nparts_ );
+
+    cp_parts.gpu_nparts_ = 0;
+
+    const int return_value = nparts_add - nparts_to_move_;
+
     nparts_to_move_ = 0;
 
-    return nparts_add;
+    // update return value to update last_index
+    return return_value;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

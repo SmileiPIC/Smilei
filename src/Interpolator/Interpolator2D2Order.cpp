@@ -173,7 +173,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const int ny_d = ny_p + 1;                 // dual_grid_size_in_y
 
     // Loop on bin particles
-    const int nparts = particles.size(); // particles.last_index.back();
+    const int nparts = particles.last_index.back();
 
     const int first_index = *istart;
     const int last_index  = *iend;
@@ -183,27 +183,27 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
     const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
 
-    #pragma omp target defaultmap( none )                             \
-        map( to                                                       \
-             : Ex2D [0:sizeofEx],                                     \
-               Ey2D [0:sizeofEy],                                     \
-               Ez2D [0:sizeofEz],                                     \
-               Bx2D [0:sizeofBx],                                     \
-               By2D [0:sizeofBy],                                     \
-               Bz2D [0:sizeofBz] )                                    \
-            map( tofrom                                               \
-                 : ELoc [first_index:interpolation_range_3D_size],    \
-                   BLoc [first_index:interpolation_range_3D_size],    \
-                   iold [first_index:interpolation_range_2D_size],    \
-                   delta [first_index:interpolation_range_2D_size] )  \
-                map( to                                               \
-                     : i_domain_begin, j_domain_begin,                \
-                       ny_d, ny_p, d_inv_,                            \
-                       nparts, first_index, last_index )              \
-                    map( to                                           \
-                         : position_x [first_index:npart_range_size], \
-                           position_y [first_index:npart_range_size] )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target defaultmap( none )                                                      \
+        map( to                                                                                \
+             : Ex2D [0:sizeofEx],                                                              \
+               Ey2D [0:sizeofEy],                                                              \
+               Ez2D [0:sizeofEz],                                                              \
+               Bx2D [0:sizeofBx],                                                              \
+               By2D [0:sizeofBy],                                                              \
+               Bz2D [0:sizeofBz] )                                                             \
+            map( tofrom                                                                        \
+                 : ELoc [first_index:interpolation_range_3D_size],                             \
+                   BLoc [first_index:interpolation_range_3D_size],                             \
+                   iold [first_index:interpolation_range_2D_size],                             \
+                   delta [first_index:interpolation_range_2D_size] )                           \
+                map( to                                                                        \
+                     : i_domain_begin, j_domain_begin,                                         \
+                       ny_d, ny_p, d_inv_,                                                     \
+                       nparts, first_index, last_index )                                       \
+                    is_device_ptr /* map */ ( /* to: */                                        \
+                                              position_x /* [first_index:npart_range_size] */, \
+                                              position_y /* [first_index:npart_range_size] */ )
+    #pragma omp teams
     #pragma omp distribute parallel for
 #endif
     for( int ipart = first_index; ipart < last_index; ipart++ ) {

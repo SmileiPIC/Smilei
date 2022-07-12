@@ -377,11 +377,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         const int particule_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Epart[0][0] ), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Bpart[0][0] ), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_invgf[0][0] ), particule_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_iold[0][0] ), particule_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_deltaold[0][0] ), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particule_count * nDim_field );
 
         {
 
@@ -587,11 +587,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Epart[0][0] ), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Bpart[0][0] ), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_invgf[0][0] ), particule_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_iold[0][0] ), particule_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_deltaold[0][0] ), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_iold[ithread].data(), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particule_count * nDim_field );
 #endif
     } //End if moving or ionized particles
 
@@ -792,48 +792,41 @@ void Species::injectParticles( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
-// GPU version
-    if (params.gpu_computing) {
-        // particles_to_move contains, up to here, send particles
-        //   clean it to manage recv particles
-        particles_to_move->clear();
-        //Merge all MPI_buffer_.partRecv in particles_to_move
-        for( int idim = 0; idim < params.nDim_field; idim++ ) {
-            for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-                int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-                if( ( n_part_recv!=0 ) ) {
-                    // insert n_part_recv in particles_to_move from 0
-                    MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-                }
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+    // particles_to_move contains, up to here, send particles
+    //   clean it to manage recv particles
+    particles_to_move->clear();
+    // Merge all MPI_buffer_.partRecv in particles_to_move
+    for( int idim = 0; idim < params.nDim_field; idim++ ) {
+        for( int iNeighbor = 0; iNeighbor < 2; iNeighbor++ ) {
+            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+            if( ( n_part_recv != 0 ) ) {
+                // insert n_part_recv in particles_to_move from 0
+                MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
             }
         }
-        particles_to_move->syncGPU();
-        particles->last_index[0] += particles->injectParticles( particles_to_move );
+    }
+    particles_to_move->syncGPU();
+    particles->last_index[0] += particles->injectParticles( particles_to_move );
+#else
+    injectParticles( params );
 
-        return;
-        
-    // CPU version
-    } else {
-        injectParticles( params );
+    int ndim = params.nDim_field;
+    int idim;
 
-        int ndim = params.nDim_field;
-        int idim;
-
-        int total_number_part_recv = 0;
-        //Merge all MPI_buffer_.partRecv in particles_to_move
-        for( int idim = 0; idim < ndim; idim++ ) {
-            for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-                int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-                if( ( n_part_recv!=0 ) ) {
-                     // insert n_part_recv in particles_to_move from 0
-                    //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-                    total_number_part_recv += n_part_recv;
-                    //particles->last_index[particles->last_index.size()-1] += n_part_recv;
-                    //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
-                }
+    int total_number_part_recv = 0;
+    // Merge all MPI_buffer_.partRecv in particles_to_move
+    for( int idim = 0; idim < ndim; idim++ ) {
+        for( int iNeighbor = 0; iNeighbor < 2; iNeighbor++ ) {
+            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+            if( ( n_part_recv != 0 ) ) {
+                // insert n_part_recv in particles_to_move from 0
+                // MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
+                total_number_part_recv += n_part_recv;
+                // particles->last_index[particles->last_index.size()-1] += n_part_recv;
+                // particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
             }
         }
-
     }
 
     // Sort to adapt do cell_keys usage
@@ -843,9 +836,6 @@ void Species::sortParticles( Params &params, Patch * patch )
             indexes_of_particles_to_exchange.push_back( ipart );
         }
     }
-
-    int ndim = params.nDim_field;
-    int idim;
 
     //cout << "\t Species id : " << species_number_ << " - nparticles send : " << indexes_of_particles_to_exchange.size() << endl;
 
@@ -1043,6 +1033,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     //particles->cell_keys.resize( particles->size() );
     particles->resizeCellKeys(particles->size());
+#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -64,7 +64,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             return;
         }
 
-        const int nparts           = particles.size();
+        const int nparts           = particles.last_index.back();
         const int first_index      = istart;
         const int last_index       = iend;
         const int npart_range_size = last_index - first_index;
@@ -75,9 +75,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         const short *const __restrict__ charge      = particles.getPtrCharge();
         const double *const __restrict__ weight     = particles.getPtrWeight();
 
-        // Arrays used for the Esirkepov projection method
-        static constexpr bool kAutoDeviceFree = true;
-        const std::size_t     kTmpArraySize   = npart_range_size * 5;
+        // // Arrays used for the Esirkepov projection method
+        // static constexpr bool kAutoDeviceFree = true;
+        // const std::size_t     kTmpArraySize   = npart_range_size * 5;
 
         // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
         // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
@@ -96,24 +96,25 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 #if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
         const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
 
-    #pragma omp target defaultmap( none )                            \
-        map( to                                                      \
-             : position_x [first_index:npart_range_size],            \
-               position_y [first_index:npart_range_size],            \
-               momentum_z [first_index:npart_range_size],            \ 
-               charge [first_index:npart_range_size],                \
-               weight [first_index:npart_range_size],                \
-               invgf_ [first_index:npart_range_size],                \
-               iold_ [first_index:interpolation_range_2D_size],      \
-               deltaold_ [first_index:interpolation_range_2D_size] ) \
-            map( tofrom                                              \
-                 : Jx [0:Jx_size],                                   \
-                   Jy [0:Jy_size],                                   \
-                   Jz [0:Jz_size] )                                  \
-                map( to                                              \
-                     : i_domain_begin, j_domain_begin,               \
-                       nprimy, dy_ov_dt, pxr, pxr, dx_inv,           \
-                       inv_cell_volume, nparts, dy_inv,              \
+    #pragma omp target defaultmap( none ) \ 
+        is_device_ptr /* map */ ( /* to: */                                        \
+                                  position_x /* [first_index:npart_range_size] */, \
+                                  position_y /* [first_index:npart_range_size] */, \
+                                  momentum_z /* [first_index:npart_range_size] */, \
+                                  charge /* [first_index:npart_range_size] */,     \
+                                  weight /* [first_index:npart_range_size] */ )    \
+        map( to                                                                    \
+             : invgf_ [first_index:npart_range_size],                              \
+               iold_ [first_index:interpolation_range_2D_size],                    \
+               deltaold_ [first_index:interpolation_range_2D_size] )               \
+            map( tofrom                                                            \
+                 : Jx [0:Jx_size],                                                 \
+                   Jy [0:Jy_size],                                                 \
+                   Jz [0:Jz_size] )                                                \
+                map( to                                                            \
+                     : i_domain_begin, j_domain_begin,                             \
+                       nprimy, dy_ov_dt, pxr, pxr, dx_inv,                         \
+                       inv_cell_volume, nparts, dy_inv,                            \
                        dx_ov_dt, one_third, first_index, last_index )
         //        map( from                                            \
                     //  : Sx0_buffer_data [0:kTmpArraySize],            \ 
