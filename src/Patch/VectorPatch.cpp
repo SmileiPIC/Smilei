@@ -4195,11 +4195,6 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     timers.particles.restart();
 
-    unsigned int Npatches = this->size();
-    unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
-
-    int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-    int has_reduced_susceptibility[Npatches];  // dependency array for the susceptibility reduction tasks
     bool diag_TaskTracing;
 
 #ifdef _OMPTASKS  
@@ -4330,6 +4325,12 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                             double time_dual, Timers &timers, int itime )
 {
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
+
     // if tasks are not activated
     #pragma omp for schedule(runtime) 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -4386,6 +4387,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
 
     // if tasks are not activated 
     #pragma omp for schedule(runtime) 
@@ -4424,6 +4430,11 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
  
     // if tasks are not activated   
     #pragma omp for schedule(runtime)
@@ -4472,6 +4483,12 @@ void VectorPatch::dynamicsWithTasks( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     int has_reduced_densities[Npatches];        // dependency array for the density reductions tasks
+
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
 
     if (!params.Laser_Envelope_model)
     {
@@ -4697,6 +4714,18 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
+    unsigned int Npatches = this->size();
+    unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+
+    int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
+    int has_reduced_susceptibility[Npatches];  // dependency array for the susceptibility reduction tasks
+
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
+
     // if tasks are activated
     #pragma omp single
     { // with tasks 
@@ -4809,7 +4838,12 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     int has_reduced_densities[Npatches];  // dependency array for the density reduction tasks    
-   
+    bool diag_TaskTracing;
+
+    #  ifdef _PARTEVENTTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    #endif 
+
     // if tasks are activated 
     #pragma omp single 
     { // with tasks
