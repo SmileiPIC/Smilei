@@ -44,7 +44,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        invgf[ipart] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
+        invgf[ipart - ipart_ref] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
                                        momentum_y[ipart]*momentum_y[ipart] +
                                        momentum_z[ipart]*momentum_z[ipart] );
 
