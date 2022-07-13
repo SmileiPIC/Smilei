@@ -284,6 +284,10 @@ public :
     //! Init new envelope from input namelist
     void initNewEnvelope( Params &params );
 
+    // If particle event tracing diagnostic is activated, trace event 
+    void traceEventIfDiagTracing(SmileiMPI *smpi, bool diag_PartEventTracing {false}, int thread, double reference_time, unsigned int event_start_or_end, int event_name);
+
+
 #ifdef _OMPTASKS
     //! macro-particle operations with tasks
     void dynamicsWithTasks( Params &params,

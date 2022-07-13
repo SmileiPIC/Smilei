@@ -337,7 +337,7 @@ void VectorPatch::dynamics( Params &params,
     timers.particles.restart();
     ostringstream t;
 
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
     double reference_time;
 
 #ifdef _OMPTASKS  
@@ -358,8 +358,8 @@ void VectorPatch::dynamics( Params &params,
 
 #  ifdef _PARTEVENTTRACING
     if( !params.Laser_Envelope_model ) {
-        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-        if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+        diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+        if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
     }
 #  endif
 
@@ -383,7 +383,7 @@ void VectorPatch::dynamics( Params &params,
         #pragma omp single
         {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-        if(diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);
+        if(diag_PartEventTracing) writeTaskTracingOutput(params, smpi, iteration);
         } // end single
     } // end if Laser envelope model
 #  endif
@@ -4195,7 +4195,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     timers.particles.restart();
 
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
 #ifdef _OMPTASKS  
     #pragma omp single
@@ -4216,8 +4216,8 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 #endif
 
 #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+    if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 
@@ -4250,11 +4250,11 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     diag_flag = needsRhoJsNow( itime );
 
     timers.particles.restart();
-    bool diag_TaskTracing; 
+    bool diag_PartEventTracing {false}; 
 
 #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    // if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+    // if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #ifdef _OMPTASKS  
@@ -4283,7 +4283,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #pragma omp single
     {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-        if(diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);
+        if(diag_PartEventTracing) writeTaskTracingOutput(params, smpi, iteration);
     } // end single
 #endif
 
@@ -4318,6 +4318,17 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
+
+void traceEventIfDiagTracing(SmileiMPI *smpi, bool diag_PartEventTracing {false}, 
+                             int thread, double reference_time, 
+                             unsigned int event_start_or_end, int event_name){
+    // If particle event tracing diagnostic is activated, trace event
+    // otherwise, this becomes an empty method 
+    #  ifdef _PARTEVENTTRACING
+    if(diag_PartEventTracing) smpi->trace_event(thread,(MPI_Wtime()-reference_time),event_start_or_end,event_name);
+    #  endif
+}
+
 void VectorPatch::dynamicsWithoutTasks( Params &params,
                             SmileiMPI *smpi,
                             SimWindow *simWindow,
@@ -4325,10 +4336,10 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                             double time_dual, Timers &timers, int itime )
 {
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
     // if tasks are not activated
@@ -4387,10 +4398,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
     // if tasks are not activated 
@@ -4430,10 +4441,10 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
  
     // if tasks are not activated   
@@ -4484,10 +4495,10 @@ void VectorPatch::dynamicsWithTasks( Params &params,
     int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     int has_reduced_densities[Npatches];        // dependency array for the density reductions tasks
 
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
     if (!params.Laser_Envelope_model)
@@ -4560,18 +4571,14 @@ void VectorPatch::dynamicsWithTasks( Params &params,
         int ithread = omp_get_thread_num();
         double timer = MPI_Wtime();
         #endif
-        #  ifdef _PARTEVENTTRACING
-        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-        #  endif
-
+        
+        traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time, 0, 4);
         // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
         // Frozen Species are reduced only if diag_flag
         // DO NOT parallelize this species loop unless race condition prevention is used!
         (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, cluster_width, params, diag_flag);
+        traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,4);
 
-        #  ifdef _PARTEVENTTRACING
-        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-        #  endif
         #ifdef  __DETAILED_TIMERS
         ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
         #endif
@@ -4585,16 +4592,12 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
     #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
-            #  endif
 
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,8);
             Species *spec_task = species( ipatch, ispec );
             spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,8);
 
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
-            #  endif
 
     #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -4611,16 +4614,12 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
 #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
-            #  endif
 
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,9);
             Species *spec_task = species( ipatch, ispec );
             spec_task->Radiate->joinNewPhotons(spec_task->radiated_photons_,spec_task->Nbins);
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,9);
 
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
-            #  endif
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -4635,14 +4634,12 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
 #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
-            #  endif
+
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,10);
             Species *spec_task = species( ipatch, ispec );
             spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
-            #  endif
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,10);
+
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -4651,10 +4648,8 @@ void VectorPatch::dynamicsWithTasks( Params &params,
 
         if(( species( ipatch, ispec )->vectorized_operators ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
-            {
-            #  ifdef _PARTEVENTTRACING               
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-            #  endif
+            {            
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -4663,18 +4658,14 @@ void VectorPatch::dynamicsWithTasks( Params &params,
                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
                     }
                     } // end iPart loop
-                } // end cells loop
-            #  ifdef _PARTEVENTTRACING                          
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            #  endif
+                } // end cells loop                   
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
             } // end task on array count
         } else {
         if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
-            {
-            #  ifdef _PARTEVENTTRACING                
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-            #  endif
+            {               
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -4684,10 +4675,9 @@ void VectorPatch::dynamicsWithTasks( Params &params,
                     }
                 } // end iPart loop
             } // end cells loop
-            } // end task on array count
-            #  ifdef _PARTEVENTTRACING                
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            #  endif
+            } // end task on array count           
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+
             } // end if vectorization is adaptive
         }// end if on vectorized operators            
 
@@ -4720,10 +4710,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
     int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     int has_reduced_susceptibility[Npatches];  // dependency array for the susceptibility reduction tasks
 
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
     // if tasks are activated
@@ -4779,15 +4769,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
             #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-            #  endif
 
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,4);
             (( *this )( ipatch ))->copySpeciesBinsInLocalSusceptibility(ispec, cluster_width, params, diag_flag);
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,4);
 
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-            #  endif
             #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
             #endif
@@ -4806,15 +4792,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
                 int ithread = omp_get_thread_num();
                 double timer = MPI_Wtime();
                 #endif
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
-                #  endif
 
+                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,8);
                 spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
+                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,8);
 
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
-                #  endif
                 #ifdef  __DETAILED_TIMERS
                 ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
                 #endif
@@ -4838,10 +4820,10 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     int has_reduced_densities[Npatches];  // dependency array for the density reduction tasks    
-    bool diag_TaskTracing;
+    bool diag_PartEventTracing {false};
 
     #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);   
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
     // if tasks are activated 
@@ -4898,18 +4880,14 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
             #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-            #  endif
 
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,4);
             // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
             // Frozen Species are reduced only if diag_flag
             // DO NOT parallelize this species loop unless race condition prevention is used!
             (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, cluster_width, params, diag_flag);
+            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,4);
 
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-            #  endif
             #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
             #endif
@@ -4918,9 +4896,8 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
             if(( species( ipatch, ispec )->vectorized_operators ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
                 #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
                 {
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-                #  endif
+
+                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
                 Species *spec_task = species( ipatch, ispec );
                 for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                     for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -4930,17 +4907,15 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                         }
                     } // end iPart loop
                 } // end cells loop
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-                #  endif
+                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+
                 } // end task on array count
             } else {
                 if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
                     {
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-                    #  endif
+
+                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
                     Species *spec_task = species( ipatch, ispec );
                     for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                         for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -4950,9 +4925,8 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                             }
                         } // end iPart loop
                     } // end cells loop
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-                    #  endif
+                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+
                     } // end task on array count
             } // end if vectorization is adaptive
             }// end if on vectorized operators

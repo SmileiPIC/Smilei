@@ -312,7 +312,7 @@ public:
     double reference_time;
 
     // determine if "task" tracing is performed at this iteration
-    bool diagTaskTracing(double time_dual, double timestep ){
+    bool diagPartEventTracing(double time_dual, double timestep ){
         bool diagTracing = false;
         if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_task_tracing_)==0){
             diagTracing = true;
