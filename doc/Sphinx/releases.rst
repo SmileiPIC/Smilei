@@ -23,9 +23,12 @@ Changes made in the repository (not released)
 * In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
 * Collisions: new parameter ``time_frozen``
 * Performances post-processing: new parameter ``cumulative``
+* ``PML`` can now be used as a bounday condition for the envelope model too.
+* It is no longer necessary to use ``PML`` on all boundaries anymore.  
 * Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
-* Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
-* Bugfixes: C++11 compilation issue
+* Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints.
+* Bugfixes: C++11 compilation issue.
+* Bugfixes: ``PML`` are now compatible with dynamic load balancing.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
