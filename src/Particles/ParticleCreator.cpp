@@ -153,8 +153,6 @@ int ParticleCreator::create( struct SubSpace sub_space,
     // Calculate density and number of particles_ for the species_
     // ---------------------------------------------------------
     
-    species_->max_charge_ = 0.;
-    
     // fields containing the profiles values in each cell (always 3d)
     Field3D charge, n_part_in_cell, density, temperature[3], velocity[3];
     
@@ -180,6 +178,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
     }
     
     // CHARGE PROFILE
+    
+    species_->max_charge_ = -1;
+    
     charge.allocateDims( n_space_to_create );
     if( species_->mass_ > 0 ) {
         // Initialize charge profile
@@ -194,8 +195,10 @@ int ParticleCreator::create( struct SubSpace sub_space,
                 }
             }
         }
+    // Photon species
     } else {
         charge.put_to( 0. );
+        species_->max_charge_ = 0;
     }
     
     // WEIGHT & NPPC PROFILE
@@ -534,6 +537,70 @@ int ParticleCreator::create( struct SubSpace sub_space,
     return n_new_particles;
     
 } // end create
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Creation of the charge profile and initialization of `max_charge_`
+// ---------------------------------------------------------------------------------------------------------------------
+void ParticleCreator::createChargeProfile( struct SubSpace sub_space,
+                             Patch *patch)
+{
+    
+    
+    std::vector<unsigned int> n_space_to_create( 3, 0 );
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        n_space_to_create[idim] = sub_space.box_size_[idim];
+    }
+    
+    // Create particles_ in a space starting at cell_position
+    std::vector<double> cell_position( 3, 0 );
+    std::vector<double> global_origin( 3, 0. );
+    std::vector<Field *> xyz( species_->nDim_field );
+    for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
+        cell_position[idim] = patch->getDomainLocalMin( idim );
+        xyz[idim] = new Field3D( n_space_to_create );
+    }
+    // Create the x,y,z maps where profiles will be evaluated
+    std::vector<double> ijk( 3 );
+    for( ijk[0]=0; ijk[0]<sub_space.box_size_[0]; ijk[0]++ ) {
+        for( ijk[1]=0; ijk[1]<sub_space.box_size_[1]; ijk[1]++ ) {
+            for( ijk[2]=0; ijk[2]<sub_space.box_size_[2]; ijk[2]++ ) {
+                for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*species_->cell_length[idim];
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) += sub_space.cell_index_[idim]*species_->cell_length[idim];
+                }
+            }
+        }
+    }
+    
+    // fields containing the profiles values in each cell (always 3d)
+    Field3D charge;
+
+    // CHARGE PROFILE
+    
+    species_->max_charge_ = -1;
+    
+    charge.allocateDims( n_space_to_create );
+    if( species_->mass_ > 0 ) {
+        // Initialize charge profile
+        species_->charge_profile_->valuesAt( xyz, global_origin, charge );
+        // Find max charge
+        for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
+            for( unsigned int j=0; j< sub_space.box_size_[1]; j++ ) {
+                for( unsigned int k=0; k< sub_space.box_size_[2]; k++ ) {
+                    if( charge( i, j, k ) > species_->max_charge_ ) {
+                        species_->max_charge_ = charge( i, j, k );
+                    }
+                }
+            }
+        }
+    // Photon species
+    } else {
+        charge.put_to( 0. );
+        species_->max_charge_ = 0;
+    }
+
+} // end createChargeProfile
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Creation of the position for all particles (nPart)
@@ -896,7 +963,7 @@ void ParticleCreator::createCharge( Particles * particles, Species * species,
         for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
             particles->charge( p ) = Z;
         }
-        // if charge is not integer, then particles can have two different charges
+    // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
         double rr=r/( 1.-r ), diff;

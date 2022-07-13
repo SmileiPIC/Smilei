@@ -384,6 +384,7 @@ class Species(SmileiComponent):
     radiation_photon_species = None
     radiation_photon_sampling = 1
     radiation_photon_gamma_threshold = 2.
+    radiation_max_emissions = 10
 
     # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
@@ -596,7 +597,7 @@ class RadiationReaction(SmileiComponent):
     # Parameters for computing the tables
     Niel_computation_method = "table"
 
-# MutliphotonBreitWheeler pair creation
+# MultiphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
     """
     Photon decay into electron-positron pairs

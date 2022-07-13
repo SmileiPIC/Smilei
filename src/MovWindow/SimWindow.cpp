@@ -2,11 +2,9 @@
 #include "SimWindow.h"
 #include "Params.h"
 #include "Species.h"
-#ifdef _VECTO
 #include "SpeciesVAdaptiveMixedSort.h"
 #include "SpeciesVAdaptive.h"
 #include "SpeciesV.h"
-#endif
 #include "ElectroMagn.h"
 #include "Interpolator.h"
 #include "Projector.h"
@@ -372,64 +370,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             
                             particle_creator.create( init_space, params, mypatch, 0 );
                             
-                            // mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
-
-                            /*#ifdef _VECTO
-                                                    // Classical vectorized mode
-                                                    if (params.vectorization_mode == "on")
-                                                    {
-                                                        if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
-                                                            dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
-                                                        mypatch->vecSpecies[ispec]->sortParticles(params);
-                                                    }
-                                                    // First adaptive vectorization mode
-                                                    else if (params.vectorization_mode == "adaptive_mixed_sort")
-                                                    {
-                                                        if ( dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec]) )
-                                                        {
-                                                            dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
-                                                        }
-                                                    }
-                                                    // Second adaptive vectorization mode
-                                                    else if (params.vectorization_mode == "adaptive")
-                                                    {
-                                                        if ( dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec]) )
-                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
-                                                        mypatch->vecSpecies[ispec]->sortParticles(params);
-                                                    }
-                                                }
-                            #endif
-                                                // We define the IDs of the new particles
-                                                for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
-                                                    if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
-                                                        track->setIDs( mypatch );
-                            #ifdef _VECTO
-                                            }
-                                            // Patches that have received particles from another patch
-                                            // without the creation of new particles
-                                            else // (patch_particle_created[ithread][j] == false)
-                                            {
-                                                for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
-                                                {
-                                                    // For the adaptive vectorization, we partially reconfigure the patch
-                                                    // We do not have to sort, but operators may have to be reconfigured
-                                                    // First adaptive vectorization mode:
-                                                    if (params.vectorization_mode == "adaptive_mixed_sort") {
-                                                        if ( dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec]) )
-                                                        {
-                                                            dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
-                                                            dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
-                                                        }
-                                                    }
-                                                    // Second adaptive vectorization mode:
-                                                    else if (params.vectorization_mode == "adaptive")
-                                                    {
-                                                        if ( dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec]) )
-                                                        {
-                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
-                                                        }
-                                                    }
-                            #endif*/
                         }
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
@@ -446,8 +386,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #endif
         
         //Fill necessary patches with particles
-#ifdef _VECTO
-
         if( ( params.vectorization_mode == "on" ) ) {
 
             //#pragma omp master
@@ -538,7 +476,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 } // end j loop
             } // End ithread loop
         }
-#endif
         
         // Diagnostic Track Particles
 #ifndef _NO_MPI_TM
