@@ -361,7 +361,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
     std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
+    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
 
     // Static cast of the envelope fields
     Field2D *Phi = static_cast<Field2D *>( EMfields->envelope->Phi_ );
@@ -426,7 +426,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         } else {
             exp_m_theta_local = 1. ;
         }
-        for( unsigned int imode = 1; imode < nmodes ; imode++ ) {
+        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
             El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
             Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
             Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
@@ -481,7 +481,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     
     std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
+    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     double r, delta2, xpn, rpn;
 
