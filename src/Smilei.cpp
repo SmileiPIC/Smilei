@@ -128,6 +128,7 @@ int main( int argc, char *argv[] )
             WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
             WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
+            // This assumes the MPI rank on a node are sequential
             const int this_process_gpu = smpi.getRank() % gpu_count;
 
             // std::cout << "Using GPU id: " << this_process_gpu << "\n";

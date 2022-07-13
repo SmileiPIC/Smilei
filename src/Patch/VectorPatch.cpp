@@ -1455,6 +1455,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
+    // TODO(Etienne M): Fix data_on_cpu_updated to allow for "multi threaded" GPU offloading
     bool data_on_cpu_updated( false );
 
     // Global diags: scalars + particles
@@ -4450,22 +4451,22 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         }
 
         // Initialize field data strucures on GPU and synchronize it
-        const double *const Jx  = &( patches_[ipatch]->EMfields->Jx_->data_[0] );
-        const double *const Jy  = &( patches_[ipatch]->EMfields->Jy_->data_[0] );
-        const double *const Jz  = &( patches_[ipatch]->EMfields->Jz_->data_[0] );
-        const double *const Rho = &( patches_[ipatch]->EMfields->rho_->data_[0] );
+        const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+        const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+        const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+        const double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
-        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
-        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
-        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
-        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
-        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        const double *const Bx = &( patches_[ipatch]->EMfields->Bx_->data_[0] );
-        const double *const By = &( patches_[ipatch]->EMfields->By_->data_[0] );
-        const double *const Bz = &( patches_[ipatch]->EMfields->Bz_->data_[0] );
+        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        const double *const By = patches_[ipatch]->EMfields->By_->data();
+        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
@@ -4521,19 +4522,19 @@ void VectorPatch::syncFieldFromHostToDevice()
     const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
 
-        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
-        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
-        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
-        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
-        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        const double *const Bx = &( patches_[ipatch]->EMfields->Bx_->data_[0] );
-        const double *const By = &( patches_[ipatch]->EMfields->By_->data_[0] );
-        const double *const Bz = &( patches_[ipatch]->EMfields->Bz_->data_[0] );
+        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        const double *const By = patches_[ipatch]->EMfields->By_->data();
+        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
@@ -4566,19 +4567,19 @@ void VectorPatch::syncDataFromDeviceToHost()
     const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
+        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
             Species *spec = species( ipatch, ispec );
             spec->particles->syncCPU();
         }
 
-        double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
-        double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
-        double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+        double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-        double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
-        double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
-        double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+        double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );

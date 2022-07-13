@@ -314,16 +314,13 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'B';
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target map( to                                                  \
-                            : field [ix * dimY + iy:field_last - field_first] ) \
-        map( from                                                               \
-             : sub [0:( NX - 1 ) * NY + NY] ) if( is_the_right_field )
+    #pragma omp target if( is_the_right_field )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -352,16 +349,15 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'B';
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target map( to                               \
-                            : sub [0:( NX - 1 ) * NY + NY] ) \
-        map( tofrom                                          \
-             : field [field_first:field_last - field_first] ) if( is_the_right_field )
+    #pragma omp target if( is_the_right_field ) \
+        map( tofrom                             \
+             : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -391,16 +387,15 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'J';
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target map( to                                               \
-                            : field [field_first:field_last - field_first] ) \
-        map( from                                                            \
-             : sub [0:( NX - 1 ) * NY + NY] ) if( is_the_right_field )
+    #pragma omp target if( is_the_right_field ) \
+        map( to                                 \
+             : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -430,17 +425,15 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'J';
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target map( to                               \
-                            : sub [0:( NX - 1 ) * NY + NY] ) \
-        map( tofrom                                          \
-             : field [field_first:field_last - field_first] ) if( is_the_right_field )
-
+    #pragma omp target if( is_the_right_field ) \
+        map( tofrom                             \
+             : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif

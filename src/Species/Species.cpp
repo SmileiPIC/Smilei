@@ -795,7 +795,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
     // particles_to_move contains, up to here, send particles
     //   clean it to manage recv particles
-    particles_to_move->clear();
+    particles_to_move->clear(); // Clear on the host
     // Merge all MPI_buffer_.partRecv in particles_to_move
     for( int idim = 0; idim < params.nDim_field; idim++ ) {
         for( int iNeighbor = 0; iNeighbor < 2; iNeighbor++ ) {
