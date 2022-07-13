@@ -156,16 +156,6 @@ public :
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    double time_dual,
                    Timers &timers, int itime );
-#ifdef _OMPTASKS
-    //! macro-particle operations with tasks
-    void dynamicsWithTasks( Params &params,
-                   SmileiMPI *smpi,
-                   SimWindow *simWindow,
-                   RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                   double time_dual,
-                   Timers &timers, int itime );
-#endif
     
     //! For all patches, exchange particles and sort them.
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
@@ -205,11 +195,20 @@ public :
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
     //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
     void ponderomotiveUpdatePositionAndCurrents( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+
     void resetRhoJ(bool old = false);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
@@ -284,6 +283,26 @@ public :
     
     //! Init new envelope from input namelist
     void initNewEnvelope( Params &params );
+
+#ifdef _OMPTASKS
+    //! macro-particle operations with tasks
+    void dynamicsWithTasks( Params &params,
+                   SmileiMPI *smpi,
+                   SimWindow *simWindow,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   double time_dual,
+                   Timers &timers, int itime );
+    //! macro-particle operations with envelope and tasks
+    void ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+#endif
     
     // Lists of fields
     std::vector<Field *> densities;
