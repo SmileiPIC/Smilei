@@ -132,7 +132,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    You can alternatively use ``"PML"`` for all boundaries.
+    You can alternatively use ``"PML"`` for any EM boundary.
     Vectorization, collisions and
     order-4 interpolation are not supported yet.
 
@@ -296,12 +296,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Over the second half, all fields are progressively reduced down to zero.
 
   * ``"PML"`` stands for Perfectly Matched Layer. It is an open boundary condition.
-    The number of cells in the layer is defined by ``"number_of_pml_cells"``.
+    The number of cells in the layer must be defined by ``"number_of_pml_cells"``.
     It supports laser injection as in ``"silver-muller"``.
-
-  .. warning::
-
-    In the current release, in order to use PML all ``"EM_boundary_conditions"`` of the simulation must be ``"PML"``.
+    If not all boundary conditions are ``PML``, make sure to set ``number_of_pml_cells=0`` on boundaries not using PML.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -322,10 +319,28 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: number_of_pml_cells
 
-  :type: list of lists of integer
+  :type: List of lists of integers
   :default: ``[[6,6],[6,6],[6,6]]``
 
   Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
+
+.. rst-class:: experimental
+
+.. py:data:: pml_sigma_parameters
+
+  :type: List of list of integers
+  :default: [[20,2],[20,2],[20,2]]
+
+  Defines [sigma_max,power_sigma] for each dimension.
+
+.. rst-class:: experimental
+
+.. py:data:: pml_kappa_parameters
+
+  :type: List of lists of integers
+  :default: [[80,4],[80,4],[80,4]]
+
+  Defines [kappa_max,power_kappa] for each dimension.
 
 .. py:data:: time_fields_frozen
 
@@ -1767,8 +1782,8 @@ Following is the generic laser envelope creator ::
   :type: list of lists of strings
   :default: ``[["reflective"]]``
 
-  For the moment, only reflective boundary conditions are implemented in the
-  resolution of the envelope equation.
+  Defines the boundary conditions used for the envelope. Either ``"reflective"`` or ``"PML"``.
+  In the case of ``"PML"``, make sure to define ``"number_of_pml_cells"`` in the ``Main`` block.
 
 .. py:data:: polarization_phi
 
