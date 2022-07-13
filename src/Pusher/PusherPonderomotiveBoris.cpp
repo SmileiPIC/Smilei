@@ -39,7 +39,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
     double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
     
-    short *charge = particles.getPtrCharge();
+    short *const charge = particles.getPtrCharge();
     
     const int nparts = vecto ? Epart->size() / 3 :
                                particles.size(); // particles.size()

@@ -7,14 +7,10 @@
 #include "Patch3D.h"
 #include "PatchAM.h"
 #include "DomainDecomposition.h"
-
 #include "Tools.h"
-
-#ifdef _VECTO
 #include "SpeciesV.h"
 #include "SpeciesVAdaptiveMixedSort.h"
 #include "SpeciesVAdaptive.h"
-#endif
 
 class PatchesFactory
 {
