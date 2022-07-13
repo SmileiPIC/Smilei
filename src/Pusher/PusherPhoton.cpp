@@ -44,7 +44,8 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     #ifndef _GPU
         #pragma omp simd
     #else
-        int np = iend-istart;
+        //int np = iend-istart;
+        int nparts = smpi->dynamics_invgf[ithread].size();
         #pragma acc parallel present(invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z)
         #pragma acc loop gang worker vector
     #endif
