@@ -147,6 +147,25 @@ public :
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    double time_dual,
                    Timers &timers, int itime );
+
+    //! macro-particle operations without tasks
+    void dynamicsWithoutTasks( Params &params,
+                   SmileiMPI *smpi,
+                   SimWindow *simWindow,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   double time_dual,
+                   Timers &timers, int itime );
+#ifdef _OMPTASKS
+    //! macro-particle operations with tasks
+    void dynamicsWithTasks( Params &params,
+                   SmileiMPI *smpi,
+                   SimWindow *simWindow,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   double time_dual,
+                   Timers &timers, int itime );
+#endif
     
     //! For all patches, exchange particles and sort them.
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
