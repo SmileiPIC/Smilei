@@ -44,7 +44,7 @@ NumberOfCell_inY=1024
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=16
+SizePatch=512
 
 #################################
 NumberOfTimeStep=60000

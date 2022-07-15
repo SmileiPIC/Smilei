@@ -72,8 +72,8 @@ export MPICH_MPIIO_HINTS_DISPLAY=1
 # MPICH general
 export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
 
-# MPICH GPU support (pass GPU buffers to the MPI)
-# export MPICH_GPU_SUPPORT_ENABLED=1
+# MPICH GPU support (support for functionality allowing mpi to understand GPU buffers)
+export MPICH_GPU_SUPPORT_ENABLED=1
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3

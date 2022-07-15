@@ -274,7 +274,7 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_MEM_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
             const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
             const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
@@ -285,7 +285,7 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         }
 #endif
     } else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_MEM_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         ERROR( "To Do GPU : envelope" );
 #endif
         delete sendFields_[iDim*2+iNeighbor];
