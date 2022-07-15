@@ -172,12 +172,12 @@ Main(
     print_every = 2
 )
 
-LoadBalancing(
-    initial_balance = True,
-    every = 150,
-    cell_load = 1.,
-    frozen_particle_load = 0.1,
-)
+# LoadBalancing(
+#     initial_balance = True,
+#     every = 150,
+#     cell_load = 1.,
+#     frozen_particle_load = 0.1,
+# )
 
 Vectorization(
    mode = "off"
