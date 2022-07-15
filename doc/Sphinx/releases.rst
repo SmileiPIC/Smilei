@@ -31,7 +31,6 @@ Changes made in the repository (not released)
 * Bugfixes: ``PML`` are now compatible with dynamic load balancing.
 * Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
 * Bugfixes: C++11 compilation issue
-* Bugfixes: Fix a bug where introducing particle merging after a restart would fail.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

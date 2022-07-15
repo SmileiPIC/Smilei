@@ -506,6 +506,9 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
             }
 
+            s.vect( "first_index", spec->particles->first_index );
+            s.vect( "last_index", spec->particles->last_index );
+
         } // End if partSize
 
     } // End for ispec
@@ -893,6 +896,13 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             if (spec->particles->isMonteCarlo) {
                 s.vect( "Tau", spec->particles->Tau );
             }
+
+            if( ! params.cell_sorting_ ) {
+                s.vect( "first_index", spec->particles->first_index, true );
+                s.vect( "last_index", spec->particles->last_index, true );
+            }
+            // When cell sorting is activated, indexes are recomputed directly after the restart.
+
         }
     }
     
