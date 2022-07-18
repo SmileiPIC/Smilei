@@ -143,7 +143,7 @@ LaunchSRunPatProfile() {{
     # # -u make the program crash (abi break) or silently corrupts it state
     # pat_build -g mpi,syscall,io,omp,hdf5 -w -f $1 -o instrumented_executable
 
-    LaunchSRun instrumented_executable ${{@:2}}
+    LaunchSRun ./instrumented_executable ${{@:2}}
 }}
 
 # Try to use this profiling on only one GPU
