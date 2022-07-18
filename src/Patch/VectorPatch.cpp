@@ -4561,7 +4561,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
         double timer = MPI_Wtime();
         #endif
         
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time, 0, 4);
+        smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(), 0, 4);
         // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
         // Frozen Species are reduced only if diag_flag
         // DO NOT parallelize this species loop unless race condition prevention is used!
