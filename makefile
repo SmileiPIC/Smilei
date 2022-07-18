@@ -226,12 +226,12 @@ ifneq (,$(call parse_config,omptasks))
     CXXFLAGS += -D_OMPTASKS
 endif
 
-ifneq (,$(call parse_config,tasktracing))
+ifneq (,$(call parse_config,part_event_tracing_tasks_on))
     CXXFLAGS += -D_OMPTASKS
     CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
-ifneq (,$(call parse_config,developtracing))
+ifneq (,$(call parse_config,part_event_tracing_tasks_off))
     CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
@@ -272,8 +272,8 @@ header:
 	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
 	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
-	@if [ $(call parse_config,tasktracing) ]; then echo "- Compiled with OpenMP tasks and particle events tracing"; fi;
-	@if [ $(call parse_config,developtracing) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_on) ]; then echo "- Compiled particle events tracing, with tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_off) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
@@ -449,19 +449,19 @@ help:
 	@echo
 	@echo 'Config options:'
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
-	@echo '    verbose              : to print compile command lines'
-	@echo '    debug                : to compile in debug mode (code runs really slow)'
-	@echo '    detailed_timers      : to compile the code with more refined timers (refined time report)'
-	@echo '    noopenmp             : to compile without openmp'
-	@echo '    no_mpi_tm            : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
-	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
-	@echo '    scalasca             : to compile using scalasca'
-	@echo '    advisor              : to compile for Intel Advisor analysis'
-	@echo '    vtune                : to compile for Intel Vtune analysis'
-	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    omptasks             : to compile with OpenMP tasks'
-	@echo '    tasktracing          : to compile with OpenMP tasks and task tracing'
-	@echo '    developtracing       : to compile with "task" tracing without tasks'
+	@echo '    verbose                      : to print compile command lines'
+	@echo '    debug                        : to compile in debug mode (code runs really slow)'
+	@echo '    detailed_timers              : to compile the code with more refined timers (refined time report)'
+	@echo '    noopenmp                     : to compile without openmp'
+	@echo '    no_mpi_tm                    : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
+	@echo '    opt-report                   : to generate a report about optimization, vectorization and inlining (Intel compiler)'
+	@echo '    scalasca                     : to compile using scalasca'
+	@echo '    advisor                      : to compile for Intel Advisor analysis'
+	@echo '    vtune                        : to compile for Intel Vtune analysis'
+	@echo '    inspector                    : to compile for Intel Inspector analysis'
+	@echo '    omptasks                     : to compile with OpenMP tasks'
+	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
+	@echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

@@ -99,20 +99,25 @@ Advanced compilation options
 
 .. code-block:: bash
 
-  make config=debug           # With debugging output (slow execution)
-  make config=noopenmp        # Without OpenMP support
-  make config=no_mpi_tm       # Without a MPI library which supports MPI_THREAD_MULTIPLE
-  make config=scalasca        # For the Scalasca profiler
-  make config=advisor         # For Intel Advisor
-  make config=vtune           # For Intel Vtune
-  make config=inspector       # For Intel Inspector
-  make config=detailed_timers # More detailed timers, but somewhat slower execution
+  make config=debug                        # With debugging output (slow execution)
+  make config=noopenmp                     # Without OpenMP support
+  make config=no_mpi_tm                    # Without a MPI library which supports MPI_THREAD_MULTIPLE
+  make config=scalasca                     # For the Scalasca profiler
+  make config=advisor                      # For Intel Advisor
+  make config=vtune                        # For Intel Vtune
+  make config=inspector                    # For Intel Inspector
+  make config=detailed_timers              # More detailed timers, but somewhat slower execution
+  make config=omptasks                     # use OpenMP task parallelization, not supported by old compilers
+  make config=part_event_tracing_tasks_off # trace the use particle operators, without task parallelization
+  make config=part_event_tracing_tasks_on  # trace the use particle operators, with OpenMP task parallelization
 
 It is possible to combine arguments above within quotes, for instance:
 
 .. code-block:: bash
 
   make config="debug noopenmp" # With debugging output, without OpenMP
+
+However, some arguments may not be compatible, e.g. ``noopenmp`` and ``omptasks``. 
 
 .. rubric:: Obtain some information about the compilation
 
