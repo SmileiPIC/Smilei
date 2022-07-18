@@ -172,6 +172,7 @@ Main(
     print_every = 2
 )
 
+# # Disabled for GPUs as of 2022/06
 # LoadBalancing(
 #     initial_balance = True,
 #     every = 150,
@@ -179,6 +180,7 @@ Main(
 #     frozen_particle_load = 0.1,
 # )
 
+# Always disabled for GPU (counter intuitive)
 Vectorization(
    mode = "off"
 )
@@ -227,6 +229,7 @@ restart_run='initial'
 # initial pour un premier run
 # restart pour lire un fichier restart pour continuer
 # all job have to be in $SCRATCHDIR directory (see below for the eact path)
+# chemin_restart='/scratch/cnt0026/lpp0106/ckrafft/SmileiGG12v2_Occi-016'
 chemin_restart='SmileiGG12v2_Occi-016'
 
 
