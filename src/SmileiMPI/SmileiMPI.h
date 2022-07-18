@@ -309,7 +309,7 @@ public:
     std::vector<std::vector<unsigned int>> task_tracing_start_or_end_;
     std::vector<std::vector<int>> task_tracing_event_name_;
     int iter_frequency_task_tracing_;
-    double reference_time;
+    double reference_time_;
 
     // determine if "task" tracing is performed at this iteration
     bool diagPartEventTracing(double time_dual, double timestep ){
@@ -326,6 +326,18 @@ public:
         task_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
         task_tracing_event_name_[thread].push_back(event_name);           // write Event Name
     };
+
+    // If particle event tracing diagnostic is activated, trace event
+    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread, 
+                                 unsigned int event_start_or_end, int event_name)
+    {
+        // If particle event tracing diagnostic is activated, trace event
+        // otherwise, this becomes an empty method 
+        #  ifdef _PARTEVENTTRACING
+        if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
+        #  endif
+    };
+
 
 protected:
     //! Global MPI Communicator

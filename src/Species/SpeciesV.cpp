@@ -301,14 +301,14 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                        
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
                                        ithread, particles->first_index[ipack*packsize_] );
             } // end interpolation                   
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0] += MPI_Wtime() - timer;
@@ -321,11 +321,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                        
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,5);
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
                     ( *Ionize )( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj );
                 }                
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,5);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
@@ -346,7 +346,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                       
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,6);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,6);
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
                     ( *Radiate )( *particles,
@@ -367,7 +367,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //                               last_index[scell],
                     //                               ithread );
                 }            
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,6);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,6);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[5] += MPI_Wtime() - timer;
@@ -381,7 +381,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                     
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,7);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,7);
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
                     // Pair generation process
@@ -404,7 +404,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
 
                 }                      
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,7);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
@@ -416,12 +416,12 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
    
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
             // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
                        particles->last_index[ipack*packsize_+packsize_-1],
                        ithread, particles->first_index[ipack*packsize_] );                    
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1] += MPI_Wtime() - timer;
@@ -429,7 +429,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
             // Boundary conditions and energy lost                     
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,2);
 
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
 
@@ -472,10 +472,10 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
                 }
             } // end scell for BC
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,2);
 
                  
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
 
                 if( mass_>0 ) {
@@ -504,7 +504,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     }
                 }
             } // end scell  
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
 #ifdef  __DETAILED_TIMERS
@@ -518,7 +518,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
              
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ )
                 Proj->currentsAndDensityWrapper(
                     EMfields, *particles, smpi, particles->first_index[ipack*packsize_+scell],
@@ -527,7 +527,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     diag_flag, params.is_spectral,
                     ispec, ipack*packsize_+scell, particles->first_index[ipack*packsize_]
                 );
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 
 #ifdef  __DETAILED_TIMERS
@@ -545,20 +545,20 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
         if( params.geometry != "AMcylindrical" ) {
             double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                         
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
                 for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on scells             
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
         } else { // AM case
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             int n_species = patch->vecSpecies.size();
 
                      
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
                 int ifield = imode*n_species+ispec;
                 complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
@@ -568,7 +568,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     }
                 }
             }                          
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
         }
     } // End projection for frozen particles
@@ -672,14 +672,14 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
               
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             // Interpolate the fields at the particle position
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[scell] ),
                                        &( particles->last_index[scell] ),
                                        buffer_id, particles->first_index[0] );
             } // end cell loop for Interpolator                     
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -721,9 +721,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 // } // end cell loop for Interpolator                    
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,5);
                 Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );             
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,5);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -765,14 +765,14 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                  // }
 
                 
-                 traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,6);
+                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,6);
                  // Radiation process
                  ( *Radiate )( *particles, *radiated_photons_, smpi,
                                RadiationTables,
                                radiated_energy_per_bin[ibin],
                                particles->first_index[first_cell_of_bin[ibin]],
                                particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );                        
-                 traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,6);
+                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,6);
 
                  // Update scalar variable for diagnostics
                  // radiated_energy += Radiate->getRadiatedEnergy();
@@ -808,7 +808,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 // Pair generation process                     
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,7);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,7);
                 double radiated_energy_bin = 0;
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
@@ -826,7 +826,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                                                                          buffer_id );
 
                 // } // end scell                  
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,7);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -844,15 +844,15 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-              
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,7);
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,7);
             // clean decayed photons from arrays 
             // this loop must not be parallelized unless race conditions are prevented
             for( int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
             } // end scell                                       
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,7);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -872,12 +872,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
                    
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
             // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]],
                         particles->last_index[last_cell_of_bin[ibin]],
                         buffer_id, particles->first_index[0] );       
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -907,7 +907,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
             
                     
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,2);
             double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
@@ -939,10 +939,10 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     
                 } // end scell loop
             } // end if condition on mass              
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,2);
 
                  
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
             if( mass_>0 ) {
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                     for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
@@ -971,7 +971,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     } // end iPart loop
                 } // end scell loop
             } // end if condition on mass                                 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
             
 
 #ifdef  __DETAILED_TIMERS
@@ -995,7 +995,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
                
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
@@ -1016,7 +1016,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     // } // end scell loop
                 } // end if AM
             } // end condition on test and mass              
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1073,7 +1073,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
                     // This must be done before Projection 
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;                    
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,5);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,5);
 #ifdef  __DETAILED_TIMERS
                     ithread = omp_get_thread_num();
                     timer = MPI_Wtime();
@@ -1082,7 +1082,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
                         Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     } //End loop on particles                      
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,5);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,5);
 
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1126,12 +1126,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     timer = MPI_Wtime();
 #endif
                        
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
                     // basic projector is not vectorized, no need to make a loop on scell
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
                         Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     } //End loop on particles  
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1802,12 +1802,12 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[7] += MPI_Wtime() - timer;
@@ -1824,12 +1824,12 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
 
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,5);
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                     Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread );
                     Ionize->envelopeIonization( particles, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
                 }
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,5);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
@@ -1843,11 +1843,11 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Proj->susceptibility( EMfields, *particles, mass_, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, particles->first_index[ipack*packsize_] );
             }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[8] += MPI_Wtime() - timer;
@@ -1858,9 +1858,9 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[9] += MPI_Wtime() - timer;
@@ -1932,13 +1932,13 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 // Interpolate the fields and envelope at the particle position
                 // Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
             }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 
 #ifdef  __DETAILED_TIMERS
@@ -1966,10 +1966,10 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
 
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,5);
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
                 Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,5);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,5);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1992,7 +1992,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
                 timer = MPI_Wtime();
 #endif
 
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
                 if (params.geometry != "AMcylindrical"){
                     for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                         Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
@@ -2008,7 +2008,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
                     //                               particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]] ,
                     //                               buffer_id );
                 } // end if geometry
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[8*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2028,10 +2028,10 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
                 timer = MPI_Wtime();
 #endif
 
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
                 // Push only the particle momenta
                 ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id);
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2188,12 +2188,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[10] += MPI_Wtime() - timer;
@@ -2203,10 +2203,10 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
             // Push only the particle position
             ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[11] += MPI_Wtime() - timer;
@@ -2214,7 +2214,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 #endif
 
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,2);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 double energy_lost( 0. );
                 // Apply wall and boundary conditions
@@ -2234,10 +2234,10 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                     ERROR( "Particles with zero mass cannot interact with envelope" );
                 }
             } // end scell
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,2);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,2);
 
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 // Apply wall and boundary conditions
                 if( mass_>0 ) { // condition mass_>0
@@ -2257,7 +2257,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                     LINK_NAMELIST + std::string("#laser-envelope-model"));
                 }
             } // end scell 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 #ifdef  __DETAILED_TIMERS
@@ -2270,12 +2270,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             if( ( !particles->is_test ) && ( mass_ > 0 ) )
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                     Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], ithread, diag_flag, params.is_spectral, ispec, ipack*packsize_+scell, particles->first_index[ipack*packsize_] );
                 }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 
 #ifdef  __DETAILED_TIMERS
@@ -2289,7 +2289,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
     } else { // immobile particle (at the moment only project density)
                      
-        traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+        smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
         if( diag_flag &&( !particles->is_test ) ) {
             if( params.geometry != "AMcylindrical" ) {
                 double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
@@ -2313,7 +2313,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                 }
             }
         }                   
-        traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+        smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
     }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdatePositionAndCurrents
@@ -2388,11 +2388,11 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,0);
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
             }
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,0);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,0);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[10*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2412,10 +2412,10 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             timer = MPI_Wtime();
 #endif
 
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,1);
             // Push only the particle position
             ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id );
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,1);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[11*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2437,7 +2437,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {                     
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,2);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,2);
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 energy_lost = 0;
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -2449,10 +2449,9 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                 //        if omp, create a list per thread
                 partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
                 nrj_lost_per_bin[ibin] += mass_ * energy_lost;
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,2);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,2);
                   
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,11);
-                #  endif
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
                 for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
                     if ( particles->cell_keys[iPart] != -1 ) {
                         //First reduction of the count sort algorithm. Lost particles are not included.
@@ -2463,7 +2462,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                         // count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                     }
                 } // end iPart loop           
-                traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,11);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
 
                 } // end loop on scell
             } else if( mass_==0 ) {
@@ -2488,7 +2487,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             timer = MPI_Wtime();
 #endif
                       
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
@@ -2506,7 +2505,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                     //                                             buffer_id, diag_flag);
                   } // end if AM
             } // end condition on test and mass                       
-            traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2542,12 +2541,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                     timer = MPI_Wtime();
 #endif
                        
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,0,3);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,3);
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
                         Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     }                     
-                    traceEventIfDiagTracing(smpi, diag_PartEventTracing, omp_get_thread_num(), smpi->reference_time,1,3);
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,3);
 
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
