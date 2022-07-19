@@ -223,11 +223,11 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     }
 
 #ifdef _PARTEVENTTRACING
-    iter_frequency_task_tracing_ = 10;
+    iter_frequency_particle_event_tracing_ = 100;
     int nthreads = omp_get_max_threads();
-    task_tracing_event_time_.resize(nthreads);
-    task_tracing_start_or_end_.resize(nthreads);
-    task_tracing_event_name_.resize(nthreads);
+    particle_event_tracing_event_time_.resize(nthreads);
+    particle_event_tracing_start_or_end_.resize(nthreads);
+    particle_event_tracing_event_name_.resize(nthreads);
 
     unsigned int tot_species_number = PyTools::nComponents( "Species" );
     unsigned int Npatches           = params.tot_number_of_patches;
@@ -247,13 +247,13 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
 
     for (unsigned int ithread = 0; ithread<nthreads; ithread++){
         // use reserve to prevent frequent memory reallocation which increases tracing overhead
-        task_tracing_event_time_[ithread].reserve(Ntasks);
-        task_tracing_start_or_end_[ithread].reserve(Ntasks);
-        task_tracing_event_name_[ithread].reserve(Ntasks);
+        particle_event_tracing_event_time_[ithread].reserve(Ntasks);
+        particle_event_tracing_start_or_end_[ithread].reserve(Ntasks);
+        particle_event_tracing_event_name_[ithread].reserve(Ntasks);
         // initialize vectors to zero size
-        task_tracing_event_time_[ithread].resize(0);          // stores time
-        task_tracing_start_or_end_[ithread].resize(0);        // stores start (0) or end (1)
-        task_tracing_event_name_[ithread].resize(0);          // stores task type
+        particle_event_tracing_event_time_[ithread].resize(0);          // stores time
+        particle_event_tracing_start_or_end_[ithread].resize(0);        // stores start (0) or end (1)
+        particle_event_tracing_event_name_[ithread].resize(0);          // stores task type
         // task types:
         // -  0: Interp 
         // -  1: Push

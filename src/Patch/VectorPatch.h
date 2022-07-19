@@ -105,27 +105,27 @@ public :
     }
 
 #  ifdef _PARTEVENTTRACING  
-    // Write Output for "Task" tracing - this method must be called inside a pragma omp single construct
-    void writeTaskTracingOutput(Params &params, SmileiMPI *smpi, int iteration){
+    // Write Output for Particle Event Tracing diagnostic - this method must be called inside a pragma omp single construct
+    void writeParticleEventTracingOutput(Params &params, SmileiMPI *smpi, int iteration){
         int rank(0);
         MPI_Comm_rank( MPI_COMM_WORLD, &rank );
         for (int ithread=0; ithread<omp_get_max_threads(); ithread++){ // write a file for eacht thread
             std::ofstream outfile;
-            std::string namefile = "task_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
+            std::string namefile = "particle_event_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
             outfile.open(namefile, std::ios_base::app); // append to file
             outfile << "Start Iteration "<<std::to_string(iteration)<<"\n";
-            for (int event_id = 0; event_id<smpi->task_tracing_event_time_[ithread].size();event_id++){
+            for (int event_id = 0; event_id<smpi->particle_event_tracing_event_time_[ithread].size();event_id++){
                 // Write line in file with structure Time Start/End EventName
-                outfile<<std::to_string((smpi->task_tracing_event_time_[ithread][event_id]))<<" "
-                       <<(smpi->task_tracing_start_or_end_[ithread][event_id])<<" "
-                       <<(smpi->task_tracing_event_name_[ithread][event_id])<<" \n" ;
+                outfile<<std::to_string((smpi->particle_event_tracing_event_time_[ithread][event_id]))<<" "
+                       <<(smpi->particle_event_tracing_start_or_end_[ithread][event_id])<<" "
+                       <<(smpi->particle_event_tracing_event_name_[ithread][event_id])<<" \n" ;
             } // end loop on traced events
         outfile << "End Iteration "<<std::to_string(iteration)<<"\n";
-        smpi->task_tracing_event_time_[ithread].clear();
-        smpi->task_tracing_start_or_end_[ithread].clear();
-        smpi->task_tracing_event_name_[ithread].clear();
+        smpi->particle_event_tracing_event_time_[ithread].clear();
+        smpi->particle_event_tracing_start_or_end_[ithread].clear();
+        smpi->particle_event_tracing_event_name_[ithread].clear();
         } // end loop on threads
-    } // end writeTaskTracingOutput
+    } // end writeParticleEventTracingOutput
 #endif
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------

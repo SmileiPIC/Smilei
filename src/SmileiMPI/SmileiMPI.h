@@ -305,16 +305,16 @@ public:
     bool test_mode;
 
     // Task tracing diag
-    std::vector<std::vector<double>> task_tracing_event_time_;
-    std::vector<std::vector<unsigned int>> task_tracing_start_or_end_;
-    std::vector<std::vector<int>> task_tracing_event_name_;
-    int iter_frequency_task_tracing_;
+    std::vector<std::vector<double>> particle_event_tracing_event_time_;
+    std::vector<std::vector<unsigned int>> particle_event_tracing_start_or_end_;
+    std::vector<std::vector<int>> particle_event_tracing_event_name_;
+    int iter_frequency_particle_event_tracing_;
     double reference_time_;
 
     // determine if "task" tracing is performed at this iteration
     bool diagPartEventTracing(double time_dual, double timestep ){
         bool diagTracing = false;
-        if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_task_tracing_)==0){
+        if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_particle_event_tracing_)==0){
             diagTracing = true;
         }
         return diagTracing;
@@ -322,9 +322,9 @@ public:
     // trace event or "task"
     void trace_event(int thread, double event_time,unsigned int event_start_or_end, int event_name)
     {
-        task_tracing_event_time_[thread].push_back(event_time);           // write time
-        task_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
-        task_tracing_event_name_[thread].push_back(event_name);           // write Event Name
+        particle_event_tracing_event_time_[thread].push_back(event_time);           // write time
+        particle_event_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
+        particle_event_tracing_event_name_[thread].push_back(event_name);           // write Event Name
     };
 
     // If particle event tracing diagnostic is activated, trace event

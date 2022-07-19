@@ -383,7 +383,7 @@ void VectorPatch::dynamics( Params &params,
         #pragma omp single
         {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-        if(diag_PartEventTracing) writeTaskTracingOutput(params, smpi, iteration);
+        if(diag_PartEventTracing) writeParticleEventTracingOutput(params, smpi, iteration);
         } // end single
     } // end if Laser envelope model
 #  endif
@@ -4283,7 +4283,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #pragma omp single
     {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-        if(diag_PartEventTracing) writeTaskTracingOutput(params, smpi, iteration);
+        if(diag_PartEventTracing) writeParticleEventTracingOutput(params, smpi, iteration);
     } // end single
 #endif
 
