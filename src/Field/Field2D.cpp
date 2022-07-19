@@ -311,8 +311,8 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     int dimY = dims_[1];
 
-    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
-    double* field = data_;
+    double *__restrict__ sub         = sendFields_[iDim * 2 + iNeighbor]->data_;
+    const double *__restrict__ field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'B';
@@ -347,8 +347,9 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     int dimY = dims_[1];
 
-    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
-    double* field = data_;
+    const double *__restrict__ sub = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
+    double *__restrict__ field     = data_;
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'B';
 
@@ -384,8 +385,8 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
     int dimY = dims_[1];
 
-    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
-    double* field = data_;
+    double *__restrict__ sub         = sendFields_[iDim * 2 + iNeighbor]->data_;
+    const double *__restrict__ field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'J';
@@ -422,8 +423,8 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 
     int dimY = dims_[1];
 
-    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
-    double* field = data_;
+    const double *__restrict__ sub = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
+    double *__restrict__ field     = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool is_the_right_field = name[0] == 'J';

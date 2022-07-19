@@ -1455,9 +1455,9 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-    // TODO(Etienne M): Fix data_on_cpu_updated to allow for "multi threaded" GPU offloading
-    bool data_on_cpu_updated( false );
-
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    bool data_on_cpu_updated = false;
+#endif
     // Global diags: scalars + particles
     timers.diags.restart();
 
@@ -1466,10 +1466,20 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
 
-        if ( (params.gpu_computing) && ( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
-            syncDataFromDeviceToHost();
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        if( params.gpu_computing &&
+            globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+            !data_on_cpu_updated &&
+            ( itime > 0 ) ) {
+    #pragma omp single
+            { 
+                // Must be done by one and only one thread
+                syncDataFromDeviceToHost();
+            }
+    #pragma omp barrier
             data_on_cpu_updated = true;
         }
+#endif
 
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
@@ -1510,6 +1520,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         }
         diag_timers_[idiag]->update();
     }
+
     #pragma omp master
     {
         vector<double> global_mins( MPI_mins.size() ), global_maxs( MPI_maxs.size() );
@@ -1537,6 +1548,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             }
         }
     }
+
     #pragma omp barrier
 
     // Global diags: scalars + binnings
@@ -1567,10 +1579,20 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers_[globalDiags.size()+idiag]->restart();
 
-        if ( (params.gpu_computing) && ( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
-            syncDataFromDeviceToHost();
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        if( params.gpu_computing &&
+            localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+            !data_on_cpu_updated &&
+            ( itime > 0 ) ) {
+    #pragma omp single
+            { 
+                // Must be done by one and only one thread
+                syncDataFromDeviceToHost();
+            }
+    #pragma omp barrier
             data_on_cpu_updated = true;
         }
+#endif
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
