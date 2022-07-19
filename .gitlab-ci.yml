@@ -14,6 +14,7 @@ install:
   stage: install
   only:
     - develop
+    - task_tracing
 
   script:
     # Force workdir cleaning in case of retried
