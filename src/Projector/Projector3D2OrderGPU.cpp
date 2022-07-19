@@ -61,7 +61,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
     const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
-    const short *const __restrict__ charge      = particles.getPtrCharge();
+    const short  *const __restrict__ charge     = particles.getPtrCharge();
     const double *const __restrict__ weight     = particles.getPtrWeight();
 
     const int nparts = particles.last_index.back();
@@ -122,9 +122,11 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         const int istart_pack       = istart + ipack * packsize;
         const int iend_pack         = std::min( iend - istart,
                                                 istart_pack + packsize );
-        const int current_pack_size = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+    const int current_pack_size = iend_pack - istart_pack;
+
     #pragma omp target defaultmap( none )                                             \
         map( tofrom                                                                   \
              : iold [istart_pack:2 * packsize + current_pack_size - istart_pack],     \

@@ -43,8 +43,9 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     
     const short *const charge = particles.getPtrCharge( ) ;
     
+
     const int nparts = vecto ? GradPhi_mpart->size()/3 :
-                               particles.size(); // particles.size()
+                               particles.last_index.back(); // particles.size()
     
     const double *const __restrict__ Phi_m      = &( ( *Phi_mpart )[0*nparts] );
     const double *const __restrict__ GradPhi_mx = &( ( *GradPhi_mpart )[0*nparts] );

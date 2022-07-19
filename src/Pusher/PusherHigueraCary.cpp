@@ -54,7 +54,7 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
     double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    short * __restrict__ charge = particles.getPtrCharge();
+    short *const __restrict__ charge = particles.getPtrCharge();
     
     #ifndef _GPU
         #pragma omp simd

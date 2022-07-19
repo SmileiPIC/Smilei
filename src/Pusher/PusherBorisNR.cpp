@@ -41,8 +41,8 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     double *const __restrict__ momentum_y = particles.getPtrMomentum( 1 );
     double *const __restrict__ momentum_z = particles.getPtrMomentum( 2 );
 
-    const short *__restrict__ charge = particles.getPtrCharge();
-    
+    const short *const __restrict__ charge = particles.getPtrCharge();
+
     #ifndef _GPU
         #pragma omp simd
     #else
@@ -56,7 +56,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 
         const double charge_over_mass = ( double )( charge[ipart] )*one_over_mass_;
         
-        double alpha = charge_over_mass*dts2;
+        const double alpha = charge_over_mass*dts2;
 
         // uminus = v + q/m * dt/2 * E
         const double umx = momentum_x[ipart] * one_over_mass_ + alpha * ( Ex[ipart2] );

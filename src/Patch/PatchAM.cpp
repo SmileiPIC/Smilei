@@ -256,3 +256,19 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
 
 
 } // END exchangeField_movewin
+
+
+void PatchAM::computePoynting() {
+    if( isBoundary( 0, 0 ) ) {
+        EMfields->computePoynting( 0, 0 );
+    }
+    if( isBoundary( 0, 1 ) ) {
+        EMfields->computePoynting( 0, 1 );
+    }
+    if( isBoundary( 1, 1 ) ) {
+        EMfields->computePoynting( 1, 1 );
+    }
+    // No poynting from axis
+    EMfields->poynting_inst[0][1] = 0;
+    EMfields->poynting[0][1] = 0;
+}

@@ -134,7 +134,7 @@ public:
     double dx_ov_dt;
     
     //! compute Poynting on borders
-    void computePoynting();
+    void computePoynting( unsigned int axis, unsigned int side );
     
     //! Method used to impose external fields
     void applyExternalField( Field *, Profile *, Patch * );

@@ -39,7 +39,7 @@ struct BinaryProcessData
     double gamma1_COM, gamma2_COM;
     
     //! Relative velocity
-    double vrel;
+    double vrel, vrel_corr;
     
     //! Debye length squared
     double debye2;

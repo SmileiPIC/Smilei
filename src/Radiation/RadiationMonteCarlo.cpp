@@ -50,7 +50,7 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 //! induced by the nonlinear inverse Compton scattering
 //
 //! \param particles   particle object containing the particle properties
-//! \param photon_species species that will receive emitted photons
+//! \param photons     Particles object that will receive emitted photons
 //! \param smpi        MPI properties
 //! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
@@ -87,14 +87,9 @@ void RadiationMonteCarlo::operator()(
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
+
     // 1 / mass^2
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
-
-    // Temporary quantum parameter
-    double particle_chi;
-
-    // Temporary Lorentz factor
-    double particle_gamma;
 
     // Radiated energy
     double cont_rad_energy;
@@ -291,7 +286,7 @@ void RadiationMonteCarlo::operator()(
         //curandState_t state_2;
         
         #pragma acc loop gang worker vector \
-        private(random_number, seed_curand_1, seed_curand_2, particle_chi, particle_gamma) \
+        private(random_number, seed_curand_1, seed_curand_2) \
         reduction(+:radiated_energy_loc) 
 
 #endif
@@ -316,16 +311,16 @@ void RadiationMonteCarlo::operator()(
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
 
             // Gamma
-            particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+            const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                           + momentum_y[ipart]*momentum_y[ipart]
                           + momentum_z[ipart]*momentum_z[ipart] );
 
-            if( particle_gamma==1. ){ // does not apply the MC routine for particles with 0 kinetic energy
+            if( particle_gamma < 1.1){ // does not apply the MC routine for particles with 0 kinetic energy
                 break;
             }
 
             // Computation of the Lorentz invariant quantum parameter
-            particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
+            const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                            particle_gamma,
                            Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
@@ -387,8 +382,8 @@ void RadiationMonteCarlo::operator()(
                     #else
                         seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
                         seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
-
-                        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
+                        
+                        prng_state_2.init( seed_curand_2, seq, offset ); //Random generator initialization
 	
                         random_number = prng_state_2.uniform(); //Generating number
                         //random_number = curand_uniform(&state_2); //Generating number
@@ -556,24 +551,23 @@ void RadiationMonteCarlo::operator()(
                     // that a new drawing is possible
                     // at the next Monte-Carlo iteration
                     tau[ipart] = -1.;
-                }
+                } // end if tau
 
                 // Incrementation of the Monte-Carlo iteration counter
                 mc_it_nb ++;
                 // Update of the local time
                 local_it_time += emission_time;
 
-            }
-
             // Continuous emission
             // particle_chi needs to be below the discontinuous threshold
-            // particle_chi needs to be above the continuous threshold
+            // particle_chi needs to be above the continuous thresholdF
             // No discontiuous emission is in progress:
             // tau[ipart] <= epsilon_tau_
-            else if( ( particle_chi <= RadiationTables.getMinimumChiDiscontinuous() )
-                     && ( tau[ipart] <= epsilon_tau_ )
-                     && ( particle_chi > RadiationTables.getMinimumChiContinuous() )
-                     && ( particle_gamma > 1. ) ) {
+            }
+            else if( particle_chi <=  RadiationTables.getMinimumChiDiscontinuous()
+                     && tau[ipart] <= epsilon_tau_
+                     && particle_chi >  RadiationTables.getMinimumChiContinuous() ) {
+
 
                 // Remaining time of the iteration
                 emission_time = dt_ - local_it_time;
@@ -633,7 +627,7 @@ void RadiationMonteCarlo::operator()(
         const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 

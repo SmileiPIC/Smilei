@@ -839,7 +839,7 @@ Each species has to be defined in a ``Species`` block::
 
   :type: float or :doc:`profile <profiles>`
 
-  The absolute value of the number density or charge density (choose one only)
+  The absolute value of the charge density or number density (choose one only)
   of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
 
 
@@ -1350,7 +1350,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
     order shown in the above example. Undefined modes are considered zero.
-    This can be used only in ``AMcylindrical`` geometry.
+    This can be used only in ``AMcylindrical`` geometry. In this
+    geometry a two-dimensional :math:`(x,r)` grid is used and the laser is injected from a
+    :math:`x` boundary, thus the provided profiles must be a function of :math:`(r,t)`.
 
 
 

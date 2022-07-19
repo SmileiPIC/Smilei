@@ -125,7 +125,33 @@ public:
     {
         return (box_side_ == "zmax");
     }
-
+    
+    //! Return injector axis (0, 1 or 2 means x, y or z)
+    inline unsigned int axis() {
+        std::string a = box_side_.substr( 0, 1 );
+        const std::string xyz = "xyz";
+        unsigned int n = xyz.find( a );
+        if( n < 3 ) {
+            return n;
+        } else {
+            ERROR( "wrong box_side" );
+        }
+        return 4;
+    }
+    
+    //! Return injector min or max (0 or 1)
+    inline unsigned int min_max() {
+        std::string mm = box_side_.substr( 1, 3 );
+        if( mm == "min" ) {
+            return 0;
+        } else if( mm == "max" ) {
+            return 1;
+        } else {
+            ERROR( "wrong box_side" );
+        }
+        return 2;
+    }
+    
 };
 
 #endif
