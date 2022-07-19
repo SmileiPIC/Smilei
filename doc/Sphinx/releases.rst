@@ -24,6 +24,7 @@ Changes made in the repository (not released)
 * Performances post-processing: new parameter ``cumulative``
 * Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
 * Experimental: :doc:`task_parallelization` of macro-particle operations with OpenMP is now available.
+* Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.  
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
