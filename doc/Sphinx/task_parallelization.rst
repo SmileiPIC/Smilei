@@ -149,7 +149,7 @@ decomposition given by the clusters and the relaxation of the constraints involv
 in the assignment of macro-particle operations to threads yields a shorter time
 to the result.
 
-.. _task_tracing_tasks:
+.. _part_event_tracing:
 
 .. figure:: _static/Task_tracing_doc.png
     :width: 100%
