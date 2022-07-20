@@ -60,6 +60,8 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_SCHEDULE=dynamic
 export OMP_PLACES=cores
 
+# These variables may trigger a huge flood of information when using multiple 
+# threads per MPI + GPU support
 export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
 export CRAY_OMP_CHECK_AFFINITY=TRUE
 
@@ -202,7 +204,7 @@ exit $kRETVAL
         self.options = options
 
         # Use the config flag "gpu_amd" to compile for GPU or remove it for CPU only
-        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -j'
+        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -k -j'
         self.COMPILE_COMMAND = the_make_command + ' > ' + self.smilei_path.COMPILE_OUT + ' 2> '+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 
