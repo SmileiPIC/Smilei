@@ -18,7 +18,7 @@ void Field::put_to( double val )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_hostptr_mapped_on_device )
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #endif
         for( unsigned int i = 0; i < globalDims_; i++ ) {
