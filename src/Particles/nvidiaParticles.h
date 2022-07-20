@@ -1,20 +1,9 @@
-
 #ifndef NVIDIAPARTICLES_H
 #define NVIDIAPARTICLES_H
 
-#include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
-#include <thrust/iterator/zip_iterator.h>
-#include <thrust/tuple.h>
 
 #include "Particles.h"
-
-typedef thrust::device_vector<double>::iterator Diter;
-typedef thrust::device_vector<short>::iterator  Siter;
-// typedef a tuple of these iterators
-typedef thrust::tuple<Diter, Diter, Diter, Diter, Diter, Diter, Diter, Siter> IteratorParticles;
-// typedef the zip_iterator of this tuple
-typedef thrust::zip_iterator<IteratorParticles> ZipIterParts;
 
 class nvidiaParticles : public Particles
 {

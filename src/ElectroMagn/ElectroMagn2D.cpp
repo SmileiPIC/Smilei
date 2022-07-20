@@ -1193,11 +1193,8 @@ void ElectroMagn2D::centerMagneticFields()
     double *const __restrict__ Bz2D_m     = Bz_m->data();
 
 // Magnetic field Bx^(p,d)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                     \
-                            : Bx2D_m [0:nx_p * ny_d] ) \
-        map( to                                        \
-             : Bx2D [0:nx_p * ny_d] )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -1208,11 +1205,8 @@ void ElectroMagn2D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                             \
-                            : By2D_m [0:( nx_p + 1 ) * ny_p] ) \
-        map( to                                                \
-             : By2D [0:( nx_p + 1 ) * ny_p] )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -1222,11 +1216,8 @@ void ElectroMagn2D::centerMagneticFields()
         }
     }
     // Magnetic field Bz^(d,d)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
-    #pragma omp target map( tofrom                             \
-                            : Bz2D_m [0:( nx_p + 1 ) * ny_d] ) \
-        map( to                                                \
-             : Bz2D [0:( nx_p + 1 ) * ny_d] )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif

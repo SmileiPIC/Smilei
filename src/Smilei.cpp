@@ -105,19 +105,11 @@ int main( int argc, char *argv[] )
     OpenPMDparams openPMD( params );
     PyTools::setIteration( 0 );
 
-//#ifdef _GPU
-//    int ngpus = acc_get_num_devices( acc_device_nvidia );
-//    if ( (ngpus>0) && (params.gpu_computing) ) {
-//        int gpunum = smpi.getRank()%ngpus;
-//        cout << gpunum << endl;
-//        acc_set_device_num( gpunum, acc_device_nvidia );
-//    }
-//#endif
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     if( params.gpu_computing ) {
         if( ::omp_get_max_threads() != 1 ) {
-            // TODO(Etienne M): We should be able to work around this "problem" cf 4.13.1 in Omp Exemple 5.0.1
-            ERROR( "Runing Smilei on GPU using more than one OpenMP thread is not supported when offloading using OpenMP." );
+            // TODO(Etienne M): I beleive there is a race condition inside the CCE OpenMP runtime
+            WARNING( "Runing Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
         }
 
         const int gpu_count = ::omp_get_num_devices();
@@ -128,6 +120,7 @@ int main( int argc, char *argv[] )
             WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
             WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
+            // This assumes the MPI rank on a node are sequential
             const int this_process_gpu = smpi.getRank() % gpu_count;
 
             // std::cout << "Using GPU id: " << this_process_gpu << "\n";
@@ -721,7 +714,7 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        
+
         // print message at given time-steps
         // --------------------------------
         if( params.printNow( itime ) ) {

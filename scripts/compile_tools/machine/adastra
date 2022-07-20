@@ -156,3 +156,4 @@ LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
 # Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
 # -v to dump omp kernel info (register alloc/spill etc.)
 LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v
+# LDFLAGS += --save-temps

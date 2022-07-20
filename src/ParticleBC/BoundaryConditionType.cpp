@@ -26,7 +26,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
                                       position /* [imin:imax - imin] */ ) \
         is_device_ptr( /* tofrom: */                                      \
                        cell_keys /* [imin:imax - imin] */ )
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
@@ -49,7 +49,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
                                       position /* [imin:imax - imin] */ ) \
         is_device_ptr( /* tofrom: */                                      \
                        cell_keys /* [imin:imax - imin] */ )
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {

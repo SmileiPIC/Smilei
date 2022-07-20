@@ -571,7 +571,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
 
             if ( regular_number_array.size()==0){
                 const double coeff = std::pow( static_cast<double>(nPart), static_cast<double>(species->inv_nDim_particles) );
-                if( nPart != std::round(std::pow( std::round( coeff ), static_cast<double>(species->nDim_particle) ) ) ) {
+                if( nPart != static_cast<unsigned int>( std::floor( std::pow( std::round( coeff ), static_cast<double>( species->nDim_particle ) ) ) ) ) {
                     ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
                 }
                 for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
