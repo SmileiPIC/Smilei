@@ -346,15 +346,13 @@ void VectorPatch::dynamics( Params &params,
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
         smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
-#endif
 
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
-#ifdef _OMPTASKS  
-        if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
+        ( *this )( ipatch )->EMfields->restartRhoJ(); 
+        if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();
+    }
 #endif
-    } // end ipatch
 
 #  ifdef _PARTEVENTTRACING
     if( !params.Laser_Envelope_model ) {
@@ -4221,6 +4219,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 #  endif
 
 
+    #pragma omp single
+    diag_flag = needsRhoJsNow( itime );
+
+    timers.particles.restart();
+
 #ifndef _OMPTASKS
     // if tasks are not activated
     ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( params, smpi, simWindow,
@@ -4331,55 +4334,55 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);   
     #endif 
 
-    // if tasks are not activated
-    #pragma omp for schedule(runtime) 
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            Species *spec = species( ipatch, ispec );
+    #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+                Species *spec = species( ipatch, ispec );
 
-            if( params.keep_position_old ) {
-                spec->particles->savePositions();
-            }
-            
-            if( params.Laser_Envelope_model ) {
-                continue;
-            }
-
-            if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
-                // Dynamics with vectorized operators
-                if( spec->vectorized_operators ) {
-                    spec->dynamics( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag, partwalls( ipatch ),
-                                    ( *this )( ipatch ), smpi,
-                                    RadiationTables,
-                                    MultiphotonBreitWheelerTables,
-                                    localDiags );                   
+                if( params.keep_position_old ) {
+                    spec->particles->savePositions();
                 }
-                // Dynamics with scalar operators
-                else {
-                    if( params.vectorization_mode == "adaptive" ) {
-                        spec->scalarDynamics( time_dual, ispec,
-                                              emfields( ipatch ),
-                                              params, diag_flag, partwalls( ipatch ),
-                                              ( *this )( ipatch ), smpi,
-                                              RadiationTables,
-                                              MultiphotonBreitWheelerTables,
-                                              localDiags );
-                    } else {
-                        spec->Species::dynamics( time_dual, ispec,
-                                                 emfields( ipatch ),
-                                                 params, diag_flag, partwalls( ipatch ),
-                                                 ( *this )( ipatch ), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags );
-                      } // end case vectorization non adaptive
-                } // end if condition on vectorization
-            } // end if condition on species
-        } // end loop on species
-    } // end loop on patches    
+                
+                if( params.Laser_Envelope_model ) {
+                    continue;
+                }
+
+                if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
+                    // Dynamics with vectorized operators
+                    if( spec->vectorized_operators ) {
+                        spec->dynamics( time_dual, ispec,
+                                        emfields( ipatch ),
+                                        params, diag_flag, partwalls( ipatch ),
+                                        ( *this )( ipatch ), smpi,
+                                        RadiationTables,
+                                        MultiphotonBreitWheelerTables,
+                                        localDiags );
+                    }
+                    // Dynamics with scalar operators
+                    else {
+                        if( params.vectorization_mode == "adaptive" ) {
+                            spec->scalarDynamics( time_dual, ispec,
+                                                   emfields( ipatch ),
+                                                   params, diag_flag, partwalls( ipatch ),
+                                                   ( *this )( ipatch ), smpi,
+                                                   RadiationTables,
+                                                   MultiphotonBreitWheelerTables,
+                                                   localDiags );
+                        } else {
+                            spec->Species::dynamics( time_dual, ispec,
+                                                     emfields( ipatch ),
+                                                     params, diag_flag, partwalls( ipatch ),
+                                                     ( *this )( ipatch ), smpi,
+                                                     RadiationTables,
+                                                     MultiphotonBreitWheelerTables,
+                                                     localDiags );
+                        }
+                    } // end if condition on vectorization
+                } // end if condition on species
+            } // end loop on species
+            //MESSAGE("species dynamics");
+        } // end loop on patches   
 }
 
 void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
@@ -4394,30 +4397,32 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
     #endif 
 
     // if tasks are not activated 
-    #pragma omp for schedule(runtime) 
+    #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
                                 ( *this )( ipatch ), smpi,
                                 localDiags );
+                else {
+                    if( params.vectorization_mode == "adaptive" ) {
+                        species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                                 emfields( ipatch ),
+                                 params, diag_flag,
+                                 ( *this )( ipatch ), smpi,
+                                 localDiags );
                     } else {
-                        if( params.vectorization_mode == "adaptive" ) {
-                            species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag,
-                                    ( *this )( ipatch ), smpi,
-                                    localDiags );
-                        } else {
-                            species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag,
-                                    ( *this )( ipatch ), smpi, localDiags );
-                        } // end condition on adaptive vectorization
-                   } // end condition on vectorization   
+                        species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                                 emfields( ipatch ),
+                                 params, diag_flag,
+                                 ( *this )( ipatch ), smpi,
+                                 localDiags );
+                        }
+                }
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -4438,34 +4443,34 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
  
     // if tasks are not activated   
     #pragma omp for schedule(runtime)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
-                    species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
-                           emfields( ipatch ),
-                           params, diag_flag, partwalls( ipatch ),
-                           ( *this )( ipatch ), smpi,
-                           localDiags );
-                } else {
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+                if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
+                        species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
+                               emfields( ipatch ),
+                               params, diag_flag, partwalls( ipatch ),
+                               ( *this )( ipatch ), smpi,
+                               localDiags );
+                    } else {
 
-                        if( params.vectorization_mode == "adaptive" ) {
-                            species( ipatch, ispec )->scalarPonderomotiveUpdatePositionAndCurrents( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag, partwalls( ipatch ),
-                                    ( *this )( ipatch ), smpi,
-                                    localDiags );
-                        } else {                
-                            species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag, partwalls( ipatch ),
-                                    ( *this )( ipatch ), smpi,
-                                    localDiags );
-                        }
-                    } // condition on vectorized operators
-            } // end diagnostic or projection if condition on species
-        } // end loop on species
-    } // end loop on patches
+                             if( params.vectorization_mode == "adaptive" ) {
+                                species( ipatch, ispec )->scalarPonderomotiveUpdatePositionAndCurrents( time_dual, ispec,
+                                        emfields( ipatch ),
+                                        params, diag_flag, partwalls( ipatch ),
+                                        ( *this )( ipatch ), smpi,
+                                        localDiags );
+                             } else {
+                                species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
+                                        emfields( ipatch ),
+                                        params, diag_flag, partwalls( ipatch ),
+                                        ( *this )( ipatch ), smpi,
+                                        localDiags );
+                             }
+                    }
+                } // end diagnostic or projection if condition on species
+            } // end loop on species
+        } // end loop on patches
     // end operations to perform if tasks are not activated 
 
 }
