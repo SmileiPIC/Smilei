@@ -1182,9 +1182,26 @@ void Params::compute()
 
 
     // Set clrw if not set by the user
-    if (gpu_computing) {
-        cluster_width_ = n_space[0];
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    switch( nDim_field ) {
+        case 1:
+            // GPU 1D is not implemented
+            cluster_width_ = n_space[0];
+            break;
+        case 2:
+            // 16x16 clusters used for charge deposition
+            cluster_width_ = 16;
+            break;
+        case 3:
+            // GPU 3D binning is not implemented
+            cluster_width_ = n_space[0];
+            break;
+        default:
+            SMILEI_ASSERT( false );
+            break;
     }
+#endif
+
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
 

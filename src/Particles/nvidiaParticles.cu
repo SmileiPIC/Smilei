@@ -17,23 +17,28 @@ struct count_if_out
   }
 };
 
-//! Structure with specific function thrust::tuple operator
-struct remove_if_out
+nvidiaParticles::nvidiaParticles( const Params& parameters )
+    : Particles{}
+    , gpu_nparts_{}
 {
-    typedef thrust::tuple<double,double,double,double,double,double,double,short,int> Tuple;
-    __host__ __device__
-    bool operator()(const Tuple&  t)
-    {
-        // thrust::get<8>(t) = cell_keys
-        return (thrust::get<8>(t) < 0);
+    std::size_t cluster_cell_volume = 1;
 
+    for( std::size_t dimension_id = 0;
+         dimension_id < parameters.nDim_field;
+         ++dimension_id ) {
+
+        // Make sure we can divide the patch in clusters
+        SMILEI_ASSERT( ( parameters.n_space[dimension_id] % parameters.cluster_width_ ) == 0 );
+
+        // Compute pow(parameters.cluster_width_, parameters.nDim_field)
+        cluster_cell_volume *= parameters.cluster_width_;
     }
-};
 
-nvidiaParticles::nvidiaParticles() : Particles()
-{
-    gpu_nparts_ = 0;
+    SMILEI_ASSERT( ( parameters.n_cell_per_patch % cluster_cell_volume ) == 0 );
 
+    // Overwrite what's done in Species::initCluster
+    first_index.resize( parameters.n_cell_per_patch / cluster_cell_volume );
+    // We dont use last_index, it would contain redundant data
 }
 
 void nvidiaParticles::initializeDataOnDevice()
@@ -454,7 +459,8 @@ void nvidiaParticles::createParticles( int n_additional_particles )
 }
 
 extern "C" {
-void* CreateGPUParticles() {
-    return new nvidiaParticles();
-}
+    void* CreateGPUParticles( const void* parameters )
+    {
+        return new nvidiaParticles{ *static_cast<const Params*>( parameters ) };
+    }
 }

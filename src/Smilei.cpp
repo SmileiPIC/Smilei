@@ -108,7 +108,8 @@ int main( int argc, char *argv[] )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     if( params.gpu_computing ) {
         if( ::omp_get_max_threads() != 1 ) {
-            // TODO(Etienne M): I beleive there is a race condition inside the CCE OpenMP runtime
+            // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei 
+            // GPU to use only one thread.
             WARNING( "Runing Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
         }
 
@@ -139,8 +140,6 @@ int main( int argc, char *argv[] )
             WARNING( "Smilei can break if dynamic is not used." );
         }
     } else {
-        // TODO(Etienne M): We may not need that check. When the GPU implementation is complete, a user should be able
-        // to turn the GPU offloading on/off without recompiling, right ?
         ERROR( "Smilei was compiled to offload computation to a GPU. Please enable the GPU mode in the Python input file." );
     }
 #endif

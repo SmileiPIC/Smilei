@@ -1,15 +1,14 @@
 #include "ParticlesFactory.h"
 
-#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
-// TODO(Etienne M): find a way to put that in the function body, under the macro
-// guards, where CreateGPUParticles is called.
-extern "C" void* CreateGPUParticles();
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+extern "C" void* CreateGPUParticles( const void* parameters );
 #endif
 
-Particles* ParticlesFactory::create(const Params& params) {
+Particles* ParticlesFactory::create( const Params& params )
+{
     Particles* particles = nullptr;
 
-    if(params.gpu_computing) {
+    if( params.gpu_computing ) {
 
         // Because we can potentially use 2 compilers, one for the cuda/hip
         // sources (thrust), and an other for the host code, we dont want to
@@ -38,17 +37,17 @@ Particles* ParticlesFactory::create(const Params& params) {
         // dangerous, we should hide everything that is related to an other
         // compiler behind a stable C API.
         //
-#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
-        particles = static_cast<Particles*>(CreateGPUParticles());
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        particles = static_cast<Particles*>( CreateGPUParticles( &params ) );
 #else
-        ERROR("Unreachable state reached, Smilei was not built with GPU support!")
+        ERROR( "Unreachable state reached, Smilei was not built with GPU support!" )
 #endif
     } else {
         particles = new Particles();
     }
 
-    if(particles == nullptr) {
-        ERROR("particles could not be allocated!")
+    if( particles == nullptr ) {
+        ERROR( "particles could not be allocated!" )
     }
 
     return particles;

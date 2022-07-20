@@ -3,13 +3,14 @@
 
 #include <thrust/device_vector.h>
 
+#include "Params.h"
 #include "Particles.h"
 
 class nvidiaParticles : public Particles
 {
 public:
     //! Constructor for Particle
-    nvidiaParticles();
+    nvidiaParticles(const Params& parameters);
 
     //! Destructor for Particle
     virtual ~nvidiaParticles() {};
