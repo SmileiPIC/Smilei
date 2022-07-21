@@ -263,38 +263,42 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
                    
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
-            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                
-                // Apply wall and boundary conditions
-                if( mass_>0 ) {
+            // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+            // 
+            //     // Apply wall and boundary conditions
+            //     if( mass_>0 ) {
+            // 
+            //         for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+            //             if ( particles->cell_keys[iPart] != -1 ) {
+            //                 //Compute cell_keys of remaining particles
+            //                 for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+            //                     particles->cell_keys[iPart] *= this->length_[i];
+            //                     particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
+            //                 }
+            //                 //First reduction of the count sort algorithm. Lost particles are not included.
+            //                 count[particles->cell_keys[iPart]] ++;
+            //             }
+            //         }
+            // 
+            //     } else if( mass_==0 ) {
+            // 
+            //         for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+            //             if ( particles->cell_keys[iPart] != -1 ) {
+            //                  //Compute cell_keys of remaining particles
+            //                 for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+            //                     particles->cell_keys[iPart] *= this->length_[i];
+            //                     particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
+            //                 }
+            //                 //First reduction of the count sort algorithm. Lost particles are not included.
+            //                 count[particles->cell_keys[iPart]] ++;
+            //             }
+            //         }
+            //     } // end if mass_ > 0
+            // } // end loop on cells        
 
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
-
-                } else if( mass_==0 ) {
-
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                             //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
-                } // end if mass_ > 0
-            } // end loop on cells                                      
+            // Cell keys
+            computeParticleCellKeys( params );
+                              
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
 
 #ifdef  __DETAILED_TIMERS

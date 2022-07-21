@@ -476,34 +476,42 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
                  
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,11);
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+            //for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
 
-                if( mass_>0 ) {
+            //    if( mass_>0 ) {
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
+            //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //                //Compute cell_keys of remaining particles
+            //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+            //                    particles->cell_keys[iPart] *= this->length_[i];
+            //                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+            //                }
+            //                //First reduction of the count sort algorithm. Lost particles are not included.
+            //                count[particles->cell_keys[iPart]] ++;
+            //            }
+            //        }
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
-                }
-            } // end scell  
+            //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //                //Compute cell_keys of remaining particles
+            //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+            //                    particles->cell_keys[iPart] *= this->length_[i];
+            //                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+            //                }
+            //                count[particles->cell_keys[iPart]] ++;
+            //            }
+            //        }
+            //    }
+            //} // end scell
+
+            // Cell keys
+            computeParticleCellKeys( params,
+                                     particles,
+                                     &particles->cell_keys[0],
+                                     &count[0],
+                                     particles->first_index[ipack*packsize_],
+                                     particles->last_index[ipack*packsize_+packsize_-1] );   
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,11);
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
