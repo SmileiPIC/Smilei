@@ -521,7 +521,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
-            if( ( !particles->is_test ) && ( mass_ > 0 ) )
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ){
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -541,7 +541,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[2] += MPI_Wtime() - timer;
 #endif
-
+            }
             for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
                 nrj_bc_lost += nrj_lost_per_thd[tid];
             }
