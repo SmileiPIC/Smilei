@@ -225,7 +225,8 @@ void RadiationNiel::operator()(
 
                 //h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
                 //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
-                temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart] );
+                //temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart] );
+                temp = RadiationTables.niel_.get( particle_chi[ipart+istart] );
 
                 diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
             }
@@ -243,7 +244,7 @@ void RadiationNiel::operator()(
 
                 temp = RadiationTools::getHNielFitOrder5( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -259,7 +260,7 @@ void RadiationNiel::operator()(
 
                 temp = RadiationTools::getHNielFitOrder10( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -276,7 +277,7 @@ void RadiationNiel::operator()(
 
                 temp = RadiationTools::getHNielFitRidgers( particle_chi[ipartp] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipartp-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }
@@ -319,7 +320,7 @@ void RadiationNiel::operator()(
 
     const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-        new_gamma = sqrt( 1.0
+        new_gamma = std::sqrt( 1.0
                        + momentum_x[ipart]*momentum_x[ipart]
                        + momentum_y[ipart]*momentum_y[ipart]
                        + momentum_z[ipart]*momentum_z[ipart] );

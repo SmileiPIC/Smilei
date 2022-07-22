@@ -24,6 +24,7 @@
 #include "RadiationTools.h"
 #include "H5.h"
 #include "Random.h"
+#include "Table.h"
 
 //------------------------------------------------------------------------------
 //! RadiationTables class: holds parameters, tables and functions to compute
@@ -136,12 +137,12 @@ public:
 
     inline std::string __attribute__((always_inline)) getNielHComputationMethod()
     {
-        return this->niel_.computation_method_;
+        return this->niel_computation_method_;
     }
 
     inline int __attribute__((always_inline)) getNielHComputationMethodIndex()
     {
-        return this->niel_.computation_method_index_;
+        return this->niel_computation_method_index_;
     }
 
     // -----------------------------------------------------------------------------
@@ -178,7 +179,7 @@ public:
 
     //! Bcast of the external table h
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastHTable( SmileiMPI *smpi );
+    // void bcastHTable( SmileiMPI *smpi );
 
     //! Bcast of the external table integfochi_
     //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -193,39 +194,36 @@ public:
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
 
-    struct Niel {
+    // struct Niel {
+    // 
+    //     //! Array containing tabulated values of the function h for the
+    //     //! stochastic diffusive operator of Niel et al.
+    //     std::vector<double > table_;
+    // 
+    //     //! Minimum boundary of the table h
+    //     double min_particle_chi_;
+    // 
+    //     //! Maximum boundary of the table h
+    //     double max_particle_chi_;
+    // 
+    //     //! Inverse delta chi for the table h
+    //     double inv_particle_chi_delta_;
+    // 
+    //     //! Delta chi for the table h
+    //     double particle_chi_delta_;
+    // 
+    //     //! Log10 of the minimum boundary of the table h
+    //     double log10_min_particle_chi_;
+    // 
+    //     //! Dimension of the array h
+    //     int size_particle_chi_;
+    // 
+    // };
 
-        //! Array containing tabulated values of the function h for the
-        //! stochastic diffusive operator of Niel et al.
-        std::vector<double > table_;
-
-        //! Minimum boundary of the table h
-        double min_particle_chi_;
-
-        //! Maximum boundary of the table h
-        double max_particle_chi_;
-
-        //! Inverse delta chi for the table h
-        double inv_particle_chi_delta_;
-
-        //! Delta chi for the table h
-        double particle_chi_delta_;
-
-        //! Log10 of the minimum boundary of the table h
-        double log10_min_particle_chi_;
-
-        //! Method to be used to get the h values (table, fit5, fit10)
-        std::string computation_method_;
-
-        //! Index for the computational method
-        int computation_method_index_;
-
-        //! Dimension of the array h
-        int size_particle_chi_;
-
-    };
-
-    struct Niel niel_;
+    // struct Niel niel_;
+    
+    // axe = particle_chi
+    Table niel_;
 
     // ---------------------------------------------
     // Table integfochi
@@ -333,6 +331,12 @@ private:
 
     //! Under this value, no radiation loss
     double minimum_chi_continuous_;
+
+    //! Method to be used to get the h values (table, fit5, fit10)
+    std::string niel_computation_method_;
+
+    //! Index for the computational method
+    int niel_computation_method_index_;
 
     // ---------------------------------------------
     // Factors
