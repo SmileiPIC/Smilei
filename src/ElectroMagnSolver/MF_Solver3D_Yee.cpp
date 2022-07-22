@@ -7,22 +7,25 @@
 MF_Solver3D_Yee::MF_Solver3D_Yee( Params &params )
     : Solver3D( params )
 {
+    // EMPTY
 }
 
 MF_Solver3D_Yee::~MF_Solver3D_Yee()
 {
+    // EMPTY
 }
 
 void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
-    // Static-cast of the fields
-    const double *const __restrict__ Ex3D = &( fields->Ex_->data_[0] );
-    const double *const __restrict__ Ey3D = &( fields->Ey_->data_[0] );
-    const double *const __restrict__ Ez3D = &( fields->Ez_->data_[0] );
-    double *const __restrict__ Bx3D       = &( fields->Bx_->data_[0] );
-    double *const __restrict__ By3D       = &( fields->By_->data_[0] );
-    double *const __restrict__ Bz3D       = &( fields->Bz_->data_[0] );
+    const double *const __restrict__ Ex3D = fields->Ex_->data();
+    const double *const __restrict__ Ey3D = fields->Ey_->data();
+    const double *const __restrict__ Ez3D = fields->Ez_->data();
+    double *const __restrict__ Bx3D       = fields->Bx_->data();
+    double *const __restrict__ By3D       = fields->By_->data();
+    double *const __restrict__ Bz3D       = fields->Bz_->data();
 
+    // Magnetic field Bx^(p,d,d)
+#if defined( _GPU )
     const int sizeofEx = fields->Ex_->globalDims_;
     const int sizeofEy = fields->Ey_->globalDims_;
     const int sizeofEz = fields->Ez_->globalDims_;
@@ -30,19 +33,10 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     const int sizeofBy = fields->By_->globalDims_;
     const int sizeofBz = fields->Bz_->globalDims_;
 
-    // Magnetic field Bx^(p,d,d)
-#if defined( _GPU )
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ey3D [0:sizeofEy], Ez3D [0:sizeofEz] ) \
-            map( tofrom                               \
-                 : Bx3D [0:sizeofBx] )                \
-                map( to                               \
-                     : nx_p, ny_d, nz_d, ny_p, nz_p,  \
-                       dt_ov_dy, dt_ov_dz )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -66,14 +60,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ex3D [0:sizeofEx], Ez3D [0:sizeofEz] ) \
-            map( tofrom                               \
-                 : By3D [0:sizeofBy] )                \
-                map( to                               \
-                     : nx_d, ny_p, nz_d, nz_p,        \
-                       dt_ov_dx, dt_ov_dz )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -97,14 +84,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ex3D [0:sizeofEx], Ey3D [0:sizeofEy] ) \
-            map( tofrom                               \
-                 : Bz3D [0:sizeofBz] )                \
-                map( to                               \
-                     : nx_d, ny_d, nz_p, ny_p,        \
-                       dt_ov_dx, dt_ov_dy )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -122,6 +102,4 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
 }
-

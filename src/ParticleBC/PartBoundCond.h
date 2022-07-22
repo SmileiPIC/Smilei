@@ -43,13 +43,10 @@ public:
         #pragma acc parallel deviceptr(cell_keys)
         #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none ) \
-        map( to                           \
-             : imin, imax )               \
-            is_device_ptr( /* tofrom */   \
-                           cell_keys /* [imin:imax - imin] */ )
+    #pragma omp target is_device_ptr( /* tofrom */ \
+                                      cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
-    #pragma omp parallel for
+    #pragma omp distribute parallel for
 #endif
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
             cell_keys[ipart] = 0;

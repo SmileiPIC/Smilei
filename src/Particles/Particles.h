@@ -441,7 +441,7 @@ public:
     };
 
     virtual void extractParticles( Particles* particles_to_move );
-    virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
+    virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortParticles. Should not have come here" ); return 0;};
 
     virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
 

@@ -38,6 +38,7 @@ Main(
     grid_length = [Lx,Ly,Lz],
     
     number_of_patches = [4,4,4],
+    gpu_computing = False,
     
     EM_boundary_conditions = [ ["periodic"] ],
     

@@ -1,27 +1,22 @@
 #include "ElectroMagn2D.h"
 
 #include <cmath>
-
+#include <cstring>
 #include <iostream>
 #include <sstream>
 
-#include "Params.h"
+#include "ElectroMagnBC.h"
 #include "Field2D.h"
 #include "FieldFactory.h"
-
+#include "Params.h"
 #include "Patch.h"
-#include <cstring>
-
 #include "Profile.h"
-
-#include "ElectroMagnBC.h"
-
-using namespace std;
+#include "gpu.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
+ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch ) :
     ElectroMagn( params, domain_decomposition, vecSpecies, patch )
 {
 
@@ -873,40 +868,37 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        Field2D *Bx2D   = static_cast<Field2D *>( Bx_ );
-        Field2D *By2D   = static_cast<Field2D *>( By_ );
-        Field2D *Bz2D   = static_cast<Field2D *>( Bz_ );
-        Field2D *Bx2D_m = static_cast<Field2D *>( Bx_m );
-        Field2D *By2D_m = static_cast<Field2D *>( By_m );
-        Field2D *Bz2D_m = static_cast<Field2D *>( Bz_m );
-        
-        // Magnetic field Bx^(p,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ ) {
-            memcpy( &( ( *Bx2D_m )( i, 0 ) ), &( ( *Bx2D )( i, 0 ) ), ny_d*sizeof( double ) );
-            //for (unsigned int j=0 ; j<ny_d ; j++) {
-            //    (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
-            //}
-            
-            // Magnetic field By^(d,p)
-            memcpy( &( ( *By2D_m )( i, 0 ) ), &( ( *By2D )( i, 0 ) ), ny_p*sizeof( double ) );
-            //for (unsigned int j=0 ; j<ny_p ; j++) {
-            //    (*By2D_m)(i,j)=(*By2D)(i,j);
-            //}
-            
-            // Magnetic field Bz^(d,d)
-            memcpy( &( ( *Bz2D_m )( i, 0 ) ), &( ( *Bz2D )( i, 0 ) ), ny_d*sizeof( double ) );
-            //for (unsigned int j=0 ; j<ny_d ; j++) {
-            //    (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
-            //}
-        }// end for i
-        memcpy( &( ( *By2D_m )( nx_p, 0 ) ), &( ( *By2D )( nx_p, 0 ) ), ny_p*sizeof( double ) );
-        //for (unsigned int j=0 ; j<ny_p ; j++) {
-        //    (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
-        //}
-        memcpy( &( ( *Bz2D_m )( nx_p, 0 ) ), &( ( *Bz2D )( nx_p, 0 ) ), ny_d*sizeof( double ) );
-        //for (unsigned int j=0 ; j<ny_d ; j++) {
-        //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
-        //}
+        /* const */ double *const Bx2D   = Bx_->data();
+        /* const */ double *const By2D   = By_->data();
+        /* const */ double *const Bz2D   = Bz_->data();
+        double *const             Bx2D_m = Bx_m->data();
+        double *const             By2D_m = By_m->data();
+        double *const             Bz2D_m = Bz_m->data();
+
+        // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
+        // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the 
+        // is_memory_on_device check.
+        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx2D );
+
+        if( is_memory_on_device ) {
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx2D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx2D ),
+                                                                             nx_p * ny_d );
+
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D ),
+                                                                             ( nx_p + 1 ) * ny_p );
+
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D ),
+                                                                             ( nx_p + 1 ) * ny_d );
+        } else {
+            // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
+            // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
+            std::memcpy( Bx2D_m, Bx2D, nx_p * ny_d * sizeof( double ) );
+            std::memcpy( By2D_m, By2D, ( nx_p + 1 ) * ny_p * sizeof( double ) );
+            std::memcpy( Bz2D_m, Bz2D, ( nx_p + 1 ) * ny_d * sizeof( double ) );
+        }
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -1189,53 +1181,60 @@ void ElectroMagn2D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::centerMagneticFields()
 {
-    // Static cast of the fields
-    Field2D *Bx2D   = static_cast<Field2D *>( Bx_ );
-    Field2D *By2D   = static_cast<Field2D *>( By_ );
-    Field2D *Bz2D   = static_cast<Field2D *>( Bz_ );
-    Field2D *Bx2D_m = static_cast<Field2D *>( Bx_m );
-    Field2D *By2D_m = static_cast<Field2D *>( By_m );
-    Field2D *Bz2D_m = static_cast<Field2D *>( Bz_m );
-    
-    // Magnetic field Bx^(p,d)
-    for( unsigned int i=0 ; i<nx_p ; i++ ) {
-        #pragma omp simd
-        for( unsigned int j=0 ; j<ny_d ; j++ ) {
-            ( *Bx2D_m )( i, j ) = ( ( *Bx2D )( i, j ) + ( *Bx2D_m )( i, j ) )*0.5;
-        }
-//    }
+    const double *const __restrict__ Bx2D = Bx_->data();
+    const double *const __restrict__ By2D = By_->data();
+    const double *const __restrict__ Bz2D = Bz_->data();
+    double *const __restrict__ Bx2D_m     = Bx_m->data();
+    double *const __restrict__ By2D_m     = By_m->data();
+    double *const __restrict__ Bz2D_m     = Bz_m->data();
 
-        // Magnetic field By^(d,p)
-//    for (unsigned int i=0 ; i<nx_d ; i++) {
-        #pragma omp simd
-        for( unsigned int j=0 ; j<ny_p ; j++ ) {
-            ( *By2D_m )( i, j ) = ( ( *By2D )( i, j ) + ( *By2D_m )( i, j ) )*0.5;
+// Magnetic field Bx^(p,d)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp target map( tofrom                     \
+                            : Bx2D_m [0:nx_p * ny_d] ) \
+        map( to                                        \
+             : Bx2D [0:nx_p * ny_d] )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
+    for( unsigned int x = 0; x < nx_p; ++x ) {
+        for( unsigned int y = 0; y < ny_d; ++y ) {
+            Bx2D_m[x * ny_d + y] = ( Bx2D[x * ny_d + y] + Bx2D_m[x * ny_d + y] ) * 0.5;
         }
-//    }
-
-        // Magnetic field Bz^(d,d)
-//    for (unsigned int i=0 ; i<nx_d ; i++) {
-        #pragma omp simd
-        for( unsigned int j=0 ; j<ny_d ; j++ ) {
-            ( *Bz2D_m )( i, j ) = ( ( *Bz2D )( i, j ) + ( *Bz2D_m )( i, j ) )*0.5;
-        } // end for j
-    } // end for i
-    #pragma omp simd
-    for( unsigned int j=0 ; j<ny_p ; j++ ) {
-        ( *By2D_m )( nx_p, j ) = ( ( *By2D )( nx_p, j ) + ( *By2D_m )( nx_p, j ) )*0.5;
     }
-    #pragma omp simd
-    for( unsigned int j=0 ; j<ny_d ; j++ ) {
-        ( *Bz2D_m )( nx_p, j ) = ( ( *Bz2D )( nx_p, j ) + ( *Bz2D_m )( nx_p, j ) )*0.5;
-    } // end for j
-    
-    
-}//END centerMagneticFields
 
-
+    // Magnetic field By^(d,p)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp target map( tofrom                             \
+                            : By2D_m [0:( nx_p + 1 ) * ny_p] ) \
+        map( to                                                \
+             : By2D [0:( nx_p + 1 ) * ny_p] )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
+    for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
+        for( unsigned int y = 0; y < ny_p; ++y ) {
+            By2D_m[x * ny_p + y] = ( By2D[x * ny_p + y] + By2D_m[x * ny_p + y] ) * 0.5;
+        }
+    }
+    // Magnetic field Bz^(d,d)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+    #pragma omp target map( tofrom                             \
+                            : Bz2D_m [0:( nx_p + 1 ) * ny_d] ) \
+        map( to                                                \
+             : Bz2D [0:( nx_p + 1 ) * ny_d] )
+    #pragma omp teams
+    #pragma omp distribute parallel for collapse( 2 )
+#endif
+    for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
+        for( unsigned int y = 0; y < ny_d; ++y ) {
+            Bz2D_m[x * ny_d + y] = ( Bz2D[x * ny_d + y] + Bz2D_m[x * ny_d + y] ) * 0.5;
+        }
+    }
+}
 
 // Create a new field
-Field * ElectroMagn2D::createField( string fieldname, Params& params )
+Field * ElectroMagn2D::createField( std::string fieldname, Params& params )
 {
     if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
     else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
@@ -1399,12 +1398,12 @@ void ElectroMagn2D::applyExternalField( Field *my_field,  Profile *profile, Patc
 {
     Field2D *field2D=static_cast<Field2D *>( my_field );
     
-    vector<double> pos( 2, 0 );
+    std::vector<double> pos( 2, 0 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
     
-    vector<Field *> xyz( 2 );
-    vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1], 1 };
+    std::vector<Field *> xyz( 2 );
+    std::vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1], 1 };
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         xyz[idim] = new Field3D( dims );
     }
@@ -1420,7 +1419,7 @@ void ElectroMagn2D::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dx;
     }
     
-    vector<double> global_origin = { 
+    std::vector<double> global_origin = { 
         dx * ( ( field2D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
         dy * ( ( field2D->isDual( 1 )?-0.5:0. ) - oversize[1] )
     };
@@ -1436,13 +1435,13 @@ void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 
     Field2D *field2D=static_cast<Field2D *>( my_field );
     
-    vector<double> pos( 2, 0 );
+    std::vector<double> pos( 2, 0 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
     
     // Create the x,y,z maps where profiles will be evaluated
-    vector<Field *> xyz( 2 );
-    vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1] };
+    std::vector<Field *> xyz( 2 );
+    std::vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1] };
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         xyz[idim] = new Field2D( dims );
     }
@@ -1458,7 +1457,7 @@ void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dx;
     }
     
-    vector<double> global_origin = { 
+    std::vector<double> global_origin = { 
         dx * ( ( field2D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
         dy * ( ( field2D->isDual( 1 )?-0.5:0. ) - oversize[1] )
     };

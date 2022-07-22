@@ -143,7 +143,6 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
     const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
 
-    // Static cast of the electromagnetic fields
     const double *const __restrict__ Ex3D = EMfields->Ex_->data_;
     const double *const __restrict__ Ey3D = EMfields->Ey_->data_;
     const double *const __restrict__ Ez3D = EMfields->Ez_->data_;
@@ -151,7 +150,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-#ifdef _GPU
+#if defined(_GPU)
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
     const int sizeofEz = EMfields->Ez_->globalDims_;
@@ -177,31 +176,15 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    const int npart_range_size         = last_index - first_index;
-    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
+    // const int npart_range_size         = last_index - first_index;
 
-    #pragma omp target defaultmap( none )                                           \
-        map( to                                                                     \
-             : Ex3D [0:sizeofEx],                                                   \
-               Ey3D [0:sizeofEy],                                                   \
-               Ez3D [0:sizeofEz],                                                   \
-               Bx3D [0:sizeofBx],                                                   \
-               By3D [0:sizeofBy],                                                   \
-               Bz3D [0:sizeofBz] )                                                  \
-            map( from                                                               \
-                 : ELoc [first_index:interpolation_range_size],                     \
-                   BLoc [first_index:interpolation_range_size],                     \
-                   iold [first_index:interpolation_range_size],                     \
-                   delta [first_index:interpolation_range_size] )                   \
-                map( to                                                             \
-                     : i_domain_begin, j_domain_begin, k_domain_begin,              \
-                       nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,                  \
-                       nparts, first_index, last_index )                            \
-                    is_device_ptr( /* to: */                                        \
-                                   position_x /* [first_index:npart_range_size] */, \
-                                   position_y /* [first_index:npart_range_size] */, \
-                                   position_z /* [first_index:npart_range_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target map( to                                                 \
+                            : i_domain_begin, j_domain_begin, k_domain_begin ) \
+        is_device_ptr( /* to: */                                               \
+                       position_x /* [first_index:npart_range_size] */,        \
+                       position_y /* [first_index:npart_range_size] */,        \
+                       position_z /* [first_index:npart_range_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
@@ -251,7 +234,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         // Interpolation of Bz^(d,d,p)
         BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
 
-        //Buffering of iol and delta
+        // Buffering of iol and delta
         iold[0*nparts+ipart]  = idx_p[0];
         iold[1*nparts+ipart]  = idx_p[1];
         iold[2*nparts+ipart]  = idx_p[2];

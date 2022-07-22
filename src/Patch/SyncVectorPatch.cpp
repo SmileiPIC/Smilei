@@ -320,23 +320,20 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 pt1 = &( fields[ vecPatches( ipatch )->neighbor_[0][0]-h0+icomp*nPatches ]->data_[n_space[0]*ny_*nz_] );
                 pt2 = &( vecPatches.densitiesLocalx[ifield]->data_[0] );
                 //Sum 2 ==> 1
+
+                const int last = gsp[0] * ny_ * nz_;
+
 #if defined( _GPU )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
                 #pragma acc parallel present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                const int ptsize = gsp[0] * ny_ * nz_;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [0:1], ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams
     #pragma omp distribute parallel for
 #endif
-                for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
+                for( unsigned int i = 0; i < last; i++ ) {
                     pt1[i] += pt2[i];
                     pt2[i]  = pt1[i];
                 }
@@ -451,24 +448,23 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     //The patch to the south belongs to the same MPI process than I.
                     pt1 = &( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space[1]*nz_] );
                     pt2 = &( vecPatches.densitiesLocaly[ifield]->data_[0] );
+
+                    const int outer_last   = nx_ * ny_ * nz_;
+                    const int outer_stride = ny_ * nz_;
+                    const int inner_last   = gsp[1] * nz_;
+
 #if defined( _GPU )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->globalDims_;
                     int blabla = n_space[1];
                     #pragma acc parallel present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                    const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + (gsp[1] * nz_);
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [1:1], nx_, ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse(2)
 #endif
-                    for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += ny_*nz_ ) {
-                        for( unsigned int i = 0; i < gsp[1]*nz_ ; i++ ) {
+                    for( unsigned int j = 0; j < outer_last; j += outer_stride ) {
+                        for( unsigned int i = 0; i < inner_last; i++ ) {
                             pt1[i+j] += pt2[i+j];
                             pt2[i+j]  = pt1[i+j];
                         }
@@ -584,29 +580,27 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         //The patch below me belongs to the same MPI process than I.
                         pt1 = &( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches]->data_[n_space[2]] );
                         pt2 = &( vecPatches.densitiesLocalz[ifield]->data_[0] );
-#ifdef _GPU
+
+                        const int outer_last   = nx_ * ny_ * nz_;
+                        const int outer_stride = nz_;
+                        const int inner_last   = gsp[2];
+
+#if defined( _GPU )
                         int ptsize = vecPatches.densitiesLocalz[ifield]->globalDims_;
                         int blabla = n_space[2];
                         #pragma acc parallel present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                         const int ptsize = ( nx_ * ny_ * nz_ ) - nz_ + gsp[2];
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp [2:1], nx_, ny_, nz_ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
-                        for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += nz_ ) {
-                            for( unsigned int i = 0; i < gsp[2] ; i++ ) {
+                        for( unsigned int j = 0; j < outer_last; j += outer_stride ) {
+                            for( unsigned int i = 0; i < inner_last; i++ ) {
                                 pt1[i+j] += pt2[i+j];
                                 pt2[i+j] =  pt1[i+j];
                             }
-                            //pt1 += nz_;
-                            //pt2 += nz_;
                         }
                     }
                 }
@@ -1463,12 +1457,10 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    bool is_memory_on_device = false;
-
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    is_memory_on_device = vecPatches.B_localx.size() > 0 &&
-                          smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
-#endif
+    // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
+    // is_memory_on_device check.
+    const bool is_memory_on_device = vecPatches.B_localx.size() > 0 &&
+                                     smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
     for( int icomp=0 ; icomp<2 ; icomp++ ) {
@@ -1496,7 +1488,6 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 pt2 = &( vecPatches.B_localx[ifield]->data_[0] );
                 //for filter
 
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
                 if( is_memory_on_device ) {
                     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
                                                                                      smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
@@ -1505,12 +1496,11 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
                                                                                      smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
                                                                                      oversize * ny_ * nz_ );
-                }
-#endif
-
-                if (!is_memory_on_device) {
-                    memcpy( pt2, pt1, oversize*ny_*nz_*sizeof( double ) );
-                    memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof( double ) );
+                } else {
+                    // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
+                    // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
+                    std::memcpy( pt2, pt1, oversize * ny_ * nz_ * sizeof( double ) );
+                    std::memcpy( pt1 + gsp * ny_ * nz_, pt2 + gsp * ny_ * nz_, oversize * ny_ * nz_ * sizeof( double ) );
                 }
             } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
 
@@ -1633,13 +1623,8 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + oversize * nz_ + gsp * nz_;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp, nx_, ny_, nz_, oversize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 2 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {
@@ -1767,13 +1752,8 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + ( ny_ * nz_ ) - nz_ + oversize;
-    #pragma omp target defaultmap( none ) \
-        map( tofrom                       \
-             : pt1 [0:ptsize],            \
-               pt2 [0:ptsize] )           \
-            map( to                       \
-                 : gsp, nx_, ny_, nz_, oversize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {

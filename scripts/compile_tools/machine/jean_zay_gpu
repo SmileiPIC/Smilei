@@ -10,6 +10,11 @@
 # IDRIS config for curand
 ACCELERATOR_GPU_FLAGS += -ta=tesla:cc70 -std=c++14  -lcurand -Minfo=all
 LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
+
+# To turn on Omp support, uncomment these two lines
+# ACCELERATOR_GPU_FLAGS += -mp=gpu -Minfo=mp
+# LDFLAGS += -mp=gpu
+
 ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_70
 CXXFLAGS +=  -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 

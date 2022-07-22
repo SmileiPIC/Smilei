@@ -164,6 +164,15 @@ namespace smilei {
                 ///                                      else return nullptr
                 /// else return a_pointer (untouched)
                 ///
+                /// Note:
+                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this 
+                /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
+                ///
+                /// #if defined( __NVCOMPILER )
+                ///     No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
+                ///     https://forums.developer.nvidia.com/t/nvc-v21-3-omp-target-is-present-crashes-the-program/215585
+                /// #else
+                ///
                 template <typename T>
                 static T* GetDevicePointer( T* a_pointer );
 
@@ -179,6 +188,26 @@ namespace smilei {
                 template <typename T>
                 static void DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count );
             };
+
+
+            ////////////////////////////////////////////////////////////////////////////////
+            // Macros
+            ////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////
+/// @def SMILEI_GPU_ASSERT_MEMORY_ON_DEVICE
+///
+/// Makes sure the host pointer is mapped on the device through OpenACC/OpenMP.
+/// This can be used to simulate the present() clause of OpenACC in an OpenMP
+/// context. There is not present() clause in OpenMP
+///
+/// Example usage:
+///
+///    #pragma omp target teams distribute parallel for
+///    for(...) { ... }
+///
+//////////////////////////////////////
+#define SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( a_host_pointer ) )
 
 
             ////////////////////////////////////////////////////////////////////////////////
@@ -206,14 +235,13 @@ namespace smilei {
                       bool do_device_free>
             void NonInitializingVector<T, do_device_free>::HostAlloc( std::size_t size )
             {
-                if( size_ != 0 || data_ != nullptr ) {
-                    ERROR( "NonInitializingVector::Alloc, allocation before dealloc" );
-                }
+                SMILEI_ASSERT_VERBOSE( size_ == 0 && data_ == nullptr,
+                                       "NonInitializingVector::Alloc, allocation before deallocating." );
 
                 data_ = static_cast<T*>( std::malloc( sizeof( T ) * size ) );
-                if( data_ == nullptr ) {
-                    ERROR( "NonInitializingVector::Alloc, std::malloc() out of memory." );
-                }
+
+                SMILEI_ASSERT_VERBOSE( data_ != nullptr,
+                                       "NonInitializingVector::Alloc, std::malloc() out of memory." );
 
                 size_ = size;
             }
@@ -420,6 +448,9 @@ namespace smilei {
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
     #pragma acc exit data delete( a_pointer [0:a_size] )
+#else
+                SMILEI_UNUSED( a_pointer );
+                SMILEI_UNUSED( a_size );
 #endif
             }
 
@@ -433,11 +464,26 @@ namespace smilei {
             T* HostDeviceMemoryManagment::GetDevicePointer( T* a_host_pointer )
             {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int device_num = ::omp_get_default_device();
+
+                // Omp Std 5.0: A list item in a use_device_ptr clause must hold
+                // the address of an object that has a corresponding list item
+                // in the device data environment.
+                // To be fully compliant we need to use ::omp_target_is_present
+
+                if( ::omp_target_is_present( a_host_pointer, device_num ) == 0 ) {
+                    return nullptr;
+                }
+
                 T* a_device_pointer = nullptr;
+
     #pragma omp target data use_device_ptr( a_host_pointer )
                 {
                     a_device_pointer = a_host_pointer;
                 }
+
+                SMILEI_ASSERT( a_device_pointer != nullptr );
+
                 return a_device_pointer;
 #elif defined( _GPU )
                 return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );
@@ -447,9 +493,10 @@ namespace smilei {
             }
 
             template <typename T>
-            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
+            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_host_pointer )
             {
-                return GetDevicePointer( a_pointer ) != nullptr;
+                // We could optimize the omp version by only using ::omp_target_is_present()
+                return GetDevicePointer( a_host_pointer ) != nullptr;
             }
 
             template <typename T>

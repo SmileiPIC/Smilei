@@ -4221,7 +4221,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
-        // Initialize  particles data structures on GPU, and synchronize it
+        // Initialize particles data structures on GPU, and synchronize it
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
