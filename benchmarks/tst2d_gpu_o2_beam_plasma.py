@@ -44,7 +44,7 @@ NumberOfCell_inY=1024
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=16
+SizePatch=512
 
 #################################
 NumberOfTimeStep=60000
@@ -172,15 +172,17 @@ Main(
     print_every = 2
 )
 
-LoadBalancing(
-    initial_balance = True,
-    every = 150,
-    cell_load = 1.,
-    frozen_particle_load = 0.1,
-)
+# # Disabled for GPUs as of 2022/06
+# LoadBalancing(
+#     initial_balance = True,
+#     every = 150,
+#     cell_load = 1.,
+#     frozen_particle_load = 0.1,
+# )
 
+# Always disabled for GPU (counter intuitive)
 Vectorization(
-   mode = "on"
+   mode = "off"
 )
 
 Species(
@@ -227,6 +229,7 @@ restart_run='initial'
 # initial pour un premier run
 # restart pour lire un fichier restart pour continuer
 # all job have to be in $SCRATCHDIR directory (see below for the eact path)
+# chemin_restart='/scratch/cnt0026/lpp0106/ckrafft/SmileiGG12v2_Occi-016'
 chemin_restart='SmileiGG12v2_Occi-016'
 
 

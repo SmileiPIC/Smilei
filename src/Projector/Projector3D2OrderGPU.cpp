@@ -241,7 +241,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jx^(d,p,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSx [0:kTmpArraySize], sumX [0:kTmpArraySize] )
@@ -320,7 +320,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jy^(p,d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSy [0:kTmpArraySize], \
@@ -400,7 +400,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jz^(p,p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp teams
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSz [0:kTmpArraySize], \

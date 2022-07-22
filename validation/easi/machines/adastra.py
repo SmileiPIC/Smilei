@@ -1,6 +1,5 @@
 from . import Machine
 
-
 class MachineAdastra(Machine):
     """
     As of 22/03/17, this class, while named Adastra, instead targets the 
@@ -20,7 +19,8 @@ class MachineAdastra(Machine):
 # #SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
 #SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to conter the effect
 #SBATCH --threads-per-core=1
-# #SBATCH --hint=memory_bound                    # Maximise memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
+#SBATCH --hint=nomultithread
+#SBATCH --hint=memory_bound                    # Maximise memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
 #SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
@@ -60,6 +60,8 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_SCHEDULE=dynamic
 export OMP_PLACES=cores
 
+# These variables may trigger a huge flood of information when using multiple 
+# threads per MPI + GPU support
 export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
 export CRAY_OMP_CHECK_AFFINITY=TRUE
 
@@ -72,8 +74,8 @@ export MPICH_MPIIO_HINTS_DISPLAY=1
 # MPICH general
 export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
 
-# MPICH GPU support (pass GPU buffers to the MPI)
-# export MPICH_GPU_SUPPORT_ENABLED=1
+# MPICH GPU support (support for functionality allowing mpi to understand GPU buffers)
+export MPICH_GPU_SUPPORT_ENABLED=1
 
 # Omp target debug
 # export CRAY_ACC_DEBUG=3
@@ -143,7 +145,7 @@ LaunchSRunPatProfile() {{
     # # -u make the program crash (abi break) or silently corrupts it state
     # pat_build -g mpi,syscall,io,omp,hdf5 -w -f $1 -o instrumented_executable
 
-    LaunchSRun instrumented_executable ${{@:2}}
+    LaunchSRun ./instrumented_executable ${{@:2}}
 }}
 
 # Try to use this profiling on only one GPU
@@ -202,7 +204,7 @@ exit $kRETVAL
         self.options = options
 
         # Use the config flag "gpu_amd" to compile for GPU or remove it for CPU only
-        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -j'
+        the_make_command = 'make machine="adastra" config="' + (self.options.compile_mode if self.options.compile_mode else '') + (' verbose' if self.options.verbose else '') + '" -k -j'
         self.COMPILE_COMMAND = the_make_command + ' > ' + self.smilei_path.COMPILE_OUT + ' 2> '+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 

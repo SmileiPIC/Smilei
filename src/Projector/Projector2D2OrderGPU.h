@@ -57,7 +57,6 @@ public:
                          int          ipart_ref = 0 ) override;
 
 protected:
-    // TODO(Etienne M): remove state
     double dt;
     double dts2;
     double dts4;

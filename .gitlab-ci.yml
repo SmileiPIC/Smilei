@@ -13,6 +13,7 @@ install:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Force workdir cleaning in case of retried
@@ -32,6 +33,7 @@ compile_default:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -44,6 +46,7 @@ run1D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -57,6 +60,7 @@ run2D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -72,6 +76,7 @@ run3D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -88,6 +93,7 @@ runAM:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -100,6 +106,7 @@ runCollisions:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     # Move in test dir
@@ -112,6 +119,7 @@ compile_picsar:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -123,6 +131,7 @@ run_picsar:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -133,6 +142,7 @@ compile_debug:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -144,6 +154,7 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -155,6 +166,7 @@ compile_no_openmp:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - develop_gpu_omp
 
 
   script:

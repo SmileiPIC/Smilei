@@ -64,7 +64,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             return;
         }
 
-        const int nparts           = particles.size();
+        const int nparts           = particles.last_index.back();
         const int first_index      = istart;
         const int last_index       = iend;
         const int npart_range_size = last_index - first_index;
@@ -75,9 +75,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         const short *const __restrict__ charge      = particles.getPtrCharge();
         const double *const __restrict__ weight     = particles.getPtrWeight();
 
-        // Arrays used for the Esirkepov projection method
-        static constexpr bool kAutoDeviceFree = true;
-        const std::size_t     kTmpArraySize   = npart_range_size * 5;
+        // // Arrays used for the Esirkepov projection method
+        // static constexpr bool kAutoDeviceFree = true;
+        // const std::size_t     kTmpArraySize   = npart_range_size * 5;
 
         // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
         // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
@@ -93,28 +93,15 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
         // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
 
-    #pragma omp target defaultmap( none )                            \
-        map( to                                                      \
-             : position_x [first_index:npart_range_size],            \
-               position_y [first_index:npart_range_size],            \
-               momentum_z [first_index:npart_range_size],            \ 
-               charge [first_index:npart_range_size],                \
-               weight [first_index:npart_range_size],                \
-               invgf_ [first_index:npart_range_size],                \
-               iold_ [first_index:interpolation_range_2D_size],      \
-               deltaold_ [first_index:interpolation_range_2D_size] ) \
-            map( tofrom                                              \
-                 : Jx [0:Jx_size],                                   \
-                   Jy [0:Jy_size],                                   \
-                   Jz [0:Jz_size] )                                  \
-                map( to                                              \
-                     : i_domain_begin, j_domain_begin,               \
-                       nprimy, dy_ov_dt, pxr, pxr, dx_inv,           \
-                       inv_cell_volume, nparts, dy_inv,              \
-                       dx_ov_dt, one_third, first_index, last_index )
+    #pragma omp target is_device_ptr /* map */ ( /* to: */                                        \
+                                                 position_x /* [first_index:npart_range_size] */, \
+                                                 position_y /* [first_index:npart_range_size] */, \
+                                                 momentum_z /* [first_index:npart_range_size] */, \
+                                                 charge /* [first_index:npart_range_size] */,     \
+                                                 weight /* [first_index:npart_range_size] */ )
         //        map( from                                            \
                     //  : Sx0_buffer_data [0:kTmpArraySize],            \ 
                     //    Sx1_buffer_data [0:kTmpArraySize],            \
@@ -244,18 +231,18 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             for( unsigned int i = 0; i < 1; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 /* Jx[iloc] += tmpJx[0]; */
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                 Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; j++ ) {
                     tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                     Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                     Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
@@ -268,28 +255,28 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
             for( unsigned int i = 1; i < 5; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                 Jx[iloc] += tmpJx[0];
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                 Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; ++j ) {
                     tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                     Jx[iloc + j] += tmpJx[j];
                     tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                     Jy[iloc + j + pxr * ( i + ipo )] += tmp;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP_PENDING )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
 #endif
                     Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +

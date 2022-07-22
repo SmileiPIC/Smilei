@@ -784,17 +784,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         // If compiled for GPU and asking for GPU
         MESSAGE( 1, "Smilei will run on GPU" );
 #else
-    #if !defined( _GPU ) && defined( _OPENACC )
-        MESSAGE( 1, "Smilei will be exeecuted on CPU through Thrust" );
-    #else
         // If compiled for CPU and asking for GPU
         ERROR( "Smilei is not compiled for GPU" );
-    #endif
 #endif
     } else {
 #if defined( _OPENACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // If compiled for GPU and asking for CPU
-        ERROR( "Smilei will be executed on GPU,set Main.gpu_computing = True" );
+        ERROR( "Smilei needs to be executed on GPU, set Main.gpu_computing = True" );
+#else
+        // If compiled for CPU and asking for CPU
+        MESSAGE( 1, "Smilei will run on CPU" );
 #endif
     }
 
