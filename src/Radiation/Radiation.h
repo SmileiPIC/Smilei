@@ -44,7 +44,7 @@ public:
     //! \param radiated_energy     overall energy radiated during the call to this method
     virtual void operator()(
         Particles       &particles,
-        Particles       &photons,
+        Particles       *photons,
         SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,

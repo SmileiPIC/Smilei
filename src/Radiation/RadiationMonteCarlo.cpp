@@ -32,9 +32,10 @@
 RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species, Random * rand  )
     : Radiation( params, species, rand )
 {
-    radiation_photon_sampling_ = species->radiation_photon_sampling_;
+    radiation_photon_sampling_        = species->radiation_photon_sampling_;
+    max_photon_emissions_             = species->radiation_max_emissions_;
     radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
-    inv_radiation_photon_sampling_ = 1. / radiation_photon_sampling_;
+    inv_radiation_photon_sampling_    = 1. / radiation_photon_sampling_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationMonteCarlo::operator()(
     Particles       &particles,
-    Particles       &photons,
+    Particles       *photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -76,7 +77,9 @@ void RadiationMonteCarlo::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
+    // Total number of particles
     const int nparts = Epart->size()/3;
+    
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -94,46 +97,7 @@ void RadiationMonteCarlo::operator()(
     // Temporary double parameter
     double temp;
 
-    // Momentum shortcut
-    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
-
-    // Position shortcut
-    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
-    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
-    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
-
-    // Charge shortcut
-    const short *const __restrict__ charge = particles.getPtrCharge();
-
-    // Weight shortcut
-    const double *const __restrict__ weight = particles.getPtrWeight();
-
-    // Optical depth for the Monte-Carlo process
-    double *const __restrict__ tau = particles.getPtrTau();
-
-    // Quantum parameter
-    double *const __restrict__ chi = particles.getPtrChi();
-
-    // Tables for MC
-    const double *const table_integfochi = &(RadiationTables.integfochi_.table_[0]);
-    const double *const table_min_photon_chi = &(RadiationTables.xi_.min_photon_chi_table_[0]);
-    double * table_xi = &(RadiationTables.xi_.table_[0]);
-
-    // Size of tables
-    int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
-    int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
-    int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
-                           RadiationTables.xi_.size_photon_chi_;
-
-    // Parameter to store the local radiated energy
-    double radiated_energy_loc = 0;
-
-    //random temporary number
-    double random_number; 
-
-    #ifdef _GPU
+#ifdef _GPU
     unsigned long long seed; // Parameters for CUDA generator
     unsigned long long seq;
     unsigned long long offset;
@@ -145,11 +109,115 @@ void RadiationMonteCarlo::operator()(
     seed = 12345ULL;
     seq = 0ULL;
     offset = 0ULL;
-    #endif
+#endif
+
+    // Parameter to store the local radiated energy
+    double radiated_energy_loc = 0;
+
+    //random temporary number
+    double random_number; 
+
+    // Particle properties ----------------------------------------------------------------
+
+    // Particles position shortcut
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+
+    // Particles Momentum shortcut
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
+    
+    // Charge shortcut
+    const short *const __restrict__ charge = particles.getPtrCharge();
+
+    // Weight shortcut
+    const double *const __restrict__ weight = particles.getPtrWeight();
+
+    // Optical depth for the Monte-Carlo process
+
+    double *const __restrict__ tau = particles.getPtrTau();
+
+    // Quantum parameter
+    double *const __restrict__ chi = particles.getPtrChi();
+
+    
+    // Photon properties ----------------------------------------------------------------
+    
+    // Number of photons
+
+    int nphotons;
+#ifdef _GPU
+    int nphotons_start;
+#endif
+    
+    // Buffer size for each particle
+    const double photon_buffer_size_per_particle = radiation_photon_sampling_ * max_photon_emissions_;
+    
+    if (photons) {
+#ifdef _GPU
+            // We reserve a large number of potential photons on device since we can't reallocate
+            nphotons_start = photons->gpu_size();
+            //static_cast<nvidiaParticles*>(photons)->deviceReserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
+            static_cast<nvidiaParticles*>(photons)->createParticles( (iend - istart) * photon_buffer_size_per_particle );
+            //std::cerr << "photons size: " << static_cast<nvidiaParticles*>(photons)->gpu_size() 
+            //          << " new: " << (iend - istart)*photon_buffer_size_per_particle
+            //          << std::endl;
+
+#else 
+            nphotons = photons->size();
+            // We reserve a large number of photons
+            photons->reserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
+#endif
+    } else {
+        nphotons = 0;
+    }
+    
+    // Photon position shortcut
+    double *const __restrict__ photon_position_x = photons ? photons->getPtrPosition( 0 ) : nullptr;
+    double *const __restrict__ photon_position_y = photons ? (nDim_ > 1 ? photons->getPtrPosition( 1 ) : nullptr) : nullptr;
+    double *const __restrict__ photon_position_z = photons ? (nDim_ > 2 ? photons->getPtrPosition( 2 ) : nullptr) : nullptr;
+
+    // Particles Momentum shortcut
+    double *const __restrict__ photon_momentum_x = photons ? photons->getPtrMomentum(0) : nullptr;
+    double *const __restrict__ photon_momentum_y = photons ? photons->getPtrMomentum(1) : nullptr;
+    double *const __restrict__ photon_momentum_z = photons ? photons->getPtrMomentum(2) : nullptr;
+
+    // Charge shortcut
+    short *const __restrict__ photon_charge = photons ? photons->getPtrCharge() : nullptr;
+
+    // Weight shortcut
+    double *const __restrict__ photon_weight = photons ? photons->getPtrWeight() : nullptr;
+
+    // Quantum Parameter
+    double *const __restrict__ photon_chi_array = photons ? (photons->isQuantumParameter ? photons->getPtrChi() : nullptr) : nullptr;
+    
+    double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
+
+#ifdef _GPU
+    // Cell keys as a mask
+    int *const __restrict__ photon_cell_keys = photons ? photons->getPtrCellKeys() : nullptr;
+#endif
+
+    // Table properties ----------------------------------------------------------------
+#ifdef _GPU
+    // Size of tables
+    int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
+    int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
+    int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
+                           RadiationTables.xi_.size_photon_chi_;
+#endif
+
+
+    // Tables for MC
+    const double *const table_integfochi = &(RadiationTables.integfochi_.table_[0]);
+    const double *const table_min_photon_chi = &(RadiationTables.xi_.min_photon_chi_table_[0]);
+    double * table_xi = &(RadiationTables.xi_.table_[0]);
 
     // _______________________________________________________________
     // Computation
-    #ifdef _GPU
+#ifdef _GPU
     // Management of the data on GPU though this data region
     int np = iend-istart;
     
@@ -160,7 +228,7 @@ void RadiationMonteCarlo::operator()(
     // Parameters for linear alleatory number generator
     const int a = 1664525;
     const int c = 1013904223;
-    const int m = pow(2,32);
+    const int m = std::pow(2,32);
 
     // Variable to save seed for CUDA generators
     int seed_curand_1;
@@ -171,27 +239,58 @@ void RadiationMonteCarlo::operator()(
             table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
             table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
             deviceptr(momentum_x,momentum_y,momentum_z,position_x, \
-            position_y,position_z,charge,weight,tau,chi) 
+            position_y,position_z,charge,weight,tau,chi, \
+            photon_position_x, \
+            photon_position_y, \
+            photon_position_z, \
+            photon_momentum_x, \
+            photon_momentum_y, \
+            photon_momentum_z, \
+            photon_weight, \
+            photon_charge, \
+            photon_chi_array, \
+            photon_tau, \
+            photon_cell_keys \
+            ) 
     {
-    #endif
+#endif
 
 
-    #ifdef _GPU
-        #pragma acc parallel \
-        present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-        Bx[istart:np],By[istart:np],Bz[istart:np], \
-        table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
-        table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
-        deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) 
-        {
-            #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2) \
-        reduction(+:radiated_energy_loc) 
+#ifdef _GPU
+    #pragma acc parallel \
+    present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+    Bx[istart:np],By[istart:np],Bz[istart:np], \
+    table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
+    table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
+    deviceptr(position_x, \
+            position_y, \
+            position_z, \
+            momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
+            photon_position_x, \
+            photon_position_y, \
+            photon_position_z, \
+            photon_momentum_x, \
+            photon_momentum_y, \
+            photon_momentum_z, \
+            photon_weight, \
+            photon_charge, \
+            photon_chi_array, \
+            photon_tau, \
+            photon_cell_keys, \
+    ) 
+    {
         
         smilei::tools::gpu::Random prng_state_1;
         smilei::tools::gpu::Random prng_state_2;
+        //curandState_t state_1;
+        //curandState_t state_2;
+        
+        #pragma acc loop gang worker vector \
+        private(random_number, seed_curand_1, seed_curand_2) \
+        reduction(+:radiated_energy_loc) 
 
+#endif
 
-    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         
         // charge / mass^2
@@ -203,24 +302,27 @@ void RadiationMonteCarlo::operator()(
         double local_it_time = 0;
         // Number of Monte-Carlo iterations
         int mc_it_nb = 0;
+        
+        // Number of emitted photons per particles
+        int emission_count_per_particle = 0;
 
         // Monte-Carlo Manager inside the time step
         while( ( local_it_time < dt_ )
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
 
             // Gamma
-            const double gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+            const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                           + momentum_y[ipart]*momentum_y[ipart]
                           + momentum_z[ipart]*momentum_z[ipart] );
 
-            if( gamma < 1.1){ // does not apply the MC routine for particles with 0 kinetic energy
+            if( particle_gamma < 1.1){ // does not apply the MC routine for particles with 0 kinetic energy
                 break;
             }
 
             // Computation of the Lorentz invariant quantum parameter
             const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
-                           gamma,
+                           particle_gamma,
                            Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                            Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
@@ -243,12 +345,14 @@ void RadiationMonteCarlo::operator()(
                         seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
                		
                         prng_state_1.init( seed_curand_1, seq, offset ); //Cuda generator initialization
-                        // hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        //hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        //curand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
                         
                         random_number = prng_state_1.uniform(); //Generating number
-                        // random_number = hiprand_uniform(&state_1); //Generating number
+                        //random_number = hiprand_uniform(&state_1); //Generating number
+                        //random_number = curand_uniform(&state_1); //Generating number
                         
-                        tau[ipart] = -log( 1.- random_number );
+                        tau[ipart] = -std::log( 1.- random_number );
                         initial_seed_1 = random_number;
                     #endif
                 }
@@ -260,9 +364,7 @@ void RadiationMonteCarlo::operator()(
             if( tau[ipart] > epsilon_tau_ ) {
 
                 // from the cross section
-                //temp = 0;
-                temp = RadiationTables.computePhotonProductionYield( particle_chi, gamma, 
-                                                                        table_integfochi );
+                temp = RadiationTables.computePhotonProductionYield( particle_chi, particle_gamma, table_integfochi);
 
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
@@ -272,7 +374,7 @@ void RadiationMonteCarlo::operator()(
                 // Update of the optical depth
                 tau[ipart] -= temp*emission_time;
 
-                // If the final optical depth is reached
+                // If the final optical depth is reached, photons are emitted
                 if( tau[ipart] <= epsilon_tau_ ) {
 
                     #ifndef _GPU
@@ -280,33 +382,170 @@ void RadiationMonteCarlo::operator()(
                     #else
                         seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
                         seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
-
-                        // hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
-                        // 
-                        // random_number = hiprand_uniform(&state_2); //Generating number
                         
-                        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
+                        prng_state_2.init( seed_curand_2, seq, offset ); //Random generator initialization
 	
                         random_number = prng_state_2.uniform(); //Generating number
-                        
+                        //random_number = curand_uniform(&state_2); //Generating number
                     #endif
 
                     // Emission of a photon
                     // Radiated energy is incremented only if the macro-photon is not created
-                    radiated_energy_loc += RadiationMonteCarlo::photonEmission( ipart,
-                                                         particle_chi, gamma,
-                                                         position_x,
-                                                         position_y,
-                                                         position_z,
-                                                         momentum_x,
-                                                         momentum_y,
-                                                         momentum_z,
-                                                         weight,
-                                                         random_number,
-                                                         table_min_photon_chi,
-                                                         table_xi,
-                                                         &photons,
-                                                         RadiationTables);                  
+
+                    // Get the photon quantum parameter from the table xip
+                    // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
+                    double photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, random_number,  table_min_photon_chi, table_xi);
+
+                    // compute the photon gamma factor
+                    double photon_gamma = photon_chi/particle_chi*( particle_gamma-1.0 );
+
+                    // *****************************************************************
+                    // Creation of the new photon
+
+                    // Update of the particle properties
+                    // direction d'emission // direction de l'electron (1/gamma << 1)
+                    // With momentum conservation
+                    double inv_old_norm_p = photon_gamma/std::sqrt( particle_gamma*particle_gamma - 1.0 );
+                    momentum_x[ipart] -= momentum_x[ipart]*inv_old_norm_p;
+                    momentum_y[ipart] -= momentum_y[ipart]*inv_old_norm_p;
+                    momentum_z[ipart] -= momentum_z[ipart]*inv_old_norm_p;
+
+                    // With energy conservation
+                    /*inv_old_norm_p = 1./sqrt(particle_gamma*particle_gamma - 1.0);
+                    particle_gamma -= photon_gamma;
+                    new_norm_p = sqrt(particle_gamma*particle_gamma - 1.0);
+                    px *= new_norm_p * inv_old_norm_p;
+                    py *= new_norm_p * inv_old_norm_p;
+                    pz *= new_norm_p * inv_old_norm_p;*/
+
+                    // Creation of macro-photons if requested
+                    // Check that the photon_species is defined and the threshold on the energy
+                    if(          photons
+                            && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
+                            && ( emission_count_per_particle < max_photon_emissions_)) {
+                                
+// CPU implementation (non-threaded implementation)
+#ifndef _GPU                                 
+                        // Creation of new photons in the temporary array photons
+                        photons->createParticles( radiation_photon_sampling_ );
+                        
+                        // New number of photons
+                        nphotons += radiation_photon_sampling_;
+
+                        // Inverse of the momentum norm
+                        inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
+                                                  + momentum_y[ipart]*momentum_y[ipart]
+                                                  + momentum_z[ipart]*momentum_z[ipart] );
+
+                        // For all new photons
+                        #pragma omp simd
+                        for( auto iphoton=nphotons-radiation_photon_sampling_; iphoton<nphotons; iphoton++ ) {
+
+                            // std::cerr  << photons << " "
+                            //            << iphoton << " " 
+                            //            << photons->size() << " " 
+                            //            << radiation_photon_sampling_ << " " 
+                            //            << ipart << " "
+                            //            << photon_position_x << " "
+                            //            << photons->getPtrPosition( 0 ) << " "
+                            //            << std::endl;
+
+                            photon_position_x[iphoton]=position_x[ipart];
+                            if (nDim_>1) {
+                                photon_position_y[iphoton]=position_y[ipart];
+                                if (nDim_>2) {
+                                    photon_position_z[iphoton]=position_z[ipart];
+                                }
+                            }
+
+                            photon_momentum_x[iphoton] =
+                                photon_gamma*momentum_x[ipart]*inv_old_norm_p;
+                            photon_momentum_y[iphoton] =
+                                photon_gamma*momentum_y[ipart]*inv_old_norm_p;
+                            photon_momentum_z[iphoton] =
+                                photon_gamma*momentum_z[ipart]*inv_old_norm_p;
+
+                            photon_weight[iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
+                            photon_charge[iphoton] = 0;
+
+                            if( photons->isQuantumParameter ) {
+                                photon_chi_array[iphoton] = photon_chi;
+                            }
+
+                            if( photons->isMonteCarlo ) {
+                                photon_tau[iphoton] = -1.;
+                            }
+
+                        } // end for iphoton
+                        
+                        // Number of emitted photons
+                        emission_count_per_particle += 1;
+                        
+// GPU optimized implementation (SIMT compatible implementation)
+// Each particle has a buffer of `max_photon_emissions_` possible emission
+// meaning `ax_photon_emissions_`*radiation_photon_sampling_` photons
+#else
+
+                        // Inverse of the momentum norm
+                        inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
+                                                  + momentum_y[ipart]*momentum_y[ipart]
+                                                  + momentum_z[ipart]*momentum_z[ipart] );
+
+                        const int iphoton_start = nphotons_start // initial number of photons
+                                  + (ipart - istart) * photon_buffer_size_per_particle // beginning of the buffer for ipart
+                                  + emission_count_per_particle * radiation_photon_sampling_; // already emitted photons (i.e. buffer usage)
+
+
+                        // For all new photons
+                        for( auto iphoton=0; iphoton<radiation_photon_sampling_; iphoton++ ) {
+                            
+                            // Photon positions at particle positions
+                            photon_position_x[iphoton_start + iphoton]=position_x[ipart];
+                            if (nDim_>1) {
+                                photon_position_y[iphoton_start + iphoton]=position_y[ipart];
+                                if (nDim_>2) {
+                                    photon_position_z[iphoton_start + iphoton]=position_z[ipart];
+                                }
+                            }
+                            
+                            // Photon momentum
+                            photon_momentum_x[iphoton_start + iphoton] =
+                                photon_gamma*momentum_x[ipart]*inv_old_norm_p;
+                            photon_momentum_y[iphoton_start + iphoton] =
+                                photon_gamma*momentum_y[ipart]*inv_old_norm_p;
+                            photon_momentum_z[iphoton_start + iphoton] =
+                                photon_gamma*momentum_z[ipart]*inv_old_norm_p;
+                                
+                            photon_weight[iphoton_start + iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
+                            photon_charge[iphoton_start + iphoton] = 0;
+
+                            if( photons->isQuantumParameter ) {
+                                photon_chi_array[iphoton_start + iphoton] = photon_chi;
+                            }
+
+                            if( photons->isMonteCarlo ) {
+                                photon_tau[iphoton_start + iphoton] = -1.;
+                            }
+                                
+                            // cell_keys plays the role of a mask here
+                            // If the photon is created, then cell_keys is True
+                            photon_cell_keys[iphoton_start + iphoton] = 1;
+                            
+                        }
+                        
+                        emission_count_per_particle += 1;
+                        
+#endif                        
+                    }
+                    // If no emission of a macro-photon:
+                    // Addition of the emitted energy in the cumulating parameter
+                    // for the scalar diagnostics
+                    else {
+                        photon_gamma = particle_gamma - std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                                                         + momentum_y[ipart]*momentum_y[ipart]
+                                                         + momentum_z[ipart]*momentum_z[ipart] );
+                        radiated_energy_loc += weight[ipart]*photon_gamma;
+                    }
 
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
@@ -339,13 +578,13 @@ void RadiationMonteCarlo::operator()(
                             emission_time );
 
                 // Effect on the momentum
-                temp = cont_rad_energy*gamma/( gamma*gamma-1. );
+                temp = cont_rad_energy*particle_gamma/( particle_gamma*particle_gamma-1. );
                 momentum_x[ipart] -= temp*momentum_x[ipart];
                 momentum_y[ipart] -= temp*momentum_y[ipart];
                 momentum_z[ipart] -= temp*momentum_z[ipart];
 
                 // Incrementation of the radiated energy cumulative parameter
-                radiated_energy_loc += weight[ipart]*( gamma - sqrt( 1.0
+                radiated_energy_loc += weight[ipart]*( particle_gamma - std::sqrt( 1.0
                                                     + momentum_x[ipart]*momentum_x[ipart]
                                                     + momentum_y[ipart]*momentum_y[ipart]
                                                     + momentum_z[ipart]*momentum_z[ipart] ) );
@@ -356,12 +595,15 @@ void RadiationMonteCarlo::operator()(
             // No emission since particle_chi is too low
             else { // if (particle_chi < RadiationTables.getMinimumChiContinuous())
                 local_it_time = dt_;
-            }
+            } // end if
         } // end while
     } // end for
+
     #ifdef _GPU
     } // end acc parallel
     #endif
+
+    //if (photons) std::cerr << photons->gpu_size()  << std::endl;
 
     // Update the patch radiated energy
     radiated_energy += radiated_energy_loc;
@@ -375,7 +617,8 @@ void RadiationMonteCarlo::operator()(
         int np = iend-istart;
         #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
         Bx[istart:np],By[istart:np],Bz[istart:np]) \
-        deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) 
+        deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) \
+        private(gamma)
     {
 
         #pragma acc loop gang worker vector
@@ -384,14 +627,14 @@ void RadiationMonteCarlo::operator()(
         const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        const double gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
         chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
-                     gamma,
+                     particle_gamma,
                      Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                      Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
@@ -406,162 +649,3 @@ void RadiationMonteCarlo::operator()(
     #endif
 
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Perform the photon emission (creation of a super-photon
-//! and slow down of the emitting particle)
-//! \param ipart              particle index
-//! \param particle_chi              particle quantum parameter
-//! \param particle_gamma            particle gamma factor
-//! \param position           particle position
-//! \param momentum           particle momentum
-//! \param RadiationTables    Cross-section data tables and useful functions
-//                        for nonlinear inverse Compton scattering
-// ---------------------------------------------------------------------------------------------------------------------
-double RadiationMonteCarlo::photonEmission( int ipart,
-        const double particle_chi,
-        const double particle_gamma,
-        double * position_x,
-        double * position_y,
-        double * position_z,
-        double * momentum_x,
-        double * momentum_y,
-        double * momentum_z,
-        const double *const weight,
-        double random_number,
-        const double *const table_min_photon_chi,
-        double * table_xi,
-        Particles * photons,
-        RadiationTables &RadiationTables)
-{
-    // ____________________________________________________
-    // Parameters
-    double photon_chi;      // Photon quantum parameter
-    double photon_gamma;    // Photon gamma factor
-    double inv_old_norm_p;
-    double radiated_energy = 0;
-
-    // Get the photon quantum parameter from the table xip
-    // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
-    //photon_chi = 0;
-    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, random_number, 
-                                                            table_min_photon_chi, table_xi);
-    //std::cerr << " " << photon_chi <<std::endl;
-    // compute the photon gamma factor
-    photon_gamma = photon_chi/particle_chi*( particle_gamma-1.0 );
-
-    // ____________________________________________________
-    // Creation of the new photon
-
-    // ____________________________________________________
-    // Update of the particle properties
-    // direction d'emission // direction de l'electron (1/gamma << 1)
-    // With momentum conservation
-
-    inv_old_norm_p = photon_gamma/std::sqrt( particle_gamma*particle_gamma - 1.0 );
-    momentum_x[ipart] -= momentum_x[ipart]*inv_old_norm_p;
-    momentum_y[ipart] -= momentum_y[ipart]*inv_old_norm_p;
-    momentum_z[ipart] -= momentum_z[ipart]*inv_old_norm_p;
-
-    // With energy conservation
-    /*inv_old_norm_p = 1./sqrt(particle_gamma*particle_gamma - 1.0);
-    particle_gamma -= photon_gamma;
-    new_norm_p = sqrt(particle_gamma*particle_gamma - 1.0);
-    px *= new_norm_p * inv_old_norm_p;
-    py *= new_norm_p * inv_old_norm_p;
-    pz *= new_norm_p * inv_old_norm_p;*/
-
-    // Creation of macro-photons if requested
-    // Check that the photons is defined and the threshold on the energy
-    if( photons
-           && ( photon_gamma >= radiation_photon_gamma_threshold_ ) ) {
-        
-        /* ---------------------------------------------------------------------
-        // First method: emission of a single photon
-
-        // Creation of the new photon in the temporary array photons
-        photons->createParticle();
-
-        int idNew = photons->size() - 1;
-
-        for (int i=0; i<n_dimensions_; i++) {
-            photons->position(i,idNew)=position[i][ipart];
-        }
-
-        inv_old_norm_p = 1./sqrt(momentum_x[ipart]*momentum_x[ipart]
-                                + momentum_y[ipart]*momentum_y[ipart]
-                                + momentum_z[ipart]*momentum_z[ipart]);
-
-        for (unsigned int i=0; i<3; i++) {
-            photons->momentum(i,idNew) =
-            photon_gamma*momentum[i][ipart]*inv_old_norm_p;
-        }
-
-        photons->weight(idNew)=weight[ipart];
-        photons->charge(idNew)=0;
-        --------------------------------------------------------------------- */
-
-        // Second method: emission of several photons for statistics following
-        // the parameter radiation_photon_sampling_
-
-
-        #ifndef _GPU
-        // Creation of new photons in the temporary array photons
-        photons->createParticles( radiation_photon_sampling_ );
-
-        // Final size
-        int npart = photons->size();
-
-        // Inverse of the momentum norm
-        inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
-                                  + momentum_y[ipart]*momentum_y[ipart]
-                                  + momentum_z[ipart]*momentum_z[ipart] );
-
-        // For all new photons
-        for( int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++ ) {
-
-
-            photons->position( 0, idNew )=position_x[ipart];
-            if (nDim_>1) {
-                photons->position( 1, idNew )=position_y[ipart];
-                if (nDim_>2) {
-                    photons->position( 2, idNew )=position_z[ipart];
-                }
-            }
-
-            photons->momentum( 0, idNew ) =
-                photon_gamma*momentum_x[ipart]*inv_old_norm_p;
-            photons->momentum( 1, idNew ) =
-                photon_gamma*momentum_y[ipart]*inv_old_norm_p;
-            photons->momentum( 2, idNew ) =
-                photon_gamma*momentum_z[ipart]*inv_old_norm_p;
-
-
-            photons->weight( idNew )=weight[ipart]*inv_radiation_photon_sampling_;
-            photons->charge( idNew )=0;
-
-            if( photons->isQuantumParameter ) {
-                photons->chi( idNew ) = photon_chi;
-            }
-
-            if( photons->isMonteCarlo ) {
-                photons->tau( idNew ) = -1.;
-            }
-
-        }
-        #endif
-
-    }
-    // Addition of the emitted energy in the cumulating parameter
-    // for the scalar diagnostics
-    else {
-        photon_gamma = particle_gamma - sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
-                                         + momentum_y[ipart]*momentum_y[ipart]
-                                         + momentum_z[ipart]*momentum_z[ipart] );
-        radiated_energy += weight[ipart]*photon_gamma;
-    }
-
-    return radiated_energy;
-}
-
-

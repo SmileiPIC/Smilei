@@ -214,7 +214,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
                     ( *Radiate )( *particles,
-                                  *radiated_photons_,
+                                  radiated_photons_,
                                   smpi,
                                   RadiationTables, nrj_radiated_,
                                   particles->first_index[scell], particles->last_index[scell], ithread );

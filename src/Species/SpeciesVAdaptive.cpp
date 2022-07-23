@@ -152,7 +152,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
                 // Radiation process
                 ( *Radiate )( *particles,
-                              *radiated_photons_,
+                              radiated_photons_,
                               smpi,
                               RadiationTables, nrj_radiated_,
                               particles->first_index[scell], particles->last_index[scell], ithread );

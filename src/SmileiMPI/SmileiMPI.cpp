@@ -714,7 +714,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
     irequest += 2*nspec;
     
     // Send some scalars
-    unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
+    unsigned int nscalars = 4 + ( params.has_MC_radiation_ || params.has_LL_radiation_ || params.has_Niel_radiation_ );
     patch->buffer_scalars_particles.resize( nscalars*nspec );
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         unsigned int i = ispec*nscalars;
@@ -722,7 +722,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
         patch->buffer_scalars_particles[i+1] = patch->vecSpecies[ispec]->nrj_new_part_; // injected
         patch->buffer_scalars_particles[i+2] = patch->vecSpecies[ispec]->nrj_mw_out; // lost by moving window
         patch->buffer_scalars_particles[i+3] = patch->vecSpecies[ispec]->nrj_mw_inj; // gained by moving window
-        if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
+        if( params.has_MC_radiation_ || params.has_LL_radiation_ || params.has_Niel_radiation_ ) {
             patch->buffer_scalars_particles[i+4] = patch->vecSpecies[ispec]->nrj_radiated_; // radiated energy
         }
     }
@@ -840,7 +840,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
     tag += 2*nspec;
     
     // Receive some scalars
-    unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
+    unsigned int nscalars = 4 + ( params.has_MC_radiation_ || params.has_LL_radiation_ || params.has_Niel_radiation_ );
     patch->buffer_scalars_particles.resize( nscalars*nspec );
     MPI_Status status;
     MPI_Recv( &patch->buffer_scalars_particles[0], patch->buffer_scalars_particles.size(), MPI_DOUBLE, from, tag, world_, &status );
@@ -851,7 +851,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         patch->vecSpecies[ispec]->nrj_new_part_ = patch->buffer_scalars_particles[i+1];
         patch->vecSpecies[ispec]->nrj_mw_out    = patch->buffer_scalars_particles[i+2];
         patch->vecSpecies[ispec]->nrj_mw_inj    = patch->buffer_scalars_particles[i+3];
-        if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
+        if( params.has_MC_radiation_ || params.has_LL_radiation_ || params.has_Niel_radiation_ ) {
             patch->vecSpecies[ispec]->nrj_radiated_ = patch->buffer_scalars_particles[i+4];
         }
     }

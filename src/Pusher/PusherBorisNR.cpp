@@ -50,7 +50,6 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
         #pragma acc loop gang worker vector
     #endif
-
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
         const int ipart2 = ipart - ipart_buffer_offset;

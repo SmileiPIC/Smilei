@@ -50,7 +50,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Particles       &photons,
+    Particles       *photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -146,9 +146,9 @@ void RadiationNiel::operator()(
     //double t0 = MPI_Wtime();
 
     // 1) Vectorized computation of gamma and the particle quantum parameter
-        #ifndef _GPU
+#ifndef _GPU
             #pragma omp simd
-        #else
+#else
         
             // Management of the data on GPU though this data region
             const int np = iend-istart;
@@ -172,7 +172,7 @@ void RadiationNiel::operator()(
 
             #pragma acc loop gang worker vector
  
-   	 #endif
+#endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
 
@@ -190,9 +190,9 @@ void RadiationNiel::operator()(
                                   Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                                   Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
     
-    #ifndef _GPU
+#ifndef _GPU
         } //finish cycle
-    #endif
+#endif
     //double t1 = MPI_Wtime();
 
         #ifdef _GPU

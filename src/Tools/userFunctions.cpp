@@ -178,28 +178,30 @@ void userFunctions::distributeArray(
 //! \param elem element to be found
 //! \param nb_elem number of elements
 // ----------------------------------------------------------------------------
-int userFunctions::searchValuesInMonotonicArray( double *array,
-        double elem,
-        int nb_elems )
-{
-    int imin = 0; // lower bound
-    int imax = nb_elems-1; // upper bound
-    int imid = 0;
-    
-    if( elem == array[0] ) {
-        return 0;
-    } else if( elem == array[nb_elems-1] ) {
-        return nb_elems-2;
-    } else {
-        while( imax - imin > 1 ) {
-            imid= ( imin + imax )/2;
-            //imid= (imin + imax)>>1;
-            if( elem >= array[imid] ) {
-                imin = imid;
-            } else {
-                imax = imid;
-            }
-        }
-        return imin;
-    }
-}
+// template <class T>
+// int userFunctions::searchValuesInMonotonicArray(  T * array,
+//         T elem,
+//         int nb_elems )
+// {
+//     int imin = 0; // lower bound
+//     int imax = nb_elems-1; // upper bound
+//     int imid = 0;
+// 
+//     if( elem == array[0] ) {
+//         return 0;
+//     } else if( elem == array[nb_elems-1] ) {
+//         return nb_elems-2;
+//     } else {
+//         while( imax - imin > 1 ) {
+//             imid= ( imin + imax )/2;
+//             //imid= (imin + imax)>>1;
+//             if( elem >= array[imid] ) {
+//                 imin = imid;
+//             } else {
+//                 imax = imid;
+//             }
+//         }
+//         return imin;
+//     }
+// }
+

@@ -83,12 +83,12 @@ endif
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -std=c++11 -Wall
-else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+    CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
     CXXFLAGS += -std=c++11
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)
@@ -150,7 +150,7 @@ else ifneq (,$(call parse_config,inspector))
 # Default configuration
 else
     ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    	CXXFLAGS += -Ofast -g  -fno-math-errno
+    	CXXFLAGS += -O3 -g -fno-math-errno
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
         CXXFLAGS += -Ofast -g
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
@@ -335,7 +335,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode

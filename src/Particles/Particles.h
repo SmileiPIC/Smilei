@@ -1,3 +1,22 @@
+// -----------------------------------------------------------------------------
+//
+//! \file Particles.cpp
+//
+//! \brief contains the Particles class description
+//
+//! The Particles Class is the main data structure for handling particle list. 
+//! It contains the main particles properties:
+//! - positions 
+//! - momentums 
+//! - charge 
+//! - weight
+//! - quantum parameter (chi) for QED effects
+//! - optical depth for Monte-Carlo processes
+//! - tag id for tracked particles
+//
+//! The class also contains many functions to manage particles. 
+// -----------------------------------------------------------------------------
+
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
@@ -14,8 +33,6 @@ class Particle;
 
 class Params;
 class Patch;
-
-
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -36,13 +53,16 @@ public:
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, Particles &part );
 
-    //! Set capacity of Particles vectors
-    void reserve( unsigned int n_part_max, unsigned int nDim );
+    //! Set capacity of Particles vectors and change dimensionality
+    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  );
 
-    //! Initialize like another particle, but only reserve space
+    //! Set capacity of Particles vectors and keep dimensionality
+    void reserve( unsigned int reserved_particles );
+
+    //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
-    //! Resize Particles vectors
+    //! //! Resize Particle vectors and change dimensionality according to nDim
     void resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Resize Particles vectors
@@ -364,15 +384,6 @@ public:
     std::vector< std::vector<short   >*> short_prop_;
     std::vector< std::vector<uint64_t>*> uint64_prop_;
 
-    //! Specific pointers
-    double * __restrict__ position_x;
-    double * __restrict__ position_y;
-    double * __restrict__ position_z;
-
-    double * __restrict__ momentum_x;
-    double * __restrict__ momentum_y;
-    double * __restrict__ momentum_z;
-
 #ifdef __DEBUG
     bool testMove( int iPartStart, int iPartEnd, Params &params );
 
@@ -416,7 +427,7 @@ public:
     virtual void syncCPU() { ERROR( "Should not have come here" ); };
 
     virtual double* getPtrPosition( int idim ) {
-        return &(Position[idim][0]);
+        return Position[idim].data();
     };
     virtual double* getPtrMomentum( int idim ) {
         return &(Momentum[idim][0]);
@@ -440,8 +451,25 @@ public:
         return &(cell_keys[0]);
     };
 
+    // --------------------------------------------------------------------------------------------
+    // Accelerator specific virtual functions
+
+    // -----------------------------------------------------------------------------
+    //! Extract particles from the Particles object and put 
+    //! them in the Particles object `particles_to_move`
+    // -----------------------------------------------------------------------------
     virtual void extractParticles( Particles* particles_to_move );
-    virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortParticles. Should not have come here" ); return 0;};
+    
+    // -----------------------------------------------------------------------------
+    //! Erase particles leaving the patch object on device
+    // -----------------------------------------------------------------------------
+    virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
+    
+    // -----------------------------------------------------------------------------
+    //! Inject particles from particles_to_move object and put 
+    //! them in the Particles object
+    //! \param[in,out] particles_to_inject Particles object containing particles to inject
+    virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
 
     virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
 

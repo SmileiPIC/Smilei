@@ -1,3 +1,15 @@
+// -----------------------------------------------------------------------------
+//
+//! \file nvidiaParticles.h
+//
+//! \brief contains the nvidiaParticles class description
+//
+//! The nvidiaParticles inherits from the Particles class to deal with NVIDIA GPUs.
+//! It uses CUDA Thrust instead of std::vector
+//
+// -----------------------------------------------------------------------------
+// #if defined _GPU
+
 #ifndef NVIDIAPARTICLES_H
 #define NVIDIAPARTICLES_H
 
@@ -5,17 +17,35 @@
 
 #include "Particles.h"
 
+/*! \class nvidiaParticles
+    \brief Particle class for NVIDIA GPU
+*/
 class nvidiaParticles : public Particles
 {
 public:
-    //! Constructor for Particle
+    //! Constructor for nvidiaParticles
     nvidiaParticles();
 
-    //! Destructor for Particle
+    //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
+    //! Set capacity of Particles vectors on GPU
+    void deviceReserve( unsigned int reserved_particles, unsigned int nDim ) ;
+
+    //! Set capacity of Particles vectors based on already used dimension on CPU
+    void deviceReserve( unsigned int reserved_particles );
+
+    //! Reset Particles vectors
+    void deviceClear();
+
+    //! Initialize the particle properties on devide as a mirror of the host definition
+    // 
     void initializeDataOnDevice() override;
+    
+    //! Send the particles from host to device
     void syncGPU() override;
+    
+    //! Update the particles from device to host
     void syncCPU() override;
 
     //! Position vector on device
@@ -80,10 +110,15 @@ public:
     void extractParticles( Particles* particles_to_move ) override;
     
     // -----------------------------------------------------------------------------
+    //! Erase particles leaving the patch object on device
+    // -----------------------------------------------------------------------------
+    int eraseLeavingParticles() override;
+    
+    // -----------------------------------------------------------------------------
     //! Inject particles from particles_to_move object and put 
     //! them in the Particles object
     // -----------------------------------------------------------------------------
-    int injectParticles( Particles* particles_to_move ) override;
+    int injectParticles( Particles* particles_to_inject ) override;
 
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors
@@ -91,9 +126,11 @@ public:
     // ---------------------------------------------------------------------------------------------------------------------
     void createParticles( int n_additional_particles ) override;
 
+    // Number of particles on device
     int gpu_nparts_;
-    int nparts_to_move_;
 
 };
 
 #endif
+
+// #endif

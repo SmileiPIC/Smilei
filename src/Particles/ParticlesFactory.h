@@ -6,8 +6,8 @@
 //
 // -----------------------------------------------------------------------------
 
-#ifndef PARTICLESFACTORY_H
-#define PARTICLESFACTORY_H
+#ifndef PARTICLES_PARTICLESFACTORY_H
+#define PARTICLES_PARTICLESFACTORY_H
 
 #include "Params.h"
 #include "Particles.h"
