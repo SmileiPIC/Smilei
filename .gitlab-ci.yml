@@ -177,4 +177,4 @@ run_omptasks:
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc" -m 4 -o 4 -n 1 -v
+    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v
