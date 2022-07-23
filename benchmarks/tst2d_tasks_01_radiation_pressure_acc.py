@@ -75,7 +75,7 @@ Species(
     name = 'ion',
     position_initialization = 'regular',
     momentum_initialization = 'cold',
-    particles_per_cell = 64,
+    particles_per_cell = 4,
     mass = 1836.0,
     charge = 1.0,
     number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
@@ -88,7 +88,7 @@ Species(
     name = 'eon',
     position_initialization = 'regular',
     momentum_initialization = 'mj',
-    particles_per_cell = 64,
+    particles_per_cell = 4,
     mass = 1.0,
     charge = -1.0,
     number_density = trapezoidal(100.0,xvacuum=l0,xplateau=0.44*l0),
@@ -120,8 +120,8 @@ DiagFields(
 for direction in ["forward", "backward", "both", "canceling"]:
 	DiagScreen(
 	    shape = "sphere",
-	    point = [0., Lsim[1]/2.],
-	    vector = [Lsim[0]/2., 0.1],
+	    point = [0., Ly/2.],
+	    vector = [Lx/2., 0.1],
 	    direction = direction,
 	    deposited_quantity = "weight",
 	    species = ["eon"],
@@ -130,12 +130,12 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	)
 	DiagScreen(
 	    shape = "plane",
-	    point = [Lsim[0]/2., Lsim[1]/2.],
+	    point = [Lx/2., Ly/2.],
 	    vector = [1., 0.1],
 	    direction = direction,
 	    deposited_quantity = "weight",
 	    species = ["eon"],
-	    axes = [["a", -Lsim[1]/2., Lsim[1]/2., 10],],
+	    axes = [["a", -Ly/2., Ly/2., 10],],
 	    every = 350
 	)
 

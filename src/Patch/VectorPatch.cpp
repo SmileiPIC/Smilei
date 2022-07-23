@@ -350,7 +350,7 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ(); 
-        if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();
+        if(diag_flag) ( *this )( ipatch )->EMfields->restartRhoJs();
     }
 #endif
 
