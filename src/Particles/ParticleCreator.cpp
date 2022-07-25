@@ -420,7 +420,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         for( unsigned int k = 0; k < ax.size(); k++ ) {
                             fm.vect( ax[k], buffer[0], true, i, npart );
                             for( unsigned int ip=0; ip<index_buffer.size(); ip++ ) {
-                                arrays[k][nprev+ip] = buffer[0][index_buffer[ip]];
+                                arrays[k+1][nprev+ip] = buffer[0][index_buffer[ip]];
                             }
                         }
                     }
