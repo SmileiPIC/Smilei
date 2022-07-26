@@ -42,7 +42,7 @@ public:
     double get(double x);
 
     //! Copy values from input_data to the table data
-    double set(std::vector<double> input_data);
+    double set(std::vector<double> & input_data);
 
     // --------------------------------------------------------
     // Parameters

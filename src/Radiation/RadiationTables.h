@@ -21,10 +21,10 @@
 #include <cmath>
 #include "userFunctions.h"
 #include "Params.h"
-#include "RadiationTools.h"
 #include "H5.h"
 #include "Random.h"
 #include "Table.h"
+#include "RadiationTools.h"
 
 //------------------------------------------------------------------------------
 //! RadiationTables class: holds parameters, tables and functions to compute
@@ -57,8 +57,8 @@ public:
     //! param[in] particle_chi particle quantum parameter
     //! param[in] particle_gamma particle Lorentz factor
     //! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
-    double computePhotonProductionYield( double particle_chi, double particle_gamma, 
-                                         const double *const integfochi_table );
+    double computePhotonProductionYield( const double particle_chi, 
+                                         const double particle_gamma);
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -107,10 +107,20 @@ public:
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
     //#pragma omp declare simd
-    inline double __attribute__((always_inline)) getRidgersCorrectedRadiatedEnergy( double particle_chi,
-            double dt )
+    inline double __attribute__((always_inline)) getRidgersCorrectedRadiatedEnergy( const double particle_chi,
+            const double dt )
     {
-        return RadiationTools::computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
+        return computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
+    };
+
+    //! Computation of the function g of Erber using the Ridgers
+    //! approximation formulae
+    //! \param particle_chi particle quantum parameter
+    //#pragma omp declare simd
+    static inline double __attribute__((always_inline)) computeRidgersFit( double particle_chi )
+    {
+        return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
+                    + 2.44*particle_chi*particle_chi, -2.0/3.0 );
     };
 
     //! Get of the classical continuous radiated energy during dt
@@ -177,14 +187,6 @@ public:
     // TABLE COMMUNICATIONS
     // ---------------------------------------------------------------------
 
-    //! Bcast of the external table h
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    // void bcastHTable( SmileiMPI *smpi );
-
-    //! Bcast of the external table integfochi_
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastIntegfochiTable( SmileiMPI *smpi );
-
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void bcastTableXi( SmileiMPI *smpi );
@@ -193,72 +195,18 @@ public:
     // Table h for the
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
-
-    // struct Niel {
-    // 
-    //     //! Array containing tabulated values of the function h for the
-    //     //! stochastic diffusive operator of Niel et al.
-    //     std::vector<double > table_;
-    // 
-    //     //! Minimum boundary of the table h
-    //     double min_particle_chi_;
-    // 
-    //     //! Maximum boundary of the table h
-    //     double max_particle_chi_;
-    // 
-    //     //! Inverse delta chi for the table h
-    //     double inv_particle_chi_delta_;
-    // 
-    //     //! Delta chi for the table h
-    //     double particle_chi_delta_;
-    // 
-    //     //! Log10 of the minimum boundary of the table h
-    //     double log10_min_particle_chi_;
-    // 
-    //     //! Dimension of the array h
-    //     int size_particle_chi_;
-    // 
-    // };
-
-    // struct Niel niel_;
     
-    // axe = particle_chi
+    // 1d array
+    // axe 0 = particle_chi
     Table niel_;
 
     // ---------------------------------------------
     // Table integfochi
     // ---------------------------------------------
 
-    struct IntegrationFoverChi {
-
-        //! Array containing tabulated values for the computation
-        //! of the photon production rate dN_{\gamma}/dt
-        //! (which is also the optical depth for the Monte-Carlo process).
-        //! This table is the integration of the Synchrotron emissivity
-        //! refers to as F over the quantum parameter Chi.
-        std::vector<double > table_;
-
-        //! Minimum boundary of the table integfochi_table
-        double min_particle_chi_;
-
-        //! Maximum boundary of the table integfochi_table
-        double max_particle_chi_;
-
-        //! Minimum boundary of the table integfochi_table
-        int size_particle_chi_;
-
-        //! Log10 of the minimum boundary of the table integfochi_table
-        double log10_min_particle_chi_;
-
-        //! Delta chi for the table integfochi_table
-        double particle_chi_delta_;
-
-        //! Inverse delta chi for the table integfochi_table
-        double inv_particle_chi_delta_;
-
-    };
-
-    struct IntegrationFoverChi integfochi_;
+    // 1d array
+    // axe 0 = particle_chi
+    Table integfochi_;
 
     // ---------------------------------------------
     // Structure for min_photon_chi_for_xi and xi

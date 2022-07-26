@@ -150,7 +150,7 @@ double Table::get (double x) {
 // -----------------------------------------------------------------------------
 //! get value using linear interpolation
 // -----------------------------------------------------------------------------
-double Table::set (std::vector<double> input_data) {
+double Table::set (std::vector<double> & input_data) {
 
     if (input_data.size() != size_) {
         ERROR("Impossible to initialize data in Table " << name_ << " because sizes do not match.")

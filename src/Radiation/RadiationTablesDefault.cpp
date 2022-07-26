@@ -1,10 +1,13 @@
 
 #include "RadiationTablesDefault.h"
 
+
 // ---------------------------------------------
-// Default values (initialization)
+//! Default values (initialization)
 // ---------------------------------------------    
-void RadiationTablesDefault::setDefault( Table & niel, RadiationTables::IntegrationFoverChi& integfochi, RadiationTables::Xi& xi )
+void RadiationTablesDefault::setDefault( Table & niel, 
+                                         Table & integfochi, 
+                                         RadiationTables::Xi& xi )
 {
         
     // Default parameters for table `h`
@@ -23,8 +26,8 @@ void RadiationTablesDefault::setDefault( Table & niel, RadiationTables::Integrat
     // niel.log10_min_particle_chi_ = std::log10( niel.min_particle_chi_ );
     // niel.particle_chi_delta_ = ( std::log10( niel.max_particle_chi_ ) - niel.log10_min_particle_chi_ )/( niel.size_particle_chi_-1 );
     // niel.inv_particle_chi_delta_ = 1.0/niel.particle_chi_delta_;
-    std::vector<double> default_table ( niel.size_ );
-    default_table = {
+    std::vector<double> default_niel_table ( niel.size_ );
+    default_niel_table = {
         1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12, 1.9818453998e-12,
         1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11, 1.31843918408e-11,
         8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11, 8.76146916271e-11,
@@ -53,21 +56,24 @@ void RadiationTablesDefault::setDefault( Table & niel, RadiationTables::Integrat
         26.813027649, 26.813027649, 26.813027649, 26.813027649, 26.813027649, 26.813027649
     };
     
-    for (unsigned int i = 0 ; i < niel.size_ ; i++) {
-        niel.data_[i] = default_table[i];
-    }
+    niel.set(default_niel_table);
+    
+    // for (unsigned int i = 0 ; i < niel.size_ ; i++) {
+    //     niel.data_[i] = default_niel_table[i];
+    // }
         
     // Default parameters for table `integfochi`
-    integfochi.min_particle_chi_ = 1e-4;
-    integfochi.max_particle_chi_ = 1e3;
-    integfochi.size_particle_chi_ = 256;
-    integfochi.log10_min_particle_chi_ = std::log10( integfochi.min_particle_chi_ );
-    integfochi.particle_chi_delta_ = ( std::log10( integfochi.max_particle_chi_ )
-                                       - integfochi.log10_min_particle_chi_ )/( integfochi.size_particle_chi_-1 );
-    integfochi.inv_particle_chi_delta_ = 1.0/integfochi.particle_chi_delta_;
-    integfochi.table_.resize( integfochi.size_particle_chi_ );
-    integfochi.table_ =
-        {
+    integfochi.min_ = 1e-4;
+    integfochi.max_ = 1e3;
+    integfochi.size_ = 256;
+    integfochi.log10_min_ = std::log10( integfochi.min_ );
+    integfochi.delta_ = ( std::log10( integfochi.max_ )
+                                       - integfochi.log10_min_ )/( integfochi.size_-1 );
+    integfochi.inv_delta_ = 1.0/integfochi.delta_;
+    integfochi.allocate();
+    
+    std::vector<double> default_integfochi_table ( integfochi.size_ );
+    default_integfochi_table = {
             5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325,
             5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266,
             5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067, 5.23429870067,
@@ -95,6 +101,8 @@ void RadiationTablesDefault::setDefault( Table & niel, RadiationTables::Integrat
             0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329, 0.719088614329,
             0.584691727611, 0.584691727611, 0.584691727611, 0.584691727611, 0.584691727611, 0.584691727611
         };
+        
+    integfochi.set(default_integfochi_table);
         
     // Default parameters for table `min_photon_chi_for_xi`
     xi.min_particle_chi_ = 1e-4;

@@ -10,7 +10,6 @@
 
 #include "RadiationTables.h"
 #include "RadiationTablesDefault.h"
-#include "H5.h"
 
 // -----------------------------------------------------------------------------
 // INITILIZATION AND DESTRUCTION
@@ -130,7 +129,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
                                          / ( params.electron_mass*params.c_vacuum_*params.c_vacuum_ );
 
         // Computation of the factor factor_dNph_dt_
-        factor_dNph_dt_ = sqrt( 3. )*params.fine_struct_cst/( 2.*M_PI*normalized_Compton_wavelength_ );
+        factor_dNph_dt_ = std::sqrt( 3.0 )*params.fine_struct_cst/( 2.0*M_PI*normalized_Compton_wavelength_ );
 
         // Computation of the factor for the classical radiated power
         factor_classical_radiated_power_ = 2.*params.fine_struct_cst/( 3.*normalized_Compton_wavelength_ );
@@ -197,9 +196,9 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.has_MC_radiation_ ) {
         MESSAGE( "" );
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
-        MESSAGE( 2,"Dimension quantum parameter: " << integfochi_.size_particle_chi_ );
-        MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi_.min_particle_chi_ );
-        MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi_.max_particle_chi_ );
+        MESSAGE( 2,"Dimension quantum parameter: " << integfochi_.size_ );
+        MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi_.min_ );
+        MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi_.max_ );
         MESSAGE( "" );
         MESSAGE( 1,"--- Table `min_photon_chi_for_xi` and `xi`:" );
         MESSAGE( 2,"Dimension particle chi: " << xi_.size_particle_chi_ );
@@ -235,6 +234,47 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 // PHYSICAL COMPUTATION
 // -----------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Computation of the Cross Section dNph/dt which is also
+//! the number of photons generated per time unit.
+//
+//! param[in] particle_chi particle quantum parameter
+//! param[in] particle_gamma particle Lorentz factor
+//! param[in] integfochi table of the discretized integrated f/chi function for Photon production yield computation
+// ---------------------------------------------------------------------------------------------------------------------
+double RadiationTables::computePhotonProductionYield( 
+                                            const double particle_chi, 
+                                            const double particle_gamma)
+{
+    // final value
+    double dNphdt;
+
+    // Log of the particle quantum parameter particle_chi
+    const double logchipa = std::log10( particle_chi );
+
+    // Lower index for interpolation in the table integfochi_
+    int ichipa = int( std::floor( ( logchipa-integfochi_.log10_min_ )
+                         *integfochi_.inv_delta_ ) );
+
+    // If we are not in the table...
+    if( ichipa < 0 ) {
+        ichipa = 0;
+        dNphdt = integfochi_.data_[ichipa];
+    } else if( ichipa >= integfochi_.size_-1 ) {
+        ichipa = integfochi_.size_-2;
+        dNphdt = integfochi_.data_[ichipa];
+    } else {
+        // Upper and lower values for linear interpolation
+        const double logchipam = ichipa*integfochi_.delta_ + integfochi_.log10_min_;
+        const double logchipap = logchipam + integfochi_.delta_;
+
+        // Interpolation
+        dNphdt = ( integfochi_.data_[ichipa+1]*std::fabs( logchipa-logchipam ) +
+                   integfochi_.data_[ichipa]*std::fabs( logchipap - logchipa ) )*integfochi_.inv_delta_;
+    }
+    return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
+}
 
 // -----------------------------------------------------------------------------
 //! Computation of the photon quantum parameter photon_chi for emission
@@ -357,8 +397,6 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
                                                 const double *const table_min_photon_chi, 
                                                 double * table_xi)
 {
-    // Log10 of particle_chi
-    double log10_particle_chi;
 
     // Photon chi (1 and 2 for interpolation)
     double photon_chi;
@@ -369,28 +407,26 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     //double xi;
 
     //double chiph_xip_delta;
-    double chiph_xip_delta_1;
     double chiph_xip_delta_2;
 
-    int ichipa;
     int ichiph_1;
     int ichiph_2;
     // For the interpolation
     double log10_chiphm;
     double log10_chiphp;
     double d_photon_chi;
-    double d_particle_chi;
     int ixip_1;
     int ixip_2;
 
-    log10_particle_chi = std::log10( particle_chi );
+    // Log10 of particle_chi
+    const double log10_particle_chi = std::log10( particle_chi );
 
     // ---------------------------------------
     // index of particle_chi in xi_.table
     // ---------------------------------------
 
     // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
-    ichipa = int( floor( ( log10_particle_chi-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
+    int ichipa = int( std::floor( ( log10_particle_chi-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -431,7 +467,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 
     // Corresponding particle_chi for ichipa
     // log10_particle_chi = ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_;
-    d_particle_chi = (log10_particle_chi - (ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_))
+    const double d_particle_chi = (log10_particle_chi - (ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_))
                        * xi_.inv_particle_chi_delta_;
 
      /*std::cerr << " " << log10_particle_chi
@@ -449,7 +485,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 
     // Chi gap for the corresponding particle_chi
 
-    chiph_xip_delta_1 = ( ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - table_min_photon_chi[ichipa])
+    const double chiph_xip_delta_1 = ( ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - table_min_photon_chi[ichipa])
                       *xi_.inv_size_photon_chi_minus_one_;
 
     chiph_xip_delta_2 = ( (ichipa+1)*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - table_min_photon_chi[ichipa+1])
@@ -514,69 +550,43 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 //
 //! param[in] particle_chi particle quantum parameter
 //! param[in] particle_gamma particle Lorentz factor
-//! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
+//! param[in] integfochi table of the discretized integrated f/chi function for Photon production yield computation
 // ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::computePhotonProductionYield( double particle_chi, double particle_gamma, 
-    const double *const integfochi_table)
-{
-
-    // Log of the particle quantum parameter particle_chi
-    double logchipa;
-    double logchipam;
-    double logchipap;
-    // Index
-    int ichipa;
-    // final value
-    double dNphdt;
-
-    logchipa = std::log10( particle_chi );
-
-    // Lower index for interpolation in the table integfochi_
-    ichipa = int( floor( ( logchipa-integfochi_.log10_min_particle_chi_ )
-                         *integfochi_.inv_particle_chi_delta_ ) );
-
-    // If we are not in the table...
-    if( ichipa < 0 ) {
-        ichipa = 0;
-        dNphdt = integfochi_table[ichipa];
-    } else if( ichipa >= integfochi_.size_particle_chi_-1 ) {
-        ichipa = integfochi_.size_particle_chi_-2;
-        dNphdt = integfochi_table[ichipa];
-    } else {
-        // Upper and lower values for linear interpolation
-        logchipam = ichipa*integfochi_.particle_chi_delta_ + integfochi_.log10_min_particle_chi_;
-        logchipap = logchipam + integfochi_.particle_chi_delta_;
-
-        // Interpolation
-        dNphdt = ( integfochi_table[ichipa+1]*fabs( logchipa-logchipam ) +
-                   integfochi_table[ichipa]*fabs( logchipap - logchipa ) )*integfochi_.inv_particle_chi_delta_;
-    }
-
-    return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
-
-}
-
-
-// -----------------------------------------------------------------------------
-//! Return the value of the function h(particle_chi) of Niel et al.
-//! from the computed table niel_.table
-//! \param particle_chi particle quantum parameter
-// -----------------------------------------------------------------------------
-// double RadiationTables::getHNielFromTable( double particle_chi )
+// double RadiationTables::computePhotonProductionYield( const double particle_chi, 
+//                                                       const double particle_gamma, 
+//                                                       const Table & integfochi)
 // {
-//     int ichipa;
-//     double d;
+//     // final value
+//     double dNphdt;
 // 
-//     // Position in the niel_.table
-//     d = ( std::log10( particle_chi )-niel_.log10_min_particle_chi_ )*niel_.inv_particle_chi_delta_;
-//     ichipa = int( floor( d ) );
+//     // Log of the particle quantum parameter particle_chi
+//     const double logchipa = std::log10( particle_chi );
 // 
-//     // distance for interpolation
-//     d = d - floor( d );
+//     // Lower index for interpolation in the table integfochi_
+//     int ichipa = int( std::floor( ( logchipa-integfochi.log10_min_ )
+//                          *integfochi.inv_delta_ ) );
 // 
-//     // Linear interpolation
-//     return niel_.table_[ichipa]*( 1.-d ) + niel_.table_[ichipa+1]*( d );
+//     // If we are not in the table...
+//     if( ichipa < 0 ) {
+//         ichipa = 0;
+//         dNphdt = integfochi.data_[ichipa];
+//     } else if( ichipa >= integfochi.size_-1 ) {
+//         ichipa = integfochi.size_-2;
+//         dNphdt = integfochi.data_[ichipa];
+//     } else {
+//         // Upper and lower values for linear interpolation
+//         const double logchipam = ichipa*integfochi.delta_ + integfochi.log10_min_;
+//         const double logchipap = logchipam + integfochi.delta_;
+// 
+//         // Interpolation
+//         dNphdt = ( integfochi.data_[ichipa+1]*std::fabs( logchipa-logchipam ) +
+//                    integfochi.data_[ichipa]*std::fabs( logchipap - logchipa ) )*integfochi.inv_delta_;
+//     }
+// 
+//     return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
+// 
 // }
+
 
 // -----------------------------------------------------------------------------
 //! Return the stochastic diffusive component of the pusher
@@ -676,17 +686,22 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 
             // First, we read attributes
             H5Read c = f.dataset( "integfochi" );
-            c.attr( "size_particle_chi", integfochi_.size_particle_chi_ );
-            c.attr( "min_particle_chi", integfochi_.min_particle_chi_ );
-            c.attr( "max_particle_chi", integfochi_.max_particle_chi_ );
+            c.attr( "size_particle_chi", integfochi_.size_ );
+            c.attr( "min_particle_chi", integfochi_.min_ );
+            c.attr( "max_particle_chi", integfochi_.max_ );
 
             // Resize and read array
-            integfochi_.table_.resize( integfochi_.size_particle_chi_ );
-            f.vect( "integfochi", integfochi_.table_ );
+            // integfochi_.table_.resize( integfochi_.size_ );
+            // f.vect( "integfochi", integfochi_.table_ );
+
+            integfochi_.allocate();
+            f.vect( "h", integfochi_.data_[0], H5T_NATIVE_DOUBLE, 0, integfochi_.size_ );
+
+            
         }
 
         // Bcast the table to all MPI ranks
-        RadiationTables::bcastIntegfochiTable( smpi );
+        integfochi_.bcast( smpi );
     }
     // Else, the table can not be found, we throw an error
     else {
@@ -694,7 +709,6 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
               << table_path_<<"`. Please check that the path is correct.",
               LINK_NAMELIST + std::string("#radiation-reaction"))
     }
-
 }
 
 // -----------------------------------------------------------------------------
@@ -757,200 +771,6 @@ void RadiationTables::readTables( Params &params, SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 // TABLE COMMUNICATIONS
 // -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
-//! Bcast of the external table h for the Niel radiation model
-//
-//! \param smpi Object of class SmileiMPI containing MPI properties
-// -----------------------------------------------------------------------------
-// void RadiationTables::bcastHTable( SmileiMPI *smpi )
-// {
-//     // Position for MPI pack and unack
-//     int position;
-//     // buffer size for MPI pack and unpack
-//     int buf_size;
-// 
-//     // -------------------------------------------------------
-//     // Bcast of all the parameters
-//     // We pack everything in a buffer
-//     // --------------------------------------------------------
-// 
-//     // buffer size
-//     if( smpi->getRank() == 0 ) {
-//         MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
-//         buf_size = position;
-//         MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
-//         buf_size += position;
-//         MPI_Pack_size( niel_.size_particle_chi_, MPI_DOUBLE, smpi->world(),
-//                        &position );
-//         buf_size += position;
-//     }
-// 
-//     //MESSAGE( 2,"Buffer size: " << buf_size );
-// 
-//     // Exchange buf_size with all ranks
-//     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
-// 
-//     // Packet that will contain all parameters
-//     char *buffer = new char[buf_size];
-// 
-//     // Proc 0 packs
-//     if( smpi->getRank() == 0 ) {
-//         position = 0;
-//         MPI_Pack( &niel_.size_particle_chi_,
-//                   1, MPI_INT, buffer, buf_size, &position, smpi->world() );
-//         MPI_Pack( &niel_.min_particle_chi_,
-//                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-//         MPI_Pack( &niel_.max_particle_chi_,
-//                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-// 
-//         MPI_Pack( &niel_.table_[0], niel_.size_particle_chi_,
-//                   MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-// 
-//     }
-// 
-//     // Bcast all parameters
-//     MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
-// 
-//     // Other ranks unpack
-//     if( smpi->getRank() != 0 ) {
-//         position = 0;
-//         MPI_Unpack( buffer, buf_size, &position,
-//                     &niel_.size_particle_chi_, 1, MPI_INT, smpi->world() );
-//         MPI_Unpack( buffer, buf_size, &position,
-//                     &niel_.min_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
-//         MPI_Unpack( buffer, buf_size, &position,
-//                     &niel_.max_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
-// 
-//         // Resize table before unpacking values
-//         niel_.table_.resize( niel_.size_particle_chi_ );
-// 
-//         MPI_Unpack( buffer, buf_size, &position, &niel_.table_[0],
-//                     niel_.size_particle_chi_, MPI_DOUBLE, smpi->world() );
-// 
-//     }
-// 
-//     delete[] buffer;
-// 
-//     niel_.log10_min_particle_chi_ = std::log10( niel_.min_particle_chi_ );
-// 
-//     // Computation of the delta
-//     niel_.particle_chi_delta_ = ( std::log10( niel_.max_particle_chi_ )
-//                       - niel_.log10_min_particle_chi_ )/( niel_.size_particle_chi_-1 );
-// 
-//     // Inverse delta
-//     niel_.inv_particle_chi_delta_ = 1./niel_.particle_chi_delta_;
-// }
-
-// -----------------------------------------------------------------------------
-//! Bcast of the external table integfochi
-//
-//! \param smpi Object of class SmileiMPI containing MPI properties
-// -----------------------------------------------------------------------------
-void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
-{
-    // Position for MPI pack and unack
-    int position;
-    // buffer size for MPI pack and unpack
-    int buf_size;
-
-    // -------------------------------------------------------
-    // Bcast of all the parameters
-    // We pack everything in a buffer
-    // --------------------------------------------------------
-
-    // buffer size
-    if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
-        buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
-        buf_size += position;
-        MPI_Pack_size( integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->world(),
-                       &position );
-        buf_size += position;
-    }
-
-    //MESSAGE( 2,"Buffer size: " << buf_size );
-
-    // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
-
-    // Packet that will contain all parameters
-    char *buffer = new char[buf_size];
-
-    // Proc 0 packs
-    if( smpi->getRank() == 0 ) {
-        position = 0;
-        MPI_Pack( &integfochi_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
-        MPI_Pack( &integfochi_.min_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-        MPI_Pack( &integfochi_.max_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-
-        MPI_Pack( &integfochi_.table_[0], integfochi_.size_particle_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-
-    }
-
-    // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
-
-    // Other ranks unpack
-    if( smpi->getRank() != 0 ) {
-        position = 0;
-        MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
-        MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
-        MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
-
-        // Resize table before unpacking values
-        integfochi_.table_.resize( integfochi_.size_particle_chi_ );
-
-        MPI_Unpack( buffer, buf_size, &position, &integfochi_.table_[0],
-                    integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->world() );
-
-    }
-
-    delete[] buffer;
-
-    integfochi_.log10_min_particle_chi_ = std::log10( integfochi_.min_particle_chi_ );
-
-    // Computation of the delta
-    integfochi_.particle_chi_delta_ = ( std::log10( integfochi_.max_particle_chi_ )
-                               - integfochi_.log10_min_particle_chi_ )/( integfochi_.size_particle_chi_-1 );
-
-    // Inverse delta
-    integfochi_.inv_particle_chi_delta_ = 1.0/integfochi_.particle_chi_delta_;
-
-    // -----------------------------------------------------------------------
-    // DEBUG
-    //
-    // double sum_integfochi_ = 0;
-    // for (int i = 0 ; i < integfochi_.size_particle_chi_ ; i++) {
-    //     sum_integfochi_ += integfochi_.table_[i];
-    // }
-    //
-    // for (int i = 0 ; i < smpi->getSize() ; i++) {
-    //     if( smpi->getRank() == i ) {
-    //         std::cerr << " rank: " << smpi->getRank()
-    //                   << " buf_size: " << buf_size
-    //                   << " integfochi_.size_particle_chi_: " << integfochi_.size_particle_chi_
-    //                   << " integfochi_.min_particle_chi_: " << integfochi_.min_particle_chi_
-    //                   << " integfochi_.max_particle_chi_: " << integfochi_.max_particle_chi_
-    //                   << " integfochi_.log10_min_particle_chi_: " << integfochi_.log10_min_particle_chi_
-    //                   << " integfochi_.particle_chi_delta_: " << integfochi_.particle_chi_delta_
-    //                   << " integfochi_.inv_particle_chi_delta_: " << integfochi_.inv_particle_chi_delta_
-    //                   << " sum_integfochi_: " << sum_integfochi_
-    //                   << std::endl;
-    //         usleep(1000);
-    //         smpi->barrier();
-    //     }
-    // }
-    // -----------------------------------------------------------------------
-}
 
 // -----------------------------------------------------------------------------
 //! Bcast of the external table xip_chiphmin and xi

@@ -173,7 +173,8 @@ void MergingVranicCartesian::operator() (
 
         // Computation of the particle gamma factor
         if (mass == 0) {
-            #pragma omp simd private(ipr) aligned(gamma : 64)
+            #pragma omp simd private(ipr) 
+            //aligned(gamma : 64)
             for (ip=(unsigned int)(istart) ; ip<(unsigned int) (iend); ip++ ) {
 
                 // Local (relative) array index
@@ -185,7 +186,8 @@ void MergingVranicCartesian::operator() (
 
             }
         } else {
-            #pragma omp simd private(ipr) aligned(gamma : 64)
+            #pragma omp simd private(ipr) 
+            //aligned(gamma : 64)
             for (ip=(unsigned int)(istart) ; ip<(unsigned int) (iend); ip++ ) {
 
                 // Local (relative) array index
@@ -410,7 +412,8 @@ void MergingVranicCartesian::operator() (
         // requested discretization.
         // This loop can be efficiently vectorized
         #pragma omp simd \
-        private(ipr,mx_i,my_i,mz_i) aligned(momentum_cell_index: 64)
+        private(ipr,mx_i,my_i,mz_i) 
+        //aligned(momentum_cell_index: 64)
         for (ip=(unsigned int) (istart) ; ip < (unsigned int) (iend); ip++ ) {
 
             // Relative particle array index
