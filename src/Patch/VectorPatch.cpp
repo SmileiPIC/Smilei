@@ -779,11 +779,8 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
                     
                 }
-                
             } // if particles > 0
-            
         } // end for i_injector
-    
     } // end for ipatch
     
     timers.particleInjection.update( params.printNow( itime ) );

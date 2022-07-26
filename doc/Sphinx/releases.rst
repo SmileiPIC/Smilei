@@ -25,12 +25,13 @@ Changes made in the repository (not released)
 * Performances post-processing: new parameter ``cumulative``
 * ``PML`` can now be used as a bounday condition for the envelope model too.
 * It is no longer necessary to use ``PML`` on all boundaries anymore.  
-* Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
-* Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints.
-* Bugfixes: C++11 compilation issue.
-* Bugfixes: ``PML`` are now compatible with dynamic load balancing.
-* Bugfixes: Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
-* Bugfixes: C++11 compilation issue
+* Bugfixes: 
+
+  * Poisson Solver correction was not properly accounted for with SDMD.
+  * Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
+  * C++11 compilation issue
+  * Reading particle weights and momenta from hdf5 file
+  * Bugfixes: ``PML`` are now compatible with dynamic load balancing.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
