@@ -167,8 +167,8 @@ void LaserEnvelope2D::updateEnvelope( Patch *patch )
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
 
-    bool isYmin = patch->isBoundary( 1, 0 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmin;
-    bool isYmax = patch->isBoundary( 1, 1 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmax;
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;
@@ -246,8 +246,8 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( Patch *patch )
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
-    bool isYmin = patch->isBoundary( 1, 0 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmin;
-    bool isYmax = patch->isBoundary( 1, 1 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmax;
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;

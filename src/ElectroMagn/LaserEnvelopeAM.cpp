@@ -198,9 +198,8 @@ void LaserEnvelopeAM::updateEnvelope( Patch *patch )
     Field2D *Env_Chi2Dcyl  = static_cast<Field2D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
   
     int  j_glob = ( static_cast<ElectroMagnAM *>( patch->EMfields ) )->j_glob_;
-    bool isYmin = patch->isBoundary( 1, 0 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmin;
-    bool isYmax = patch->isBoundary( 1, 1 );//( static_cast<ElectroMagn2D *>( EMfields ) )->isYmax;
-  
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
 
     // temporary variable for updated envelope
     cField2D *A2Dcylnew;
