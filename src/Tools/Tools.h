@@ -72,7 +72,7 @@ std::cerr << ERROR_STYLE << line << "\n [" << __msg << "] " << __FILE__ << ":" <
 
 #define __PRINTLINE(__num) {MESSAGE(std::string(__num,'-'))}
 
-#define TITLE(...) {MESSAGE(std::endl); MESSAGE(__VA_ARGS__); __PRINTLINE(80);}
+#define TITLE(...) {MESSAGE(std::endl); MESSAGE(__VA_ARGS__); __PRINTLINE(80-1);}
 
 // ATTENTION: this costs a lot! use with care!
 #define MESSAGEALL1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); \

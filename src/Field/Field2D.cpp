@@ -101,16 +101,16 @@ void Field2D::allocateDims()
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
     
-    data_2D= new double*[dims_[0]];
-    for( unsigned int i=0; i<dims_[0]; i++ ) {
-        data_2D[i] = data_ + i*dims_[1];
-        for( unsigned int j=0; j<dims_[1]; j++ ) {
-            data_2D[i][j] = 0.0;
-        }
+    data_2D = new double *[dims_[0]];
+
+    // Try not to use data_2D, it breaks the homogeneity of the code
+    for( unsigned int i = 0; i < dims_[0]; i++ ) {
+        data_2D[i] = data_ + i * dims_[1];
     }
-    
+
     globalDims_ = dims_[0]*dims_[1];
     
+    Field::put_to(0.0);
 }
 
 void Field2D::deallocateDataAndSetTo( Field* f )
@@ -162,17 +162,17 @@ void Field2D::allocateDims( unsigned int mainDim, bool isPrimal )
     
     data_ = new double[dims_[0]*dims_[1]];
     //! \todo{check row major order!!! (JD)}
-    
-    data_2D= new double*[dims_[0]];
-    for( unsigned int i=0; i<dims_[0]; i++ )  {
-        data_2D[i] = data_ + i*dims_[1];
-        for( unsigned int j=0; j<dims_[1]; j++ ) {
-            data_2D[i][j] = 0.0;
-        }
+
+    data_2D = new double *[dims_[0]];
+
+    // Try not to use data_2D, it breaks the homogeneity of the code
+    for( unsigned int i = 0; i < dims_[0]; i++ ) {
+        data_2D[i] = data_ + i * dims_[1];
     }
-    
+
     globalDims_ = dims_[0]*dims_[1];
     
+    Field::put_to(0.0);
 }
 
 

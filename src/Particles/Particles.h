@@ -57,19 +57,19 @@ public:
     //! Reset Particles vectors
     void clear();
 
-    //! Get number of particules
+    //! Get number of particles
     inline unsigned int size() const
     {
         return Weight.size();
     }
 
-    //! Get number of particules
+    //! Get number of particles
     inline unsigned int capacity() const
     {
         return Weight.capacity();
     }
 
-    //! Get dimension of particules
+    //! Get dimension of particles
     inline unsigned int dimension() const
     {
         return Position.size();

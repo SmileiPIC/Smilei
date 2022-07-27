@@ -252,8 +252,10 @@ int main( int argc, char *argv[] )
         // }
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
-        vecPatches.sortAllParticles( params );
-        
+        vecPatches.initialParticleSorting( params );
+
+        // TODO(Etienne M): GPU restart handling
+
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
         
@@ -273,13 +275,21 @@ int main( int argc, char *argv[] )
     } else {
         
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
-        vecPatches.sortAllParticles( params );
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        TITLE( "GPU allocation of the fields and particles" );
+        // Nothing is copied to the GPU yet, because most of the initialization
+        // "needs" (for now) to be done on the host. The initialized
+        // particles are sorted at the cell granularity (due to way they are 
+        // created), which is enough for the initialization to not be very slow 
+        // due to random access in projection.
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+#endif
 
-        if (params.gpu_computing) {
-            TITLE( "Initialize GPU data" );
-            vecPatches.initializeDataOnDevice( params, &smpi, &radiation_tables_ );
-        }
+#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
+        // CPU only, its too early to sort on GPU
+        vecPatches.initialParticleSorting( params );
+#endif
 
         // Initialize the electromagnetic fields
         // -------------------------------------

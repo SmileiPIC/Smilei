@@ -68,7 +68,7 @@ public:
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
     };
 
-    //! Get number of particules
+    //! Get number of particles
     unsigned int gpu_size() const override
     {
         return gpu_nparts_;

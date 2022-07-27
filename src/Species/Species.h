@@ -109,7 +109,7 @@ public:
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
 
-    //! Boundary conditions for particules
+    //! Boundary conditions for particles
     std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
@@ -436,7 +436,7 @@ public:
     //! Method used to integrate particles which come from another patches
     virtual void injectParticles( Params &params );
 
-    //! Method used to sort particles
+    //! Method used to inject and sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
     virtual void computeParticleCellKeys(   Params    & params,

@@ -80,9 +80,9 @@ void nvidiaParticles::initializeDataOnDevice()
     nvidia_cell_keys_.resize( Charge.size() );
     gpu_nparts_ = Charge.size();
 
-    if (gpu_nparts_!=0)
+    if( gpu_nparts_ != 0 ) {
         syncGPU();
-    else {
+    } else {
         for (int idim=0;idim<Position.size();idim++)
             nvidia_position_[idim].reserve( 100 );
         for (int idim=0;idim<Momentum.size();idim++)

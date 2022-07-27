@@ -98,14 +98,14 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
     }
 
     // Position quick pointers
-    position_x = &Position[0][0];
-    position_y = &Position[1][0];
-    position_z = &Position[2][0];
+    position_x = Position[0].data();
+    position_y = Position[1].empty() ? nullptr : Position[1].data(); // data()/&vec[0] are undefined if a vector is empty.
+    position_z = Position[2].empty() ? nullptr : Position[2].data(); // data()/&vec[0] are undefined if a vector is empty.
 
     // Momentum quick pointers
-    momentum_x = &Momentum[0][0];
-    momentum_y = &Momentum[1][0];
-    momentum_z = &Momentum[2][0];
+    momentum_x = Momentum[0].data();
+    momentum_y = Momentum[1].data();
+    momentum_z = Momentum[2].data();
 
 }
 
