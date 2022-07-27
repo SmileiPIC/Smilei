@@ -54,7 +54,9 @@ public:
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
     //! \param[out] pair_chi quantum parameters of the pair
-    void computePairQuantumParameter( double photon_chi, double * pair_chi, Random * rand );
+    void computePairQuantumParameter( const double photon_chi, 
+                                      double * pair_chi,
+                                      const double xip );
 
     //! Return factor for dN / dWdt computation
     inline double  __attribute__((always_inline)) getFactorDNdWdt(void) {
@@ -67,8 +69,8 @@ public:
     //! \param gamma photon normalized energy
     // -----------------------------------------------------------------------------
     double computeBreitWheelerPairProductionRate( 
-        double photon_chi, 
-        double photon_gamma);
+        const double photon_chi, 
+        const double photon_gamma);
 
     // ---------------------------------------------------------------------
     // TABLE READING
@@ -85,18 +87,6 @@ public:
     //! Read all external tables
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void readTables( Params &params, SmileiMPI *smpi );
-
-    // ---------------------------------------------------------------------
-    // TABLE COMMUNICATIONS
-    // ---------------------------------------------------------------------
-
-    //! Bcast of the external table T
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastTableT( SmileiMPI *smpi );
-
-    //! Bcast of the external table xip_chipamin and xip
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastTableXi( SmileiMPI *smpi );
 
     // ---------------------------------------------
     // Structure for Table T used for the

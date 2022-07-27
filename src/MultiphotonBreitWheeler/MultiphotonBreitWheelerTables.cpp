@@ -108,7 +108,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double photon_chi, 
                                                                  double * pair_chi,
-                                                                 Random * rand )
+                                                                 const double xip )
 {
 
     // -----------------------------------------------------------
@@ -135,10 +135,6 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double ph
     // ---------------------------------------
     // Search of the index ichiph for photon_chi
     // ---------------------------------------
-
-    // First, we compute a random xip in [0,1[
-    // xip = Rand::uniform();
-    const double xip = rand->uniform();
 
     // The array uses the symmetric properties of the T fonction,
     // Cases xip > or <= 0.5 are treated seperatly
@@ -199,8 +195,8 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double ph
 //! \param photon_gamma photon normalized energy
 // -----------------------------------------------------------------------------
 double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( 
-    double photon_chi,
-    double photon_gamma )
+    const double photon_chi,
+    const double photon_gamma )
 {
     // final value to return
     double dNBWdt;

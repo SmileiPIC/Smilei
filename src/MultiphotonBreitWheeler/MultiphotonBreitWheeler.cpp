@@ -316,8 +316,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // pair quantum parameters
                     double pair_chi[2];
 
+                    const double xip = rand_->uniform();
+
                     // Get the pair quantum parameters to compute the energy
-                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], rand_ );
+                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], xip );
 
                     // pair propagation direction // direction of the photon
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
