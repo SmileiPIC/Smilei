@@ -22,13 +22,8 @@ RadiationTables::RadiationTables()
 {
 
     // Default parameters
-
     minimum_chi_continuous_ = 1e-3;
     minimum_chi_discontinuous_ = 1e-2;
-
-    // Default init of the tables
-    RadiationTablesDefault::setDefault( niel_, integfochi_, xi_ );
-
 }
 
 // -----------------------------------------------------------------------------
@@ -62,60 +57,32 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
     }
 
-    if( params.has_LL_radiation_ || params.hasDiagRadiationSpectrum ) {
-        MESSAGE( 1,"A continuous radiation reaction module"
-                 << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction"  );
-        MESSAGE( 2,"- applied minimum chi for continuous radiation module is "
-                <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
-    }
-
-    if( params.has_Niel_radiation_ ) {
-        MESSAGE( 1,"The Fokker-Planck radiation reaction module 'Niel'"
-                 << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction"  );
-        MESSAGE( 2,"- applied minimum chi for Niel's radiation module is "
-                <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
-    }
-
-    if( params.has_MC_radiation_ ) {
-        MESSAGE( 1,"The Monte-Carlo Compton radiation module"
-                 << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction"  );
-        MESSAGE( 2,"- applied minimum chi for MC radiation module is "
-                 <<std::setprecision(6)<<minimum_chi_discontinuous_<<".\n");
-
-    }
-
     // If the namelist for Nonlinear Inverse Compton Scattering exists
     // We read the properties
     if( PyTools::nComponents( "RadiationReaction" ) != 0 ) {
 
+        if( params.has_LL_radiation_ || 
+            params.hasDiagRadiationSpectrum || 
+            params.has_Niel_radiation_ || 
+            params.has_MC_radiation_  ) {
+            // Minimum threshold on chi to allow continuous radiation
+            PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction"  );
+        }
+        
+        // If Monte-Carlo radiation loss is requested
+        if( params.has_MC_radiation_ ) {
+            // Discontinuous minimum threshold
+            PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction"  );
+        }
+
         if( params.has_Niel_radiation_ ) {
             // How to handle the h function (table or fit)
             PyTools::extract( "Niel_computation_method", niel_computation_method_, "RadiationReaction" );
-            MESSAGE( 2,"- computational method: " << niel_computation_method_<< ".\n");
-            
         }
 
-        // If Monte-Carlo radiation loss is requested
-        if( params.has_MC_radiation_ ) {
-
-            // Discontinuous minimum threshold
-            PyTools::extract( "minimum_chi_discontinuous",
-                              minimum_chi_discontinuous_, "RadiationReaction" );
-        }
-
-        // With any radiation model whatever the table computation
         if( params.has_Niel_radiation_ || params.has_MC_radiation_ ) {
-
             // Path to the databases
             PyTools::extract( "table_path", table_path_, "RadiationReaction"  );
-
-            // Radiation threshold on the quantum parameter particle_chi
-            PyTools::extract( "minimum_chi_continuous",
-                              minimum_chi_continuous_, "RadiationReaction" );
-
         }
     }
 
@@ -133,34 +100,13 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
         // Computation of the factor for the classical radiated power
         factor_classical_radiated_power_ = 2.*params.fine_struct_cst/( 3.*normalized_Compton_wavelength_ );
-
-        MESSAGE( 1, "Factor classical radiated power: " << factor_classical_radiated_power_ );
-
     }
 
-    // Messages...
-    // Computation of some parameters
-    if( params.has_MC_radiation_ ||
-            params.has_LL_radiation_ ||
-            params.has_Niel_radiation_ ) {
-        MESSAGE( 1, "Minimum quantum parameter for continuous radiation: "
-                 << std::setprecision( 5 ) << minimum_chi_continuous_ );
-    }
-    if( params.has_MC_radiation_ ) {
-        MESSAGE( 1,"Minimum quantum parameter for discontinuous radiation: "
-                 << std::setprecision( 5 ) << minimum_chi_discontinuous_ );
-    }
-    if( params.has_MC_radiation_ || params.has_Niel_radiation_ ) {
-        if (table_path_.size() > 0) {
-            MESSAGE( 1,"Table path: " << table_path_ );
-        }
-    }
     if( params.has_Niel_radiation_ ) {
         if( niel_computation_method_ == "table" ||
                 niel_computation_method_ == "fit5"  ||
                 niel_computation_method_ == "fit10" ||
                 niel_computation_method_ == "ridgers" ) {
-            MESSAGE( 1,"Niel h function computation method: " << niel_computation_method_ );
         } else {
             ERROR_NAMELIST( 
                 " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`.",
@@ -183,6 +129,38 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
     MESSAGE( "" );
 
+    if( params.has_LL_radiation_ || params.hasDiagRadiationSpectrum ) {
+        MESSAGE( 1, "A continuous radiation reaction module"
+                 << " is requested by some species:" );
+        MESSAGE( 2, "- applied minimum chi for continuous radiation module is "
+                <<std::setprecision(6)<<minimum_chi_continuous_<<".");
+        MESSAGE( 2, "- factor classical radiated power: " << factor_classical_radiated_power_ );
+        MESSAGE( "" );
+    }
+
+    if( params.has_Niel_radiation_ ) {
+        MESSAGE( 1,"The Fokker-Planck radiation reaction module 'Niel'"
+                 << " is requested by some species:" );
+        MESSAGE( 2,"- applied minimum chi for Niel's radiation module is "
+                <<std::setprecision(6)<<minimum_chi_continuous_<<".");
+        MESSAGE( 2,"- Niel h function computation method: " << niel_computation_method_<< ".");
+        MESSAGE( 2,"- table path: " << table_path_ );
+        MESSAGE( "" );
+    }
+
+    if( params.has_MC_radiation_ ) {
+        MESSAGE( 1,"The Monte-Carlo Compton radiation module"
+                 << " is requested by some species:" );
+        MESSAGE( 2,"- applied minimum chi for Monte-Carlo radiation module is "
+                <<std::setprecision(6)<<minimum_chi_continuous_<<".");
+        MESSAGE( 2,"- applied minimum chi for MC radiation module is "
+                 <<std::setprecision(6)<<minimum_chi_discontinuous_<<".");
+        MESSAGE( 2,"- table path: " << table_path_ );
+
+    }
+
+    MESSAGE( "" );
+
     // We read the table only if specified
     if( params.has_MC_radiation_ || params.has_Niel_radiation_ ) {
         if (table_path_.size() > 0) {
@@ -190,6 +168,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
             readTables( params, smpi );
         } else {
             MESSAGE(1,"Default tables (stored in the code) are used:");
+            RadiationTablesDefault::setDefault( niel_, integfochi_, xi_ );
         }
     }
 
@@ -695,7 +674,7 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
             // f.vect( "integfochi", integfochi_.table_ );
 
             integfochi_.allocate();
-            f.vect( "h", integfochi_.data_[0], H5T_NATIVE_DOUBLE, 0, integfochi_.size_ );
+            f.vect( "integfochi", integfochi_.data_[0], H5T_NATIVE_DOUBLE, 0, integfochi_.size_ );
 
             
         }

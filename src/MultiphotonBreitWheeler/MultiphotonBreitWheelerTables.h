@@ -22,6 +22,7 @@
 #include "Params.h"
 #include "userFunctions.h"
 #include "Random.h"
+#include "Table.h"
 
 //------------------------------------------------------------------------------
 //! MultiphotonBreitWheelerTables class: holds parameters, tables and
@@ -92,32 +93,36 @@ public:
     // pair creation Monte-Carlo process
     // ---------------------------------------------
 
-    struct T {
-        
-        //! Array containing tabulated values of the function T
-        std::vector<double > table_;
-        
-        //! Minimum boundary of the table T
-        double min_photon_chi_;
-        
-        //! Log10 of the minimum boundary of the table T
-        double log10_min_photon_chi_;
-        
-        //! Maximum boundary of the table T
-        double max_photon_chi_;
-        
-        //! Delta chi for the table T
-        double photon_chi_delta_;
-        
-        //! Inverse delta chi for the table h
-        double photon_chi_inv_delta_;
+    // struct T {
+    // 
+    //     //! Array containing tabulated values of the function T
+    //     std::vector<double > table_;
+    // 
+    //     //! Minimum boundary of the table T
+    //     double min_photon_chi_;
+    // 
+    //     //! Log10 of the minimum boundary of the table T
+    //     double log10_min_photon_chi_;
+    // 
+    //     //! Maximum boundary of the table T
+    //     double max_photon_chi_;
+    // 
+    //     //! Delta chi for the table T
+    //     double photon_chi_delta_;
+    // 
+    //     //! Inverse delta chi for the table h
+    //     double photon_chi_inv_delta_;
+    // 
+    //     //! Dimension of the array T
+    //     int size_photon_chi_;
+    // 
+    // };
+    // 
+    // struct T T_;
 
-        //! Dimension of the array T
-        int size_photon_chi_;
-        
-    };
-
-    struct T T_;
+    // 1d array
+    // axe 0 : photon_chi
+    Table T_;
 
     // ---------------------------------------------
     // Structure for xi and particle_chi min for xip table

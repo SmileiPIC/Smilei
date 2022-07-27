@@ -42,12 +42,14 @@ void Table::allocate () {
 // -----------------------------------------------------------------------------
 void Table::bcast (SmileiMPI *smpi) {
     
-    if (size_ == 0) {
-        ERROR("Problem during table bcast, size is equal to 0");
-    }
-    
-    if (!data_) {
-        ERROR("Problem during table bcast, data not allocated");
+    if (smpi->isMaster()) {
+        if (size_ == 0) {
+            ERROR("Problem during table bcast, size is equal to 0");
+        }
+        
+        if (!data_) {
+            ERROR("Problem during table bcast, data not allocated");
+        }
     }
     
     // Position for MPI pack and unack
@@ -61,7 +63,7 @@ void Table::bcast (SmileiMPI *smpi) {
     // --------------------------------------------------------
 
     // buffer size
-    if( smpi->getRank() == 0 ) {
+    if( smpi->isMaster() ) {
         MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
         buf_size = position;
         MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
@@ -80,7 +82,7 @@ void Table::bcast (SmileiMPI *smpi) {
     char *buffer = new char[buf_size];
 
     // Proc 0 packs
-    if( smpi->getRank() == 0 ) {
+    if( smpi->isMaster() ) {
         position = 0;
         MPI_Pack( &size_,
                   1, MPI_INT, buffer, buf_size, &position, smpi->world() );
@@ -98,7 +100,7 @@ void Table::bcast (SmileiMPI *smpi) {
     MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
-    if( smpi->getRank() != 0 ) {
+    if( !smpi->isMaster() ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
                     &size_, 1, MPI_INT, smpi->world() );
@@ -150,7 +152,7 @@ double Table::get (double x) {
 // -----------------------------------------------------------------------------
 //! get value using linear interpolation
 // -----------------------------------------------------------------------------
-double Table::set (std::vector<double> & input_data) {
+void Table::set (std::vector<double> & input_data) {
 
     if (input_data.size() != size_) {
         ERROR("Impossible to initialize data in Table " << name_ << " because sizes do not match.")

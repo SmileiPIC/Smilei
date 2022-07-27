@@ -38,11 +38,11 @@ public:
     //! Bcast data_ and metadata to all MPI processes
     void bcast(SmileiMPI *smpi);
     
-    //! get value using linear interpolation
+    //! get value using linear interpolation at position x
     double get(double x);
 
     //! Copy values from input_data to the table data
-    double set(std::vector<double> & input_data);
+    void set(std::vector<double> & input_data);
 
     // --------------------------------------------------------
     // Parameters

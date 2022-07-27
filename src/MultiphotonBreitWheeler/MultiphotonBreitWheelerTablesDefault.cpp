@@ -4,19 +4,20 @@
 // ---------------------------------------------
 // Default values (initialization)
 // ---------------------------------------------
-void MultiphotonBreitWheelerTablesDefault::setDefault( MultiphotonBreitWheelerTables::T& table, MultiphotonBreitWheelerTables::Xi& xi )
+void MultiphotonBreitWheelerTablesDefault::setDefault( Table & T, MultiphotonBreitWheelerTables::Xi& xi )
 {
         
     // T table parameters
-    table.min_photon_chi_ = 1e-2;
-    table.max_photon_chi_ = 1e2;
-    table.size_photon_chi_ = 256;
-    table.log10_min_photon_chi_ = std::log10( table.min_photon_chi_ );
-    table.photon_chi_delta_ = ( std::log10( table.max_photon_chi_ )
-                                - table.log10_min_photon_chi_ )/( table.size_photon_chi_-1 );
-    table.photon_chi_inv_delta_ = 1.0/table.photon_chi_delta_;
-    table.table_.resize( table.size_photon_chi_ );
-    table.table_ = {
+    T.min_ = 1e-2;
+    T.max_ = 1e2;
+    T.size_ = 256;
+    T.log10_min_ = std::log10( T.min_ );
+    T.delta_ = ( std::log10( T.max_ )
+                                - T.log10_min_ )/( T.size_-1 );
+    T.inv_delta_ = 1.0/T.delta_;
+
+    std::vector<double> default_T_table ( T.size_ );
+    default_T_table = {
         1.89766425183209e-120, 2.623548288690785e-116, 2.592337897346051e-112, 1.852711004819605e-108, 9.688007878509832e-105, 3.747935717444709e-101, 1.08425096533941e-97, 2.369909337223765e-94,
         3.952963720683432e-91, 5.080124619834856e-88, 5.077024779077388e-85, 3.981139492064235e-82, 2.470645432609396e-79, 1.223564496493403e-76, 4.874574484086996e-74, 1.574330789551051e-71,
         4.152801705538704e-69, 9.011426466226253e-67, 1.619806360819927e-64, 2.428022787479526e-62, 3.05465442729567e-60, 3.245570396514492e-58, 2.929837373034956e-56, 2.260116637178908e-54,
@@ -50,6 +51,8 @@ void MultiphotonBreitWheelerTablesDefault::setDefault( MultiphotonBreitWheelerTa
         1584.620614160733, 1688.563711117558, 1799.163210556904, 1916.839498569646, 2042.039311675785, 2175.237381580207, 2316.93818233973, 2467.677786308957,
         2628.025835627994, 2798.58763643528, 2980.006383434974, 3172.965522922245, 3378.191262873254, 3596.455239241103, 3828.577348167001, 4075.42875441877
     };
+    
+    T.set(default_T_table);
         
     // Tables `min_particle_chi_for_xi` and `xi`
     xi.min_photon_chi_ = 1e-2;
