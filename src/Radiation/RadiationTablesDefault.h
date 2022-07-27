@@ -18,7 +18,7 @@
 class RadiationTablesDefault
 {
 public :
-    static void setDefault( Table & niel, Table & integfochi, RadiationTables::Xi& xi );
+    static void setDefault( Table & niel, Table & integfochi, Table & xi );
 };
 
 #endif

@@ -90,10 +90,10 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
 
         MESSAGE( "" )
         MESSAGE( 1,"--- Table `min_particle_chi_for_xi` and `xi`:" );
-        MESSAGE( 2,"Dimension photon chi: " << xi_.size_photon_chi_ );
-        MESSAGE( 2,"Dimension particle chi: " << xi_.size_particle_chi_ );
-        MESSAGE( 2,"Minimum photon chi: " << xi_.min_photon_chi_ );
-        MESSAGE( 2,"Maximum photon chi: " << xi_.max_photon_chi_ );
+        MESSAGE( 2,"Dimension photon chi: " << xi_.dim_size_[0] );
+        MESSAGE( 2,"Dimension particle chi: " << xi_.dim_size_[1] );
+        MESSAGE( 2,"Minimum photon chi: " << xi_.min_ );
+        MESSAGE( 2,"Maximum photon chi: " << xi_.max_ );
 
     }
 
@@ -119,17 +119,17 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double ph
     const double logchiph = std::log10( photon_chi );
 
     // Lower boundary of the table
-    if( photon_chi < xi_.min_photon_chi_ ) {
+    if( photon_chi < xi_.min_ ) {
         ichiph = 0;
     }
     // Upper boundary of the table
-    else if( photon_chi >= xi_.max_photon_chi_ ) {
-        ichiph = xi_.size_photon_chi_-1;
+    else if( photon_chi >= xi_.max_ ) {
+        ichiph = xi_.dim_size_[0]-1;
     }
     // Inside the table
     else {
         // Use floor so that photon_chi corresponding to ichiph is <= given photon_chi
-        ichiph = int( std::floor( ( logchiph-xi_.log10_min_photon_chi_ )*( xi_.photon_chi_inv_delta_ ) ) );
+        ichiph = int( std::floor( ( logchiph-xi_.log10_min_ )*( xi_.inv_delta_ ) ) );
     }
 
     // ---------------------------------------
@@ -151,28 +151,28 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double ph
 
     // check boundaries
     // Lower bound
-    if( xipp < xi_.table_[ichiph*xi_.size_particle_chi_] ) {
+    if( xipp < xi_.data_[ichiph*xi_.dim_size_[1]] ) {
         ichipa = 0;
     }
     // Upper bound
-    else if( xipp >= xi_.table_[( ichiph+1 )*xi_.size_particle_chi_-1] ) {
-        ichipa = xi_.size_particle_chi_-2;
+    else if( xipp >= xi_.data_[( ichiph+1 )*xi_.dim_size_[1]-1] ) {
+        ichipa = xi_.dim_size_[1]-2;
     } else {
         // Search for the corresponding index ichipa for xip
         ichipa = userFunctions::searchValuesInMonotonicArray(
-                     &xi_.table_[ichiph*xi_.size_particle_chi_], xipp, xi_.size_particle_chi_ );
+                     &xi_.data_[ichiph*xi_.dim_size_[1]], xipp, xi_.dim_size_[1] );
     }
 
     // Delta for the particle_chi dimension
-    const double delta_chipa = ( std::log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
-                  * xi_.inv_size_particle_chi_minus_one_;
+    const double delta_chipa = ( std::log10( 0.5*photon_chi )-xi_.axis1_min_[ichiph] )
+                  * xi_.inv_dim_size_minus_one_[1];
 
-    const int ixip = ichiph*xi_.size_particle_chi_ + ichipa;
+    const int ixip = ichiph*xi_.dim_size_[1]+ ichipa;
 
-    const double log10_chipam = ichipa*delta_chipa + xi_.min_particle_chi_[ichiph];
+    const double log10_chipam = ichipa*delta_chipa + xi_.axis1_min_[ichiph];
     const double log10_chipap = log10_chipam + delta_chipa;
 
-    const double d = ( xipp - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
+    const double d = ( xipp - xi_.data_[ixip] ) / ( xi_.data_[ixip+1] - xi_.data_[ixip] );
 
     // If xip > 0.5, the electron will bring more energy than the positron
     if( xip > 0.5 ) {
@@ -194,6 +194,50 @@ void MultiphotonBreitWheelerTables::computePairQuantumParameter( const double ph
 }
 
 // -----------------------------------------------------------------------------
+//! Computation of the production rate of pairs per photon
+//! \param photon_chi photon quantum parameter
+//! \param photon_gamma photon normalized energy
+// -----------------------------------------------------------------------------
+double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( 
+    double photon_chi,
+    double photon_gamma )
+{
+    // final value to return
+    double dNBWdt;
+
+    // Log of the photon quantum parameter particle_chi
+    const double logchiph = std::log10( photon_chi );
+
+    // Lower index for interpolation in the table integfochi
+    int ichiph = int( std::floor( ( logchiph-T_.log10_min_ )
+                         *T_.inv_delta_ ) );
+
+    // If photon_chi is below the lower bound of the table
+    // An asymptotic approximation is used
+    if( ichiph < 0 ) {
+        ichiph = 0;
+        // 0.2296 * sqrt(3) * pi [MG/correction by Antony]
+        dNBWdt = 1.2493450020845291*std::exp( -8.0/( 3.0*photon_chi ) ) * photon_chi*photon_chi;
+    }
+    // If photon_chi is above the upper bound of the table
+    // An asymptotic approximation is used
+    else if( ichiph >= T_.size_-1 ) {
+        ichiph = T_.size_-2;
+        dNBWdt = 2.067731275227008*std::pow( photon_chi, 5.0/3.0 );
+    } else {
+        // Upper and lower values for linear interpolation
+        const double logchiphm = ichiph*T_.delta_ + T_.log10_min_;
+        const double logchiphp = logchiphm + T_.delta_;
+
+        // Interpolation
+        dNBWdt = ( T_.data_[ichiph+1]*std::fabs( logchiph-logchiphm ) +
+                   T_.data_[ichiph]*std::fabs( logchiphp - logchiph ) )*T_.inv_delta_;
+    }
+    return factor_dNBW_dt_*dNBWdt/(photon_chi*photon_gamma);
+}
+
+
+// -----------------------------------------------------------------------------
 // TABLE READING
 // -----------------------------------------------------------------------------
 
@@ -211,13 +255,21 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 
             H5Read f( file );
 
+            unsigned int size;
+
             // First, we read attributes
             H5Read d = f.dataset( "integration_dt_dchi" );
-            d.attr( "size_photon_chi", T_.size_ );
+            d.attr( "size_photon_chi", size );
             d.attr( "min_photon_chi", T_.min_ );
             d.attr( "max_photon_chi", T_.max_ );
+            
+            // Initialize table parameters
+            T_.set_size(&size);
 
+            // Allocate data
             T_.allocate();
+            
+            // Fill data
             f.vect( "integration_dt_dchi", T_.data_[0], H5T_NATIVE_DOUBLE, 0, T_.size_ );
 
             // Resize and read table
@@ -254,16 +306,25 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
 
             // First, we read attributes
             H5Read xi = f.dataset( "xi" );
-            xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
-            xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
-            xi.attr( "min_photon_chi", xi_.min_photon_chi_ );
-            xi.attr( "max_photon_chi", xi_.max_photon_chi_ );
+            
+            unsigned int dim_size[2];
+            
+            xi.attr( "size_photon_chi", dim_size[0] );
+            xi.attr( "size_particle_chi", dim_size[1] );
+            xi.attr( "min_photon_chi", xi_.min_ );
+            xi.attr( "max_photon_chi", xi_.max_ );
+            
+            xi_.set_size(&dim_size[0]);
 
             // Allocate and read arrays
-            xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
-            xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
-            f.vect( "min_particle_chi_for_xi", xi_.min_particle_chi_ );
-            f.vect( "xi", xi_.table_ );
+            // xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
+            // xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
+            // f.vect( "min_particle_chi_for_xi", xi_.min_particle_chi_ );
+            // f.vect( "xi", xi_.table_ );
+
+            xi_.allocate();
+            f.vect( "min_particle_chi_for_xi", xi_.axis1_min_[0], H5T_NATIVE_DOUBLE );
+            f.vect( "xi", xi_.data_[0], H5T_NATIVE_DOUBLE );
 
         }
     }
@@ -275,7 +336,7 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
     }
 
     // Bcast the table to all MPI ranks
-    MultiphotonBreitWheelerTables::bcastTableXi( smpi );
+    xi_.bcast( smpi );
 
 }
 
@@ -388,98 +449,98 @@ void MultiphotonBreitWheelerTables::readTables( Params &params, SmileiMPI *smpi 
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
-{
-    // Position for MPI pack and unack
-    int position = 0;
-    // buffer size for MPI pack and unpack
-    int buf_size = 0;
-
-    // -------------------------------------------
-    // Bcast of all the parameters
-    // We pack everything in a buffer
-    // -------------------------------------------
-
-    // Compute the buffer size
-    if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 2, MPI_INT, smpi->world(), &position );
-        buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
-        buf_size += position;
-        MPI_Pack_size( xi_.size_photon_chi_, MPI_DOUBLE, smpi->world(),
-                       &position );
-        buf_size += position;
-        MPI_Pack_size( xi_.size_photon_chi_*xi_.size_particle_chi_, MPI_DOUBLE,
-                       smpi->world(), &position );
-        buf_size += position;
-    }
-
-    //MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
-
-    // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
-
-    // Packet that will contain all parameters
-    char *buffer = new char[buf_size];
-
-    // Proc 0 packs
-    if( smpi->getRank() == 0 ) {
-        position = 0;
-        MPI_Pack( &xi_.size_photon_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
-        MPI_Pack( &xi_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
-        MPI_Pack( &xi_.min_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-        MPI_Pack( &xi_.max_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-
-        MPI_Pack( &xi_.min_particle_chi_[0], xi_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-
-        MPI_Pack( &xi_.table_[0], xi_.size_particle_chi_*xi_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
-    }
-
-    // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
-
-    // Other ranks unpack
-    if( smpi->getRank() != 0 ) {
-        position = 0;
-        MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->world() );
-        MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
-        MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.min_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
-        MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.max_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
-
-        // Resize tables before unpacking values
-        xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
-        xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
-
-        MPI_Unpack( buffer, buf_size, &position, &xi_.min_particle_chi_[0],
-                    xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
-
-        MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
-                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
-    }
-
-    delete[] buffer;
-
-    // Log10 of xi_.min_photon_chi_ for efficiency
-    xi_.log10_min_photon_chi_ = log10( xi_.min_photon_chi_ );
-
-    // Computation of the delta
-    xi_.photon_chi_delta_ = ( log10( xi_.max_photon_chi_ )
-                        - xi_.log10_min_photon_chi_ )/( xi_.size_photon_chi_-1 );
-
-    // Inverse of delta
-    xi_.photon_chi_inv_delta_ = 1./xi_.photon_chi_delta_;
-
-    // Inverse particle_chi discetization (regularly used)
-    xi_.inv_size_particle_chi_minus_one_ = 1./( xi_.size_particle_chi_ - 1. );
-
-}
+// void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
+// {
+//     // Position for MPI pack and unack
+//     int position = 0;
+//     // buffer size for MPI pack and unpack
+//     int buf_size = 0;
+// 
+//     // -------------------------------------------
+//     // Bcast of all the parameters
+//     // We pack everything in a buffer
+//     // -------------------------------------------
+// 
+//     // Compute the buffer size
+//     if( smpi->getRank() == 0 ) {
+//         MPI_Pack_size( 2, MPI_INT, smpi->world(), &position );
+//         buf_size = position;
+//         MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
+//         buf_size += position;
+//         MPI_Pack_size( xi_.size_photon_chi_, MPI_DOUBLE, smpi->world(),
+//                        &position );
+//         buf_size += position;
+//         MPI_Pack_size( xi_.size_photon_chi_*xi_.size_particle_chi_, MPI_DOUBLE,
+//                        smpi->world(), &position );
+//         buf_size += position;
+//     }
+// 
+//     //MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
+// 
+//     // Exchange buf_size with all ranks
+//     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
+// 
+//     // Packet that will contain all parameters
+//     char *buffer = new char[buf_size];
+// 
+//     // Proc 0 packs
+//     if( smpi->getRank() == 0 ) {
+//         position = 0;
+//         MPI_Pack( &xi_.size_photon_chi_,
+//                   1, MPI_INT, buffer, buf_size, &position, smpi->world() );
+//         MPI_Pack( &xi_.size_particle_chi_,
+//                   1, MPI_INT, buffer, buf_size, &position, smpi->world() );
+//         MPI_Pack( &xi_.min_photon_chi_,
+//                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
+//         MPI_Pack( &xi_.max_photon_chi_,
+//                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
+// 
+//         MPI_Pack( &xi_.min_particle_chi_[0], xi_.size_photon_chi_,
+//                   MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
+// 
+//         MPI_Pack( &xi_.table_[0], xi_.size_particle_chi_*xi_.size_photon_chi_,
+//                   MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
+//     }
+// 
+//     // Bcast all parameters
+//     MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
+// 
+//     // Other ranks unpack
+//     if( smpi->getRank() != 0 ) {
+//         position = 0;
+//         MPI_Unpack( buffer, buf_size, &position,
+//                     &xi_.size_photon_chi_, 1, MPI_INT, smpi->world() );
+//         MPI_Unpack( buffer, buf_size, &position,
+//                     &xi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
+//         MPI_Unpack( buffer, buf_size, &position,
+//                     &xi_.min_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
+//         MPI_Unpack( buffer, buf_size, &position,
+//                     &xi_.max_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
+// 
+//         // Resize tables before unpacking values
+//         xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
+//         xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
+// 
+//         MPI_Unpack( buffer, buf_size, &position, &xi_.min_particle_chi_[0],
+//                     xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
+// 
+//         MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
+//                     xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
+//     }
+// 
+//     delete[] buffer;
+// 
+//     // Log10 of xi_.min_photon_chi_ for efficiency
+//     xi_.log10_min_photon_chi_ = log10( xi_.min_photon_chi_ );
+// 
+//     // Computation of the delta
+//     xi_.photon_chi_delta_ = ( log10( xi_.max_photon_chi_ )
+//                         - xi_.log10_min_photon_chi_ )/( xi_.size_photon_chi_-1 );
+// 
+//     // Inverse of delta
+//     xi_.photon_chi_inv_delta_ = 1./xi_.photon_chi_delta_;
+// 
+//     // Inverse particle_chi discetization (regularly used)
+//     xi_.inv_size_particle_chi_minus_one_ = 1./( xi_.size_particle_chi_ - 1. );
+// 
+// }

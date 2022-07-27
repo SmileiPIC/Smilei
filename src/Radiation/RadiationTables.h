@@ -24,6 +24,7 @@
 #include "H5.h"
 #include "Random.h"
 #include "Table.h"
+#include "Table2D.h"
 #include "RadiationTools.h"
 
 //------------------------------------------------------------------------------
@@ -74,9 +75,7 @@ public:
     //! \param[in] table_min_photon_chi
     //! \param[in] table_xi
     double computeRandomPhotonChiWithInterpolation( double particle_chi, 
-                                                    double xi,
-                                                    const double *const table_min_photon_chi, 
-                                                    double * table_xi);
+                                                    double xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre
@@ -212,52 +211,11 @@ public:
     // Structure for min_photon_chi_for_xi and xi
     // ---------------------------------------------
 
-    struct Xi {
-
-        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
-        //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-        std::vector<double> table_ ;
-
-        //! Table containing the photon_chi min values
-        //! Under this value, photon energy is
-        //! considered negligible
-        std::vector<double > min_photon_chi_table_;
-
-        //! Logarithm of the minimum boundary for particle_chi in the table xip
-        //! and xip_chiphmin
-        double log10_min_particle_chi_;
-
-        //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
-        double max_particle_chi_;
-
-        //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
-        double min_particle_chi_;
-
-        //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
-        double particle_chi_delta_;
-
-        //! Inverse of the delta for the particle_chi discretization
-        //! in the table xip and xip_chiphmin
-        double inv_particle_chi_delta_;
-
-        //! Dimension of the discretized parameter particle_chi
-        int size_particle_chi_;
-
-        //! Dimension of the discretized parameter photon_chi
-        int size_photon_chi_;
-
-        //! 1/(xi_.size_photon_chi_ - 1)
-        double inv_size_photon_chi_minus_one_;
-
-        //! xip power
-        // double power_;
-
-        //! xip threshold
-        // double threshold_;
-
-    };
-
-    struct Xi xi_;
+    // 2d array
+    // axe0: particle_chi
+    // axe1: photon_chi
+    Table2D xi_;
+    
 private:
 
     // ---------------------------------------------

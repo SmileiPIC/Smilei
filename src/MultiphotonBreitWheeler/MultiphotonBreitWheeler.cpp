@@ -279,7 +279,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             // If epsilon_tau_ > 0
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTools::computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart], &mBW_tables );
+                temp = mBW_tables.computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart] );
 
                 // Time to decay
                 // If this time is above the remaining iteration time,

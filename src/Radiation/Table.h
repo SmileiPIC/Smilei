@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 //! \file Table.h
 //
-//! \brief Class Table definition (for QED)
+//! \brief  Class Table used to store and manage 1D database for physical processes
 //
 // ----------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ public:
     Table();
 
     //! Destructor for Table
-    ~Table();
+    virtual ~Table();
 
     // --------------------------------------------------------
     // Main functions
@@ -38,11 +38,20 @@ public:
     //! Bcast data_ and metadata to all MPI processes
     void bcast(SmileiMPI *smpi);
     
+    //! Set the size of the data
+    void set_size(unsigned int * dim_size);
+    
+    //! Compute usefull parameters using inputs
+    void compute_parameters();
+    
     //! get value using linear interpolation at position x
     double get(double x);
 
     //! Copy values from input_data to the table data
+    //! params[in] std::vector<double> & input_data : vector to be used to initialize table data
     void set(std::vector<double> & input_data);
+    
+    virtual void set(std::vector<double> & input_axis1_min, std::vector<double> & input_data) {};
 
     // --------------------------------------------------------
     // Parameters
@@ -50,8 +59,17 @@ public:
     // Main data array
     double * data_ = nullptr;
     
+    // Min values for axis 1 (only relevant if dimension_ > 1)
+    double * axis1_min_ = nullptr;
+    
+    // Table dimension
+    unsigned int dimension_;
+    
     // Size of the table
     unsigned int size_;
+    
+    // Size for each dimension
+    unsigned int dim_size_[2];
     
     //! Minimum values
     double min_;
@@ -68,11 +86,13 @@ public:
     //! Inverse delta
     double inv_delta_;
     
+    double inv_dim_size_minus_one_[2];
+    
     //! table name
     std::string name_;
     
     //! axis names
-    std::string axis_name_;
+    std::string axis_name_[2];
     
 protected:
     

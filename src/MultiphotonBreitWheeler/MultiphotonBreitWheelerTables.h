@@ -23,6 +23,7 @@
 #include "userFunctions.h"
 #include "Random.h"
 #include "Table.h"
+#include "Table2D.h"
 
 //------------------------------------------------------------------------------
 //! MultiphotonBreitWheelerTables class: holds parameters, tables and
@@ -60,6 +61,15 @@ public:
         return factor_dNBW_dt_;
     }
 
+    // -----------------------------------------------------------------------------
+    //! Computation of the production rate of pairs per photon
+    //! \param photon_chi photon quantum parameter
+    //! \param gamma photon normalized energy
+    // -----------------------------------------------------------------------------
+    double computeBreitWheelerPairProductionRate( 
+        double photon_chi, 
+        double photon_gamma);
+
     // ---------------------------------------------------------------------
     // TABLE READING
     // ---------------------------------------------------------------------
@@ -93,33 +103,6 @@ public:
     // pair creation Monte-Carlo process
     // ---------------------------------------------
 
-    // struct T {
-    // 
-    //     //! Array containing tabulated values of the function T
-    //     std::vector<double > table_;
-    // 
-    //     //! Minimum boundary of the table T
-    //     double min_photon_chi_;
-    // 
-    //     //! Log10 of the minimum boundary of the table T
-    //     double log10_min_photon_chi_;
-    // 
-    //     //! Maximum boundary of the table T
-    //     double max_photon_chi_;
-    // 
-    //     //! Delta chi for the table T
-    //     double photon_chi_delta_;
-    // 
-    //     //! Inverse delta chi for the table h
-    //     double photon_chi_inv_delta_;
-    // 
-    //     //! Dimension of the array T
-    //     int size_photon_chi_;
-    // 
-    // };
-    // 
-    // struct T T_;
-
     // 1d array
     // axe 0 : photon_chi
     Table T_;
@@ -128,54 +111,11 @@ public:
     // Structure for xi and particle_chi min for xip table
     // ---------------------------------------------
 
-    struct Xi {
-        
-        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{e^-})\f$
-        //! that gives gives the probability for a photon to decay into pair
-        //! with an electron of energy in the range \f$[0, \chi_{e^-}]\f$
-        //! This enables to compute the energy repartition between the electron and the positron
-        std::vector<double> table_;
-        
-        //! Table containing the particle_chi min values
-        //! Under this value, electron kinetic energy of the pair is
-        //! considered negligible
-        std::vector<double > min_particle_chi_;
-        
-        //! Minimum boundary for photon_chi in the table xi and xi_.chipamin
-        double min_photon_chi_;
-        
-        //! Logarithm of the minimum boundary for photon_chi in the table xi
-        //! and xi_.chipamin
-        double log10_min_photon_chi_;
-        
-        //! Maximum boundary for photon_chi in the table xip and xip_chipamin
-        double max_photon_chi_;
-        
-        //! Delta for the photon_chi discretization in the table xip and xip_chipamin
-        double photon_chi_delta_;
-        
-        //! Inverse of the delta for the photon_chi discretization
-        //! in the table xip and xip_chipamin
-        double photon_chi_inv_delta_;
-
-        //! Dimension of the discretized parameter photon_chi
-        int size_photon_chi_;
-
-        //! Dimension of the discretized parameter particle_chi
-        int size_particle_chi_;
-        
-        //! xip power
-        // double power_;
-
-        //! 1/(xi_.size_particle_chi_ - 1)
-        double inv_size_particle_chi_minus_one_;
-
-        //! xip threshold
-        // double threshold_;
-        
-    };
+    // 2d array:
+    // - axe0: photon_chi
+    // - axe1: particle_chi
+    Table2D xi_;
     
-    struct Xi xi_;
 private:
 
     // ---------------------------------------------
