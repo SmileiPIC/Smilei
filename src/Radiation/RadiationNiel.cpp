@@ -52,7 +52,7 @@ void RadiationNiel::operator()(
     Particles       &particles,
     Particles       *photons,
     SmileiMPI       *smpi,
-    RadiationTables &RadiationTables,
+    RadiationTables &radiation_tables,
     double          &radiated_energy,
     int istart,
     int iend,
@@ -118,9 +118,9 @@ void RadiationNiel::operator()(
     // Niel table
     // double* table = &(RadiationTables.niel_.table_[0]);
 
-    const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
-    const double factor_classical_radiated_power      = RadiationTables.getFactorClassicalRadiatedPower();
-    const int niel_computation_method = RadiationTables.getNielHComputationMethodIndex();
+    const double minimum_chi_continuous               = radiation_tables.getMinimumChiContinuous();
+    const double factor_classical_radiated_power      = radiation_tables.getFactorClassicalRadiatedPower();
+    const int niel_computation_method                 = radiation_tables.getNielHComputationMethodIndex();
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
@@ -148,7 +148,7 @@ void RadiationNiel::operator()(
 #else
         
             // Size of Niel table
-            const int niel_table_size = RadiationTables.niel_.size_;
+            const int niel_table_size = radiation_tables.niel_.size_;
         
             // Management of the data on GPU though this data region
             const int np = iend-istart;
@@ -156,9 +156,9 @@ void RadiationNiel::operator()(
             #pragma acc parallel create(random_numbers[0:nbparticles], diffusion[0:nbparticles])  \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], \
-            RadiationTables, \
-            RadiationTables->niel_, \
-            RadiationTables->niel_->data_[0:niel_table_size] ) \
+            radiation_tables, \
+            radiation_tables.niel_, \
+            radiation_tables.niel_.data_[0:niel_table_size] ) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) \
             private(temp,rad_energy,new_gamma, p, seed_curand ) reduction(+:radiated_energy_loc)
         {
@@ -305,7 +305,7 @@ void RadiationNiel::operator()(
                     // h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
                     // temp = 0;
                     // temp = RadiationTables.getHNielFromTable( particle_chi[ipart], table );
-                    temp = RadiationTables.niel_.get( particle_chi[ipart] );
+                    temp = radiation_tables.niel_.get( particle_chi[ipart] );
 
                     diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
@@ -385,7 +385,7 @@ void RadiationNiel::operator()(
     #endif
 
                 // Radiated energy during the time step
-                rad_energy = RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
+                rad_energy = radiation_tables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
 
                 // Effect on the momentum
                 // Temporary factor
