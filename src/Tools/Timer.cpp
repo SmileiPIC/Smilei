@@ -17,6 +17,7 @@ Timer::Timer( string name ) :
     smpi_( NULL )
 {
     register_timers.resize( 0, 0. );
+    name_ = name;
 }
 
 Timer::~Timer()

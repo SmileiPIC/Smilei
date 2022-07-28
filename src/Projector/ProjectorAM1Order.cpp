@@ -160,7 +160,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
     std::complex<double> e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
 
-    theta_old += e_delta_m1; // eitheta at t = t0 - dt/2
+    theta_old *= e_delta_m1; // eitheta at t = t0 - dt/2
     e_theta[0] = theta_old;
     e_theta[1] = eitheta;
 

@@ -97,9 +97,8 @@ void RadiationCorrLandauLifshitz::operator()(
 
 #ifndef _GPU
     // Local vector to store the radiated energy
-
-    // double * rad_norm_energy = new double [iend-istart];
-    double * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
+    double * rad_norm_energy = new double [iend-istart];
+    // double * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
     #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
         rad_norm_energy[ipart] = 0;
@@ -240,9 +239,12 @@ void RadiationCorrLandauLifshitz::operator()(
     // Add the local energy to the patch one
     radiated_energy += radiated_energy_loc;
 
-    #ifndef _GPU
-        // _______________________________________________________________
-        // Cleaning
-    free(rad_norm_energy);
-    #endif
+
+#ifndef _GPU
+    // _______________________________________________________________
+    // Cleaning
+
+    // free(rad_norm_energy);
+    delete [] rad_norm_energy;
+#endif
 }

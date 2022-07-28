@@ -81,11 +81,11 @@ endif
 # Flags
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
+CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 # C++ version
-ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
-else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall -Wextra

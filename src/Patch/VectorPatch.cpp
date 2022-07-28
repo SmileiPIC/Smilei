@@ -223,9 +223,6 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 void VectorPatch::configuration( Params &params, Timers &timers, int itime )
 {
 
-    //if (params.has_adaptive_vectorization)
-    //{
-
     timers.reconfiguration.restart();
 
     unsigned int npatches = this->size();
@@ -253,7 +250,6 @@ void VectorPatch::configuration( Params &params, Timers &timers, int itime )
     }
 
     timers.reconfiguration.update( params.printNow( itime ) );
-    //}
 
 }
 
@@ -262,8 +258,6 @@ void VectorPatch::configuration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 {
-    //if (params.has_adaptive_vectorization)
-    //{
 
     timers.reconfiguration.restart();
 
@@ -293,7 +287,6 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
     }
 
     timers.reconfiguration.update( params.printNow( itime ) );
-    //}
 }
 
 
@@ -302,7 +295,6 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::sortAllParticles( Params &params )
 {
-#ifdef _VECTO
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -312,7 +304,6 @@ void VectorPatch::sortAllParticles( Params &params )
             }
         }
     }
-#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -586,15 +577,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             unsigned int i_species = particle_injector->getSpeciesNumber();
             Species * injector_species = patch->vecSpecies[i_species];
             
-            // Pointer to simplify the code
-            Particles* particles = &local_particles_vector[i_injector];
-            
             // No particles at the begining
-            particles->initialize( 0, *injector_species->particles );
+            local_particles_vector[i_injector].initialize( 0, *injector_species->particles );
             
             // Particle creator object
             ParticleCreator particle_creator;
-            particle_creator.associate( particle_injector, particles, injector_species );
+            particle_creator.associate( particle_injector, &local_particles_vector[i_injector], injector_species );
             
             // Creation of the particles in local_particles_vector
             particle_creator.create( init_space, params, patch, itime );
@@ -2986,7 +2974,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 
     }
 
-#ifdef _VECTO
     if( params.vectorization_mode == "on" ) {
         // vectorization or cell sorting
         // Recompute the cell keys and sort  frozen particles
@@ -3019,7 +3006,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             }
         }
     }
-#endif
 
     //Put received patches in the global vecPatches
     for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
@@ -4258,11 +4244,6 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
     const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-    const int size_of_table_niel           = radiation_tables->niel_.size_particle_chi_;
-    const int size_of_table_integfochi     = radiation_tables->integfochi_.size_particle_chi_;
-    const int size_of_table_min_photon_chi = radiation_tables->xi_.size_particle_chi_;
-    const int size_of_table_xi             = radiation_tables->xi_.size_particle_chi_ * radiation_tables->xi_.size_photon_chi_;
-
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
         // Initialize particles data structures on GPU, and synchronize it
@@ -4314,21 +4295,34 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
 
-        if( params.has_Niel_radiation_ ) {
+        // Tables for radiation processes
 
-            const double *const table = &( radiation_tables->niel_.table_[0] );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
+        if( params.has_Niel_radiation_ || params.has_MC_radiation_ || params.has_LL_radiation_ ) {
+            #pragma acc enter data copyin (radiation_tables)
+        }
+
+        if( params.has_Niel_radiation_ && radiation_tables.niel_computation_method_ == "table") {
+
+            #pragma acc enter data copyin (radiation_tables->niel_)
+            
+            const int niel_table_size         = radiation_tables->niel_.size_;
+            const double *const niel_table    = &( radiation_tables->niel_.data_[0] );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( niel_table, niel_table_size );
         }
 
         if( params.has_MC_radiation_ ) {
 
-            const double *const table_integfochi     = &( radiation_tables->integfochi_.table_[0] );
-            const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );
-            const double *const table_xi             = &( radiation_tables->xi_.table_[0] );
+            const int integfochi_table_size        = radiation_tables->integfochi_.size_;
+            const int min_photon_chi_size          = radiation_tables->xi_.size_particle_chi_;
+            const int xi_table_size                = radiation_tables->xi_.size_particle_chi_ * radiation_tables->xi_.size_photon_chi_;
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
+            const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
+            const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+            const double *const xi_table             = &( radiation_tables->xi_.data_[0] );
+
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( integfochi_table, integfochi_table_size );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( min_photon_chi_table, min_photon_chi_size );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( xi_table, xi_table_size );
         }
     }
 #endif

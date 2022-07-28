@@ -911,7 +911,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     // -------------------------------------------------------
-    // Parameters for the mutliphoton Breit-Wheeler pair decay
+    // Parameters for the multiphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
     hasMultiphotonBreitWheeler = false ;// Default value
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );

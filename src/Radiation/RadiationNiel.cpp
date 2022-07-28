@@ -116,7 +116,7 @@ void RadiationNiel::operator()(
     double*const __restrict__ particle_chi = particles.getPtrChi();
 
     // Niel table
-    double* table = &(RadiationTables.niel_.table_[0]);
+    // double* table = &(RadiationTables.niel_.table_[0]);
 
     const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power      = RadiationTables.getFactorClassicalRadiatedPower();
@@ -302,10 +302,11 @@ void RadiationNiel::operator()(
                 // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous ) {
         #endif
-                    //h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
-                    //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
-                    //temp = 0;
-                    temp = RadiationTables.getHNielFromTable( particle_chi[ipart], table );
+                    // h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
+                    // h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
+                    // temp = 0;
+                    // temp = RadiationTables.getHNielFromTable( particle_chi[ipart], table );
+                    temp = RadiationTables.niel_.get( particle_chi[ipart] );
 
                     diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 

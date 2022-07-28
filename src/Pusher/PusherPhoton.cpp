@@ -37,9 +37,9 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
     
-    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
+    const double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    const double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    const double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     #ifndef _GPU
         #pragma omp simd
@@ -52,7 +52,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        invgf[ipart] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
+        invgf[ipart - ipart_ref] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
                                        momentum_y[ipart]*momentum_y[ipart] +
                                        momentum_z[ipart]*momentum_z[ipart] );
 

@@ -237,9 +237,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     dump_number++;
 
 #ifdef  __DEBUG
-    MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
+    //MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
+    MESSAGEALL( " Checkpoint #" << dumpName << "at iteration " << itime << " dumped" );
 #else
-    MESSAGE( "Step " << itime << " : DUMP fields and particles " << num_dump );
+    MESSAGE( " Checkpoint #" << num_dump << "at iteration " << itime << " dumped" );
 #endif
 
 
@@ -498,6 +499,11 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 
             if( spec->particles->tracked ) {
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
+            }
+
+            // Monte-Carlo process
+            if (spec->particles->isMonteCarlo) {
+                s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
             }
 
             s.vect( "first_index", spec->particles->first_index );
@@ -887,12 +893,15 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
             }
 
-            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting_ ) {
+            if (spec->particles->isMonteCarlo) {
+                s.vect( "Tau", spec->particles->Tau );
+            }
+
+            if( ! params.cell_sorting_ ) {
                 s.vect( "first_index", spec->particles->first_index, true );
                 s.vect( "last_index", spec->particles->last_index, true );
             }
-            // In the adaptive vectorization case, the bins will be recomputed
-            // latter in the patch reconfiguration
+            // When cell sorting is activated, indexes are recomputed directly after the restart.
 
         }
     }

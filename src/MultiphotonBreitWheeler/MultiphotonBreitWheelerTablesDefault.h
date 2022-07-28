@@ -9,6 +9,8 @@
 #include <iomanip>
 
 #include "MultiphotonBreitWheelerTables.h"
+#include "Table.h"
+#include "Table2D.h"
 
 // ---------------------------------------------
 // Default values (initialization)
@@ -16,7 +18,7 @@
 class MultiphotonBreitWheelerTablesDefault
 {
 public :
-    static void setDefault( MultiphotonBreitWheelerTables::T& table, MultiphotonBreitWheelerTables::Xi& xi );
+    static void setDefault( Table & T, Table & xi );
 };
 
 #endif

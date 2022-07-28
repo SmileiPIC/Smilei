@@ -46,7 +46,14 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
-   
+
+.. [Massimo2022]
+
+  Francesco Massimo, Mathieu Lobet, Julien Derouillat, Arnaud Beck, Guillaume Bouchard, Mickael Grech, Frédéric Pérez, Tommaso Vinci,
+  `A Task Programming Implementation for the Particle in Cell Code Smilei`,
+  `PASC '22: Proceedings of the Platform for Advanced Scientific Computing Conference 5, 1 (2022) <https://doi.org/10.1145/3539781.3539788>`_, 
+  `arXiv:2204.12837 <https://arxiv.org/abs/2204.12837>`_
+
 .. [Yao2022]
 
   W. Yao, A. Fazzini, S. N. Chen, K. Burdonov, P. Antici, J. Béard, S. Bolaños, A. Ciardi, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, V. Nastasa, S. Orlando, S. Pikuz, D. C. Popescu, G. Revet, X. Ribeyre, E. d’Humières and J. Fuchs,
