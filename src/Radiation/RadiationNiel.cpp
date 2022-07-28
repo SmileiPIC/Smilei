@@ -430,12 +430,12 @@ void RadiationNiel::operator()(
                          Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                          Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    #ifndef _GPU
+#ifndef _GPU
     } 
-    #else
+#else
         } // end acc parallel loop
     } // end acc parallel region
-    #endif
+#endif
 
    //double t5 = MPI_Wtime();
 
