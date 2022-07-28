@@ -93,10 +93,10 @@ void RadiationNiel::operator()(
     double rad_energy;
 
     // Stochastic diffusive term for Niel et al.
-    double diffusion[nbparticles];
+    double * diffusion = new double [nbparticles];
 
     // Random Number
-    double random_numbers[nbparticles];
+    double * random_numbers = new double [nbparticles];
 
     // Momentum shortcut
     double*const __restrict__ momentum_x = particles.getPtrMomentum(0);
@@ -335,6 +335,10 @@ void RadiationNiel::operator()(
 
     }
     radiated_energy += radiated_energy_loc;
+
+    // Destruction
+    delete [] diffusion;
+    delete [] random_numbers;
 
     //double t5 = MPI_Wtime();
 
