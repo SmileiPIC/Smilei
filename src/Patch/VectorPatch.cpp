@@ -4301,7 +4301,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             #pragma acc enter data copyin (radiation_tables)
         }
 
-        std::strong niel_computation_method = radiation_tables->getNielHComputationMethod();
+        std::string niel_computation_method = radiation_tables->getNielHComputationMethod();
 
         if( params.has_Niel_radiation_ && niel_computation_method == "table") {
 

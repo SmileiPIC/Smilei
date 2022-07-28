@@ -14,7 +14,7 @@ install:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    - radiation_GPU
+#    - radiation_GPU
 
   script:
     # Force workdir cleaning in case of retried
@@ -35,7 +35,7 @@ compile_default:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    - radiation_GPU
+#    - radiation_GPU
     
   script:
     # Move in test dir
@@ -49,7 +49,7 @@ run1D:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    - radiation_GPU
+#    - radiation_GPU
     
   script:
     # Move in test dir
@@ -64,7 +64,7 @@ run2D:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    - radiation_GPU
+#    - radiation_GPU
     
   script:
     # Move in test dir
@@ -81,7 +81,7 @@ run3D:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    - radiation_GPU
+#    - radiation_GPU
     
   script:
     # Move in test dir

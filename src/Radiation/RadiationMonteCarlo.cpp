@@ -257,8 +257,9 @@ void RadiationMonteCarlo::operator()(
     #pragma acc parallel \
     present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
     Bx[istart:np],By[istart:np],Bz[istart:np], \
-    table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
-    table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
+    RadiationTables.integfochi_.data_[0:RadiationTables.integfochi_.size_], \
+    RadiationTables.xi_.data_[0:RadiationTables.xi_.size_], \
+    RadiationTables.xi_.axis1_min_[0:RadiationTables.xi_.dim_size_[0]]) \
     deviceptr(position_x, \
             position_y, \
             position_z, \
