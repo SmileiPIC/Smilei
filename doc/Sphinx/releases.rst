@@ -25,9 +25,10 @@ Changes made in the repository (not released)
 * Bugfixes: 
 
   * Poisson Solver correction was not properly accounted for with SDMD.
-  * Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
+  * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
   * C++11 compilation issue
   * Reading particle weights and momenta from hdf5 file
+  * For developers: new table management for Monte-Carlo physical processes
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
