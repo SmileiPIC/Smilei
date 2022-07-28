@@ -4301,7 +4301,9 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             #pragma acc enter data copyin (radiation_tables)
         }
 
-        if( params.has_Niel_radiation_ && radiation_tables->niel_computation_method_ == "table") {
+        std::strong niel_computation_method = radiation_tables->getNielHComputationMethod();
+
+        if( params.has_Niel_radiation_ && niel_computation_method == "table") {
 
             #pragma acc enter data copyin (radiation_tables->niel_)
             
@@ -4314,7 +4316,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 
             const int integfochi_table_size        = radiation_tables->integfochi_.size_;
             const int min_photon_chi_size          = radiation_tables->xi_.dim_size_[0];
-            const int xi_table_size                = radiation_tables->xi_.size_ * radiation_tables->xi_.size_photon_chi_;
+            const int xi_table_size                = radiation_tables->xi_.size_;
 
             const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
             const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
