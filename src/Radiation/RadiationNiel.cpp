@@ -128,9 +128,6 @@ void RadiationNiel::operator()(
     // Parameters for linear alleatory number generator
     #ifdef _GPU
 
-        // Size of Niel table
-        const int size_of_table_Niel = RadiationTables.niel_.size_particle_chi_;
-
         // Initialize initial seed for linear generator
         double initial_seed = rand_->uniform();
         int    seed_curand;
@@ -150,25 +147,27 @@ void RadiationNiel::operator()(
             #pragma omp simd
 #else
         
+            // Size of Niel table
+            const int niel_table_size = RadiationTables.niel_.size_;
+        
             // Management of the data on GPU though this data region
             const int np = iend-istart;
         
             #pragma acc parallel create(random_numbers[0:nbparticles], diffusion[0:nbparticles])  \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], \
-            table[0:size_of_table_Niel], niel_computation_method_ ) \
+            RadiationTables, \
+            RadiationTables->niel_, \
+            RadiationTables->niel_->data_[0:niel_table_size] ) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) \
             private(temp,rad_energy,new_gamma, p, seed_curand ) reduction(+:radiated_energy_loc)
         {
-            unsigned long long seed; // Parameters for CUDA generator
-            unsigned long long seq;
-            unsigned long long offset;
+            // Parameters for random generator
+            unsigned long long seed = 12345ULL;
+            unsigned long long seq = 0ULL;
+            unsigned long long offset = 0ULL;
             
             smilei::tools::gpu::Random rand;
-
-            seed = 12345ULL;
-            seq = 0ULL;
-            offset = 0ULL;
 
             #pragma acc loop gang worker vector
  

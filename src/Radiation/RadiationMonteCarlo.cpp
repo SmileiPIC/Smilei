@@ -203,10 +203,10 @@ void RadiationMonteCarlo::operator()(
     // Table properties ----------------------------------------------------------------
 #ifdef _GPU
     // Size of tables
-    int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
-    int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
-    int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
-                           RadiationTables.xi_.size_photon_chi_;
+    // int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
+    // int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
+    // int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
+    //                        RadiationTables.xi_.size_photon_chi_;
 #endif
 
 
@@ -236,8 +236,9 @@ void RadiationMonteCarlo::operator()(
     
     #pragma acc data present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np], \
-            table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
-            table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
+            RadiationTables.integfochi_.data_[0:RadiationTables.integfochi_.size_], \
+            RadiationTables.xi_.data_[0:RadiationTables.xi_.size_], \
+            RadiationTables.xi_.axis1_min_[0:RadiationTables.xi_.dim_size_[0]]) \
             deviceptr(momentum_x,momentum_y,momentum_z,position_x, \
             position_y,position_z,charge,weight,tau,chi, \
             photon_position_x, \
@@ -253,10 +254,6 @@ void RadiationMonteCarlo::operator()(
             photon_cell_keys \
             ) 
     {
-#endif
-
-
-#ifdef _GPU
     #pragma acc parallel \
     present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
     Bx[istart:np],By[istart:np],Bz[istart:np], \
@@ -602,53 +599,54 @@ void RadiationMonteCarlo::operator()(
         } // end while
     } // end for
 
-    #ifdef _GPU
+#ifdef _GPU
     } // end acc parallel
-    #endif
+#endif
 
     //if (photons) std::cerr << photons->gpu_size()  << std::endl;
 
     // Update the patch radiated energy
     radiated_energy += radiated_energy_loc;
     //std::cerr << " " << radiated_energy << std::endl;
+    
     // ____________________________________________________
     // Update of the quantum parameter chi
 
-    #ifndef _GPU
+#ifndef _GPU
         #pragma omp simd
-    #else
-        int np = iend-istart;
-        #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-        Bx[istart:np],By[istart:np],Bz[istart:np]) \
-        deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) \
-        private(gamma)
+#else
+    int np = iend-istart;
+    #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+    Bx[istart:np],By[istart:np],Bz[istart:np]) \
+    deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) \
+    private(gamma)
     {
 
         #pragma acc loop gang worker vector
-    #endif
-    for( int ipart=istart ; ipart<iend; ipart++ ) {
-        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+#endif
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-        // Gamma
-        const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
-                      + momentum_y[ipart]*momentum_y[ipart]
-                      + momentum_z[ipart]*momentum_z[ipart] );
+            // Gamma
+            const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                          + momentum_y[ipart]*momentum_y[ipart]
+                          + momentum_z[ipart]*momentum_z[ipart] );
 
-        // Computation of the Lorentz invariant quantum parameter
-        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                     momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
-                     particle_gamma,
-                     Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
-                     Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
+            // Computation of the Lorentz invariant quantum parameter
+            chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+                         momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
+                         particle_gamma,
+                         Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                         Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    }
-
-    #ifdef _GPU
-    }
-    #endif
+        }
 
     #ifdef _GPU
+    } // end acc parallel
+    #endif
+
+#ifdef _GPU
     }   // end acc data
-    #endif
+#endif
 
 }

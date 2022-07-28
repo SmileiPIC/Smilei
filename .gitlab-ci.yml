@@ -64,7 +64,8 @@ run2D:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-
+    - radiation_GPU
+    
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -80,7 +81,8 @@ run3D:
     - develop
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-
+    - radiation_GPU
+    
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
