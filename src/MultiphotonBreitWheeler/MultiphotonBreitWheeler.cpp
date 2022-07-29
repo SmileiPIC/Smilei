@@ -472,22 +472,17 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     if ( smpi->dynamics_eithetaold.size() )
         thetaold = &( smpi->dynamics_eithetaold[ithread] );
 
-    int nparts = Epart->size()/3;
+    const int nparts = Epart->size()/3;
 
 
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
-
-        // Index of the last existing photon (weight > 0)
-        int last_photon_index;
-        int first_photon_index;
-        int ii;
         int nb_deleted_photon;
 
         // Backward loop over the photons to fing the first existing photon
-        last_photon_index = bmax[ibin]-1;
-        first_photon_index = bmin[ibin];
+        int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
+        int first_photon_index = bmin[ibin];
         while( ( last_photon_index >= bmin[ibin] )
                 && ( weight[last_photon_index] <= 0 ) ) {
             last_photon_index--;
@@ -549,7 +544,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
             }
 
             bmax[ibin] = last_photon_index+1;
-            for( ii=ibin+1; ii<nbin; ii++ ) {
+            for( int ii=ibin+1; ii<nbin; ii++ ) {
                 bmin[ii] -= nb_deleted_photon;
                 bmax[ii] -= nb_deleted_photon;
             }

@@ -491,11 +491,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                                                         particles->last_index[ibin], ithread );
 
                 // Update the photon quantum parameter chi of all photons
-                Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
-                        smpi,
-                        particles->first_index[ibin],
-                        particles->last_index[ibin],
-                        ithread );
+                // Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
+                //         smpi,
+                //         particles->first_index[ibin],
+                //         particles->last_index[ibin],
+                //         ithread );
 
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
