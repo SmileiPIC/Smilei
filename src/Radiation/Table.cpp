@@ -23,6 +23,10 @@ Table::~Table()
     if (data_) {
         delete [] data_;
         data_ = nullptr;
+        size_ = 0;
+        for (unsigned int i = 0 ; i < dimension_ ; i++) {
+            dim_size_[i] = 0;
+        }
     }
 }
 

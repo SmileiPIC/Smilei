@@ -375,16 +375,6 @@ double RadiationTables::computePhotonProductionYield(
 double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, double xi)
 {
 
-    // Random xi
-    //double xi;
-
-    //double chiph_xip_delta;
-    
-    // For the interpolation
-    double log10_chiphm;
-    double log10_chiphp;
-    double d_photon_chi;
-
     // Log10 of particle_chi
     const double log10_particle_chi = std::log10( particle_chi );
 
@@ -472,7 +462,11 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Photon chi (1 and 2 for interpolation)
     double photon_chi_1;
     double photon_chi_2;
-
+    
+    // For the interpolation
+    double log10_chiphm;
+    double log10_chiphp;
+    
     // Computation of the final photon_chi by interpolation
     if( (xi_.data_[ixip_1] < 1.0) && (xi_.data_[ixip_1+1] - xi_.data_[ixip_1] > 1e-15) ) {
 
@@ -481,7 +475,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 
         log10_chiphp = log10_chiphm + chiph_xip_delta_1;
 
-        d_photon_chi = ( xi - xi_.data_[ixip_1] ) / ( xi_.data_[ixip_1+1] - xi_.data_[ixip_1] );
+        const double d_photon_chi = ( xi - xi_.data_[ixip_1] ) / ( xi_.data_[ixip_1+1] - xi_.data_[ixip_1] );
 
         // Chiph after linear interpolation in the logarithmic scale
         photon_chi_1 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
@@ -499,7 +493,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
                        + xi_.axis1_min_[ichipa+1];
         log10_chiphp = log10_chiphm + chiph_xip_delta_2;
 
-        d_photon_chi = ( xi - xi_.data_[ixip_2] ) / ( xi_.data_[ixip_2+1] - xi_.data_[ixip_2] );
+        const double d_photon_chi = ( xi - xi_.data_[ixip_2] ) / ( xi_.data_[ixip_2+1] - xi_.data_[ixip_2] );
 
         // Chiph after linear interpolation in the logarithmic scale
         photon_chi_2 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
@@ -517,50 +511,6 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     //photon_chi = 0;
     return photon_chi;
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Computation of the Cross Section dNph/dt which is also
-//! the number of photons generated per time unit.
-//
-//! param[in] particle_chi particle quantum parameter
-//! param[in] particle_gamma particle Lorentz factor
-//! param[in] integfochi table of the discretized integrated f/chi function for Photon production yield computation
-// ---------------------------------------------------------------------------------------------------------------------
-// double RadiationTables::computePhotonProductionYield( const double particle_chi, 
-//                                                       const double particle_gamma, 
-//                                                       const Table & integfochi)
-// {
-//     // final value
-//     double dNphdt;
-// 
-//     // Log of the particle quantum parameter particle_chi
-//     const double logchipa = std::log10( particle_chi );
-// 
-//     // Lower index for interpolation in the table integfochi_
-//     int ichipa = int( std::floor( ( logchipa-integfochi.log10_min_ )
-//                          *integfochi.inv_delta_ ) );
-// 
-//     // If we are not in the table...
-//     if( ichipa < 0 ) {
-//         ichipa = 0;
-//         dNphdt = integfochi.data_[ichipa];
-//     } else if( ichipa >= integfochi.size_-1 ) {
-//         ichipa = integfochi.size_-2;
-//         dNphdt = integfochi.data_[ichipa];
-//     } else {
-//         // Upper and lower values for linear interpolation
-//         const double logchipam = ichipa*integfochi.delta_ + integfochi.log10_min_;
-//         const double logchipap = logchipam + integfochi.delta_;
-// 
-//         // Interpolation
-//         dNphdt = ( integfochi.data_[ichipa+1]*std::fabs( logchipa-logchipam ) +
-//                    integfochi.data_[ichipa]*std::fabs( logchipap - logchipa ) )*integfochi.inv_delta_;
-//     }
-// 
-//     return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
-// 
-// }
-
 
 // -----------------------------------------------------------------------------
 //! Return the stochastic diffusive component of the pusher
