@@ -236,9 +236,9 @@ void RadiationMonteCarlo::operator()(
     
     #pragma acc data present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np], \
-            RadiationTables.integfochi_.data_[0:RadiationTables.integfochi_.size_], \
-            RadiationTables.xi_.data_[0:RadiationTables.xi_.size_], \
-            RadiationTables.xi_.axis1_min_[0:RadiationTables.xi_.dim_size_[0]]) \
+            radiation_tables.integfochi_.data_[0:radiation_tables.integfochi_.size_], \
+            radiation_tables.xi_.data_[0:radiation_tables.xi_.size_], \
+            radiation_tables.xi_.axis1_min_[0:radiation_tables.xi_.dim_size_[0]]) \
             deviceptr(momentum_x,momentum_y,momentum_z,position_x, \
             position_y,position_z,charge,weight,tau,chi, \
             photon_position_x, \
@@ -257,9 +257,9 @@ void RadiationMonteCarlo::operator()(
     #pragma acc parallel \
     present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
     Bx[istart:np],By[istart:np],Bz[istart:np], \
-    RadiationTables.integfochi_.data_[0:RadiationTables.integfochi_.size_], \
-    RadiationTables.xi_.data_[0:RadiationTables.xi_.size_], \
-    RadiationTables.xi_.axis1_min_[0:RadiationTables.xi_.dim_size_[0]]) \
+    radiation_tables.integfochi_.data_[0:radiation_tables.integfochi_.size_], \
+    radiation_tables.xi_.data_[0:radiation_tables.xi_.size_], \
+    radiation_tables.xi_.axis1_min_[0:radiation_tables.xi_.dim_size_[0]]) \
     deviceptr(position_x, \
             position_y, \
             position_z, \

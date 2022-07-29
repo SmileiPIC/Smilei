@@ -4336,9 +4336,9 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi,
         const int min_particle_chi_size            = multiphoton_Breit_Wheeler_tables->xi_.dim_size_[0];
         const int xi_table_size                    = multiphoton_Breit_Wheeler_tables->xi_.size_;
 
-        const double *const T_table                = &( radiation_tables->T_.data_[0] );
-        const double *const min_particle_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
-        const double *const xi_table               = &( radiation_tables->xi_.data_[0] );
+        const double *const T_table                = &( multiphoton_Breit_Wheeler_tables->T_.data_[0] );
+        const double *const min_particle_chi_table = &( multiphoton_Breit_Wheeler_tables->xi_.axis1_min_[0] );
+        const double *const xi_table               = &( multiphoton_Breit_Wheeler_tables->xi_.data_[0] );
         
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( T_table, T_table_size );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( min_particle_chi_table, min_particle_chi_size );
@@ -4369,22 +4369,22 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
-        const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
-        const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
-        const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-        const double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+        double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+        double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+        double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+        double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
-        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+        double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+        double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        const double *const By = patches_[ipatch]->EMfields->By_->data();
-        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+        double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        double *const By = patches_[ipatch]->EMfields->By_->data();
+        double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Jx, sizeofJx );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Jy, sizeofJy );
@@ -4412,7 +4412,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
         #pragma acc enter data copyin (radiation_tables->niel_)
         
         const int niel_table_size         = radiation_tables->niel_.size_;
-        const double *const niel_table    = &( radiation_tables->niel_.data_[0] );
+        double *const niel_table    = &( radiation_tables->niel_.data_[0] );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( niel_table, niel_table_size );
     }
 
@@ -4422,9 +4422,9 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
         const int min_photon_chi_size          = radiation_tables->xi_.dim_size_[0];
         const int xi_table_size                = radiation_tables->xi_.size_;
 
-        const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
-        const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
-        const double *const xi_table             = &( radiation_tables->xi_.data_[0] );
+        double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
+        double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+        double *const xi_table             = &( radiation_tables->xi_.data_[0] );
 
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( integfochi_table, integfochi_table_size );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( min_photon_chi_table, min_photon_chi_size );
@@ -4438,9 +4438,9 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
         const int min_particle_chi_size            = multiphoton_Breit_Wheeler_tables->xi_.dim_size_[0];
         const int xi_table_size                    = multiphoton_Breit_Wheeler_tables->xi_.size_;
 
-        const double *const T_table                = &( radiation_tables->T_.data_[0] );
-        const double *const min_particle_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
-        const double *const xi_table               = &( radiation_tables->xi_.data_[0] );
+        double *const T_table                = &( multiphoton_Breit_Wheeler_tables->T_.data_[0] );
+        double *const min_particle_chi_table = &( multiphoton_Breit_Wheeler_tables->xi_.axis1_min_[0] );
+        double *const xi_table               = &( multiphoton_Breit_Wheeler_tables->xi_.data_[0] );
         
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( T_table, T_table_size );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( min_particle_chi_table, min_particle_chi_size );
