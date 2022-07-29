@@ -4426,6 +4426,23 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi, RadiationT
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( xi_table, xi_table_size );
     }
 
+    // Table for multiphoton Breit-Wheeler pair creation
+    if (params.has_multiphoton_Breit_Wheeler_) {
+        
+        const int T_table_size                     = multiphoton_Breit_Wheeler_tables->T_.size_;
+        const int min_particle_chi_size            = multiphoton_Breit_Wheeler_tables->xi_.dim_size_[0];
+        const int xi_table_size                    = multiphoton_Breit_Wheeler_tables->xi_.size_;
+
+        const double *const T_table                = &( radiation_tables->T_.data_[0] );
+        const double *const min_particle_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+        const double *const xi_table               = &( radiation_tables->xi_.data_[0] );
+        
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( T_table, T_table_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( min_particle_chi_table, min_particle_chi_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( xi_table, xi_table_size );
+        
+    }
+
 #endif
 }
 
