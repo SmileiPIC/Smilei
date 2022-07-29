@@ -296,7 +296,7 @@ public:
     //! of Niel et al.
     bool has_Niel_radiation_;
     //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
-    bool hasDiagRadiationSpectrum;
+    bool has_diag_radiation_spectrum_;
 
     //! Tells whether there is a species with multiphoton Breit-Wheeler
     bool has_multiphoton_Breit_Wheeler_;

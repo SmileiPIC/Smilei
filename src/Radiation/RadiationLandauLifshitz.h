@@ -53,7 +53,7 @@ public:
         Particles       &particles,
         Particles       *photons,
         SmileiMPI       *smpi,
-        RadiationTables &RadiationTables,
+        RadiationTables &radiation_tables,
         double          &radiated_energy,
         int istart,
         int iend,

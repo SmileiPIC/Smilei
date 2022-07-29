@@ -883,7 +883,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     has_MC_radiation_ = false ;// Default value
     has_LL_radiation_ = false ;// Default value
     has_Niel_radiation_ = false ;// Default value
-    hasDiagRadiationSpectrum = false; // Default value
+    has_diag_radiation_spectrum_ = false; // Default value
 
     // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
@@ -906,7 +906,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         else if (radiation_model=="diagradiationspectrum")
         {
-            hasDiagRadiationSpectrum = true;
+            has_diag_radiation_spectrum_ = true;
         }
     }
 

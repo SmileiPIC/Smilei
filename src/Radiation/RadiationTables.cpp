@@ -46,7 +46,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.has_MC_radiation_ ||
         params.has_LL_radiation_ ||
         params.has_Niel_radiation_||
-        params.hasDiagRadiationSpectrum) {
+        params.has_diag_radiation_spectrum_) {
         TITLE( "Initializing radiation reaction (or RadiationSpectrum parameters)" )
 
         // Preliminary checks
@@ -62,7 +62,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( PyTools::nComponents( "RadiationReaction" ) != 0 ) {
 
         if( params.has_LL_radiation_ || 
-            params.hasDiagRadiationSpectrum || 
+            params.has_diag_radiation_spectrum_ || 
             params.has_Niel_radiation_ || 
             params.has_MC_radiation_  ) {
             // Minimum threshold on chi to allow continuous radiation
@@ -129,7 +129,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
     MESSAGE( "" );
 
-    if( params.has_LL_radiation_ || params.hasDiagRadiationSpectrum ) {
+    if( params.has_LL_radiation_ || params.has_diag_radiation_spectrum_ ) {
         MESSAGE( 1, "A continuous radiation reaction module"
                  << " is requested by some species:" );
         MESSAGE( 2, "- applied minimum chi for continuous radiation module is "
