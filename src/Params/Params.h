@@ -299,7 +299,7 @@ public:
     bool hasDiagRadiationSpectrum;
 
     //! Tells whether there is a species with multiphoton Breit-Wheeler
-    bool hasMultiphotonBreitWheeler;
+    bool has_multiphoton_Breit_Wheeler_;
     
     //! Tells whether position_old is used
     bool keep_position_old;

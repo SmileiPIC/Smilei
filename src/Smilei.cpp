@@ -758,6 +758,11 @@ int main( int argc, char *argv[] )
     if (params.multiple_decomposition) {
         region.clean();
     }
+    
+    if (params.gpu_computing) {
+        vecPatches.cleanDataOnDevice( params, &smpi, &radiation_tables_ );
+    }
+    
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;

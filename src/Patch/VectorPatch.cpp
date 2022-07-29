@@ -4294,39 +4294,138 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
-
-        // Tables for radiation processes
-
-        if( params.has_Niel_radiation_ || params.has_MC_radiation_ || params.has_LL_radiation_ ) {
-            #pragma acc enter data copyin (radiation_tables)
-        }
-
-        std::string niel_computation_method = radiation_tables->getNielHComputationMethod();
-
-        if( params.has_Niel_radiation_ && niel_computation_method == "table") {
-
-            #pragma acc enter data copyin (radiation_tables->niel_)
-            
-            const int niel_table_size         = radiation_tables->niel_.size_;
-            const double *const niel_table    = &( radiation_tables->niel_.data_[0] );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( niel_table, niel_table_size );
-        }
-
-        if( params.has_MC_radiation_ ) {
-
-            const int integfochi_table_size        = radiation_tables->integfochi_.size_;
-            const int min_photon_chi_size          = radiation_tables->xi_.dim_size_[0];
-            const int xi_table_size                = radiation_tables->xi_.size_;
-
-            const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
-            const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
-            const double *const xi_table             = &( radiation_tables->xi_.data_[0] );
-
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( integfochi_table, integfochi_table_size );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( min_photon_chi_table, min_photon_chi_size );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( xi_table, xi_table_size );
-        }
     }
+    
+    // Tables for radiation processes
+    if( params.has_Niel_radiation_ || params.has_MC_radiation_ || params.has_LL_radiation_ ) {
+        #pragma acc enter data copyin (radiation_tables)
+    }
+
+    std::string niel_computation_method = radiation_tables->getNielHComputationMethod();
+
+    if( params.has_Niel_radiation_ && niel_computation_method == "table") {
+
+        #pragma acc enter data copyin (radiation_tables->niel_)
+        
+        const int niel_table_size         = radiation_tables->niel_.size_;
+        const double *const niel_table    = &( radiation_tables->niel_.data_[0] );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( niel_table, niel_table_size );
+    }
+
+    if( params.has_MC_radiation_ ) {
+
+        const int integfochi_table_size        = radiation_tables->integfochi_.size_;
+        const int min_photon_chi_size          = radiation_tables->xi_.dim_size_[0];
+        const int xi_table_size                = radiation_tables->xi_.size_;
+
+        const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
+        const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+        const double *const xi_table             = &( radiation_tables->xi_.data_[0] );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( integfochi_table, integfochi_table_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( min_photon_chi_table, min_photon_chi_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( xi_table, xi_table_size );
+    }
+    
+    // Table for multiphoton Breit-Wheeler pair creation
+    if (params.has_multiphoton_Breit_Wheeler_) {
+        
+        const int T_table_size                     = multiphoton_Breit_Wheeler_tables->T_.size_;
+        const int min_particle_chi_size            = multiphoton_Breit_Wheeler_tables->xi_.dim_size_[0];
+        const int xi_table_size                    = multiphoton_Breit_Wheeler_tables->xi_.size_;
+
+        const double *const T_table                = &( radiation_tables->T_.data_[0] );
+        const double *const min_particle_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+        const double *const xi_table               = &( radiation_tables->xi_.data_[0] );
+        
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( T_table, T_table_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( min_particle_chi_table, min_particle_chi_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( xi_table, xi_table_size );
+        
+    }
+    
+#endif
+}
+
+void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
+{
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+    const int npatches = this->size();
+
+    const int sizeofJx  = patches_[0]->EMfields->Jx_->globalDims_;
+    const int sizeofJy  = patches_[0]->EMfields->Jy_->globalDims_;
+    const int sizeofJz  = patches_[0]->EMfields->Jz_->globalDims_;
+    const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
+
+    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+
+    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+
+        const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+        const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+        const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+        const double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+
+        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+
+        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+
+        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        const double *const By = patches_[ipatch]->EMfields->By_->data();
+        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Rho, sizeofRho );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Ez, sizeofJz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Bmz, sizeofBz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( Bz, sizeofBz );
+
+    }
+    
+    std::string niel_computation_method = radiation_tables->getNielHComputationMethod();
+
+    if( params.has_Niel_radiation_ && niel_computation_method == "table") {
+
+        #pragma acc enter data copyin (radiation_tables->niel_)
+        
+        const int niel_table_size         = radiation_tables->niel_.size_;
+        const double *const niel_table    = &( radiation_tables->niel_.data_[0] );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( niel_table, niel_table_size );
+    }
+
+    if( params.has_MC_radiation_ ) {
+
+        const int integfochi_table_size        = radiation_tables->integfochi_.size_;
+        const int min_photon_chi_size          = radiation_tables->xi_.dim_size_[0];
+        const int xi_table_size                = radiation_tables->xi_.size_;
+
+        const double *const integfochi_table     = &( radiation_tables->integfochi_.data_[0] );
+        const double *const min_photon_chi_table = &( radiation_tables->xi_.axis1_min_[0] );
+        const double *const xi_table             = &( radiation_tables->xi_.data_[0] );
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( integfochi_table, integfochi_table_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( min_photon_chi_table, min_photon_chi_size );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( xi_table, xi_table_size );
+    }
+
 #endif
 }
 

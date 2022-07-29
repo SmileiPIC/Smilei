@@ -913,11 +913,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     // Parameters for the multiphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
-    hasMultiphotonBreitWheeler = false ;// Default value
+    has_multiphoton_Breit_Wheeler_ = false ;// Default value
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
         if( PyTools::extractV( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
-            hasMultiphotonBreitWheeler = true;
+            has_multiphoton_Breit_Wheeler_ = true;
         }
     }
 
@@ -1252,7 +1252,7 @@ void Params::check_consistency()
         //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
         // }
 
-        if( hasMultiphotonBreitWheeler ) {
+        if( has_multiphoton_Breit_Wheeler_ ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }
