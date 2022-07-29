@@ -36,7 +36,7 @@ RadiationDiagRadiationSpectrum::~RadiationDiagRadiationSpectrum()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param RadiationTables Cross-section data tables and useful functions
+//! \param radiation_tables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -47,7 +47,7 @@ void RadiationDiagRadiationSpectrum::operator() (
       Particles &particles,
       Particles *photons,
       SmileiMPI *smpi,
-      RadiationTables &RadiationTables,
+      RadiationTables &radiation_tables,
       double          &radiated_energy,
       int istart,
       int iend,

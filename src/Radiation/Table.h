@@ -51,6 +51,12 @@ public:
     //! params[in] std::vector<double> & input_data : vector to be used to initialize table data
     void set(std::vector<double> & input_data);
     
+    //! Return pointer to the data_ array
+    inline double * __attribute__((always_inline)) data()
+    {
+        return &data_[0];
+    };
+    
     virtual void set(std::vector<double> & input_axis1_min, std::vector<double> & input_data) {};
 
     // --------------------------------------------------------
