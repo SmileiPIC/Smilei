@@ -4227,7 +4227,9 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
+void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, 
+                                        RadiationTables *radiation_tables,
+                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Maybe we could just alloc the memory here and initialize 
@@ -4347,7 +4349,10 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 #endif
 }
 
-void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
+//! Clean data allocated on device
+void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi, 
+                                    RadiationTables *radiation_tables,
+                                    MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
 

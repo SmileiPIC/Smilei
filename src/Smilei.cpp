@@ -279,7 +279,7 @@ int main( int argc, char *argv[] )
 
         if (params.gpu_computing) {
             TITLE( "Initialize GPU data" );
-            vecPatches.initializeDataOnDevice( params, &smpi, &radiation_tables_ );
+            vecPatches.initializeDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
         }
 
         // Initialize the electromagnetic fields
@@ -760,7 +760,7 @@ int main( int argc, char *argv[] )
     }
     
     if (params.gpu_computing) {
-        vecPatches.cleanDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.cleanDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
     }
     
     vecPatches.close( &smpi );

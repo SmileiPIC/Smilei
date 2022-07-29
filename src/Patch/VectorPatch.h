@@ -410,10 +410,14 @@ public :
     }
 
     //! Create and copy the data on device (GPU) from host (CPU)
-    void initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ );
+    void initializeDataOnDevice( Params &params, SmileiMPI *smpi, 
+                                 RadiationTables * radiation_tables,
+                                 MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
     //! Clean data allocated on device
-    void cleanDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ );
+    void cleanDataOnDevice( Params &params, SmileiMPI *smpi, 
+                            RadiationTables * radiation_tables,
+                            MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
     //! Field Synchronization from the GPU (Device) to the host (CPU)
     //! This function updates the data on the host from the data located on the device
