@@ -478,7 +478,6 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
-        int nb_deleted_photon;
 
         // Backward loop over the photons to fing the first existing photon
         int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
@@ -521,7 +520,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
         }
 
         // Removal of the photons
-        nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+        const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
 
         if( nb_deleted_photon > 0 ) {
             particles.eraseParticle( last_photon_index+1, nb_deleted_photon );
@@ -585,7 +584,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
         double *weight = &( particles.weight( 0 ) );
         //int nb_deleted_photon;
 
-        // Backward loop over the photons to fing the first existing photon
+        // Backward loop over the photons to find the first existing photon
         int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
         int first_photon_index = bmin[ibin]; // Index of the first photon
         while( ( last_photon_index >= bmin[ibin] )
@@ -615,7 +614,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
                         iold[iDim*nparts+ipart] = iold[iDim*nparts+last_photon_index];
                         deltaold[iDim*nparts+ipart] = deltaold[iDim*nparts+last_photon_index];
                     }
-                    gamma[0*nparts+ipart] = gamma[0*nparts+last_photon_index];
+                    gamma[ipart] = gamma[0*nparts+last_photon_index];
 
                     if (thetaold) {
                         thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
@@ -623,6 +622,14 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
                     last_photon_index --;
                 }
             }
+        } // end for ipart
+            
+        // Update of the bin boundaries
+        const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+
+        if( nb_deleted_photon > 0 ) {
+            bmax[ibin] = last_photon_index+1;
         }
+        
     } // if bmax[ibin] > bmin[ibin]
 }

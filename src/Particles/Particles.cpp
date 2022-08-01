@@ -983,7 +983,7 @@ void Particles::compress() {
         
         // Compute the space between the bins
         
-        unsigned int bin_space = last_index[ibin-1] - first_index[ibin] + 2;
+        unsigned int bin_space = last_index[ibin-1] - first_index[ibin];
         
         // Determine first index and number of particles to copy. 
         // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
@@ -1006,11 +1006,11 @@ void Particles::compress() {
             }
             
             if (particles_number>0) {
-                overwriteParticle(copy_first_index, last_index[ibin-1]+1, copy_particles_number );
+                overwriteParticle(copy_first_index, last_index[ibin-1], copy_particles_number );
             }
             
             //Update bin indexes
-            first_index[ibin] = last_index[ibin-1]+1;
+            first_index[ibin] = last_index[ibin-1];
             last_index[ibin] = first_index[ibin] + copy_particles_number;
         }
         

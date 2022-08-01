@@ -429,7 +429,7 @@ public:
 
     //! Indices of the first particles of each bin (or cells) in the Particles object
     std::vector<int> first_index;
-    //! Indexes of the last particles in each bin (or cells) in the Particles object
+    //! Indexes of the last particles + 1 in each bin (or cells) in the Particles object
     std::vector<int> last_index;
 
     virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
