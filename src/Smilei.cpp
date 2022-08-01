@@ -331,8 +331,10 @@ int main( int argc, char *argv[] )
         }
         
         vecPatches.computeCharge();
+        // TODO(Etienne M): redundant work is done here. We exchange current 
+        // density J when in fact, only charge density Rho needs to be exchanged.
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        
+
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             MESSAGE( 1, "Solving Poisson at time t = 0" );

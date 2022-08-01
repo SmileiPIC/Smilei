@@ -300,7 +300,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sortAllParticles( Params &params )
+void VectorPatch::initialParticleSorting( Params &params )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Initial sorting
@@ -1054,6 +1054,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
+            break;
         }
     }
     if( !some_particles_are_moving  && !diag_flag ) {
@@ -2211,13 +2212,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     uint64_t nparticles_global( 0 );
     MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
 
     //Timer ptimer("global");
     //ptimer.init(smpi);
     //ptimer.restart();
 
     double gamma_mean = gamma_global/( double )nparticles_global;
+
+    MESSAGE( "GAMMA = " << gamma_mean );
 
     unsigned int iteration_max = params.relativistic_poisson_max_iteration;
     double           error_max = params.relativistic_poisson_max_error;
