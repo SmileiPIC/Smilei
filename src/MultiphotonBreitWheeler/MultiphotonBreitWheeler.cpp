@@ -515,10 +515,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
                     if (thetaold) {
                         (*thetaold)[0*nparts+ipart] = (*thetaold)[0*nparts+last_photon_index];
                     }
-
                     last_photon_index --;
-
-
                 }
             }
         }
@@ -550,4 +547,82 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+    //! Clean photons that decayed into pairs (weight <= 0) and resize each bin
+    //! But keeping the space between bins (so called no compression)
+    //! \param particles   particle object containing the particle
+    //!                    properties of the current species
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
+    //! \param ithread     Thread index
+// -----------------------------------------------------------------------------
+void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
+    Particles &particles,
+    SmileiMPI *smpi,
+    int ibin, int nbin,
+    int *bmin, int *bmax, int ithread )
+{
+    
+    double *const Epart     = smpi->dynamics_Epart[ithread].data();
+    double *const Bpart     = smpi->dynamics_Bpart[ithread].data();
+    double *const gamma     = smpi->dynamics_invgf[ithread].data();
+    int *const iold         = smpi->dynamics_iold[ithread].data();
+    double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
+
+    const int nparts = smpi->dynamics_Epart[ithread].size()/3;
+
+    std::complex<double> * thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = smpi->dynamics_eithetaold[ithread].data();
+
+    if( bmax[ibin] > bmin[ibin] ) {
+        // Weight shortcut
+        double *weight = &( particles.weight( 0 ) );
+        //int nb_deleted_photon;
+
+        // Backward loop over the photons to fing the first existing photon
+        int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
+        int first_photon_index = bmin[ibin]; // Index of the first photon
+        while( ( last_photon_index >= bmin[ibin] )
+                && ( weight[last_photon_index] <= 0 ) ) {
+            last_photon_index--;
+        }
+        while( ( first_photon_index < bmax[ibin] )
+                && ( weight[first_photon_index] > 0 ) ) {
+            first_photon_index++;
+        }
+        // At this level, last_photon_index is the position of the last still-existing photon (weight > 0)
+        // that will not be erased
+
+        // Backward loop over the photons to fill holes in the photon particle array (at the bin level only)
+        for( int ipart=last_photon_index-1 ; ipart>=bmin[ibin]; ipart-- ) {
+            if( weight[ipart] <= 0 ) {
+                if( ipart < last_photon_index ) {
+                    // The last existing photon comes to the position of
+                    // the deleted photon
+                    particles.overwriteParticle( last_photon_index, ipart );
+                    // Overwrite bufferised data
+                    for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                        Epart[iDim*nparts+ipart] = Epart[iDim*nparts+last_photon_index];
+                        Bpart[iDim*nparts+ipart] = Bpart[iDim*nparts+last_photon_index];
+                    }
+                    for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+                        iold[iDim*nparts+ipart] = iold[iDim*nparts+last_photon_index];
+                        deltaold[iDim*nparts+ipart] = deltaold[iDim*nparts+last_photon_index];
+                    }
+                    gamma[0*nparts+ipart] = gamma[0*nparts+last_photon_index];
+
+                    if (thetaold) {
+                        thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
+                    }
+                    last_photon_index --;
+                }
+            }
+        }
+    } // if bmax[ibin] > bmin[ibin]
 }

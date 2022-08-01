@@ -132,15 +132,19 @@ public:
     void swapParticle( unsigned int part1, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1 into part2 memory location. Erasing part2
+    //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, unsigned int part2 );
 
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
+    //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
+    //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
+    //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
     //! Move iPart at the end of vectors
@@ -158,17 +162,21 @@ public:
     //! Move ipart at new_pos in the particles data structure
     void moveParticles( int iPart, int new_pos );
 
-    //! Compress the particles vectors according to the provided mask
+    //! Remove and compress the particles vectors according to the provided mask
     //! between istart and iend
     void eraseParticlesWithMask( int istart, int iend, std::vector <int> & mask );
 
-    //! Compress the particles vectors using cell_keys as a mask
+    //! Remove and compress the particles vectors using cell_keys as a mask
     //! between istart and iend
     void eraseParticlesWithMask( int istart, int iend);
 
     //! This method erases particles according to the provided mask
     //! between istart and iend
     // void eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased);
+
+    //! This method eliminates the space between the bins 
+    //! (presence of empty particles beteen the bins)
+    void compress();
 
     //! Test if ipart is in the local patch
     bool isParticleInDomain( unsigned int ipart, Patch *patch );
@@ -419,8 +427,10 @@ public:
         prop = double_prop_[iprop];
     }
 
-    //! Indices of first and last particles in each bin/cell
-    std::vector<int> first_index, last_index;
+    //! Indices of the first particles of each bin (or cells) in the Particles object
+    std::vector<int> first_index;
+    //! Indexes of the last particles in each bin (or cells) in the Particles object
+    std::vector<int> last_index;
 
     virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };

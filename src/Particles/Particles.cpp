@@ -308,7 +308,6 @@ void Particles::resizeCellKeys(unsigned int nParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::shrinkToFit()
 {
-
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         std::vector<double>( *double_prop_[iprop] ).swap( *double_prop_[iprop] );
     }
@@ -320,9 +319,7 @@ void Particles::shrinkToFit()
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         std::vector<uint64_t>( *uint64_prop_[iprop] ).swap( *uint64_prop_[iprop] );
     }
-
     //cell_keys.swap(cell_keys);
-
 }
 
 
@@ -691,7 +688,8 @@ void Particles::translateParticles( std::vector<unsigned int> parts )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle src_particle into dest_particle memory location, erasing dest_particle.
+//! Move particle src_particle into dest_particle memory location, erasing dest_particle.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle )
 {
@@ -710,7 +708,8 @@ void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
+//! Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N )
 {
@@ -732,7 +731,8 @@ void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsig
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle part1 into part2 memory location of dest vector, erasing part2.
+//! Move particle part1 into part2 memory location of dest vector, erasing part2.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 )
 {
@@ -969,6 +969,53 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 //         }
 //     }
 // }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method eliminates the space between the bins 
+//! (presence of empty particles between the bins)
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::compress() {
+    
+    for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
+        
+        // Compute the number of particles
+        unsigned int particles_number = last_index[ibin] - first_index[ibin];
+        
+        // Compute the space between the bins
+        
+        unsigned int bin_space = last_index[ibin-1] - first_index[ibin] + 2;
+        
+        // Determine first index and number of particles to copy. 
+        // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
+        
+        if (bin_space > 0) {
+            
+            // Compute the number of particles
+            unsigned int copy_particles_number = 0;
+            
+            // if last_index[ibin] - bin_space < first_index[ibin], it means that the empty space is larger than the number of particles in ibin
+            // then we move the full bin
+            // Else we only move the particles from copy_first_bin to last_index[ibin]
+            unsigned int copy_first_index = last_index[ibin] - bin_space;
+                    
+            if (copy_first_index < first_index[ibin]) {
+                copy_first_index = first_index[ibin];
+                copy_particles_number = particles_number;
+            } else {
+                copy_particles_number = bin_space;
+            }
+            
+            if (particles_number>0) {
+                overwriteParticle(copy_first_index, last_index[ibin-1]+1, copy_particles_number );
+            }
+            
+            //Update bin indexes
+            first_index[ibin] = last_index[ibin-1]+1;
+            last_index[ibin] = first_index[ibin] + copy_particles_number;
+        }
+        
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Move ipart at new_pos in the particles data structure

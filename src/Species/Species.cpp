@@ -498,7 +498,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 //         ithread );
 
                 // Suppression of the decayed photons into pairs
-                Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
+                // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
+                //     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
+                Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
 
 #ifdef  __DETAILED_TIMERS
@@ -638,6 +640,25 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             }
         }
     } // End projection for frozen particles
+    
+    // Compression of the bins if necessary 
+    // Multiphoton Breit-Wheeler
+    if( Multiphoton_Breit_Wheeler_process ) {
+    
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+    
+        particles->compress();
+        
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
+        
+        
+    }
+    
+    
 } //END dynamics
 
 
