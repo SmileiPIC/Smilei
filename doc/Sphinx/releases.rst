@@ -22,7 +22,7 @@ Changes made in the repository (not released)
 
 * Collisions: new parameter ``time_frozen``
 * Performances post-processing: new parameter ``cumulative``
- * For developers: new table management for Monte-Carlo physical processes (tranparent to users)
+ * For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Bugfixes: 
 
   * Poisson Solver correction was not properly accounted for with SDMD.
