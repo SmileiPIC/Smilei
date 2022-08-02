@@ -73,7 +73,14 @@ public:
         return data_3D[i][j][k];
     };
     
-    
+    Field* clone() override {
+        auto newInstance = new cField3D(dims_);
+        newInstance->name = name;
+        newInstance->copyFrom(this);
+        return newInstance;
+    }
+
+
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
     
     inline std::complex<double> &operator()( unsigned int i )
