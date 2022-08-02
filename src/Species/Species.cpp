@@ -655,10 +655,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
         
-        
     }
-    
-    
 } //END dynamics
 
 

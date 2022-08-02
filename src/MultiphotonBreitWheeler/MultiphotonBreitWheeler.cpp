@@ -629,6 +629,13 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
 
         if( nb_deleted_photon > 0 ) {
             bmax[ibin] = last_photon_index+1;
+            
+            std::cerr 
+                    << " ibin: " << ibin
+                    << " - bmin: " << bmin[ibin]
+                    << " - bmax: " << bmax[ibin]
+                    << " - nb_deleted_photon: " << nb_deleted_photon
+                    << std::endl;
         }
         
     } // if bmax[ibin] > bmin[ibin]

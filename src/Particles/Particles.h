@@ -114,7 +114,7 @@ public:
     void eraseParticle( unsigned int iPart, unsigned int nPart );
 
     //! Suppress all particles from iPart to the end of particle array
-    void eraseParticleTrail( unsigned int iPart );
+    void eraseParticleTrail( unsigned int iPart, bool compute_cell_keys = false );
 
     //! Print parameters of particle iPart
     void print( unsigned int iPart );
@@ -137,7 +137,7 @@ public:
 
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
     //! Warning: do not update first_index and last_index
-    void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N );
+    void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N, bool cell_keys = false );
 
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
     //! Warning: do not update first_index and last_index
@@ -177,6 +177,9 @@ public:
     //! This method eliminates the space between the bins 
     //! (presence of empty particles beteen the bins)
     void compress();
+    
+    //! Sum the vectors
+    void sum(int ibin_min, int ibin_max);
 
     //! Test if ipart is in the local patch
     bool isParticleInDomain( unsigned int ipart, Patch *patch );
