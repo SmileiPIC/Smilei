@@ -272,10 +272,13 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+        // Allocate only the first time we call this function
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
+        // At initialization, this data is NOT on the GPU
+        const bool is_manipulating_gpu_memory = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data() );
+        if( is_manipulating_gpu_memory && ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
             const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
             const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
             const int           dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
@@ -389,13 +392,15 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const double *__restrict__ field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'J';
+    // At initialization, this data is NOT on the GPU
+    const bool is_manipulating_gpu_memory = name[0] == 'J' &&
+                                            smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field ) \
-        map( to                                 \
+    #pragma omp target if( is_manipulating_gpu_memory ) \
+        map( to                                         \
              : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
@@ -427,13 +432,15 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     double *__restrict__ field     = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'J';
+        // At initialization, this data is NOT on the GPU
+    const bool is_manipulating_gpu_memory = name[0] == 'J' &&
+                                            smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field ) \
-        map( tofrom                             \
+    #pragma omp target if( is_manipulating_gpu_memory ) \
+        map( tofrom                                     \
              : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )

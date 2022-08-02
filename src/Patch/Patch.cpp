@@ -1389,8 +1389,8 @@ void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr )
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
             if (devPtr) {
-                // SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->sendFields_[iDim * 2 + iNeighbor]->data_ );
-                double* sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->sendFields_[iDim*2+iNeighbor]->data_ );
+                // At initialization, we may not have everything on GPU SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->sendFields_[iDim * 2 + iNeighbor]->data_ );
+                double* sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDeviceOrHostPointer(field->sendFields_[iDim*2+iNeighbor]->data_);
                 // Assumes a GPU compatible MPI implementation
                 MPI_Isend( sendField, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
@@ -1405,8 +1405,8 @@ void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr )
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
             if (devPtr) {
-                // SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_ );
-                double* recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_ );
+                // At initialization, we may not have everything on GPU SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_ );
+                double* recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDeviceOrHostPointer(field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_);
                 // Assumes a GPU compatible MPI implementation
                 MPI_Irecv( recvField, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,

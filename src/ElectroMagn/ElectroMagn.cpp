@@ -494,10 +494,7 @@ void ElectroMagn::restartRhoJs()
         }
     }
     
-    Jx_ ->put_to( 0. );
-    Jy_ ->put_to( 0. );
-    Jz_ ->put_to( 0. );
-    rho_->put_to( 0. );
+    restartRhoJ();
 }
 
 void ElectroMagn::restartEnvChis()

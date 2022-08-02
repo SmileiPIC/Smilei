@@ -165,7 +165,7 @@ namespace smilei {
                 /// else return a_pointer (untouched)
                 ///
                 /// Note:
-                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this 
+                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this
                 /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
                 ///
                 /// #if defined( __NVCOMPILER )
@@ -174,10 +174,19 @@ namespace smilei {
                 /// #else
                 ///
                 template <typename T>
-                static T* GetDevicePointer( T* a_pointer );
+                static T* GetDevicePointer( T* a_host_pointer );
+
+                /// Smilei's code does a lot of runtime checking to know if we are using GPU or CPU data.
+                /// Sometimes, we just want to get the GPU pointer if it exist, or the host pointer if no GPU equivalent
+                /// exists. ie: MPI_Isend in Patch::initSumField() There, we dont know which buffer we deal with under
+                /// the contract that the data will be exchanged will be from the GPU if it exists there, or else, on
+                /// from the CPU.
+                ///
+                template <typename T>
+                static T* GetDeviceOrHostPointer( T* a_host_pointer );
 
                 template <typename T>
-                static bool IsHostPointerMappedOnDevice( const T* a_pointer );
+                static bool IsHostPointerMappedOnDevice( const T* a_host_pointer );
 
                 /// Expects host pointers passed through GetDevicePointer. a_count T's are copied (dont specify the byte
                 /// count only object count).
@@ -490,6 +499,15 @@ namespace smilei {
 #else
                 return a_host_pointer;
 #endif
+            }
+
+            template <typename T>
+            T* HostDeviceMemoryManagment::GetDeviceOrHostPointer( T* a_host_pointer )
+            {
+                T* const a_device_pointer = GetDevicePointer( a_host_pointer );
+                return a_device_pointer == nullptr ?
+                           a_host_pointer : // Not mapped to the GPU
+                           a_device_pointer;
             }
 
             template <typename T>
