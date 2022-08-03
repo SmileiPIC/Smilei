@@ -413,27 +413,23 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       int          icell,
                                                       int          ipart_ref )
 {
+    // ERROR( "Projector2D2OrderGPU::currentsAndDensityWrapper(): Not implemented !" );
+
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
     std::vector<double> &invgf = smpi->dynamics_invgf[ithread];
-    Jx_                        = EMfields->Jx_->data();
-    Jy_                        = EMfields->Jy_->data();
-    Jz_                        = EMfields->Jz_->data();
-    rho_                       = EMfields->rho_->data();
+    Jx_                        = &( *EMfields->Jx_ )( 0 );
+    Jy_                        = &( *EMfields->Jy_ )( 0 );
+    Jz_                        = &( *EMfields->Jz_ )( 0 );
+    rho_                       = &( *EMfields->rho_ )( 0 );
 
     if( diag_flag ) {
-        // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
-        // - Pull everything we need from the GPU and compute on the host
-        // - Implement currentsAndDensity on GPU which means:
-        //      - The J<x>_s/Rho_s, if required by the diags must be on the GPU
-        //          -
-        //      - Rho_ must be on the GPU if species specific charge/current densities are not diagnosed
-        //
+        // The projection may apply to the species-specific arrays
 
-        // double *const b_Jx  = EMfields->Jx_s[ispec] ? &( *EMfields->Jx_s[ispec] )( 0 ) : Jx_;
-        // double *const b_Jy  = EMfields->Jy_s[ispec] ? &( *EMfields->Jy_s[ispec] )( 0 ) : Jy_;
-        // double *const b_Jz  = EMfields->Jz_s[ispec] ? &( *EMfields->Jz_s[ispec] )( 0 ) : Jz_;
-        // double *const b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : rho_;
+        // double *const b_Jx  = EMfields->Jx_s[ispec] ? &( *EMfields->Jx_s[ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 );
+        // double *const b_Jy  = EMfields->Jy_s[ispec] ? &( *EMfields->Jy_s[ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 );
+        // double *const b_Jz  = EMfields->Jz_s[ispec] ? &( *EMfields->Jz_s[ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 );
+        // double *const b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 );
 
         // for( int ipart = istart; ipart < iend; ipart++ ) {
         //     currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
@@ -464,19 +460,18 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     } else {
         // If no field diagnostics this timestep, then the projection is done directly on the total arrays
         if( is_spectral ) {
-            ERROR( "Not implemented on GPU" );
-            // for( int ipart = istart; ipart < iend; ipart++ ) {
-            //     currentsAndDensity( Jx_, Jy_, Jz_, rho_,
-            //                         particles, ipart,
-            //                         invgf[ipart], &iold[ipart], &delta[ipart],
-            //                         inv_cell_volume,
-            //                         dx_inv_, dy_inv_,
-            //                         dx_ov_dt_, dy_ov_dt_,
-            //                         i_domain_begin_, j_domain_begin_,
-            //                         nprimy,
-            //                         one_third,
-            //                         pxr );
-            // }
+            for( int ipart = istart; ipart < iend; ipart++ ) {
+                currentsAndDensity( Jx_, Jy_, Jz_, rho_,
+                                    particles, ipart,
+                                    invgf[ipart], &iold[ipart], &delta[ipart],
+                                    inv_cell_volume,
+                                    dx_inv_, dy_inv_,
+                                    dx_ov_dt_, dy_ov_dt_,
+                                    i_domain_begin_, j_domain_begin_,
+                                    nprimy,
+                                    one_third,
+                                    pxr );
+            }
         } else {
             currents( Jx_, Jy_, Jz_,
                       EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
