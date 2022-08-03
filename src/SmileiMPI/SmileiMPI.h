@@ -232,6 +232,60 @@ public:
         }
     }
     
+    //! Resize buffers for a given number of particles
+    inline void eraseBufferParticleTrail( const int ithread, const int ndim, int istart, bool isAM = false )
+    {
+        
+        unsigned int np = dynamics_invgf[ithread].size();
+        
+        for ( int idim=2 ; idim>=0 ; idim-- ) {
+            dynamics_Epart[ithread].erase(dynamics_Epart[ithread].begin()+idim*np + istart,
+                                          dynamics_Epart[ithread].begin()+idim*np + np);
+            dynamics_Bpart[ithread].erase(dynamics_Bpart[ithread].begin()+idim*np + istart,
+                                          dynamics_Bpart[ithread].begin()+idim*np + np);
+        }
+        dynamics_invgf[ithread].erase(dynamics_invgf[ithread].begin() + istart,
+                                      dynamics_invgf[ithread].begin() + np);
+        
+        for ( int idim=ndim-1 ; idim>=0 ; idim-- ) {
+            dynamics_iold[ithread].erase(dynamics_iold[ithread].begin()+idim*np + istart,
+                                          dynamics_iold[ithread].begin()+idim*np + np);
+            dynamics_deltaold[ithread].erase(dynamics_deltaold[ithread].begin()+idim*np + istart,
+                                          dynamics_deltaold[ithread].begin()+idim*np + np);
+        }
+                                      
+        if( isAM ) {
+            dynamics_eithetaold[ithread].erase(dynamics_eithetaold[ithread].begin() + istart,
+                                               dynamics_eithetaold[ithread].begin() + np);
+        }
+        
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            
+            for ( int idim=2 ; idim>=0 ; idim-- ) {
+                dynamics_GradPHIpart[ithread].erase(dynamics_GradPHIpart[ithread].begin()+idim*np + istart,
+                                              dynamics_GradPHIpart[ithread].begin()+idim*np + np);
+                dynamics_GradPHI_mpart[ithread].erase(dynamics_GradPHI_mpart[ithread].begin()+idim*np + istart,
+                                              dynamics_GradPHI_mpart[ithread].begin()+idim*np + np);
+            }
+            
+            dynamics_PHIpart[ithread].erase(dynamics_PHIpart[ithread].begin() + istart,
+                                        dynamics_PHIpart[ithread].begin() + np);
+            dynamics_PHI_mpart[ithread].erase(dynamics_PHI_mpart[ithread].begin() + istart,
+                                        dynamics_PHI_mpart[ithread].begin() + np);
+            dynamics_inv_gamma_ponderomotive[ithread].erase(dynamics_inv_gamma_ponderomotive[ithread].begin() + istart,
+                                        dynamics_inv_gamma_ponderomotive[ithread].begin() + np);
+                                        
+            if ( dynamics_EnvEabs_part.size() > 0 ) {
+                dynamics_EnvEabs_part[ithread].erase(dynamics_EnvEabs_part[ithread].begin() + istart,
+                                            dynamics_EnvEabs_part[ithread].begin() + np);
+                dynamics_EnvExabs_part[ithread].erase(dynamics_EnvExabs_part[ithread].begin() + istart,
+                                            dynamics_EnvExabs_part[ithread].begin() + np);
+            }
+            
+        }
+        
+    }
+    
     // Resize buffers for old properties only
     inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )
     {
