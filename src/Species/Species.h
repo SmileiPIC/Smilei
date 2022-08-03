@@ -509,6 +509,9 @@ public:
     //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
 
+    //! 
+    void compress(SmileiMPI *smpi);
+
     //! Moving window boundary conditions managment
     void disableXmax();
     //! Moving window boundary conditions managment

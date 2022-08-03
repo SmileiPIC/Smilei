@@ -501,7 +501,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                 //     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
                 Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
-                    *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
+                    *particles, smpi, ibin, 
+                    particles->first_index.size(), 
+                    &particles->first_index[0], 
+                    &particles->last_index[0], 
+                    ithread );
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -649,7 +653,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         timer = MPI_Wtime();
 #endif
     
-        particles->compress();
+        //particles->compress();
+        compress(smpi);
         
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -657,6 +662,65 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         
     }
 } //END dynamics
+
+//!
+void Species::compress(SmileiMPI *smpi) {
+    
+    int ithread;
+#ifdef _OPENMP
+    ithread = omp_get_thread_num();
+#else
+    ithread = 0;
+#endif
+    
+    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
+    std::vector<double> *gamma = &( smpi->dynamics_invgf[ithread] );
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
+
+    std::vector<std::complex<double>> *thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = &( smpi->dynamics_eithetaold[ithread] );
+    
+    // std::cerr << nparts << " " << Epart->size() << std::endl;
+    
+    int nbin = particles->first_index.size();
+    
+    for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
+    
+    
+        // Removal of the photons
+        const unsigned int bin_gap = particles->first_index[ibin+1] - particles->last_index[ibin];
+
+        if( bin_gap > 0 ) {
+            particles->eraseParticle( particles->last_index[ibin], bin_gap, true );
+            
+            const int nparts = Epart->size()/3;
+            
+            // Erase bufferised data
+            for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                Epart->erase(Epart->begin()+iDim*nparts+particles->last_index[ibin],Epart->begin()+iDim*nparts+particles->last_index[ibin]+bin_gap);
+                Bpart->erase(Bpart->begin()+iDim*nparts+particles->last_index[ibin],Bpart->begin()+iDim*nparts+particles->last_index[ibin]+bin_gap);
+            }
+            for ( int iDim=particles->dimension()-1; iDim>=0 ; iDim-- ) {
+                iold->erase(iold->begin()+iDim*nparts+particles->last_index[ibin],iold->begin()+iDim*nparts+particles->last_index[ibin]+bin_gap);
+                deltaold->erase(deltaold->begin()+iDim*nparts+particles->last_index[ibin],deltaold->begin()+iDim*nparts+particles->last_index[ibin]+bin_gap);
+            }
+            gamma->erase(gamma->begin()+0*nparts+particles->last_index[ibin],gamma->begin()+0*nparts+particles->last_index[ibin]+bin_gap);
+            
+            if (thetaold) {
+                thetaold->erase(thetaold->begin()+0*nparts+particles->last_index[ibin],thetaold->begin()+0*nparts+particles->last_index[ibin]+bin_gap);
+            }
+            
+            for( int ii=ibin+1; ii<nbin; ii++ ) {
+                particles->first_index[ii] -= bin_gap;
+                particles->last_index[ii] -= bin_gap;
+            }
+        }
+    }
+    particles->eraseParticleTrail( particles->last_index[nbin-1], true );
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------

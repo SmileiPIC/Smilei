@@ -109,9 +109,9 @@ public:
     void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
 
     //! Suppress particle iPart
-    void eraseParticle( unsigned int iPart );
+    void eraseParticle( unsigned int iPart, bool compute_cell_keys = false );
     //! Suppress nPart particles from iPart
-    void eraseParticle( unsigned int iPart, unsigned int nPart );
+    void eraseParticle( unsigned int iPart, unsigned int nPart, bool compute_cell_keys = false );
 
     //! Suppress all particles from iPart to the end of particle array
     void eraseParticleTrail( unsigned int iPart, bool compute_cell_keys = false );
@@ -177,6 +177,7 @@ public:
     //! This method eliminates the space between the bins 
     //! (presence of empty particles beteen the bins)
     void compress();
+    void compress2();
     
     //! Sum the vectors
     void sum(int ibin_min, int ibin_max);

@@ -468,7 +468,7 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
 //! Suppress particle iPart
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::eraseParticle( unsigned int ipart )
+void Particles::eraseParticle( unsigned int ipart, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart );
@@ -482,7 +482,9 @@ void Particles::eraseParticle( unsigned int ipart )
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart );
     }
 
-    //cell_keys.erase(cell_keys.begin() + ipart);
+    if (compute_cell_keys) {
+        cell_keys.erase(cell_keys.begin() + ipart);
+    }
 
 }
 
@@ -513,7 +515,7 @@ void Particles::eraseParticleTrail( unsigned int ipart, bool compute_cell_keys )
 //! Suppress npart particles from ipart
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
+void Particles::eraseParticle( unsigned int ipart, unsigned int npart, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart, ( *double_prop_[iprop] ).begin()+ipart+npart );
@@ -525,6 +527,10 @@ void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
 
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).begin()+ipart+npart );
+    }
+
+    if (compute_cell_keys) {
+        cell_keys.erase( cell_keys.begin()+ipart, cell_keys.begin()+ipart+npart );
     }
 
 }
@@ -989,11 +995,48 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 //     }
 // }
 
+void Particles::compress2() {
+    
+    int nbin = first_index.size();
+    
+    for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
+    
+        // Removal of the photons
+        const unsigned int nb_deleted_photon = first_index[ibin+1] - last_index[ibin];
+
+        if( nb_deleted_photon > 0 ) {
+            eraseParticle( last_index[ibin], nb_deleted_photon );
+            
+            // Erase bufferised data
+            // for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+            //     Epart->erase(Epart->begin()+iDim*nparts+last_photon_index+1,Epart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            //     Bpart->erase(Bpart->begin()+iDim*nparts+last_photon_index+1,Bpart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            // }
+            // for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+            //     iold->erase(iold->begin()+iDim*nparts+last_photon_index+1,iold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            //     deltaold->erase(deltaold->begin()+iDim*nparts+last_photon_index+1,deltaold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            // }
+            // gamma->erase(gamma->begin()+0*nparts+last_photon_index+1,gamma->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
+            // 
+            // if (thetaold) {
+            //     thetaold->erase(thetaold->begin()+0*nparts+last_photon_index+1,thetaold->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
+            // }
+            
+            for( int ii=ibin+1; ii<nbin; ii++ ) {
+                first_index[ii] -= nb_deleted_photon;
+                last_index[ii] -= nb_deleted_photon;
+            }
+        }
+    }
+    eraseParticleTrail( last_index[nbin-1], true );
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! This method eliminates the space between the bins 
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compress() {
+    
     
     for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
         
@@ -1066,24 +1109,29 @@ void Particles::compress() {
 
 void Particles::sum(int ibin_min, int ibin_max) {
     
-    double sum = 0;
-    int iteration = 0;
+    double sum_px = 0;
+    double sum_py = 0;
+    double sum_mx = 0;
+    double sum_my = 0;
+    int iterations = 0;
     
     for (int ibin = ibin_min ; ibin < ibin_max ; ibin++) {
         for (int ipart = first_index[ibin] ; ipart < last_index[ibin] ; ipart++) {
-            sum += Momentum[0][ipart];
-            iteration += 1;
+            if (Weight[ipart] > 0) {
+                sum_px += Position[0][ipart];
+                sum_py += Position[1][ipart];
+                sum_mx += Momentum[0][ipart];
+                sum_my += Momentum[1][ipart];
+                iterations += 1;
+            }
         }
     }
-    std::cerr << " Momentum_x: " << sum << "(" << iteration << ")" << std::endl;
-        
-    sum = 0;
-    for (int ibin = ibin_min ; ibin < ibin_max ; ibin++) {
-        for (int ipart = first_index[ibin] ; ipart < last_index[ibin] ; ipart++) {
-            sum += Momentum[1][ipart];
-        }
-    }
-    std::cerr << " Momentum_y: " << sum << std::endl;
+    std::cerr << " Position_x: " << sum_px
+              << " Position_y: " << sum_py
+              << " Momentum_x: " << sum_mx
+              << " Momentum_y: " << sum_my 
+              << " nb particles: " << iterations
+              << std::endl;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

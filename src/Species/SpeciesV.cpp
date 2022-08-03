@@ -285,7 +285,16 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
                     // Suppression of the decayed photons into pairs
                     // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
-                    //     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
+                    //     *particles, smpi,
+                    //     ipack*packsize_+scell,
+                    //     particles->first_index.size(),
+                    //     &particles->first_index[0],
+                    //     &particles->last_index[0],
+                    //     ithread );
+                        
+                    // std::cerr << scell << std::endl;
+                    // particles->sum(ipack*packsize_+scell,ipack*packsize_+scell+1);
+                        
                     Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                         *particles, smpi,
                         ipack*packsize_+scell, 
@@ -293,6 +302,8 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         &particles->first_index[0], 
                         &particles->last_index[0],
                         ithread );
+                    
+                    // particles->sum(ipack*packsize_+scell,ipack*packsize_+scell+1);
                     
                 }
 #ifdef  __DETAILED_TIMERS
@@ -507,24 +518,22 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // Compression of the bins if necessary 
     // Multiphoton Breit-Wheeler
     if( Multiphoton_Breit_Wheeler_process ) {
-    
+
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-    
-    
-        particles->sum(0, particles->last_index.size());
-    
-        particles->compress();
-        
-        particles->sum(0, particles->last_index.size());
-        
+        // particles->sum(0, particles->last_index.size());
+
+        //particles->compress2();
+        compress(smpi);
+
+        // particles->sum(0, particles->last_index.size());
+
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
-        
+
     }
-    
 
 }//END dynamics
 
@@ -927,7 +936,6 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
         addSpaceForOneParticle();
 
     source_particles.clear();
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1108,6 +1116,8 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize ) { // advance particle momentum
 
+        // For the moment, npack_ is always equal to 1
+        // Notion of pack_ il let for futur optimization
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             // ipack start @ particles->first_index [ ipack * packsize_ ]
