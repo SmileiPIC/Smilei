@@ -644,9 +644,11 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             // clean decayed photons from arrays 
             // this loop must not be parallelized unless race conditions are prevented
             for( int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
-                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                    *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
-            } // end scell                                       
+                // Suppression of the decayed photons into pairs
+                Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
+                    *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id  ); 
+            } // end scell         
+                                         
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
 #ifdef  __DETAILED_TIMERS
