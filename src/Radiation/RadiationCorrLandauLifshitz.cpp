@@ -37,7 +37,7 @@ RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 //! induced by the nonlinear inverse Compton scattering
 //
 //! \param particles   particle object containing the particle properties
-//! \param photon_species species that will receive emitted photons
+//! \param photons     Particles object that will receive emitted photons
 //! \param smpi        MPI properties
 //! \param RadiationTables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
@@ -48,7 +48,7 @@ RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationCorrLandauLifshitz::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       *photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -171,7 +171,7 @@ void RadiationCorrLandauLifshitz::operator()(
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if( (gamma>1.) && (particle_chi >= minimum_chi_continuous) ) {
+        if( gamma > 1.1 && particle_chi >= minimum_chi_continuous ) {
 
             // Radiated energy during the time step
             const double temp =

@@ -62,7 +62,8 @@ public:
     //! Inverse r coordinate
     std::vector<double> invR, invRd;
     
-    
+    //! Update Poyting quantities depending on location of the patch
+    void computePoynting() override;
     
 };
 

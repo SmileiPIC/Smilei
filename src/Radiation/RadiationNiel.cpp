@@ -50,7 +50,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       *photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -124,7 +124,6 @@ void RadiationNiel::operator()(
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
-    double new_gamma = 0;
     
     // Parameters for linear alleatory number generator
     #ifdef _GPU
@@ -147,9 +146,9 @@ void RadiationNiel::operator()(
     //double t0 = MPI_Wtime();
 
     // 1) Vectorized computation of gamma and the particle quantum parameter
-        #ifndef _GPU
+#ifndef _GPU
             #pragma omp simd
-        #else
+#else
         
             // Management of the data on GPU though this data region
             const int np = iend-istart;
@@ -173,7 +172,7 @@ void RadiationNiel::operator()(
 
             #pragma acc loop gang worker vector
  
-   	 #endif
+#endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
 
@@ -191,9 +190,9 @@ void RadiationNiel::operator()(
                                   Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                                   Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
     
-    #ifndef _GPU
+#ifndef _GPU
         } //finish cycle
-    #endif
+#endif
     //double t1 = MPI_Wtime();
 
         #ifdef _GPU
@@ -382,7 +381,7 @@ void RadiationNiel::operator()(
         #pragma omp simd private(temp,rad_energy)
         for( ipart=istart ; ipart<iend; ipart++ ) {
             // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
-            if( particle_chi[ipart] > minimum_chi_continuous ) {
+            if( gamma[ipart-ipart_ref] > 1.1 && particle_chi[ipart] > minimum_chi_continuous ) {
     #endif
 
                 // Radiated energy during the time step

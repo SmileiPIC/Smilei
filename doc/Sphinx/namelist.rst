@@ -748,6 +748,7 @@ Each species has to be defined in a ``Species`` block::
       radiation_photon_species = "photon",
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
+      radiation_max_emissions = 10,
 
       # Relativistic field initialization:
       relativistic_field_initialization = "False",
@@ -838,7 +839,7 @@ Each species has to be defined in a ``Species`` block::
 
   :type: float or :doc:`profile <profiles>`
 
-  The absolute value of the number density or charge density (choose one only)
+  The absolute value of the charge density or number density (choose one only)
   of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
 
 
@@ -1007,6 +1008,15 @@ Each species has to be defined in a ``Species`` block::
   is still conserved.
 
   A large number may rapidly slow down the performances and lead to memory saturation.
+
+  This parameter cannot be assigned to photons (mass = 0).
+  
+.. py:data:: radiation_max_emissions
+
+  :default: ``10``
+
+  The maximum number of emission Monte-Carlo event a macro-particle can undergo during a timestep.
+  Since this value is used to allocate some buffers, a high value can saturate memory.
 
   This parameter cannot be assigned to photons (mass = 0).
 
@@ -1340,7 +1350,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
     order shown in the above example. Undefined modes are considered zero.
-    This can be used only in ``AMcylindrical`` geometry.
+    This can be used only in ``AMcylindrical`` geometry. In this
+    geometry a two-dimensional :math:`(x,r)` grid is used and the laser is injected from a
+    :math:`x` boundary, thus the provided profiles must be a function of :math:`(r,t)`.
 
 
 

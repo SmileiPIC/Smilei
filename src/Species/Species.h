@@ -180,10 +180,14 @@ public:
     std::string radiation_photon_species;
     //! Number of photons emitted per particle and per event
     int radiation_photon_sampling_;
+    //! Maximum number of photon emissions process during a timestep per particle
+    int radiation_max_emissions_;
     //! Threshold on the photon Lorentz factor under which the macro-photon
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
+    //! Particle object to store emitted photons by radiation at each time step
+    Particles * radiated_photons_ = NULL;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
@@ -502,7 +506,11 @@ public:
     }
 
     //! Method to import particles in this species while conserving the sorting among bins
-    virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
+    //! \param[in] Params the main Smilei parameters
+    //! \param[in,out] Patch current patch
+    //! \param[in,out] source_particles Particles object containing the particles to import 
+    //! \param[in,out] localDiags vector of diags for tracked particles
+    virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
 
     //! Moving window boundary conditions managment
     void disableXmax();
