@@ -4273,12 +4273,12 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
-            
+
             // Create photon species on the device
             if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
                 spec->radiated_photons_->initializeDataOnDevice();
             }
-            
+
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
@@ -4319,8 +4319,10 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
 
         // TODO(Etienne M): We should create a function that does the copy of the radiation table.
         // Here we should only allocate data.
+
         if( params.has_Niel_radiation_ ) {
             const double *const table = &( radiation_tables->niel_.table_[0] );
+
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 

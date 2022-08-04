@@ -4,11 +4,10 @@
 //
 //! \brief contains the nvidiaParticles class description
 //
-//! The nvidiaParticles inherits from the Particles class to deal with NVIDIA GPUs.
-//! It uses CUDA Thrust instead of std::vector
+//! The nvidiaParticles inherits from the Particles class to deal with GPUs.
+//! It uses NVIDIA/AMD thrust::device_vector instead of std::vector
 //
 // -----------------------------------------------------------------------------
-// #if defined _GPU
 
 #ifndef NVIDIAPARTICLES_H
 #define NVIDIAPARTICLES_H
@@ -19,7 +18,7 @@
 #include "Particles.h"
 
 /*! \class nvidiaParticles
-    \brief Particle class for NVIDIA GPU
+    \brief Particle class for GPUs
 */
 class nvidiaParticles : public Particles
 {
@@ -133,5 +132,3 @@ public:
 };
 
 #endif
-
-// #endif
