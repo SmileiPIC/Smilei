@@ -75,14 +75,14 @@ TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 # Flags
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
+CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 # C++ version
-ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -std=c++11 -Wall -Wextra
-else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+    CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
     CXXFLAGS += -std=c++11
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)

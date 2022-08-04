@@ -28,16 +28,8 @@ PusherBoris::~PusherBoris()
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
-    std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
-
-    // double local_invgf;
-    // double umx, umy, umz; //upx, upy, upz;
-    // double inv_det_T, Tx, Ty, Tz;
-    //double Tx2, Ty2, Tz2;
-    //double TxTy, TyTz, TzTx;
-    //double alpha;
+    const int nparts = vecto ? smpi->dynamics_Epart[ithread].size() / 3 :
+                               particles.last_index.back(); // particles.size()
 
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -49,15 +41,13 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.last_index.back(); // particles.size()
-
-    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
-    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
+    const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( smpi->dynamics_Epart[ithread] )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( smpi->dynamics_Bpart[ithread] )[0*nparts] );
+    const double *const __restrict__ By = &( ( smpi->dynamics_Bpart[ithread] )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( smpi->dynamics_Bpart[ithread] )[2*nparts] );
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {

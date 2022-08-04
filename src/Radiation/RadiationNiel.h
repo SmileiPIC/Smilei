@@ -56,7 +56,7 @@ public:
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
-        Particles &photons,
+        Particles *photons,
         SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,

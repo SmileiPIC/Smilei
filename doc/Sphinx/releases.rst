@@ -22,7 +22,13 @@ Changes made in the repository (not released)
 
 * Collisions: new parameter ``time_frozen``
 * Performances post-processing: new parameter ``cumulative``
-* Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
+ * For developers: new table management for Monte-Carlo physical processes (tranparent to users)
+* Bugfixes:
+
+  * Poisson Solver correction was not properly accounted for with SDMD.
+  * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
+  * C++11 compilation issue
+  * Reading particle weights and momenta from hdf5 file
 * Experimental: :doc:`task_parallelization` of macro-particle operations with OpenMP is now available.
 * Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.  
 

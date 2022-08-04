@@ -63,7 +63,6 @@ Species::Species( Params &params, Patch *patch ) :
     radiating_( false ),
     relativistic_field_initialization_( false ),
     iter_relativistic_initialization_( 0 ),
-    multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
     charge_profile_( NULL ),
@@ -82,11 +81,12 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
-    photon_species_( NULL ),
+    photon_species_( nullptr ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
-    radiated_photons_( NULL ),
-    mBW_pair_creation_sampling_( 2, 1 ),
+    radiated_photons_( nullptr ),
+    //mBW_pair_creation_sampling_( {1,1} ),
+    mBW_pair_species_names_( 2, "" ),
     cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -122,6 +122,12 @@ Species::Species( Params &params, Patch *patch ) :
     merge_momentum_cell_size_.resize(3);
 
     merge_min_momentum_cell_length_.resize(3);
+    
+    mBW_pair_species_index_[0] = -1;
+    mBW_pair_species_index_[1] = -1;
+    
+    mBW_pair_creation_sampling_[0] = 1;
+    mBW_pair_creation_sampling_[1] = 1;
 
     // particles_to_move = new Particles();
 
@@ -303,6 +309,22 @@ void Species::resizeCluster( Params &params )
 // Create the particles once the namelist is read
 void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
 {
+    
+    // Area for particle creation
+    struct SubSpace init_space;
+    init_space.cell_index_[0] = 0;
+    init_space.cell_index_[1] = 0;
+    init_space.cell_index_[2] = 0;
+    init_space.box_size_[0]   = params.n_space[0];
+    init_space.box_size_[1]   = params.n_space[1];
+    init_space.box_size_[2]   = params.n_space[2];
+
+    // Creation of the particle creator
+    ParticleCreator particle_creator;
+    // Associate the ceator to the current species (this)
+    particle_creator.associate(this);
+
+    // If restart from a checkpoint or without particle creation
     if( params.restart || !with_particles ) {
 
         if( like_particles ) {
@@ -311,20 +333,12 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
             particles->initialize( 0, params.nDim_particle, params.keep_position_old );
         }
 
+        // Compute only `max_charge_`
+        particle_creator.createChargeProfile( init_space, patch);
+
     } else {
 
-        // Area for particle creation
-        struct SubSpace init_space;
-        init_space.cell_index_[0] = 0;
-        init_space.cell_index_[1] = 0;
-        init_space.cell_index_[2] = 0;
-        init_space.box_size_[0]   = params.n_space[0];
-        init_space.box_size_[1]   = params.n_space[1];
-        init_space.box_size_[2]   = params.n_space[2];
-
-        // Creation of the particle creator and association to the new species
-        ParticleCreator particle_creator;
-        particle_creator.associate(this);
+        // Create profiles and particles
         particle_creator.create( init_space, params, patch, 0 );
 
     }
@@ -440,6 +454,12 @@ Species::~Species()
 
     if (radiated_photons_) {
         delete radiated_photons_;
+    }
+    
+    for (int k=0 ; k<2 ; k++) {
+        if (mBW_pair_particles_[k]) {
+            delete mBW_pair_particles_[k];
+        }
     }
 
 #ifdef _OMPTASKS
@@ -607,7 +627,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,6);
                 // Radiation process
                 ( *Radiate )( *particles,
-                              *radiated_photons_,
+                              radiated_photons_,
                               smpi,
                               RadiationTables,
                               nrj_radiated_,
@@ -643,20 +663,22 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
+                                                        mBW_pair_particles_,
+                                                        mBW_pair_species_,
                                                         MultiphotonBreitWheelerTables,
                                                         nrj_radiated_,
                                                         particles->first_index[ibin],
                                                         particles->last_index[ibin], ithread );
 
                 // Update the photon quantum parameter chi of all photons
-                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
                         smpi,
                         particles->first_index[ibin],
                         particles->last_index[ibin],
                         ithread );
 
                 // Suppression of the decayed photons into pairs
-                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
@@ -925,7 +947,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,6);
                         // Radiation process
                         ( *Radiate )( *particles,
-                                      *radiated_photons_,
+                                      Radiate->new_photons_per_bin_[ibin],
                                       smpi,
                                       RadiationTables,
                                       radiated_energy_per_bin[ibin],
@@ -969,21 +991,24 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,7);
                         double radiated_energy_bin = 0;
-                        // Pair generation process
-                        ( *Multiphoton_Breit_Wheeler_process )( *particles,
-                                                        smpi,
-                                                        MultiphotonBreitWheelerTables,
-                                                        radiated_energy_bin,
-                                                        particles->first_index[ibin], particles->last_index[ibin], 
-                                                        buffer_id, ibin );
-                        radiated_energy_per_bin[ibin] = radiated_energy_bin;
 
+                        ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                                                                smpi,
+                                                                mBW_pair_particles_,
+                                                                mBW_pair_species_,
+                                                                MultiphotonBreitWheelerTables,
+                                                                radiated_energy_bin,
+                                                                particles->first_index[ibin],
+                                                                particles->last_index[ibin], 
+                                                                buffer_id, ibin );
+
+                        radiated_energy_per_bin[ibin] = radiated_energy_bin;
                         // Update the photon quantum parameter chi of all photons
-                        Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
-                                smpi,
-                                particles->first_index[ibin],
-                                particles->last_index[ibin],
-                                buffer_id );    
+                        Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
+                                                                smpi,
+                                                                particles->first_index[ibin],
+                                                                particles->last_index[ibin],
+                                                                buffer_id );
 
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,7);
 
@@ -1450,9 +1475,9 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         if( Multiphoton_Breit_Wheeler_process ) {
             // Addition of the electron-positron particles
             for( int k=0; k<2; k++ ) {
-                mBW_pair_species[k]->importParticles( params,
+                mBW_pair_species_[k]->importParticles( params,
                                                       patch,
-                                                      Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                                      *mBW_pair_particles_[k],
                                                       localDiags );
             }
         }
@@ -1897,7 +1922,6 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
                 particles->first_index[idx] += bin_count[ibin];
                 particles->last_index[idx]  += bin_count[ibin];
             }
-
         }
         // update istart/istop fot the next cell
         istart += bin_count[ibin];
