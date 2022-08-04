@@ -1251,6 +1251,8 @@ Field * ElectroMagn2D::createField( std::string fieldname, Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalRhoJ()
 {
+    // TODO(Etienne M): DIAGS. This may need to be done on GPU.
+
     // static cast of the total currents and densities
     Field2D *Jx2D    = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D    = static_cast<Field2D *>( Jy_ );

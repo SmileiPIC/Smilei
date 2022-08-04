@@ -414,10 +414,10 @@ public :
 
     //! Field Synchronization from the GPU (Device) to the host (CPU)
     //! This function updates the data on the host from the data located on the device
-    void syncFieldFromHostToDevice();
+    void copyEMFieldsFromHostToDevice();
     
     //! Data synchronization from device (GPU) to host (CPU)
-    void syncDataFromDeviceToHost();
+    void copyDeviceStateToHost();
     
 private :
 

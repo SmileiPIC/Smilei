@@ -250,7 +250,7 @@ if (Scalar_save):
     DiagScalar(
         every = NumberOfTimeStepForSnapshotSCALAR ,
         vars = ["Utot","Uelm","Ukin","Uelm_Ex","Uelm_Ey","Uelm_Ez","Uelm_Bx_m","Uelm_By_m","Uelm_Bz_m", "Ukin_electron-beam","Ukin_electron", "Ukin_ion"],
-        precision = 10
+        precision = 15
     )
 
 if (Fields_save):

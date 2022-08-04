@@ -1,4 +1,3 @@
-// #include <thrust/host_vector.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
@@ -21,24 +20,7 @@ nvidiaParticles::nvidiaParticles( const Params& parameters )
     : Particles{}
     , gpu_nparts_{}
 {
-    std::size_t cluster_cell_volume = 1;
-
-    for( std::size_t dimension_id = 0;
-         dimension_id < parameters.nDim_field;
-         ++dimension_id ) {
-
-        // Make sure we can divide the patch in clusters
-        SMILEI_ASSERT( ( parameters.n_space[dimension_id] % parameters.cluster_width_ ) == 0 );
-
-        // Compute pow(parameters.cluster_width_, parameters.nDim_field)
-        cluster_cell_volume *= parameters.cluster_width_;
-    }
-
-    SMILEI_ASSERT( ( parameters.n_cell_per_patch % cluster_cell_volume ) == 0 );
-
-    // Overwrite what's done in Species::initCluster
-    first_index.resize( parameters.n_cell_per_patch / cluster_cell_volume );
-    // We dont use last_index, it would contain redundant data
+    // EMPTY
 }
 
 void nvidiaParticles::initializeDataOnDevice()

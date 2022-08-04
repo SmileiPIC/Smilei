@@ -272,18 +272,9 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+        // Allocate only the first time we call this function
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
-            const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
-            const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
-            const int           dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
-
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
-        }
-#endif
     } else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         ERROR( "To Do GPU : envelope" );
@@ -293,6 +284,25 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
     }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) &&
+                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data() );
+    if( should_manipulate_gpu_memory ) {
+        // At initialization, this data() is NOT on the GPU so we dont map it to the GPU.
+        // On the other hand, later in the pic loop, data() will be on GPU and we
+        // need to map the exchange buffers.
+        const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data();
+        const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
+        const int           dSize = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
+
+        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( dsend );
+        if( !is_already_mapped_on_gpu ) {
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+        }
+    }
+#endif
 }
 
 void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
@@ -315,12 +325,16 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     const double *__restrict__ field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'B';
+    // At initialization, this data is NOT on the GPU
+    const bool should_manipulate_gpu_memory = name[0] == 'B' &&
+                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
+    SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) ==
+                   smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field )
+    #pragma omp target if( should_manipulate_gpu_memory )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -351,13 +365,16 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     double *__restrict__ field     = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'B';
+    // At initialization, this data is NOT on the GPU
+    const bool should_manipulate_gpu_memory = name[0] == 'B' &&
+                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( /*iteration == 0 && */!smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field ) \
-        map( tofrom                             \
+    #pragma omp target if( should_manipulate_gpu_memory ) \
+        map( tofrom                                       \
              : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
@@ -389,13 +406,16 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const double *__restrict__ field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'J';
+    // At initialization, this data is NOT on the GPU
+    const bool should_manipulate_gpu_memory = name[0] == 'J' &&
+                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field ) \
-        map( to                                 \
+    #pragma omp target if( should_manipulate_gpu_memory ) \
+        map( to                                           \
              : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
@@ -427,13 +447,16 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     double *__restrict__ field     = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool is_the_right_field = name[0] == 'J';
+    // At initialization, this data is NOT on the GPU
+    const bool should_manipulate_gpu_memory = name[0] == 'J' &&
+                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
-    #pragma omp target if( is_the_right_field ) \
-        map( tofrom                             \
+    #pragma omp target if( should_manipulate_gpu_memory ) \
+        map( tofrom                                       \
              : field [field_first:field_last - field_first] )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )

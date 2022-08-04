@@ -33,7 +33,7 @@ class MachineAdastra(Machine):
 # # --feature=MI200
 # #SBATCH --gpus=mi100:1 or mi200:1
 
-echo "Date              = $(date)"
+echo "Date              = $(date -R) | $(date +%s)"
 echo "Hostname          = $(hostname -s)"
 echo "Working Directory = $(pwd)"
 echo ""
@@ -44,7 +44,7 @@ echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 # Build  the environment (delegating this to a script would be better)
 module purge
 module load craype-network-ofi craype-x86-rome libfabric/1.13.1
-module load PrgEnv-cray/8.1.0 cce/13.0.1
+module load PrgEnv-cray/8.3.3 cce/13.0.1
 module load cray-mpich/8.1.13
 module load rocm/4.5.0
 module load craype-accel-amd-gfx908 # MI100
@@ -187,7 +187,7 @@ kRETVAL=$?
 # Put the result in the slurm output file.
 cat {the_output_file}
 
-echo "The task ended at = $(date)"
+echo "The task ended at = $(date -R) | $(date +%s)"
 
 echo -n $kRETVAL > exit_status_file
 exit $kRETVAL

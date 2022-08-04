@@ -599,6 +599,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         if( params.geometry != "AMcylindrical" ) {
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+
+                // TODO(Etienne M): DIAGS. The projector needs to work on valid data. Currently, in GPU mode, it'll read
+                // outdated particles data because basic() is always done on CPU. We need to pull the GPU data to the
+                // host.
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );

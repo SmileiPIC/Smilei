@@ -276,16 +276,6 @@ int main( int argc, char *argv[] )
         
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
-        TITLE( "GPU allocation of the fields and particles" );
-        // Nothing is copied to the GPU yet, because most of the initialization
-        // "needs" (for now) to be done on the host. The initialized
-        // particles are sorted at the cell granularity (due to way they are 
-        // created), which is enough for the initialization to not be very slow 
-        // due to random access in projection.
-        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
-#endif
-
 #if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
@@ -329,9 +319,16 @@ int main( int argc, char *argv[] )
             MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
-        
+
+        // TODO(Etienne M): Dont we need to computeCharge() only if we
+        // initialize the E/B fields by solving the appropriate poisson
+        // equation? projectionForDiags will overwrite the result anyway.
+        // Shouldnt we call computeCharge() in runNonRelativisticPoissonModule,
+        // like it's done in runRelativisticModule with
+        // computeChargeRelativisticSpecies().
         vecPatches.computeCharge();
-        // TODO(Etienne M): redundant work is done here. We exchange current 
+
+        // TODO(Etienne M): redundant work is done here. We exchange current
         // density J when in fact, only charge density Rho needs to be exchanged.
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
@@ -340,13 +337,10 @@ int main( int argc, char *argv[] )
             MESSAGE( 1, "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
-        
+
         MESSAGE( 1, "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
-        if (params.gpu_computing) {
-            vecPatches.syncFieldFromHostToDevice();
-        }
         
         MESSAGE( 1, "Applying prescribed fields at time t = 0" );
         vecPatches.applyPrescribedFields( time_prim );
@@ -367,7 +361,7 @@ int main( int argc, char *argv[] )
         
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
-        
+
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
@@ -423,11 +417,18 @@ int main( int argc, char *argv[] )
             }
         }
 
-       
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        TITLE( "GPU allocation and copy of the fields and particles" );
+        // Because most of the initialization "needs" (for now) to be done on
+        // the host, we introduce the GPU only at it's end.
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.copyEMFieldsFromHostToDevice();
+#endif
     }
     
     TITLE( "Species creation summary" );
