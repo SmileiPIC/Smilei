@@ -61,7 +61,7 @@ void RadiationDiagRadiationSpectrum::operator() (
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = particles.size();
+    int nparts = smpi->getBufferSize(ithread);
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );

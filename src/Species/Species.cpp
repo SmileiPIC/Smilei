@@ -405,7 +405,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
@@ -1371,7 +1371,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     // Old particles (deleted particles) are now at the end of the vectors 
     // Erase trailing particles
     particles->eraseParticleTrail( particles->last_index[nbin-1], true );
-    smpi->eraseBufferParticleTrail( particles->dimension(), particles->last_index[nbin-1], ithread );
+    // smpi->eraseBufferParticleTrail( particles->dimension(), particles->last_index[nbin-1], ithread );
 
 }
 
@@ -1459,7 +1459,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 
@@ -1543,7 +1543,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back(), false );
+        smpi->resizeBuffers( ithread, nDim_particle, particles->last_index.back(), false );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 
@@ -1606,7 +1606,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
             double energy_lost( 0. );

@@ -77,7 +77,7 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
-    int nparts = Epart->size()/3;
+    int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -148,8 +148,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // We use dynamics_invgf to store gamma
     double * const __restrict__ photon_gamma = &( smpi->dynamics_invgf[ithread][0] );
 
-    int nparts = Epart->size()/3;
-    
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -472,8 +471,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     if ( smpi->dynamics_eithetaold.size() )
         thetaold = &( smpi->dynamics_eithetaold[ithread] );
 
-    const int nparts = Epart->size()/3;
-
+    const int nparts = smpi->getBufferSize(ithread);
 
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
@@ -573,7 +571,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
     int *const iold         = smpi->dynamics_iold[ithread].data();
     double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
 
-    const int nparts = smpi->dynamics_Epart[ithread].size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
 
     std::complex<double> * thetaold = NULL;
     if ( smpi->dynamics_eithetaold.size() )

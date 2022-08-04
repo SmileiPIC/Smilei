@@ -91,7 +91,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ || Ionize ) {
         // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -498,7 +498,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
@@ -575,7 +575,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Prepare for sorting
         for( unsigned int i=0; i<count.size(); i++ ) {
@@ -652,7 +652,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     else { // immobile particle
 
         if( Ionize ) {
-            smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back() );
+            smpi->resizeBuffers( ithread, nDim_particle, particles->last_index.back() );
 
             //Point to local thread dedicated buffers
             //Still needed for ionization

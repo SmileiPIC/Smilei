@@ -710,7 +710,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         // Interpolate all usual fields on probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int maxPart_MPI = offset_in_MPI[ipatch] + npart;
-        smpi->dynamics_resize( ithread, nDim_particle, npart, false );
+        smpi->resizeBuffers( ithread, nDim_particle, npart, false );
         for( unsigned int ipart=0; ipart<npart; ipart++ ) {
             int iparticle( ipart ); // Compatibility
             int false_idx( 0 );   // Use in classical interp for now, not for probes

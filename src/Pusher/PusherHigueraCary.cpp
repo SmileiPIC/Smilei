@@ -33,10 +33,8 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.size(); // particles.size()
     
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );

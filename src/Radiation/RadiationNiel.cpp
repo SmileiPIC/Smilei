@@ -63,7 +63,7 @@ void RadiationNiel::operator()(
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
-    int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
