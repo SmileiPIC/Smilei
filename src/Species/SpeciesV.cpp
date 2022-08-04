@@ -292,8 +292,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //     &particles->last_index[0],
                     //     ithread );
                         
-                    // std::cerr << scell << std::endl;
-                    // particles->sum(ipack*packsize_+scell,ipack*packsize_+scell+1);
                         
                     Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                         *particles, smpi,
@@ -303,9 +301,13 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         &particles->last_index[0],
                         ithread );
                     
-                    // particles->sum(ipack*packsize_+scell,ipack*packsize_+scell+1);
-                    
                 }
+                
+                // Delete the gap between the bins due to photon destruction
+                // Warining : can not be here if npack_ > 0
+                //            In this case, it should be at the end of dynamics
+                compress(smpi, ithread, true);
+                
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
@@ -314,12 +316,12 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+            // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 // Push the particles and the photons
-                ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_+scell],
-                           particles->last_index[ipack*packsize_+scell],
+                ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
+                           particles->last_index[ipack*packsize_+packsize_-1],
                            ithread, particles->first_index[ipack*packsize_] );
-            }
+            // }
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[1] += MPI_Wtime() - timer;
@@ -389,14 +391,14 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             } //end if mass == 0
 
             // Cell keys
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+            // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 computeParticleCellKeys( params,
                                          particles,
                                          &particles->cell_keys[0],
                                          &count[0],
-                                         particles->first_index[ipack*packsize_ + scell],
-                                         particles->last_index[ipack*packsize_ + scell] );
-            }
+                                         particles->first_index[ipack*packsize_],
+                                         particles->last_index[ipack*packsize_ + packsize_ -1] );
+            // }
 
             // if (params.geometry == "AMcylindrical"){
             //
@@ -517,23 +519,19 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
     // Compression of the bins if necessary 
     // Multiphoton Breit-Wheeler
-    if( Multiphoton_Breit_Wheeler_process ) {
-
-#ifdef  __DETAILED_TIMERS
-        timer = MPI_Wtime();
-#endif
-        // particles->sum(0, particles->last_index.size());
-
-        //particles->compress2();
-        compress(smpi);
-
-        // particles->sum(0, particles->last_index.size());
-
-#ifdef  __DETAILED_TIMERS
-        patch->patch_timers[6] += MPI_Wtime() - timer;
-#endif
-
-    }
+//     if( Multiphoton_Breit_Wheeler_process ) {
+// 
+// #ifdef  __DETAILED_TIMERS
+//         timer = MPI_Wtime();
+// #endif
+// 
+//         compress(smpi);
+// 
+// #ifdef  __DETAILED_TIMERS
+//         patch->patch_timers[6] += MPI_Wtime() - timer;
+// #endif
+// 
+//     }
 
 }//END dynamics
 
@@ -671,7 +669,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
             }
         }
     }
-
+    
     //Copy valid particles siting over particles->last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];

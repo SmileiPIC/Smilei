@@ -60,7 +60,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
     //if (nParticles > Weight.capacity()) {
     //    WARNING("You should increase c_part_max in specie namelist");
     //}
-    if( Weight.size()==0 ) {
+    if( size()==0 ) {
         float c_part_max =1.2;
         //float c_part_max = part.c_part_max;
         //float c_part_max = params.species_param[0].c_part_max;
@@ -234,7 +234,7 @@ void Particles::reserve( unsigned int n_part_max)
 void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 {
     initialize( 0, part );
-    //reserve( npart_max, part.dimension() );
+    reserve( npart_max, part.dimension() );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ void Particles::resize( unsigned int nParticles)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Resize the cell_keys vector
+//! Resize the cell_keys vector only
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::resizeCellKeys(unsigned int nParticles)
 {
@@ -309,10 +309,10 @@ void Particles::resizeCellKeys(unsigned int nParticles)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Remove extra capacity of Particles vectors
-// Cell keys not affected
+//! Remove extra capacity of Particles vectors
+//! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::shrinkToFit()
+void Particles::shrinkToFit(const bool compute_cell_keys)
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         std::vector<double>( *double_prop_[iprop] ).swap( *double_prop_[iprop] );
@@ -325,15 +325,18 @@ void Particles::shrinkToFit()
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         std::vector<uint64_t>( *uint64_prop_[iprop] ).swap( *uint64_prop_[iprop] );
     }
-    //cell_keys.swap(cell_keys);
+    
+    if (compute_cell_keys) {
+        cell_keys.swap(cell_keys);
+    }
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reset of Particles vectors
-// Cell keys not affected
+//! Reset of Particles vectors
+//! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::clear()
+void Particles::clear(const bool compute_cell_keys)
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         double_prop_[iprop]->clear();
@@ -347,7 +350,9 @@ void Particles::clear()
         uint64_prop_[iprop]->clear();
     }
 
-    //cell_keys.clear();
+    if (compute_cell_keys) {
+        cell_keys.clear();
+    }
 
 }
 
@@ -995,9 +1000,13 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 //     }
 // }
 
-void Particles::compress2() {
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method eliminates the space between the bins 
+//! (presence of empty particles between the bins)
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::compress(bool compute_cell_keys) {
     
-    int nbin = first_index.size();
+    unsigned int nbin = NumberOfBins();
     
     for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
     
@@ -1005,22 +1014,7 @@ void Particles::compress2() {
         const unsigned int nb_deleted_photon = first_index[ibin+1] - last_index[ibin];
 
         if( nb_deleted_photon > 0 ) {
-            eraseParticle( last_index[ibin], nb_deleted_photon );
-            
-            // Erase bufferised data
-            // for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
-            //     Epart->erase(Epart->begin()+iDim*nparts+last_photon_index+1,Epart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
-            //     Bpart->erase(Bpart->begin()+iDim*nparts+last_photon_index+1,Bpart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
-            // }
-            // for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
-            //     iold->erase(iold->begin()+iDim*nparts+last_photon_index+1,iold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
-            //     deltaold->erase(deltaold->begin()+iDim*nparts+last_photon_index+1,deltaold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
-            // }
-            // gamma->erase(gamma->begin()+0*nparts+last_photon_index+1,gamma->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
-            // 
-            // if (thetaold) {
-            //     thetaold->erase(thetaold->begin()+0*nparts+last_photon_index+1,thetaold->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
-            // }
+            eraseParticle( last_index[ibin], nb_deleted_photon, compute_cell_keys );
             
             for( int ii=ibin+1; ii<nbin; ii++ ) {
                 first_index[ii] -= nb_deleted_photon;
@@ -1035,77 +1029,55 @@ void Particles::compress2() {
 //! This method eliminates the space between the bins 
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::compress() {
-    
-    
-    for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
-        
-        // Compute the number of particles
-        unsigned int particle_number = last_index[ibin] - first_index[ibin];
-        
-        // Compute the space between the bins
-        unsigned int bin_space = first_index[ibin] - last_index[ibin-1];
-        
-        // Determine first index and number of particles to copy. 
-        // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
-        
-        // Compute the number of particles
-        unsigned int copy_particle_number = 0;
-        
-        if (bin_space > 0) {
-            
-            // std::cerr << "Bin #" << ibin << " / " << first_index.size()
-            //           << std::endl;
-            // 
-            // std::cerr << " -> bin space: " << bin_space << std::endl;
-            // std::cerr << " -> particle_number: " << particle_number << std::endl;
-            // std::cerr << " -> last index ibin-1: " << last_index[ibin-1] << std::endl;
-            // std::cerr << " -> first_index: " << first_index[ibin] << std::endl;
-            
-            // if last_index[ibin] - bin_space < first_index[ibin], it means that the empty space is larger than the number of particles in ibin
-            // then we move the full bin
-            // Else we only move the particles from copy_first_bin to last_index[ibin]
-            unsigned int copy_first_index = last_index[ibin] - bin_space;
-                    
-            if (copy_first_index < first_index[ibin]) {
-                copy_first_index = first_index[ibin];
-                copy_particle_number = particle_number;
-            } else {
-                copy_particle_number = bin_space;
-            }
-            
-            if (copy_particle_number>0) {
-                overwriteParticle(copy_first_index, last_index[ibin-1], copy_particle_number, true );
-            }
-            
-            //Update bin indexes
-            first_index[ibin] = last_index[ibin-1];
-            last_index[ibin] = first_index[ibin] + copy_particle_number;
-            
-            // std::cerr << "  -> End" 
-            //           << " - first: " << first_index[ibin]
-            //           << " - last: " << last_index[ibin]
-            //           << " - copies: " << copy_particle_number
-            //           << " - size: " << Weight.size()
-            //           << std::endl;
-            
-        }
-    } // for bin
-    
-    unsigned int particles_to_erase = Weight.size() - last_index[first_index.size()-1];
-    
-    if (particles_to_erase > 0) {
-        // std::cerr << last_index[first_index.size()-1] 
-        //           << " size: " << Weight.size() 
-        //           << " particles_to_erase: " << particles_to_erase
-        //           << std::endl;
-        
-        
-        // Particles is rezised to fit the real number of particles
-        // resize(last_index[first_index.size()]-1);
-        eraseParticleTrail( last_index[first_index.size()-1], true );
-    }
-}
+// void Particles::compress() {
+//     for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
+// 
+//         // Compute the number of particles
+//         unsigned int particle_number = last_index[ibin] - first_index[ibin];
+// 
+//         // Compute the space between the bins
+//         unsigned int bin_space = first_index[ibin] - last_index[ibin-1];
+// 
+//         // Determine first index and number of particles to copy. 
+//         // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
+// 
+//         // Compute the number of particles
+//         unsigned int copy_particle_number = 0;
+// 
+//         if (bin_space > 0) {
+// 
+//             // if last_index[ibin] - bin_space < first_index[ibin], it means that the empty space is larger than the number of particles in ibin
+//             // then we move the full bin
+//             // Else we only move the particles from copy_first_bin to last_index[ibin]
+//             unsigned int copy_first_index = last_index[ibin] - bin_space;
+// 
+//             if (copy_first_index < first_index[ibin]) {
+//                 copy_first_index = first_index[ibin];
+//                 copy_particle_number = particle_number;
+//             } else {
+//                 copy_particle_number = bin_space;
+//             }
+// 
+//             if (copy_particle_number>0) {
+//                 overwriteParticle(copy_first_index, last_index[ibin-1], copy_particle_number, true );
+//             }
+// 
+//             //Update bin indexes
+//             first_index[ibin] = last_index[ibin-1];
+//             last_index[ibin] = first_index[ibin] + copy_particle_number;
+// 
+//         }
+//     } // for bin
+// 
+//     unsigned int particles_to_erase = Weight.size() - last_index[first_index.size()-1];
+// 
+//     if (particles_to_erase > 0) {
+// 
+//         // Particles is rezised to fit the real number of particles
+//         // resize(last_index[first_index.size()]-1);
+//         eraseParticleTrail( last_index[first_index.size()-1], true );
+//     }
+// }
 
 void Particles::sum(int ibin_min, int ibin_max) {
     
@@ -1114,6 +1086,7 @@ void Particles::sum(int ibin_min, int ibin_max) {
     double sum_mx = 0;
     double sum_my = 0;
     int iterations = 0;
+    int nb_particles_total = 0;
     
     for (int ibin = ibin_min ; ibin < ibin_max ; ibin++) {
         for (int ipart = first_index[ibin] ; ipart < last_index[ibin] ; ipart++) {
@@ -1124,13 +1097,15 @@ void Particles::sum(int ibin_min, int ibin_max) {
                 sum_my += Momentum[1][ipart];
                 iterations += 1;
             }
+            nb_particles_total ++;
         }
     }
     std::cerr << " Position_x: " << sum_px
               << " Position_y: " << sum_py
               << " Momentum_x: " << sum_mx
               << " Momentum_y: " << sum_my 
-              << " nb particles: " << iterations
+              << " nb real particles: " << iterations
+              << " nb particles: " << nb_particles_total
               << std::endl;
 }
 

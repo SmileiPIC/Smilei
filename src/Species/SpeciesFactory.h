@@ -1321,11 +1321,13 @@ public:
                         patch->vecSpecies[ispec1]->electron_species_index = ispec2;
                         patch->vecSpecies[ispec1]->electron_species = patch->vecSpecies[ispec2];
 
-                        int max_eon_number =
-                            patch->vecSpecies[ispec1]->getNbrOfParticles()
-                            * ( patch->vecSpecies[ispec1]->atomic_number_ || patch->vecSpecies[ispec1]->maximum_charge_state_ );
-                        patch->vecSpecies[ispec1]->Ionize->new_electrons.initializeReserve(
-                            max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles
+                        // int max_eon_number =
+                        //     patch->vecSpecies[ispec1]->getNbrOfParticles()
+                        //     * ( patch->vecSpecies[ispec1]->atomic_number_ || patch->vecSpecies[ispec1]->maximum_charge_state_ );
+                        // patch->vecSpecies[ispec1]->Ionize->new_electrons.initializeReserve(
+                        //     max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles
+                        patch->vecSpecies[ispec1]->Ionize->new_electrons.initialize(
+                            0, *patch->vecSpecies[ispec1]->electron_species->particles
                         );
                         break;
                     }
@@ -1364,8 +1366,12 @@ public:
                             patch->vecSpecies[ispec1]->photon_species_index = ispec2;
                             patch->vecSpecies[ispec1]->photon_species_ = patch->vecSpecies[ispec2];
                             patch->vecSpecies[ispec1]->radiated_photons_ = ParticlesFactory::create( params );
-                            patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
-                                patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                            // patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
+                            //     patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                            //     *patch->vecSpecies[ispec1]->photon_species_->particles
+                            // );
+                            patch->vecSpecies[ispec1]->radiated_photons_->initialize(
+                                0,
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
                             // patch->vecSpecies[ispec1]->radiated_photons_->initialize(
@@ -1419,10 +1425,15 @@ public:
                             
                             patch->vecSpecies[ispec1]->mBW_pair_particles_[k] = ParticlesFactory::create( params );
                             
-                            patch->vecSpecies[ispec1]->mBW_pair_particles_[k]->initializeReserve(
-                                patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                            // patch->vecSpecies[ispec1]->mBW_pair_particles_[k]->initializeReserve(
+                            //     patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                            //     *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
+                            // );
+                            patch->vecSpecies[ispec1]->mBW_pair_particles_[k]->initialize(
+                                0,
                                 *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
                             );
+                            
                             ispec2 = patch->vecSpecies.size() + 1;
                         }
                         ispec2++ ;

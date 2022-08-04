@@ -233,7 +233,7 @@ public:
     }
     
     //! Resize buffers for a given number of particles
-    inline void eraseBufferParticleTrail( const int ithread, const int ndim, int istart, bool isAM = false )
+    inline void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false )
     {
         
         unsigned int np = dynamics_invgf[ithread].size();

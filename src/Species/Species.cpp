@@ -527,6 +527,23 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
         } //ibin
 
+        // Compression of the bins if necessary 
+        // Multiphoton Breit-Wheeler
+        if( Multiphoton_Breit_Wheeler_process ) {
+    
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+    
+            //particles->compress();
+            compress(smpi, ithread, true);
+        
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
+        
+        }
+
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 double energy_lost( 0. );
@@ -645,22 +662,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         }
     } // End projection for frozen particles
     
-    // Compression of the bins if necessary 
-    // Multiphoton Breit-Wheeler
-    if( Multiphoton_Breit_Wheeler_process ) {
-    
-#ifdef  __DETAILED_TIMERS
-        timer = MPI_Wtime();
-#endif
-    
-        //particles->compress();
-        compress(smpi);
-        
-#ifdef  __DETAILED_TIMERS
-        patch->patch_timers[6] += MPI_Wtime() - timer;
-#endif
-        
-    }
 } //END dynamics
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1236,14 +1237,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
 //! This method eliminates the space gap between the bins 
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::compress(SmileiMPI *smpi) {
-    
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     
     // std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     // std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -1276,9 +1270,6 @@ void Species::compress(SmileiMPI *smpi) {
     
     // std::cerr << nparts << " " << Epart->size() << std::endl;
     
-    // Compute the number of particles
-    unsigned int copy_particle_number = 0;
-    
     int nbin = particles->first_index.size();
     
     for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
@@ -1288,9 +1279,20 @@ void Species::compress(SmileiMPI *smpi) {
 
         if( bin_gap > 0 ) {
             
+            // Determine first index and number of particles to copy. 
+            // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)   
+            
+            // Compute the number of particles
+            unsigned int copy_particle_number = 0;
+            
+            // Index from where we move the particles
             unsigned int copy_first_index = particles->last_index[ibin+1] - bin_gap;
+            // Total number of particles in the bin [ibin+1]
             unsigned int particle_number = particles->last_index[ibin+1] - particles->first_index[ibin+1];
-                    
+                 
+            // if copy_first_index < particles->first_index[ibin+1], it means that the empty space is larger than the number of particles in ibin
+            // then we move the full bin
+            // Else we only move the particles from copy_first_index to last_index[ibin+1]
             if (copy_first_index < particles->first_index[ibin+1]) {
                 copy_first_index = particles->first_index[ibin+1];
                 copy_particle_number = particle_number;
@@ -1299,7 +1301,7 @@ void Species::compress(SmileiMPI *smpi) {
             }
             
             if (copy_particle_number>0) {
-                particles->overwriteParticle(copy_first_index, particles->last_index[ibin], copy_particle_number, true );
+                particles->overwriteParticle(copy_first_index, particles->last_index[ibin], copy_particle_number, compute_cell_keys );
                 
                 for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
                     Ex[copy_first_index + ipart] = Ex[particles->last_index[ibin] + ipart];
@@ -1369,7 +1371,7 @@ void Species::compress(SmileiMPI *smpi) {
     // Old particles (deleted particles) are now at the end of the vectors 
     // Erase trailing particles
     particles->eraseParticleTrail( particles->last_index[nbin-1], true );
-    smpi->eraseBufferParticleTrail( ithread, particles->dimension(), particles->last_index[nbin-1] );
+    smpi->eraseBufferParticleTrail( particles->dimension(), particles->last_index[nbin-1], ithread );
 
 }
 

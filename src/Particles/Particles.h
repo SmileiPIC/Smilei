@@ -54,7 +54,7 @@ public:
     void initialize( unsigned int nParticles, Particles &part );
 
     //! Set capacity of Particles vectors and change dimensionality
-    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  );
+    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old = false );
 
     //! Set capacity of Particles vectors and keep dimensionality
     void reserve( unsigned int n_part_max );
@@ -72,10 +72,12 @@ public:
     void resizeCellKeys(unsigned int nParticles);
 
     //! Remove extra capacity of Particles vectors
-    void shrinkToFit();
+    //! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
+    void shrinkToFit(const bool compute_cell_keys = false);
 
     //! Reset Particles vectors
-    void clear();
+    //! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
+    void clear(const bool compute_cell_keys = false);
 
     //! Get number of particules
     inline unsigned int size() const
@@ -93,6 +95,12 @@ public:
     inline unsigned int dimension() const
     {
         return Position.size();
+    }
+
+    //! Get dimension of particules
+    inline unsigned int NumberOfBins() const
+    {
+        return first_index.size();
     }
 
     //! Copy particle iPart at the end of dest_parts
@@ -176,8 +184,7 @@ public:
 
     //! This method eliminates the space between the bins 
     //! (presence of empty particles beteen the bins)
-    void compress();
-    void compress2();
+    void compress(bool compute_cell_keys = false);
     
     //! Sum the vectors
     void sum(int ibin_min, int ibin_max);
@@ -286,41 +293,6 @@ public:
         return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
-    //! Partiles properties, respect type order : all double, all short, all unsigned int
-
-    //! array containing the particle position
-    std::vector< std::vector<double> > Position;
-
-    //! array containing the particle former (old) positions
-    std::vector< std::vector<double> >Position_old;
-
-    //! array containing the particle moments
-    std::vector< std::vector<double> >  Momentum;
-
-    //! containing the particle weight: equivalent to a charge density
-    std::vector<double> Weight;
-
-    //! containing the particle quantum parameter
-    std::vector<double> Chi;
-
-    //! Incremental optical depth for the Monte-Carlo process
-    std::vector<double> Tau;
-
-    //! charge state of the particle (multiples of e>0)
-    std::vector<short> Charge;
-
-    //! Id of the particle
-    std::vector<uint64_t> Id;
-
-    //! cell_keys of the particle
-    std::vector<int> cell_keys;
-
-    // TEST PARTICLE PARAMETERS
-    bool is_test;
-
-    //! True if tracking the particles
-    bool tracked;
-
     void resetIds()
     {
         unsigned int s = Id.size();
@@ -346,15 +318,6 @@ public:
         return Id;
     }
     void sortById();
-
-    //! Quantum parameter for particles that are submitted
-    //! to a radiation reaction force (CED or QED)
-    bool isQuantumParameter;
-
-    //! Parameters for particles that are submitted to a
-    //! Monte-Carlo process such as:
-    //! - discontinuous radiation reaction force
-    bool isMonteCarlo;
 
     //! Method used to get the Particle chi factor
     inline double  chi( unsigned int ipart ) const
@@ -431,14 +394,10 @@ public:
         prop = double_prop_[iprop];
     }
 
-    //! Indices of the first particles of each bin (or cells) in the Particles object
-    std::vector<int> first_index;
-    //! Indexes of the last particles + 1 in each bin (or cells) in the Particles object
-    std::vector<int> last_index;
-
     virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
+    
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
     };
@@ -466,6 +425,58 @@ public:
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);
     };
+
+    // ---------------------------------------------------------------------------------------
+    // Parameters
+    // partiles properties, respect type order : all double, all short, all unsigned int
+
+    //! array containing the particle position
+    std::vector< std::vector<double> > Position;
+
+    //! array containing the particle former (old) positions
+    std::vector< std::vector<double> >Position_old;
+
+    //! array containing the particle moments
+    std::vector< std::vector<double> >  Momentum;
+
+    //! containing the particle weight: equivalent to a charge density
+    std::vector<double> Weight;
+
+    //! containing the particle quantum parameter
+    std::vector<double> Chi;
+
+    //! Incremental optical depth for the Monte-Carlo process
+    std::vector<double> Tau;
+
+    //! charge state of the particle (multiples of e>0)
+    std::vector<short> Charge;
+
+    //! Id of the particle
+    std::vector<uint64_t> Id;
+
+    //! cell_keys of the particle
+    std::vector<int> cell_keys;
+
+    // TEST PARTICLE PARAMETERS
+    bool is_test;
+
+    //! True if tracking the particles
+    bool tracked;
+
+    //! Indices of the first particles of each bin (or cells) in the Particles object
+    std::vector<int> first_index;
+    
+    //! Indexes of the last particles + 1 in each bin (or cells) in the Particles object
+    std::vector<int> last_index;
+
+    //! Quantum parameter for particles that are submitted
+    //! to a radiation reaction force (CED or QED)
+    bool isQuantumParameter;
+
+    //! Parameters for particles that are submitted to a
+    //! Monte-Carlo process such as:
+    //! - discontinuous radiation reaction force
+    bool isMonteCarlo;
 
 
 private:
