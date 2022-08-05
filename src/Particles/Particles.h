@@ -98,9 +98,15 @@ public:
     }
 
     //! Get dimension of particules
-    inline unsigned int NumberOfBins() const
+    inline unsigned int numberOfBins() const
     {
         return first_index.size();
+    }
+    
+    //! Tells if old positions are kept (true) or not
+    inline bool keepOldPositions() const
+    {
+        return (Position_old.size() > 0);
     }
 
     //! Copy particle iPart at the end of dest_parts

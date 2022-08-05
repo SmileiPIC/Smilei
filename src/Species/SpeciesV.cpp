@@ -164,6 +164,22 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
+        // Prepare particles buffers for multiphoton Breit-Wheeler
+        if( Multiphoton_Breit_Wheeler_process ) {
+            
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            
+            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
+            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
+            
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+            
+        }
+
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 

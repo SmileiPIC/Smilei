@@ -200,7 +200,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair0_position_y = (n_dimensions_ > 1 ? new_pair[0]->getPtrPosition( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_z = (n_dimensions_ > 2 ? new_pair[0]->getPtrPosition( 2 ) : nullptr) ;
     
-    double *const __restrict__ pair0_position_old_x = particles.Position_old.size() > 0 ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair0_position_old_x = particles.keepOldPositions() ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
     double *const __restrict__ pair0_position_old_y = (particles.Position_old.size() > 1 ? new_pair[0]->getPtrPositionOld( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_old_z = (particles.Position_old.size() > 2 ? new_pair[0]->getPtrPositionOld( 2 ) : nullptr) ;
     
@@ -218,7 +218,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair1_position_y = (n_dimensions_ > 1 ? new_pair[1]->getPtrPosition( 1 ) : nullptr);
     double *const __restrict__ pair1_position_z = (n_dimensions_ > 2 ? new_pair[1]->getPtrPosition( 2 ) : nullptr);
 
-    double *const __restrict__ pair1_position_old_x = particles.Position_old.size() > 0 ? new_pair[1]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair1_position_old_x = particles.keepOldPositions() ? new_pair[1]->getPtrPositionOld( 0 ) : nullptr;
     double *const __restrict__ pair1_position_old_y = (particles.Position_old.size() > 1 ? new_pair[1]->getPtrPositionOld( 1 ) : nullptr) ;
     double *const __restrict__ pair1_position_old_z = (particles.Position_old.size() > 2 ? new_pair[1]->getPtrPositionOld( 2 ) : nullptr) ;
 
@@ -331,8 +331,12 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Final size
                     int nparticles = new_pair[0]->size();
 
+                    // Start index in the pair buffer
+                    int i_pair_start = nparticles - mBW_pair_creation_sampling_[0];
+
                     // For all new paticles
-                    for( int ipair=nparticles-mBW_pair_creation_sampling_[0]; ipair<nparticles; ipair++ ) {
+                    #pragma omp simd
+                    for( int ipair=i_pair_start; ipair < i_pair_start+mBW_pair_creation_sampling_[0]; ipair++ ) {
 
                         // Momentum
                         const double p = std::sqrt( std::pow( 1.+pair_chi[0]*inv_chiph_gammaph, 2 )-1 );
@@ -356,7 +360,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
 
                         // Old positions
-                        if( particles.Position_old.size() > 0 ) {
+                        if( particles.keepOldPositions() ) {
                             pair0_position_old_x[ipair]=position_x[ipart] ;
                             if (n_dimensions_>1) {
                                 pair0_position_old_y[ipair]=position_y[ipart] ;
@@ -383,9 +387,13 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
                     // Final size
                     nparticles = new_pair[1]->size();
+                    
+                    // Start index in the pair buffer
+                    i_pair_start = nparticles - mBW_pair_creation_sampling_[1];
 
                     // For all new paticles
-                    for( int ipair=nparticles-mBW_pair_creation_sampling_[1]; ipair<nparticles; ipair++ ) {
+                    #pragma omp simd
+                    for( auto ipair=i_pair_start; ipair < i_pair_start + mBW_pair_creation_sampling_[1]; ipair++ ) {
 
                         // Momentum
                         const double p = std::sqrt( std::pow( 1.+pair_chi[1]*inv_chiph_gammaph, 2 )-1 );
@@ -408,7 +416,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
                         // Old positions
-                        if( particles.Position_old.size() > 0 ) {
+                        if( particles.keepOldPositions() ) {
                             pair1_position_old_x[ipair]=position_x[ipart] ;
                             if (n_dimensions_>1) {
                                 pair1_position_old_y[ipair]=position_y[ipart] ;

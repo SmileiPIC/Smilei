@@ -1006,7 +1006,7 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compress(bool compute_cell_keys) {
     
-    unsigned int nbin = NumberOfBins();
+    unsigned int nbin = numberOfBins();
     
     for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
     
