@@ -416,8 +416,8 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
             
-            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
-            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
+            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
             
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -1408,20 +1408,20 @@ void Species::removeParticlesKeepBinFirstIndex(
     bool compute_cell_keys)
 {
     // Buffers for particles
-    double *const Epart     = smpi->dynamics_Epart[ithread].data();
-    double *const Bpart     = smpi->dynamics_Bpart[ithread].data();
-    double *const gamma     = smpi->dynamics_invgf[ithread].data();
-    int *const iold         = smpi->dynamics_iold[ithread].data();
-    double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
+    double *const __restrict__ Epart     = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ Bpart     = smpi->dynamics_Bpart[ithread].data();
+    double *const __restrict__ gamma     = smpi->dynamics_invgf[ithread].data();
+    int *const __restrict__ iold         = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ deltaold  = smpi->dynamics_deltaold[ithread].data();
 
-    std::complex<double> * thetaold = NULL;
+    std::complex<double> * __restrict__ thetaold = NULL;
     if ( smpi->dynamics_eithetaold.size() )
         thetaold = smpi->dynamics_eithetaold[ithread].data();
 
     const int nparts = smpi->getBufferSize(ithread);
 
     // Weight shortcut
-    double *weight =  particles->getPtrWeight();
+    double *const __restrict__ weight =  particles->getPtrWeight();
 
     // Total number of bins / cells
     const int nbin = particles->numberOfBins();
