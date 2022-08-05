@@ -39,12 +39,12 @@ dt  = 0.5 * dx/m.sqrt(2.)
 number_part_per_cell = 180 # 1800
 rapport_de_masse=1836.
 
-NumberOfCell_inX=256
-NumberOfCell_inY=256
+NumberOfCell_inX=1024
+NumberOfCell_inY=1024
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=128
+SizePatch=16
 
 #################################
 NumberOfTimeStep=60000
@@ -52,13 +52,13 @@ NumberOfTimeStep=60000
 Scalar_save = True
 NumberOfTimeStepForSnapshotSCALAR = 10 #-> 6000 sorties # sortie valeurs scalaire tout les NumberOfTimeStepForSnapshotSCALAR pas de temps
 
-Fields_save = False
+Fields_save = True
 NumberOfTimeStepForSnapshotFIELD = 20 # sortie des fichiers champs tout les NumberOfTimeStepForSnapshotFIELD pas de temps
 
-Particles_save = False
+Particles_save = True
 NumberOfTimeStepForSnapshotPART = 3000 # -> # sortie des fichiers particules tout les NumberOfTimeStepForSnapshotPART pas de temps
 
-Distribution_save = False # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
+Distribution_save = True # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
 NumberOfTimeStepForSnapshotDISTRI = 600
 # Velocity limit for the distribution histogram
 Distri_VXmin = -6.*VT
@@ -171,12 +171,12 @@ Main(
     print_every = 2
 )
 
-# LoadBalancing(
-#     initial_balance = True,
-#     every = 150,
-#     cell_load = 1.,
-#     frozen_particle_load = 0.1,
-# )
+LoadBalancing(
+    initial_balance = True,
+    every = 150,
+    cell_load = 1.,
+    frozen_particle_load = 0.1,
+)
 
 Vectorization(
    mode = "on"
