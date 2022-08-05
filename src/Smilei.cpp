@@ -252,9 +252,11 @@ int main( int argc, char *argv[] )
         // }
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
-        vecPatches.initialParticleSorting( params );
 
-        // TODO(Etienne M): GPU restart handling
+#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ) )
+        // CPU only, its too early to sort on GPU
+        vecPatches.initialParticleSorting( params );
+#endif
 
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
@@ -271,7 +273,16 @@ int main( int argc, char *argv[] )
         
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
-        
+
+        // TODO(Etienne M): GPU restart handling
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        TITLE( "GPU allocation and copy of the fields and particles" );
+        // Because most of the initialization "needs" (for now) to be done on
+        // the host, we introduce the GPU only at it's end.
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.copyEMFieldsFromHostToDevice();
+#endif
+
     } else {
         
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
