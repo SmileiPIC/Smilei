@@ -855,12 +855,12 @@ void Species::sortParticles( Params &params, Patch * patch )
     }
 
     particles_to_move->syncGPU();
-    
+
     // Erase particles that leaves this patch
-    particles->last_index[0] = particles->eraseLeavingParticles();
-    
+    particles->last_index.back() += particles->eraseLeavingParticles();
+
     // Inject newly arrived particles in particles_to_move
-    particles->last_index[0] += particles->injectParticles( particles_to_move );
+    particles->last_index.back() += particles->injectParticles( particles_to_move );
 #else
 
     // --------------------------
@@ -1171,7 +1171,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     // Warning: the current GPU version does not handle tracked particles
 
     // Inject paticles from source_particles
-    particles->last_index[0] += particles->injectParticles( &source_particles );
+    particles->last_index.back() += particles->injectParticles( &source_particles );
 #else
     // ---------------------------------------------------
     // CPU version

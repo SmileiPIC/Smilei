@@ -39,12 +39,12 @@ dt  = 0.5 * dx/m.sqrt(2.)
 number_part_per_cell = 180 # 1800
 rapport_de_masse=1836.
 
-NumberOfCell_inX=1024
-NumberOfCell_inY=1024
+NumberOfCell_inX=256
+NumberOfCell_inY=256
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=512
+SizePatch=128
 
 #################################
 NumberOfTimeStep=60000
@@ -52,13 +52,13 @@ NumberOfTimeStep=60000
 Scalar_save = True
 NumberOfTimeStepForSnapshotSCALAR = 10 #-> 6000 sorties # sortie valeurs scalaire tout les NumberOfTimeStepForSnapshotSCALAR pas de temps
 
-Fields_save = True
+Fields_save = False
 NumberOfTimeStepForSnapshotFIELD = 20 # sortie des fichiers champs tout les NumberOfTimeStepForSnapshotFIELD pas de temps
 
-Particles_save = True
+Particles_save = False
 NumberOfTimeStepForSnapshotPART = 3000 # -> # sortie des fichiers particules tout les NumberOfTimeStepForSnapshotPART pas de temps
 
-Distribution_save = True # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
+Distribution_save = False # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
 NumberOfTimeStepForSnapshotDISTRI = 600
 # Velocity limit for the distribution histogram
 Distri_VXmin = -6.*VT

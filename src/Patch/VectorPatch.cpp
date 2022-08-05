@@ -4245,7 +4245,7 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables_ )
+void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Async allocation ?

@@ -29,11 +29,16 @@ public:
     //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
-    //! Set capacity of Particles vectors on GPU
-    void deviceReserve( unsigned int reserved_particles, unsigned int nDim ) ;
+    //! Allocate the right amount of position and momentum dimensions
+    void allocateDimensions( unsigned int nDim );
 
-    //! Set capacity of Particles vectors based on already used dimension on CPU
-    void deviceReserve( unsigned int reserved_particles );
+    //! Reserve space for particle_count particles. Must be called after 
+    //! allocateDimensions()
+    void reserveParticles( unsigned int particle_count );
+
+    //! Allocate particle_count particles. Must be called after
+    //! allocateDimensions()
+    void allocateParticles( unsigned int particle_count );
 
     //! Reset Particles vectors
     void deviceClear();
@@ -110,13 +115,12 @@ public:
     void extractParticles( Particles* particles_to_move ) override;
     
     // -----------------------------------------------------------------------------
-    //! Erase particles leaving the patch object on device
+    //! Erase particles leaving the patch object on device and returns the number of particle removed
     // -----------------------------------------------------------------------------
     int eraseLeavingParticles() override;
     
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put 
-    //! them in the Particles object
+    //! Inject particles from particles_to_move into *this and return he number of particle added
     // -----------------------------------------------------------------------------
     int injectParticles( Particles* particles_to_inject ) override;
 
@@ -128,7 +132,6 @@ public:
 
     // Number of particles on device
     int gpu_nparts_;
-
 };
 
 #endif

@@ -16,11 +16,11 @@
 //! Return True if the entry is -1 as in the cell keys vector for instance
 struct count_if_out
 {
-    __host__ __device__
-  bool operator()(const int x)
-  {
-    return (x  == -1);
-  }
+    __host__ __device__ bool
+    operator()( const short x )
+    {
+        return x == -1;
+    }
 };
 
 nvidiaParticles::nvidiaParticles( const Params& parameters )
@@ -30,31 +30,58 @@ nvidiaParticles::nvidiaParticles( const Params& parameters )
     // EMPTY
 }
 
-// -----------------------------------------------------------------------------
-//! Set capacity of Particles vectors
-void nvidiaParticles::deviceReserve( unsigned int reserved_particles, unsigned int nDim)
+void nvidiaParticles::allocateDimensions( unsigned int nDim )
 {
-    for (int idim=0;idim<nvidia_position_.size();idim++)
-        nvidia_position_[idim].reserve( reserved_particles );
-    for (int idim=0;idim<3;idim++) {
-        nvidia_momentum_[idim].reserve( reserved_particles );
-    }
-    nvidia_weight_.reserve( reserved_particles );
-    nvidia_charge_.reserve( reserved_particles );
-    if( isQuantumParameter ) {
-        nvidia_chi_.reserve( reserved_particles );
-    }
-    if( isMonteCarlo ) {
-        nvidia_tau_.reserve( reserved_particles );
-    }
-    nvidia_cell_keys_.reserve( reserved_particles );
+    nvidia_position_.resize( nDim );
+    nvidia_momentum_.resize( 3 );
 }
 
-// -----------------------------------------------------------------------------
-//! Set capacity of Particles vectors based on already used dimension on CPU
-void nvidiaParticles::deviceReserve( unsigned int reserved_particles )
+void nvidiaParticles::reserveParticles( unsigned int particle_count )
 {
-    deviceReserve(reserved_particles, (unsigned int) (Position.size()));
+    for( unsigned int idim = 0; idim < nvidia_position_.size(); idim++ ) {
+        nvidia_position_[idim].reserve( particle_count );
+    }
+
+    for( unsigned int idim = 0; idim < 3; idim++ ) {
+        nvidia_momentum_[idim].reserve( particle_count );
+    }
+
+    nvidia_weight_.reserve( particle_count );
+    nvidia_charge_.reserve( particle_count );
+
+    if( isQuantumParameter ) {
+        nvidia_chi_.reserve( particle_count );
+    }
+
+    if( isMonteCarlo ) {
+        nvidia_tau_.reserve( particle_count );
+    }
+
+    nvidia_cell_keys_.reserve( particle_count );
+}
+
+void nvidiaParticles::allocateParticles( unsigned int particle_count )
+{
+    for( int idim = 0; idim < nvidia_position_.size(); idim++ ) {
+        nvidia_position_[idim].resize( particle_count );
+    }
+
+    for( int idim = 0; idim < 3; idim++ ) {
+        nvidia_momentum_[idim].resize( particle_count );
+    }
+
+    nvidia_weight_.resize( particle_count );
+    nvidia_charge_.resize( particle_count );
+
+    if( isQuantumParameter ) {
+        nvidia_chi_.resize( particle_count );
+    }
+
+    if( isMonteCarlo ) {
+        nvidia_tau_.resize( particle_count );
+    }
+
+    nvidia_cell_keys_.resize( particle_count );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -63,11 +90,11 @@ void nvidiaParticles::deviceReserve( unsigned int reserved_particles )
 // ---------------------------------------------------------------------------------------------------------------------
 void nvidiaParticles::deviceClear()
 {
-    for( unsigned int iprop=0 ; iprop<nvidia_double_prop_.size() ; iprop++ ) {
+    for( unsigned int iprop = 0; iprop < nvidia_double_prop_.size(); iprop++ ) {
         nvidia_double_prop_[iprop]->clear();
     }
 
-    for( unsigned int iprop=0 ; iprop<nvidia_short_prop_.size() ; iprop++ ) {
+    for( unsigned int iprop = 0; iprop < nvidia_short_prop_.size(); iprop++ ) {
         nvidia_short_prop_[iprop]->clear();
     }
 
@@ -81,59 +108,36 @@ void nvidiaParticles::deviceClear()
 // -----------------------------------------------------------------------------
 void nvidiaParticles::initializeDataOnDevice()
 {
-    if ( !Position.size() ) {
-        ERROR( "Set CPU first" );
-        return;
-    }
+    SMILEI_ASSERT( Position.size() > 0 );
 
-    int ndim = Position.size();
+    // "Over-reserve" to minimise the cost of future reallcoation, it might be 
+    // interesting to set the value to 1.2F ~~
+    const auto kGrowthFactor      = 1.0F;
+    const auto kPositionDimension = Position.size();
+    const auto kHostParticleCount = Position[0].size();
 
-    double res_fac = 1.;
-    nvidia_position_.resize( Position.size() );
-    for (int idim=0;idim<ndim;idim++) {
-        nvidia_position_[idim].reserve( res_fac*Position[idim].size() );
-        nvidia_position_[idim].resize( Position[idim].size() );
-    }
-    nvidia_momentum_.resize( Momentum.size() );
-    for (int idim=0;idim<Momentum.size();idim++) {
-        nvidia_momentum_[idim].reserve( res_fac*Momentum[idim].size() );
-        nvidia_momentum_[idim].resize( Momentum[idim].size() );
-    }
-    nvidia_weight_.reserve( res_fac*Weight.size() );
-    nvidia_weight_.resize( Weight.size() );
-    nvidia_charge_.reserve( res_fac*Charge.size() );
-    nvidia_charge_.resize( Charge.size() );
+    allocateDimensions( kPositionDimension );
+    reserveParticles( static_cast<unsigned int>( static_cast<float>( kHostParticleCount ) * kGrowthFactor ) );
+    allocateParticles( kHostParticleCount );
 
-    if( isQuantumParameter ) {
-        nvidia_chi_.reserve( res_fac*Chi.size() );
-        nvidia_chi_.resize( Chi.size() );
-    }
+    gpu_nparts_ = kHostParticleCount;
 
-    if( isMonteCarlo ) {
-        nvidia_tau_.reserve( res_fac*Tau.size() );
-        nvidia_tau_.resize( Tau.size() );
-    }
-
-    nvidia_cell_keys_.reserve( res_fac*Charge.size() );
-    nvidia_cell_keys_.resize( Charge.size() );
-    gpu_nparts_ = Charge.size();
-
-    if( gpu_nparts_ != 0 ) {
-        syncGPU();
+    if( gpu_nparts_ == 0 ) {
+        reserveParticles( 100 );
     } else {
-        deviceReserve(100);
+        syncGPU();
     }
 
-    // Initialize the list of pointers
+    if( nvidia_double_prop_.empty() ) {
+        // Initialize the list of pointers
+        // Done only once
 
-    if( nvidia_double_prop_.empty() ) {  // do this just once
-
-        for( unsigned int i=0 ; i< ndim ; i++ ) {
-            nvidia_double_prop_.push_back( &( nvidia_position_[i] ) );
+        for( unsigned int i = 0; i < kPositionDimension; i++ ) {
+            nvidia_double_prop_.push_back( &nvidia_position_[i] );
         }
 
-        for( unsigned int i=0 ; i< 3 ; i++ ) {
-            nvidia_double_prop_.push_back( &( nvidia_momentum_[i] ) );
+        for( unsigned int i = 0; i < 3; i++ ) {
+            nvidia_double_prop_.push_back( &nvidia_momentum_[i] );
         }
 
         nvidia_double_prop_.push_back( &nvidia_weight_ );
@@ -209,44 +213,29 @@ void nvidiaParticles::syncGPU()
 }
 
 // -----------------------------------------------------------------------------
-//! Extract particles from the Particles object and put 
+//! Extract particles from the Particles object and put
 //! them in the Particles object `particles_to_move`
 // -----------------------------------------------------------------------------
 void nvidiaParticles::extractParticles( Particles* particles_to_move )
 {
-    // TODO(Etienne M): Async copies would be great here! Launch all the kernels
-    // and wait at the end.
+    // TODO(Etienne M): We are doing extra work. We could use something like
+    // partition to output the invalidated particles in particles_to_move and
+    // keep the good ones.
 
-    nvidiaParticles * cp_parts         = static_cast<nvidiaParticles*>( particles_to_move );
-    const int nparts                   = gpu_nparts_;
-    const int position_dimension_count = nvidia_position_.size();
+    // Manage the send data structure
+    nvidiaParticles* const cp_parts                 = static_cast<nvidiaParticles*>( particles_to_move );
+    const int              nparts                   = gpu_nparts_;
+    const int              position_dimension_count = nvidia_position_.size();
 
-    const int nparts_to_move = thrust::count( thrust::device,
-                                              std::cbegin( nvidia_cell_keys_ ),
-                                              std::cbegin( nvidia_cell_keys_ ) + nparts,
-                                              -1 /* represent a particle out of boundary */ );
+    const int nparts_to_move = thrust::count_if( thrust::device,
+                                                 std::cbegin( nvidia_cell_keys_ ),
+                                                 std::cbegin( nvidia_cell_keys_ ) + nparts,
+                                                 count_if_out() );
 
     cp_parts->gpu_nparts_ = nparts_to_move;
 
     // Resize it, if too small (copy_if do not resize)
-    if (nparts_to_move > cp_parts->nvidia_weight_.size() ) {
-        for( int i = 0; i < position_dimension_count; ++i ) {
-            cp_parts->nvidia_position_[i].resize( nparts_to_move );
-        }
-        cp_parts->nvidia_momentum_[0].resize( nparts_to_move );
-        cp_parts->nvidia_momentum_[1].resize( nparts_to_move );
-        cp_parts->nvidia_momentum_[2].resize( nparts_to_move );
-        cp_parts->nvidia_weight_.resize( nparts_to_move );
-        cp_parts->nvidia_charge_.resize( nparts_to_move );
-        if (isQuantumParameter) {
-            cp_parts->nvidia_chi_.resize( nparts_to_move );
-        }
-        if (isMonteCarlo) {
-            cp_parts->nvidia_tau_.resize( nparts_to_move );
-        }
-
-        cp_parts->nvidia_cell_keys_.resize( nparts_to_move );
-    }
+    cp_parts->allocateParticles( nparts_to_move );
 
     // Iterator of the main data structure
     // Note: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
@@ -306,23 +295,16 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     particles_to_move->syncCPU();
 }
 
-// -----------------------------------------------------------------------------
-//! Erase particles leaving the patch object on device
-// -----------------------------------------------------------------------------
 int nvidiaParticles::eraseLeavingParticles()
 {
     const int position_dimension_count = nvidia_position_.size();
     const int nparts                   = gpu_nparts_;
-    const int nparts_to_remove         = thrust::count( thrust::device, 
-                                                        nvidia_cell_keys_.begin(),
-                                                        nvidia_cell_keys_.begin()+nparts,
-                                                        -1 );
+    const int nparts_to_remove         = thrust::count_if( thrust::device,
+                                                           nvidia_cell_keys_.begin(),
+                                                           nvidia_cell_keys_.begin() + nparts,
+                                                           count_if_out() );
 
-    if( nparts_to_remove == 0 ) {
-        return gpu_nparts_;
-    }
-
-    {
+    if( nparts_to_remove > 0 ) {
         const auto first_particle = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
                                                                                    std::begin( nvidia_momentum_[0] ),
                                                                                    std::begin( nvidia_momentum_[1] ),
@@ -356,6 +338,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                std::cbegin( nvidia_cell_keys_ ),
                                count_if_out() );
         }
+
         if( isMonteCarlo ) {
             thrust::remove_if( thrust::device,
                                std::begin( nvidia_tau_ ),
@@ -367,44 +350,19 @@ int nvidiaParticles::eraseLeavingParticles()
         // Update current number of particles
         gpu_nparts_ -= nparts_to_remove;
 
-        // Reisze data structures (remove if does not resize)
-        for( int i = 0; i < position_dimension_count; ++i ) {
-            nvidia_position_[i].resize( gpu_nparts_ );
-        }
-
-        nvidia_momentum_[0].resize( gpu_nparts_ );
-        nvidia_momentum_[1].resize( gpu_nparts_ );
-        nvidia_momentum_[2].resize( gpu_nparts_ );
-        nvidia_weight_.resize( gpu_nparts_ );
-        nvidia_charge_.resize( gpu_nparts_ );
-        nvidia_cell_keys_.resize( gpu_nparts_ );
-
-        if (isQuantumParameter) {
-            nvidia_chi_.resize( gpu_nparts_ );
-        }
-
-        if (isMonteCarlo) {
-            nvidia_tau_.resize( gpu_nparts_ );
-        }
+        // Resize data structures (remove if does not resize)
+        allocateParticles( gpu_nparts_ );
     }
 
-    return gpu_nparts_;
+    return /* Note: the minus matters! */ -nparts_to_remove;
 }
 
-// -----------------------------------------------------------------------------
-//! Inject particles from particles_to_inject object and put 
-//! them in the Particles object
-// -----------------------------------------------------------------------------
 int nvidiaParticles::injectParticles( Particles* particles_to_inject )
 {
-
-    int nparts = gpu_nparts_;
-
-    // Just resize cell keys, no need to remove
-    // nvidia_cell_keys_.resize(gpu_nparts_);
+    const int nparts = gpu_nparts_;
 
     // Manage the recv data structure
-    nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_inject );
+    nvidiaParticles* const cp_parts = static_cast<nvidiaParticles*>( particles_to_inject );
 
     const int nparts_add = cp_parts->gpu_nparts_;
     const int tot_parts  = nparts + nparts_add;
@@ -412,26 +370,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
     const int position_dimension_count = nvidia_position_.size();
 
     // Resize main data structure, if too small (copy_n do not resize)
-    if( tot_parts > nvidia_weight_.size() ) {
-        for( int i = 0; i < position_dimension_count; ++i ) {
-            nvidia_position_[i].resize( tot_parts );
-        }
-
-        nvidia_momentum_[0].resize( tot_parts );
-        nvidia_momentum_[1].resize( tot_parts );
-        nvidia_momentum_[2].resize( tot_parts );
-        nvidia_weight_.resize( tot_parts );
-        nvidia_charge_.resize( tot_parts );
-        nvidia_cell_keys_.resize( tot_parts );
-
-        if( isQuantumParameter ) {
-            nvidia_chi_.resize( tot_parts );
-        }
-
-        if( isMonteCarlo ) {
-            nvidia_tau_.resize( tot_parts );
-        }
-    }
+    allocateParticles( tot_parts );
 
     const auto source_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( std::cbegin( cp_parts->nvidia_position_[0] ),
                                                                                       std::cbegin( cp_parts->nvidia_momentum_[0] ),
@@ -479,10 +418,6 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
                         std::begin( nvidia_tau_ ) + nparts );
     }
 
-    // Resize below useless : nvidia_cell_keys_ resized if necessary above, cell_keys not used on cpu
-    // nvidia_cell_keys_.resize( gpu_nparts_ );
-    // cell_keys.resize       ( gpu_nparts_ );
-
     // No more particles to move
     cp_parts->gpu_nparts_ = 0;
 
@@ -516,10 +451,9 @@ void nvidiaParticles::createParticles( int n_additional_particles )
     // }
 
     nvidia_cell_keys_.resize( new_size );
-    thrust::fill(nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, -1);
+    thrust::fill( nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, -1 );
 
     gpu_nparts_ = new_size;
-
 }
 
 extern "C" {
