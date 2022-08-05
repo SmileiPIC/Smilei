@@ -9,7 +9,17 @@
 
 #include "MultiphotonBreitWheeler.h"
 #include "Species.h"
- 
+
+#if defined(_GPU)
+    #define __HIP_PLATFORM_NVCC__
+    #define __HIP_PLATFORM_NVIDIA__
+    #include "gpuRandom.h"
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #define __HIP_PLATFORM_HCC__
+    #define __HIP_PLATFORM_AMD__
+    #include "gpuRandom.h"
+#endif
+
 // -----------------------------------------------------------------------------
 //! Constructor for Radiation
 // input: simulation parameters & Species index
@@ -237,16 +247,21 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
 #ifdef _GPU
 
+    // Parameters for linear alleatory number generator
+    const int a = 1664525;
+    const int c = 1013904223;
+    const int m = std::pow(2,32);
+
     // Initialize initial seed for linear generator
     double initial_seed_1 = rand_->uniform();
     double initial_seed_2 = rand_->uniform();
 
     #pragma acc parallel \
-    present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-    Bx[istart:np],By[istart:np],Bz[istart:np], \
-    radiation_tables.integfochi_.data_[0:radiation_tables.integfochi_.size_], \
-    radiation_tables.xi_.data_[0:radiation_tables.xi_.size_], \
-    radiation_tables.xi_.axis1_min_[0:radiation_tables.xi_.dim_size_[0]]) \
+    present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts],\
+    Bx[0:nparts],By[0:nparts],Bz[0:nparts], \
+    mBW_tables.T_.data_[0:mBW_tables.T_.size_], \
+    mBW_tables.xi_.data_[0:mBW_tables.xi_.size_], \
+    mBW_tables.xi_.axis1_min_[0:mBW_tables.xi_.dim_size_[0]]) \
     deviceptr(position_x, position_y, position_z, \
             momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
             pair0_position_x, pair0_position_y, pair0_position_z, \

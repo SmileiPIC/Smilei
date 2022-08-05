@@ -1361,6 +1361,18 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     
     const int nbin = particles->numberOfBins();
     
+#ifdef _GPU
+    #pragma acc parallel seq \
+    present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts]\
+    Bx[0:nparts], By[0:nparts], Bz[0:nparts]\
+    deviceptr(
+        position_x,position_y,position_z, \
+        momentum_x,momentum_y,momentum_z, \
+        charge,weight,tau,chi
+    ) 
+    {
+#endif
+    
     for (auto ibin = 0 ; ibin < nbin-1 ; ibin++) {
     
         // Removal of the photons
@@ -1510,6 +1522,9 @@ void Species::removeParticlesKeepBinFirstIndex(
     #pragma acc parallel loop gang worker \
     present(Epart[0:nparts*3],\
     Bpart[0:nparts*3], \
+    gamma[0:nparts], \
+    iold[0:nparts*nDim_particle], \
+    deltaold[0:nparts*nDim_particle], \
     deviceptr(
         position_x,position_y,position_z, \
         momentum_x,momentum_y,momentum_z, \
@@ -1556,6 +1571,17 @@ void Species::removeParticlesKeepBinFirstIndex(
                                 position_z[ipart] = position_z[last_photon_index];
                             }
                         }
+                        momentum_x[ipart] = momentum_x[last_photon_index];
+                        momentum_y[ipart] = momentum_y[last_photon_index];
+                        momentum_z[ipart] = momentum_z[last_photon_index];
+                        charge[ipart] = charge[last_photon_index];
+                        if( isQuantumParameter ) {
+                            chi[ipart] = chi[last_photon_index];
+                        }
+                        if( isMonteCarlo ) {
+                            tau[ipart] = tau[last_photon_index];
+                        }
+
 #endif
                         // Overwrite bufferised data
                         for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
@@ -1568,9 +1594,11 @@ void Species::removeParticlesKeepBinFirstIndex(
                         }
                         gamma[ipart] = gamma[0*nparts+last_photon_index];
 
+#ifndef _GPU
                         if (thetaold) {
                             thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
                         }
+#endif
                         last_photon_index --;
                     }
                 }
