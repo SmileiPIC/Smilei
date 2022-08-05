@@ -94,6 +94,7 @@ ifneq (,$(call parse_config,gpu_amd))
 
     # When using hip/cuda to build kernels
     # When you ask CCE to drive the hip compilation
+	# NOTE: the -x hip flag MUSt come before the .cu files !
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 	# When you use hipcc directly
 	# ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
