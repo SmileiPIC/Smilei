@@ -78,7 +78,7 @@ void RadiationMonteCarlo::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     // Total number of particles
-    const int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
@@ -484,7 +484,7 @@ void RadiationMonteCarlo::operator()(
                         
 // GPU optimized implementation (SIMT compatible implementation)
 // Each particle has a buffer of `max_photon_emissions_` possible emission
-// meaning `ax_photon_emissions_`*radiation_photon_sampling_` photons
+// meaning `max_photon_emissions_*radiation_photon_sampling_` photons
 #else
 
                         // Inverse of the momentum norm

@@ -207,8 +207,14 @@ public:
     //! value of the EnvEabs used for envelope ionization
     std::vector<std::vector<double>> dynamics_EnvExabs_part;
     
+    //! Return buffer size in thread ithread
+    inline int __attribute__((always_inline)) getBufferSize(const int ithread)
+    {
+        return dynamics_invgf[ithread].size();
+    }
+    
     // Resize buffers for a given number of particles
-    inline void dynamics_resize( int ithread, int ndim_field, int npart, bool isAM = false )
+    inline void resizeBuffers( int ithread, int ndim_field, int npart, bool isAM = false )
     {
         dynamics_Epart[ithread].resize( 3*npart );
         dynamics_Bpart[ithread].resize( 3*npart );
@@ -231,6 +237,10 @@ public:
             }
         }
     }
+    
+    //! Erase Particles from istart ot the end in the buffers of thread ithread
+    void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
+        
     
     // Resize buffers for old properties only
     inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )

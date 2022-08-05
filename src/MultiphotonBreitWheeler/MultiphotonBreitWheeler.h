@@ -105,6 +105,24 @@ public:
         int ibin, int nbin,
         int *bmin, int *bmax, int ithread );
 
+
+    //! Clean photons that decayed into pairs (weight <= 0) and resize each bin
+    //! But keeping the space between bins (so called no compression)
+    //! Developers have to be aware that the space exists using the Particles bin indexes
+    //! \param particles   particle object containing the particle
+    //!                    properties of the current species
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
+    //! \param ithread     Thread index
+    void removeDecayedPhotonsWithoutBinCompression(
+        Particles &particles,
+        SmileiMPI *smpi,
+        int ibin, int nbin,
+        int *bmin, int *bmax, int ithread );
+
     //! Return the pair converted energy
     // double inline getPairEnergy( void )
     // {

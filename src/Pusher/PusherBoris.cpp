@@ -26,8 +26,8 @@ PusherBoris::~PusherBoris()
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
-    const int nparts = vecto ? smpi->dynamics_Epart[ithread].size() / 3 :
-                               particles.last_index.back(); // particles.size()
+    // const int nparts = vecto ? smpi->dynamics_Epart[ithread].size() / 3 :
+    //                            particles.last_index.back(); // particles.size()
 
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -39,7 +39,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
+    double *const __restrict__ invgf    = &( smpi->dynamics_invgf[ithread][0] );
+    
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
     const double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );
     const double *const __restrict__ Ez = &( ( smpi->dynamics_Epart[ithread] )[2*nparts] );

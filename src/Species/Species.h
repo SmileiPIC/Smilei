@@ -513,6 +513,9 @@ public:
     //! \param[in,out] localDiags vector of diags for tracked particles
     virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
 
+    //! 
+    void compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys = false);
+
     //! Moving window boundary conditions managment
     void disableXmax();
     //! Moving window boundary conditions managment
