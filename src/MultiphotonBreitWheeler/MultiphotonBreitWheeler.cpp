@@ -242,10 +242,19 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair1_chi = new_pair[1]->isQuantumParameter ? new_pair[1]->getPtrChi() : nullptr;
     double *const __restrict__ pair1_tau = new_pair[1]->isMonteCarlo ? new_pair[1]->getPtrTau() : nullptr;
 
-    // _______________________________________________________________
-    // Computation
-
 #ifdef _GPU
+    // Parameters for random generator
+    unsigned long long seed; 
+    unsigned long long seq;
+    unsigned long long offset;
+    // curandState_t state_1;
+    // curandState_t state_2;
+    // hiprandState_t state_1;
+    // hiprandState_t state_2;
+    
+    seed = 12345ULL;
+    seq = 0ULL;
+    offset = 0ULL;
 
     // Parameters for linear alleatory number generator
     const int a = 1664525;
@@ -255,6 +264,11 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Initialize initial seed for linear generator
     double initial_seed_1 = rand_->uniform();
     double initial_seed_2 = rand_->uniform();
+#endif
+
+#ifdef _GPU
+    // _______________________________________________________________
+    // Computation
 
     #pragma acc parallel \
     present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts],\

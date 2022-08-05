@@ -1469,10 +1469,15 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
         }
     }
     
+#ifdef _GPU
+} // end parallel region 
+#endif
+    
     // Old particles (deleted particles) are now at the end of the vectors 
     // Erase trailing particles
     particles->eraseParticleTrail( particles->last_index[nbin-1], true );
     // smpi->eraseBufferParticleTrail( particles->dimension(), particles->last_index[nbin-1], ithread );
+
 
 }
 
