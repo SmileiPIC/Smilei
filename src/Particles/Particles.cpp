@@ -712,7 +712,7 @@ void Particles::translateParticles( std::vector<unsigned int> parts )
 //! Move particle src_particle into dest_particle memory location, erasing dest_particle.
 //! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle )
+void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] )[dest_particle] = ( *double_prop_[iprop] )[src_particle];
@@ -724,6 +724,10 @@ void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_
 
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] )[dest_particle] = ( *uint64_prop_[iprop] )[src_particle];
+    }
+    
+    if (compute_cell_keys) {
+        cell_keys[dest_particle] = cell_keys[src_particle];
     }
 }
 

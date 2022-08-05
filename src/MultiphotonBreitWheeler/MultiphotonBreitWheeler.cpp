@@ -587,7 +587,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
 
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
-        double *weight = &( particles.weight( 0 ) );
+        double *weight = particles.getPtrWeight();
         //int nb_deleted_photon;
 
         // Backward loop over the photons to find the first existing photon

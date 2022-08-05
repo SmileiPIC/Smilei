@@ -517,8 +517,19 @@ public:
     //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
 
-    //! 
-    void compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys = false);
+    //! This method eliminates the space gap between the bins 
+    //! (presence of empty particles between the bins)
+    void compress(SmileiMPI *smpi, 
+        int ithread, 
+        bool compute_cell_keys = false);
+
+    //! This method removes particles with a negative weight 
+    //! without changing the bin first index
+    //! Bins are therefore potentially seperated by empty particle slots
+    void removeParticlesKeepBinFirstIndex(
+        SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
 
     //! Moving window boundary conditions managment
     void disableXmax();
