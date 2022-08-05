@@ -93,8 +93,11 @@ public:
     //! Clean photons that decayed into pairs (weight <= 0)
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
-    //! \param istart      Index of the first particle
-    //! \param iend        Index of the last particle
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
     void removeDecayedPhotons(
         Particles &particles,

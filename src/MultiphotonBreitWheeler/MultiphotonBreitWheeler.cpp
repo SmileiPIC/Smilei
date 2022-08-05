@@ -236,9 +236,49 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // _______________________________________________________________
     // Computation
 
+#ifdef _GPU
+
+    // Initialize initial seed for linear generator
+    double initial_seed_1 = rand_->uniform();
+    double initial_seed_2 = rand_->uniform();
+
+    #pragma acc parallel \
+    present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+    Bx[istart:np],By[istart:np],Bz[istart:np], \
+    radiation_tables.integfochi_.data_[0:radiation_tables.integfochi_.size_], \
+    radiation_tables.xi_.data_[0:radiation_tables.xi_.size_], \
+    radiation_tables.xi_.axis1_min_[0:radiation_tables.xi_.dim_size_[0]]) \
+    deviceptr(position_x, position_y, position_z, \
+            momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
+            pair0_position_x, pair0_position_y, pair0_position_z, \
+            pair0_momentum_x, pair0_momentum_y, pair0_momentum_z, \
+            pair0_weight, pair0_charge, pair0_chi, pair0_tau, \
+            pair1_position_x, pair1_position_y, pair1_position_z, \
+            pair1_momentum_x, pair1_momentum_y, pair1_momentum_z, \
+            pair1_weight, pair1_charge, pair1_chi, pair1_tau \
+    ) 
+    {
+
+        smilei::tools::gpu::Random prng_state_1;
+        smilei::tools::gpu::Random prng_state_2;
+        //curandState_t state_1;
+        //curandState_t state_2;
+        
+        double seed_curand_1;
+        double seed_curand_2;
+        
+        #pragma acc loop gang worker vector \
+        private(seed_curand_1, seed_curand_2) \
+        reduction(+:radiated_energy_loc) 
+
+#else
+
     // 1. Computation of gamma and chi
     //    Can be vectorized
     #pragma omp simd
+    
+#endif
+    
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         // Gamma
         photon_gamma[ipart] = std::sqrt( momentum_x[ipart]*momentum_x[ipart]
@@ -251,11 +291,16 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                                 photon_gamma[ipart],
                                 Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                                 Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
+                                
+#ifndef _GPU
+                                
     }
 
     // 2. Monte-Carlo process
     //    No vectorized
     for( int ipart=istart ; ipart<iend; ipart++ ) {
+
+#endif
 
         // If the photon has enough energy
         // We also check that photon_chi > chiph_threshold,
@@ -270,7 +315,23 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
                     //tau[ipart] = -log( 1.-Rand::uniform() );
+                    
+#ifndef _GPU
                     tau[ipart] = -std::log( 1.-rand_->uniform() );
+#else
+                    
+                    seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
+                    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
+           		
+                    prng_state_1.init( seed_curand_1, seq, offset ); //Cuda generator initialization
+                    //hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                    //curand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                    
+                    const double random_number = prng_state_1.uniform(); //Generating number
+                    
+                    tau[ipart] = -std::log( 1.-random_number );
+                    initial_seed_1 = random_number;
+#endif
                 }
 
             }
@@ -316,10 +377,21 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // pair quantum parameters
                     double pair_chi[2];
 
-                    const double xip = rand_->uniform();
+                    // Draw random number in [0,1[
+#ifndef _GPU
+                    const double random_number = rand_->uniform();
+#else
+                    seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
+                    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
+                        
+                    prng_state_2.init( seed_curand_2, seq, offset ); //Random generator initialization
+	
+                    random_number = prng_state_2.uniform(); //Generating number
+                    //random_number = curand_uniform(&state_2); //Generating number
+#endif
 
                     // Get the pair quantum parameters to compute the energy
-                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], xip );
+                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], random_number );
 
                     // pair propagation direction // direction of the photon
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
@@ -445,7 +517,12 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                 }
             }
         }
+    } // end ipart loop
+    
+#ifdef _GPU
     }
+#endif
+    
 }
 
 // -----------------------------------------------------------------------------
@@ -522,8 +599,6 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
                     }
 
                     last_photon_index --;
-
-
                 }
             }
         }

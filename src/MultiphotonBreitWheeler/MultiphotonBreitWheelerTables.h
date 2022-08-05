@@ -54,6 +54,9 @@ public:
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
     //! \param[out] pair_chi quantum parameters of the pair
+#ifdef _GPU
+    #pragma acc routine seq
+#endif
     void computePairQuantumParameter( const double photon_chi, 
                                       double * pair_chi,
                                       const double xip );
@@ -68,6 +71,9 @@ public:
     //! \param photon_chi photon quantum parameter
     //! \param gamma photon normalized energy
     // -----------------------------------------------------------------------------
+#ifdef _GPU
+    #pragma acc routine seq
+#endif
     double computeBreitWheelerPairProductionRate( 
         const double photon_chi, 
         const double photon_gamma);
