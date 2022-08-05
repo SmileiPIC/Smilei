@@ -363,7 +363,15 @@ public:
         return particles->capacity();
     }
 
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
+    //! For all particles of the species
+    //!   - interpolate the fields at the particle position
+    //!   - perform ionization
+    //!   - perform the radiation reaction
+    //!   - calculate the new velocity
+    //!   - calculate the new position
+    //!   - apply the boundary conditions
+    //!   - increment the currents (projection)
     virtual void dynamics( double time, unsigned int ispec,
                            ElectroMagn *EMfields,
                            Params &params, bool diag_flag,

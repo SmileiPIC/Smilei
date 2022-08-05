@@ -191,9 +191,9 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // uint64_t * id = &( particles.id(0));
 
     // Reserve pair particles (else, pointer could become obsolete)
-    double np = new_pair[0]->size();
-    new_pair[0]->reserve( np + mBW_pair_creation_sampling_[0] * (iend - istart) );
-    new_pair[1]->reserve( np + mBW_pair_creation_sampling_[1] * (iend - istart) );
+    // double np = new_pair[0]->size();
+    // new_pair[0]->reserve( np + mBW_pair_creation_sampling_[0] * (iend - istart) );
+    // new_pair[1]->reserve( np + mBW_pair_creation_sampling_[1] * (iend - istart) );
 
     // Pair shortcut
     double *const __restrict__ pair0_position_x = new_pair[0]->getPtrPosition( 0 );
@@ -623,7 +623,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
         } // end for ipart
             
         // Update of the bin boundaries
-        const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+        // const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
 
         // We photons deleted
         if( last_photon_index + 1 < bmax[ibin] ) {

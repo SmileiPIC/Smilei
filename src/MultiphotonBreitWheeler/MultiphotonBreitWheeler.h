@@ -123,6 +123,11 @@ public:
         int ibin, int nbin,
         int *bmin, int *bmax, int ithread );
 
+    //! Return the sampling for each pair 
+    int get_pair_creation_sampling(int i) {
+        return mBW_pair_creation_sampling_[i];
+    }
+
     //! Return the pair converted energy
     // double inline getPairEnergy( void )
     // {
@@ -143,7 +148,7 @@ private:
     //! Time step
     double dt_;
 
-    // Number of pairs created per even
+    // Number of pairs created per event
     int mBW_pair_creation_sampling_[2];
 
     // Inverse of the number of pairs created per even
