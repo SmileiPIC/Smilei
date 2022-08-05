@@ -29,15 +29,18 @@ public:
     //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
-    //! Set capacity of Particles vectors on GPU
+    //! Set capacity of Particles vectors on device
     void deviceReserve( unsigned int reserved_particles, unsigned int nDim ) ;
 
     //! Set capacity of Particles vectors based on already used dimension on CPU
     void deviceReserve( unsigned int reserved_particles );
 
+    //! Resize Particle vectors on device
+    void deviceResize();
+
     //! Reset Particles vectors
     void deviceClear();
-
+    
     //! Initialize the particle properties on devide as a mirror of the host definition
     // 
     void initializeDataOnDevice() override;
@@ -47,6 +50,15 @@ public:
     
     //! Update the particles from device to host
     void syncCPU() override;
+
+    //! Get number of particules on device
+    inline unsigned int gpu_size() const override
+    {
+        return gpu_nparts_;
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Parameters and vectors
 
     //! Position vector on device
     std::vector< thrust::device_vector<double> > nvidia_position_;
@@ -96,12 +108,6 @@ public:
     int * getPtrCellKeys() override {
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
     };
-
-    //! Get number of particules
-    unsigned int gpu_size() const override
-    {
-        return gpu_nparts_;
-    }
 
     // -----------------------------------------------------------------------------
     //! Extract particles from the Particles object and put 

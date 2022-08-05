@@ -356,16 +356,17 @@ Species::~Species()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all particles of the species
-//   - interpolate the fields at the particle position
-//   - perform ionization
-//   - perform the radiation reaction
-//   - calculate the new velocity
-//   - calculate the new position
-//   - apply the boundary conditions
-//   - increment the currents (projection)
-// ---------------------------------------------------------------------------------------------------------------------
-void Species::dynamics( double time_dual, unsigned int ispec,
+//! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
+//! For all particles of the species
+//!   - interpolate the fields at the particle position
+//!   - perform ionization
+//!   - perform the radiation reaction
+//!   - calculate the new velocity
+//!   - calculate the new position
+//!   - apply the boundary conditions
+//!   - increment the currents (projection)
+void Species::dynamics( double time_dual, 
+                        unsigned int ispec,
                         ElectroMagn *EMfields,
                         Params &params, bool diag_flag,
                         PartWalls *partWalls,
@@ -394,8 +395,25 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        // Prepare temporary buffers for this iteration
+        smpi->resizeBuffers( ithread, nDim_field, particles->size(), params.geometry=="AMcylindrical" );
         
+        // Prepare particles buffers for multiphoton Breit-Wheeler
+        if( Multiphoton_Breit_Wheeler_process ) {
+            
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            
+            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
+            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
+            
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+            
+        }
+
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
