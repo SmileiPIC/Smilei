@@ -8,5 +8,5 @@ While waiting for validation.py to be able to look at a specific benchmark folde
 
 For instance:
 ```bash
-ln -s smilei/benchmarks/gpu/* smilei/benchmarks/
+$ ln -f -s $(pwd)/smilei/benchmarks/gpu/*.py smilei/benchmarks/
 ```

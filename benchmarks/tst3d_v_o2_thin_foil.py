@@ -1,1 +1,0 @@
-gpu/tst3d_v_o2_thin_foil.py
