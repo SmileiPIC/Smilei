@@ -396,7 +396,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
                     double uy = momentum_y[ipart]/photon_gamma[ipart];
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
-
+                    
                     // Creation of new electrons in the temporary array new_pair[0]
                     new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
 
@@ -416,7 +416,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         //inv_gamma = 1./sqrt(1.+p*p);
 
                         // Positions
-
                         pair0_position_x[ipair]=position_x[ipart];
                         if (n_dimensions_>1) {
                             pair0_position_y[ipair]=position_y[ipart];
@@ -426,7 +425,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         }
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
-
+#ifndef _GPU
                         // Old positions
                         if( particles.Position_old.size() > 0 ) {
                             pair0_position_old_x[ipair]=position_x[ipart] ;
@@ -437,6 +436,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                                 pair0_position_old_z[ipair]=position_z[ipart] ;
                             }
                         }
+#endif
 
                         pair0_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[0];
                         pair0_charge[ipair]=new_pair_species[0]->max_charge_;
@@ -479,6 +479,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         }
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
+#ifndef _GPU
                         // Old positions
                         if( particles.Position_old.size() > 0 ) {
                             pair1_position_old_x[ipair]=position_x[ipart] ;
@@ -489,6 +490,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                                 pair1_position_old_z[ipair]=position_z[ipart] ;
                             }
                         }
+#endif
 
                         pair1_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[1];
                         pair1_charge[ipair]=new_pair_species[1]->max_charge_;

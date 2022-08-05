@@ -395,6 +395,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
@@ -402,7 +403,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         const int particule_count = particles->last_index.back();
 
-        // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
+        // smpi->dynamics_*'s pointer stability is guaranteed during the loop only if the size is not modified
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
