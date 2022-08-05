@@ -300,9 +300,12 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sortAllParticles( Params &params )
+void VectorPatch::initialParticleSorting( Params &params )
 {
-#ifdef _VECTO
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // Sort the particles in bins and compute the bin index.
+    // TODO(Etienne M): Initial sorting
+#elif defined( _VECTO )
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -541,39 +544,34 @@ void VectorPatch::cleanParticlesOverhead(Params &params, Timers &timers, int iti
 //! Particle injection from the boundaries
 void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, unsigned int itime )
 {
-
+    
     timers.particleInjection.restart();
-
+    
     //#pragma omp for schedule(runtime)
     #pragma omp single
-    {
-
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-
+        
         Patch * patch = ( *this )( ipatch );
-
+        
         // Only for patch at the domain boundary
-        if (patch->isAnyBoundary()) {
-
-            // Targeted species and species index
-            unsigned int i_species ;
-
-            vector<int>  previous_particle_number_per_species(patch->vecSpecies.size(),0);
-            vector<unsigned int>  particle_index(patch->particle_injector_vector_.size(),0);
-
-            // Local buffer of particles
-            vector<Particles> local_particles_vector(patch->particle_injector_vector_.size());
-
+        if( ! patch->isAnyBoundary() ) continue;
+        
+        // Local buffer of particles
+        vector<Particles> local_particles_vector( patch->particle_injector_vector_.size() );
+        
+        // Creation of the new particles for all injectors
+        // Create particles as if t0 with ParticleCreator
+        for( unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++ ) {
+            
             // Pointer to the current particle injector
-            ParticleInjector * particle_injector;
-
-            // Pointer to the current particle vector
-            Particles* particles;
-
-            // Pointer to the current species
-            Species * injector_species;
-
-            // Aera for injection
+            ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
+            
+            unsigned int axis = particle_injector->axis();
+            unsigned int min_max = particle_injector->min_max();
+            
+            if( !patch->isBoundary( axis, min_max ) ) continue;
+            
+            // Area for injection
             struct SubSpace init_space;
             init_space.cell_index_[0] = 0;
             init_space.cell_index_[1] = 0;
@@ -581,414 +579,220 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space.box_size_[0]   = params.n_space[0];
             init_space.box_size_[1]   = params.n_space[1];
             init_space.box_size_[2]   = params.n_space[2];
-
-            // Parameters that depend on the patch location
-            if ( patch->isXmin() ) {
-
-                init_space.cell_index_[0] = 0;
-                init_space.box_size_[0]   = 1;
-
-                //index = (new_cell_idx)/params.cluster_width_;
-            } else if ( patch->isXmax() ) {
-
-                init_space.cell_index_[0] = params.n_space[0]-1;
-                init_space.box_size_[0]   = 1;
-                //index = (new_cell_idx)/params.cluster_width_;
+            
+            if( min_max == 1 ) {
+                init_space.cell_index_[axis] = params.n_space[axis]-1;
             }
-
-            if (params.nDim_field > 1) {
-                if ( patch->isYmin() ) {
-                    init_space.cell_index_[1] = 0;
-                    init_space.box_size_[1]   = 1;
-                }
-                if ( patch->isYmax() ) {
-                    init_space.cell_index_[1] = params.n_space[1]-1;
-                    init_space.box_size_[1]   = 1;
-                }
-            }
-
-            if (params.nDim_field > 2) {
-                if ( patch->isZmin() ) {
-                    init_space.cell_index_[2] = 0;
-                    init_space.box_size_[2]   = 1;
-                }
-                if ( patch->isZmax() ) {
-                    init_space.cell_index_[2] = params.n_space[2]-1;
-                    init_space.box_size_[2]   = 1;
-                }
-            }
+            init_space.box_size_[axis] = 1;
+            
+            // We first get the species id associated to this injector
+            unsigned int i_species = particle_injector->getSpeciesNumber();
+            Species * injector_species = patch->vecSpecies[i_species];
+            
+            // Pointer to simplify the code
+            Particles* particles = &local_particles_vector[i_injector];
+            
+            // No particles at the begining
+            particles->initialize( 0, *injector_species->particles );
+            
+            // Particle creator object
+            ParticleCreator particle_creator;
+            particle_creator.associate( particle_injector, particles, injector_species );
+            
+            // Creation of the particles in local_particles_vector
+            particle_creator.create( init_space, params, patch, itime );
 
 
-            // Creation of the new particles for all injectors
-            // Create particles as if t0 with ParticleCreator
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
-
-                // Pointer to the current particle injector
-                particle_injector = patch->particle_injector_vector_[i_injector];
-
-                bool activate_injection = false;
-
-                if ( (patch->isXmin() && particle_injector->isXmin()) ||
-                     (patch->isXmax() && particle_injector->isXmax()) ) {
-
-                    activate_injection = true;
-
-                }
-
-                if (params.nDim_field > 1 && !activate_injection) {
-                    if ( ( patch->isYmin() && particle_injector->isYmin() ) ||
-                         ( patch->isYmax() && particle_injector->isYmax() )) {
-                        activate_injection = true;
-                    }
-                }
-
-                if (params.nDim_field > 2 && !activate_injection) {
-                    if ( ( patch->isZmin() && particle_injector->isZmin() ) ||
-                         ( patch->isZmax() && particle_injector->isZmax() )) {
-                        activate_injection = true;
-                    }
-                }
-
-                if (activate_injection) {
-
-                    // We first get the species id associated to this injector
-                    i_species = particle_injector->getSpeciesNumber();
-
-                    injector_species = patch->vecSpecies[i_species];
-
-                    // We store the number of particles
-                    previous_particle_number_per_species[i_species] = injector_species->getNbrOfParticles();
-
-                    // Pointer to simplify the code
-                    particles = &local_particles_vector[i_injector];
-
-                    //No particles at the begining
-                    // particles->resize(0);
-                    particles->initialize(0,*injector_species->particles);
-
-                    // Particle creator object
-                    ParticleCreator particle_creator;
-                    particle_creator.associate(particle_injector, particles, injector_species);
-
-                    //particle_index[i_injector] = previous_particle_number_per_species[i_species];
-                    // Creation of the particles in local_particles_vector
-                    particle_creator.create( init_space, params, patch, itime );
-
-
-                    // suppress all particles in the thermalized region
-                    //int * mask = new int[injector_species->particles->size()];
-                    // std::vector<int> mask(injector_species->particles->size());
-                    // for( int icell = 0 ; icell < injector_species->particles->first_index.size(); icell++ ) {
-                    //     for ( int ip = injector_species->particles->first_index[icell] ; ip < injector_species->particles->last_index[icell] ; ip-- ){
-                    //         if ( ( patch->isXmin() && (injector_species->particles->Position[0][ip] < (init_space.cell_index_[0] + init_space.box_size_[0])*params.cell_length[0]) ) ||
-                    //             (  patch->isXmax() && ( injector_species->particles->Position[0][ip] > (init_space.cell_index_[0]*params.cell_length[0]) ) ) ) {
-                    //             mask[ip] = -1;
-                    //             injector_species->count[icell] --;
-                    //         } else {
-                    //             mask[ip] = 1;
-                    //         }
-                    //     }
-                    // }
-                    //
-                    // injector_species->particles->eraseParticlesWithMask(0, injector_species->particles->size(), mask );
-                    //
-                    // // Update of first and last cell indexes
-                    // injector_species->particles->first_index[0] = 0;
-                    // injector_species->particles->last_index[0] = injector_species->particles->size();
-                    // for( int scell = 1 ; scell < particles->first_index.size(); scell++ ) {
-                    //     injector_species->particles->first_index[scell] = particles->last_index[scell-1];
-                    //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
-                    // }
-                    //delete [] mask;
-
-                }
-            }
-
-            // Shift to update the positions
-            double position_shift[3];
-            if ( patch->isXmin() ) {
-                position_shift[0] = -params.cell_length[0];
-            } else if ( patch->isXmax() ) {
-                position_shift[0] = params.cell_length[0];
-            } else {
-                position_shift[0] = 0;
-            }
-            if (params.nDim_field > 1) {
-                if ( patch->isYmin() ) {
-                    position_shift[1] = -params.cell_length[1];
-                } else if ( patch->isYmax() ) {
-                    position_shift[1] = params.cell_length[1];
-                } else {
-                    position_shift[1] = 0;
-                }
-            }
-            if (params.nDim_field > 2) {
-                if ( patch->isZmin() ) {
-                    position_shift[2] = -params.cell_length[2];
-                } else if ( patch->isZmax() ) {
-                    position_shift[2] = params.cell_length[2];
-                } else {
-                    position_shift[2] = 0;
-                }
-            }
-
-            double * __restrict__ position_x ;
-            double * __restrict__ position_y ;
-            double * __restrict__ position_z ;
-
-            double * __restrict__ momentum_x ;
-            double * __restrict__ momentum_y ;
-            double * __restrict__ momentum_z ;;
-
+            // suppress all particles in the thermalized region
+            //int * mask = new int[injector_species->particles->size()];
+            // std::vector<int> mask(injector_species->particles->size());
+            // for( int icell = 0 ; icell < injector_species->particles->first_index.size(); icell++ ) {
+            //     for ( int ip = injector_species->particles->first_index[icell] ; ip < injector_species->particles->last_index[icell] ; ip-- ){
+            //         if ( ( patch->isXmin() && (injector_species->particles->Position[0][ip] < (init_space.cell_index_[0] + init_space.box_size_[0])*params.cell_length[0]) ) ||
+            //             (  patch->isXmax() && ( injector_species->particles->Position[0][ip] > (init_space.cell_index_[0]*params.cell_length[0]) ) ) ) {
+            //             mask[ip] = -1;
+            //             injector_species->count[icell] --;
+            //         } else {
+            //             mask[ip] = 1;
+            //         }
+            //     }
+            // }
+            //
+            // injector_species->particles->eraseParticlesWithMask(0, injector_species->particles->size(), mask );
+            //
+            // // Update of first and last cell indexes
+            // injector_species->particles->first_index[0] = 0;
+            // injector_species->particles->last_index[0] = injector_species->particles->size();
+            // for( int scell = 1 ; scell < particles->first_index.size(); scell++ ) {
+            //     injector_species->particles->first_index[scell] = particles->last_index[scell-1];
+            //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
+            // }
+            //delete [] mask;
+            
             // Update positions from momentum
-            if (params.nDim_field == 3) {
+            // Particle not created at the same position of another species
+            if( !particle_injector->position_initialization_on_injector_ ) {
+                
+                unsigned int number_of_particles = local_particles_vector[i_injector].size();
+                
+                // Shift to update the positions
+                double position_shift[3] = {0., 0., 0.};
+                if( min_max == 0 ) {
+                    position_shift[axis] = -params.cell_length[axis];
+                } else {
+                    position_shift[axis] = params.cell_length[axis];
+                }
 
-                for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+                double * __restrict__ position_x = local_particles_vector[i_injector].getPtrPosition( 0 );
+                double * __restrict__ position_y = local_particles_vector[i_injector].getPtrPosition( 1 );
+                double * __restrict__ position_z = local_particles_vector[i_injector].getPtrPosition( 2 );
 
-                    // Pointer to the current particle injector
-                    particle_injector = patch->particle_injector_vector_[i_injector];
+                double * __restrict__ momentum_x = local_particles_vector[i_injector].getPtrMomentum( 0 );
+                double * __restrict__ momentum_y = local_particles_vector[i_injector].getPtrMomentum( 1 );
+                double * __restrict__ momentum_z = local_particles_vector[i_injector].getPtrMomentum( 2 );
 
-                    // Particle not created at the same position of another species
-                    if (!particle_injector->position_initialization_on_injector_) {
+                if (params.nDim_field == 1) {
+                
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
+                        double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
+                        + momentum_z[ip]*momentum_z[ip]);
 
-                        // Pointer to simplify the code
-                        particles = &local_particles_vector[i_injector];
-
-                        unsigned int number_of_particles = particles->size();
-
-                        position_x = particles->position_x;
-                        position_y = particles->position_y;
-                        position_z = particles->position_z;
-
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
-                            double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip]
-                                + momentum_y[ip]*momentum_y[ip] + momentum_z[ip]*momentum_z[ip]);
-
-                            position_x[ip] += ( momentum_x[ip]
-                                                        * inverse_gamma + position_shift[0]);
-                            position_y[ip] += ( momentum_y[ip]
-                                                        * inverse_gamma + position_shift[1]);
-                            position_z[ip] += ( momentum_z[ip]
-                                                        * inverse_gamma + position_shift[2]);
-                        }
+                        position_x[ip] += ( momentum_x[ip]
+                                                    * inverse_gamma + position_shift[0]);
                     }
-                } // end loop injector
-            } else if (params.nDim_field == 2) {
-                for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+                
+                } else if (params.nDim_field == 2) {
+                    
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
+                        double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
+                        + momentum_z[ip]*momentum_z[ip]);
 
-                    // Pointer to the current particle injector
-                    particle_injector = patch->particle_injector_vector_[i_injector];
-
-                    // Particle created at the same position of another species
-                    if (!particle_injector->position_initialization_on_injector_) {
-
-                        // Pointer to simplify the code
-                        particles = &local_particles_vector[i_injector];
-
-                        position_x = particles->position_x;
-                        position_y = particles->position_y;
-
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;;
-
-                        unsigned int number_of_particles = particles->size();
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
-                            double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
-                            + momentum_z[ip]*momentum_z[ip]);
-
-                            position_x[ip] += ( momentum_x[ip]
-                                                        * inverse_gamma + position_shift[0]);
-                            position_y[ip] += ( momentum_y[ip]
-                                                        * inverse_gamma + position_shift[1]);
-                        }
+                        position_x[ip] += ( momentum_x[ip]
+                                                    * inverse_gamma + position_shift[0]);
+                        position_y[ip] += ( momentum_y[ip]
+                                                    * inverse_gamma + position_shift[1]);
                     }
-                } // end loop injector
-            } else if (params.nDim_field == 1) {
-                for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+                    
+                    
+                } else if (params.nDim_field == 3) {
+                    
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
+                        double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip]
+                            + momentum_y[ip]*momentum_y[ip] + momentum_z[ip]*momentum_z[ip]);
 
-                    // Pointer to the current particle injector
-                    particle_injector = patch->particle_injector_vector_[i_injector];
-
-                    // Particle created at the same position of another species
-                    if (!particle_injector->position_initialization_on_injector_) {
-
-                        // Pointer to simplify the code
-                        particles = &local_particles_vector[i_injector];
-
-                        position_x = particles->position_x;
-
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;
-
-                        unsigned int number_of_particles = particles->size();
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
-                            double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
-                            + momentum_z[ip]*momentum_z[ip]);
-
-                            position_x[ip] += ( momentum_x[ip]
-                                                        * inverse_gamma + position_shift[0]);
-                        }
+                        position_x[ip] += ( momentum_x[ip]
+                                                    * inverse_gamma + position_shift[0]);
+                        position_y[ip] += ( momentum_y[ip]
+                                                    * inverse_gamma + position_shift[1]);
+                        position_z[ip] += ( momentum_z[ip]
+                                                    * inverse_gamma + position_shift[2]);
                     }
-                } // end loop injector
-            }
+                        
+                } // end if ndim_field
+            } // end if new particle positions
+        } // end loop injector
 
-            // Update positions with copy from another species
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+        // Update positions with copy from another species
+        for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
 
-                // Pointer to the current particle injector
-                particle_injector = patch->particle_injector_vector_[i_injector];
+            // Pointer to the current particle injector
+            ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
 
-                // Particle created at the same position of another species
-                if (particle_injector->position_initialization_on_injector_) {
+            // Particle created at the same position of another species
+            if (particle_injector->position_initialization_on_injector_) {
 
-                    // We first get the species id associated to this injector
-                    unsigned int i_injector_2 = particle_injector->position_initialization_on_injector_index_;
+                // We first get the species id associated to this injector
+                unsigned int i_injector_2 = particle_injector->position_initialization_on_injector_index_;
 
-                    // Pointer to simplify the code
-                    particles = &local_particles_vector[i_injector];
+                const unsigned int particle_number    = local_particles_vector[i_injector].size();
+                // Pointers injector 1
+                double *const __restrict__ px         = local_particles_vector[i_injector].getPtrPosition(0);
+                double *const __restrict__ py         = local_particles_vector[i_injector].getPtrPosition(1);
+                double *const __restrict__ pz         = local_particles_vector[i_injector].getPtrPosition(2);
+                // Pointers injector 2
+                const double *const __restrict__ lpvx = local_particles_vector[i_injector_2].getPtrPosition(0);
+                const double *const __restrict__ lpvy = local_particles_vector[i_injector_2].getPtrPosition(1);
+                const double *const __restrict__ lpvz = local_particles_vector[i_injector_2].getPtrPosition(2);
 
-                    if (params.nDim_field == 3) {
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
-                            particles->position_y[ip] =
-                            local_particles_vector[i_injector_2].position_y[ip];
-                            particles->position_z[ip] =
-                            local_particles_vector[i_injector_2].position_z[ip];
-                        }
-                    }
-                    if (params.nDim_field == 2) {
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
-                            particles->position_y[ip] =
-                            local_particles_vector[i_injector_2].position_y[ip];
-                        }
-                    }
-                    if (params.nDim_field == 1) {
-
-                        #pragma omp simd
-                        for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
-                        }
+                if (params.nDim_field == 3) {
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
+                        px[ip] = lpvx[ip];
+                        py[ip] = lpvy[ip];
+                        pz[ip] = lpvz[ip];
                     }
                 }
-            }
-
-            int new_particle_number;
-
+                else if (params.nDim_field == 2) {
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
+                        px[ip] = lpvx[ip];
+                        py[ip] = lpvy[ip];
+                    }
+                }
+                else if (params.nDim_field == 1) {
+                    #pragma omp simd
+                    for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
+                        px[ip] = lpvx[ip];
+                    }
+                } // if nDim_field 
+            } // if particle positions
+            
             // Filter particles when initialized on different position
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
-
-                if (local_particles_vector[i_injector].size() > 0) {
-
-                    // We first get the species id associated to this injector
-                    i_species = patch->particle_injector_vector_[i_injector]->getSpeciesNumber();
-
-                    // species pointer
-                    injector_species = species( ipatch, i_species );
-
-                    // Pointer to the current particle vector
-                    particles =&local_particles_vector[i_injector];
-
-                    // Then the new number of particles in species
-                    new_particle_number = particles->size() - 1;
-
-                    // Suppr not interesting parts ...
-                    // 1D
-                    for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                        if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
-                            (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
-                            if (new_particle_number > ip) {
-                                particles->overwriteParticle(new_particle_number,ip);
+            if( local_particles_vector[i_injector].size() > 0 ) {
+                
+                // We first get the species id associated to this injector
+                unsigned int i_species = particle_injector->getSpeciesNumber();
+                Species * injector_species = species( ipatch, i_species );
+                Particles* particles = &local_particles_vector[i_injector];
+                
+                // Then the new number of particles in species
+                int new_particle_number = particles->size() - 1;
+                
+                // Suppr not interesting parts ...
+                for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
+                    for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
+                        if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] > params.grid_length[axis] ) {
+                            if( new_particle_number > ip ) {
+                                particles->overwriteParticle( new_particle_number, ip );
                             }
                             new_particle_number--;
                         }
-                    } // end loop on particles
-
-                    // 2D
-                    if (params.nDim_field > 1) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if (( patch->isYmin() && ( particles->Position[1][ip] < 0.) ) ||
-                                ( patch->isYmax() && ( particles->Position[1][ip] > params.grid_length[1]) )) {
-                                // particle_in_domain = false;
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
-                            }
-                        }
-                    } // end loop on particles
-
-                    // 3D
-                    if (params.nDim_field > 2) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if (( patch->isZmin() && ( particles->Position[2][ip] < 0.) ) ||
-                                ( patch->isZmax() && ( particles->Position[2][ip] > params.grid_length[2]) )) {
-                                // particle_in_domain = false;
-                                //particles->eraseParticle(ip);
-                                if (new_particle_number > ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
-                            }
-                        }
-                    } // end loop on particles
-
-                    new_particle_number += 1;
-
-                    // New energy from particles
-                    //if( patch->isXmin() || patch->isXmax() || patch->isYmin() || patch->isYmax() || patch->isZmin() || patch->isZmax()) {
-                        double energy = 0.;
-                        // Matter particle case
-                        if( injector_species->mass_ > 0 ) {
-                            for( int ip = 0; ip<new_particle_number; ip++ ) {
-                                energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
-                            }
-                            injector_species->nrj_new_part_ += injector_species->mass_ * energy;
-                        }
-                        // Photon case
-                        else if( injector_species->mass_ == 0 ) {
-                            for( int ip=0; ip<new_particle_number; ip++ ) {
-                                energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
-                            }
-                            injector_species->nrj_new_part_ += energy;
-                        }
-                    //}
-
-                    // Insertion of the particles as a group in the vector of species
-                    if (new_particle_number > 0) {
-
-                        particles->eraseParticleTrail(new_particle_number);
-                        injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
-
                     }
-
-                } // if particles to inject
-
-            } // end for i_injector
-
-        } // Test patch at boundary
-
+                }
+                
+                new_particle_number += 1;
+                
+                // New energy from particles
+                double energy = 0.;
+                // Matter particle case
+                if( injector_species->mass_ > 0 ) {
+                    for( int ip = 0; ip<new_particle_number; ip++ ) {
+                        energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
+                    }
+                    injector_species->nrj_new_part_ += injector_species->mass_ * energy;
+                }
+                // Photon case
+                else if( injector_species->mass_ == 0 ) {
+                    for( int ip=0; ip<new_particle_number; ip++ ) {
+                        energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
+                    }
+                    injector_species->nrj_new_part_ += energy;
+                }
+                
+                // Insertion of the particles as a group in the vector of species
+                if( new_particle_number > 0 ) {
+                    
+                    particles->eraseParticleTrail( new_particle_number );
+                    injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
+                    
+                }
+            } // if particles > 0
+        } // end for i_injector
     } // end for ipatch
-    } // end omp single
-
+    
     timers.particleInjection.update( params.printNow( itime ) );
 }
 
@@ -1052,6 +856,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
+            break;
         }
     }
     if( !some_particles_are_moving  && !diag_flag ) {
@@ -1452,6 +1257,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
+// NOTE: This function will pull the GPU data unless we are at t=0
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
@@ -1467,14 +1273,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             { 
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1580,14 +1385,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[globalDiags.size()+idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             { 
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -2209,13 +2013,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     uint64_t nparticles_global( 0 );
     MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
 
     //Timer ptimer("global");
     //ptimer.init(smpi);
     //ptimer.restart();
 
     double gamma_mean = gamma_global/( double )nparticles_global;
+
+    MESSAGE( "GAMMA = " << gamma_mean );
 
     unsigned int iteration_max = params.relativistic_poisson_max_iteration;
     double           error_max = params.relativistic_poisson_max_error;
@@ -4440,11 +4245,10 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables_ )
+void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Maybe we could just alloc the memory here and initialize 
-    // it on the GPU instead of CPU initializing then copying to the GPU
+    // TODO(Etienne M): Async allocation ?
 
     const int npatches = this->size();
 
@@ -4457,18 +4261,24 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
     const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-    const int size_of_table_niel           = radiation_tables_->niel_.size_particle_chi_;
-    const int size_of_table_integfochi     = radiation_tables_->integfochi_.size_particle_chi_;
-    const int size_of_table_min_photon_chi = radiation_tables_->xi_.size_particle_chi_;
-    const int size_of_table_xi             = radiation_tables_->xi_.size_particle_chi_ * radiation_tables_->xi_.size_photon_chi_;
+    const int size_of_table_niel           = radiation_tables->niel_.size_particle_chi_;
+    const int size_of_table_integfochi     = radiation_tables->integfochi_.size_particle_chi_;
+    const int size_of_table_min_photon_chi = radiation_tables->xi_.size_particle_chi_;
+    const int size_of_table_xi             = radiation_tables->xi_.size_particle_chi_ * radiation_tables->xi_.size_photon_chi_;
 
-    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
 
         // Initialize particles data structures on GPU, and synchronize it
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
+
+            // Create photon species on the device
+            if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
+                spec->radiated_photons_->initializeDataOnDevice();
+            }
+
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
@@ -4490,46 +4300,51 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bz, sizeofBz );
 
-        if( params.hasNielRadiation ) {
+        // TODO(Etienne M): We should create a function that does the copy of the radiation table.
+        // Here we should only allocate data.
 
-            const double *const table = &( radiation_tables_->niel_.table_[0] );
+        if( params.has_Niel_radiation_ ) {
+            const double *const table = &( radiation_tables->niel_.table_[0] );
+
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
-        if( params.hasMCRadiation ) {
+        if( params.has_MC_radiation_ ) {
 
-            const double *const table_integfochi     = &( radiation_tables_->integfochi_.table_[0] );
-            const double *const table_min_photon_chi = &( radiation_tables_->xi_.min_photon_chi_table_[0] );
-            const double *const table_xi             = &( radiation_tables_->xi_.table_[0] );
+            const double *const table_integfochi     = &( radiation_tables->integfochi_.table_[0] );
+            const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );
+            const double *const table_xi             = &( radiation_tables->xi_.table_[0] );
 
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
         }
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
 
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
-void VectorPatch::syncFieldFromHostToDevice()
+void VectorPatch::copyEMFieldsFromHostToDevice()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
@@ -4570,16 +4385,25 @@ void VectorPatch::syncFieldFromHostToDevice()
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
 
 //! Sync all data (fields and particles) from device to host
-void VectorPatch::syncDataFromDeviceToHost()
+void VectorPatch::copyDeviceStateToHost()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Diags may need more data copied back from the GPU.
+    // We need to either have more of these functions, or to copy everything
+    // from the GPU to the CPU.
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
+
+    // const int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
+    // const int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
+    // const int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
 
     const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
     const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
@@ -4595,6 +4419,10 @@ void VectorPatch::syncDataFromDeviceToHost()
             spec->particles->syncCPU();
         }
 
+        // double *const Jx = patches_[ipatch]->EMfields->Jx_->data();
+        // double *const Jy = patches_[ipatch]->EMfields->Jy_->data();
+        // double *const Jz = patches_[ipatch]->EMfields->Jz_->data();
+
         double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
         double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
         double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
@@ -4602,6 +4430,12 @@ void VectorPatch::syncDataFromDeviceToHost()
         double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
         double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
         double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+
+        // TODO(Etienne M): Shouldnt Jx be copied too ? Depending on the diags
+
+        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jz, sizeofJz );
 
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );
@@ -4611,5 +4445,7 @@ void VectorPatch::syncDataFromDeviceToHost()
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmy, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }

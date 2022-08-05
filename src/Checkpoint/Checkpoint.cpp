@@ -854,7 +854,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
         unsigned int partCapacity=0;
         s.attr( "partCapacity", partCapacity );
-        spec->particles->reserve( partCapacity, nDim_particle );
+        //spec->particles->reserve( partCapacity, nDim_particle );
 
         unsigned int partSize=0;
         s.attr( "partSize", partSize );

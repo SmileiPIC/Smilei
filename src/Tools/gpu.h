@@ -104,28 +104,27 @@ namespace smilei {
             // HostDeviceMemoryManagment
             ////////////////////////////////////////////////////////////////////////////////
 
-            /// Exploits the OpenMP/OpenACC host/device memory mapping capabilities.
-            /// These function requires you to already have a pointer, this pointer will be
+            /// Exploits the host and device memory mapping capabilities of OpenMP/OpenACC.
+            /// These functions require that you already have a pointer, this pointer will be
             /// mapped to a pointer pointing to a chunk of a given size on the device memory.
-            /// This mapping is stored inside the OpenMP/OpenACC runtime.
+            /// This mapping is stored in the OpenMP/OpenACC runtime.
+            /// You should be able to use this header whether or not you ahve GPU support
+            /// enabled.
             ///
             /// Note:
-            /// - The OpenACC implementation is not complete !
-            /// - The host pointer may not point to valid data for the OpenMP mapping to
-            /// occur.
-            /// - You may exploit the virtual memory and allocate a large chunk of memory on
-            /// the host (malloc) and not use it. In this case no memory page will be marked
-            /// "in use" and you host memory consumption will be zero ! You may exploit this
-            /// fact using NonInitializingVector to easily produce GPU/CPU memory optimized
-            /// software without worrying about the host memory consumption when offloading
-            /// an Omp kernel to the GPU.
-            /// If fact, you could say that malloc can be used as an excuse to get
-            /// a unique value, that is, the returned pointer (as long as it's not freed).
-            /// This unique value can be mapped to a valid memory chunk allocated on the GPU.
-            /// - Does not support async operation. If you need that it's probably
-            /// better if you do it yourself (not using HostDeviceMemoryManagment) as it can be
-            /// quite tricky. HostDeviceMemoryManagment is best for allocating/copying big chunks
-            /// at the start of the program.
+            /// - The OpenACC implementation is not complete!
+            /// - You can exploit virtual memory and allocate a large part of the memory on the
+            /// the host (malloc) and not use it. the OS will allocate address sapce and not physical
+            /// memory until you touch the page. Before touching the page, the host physical memory allocation
+            /// will be zero! You can exploit this fact by using NonInitializingVector to easily produce
+            /// software optimized for GPU/CPU memory without worrying about consuming host memory when offloading
+            /// an kernel to the GPU. In fact, one could say that malloc can be used as an excuse to get
+            /// a unique value, i.e. the returned pointer (as long as it is not freed).
+            /// This unique value can be mapped to a valid chunk of memory allocated on the GPU.
+            /// - Does not support asynchronous operations. If you need it, it is probably
+            /// better if you do it yourself (without using HostDeviceMemoryManagment) because it can be
+            /// quite tricky. HostDeviceMemoryManagment is the best solution to allocate/copy large chunks
+            /// at the beginning of the program.
             ///
             struct HostDeviceMemoryManagment
             {
@@ -165,7 +164,7 @@ namespace smilei {
                 /// else return a_pointer (untouched)
                 ///
                 /// Note:
-                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this 
+                /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this
                 /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
                 ///
                 /// #if defined( __NVCOMPILER )
@@ -174,10 +173,19 @@ namespace smilei {
                 /// #else
                 ///
                 template <typename T>
-                static T* GetDevicePointer( T* a_pointer );
+                static T* GetDevicePointer( T* a_host_pointer );
+
+                /// Smilei's code does a lot of runtime checking to know if we are using GPU or CPU data.
+                /// Sometimes, we just want to get the GPU pointer if it exist, or the host pointer if no GPU equivalent
+                /// exists. ie: MPI_Isend in Patch::initSumField() There, we dont know which buffer we deal with under
+                /// the contract that the data will be exchanged will be from the GPU if it exists there, or else, on
+                /// from the CPU.
+                ///
+                template <typename T>
+                static T* GetDeviceOrHostPointer( T* a_host_pointer );
 
                 template <typename T>
-                static bool IsHostPointerMappedOnDevice( const T* a_pointer );
+                static bool IsHostPointerMappedOnDevice( const T* a_host_pointer );
 
                 /// Expects host pointers passed through GetDevicePointer. a_count T's are copied (dont specify the byte
                 /// count only object count).
@@ -490,6 +498,15 @@ namespace smilei {
 #else
                 return a_host_pointer;
 #endif
+            }
+
+            template <typename T>
+            T* HostDeviceMemoryManagment::GetDeviceOrHostPointer( T* a_host_pointer )
+            {
+                T* const a_device_pointer = GetDevicePointer( a_host_pointer );
+                return a_device_pointer == nullptr ?
+                           a_host_pointer : // Not mapped to the GPU
+                           a_device_pointer;
             }
 
             template <typename T>

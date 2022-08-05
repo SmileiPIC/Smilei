@@ -1,21 +1,56 @@
+// -----------------------------------------------------------------------------
+//
+//! \file nvidiaParticles.h
+//
+//! \brief contains the nvidiaParticles class description
+//
+//! The nvidiaParticles inherits from the Particles class to deal with GPUs.
+//! It uses NVIDIA/AMD thrust::device_vector instead of std::vector
+//
+// -----------------------------------------------------------------------------
+
 #ifndef NVIDIAPARTICLES_H
 #define NVIDIAPARTICLES_H
 
 #include <thrust/device_vector.h>
 
+#include "Params.h"
 #include "Particles.h"
 
+/*! \class nvidiaParticles
+    \brief Particle class for GPUs
+*/
 class nvidiaParticles : public Particles
 {
 public:
     //! Constructor for Particle
-    nvidiaParticles();
+    nvidiaParticles(const Params& parameters);
 
-    //! Destructor for Particle
+    //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
+    //! Allocate the right amount of position and momentum dimensions
+    void allocateDimensions( unsigned int nDim );
+
+    //! Reserve space for particle_count particles. Must be called after 
+    //! allocateDimensions()
+    void reserveParticles( unsigned int particle_count );
+
+    //! Allocate particle_count particles. Must be called after
+    //! allocateDimensions()
+    void allocateParticles( unsigned int particle_count );
+
+    //! Reset Particles vectors
+    void deviceClear();
+
+    //! Initialize the particle properties on devide as a mirror of the host definition
+    // 
     void initializeDataOnDevice() override;
+    
+    //! Send the particles from host to device
     void syncGPU() override;
+    
+    //! Update the particles from device to host
     void syncCPU() override;
 
     //! Position vector on device
@@ -67,7 +102,7 @@ public:
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
     };
 
-    //! Get number of particules
+    //! Get number of particles
     unsigned int gpu_size() const override
     {
         return gpu_nparts_;
@@ -80,10 +115,14 @@ public:
     void extractParticles( Particles* particles_to_move ) override;
     
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put 
-    //! them in the Particles object
+    //! Erase particles leaving the patch object on device and returns the number of particle removed
     // -----------------------------------------------------------------------------
-    int injectParticles( Particles* particles_to_move ) override;
+    int eraseLeavingParticles() override;
+    
+    // -----------------------------------------------------------------------------
+    //! Inject particles from particles_to_move into *this and return he number of particle added
+    // -----------------------------------------------------------------------------
+    int injectParticles( Particles* particles_to_inject ) override;
 
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors
@@ -91,9 +130,8 @@ public:
     // ---------------------------------------------------------------------------------------------------------------------
     void createParticles( int n_additional_particles ) override;
 
+    // Number of particles on device
     int gpu_nparts_;
-    int nparts_to_move_;
-
 };
 
 #endif

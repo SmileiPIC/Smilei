@@ -168,6 +168,7 @@ compile_no_openmp:
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
 
+
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
