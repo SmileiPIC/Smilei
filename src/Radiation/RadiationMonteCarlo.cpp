@@ -158,10 +158,10 @@ void RadiationMonteCarlo::operator()(
     if (photons) {
 #ifdef _GPU
             // We reserve a large number of potential photons on device since we can't reallocate
-            nphotons_start = photons->gpu_size();
+            nphotons_start = photons->deviceSize();
             //static_cast<nvidiaParticles*>(photons)->deviceReserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
             static_cast<nvidiaParticles*>(photons)->createParticles( (iend - istart) * photon_buffer_size_per_particle );
-            //std::cerr << "photons size: " << static_cast<nvidiaParticles*>(photons)->gpu_size() 
+            //std::cerr << "photons size: " << static_cast<nvidiaParticles*>(photons)->deviceSize() 
             //          << " new: " << (iend - istart)*photon_buffer_size_per_particle
             //          << std::endl;
 
@@ -604,7 +604,7 @@ void RadiationMonteCarlo::operator()(
     } // end acc parallel
 #endif
 
-    //if (photons) std::cerr << photons->gpu_size()  << std::endl;
+    //if (photons) std::cerr << photons->deviceSize()  << std::endl;
 
     // Update the patch radiated energy
     radiated_energy += radiated_energy_loc;

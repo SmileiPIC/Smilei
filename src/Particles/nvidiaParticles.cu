@@ -74,7 +74,7 @@ void nvidiaParticles::deviceReserve( unsigned int reserved_particles )
 // ---------------------------------------------------------------------------------------------------------------------
 //! Resize particle vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void nvidiaParticles::deviceResize( int new_size )
+void nvidiaParticles::deviceResize( unsigned int new_size )
 {
     for( unsigned int iprop=0 ; iprop<nvidia_double_prop_.size() ; iprop++ ) {
         ( *nvidia_double_prop_[iprop] ).resize(new_size);
@@ -110,6 +110,12 @@ void nvidiaParticles::deviceClear()
 
     //cell_keys.clear();
     gpu_nparts_ = 0;
+}
+
+//! Reset cell_keys to default value
+void nvidiaParticles::resetCellKeys(void)
+{
+    thrust::fill(nvidia_cell_keys_.begin(), nvidia_cell_keys_.begin() + gpu_nparts_, -1);
 }
 
 // -----------------------------------------------------------------------------

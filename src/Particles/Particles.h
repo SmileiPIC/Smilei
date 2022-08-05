@@ -147,11 +147,11 @@ public:
 
     //! Overwrite particle part1 into part2 memory location. Erasing part2
     //! Warning: do not update first_index and last_index
-    void overwriteParticle( unsigned int part1, unsigned int part2 );
+    void overwriteParticle( unsigned int part1, unsigned int part2, bool compute_cell_keys = false  );
 
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
     //! Warning: do not update first_index and last_index
-    void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N, bool cell_keys = false );
+    void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N, bool compute_cell_keys = false );
 
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
     //! Warning: do not update first_index and last_index
@@ -459,7 +459,7 @@ public:
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
     virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
 
-    virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
+    virtual unsigned int deviceSize() const { ERROR( "Should not have come here" ); return 0; };
 
     // ---------------------------------------------------------------------------------------
     // Parameters

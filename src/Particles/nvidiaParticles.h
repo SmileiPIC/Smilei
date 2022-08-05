@@ -36,13 +36,15 @@ public:
     void deviceReserve( unsigned int reserved_particles );
 
     //! Resize Particle vectors on device
-    void deviceResize();
+    void deviceResize(unsigned int new_size);
 
-    //! Reset Particles vectors
+    //! Remove all particles
     void deviceClear();
     
-    //! Initialize the particle properties on devide as a mirror of the host definition
-    // 
+    //! Reset cell_keys to default value
+    void resetCellKeys();
+    
+    //! Initialize the particle properties on devide as a mirror of the host definition 
     void initializeDataOnDevice() override;
     
     //! Send the particles from host to device
@@ -52,7 +54,7 @@ public:
     void syncCPU() override;
 
     //! Get number of particules on device
-    inline unsigned int gpu_size() const override
+    inline unsigned int deviceSize() const override
     {
         return gpu_nparts_;
     }

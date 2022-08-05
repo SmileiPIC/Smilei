@@ -39,7 +39,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    double *const __restrict__ invgf    = &( smpi->dynamics_invgf[ithread][0] );
+    double *const __restrict__ invgf       = &( smpi->dynamics_invgf[ithread][0] );
     
     const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );

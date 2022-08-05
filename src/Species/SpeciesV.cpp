@@ -309,15 +309,21 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //     ithread );
                         
                         
-                    Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
-                        *particles, smpi,
-                        ipack*packsize_+scell, 
-                        particles->first_index.size(), 
-                        &particles->first_index[0], 
-                        &particles->last_index[0],
-                        ithread );
+                    // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
+                    //     *particles, smpi,
+                    //     ipack*packsize_+scell, 
+                    //     particles->first_index.size(), 
+                    //     &particles->first_index[0], 
+                    //     &particles->last_index[0],
+                    //     ithread );
                     
-                }
+                } // end for scell
+                
+                // Remove Particles while keeping the first index of each bin
+                // Concerns as well the smpi buffers
+                // Warining : can not be here if npack_ > 0
+                //            In this case, it should be at the end of dynamics
+                removeParticlesKeepBinFirstIndex(smpi, ithread, true);
                 
                 // Delete the gap between the bins due to photon destruction
                 // Warining : can not be here if npack_ > 0

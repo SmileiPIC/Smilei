@@ -405,8 +405,15 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
             
+#ifndef _GPU
             mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
             mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
+#else
+            static_cast<nvidiaParticles>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0) );
+            static_cast<nvidiaParticles>(mBW_pair_particles_[0])->resetCellKeys();
+            static_cast<nvidiaParticles>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1) );
+            static_cast<nvidiaParticles>(mBW_pair_particles_[1])->resetCellKeys();
+#endif
             
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -536,34 +543,23 @@ void Species::dynamics( double time_dual,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
-
             }
-
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-
-            //std::cerr << "push" << std::endl;
-
-            // Push the particles and the photons
-            ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
-            //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[1] += MPI_Wtime() - timer;
-#endif
 
         } //ibin
 
         // Compression of the bins if necessary 
-        // Multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
     
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+            
+            // Remove Particles while keeping the first index of each bin
+            // Concerns as well the smpi buffers
+            removeParticlesKeepBinFirstIndex(smpi, ithread, false);
     
-            //particles->compress();
+            // Delete the gap between the bins
+            // Concerns as well the smpi buffers
             compress(smpi, ithread, true);
         
 #ifdef  __DETAILED_TIMERS
@@ -571,6 +567,18 @@ void Species::dynamics( double time_dual,
 #endif
         
         }
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
+        // Push the particles and the photons
+        ( *Push )( *particles, smpi, 0, particles->size(), ithread );
+        //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[1] += MPI_Wtime() - timer;
+#endif
 
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
@@ -806,22 +814,22 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                 // radiation_photons_->cell_keys is used as a mask
                 static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
 #endif
-                //std::cerr << " N photons to import: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->gpu_size() << std::endl;
+                //std::cerr << " N photons to import: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->deviceSize() << std::endl;
                 //std::cerr << "import" << std::endl;
                 photon_species_->importParticles( params,
                                                  patch,
                                                  *radiated_photons_,
                                                  localDiags );
-                //std::cerr << " N photons in species: " <<  photon_species_->particles->gpu_size() << std::endl;
+                //std::cerr << " N photons in species: " <<  photon_species_->particles->deviceSize() << std::endl;
 
-                //photon_species_->particles->last_index[0] = photon_species_->particles->gpu_size(); 
+                //photon_species_->particles->last_index[0] = photon_species_->particles->deviceSize(); 
 
 
 #ifdef _GPU
                 // We explicitely clear the device Particles
                 //std::cerr << "Clear" << std::endl;
                 static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
-                //std::cerr << " N photons after cleaning: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->gpu_size() << std::endl;
+                //std::cerr << " N photons after cleaning: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->deviceSize() << std::endl;
 #endif
             }
         }
@@ -986,7 +994,9 @@ void Species::sortParticles( Params &params, Patch * patch )
         ii = particles->first_index[ibin]-particles->last_index[ibin-1]; // Shift the bin in memory by ii slots.
         iPart = min( ii, particles->last_index[ibin]-particles->first_index[ibin] ); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
         if( iPart > 0 ) {
-            particles->overwriteParticle( particles->last_index[ibin]-iPart, particles->last_index[ibin-1], iPart );
+            particles->overwriteParticle( particles->last_index[ibin]-iPart, 
+                                          particles->last_index[ibin-1], 
+                                          iPart, false );
         }
         particles->last_index[ibin] -= ii;
         particles->first_index[ibin] = particles->last_index[ibin-1];
@@ -1045,7 +1055,7 @@ void Species::sortParticles( Params &params, Patch * patch )
         nmove = min( n_particles, shift[j] ); //Nbr of particles to move
         lmove = max( n_particles, shift[j] ); //How far particles must be shifted
         if( nmove>0 ) {
-            particles->overwriteParticle( particles->first_index[j], particles->first_index[j]+lmove, nmove );
+            particles->overwriteParticle( particles->first_index[j], particles->first_index[j]+lmove, nmove, false );
         }
         particles->first_index[j] += shift[j];
         particles->last_index[j] += shift[j];
@@ -1349,9 +1359,9 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     
     // std::cerr << nparts << " " << Epart->size() << std::endl;
     
-    int nbin = particles->first_index.size();
+    const int nbin = particles->numberOfBins();
     
-    for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
+    for (auto ibin = 0 ; ibin < nbin-1 ; ibin++) {
     
         // Removal of the photons
         const unsigned int bin_gap = particles->first_index[ibin+1] - particles->last_index[ibin];
@@ -1452,6 +1462,141 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     particles->eraseParticleTrail( particles->last_index[nbin-1], true );
     // smpi->eraseBufferParticleTrail( particles->dimension(), particles->last_index[nbin-1], ithread );
 
+}
+
+//! This method removes particles with a negative weight 
+//! without changing the bin first index
+//! Bins are therefore potentially seperated by empty particle slots
+void Species::removeParticlesKeepBinFirstIndex(
+    SmileiMPI *smpi,
+    int ithread,
+    bool compute_cell_keys)
+{
+    // Buffers for particles
+    double *const Epart     = smpi->dynamics_Epart[ithread].data();
+    double *const Bpart     = smpi->dynamics_Bpart[ithread].data();
+    double *const gamma     = smpi->dynamics_invgf[ithread].data();
+    int *const iold         = smpi->dynamics_iold[ithread].data();
+    double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
+
+    std::complex<double> * thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = smpi->dynamics_eithetaold[ithread].data();
+
+    const int nparts = smpi->getBufferSize(ithread);
+
+    // Weight shortcut
+    double * weight =  particles->getPtrWeight();
+
+#ifdef _GPU
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_particle > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_particle > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+    
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
+
+    short *const __restrict__ charge = particles.getPtrCharge();
+    
+    double *const __restrict__ chi = particles.getPtrChi();
+    double *const __restrict__ tau = particles.getPtrTau();
+#endif
+
+    // Total number of bins / cells
+    const int nbin = particles->numberOfBins();
+
+#ifdef _GPU
+    #pragma acc parallel loop gang worker \
+    present(Epart[0:nparts*3],\
+    Bpart[0:nparts*3], \
+    deviceptr(
+        position_x,position_y,position_z, \
+        momentum_x,momentum_y,momentum_z, \
+        charge,weight,tau,chi
+    ) 
+    {
+#endif
+
+    // loop over the bins
+    for (auto ibin = 0 ; ibin < nbin; ibin++) {
+
+        if( particles->last_index[ibin] > particles->first_index[ibin] ) {
+
+            //int nb_deleted_photon;
+
+            // Backward loop over the photons to find the first existing photon
+            int last_photon_index = particles->last_index[ibin]-1; // Index of the last existing photon (weight > 0)
+            int first_photon_index = particles->first_index[ibin]; // Index of the first photon
+            while( ( last_photon_index >= particles->first_index[ibin] )
+                    && ( weight[last_photon_index] <= 0 ) ) {
+                last_photon_index--;
+            }
+            while( ( first_photon_index < particles->last_index[ibin] )
+                    && ( weight[first_photon_index] > 0 ) ) {
+                first_photon_index++;
+            }
+            // At this level, last_photon_index is the position of the last still-existing photon (weight > 0)
+            // that will not be erased
+
+            // Backward loop over the photons to fill holes in the photon particle array (at the bin level only)
+            for( int ipart=last_photon_index-1 ; ipart>=particles->first_index[ibin]; ipart-- ) {
+                if( weight[ipart] <= 0 ) {
+                    if( ipart < last_photon_index ) {
+                        // The last existing photon comes to the position of
+                        // the deleted photon
+#ifndef _GPU
+                        particles->overwriteParticle( last_photon_index, ipart, compute_cell_keys );
+#else
+                        weight[ipart] = weight[last_photon_index];
+                        position_x[ipart] = position_x[last_photon_index];
+                        if( nDim_particle > 1 ) {
+                            position_y[ipart] = position_y[last_photon_index];
+                            if( nDim_particle > 2 ) {
+                                position_z[ipart] = position_z[last_photon_index];
+                            }
+                        }
+#endif
+                        // Overwrite bufferised data
+                        for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                            Epart[iDim*nparts+ipart] = Epart[iDim*nparts+last_photon_index];
+                            Bpart[iDim*nparts+ipart] = Bpart[iDim*nparts+last_photon_index];
+                        }
+                        for ( int iDim=nDim_particle-1 ; iDim>=0 ; iDim-- ) {
+                            iold[iDim*nparts+ipart] = iold[iDim*nparts+last_photon_index];
+                            deltaold[iDim*nparts+ipart] = deltaold[iDim*nparts+last_photon_index];
+                        }
+                        gamma[ipart] = gamma[0*nparts+last_photon_index];
+
+                        if (thetaold) {
+                            thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
+                        }
+                        last_photon_index --;
+                    }
+                }
+            } // end for ipart
+                
+            // Update of the bin boundaries
+            // const unsigned int nb_deleted_photon = last_index[ibin]-last_photon_index-1;
+
+            // We photons deleted
+            if( last_photon_index + 1 < particles->last_index[ibin] ) {
+                particles->last_index[ibin] = last_photon_index+1;
+                
+                // std::cerr 
+                //         << " ibin: " << ibin
+                //         << " - first_index: " << first_index[ibin]
+                //         << " - last_index: " << last_index[ibin]
+                //         << " - nb_deleted_photon: " << nb_deleted_photon
+                //         << std::endl;
+            }
+        } // if last_index[ibin] > first_index[ibin]
+    } // end loop over the bins
+
+#ifdef _GPU
+    } // end parallel region
+#endif
+    
 }
 
 // ------------------------------------------------
@@ -1813,6 +1958,7 @@ void Species::check( Patch *patch, std::string title )
               << '\n';
 }
 
+//! Erase all particles with zero weight
 void Species::eraseWeightlessParticles()
 {
     unsigned int nbins = particles->first_index.size();
@@ -1837,3 +1983,5 @@ void Species::eraseWeightlessParticles()
     // Remove trailing particles
     particles->eraseParticleTrail( available_i );
 }
+
+
