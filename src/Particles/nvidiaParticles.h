@@ -130,6 +130,9 @@ public:
     // ---------------------------------------------------------------------------------------------------------------------
     void createParticles( int n_additional_particles ) override;
 
+    //! See the Particles class for documentation.
+    void importAndSortParticles( const Particles* particles_to_inject ) override;
+
     // Number of particles on device
     int gpu_nparts_;
 };

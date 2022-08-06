@@ -862,12 +862,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     particles_to_move->syncGPU();
 
-    // Erase particles that leaves this patch
-    particles->last_index.back() += particles->eraseLeavingParticles();
-
-    // Inject newly arrived particles in particles_to_move
-    particles->last_index.back() += particles->injectParticles( particles_to_move );
-    particles->last_index[0] = particles->last_index.back();
+    particles->importAndSortParticles( particles_to_move );
 #else
 
     // --------------------------

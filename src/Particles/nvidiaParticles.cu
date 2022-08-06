@@ -160,32 +160,6 @@ void nvidiaParticles::initializeDataOnDevice()
     }
 }
 
-// Copy device to host
-void nvidiaParticles::syncCPU()
-{
-    for (int idim=0;idim<Position.size();idim++) {
-        Position[idim].resize( gpu_nparts_ );
-        thrust::copy((nvidia_position_[idim]).begin(), (nvidia_position_[idim]).begin()+gpu_nparts_, (Position[idim]).begin());
-    }
-    for (int idim=0;idim<Momentum.size();idim++) {
-        Momentum[idim].resize( gpu_nparts_ );
-        thrust::copy((nvidia_momentum_[idim]).begin(), (nvidia_momentum_[idim]).begin()+gpu_nparts_, (Momentum[idim]).begin());
-    }
-    Weight.resize( gpu_nparts_ );
-    thrust::copy((nvidia_weight_).begin(), (nvidia_weight_).begin()+gpu_nparts_, (Weight).begin());
-    Charge.resize( gpu_nparts_ );
-    thrust::copy((nvidia_charge_).begin(), (nvidia_charge_).begin()+gpu_nparts_, (Charge).begin());
-    if (isQuantumParameter) {
-        Chi.resize( gpu_nparts_ );
-        thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
-    }
-    if (isMonteCarlo) {
-        Tau.resize( gpu_nparts_ );
-        thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
-    }
-
-}
-
 //! Copy the particles from host to device
 void nvidiaParticles::syncGPU()
 {
@@ -210,6 +184,32 @@ void nvidiaParticles::syncGPU()
         thrust::copy((Tau).begin(), (Tau).end(), (nvidia_tau_).begin());
     }
     gpu_nparts_ = Charge.size();
+}
+
+// Copy device to host
+void nvidiaParticles::syncCPU()
+{
+    for (int idim=0;idim<Position.size();idim++) {
+        Position[idim].resize( gpu_nparts_ );
+        thrust::copy((nvidia_position_[idim]).begin(), (nvidia_position_[idim]).begin()+gpu_nparts_, (Position[idim]).begin());
+    }
+    for (int idim=0;idim<Momentum.size();idim++) {
+        Momentum[idim].resize( gpu_nparts_ );
+        thrust::copy((nvidia_momentum_[idim]).begin(), (nvidia_momentum_[idim]).begin()+gpu_nparts_, (Momentum[idim]).begin());
+    }
+    Weight.resize( gpu_nparts_ );
+    thrust::copy((nvidia_weight_).begin(), (nvidia_weight_).begin()+gpu_nparts_, (Weight).begin());
+    Charge.resize( gpu_nparts_ );
+    thrust::copy((nvidia_charge_).begin(), (nvidia_charge_).begin()+gpu_nparts_, (Charge).begin());
+    if (isQuantumParameter) {
+        Chi.resize( gpu_nparts_ );
+        thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
+    }
+    if (isMonteCarlo) {
+        Tau.resize( gpu_nparts_ );
+        thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
+    }
+
 }
 
 // -----------------------------------------------------------------------------
@@ -454,6 +454,30 @@ void nvidiaParticles::createParticles( int n_additional_particles )
     thrust::fill( nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, -1 );
 
     gpu_nparts_ = new_size;
+}
+
+void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inject )
+{
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // So basicaly, we got a 5 to 14ms budget to:
+    // - erase the leaving particles
+    // - import the entering particles
+    // - sort everything
+    // - re-compute the bins bondaries | 0.094 to 0.15ms via upper_bound
+    // - do the particle to grid current deposition
+    // All that, for 11kk particles.
+
+    // #elif defined( _GPU )
+
+    // Erase particles that leaves this patch
+    last_index.back() += eraseLeavingParticles();
+
+    // Inject newly arrived particles in particles_to_inject
+    last_index.back() += injectParticles( const_cast<Particles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
+    last_index[0] = last_index.back();
+#else
+    ERROR( "importAndSortParticles does not support this environment!" );
+#endif
 }
 
 extern "C" {

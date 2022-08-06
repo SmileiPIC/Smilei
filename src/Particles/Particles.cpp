@@ -1009,6 +1009,19 @@ void Particles::sortById()
 
 }
 
+void Particles::initializeDataOnDevice()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+void Particles::syncGPU()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+void Particles::syncCPU()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+
 void Particles::extractParticles( Particles* particles_to_move )
 {
     particles_to_move->clear();
@@ -1055,6 +1068,29 @@ void Particles::savePositions() {
     // }
     // -----------------------------------------------------
 
+}
+
+int Particles::eraseLeavingParticles()
+{
+    ERROR( "Device only feature, should not have come here!" );
+    return 0;
+}
+
+int Particles::injectParticles( Particles *particles_to_inject )
+{
+    ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
+    return 0;
+}
+
+void Particles::importAndSortParticles( const Particles *particles_to_inject )
+{
+    ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
+}
+
+unsigned int Particles::gpu_size() const
+{
+    ERROR( "Should not have come here" );
+    return 0;
 }
 
 #ifdef __DEBUG
