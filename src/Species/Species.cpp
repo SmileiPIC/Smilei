@@ -867,6 +867,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     // Inject newly arrived particles in particles_to_move
     particles->last_index.back() += particles->injectParticles( particles_to_move );
+    particles->last_index[0] = particles->last_index.back();
 #else
 
     // --------------------------
@@ -1178,6 +1179,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
 
     // Inject paticles from source_particles
     particles->last_index.back() += particles->injectParticles( &source_particles );
+    particles->last_index[0] = particles->last_index.back();
 #else
     // ---------------------------------------------------
     // CPU version

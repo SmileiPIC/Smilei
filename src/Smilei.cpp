@@ -285,7 +285,7 @@ int main( int argc, char *argv[] )
         vecPatches.copyEMFieldsFromHostToDevice();
         // TODO(Etienne M): Can we expect the particles to be stored/loaded with
         // a respected chunk ordering ?
-        vecPatches.initialParticleSorting( params );
+        vecPatches.initialParticleSorting( params );  // Does nothing when using OpenACC
 #endif
 
     } else {
@@ -444,10 +444,10 @@ int main( int argc, char *argv[] )
         // the host, we introduce the GPU only at it's end.
         vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
-        vecPatches.initialParticleSorting( params );
+        vecPatches.initialParticleSorting( params ); // Does nothing when using OpenACC
 #endif
     }
-    
+
     TITLE( "Species creation summary" );
     vecPatches.printGlobalNumberOfParticlesPerSpecies( &smpi );
     

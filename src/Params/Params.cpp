@@ -1180,31 +1180,30 @@ void Params::compute()
         }
     }
 
-
-    // Set clrw if not set by the user
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    switch( nDim_field ) {
-        case 1:
-            // GPU 1D is not implemented
-            cluster_width_ = n_space[0];
-            break;
-        case 2:
-            // 16x16 clusters used for charge deposition
-            cluster_width_ = 14;
-            break;
-        case 3:
-            // GPU 3D binning is not implemented
-            cluster_width_ = n_space[0];
-            break;
-        default:
-            SMILEI_ASSERT( false );
-            break;
-    }
-#endif
-
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        switch( nDim_particle ) {
+            case 1:
+                // GPU 1D is not implemented
+                cluster_width_ = n_space[0];
+                break;
+            case 2:
+                // 16x16 clusters used for charge deposition
+                cluster_width_ = 14;
+                break;
+            case 3:
+                // GPU 3D binning is not implemented
+                cluster_width_ = n_space[0];
+                break;
+            default:
+                SMILEI_ASSERT( false );
+                break;
+        }
+#elif defined( _GPU )
+        // default value
+        cluster_width_ = n_space[0];
+#else
         // default value
         cluster_width_ = n_space[0];
 
@@ -1229,7 +1228,11 @@ void Params::compute()
             }
             WARNING( "Particles cluster width `cluster_width` set to : " << cluster_width_ );
         }
-
+#endif
+    } else {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        ERROR( "Cluster width size is not specifiable in OpenMP GPU mode! " );
+#endif
     }
 
     // cluster_width_ != n_space[0] is not compatible
@@ -1259,7 +1262,6 @@ void Params::compute()
         multiple_decompose();
         full_B_exchange = true;
     }
-
 }
 
 

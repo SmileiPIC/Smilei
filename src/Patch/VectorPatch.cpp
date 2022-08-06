@@ -308,21 +308,36 @@ void VectorPatch::initialParticleSorting( Params &params )
     // NOTE: maybe it should not be doing particle  binning and should only be
     // responsible for particle initialization.
 
-    // At this point we expect the particles to be fully allocated and 
+    // At this point we expect the particles to be fully allocated and
     // initialized on the GPU.
 
     // We are forced to deal with first_index even though its completly
     // redundant as long as the bins are dense (no holes).
+
+    std::size_t cell_in_cluster_volume = 1;
+
+    for( std::size_t dimension_id = 0; dimension_id < params.nDim_particle; ++dimension_id ) {
+        // Compute pow(cluster_width_, params.nDim_particle)
+        cell_in_cluster_volume *= params.cluster_width_;
+    }
+
+    const std::size_t kGPUBinCount = params.n_cell_per_patch / cell_in_cluster_volume;
+
+    SMILEI_ASSERT( ( kGPUBinCount * cell_in_cluster_volume ) == params.n_cell_per_patch );
+
     for( auto &a_patch : patches_ ) {
         for( auto &a_species : a_patch->vecSpecies ) {
-            auto& particles = a_species->particles;
+            // We simulate one bin on the host. More details below.
+            auto      &particles      = a_species->particles;
             const auto particle_count = particles->last_index.back();
-            
-            particles->first_index.resize( 1 );
-            particles->last_index.resize( 1 );
 
+            particles->first_index.resize( 1 );
+            particles->last_index.resize( kGPUBinCount );
+
+            // By definition it should be zero, so this is a redundant assignment
             particles->first_index.back() = 0;
-            particles->last_index.back() = particle_count;
+            particles->last_index.back()  = particle_count;
+            particles->last_index[0]      = particles->last_index.back();
         }
     }
 
@@ -336,7 +351,7 @@ void VectorPatch::initialParticleSorting( Params &params )
     // order scheme used in current deposition. Thus we must sort in 14x14
     // tiles. To represent which particle is in which bin/tile, we re-use
     // last_index. This array contains
-    // "params.n_cell_per_patch/cluster_cell_volume" values, each representing
+    // "n_cell_per_patch/cell_in_cluster_volume" values, each representing
     // the end of the bin. ie: last_index[0] is the last particle id (excluded),
     // of bin 0 and the first particle (included) of bin 1.
     // As such, the last value of last_index is the number of particle of a
@@ -356,24 +371,15 @@ void VectorPatch::initialParticleSorting( Params &params )
     // first_index.size() : number of bin on the host (always 1)
     // last_index.size()  : number of bin on the device (should be seldom used
     //                      on the host!)
-    // last_index.back() or last_index[last_index.size()-1]: number of particles
+    // last_index.back(), last_index[last_index.size()-1] and last_index[0]:
+    // number of particles (NOTE: last_index[0] is mandatory to simulate one bin 
+    // on the host).
     //
     // Everything else is UNDEFINED (!), dont use it. This workaround with
     // first_index/last_index is not pretty but require few modifications to
     // Smilei.
     //
-
-    // std::size_t cluster_cell_volume = 1;
-
-    // for( std::size_t dimension_id = 0; dimension_id < params.nDim_particle; ++dimension_id ) {
-    //     // Compute pow(cluster_width_, params.nDim_field)
-    //     cluster_cell_volume *= cluster_width_;
-    // }
-
-    // SMILEI_ASSERT( ( params.n_cell_per_patch % cluster_cell_volume ) == 0 );
-
-    // particles->last_index.resize( params.n_cell_per_patch / cluster_cell_volume );
-
+    // params.cluster_width_ is ahrd coded in Params::compute().
 #elif defined( _VECTO )
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
