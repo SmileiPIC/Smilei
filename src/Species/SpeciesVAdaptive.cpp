@@ -556,7 +556,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                  smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),0,6);
                  // Radiation process
                  ( *Radiate )( *particles,
-                               Radiate->new_photons_per_bin_[ibin],
+                               radiated_photons_,
                                smpi,
                                RadiationTables,
                                radiated_energy_per_bin[ibin],

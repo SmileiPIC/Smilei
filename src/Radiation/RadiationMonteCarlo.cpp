@@ -62,7 +62,9 @@ void RadiationMonteCarlo::operator()(
     int             ibin,
     int             ipart_ref)
 {
-
+#ifdef _OMPTASKS
+    photons = &(new_photons_per_bin_[ibin]);
+#endif
     // _______________________________________________________________
     // Parameters
 
