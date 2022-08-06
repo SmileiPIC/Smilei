@@ -116,6 +116,11 @@ Species::Species( Params &params, Patch *patch ) :
 
 void Species::initCluster( Params &params )
 {
+    // NOTE: On GPU we dont use first_index, it would contain redundant data but
+    // we are forced to initialize it due to ParticleCreator::create() and the 
+    // way the "structural" code of Smilei depends on it (maybe it could have 
+    // been delegated to the operators).
+
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( params.n_space[0]/cluster_width_ );
     particles->last_index.resize( params.n_space[0]/cluster_width_ );
@@ -383,6 +388,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         const int particule_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
+        // TODO(Etienne M): This could be allocated on a "per bin" basis, at the cost of some overhead!
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );

@@ -32,26 +32,14 @@ Lz = 32*dz
 # Simulation time
 simulation_time  = 2001*dt
 
+# particles_per_cell = 64
 particles_per_cell = 8
 
 number_of_patches = [4,4,4]
 
 position_initialization = 'random'
 
-def n0_(x,y,z):
-   return n0
-
-
-path = os.path.abspath("./").split("/")
-directory = path[-1]
-options = directory.split("_")
-
 vectorization = "on"
-
-interpolation_WT = False,
-
-if "wp" in options:
-    interpolation_WT = True,
 
 Main(
     geometry = "3Dcartesian",
@@ -72,6 +60,7 @@ Main(
 
     gpu_computing = False,
 
+    # random_seed = 0xDEADBEEF,
     random_seed = smilei_mpi_rank,
 )
 

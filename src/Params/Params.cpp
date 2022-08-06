@@ -1190,7 +1190,7 @@ void Params::compute()
             break;
         case 2:
             // 16x16 clusters used for charge deposition
-            cluster_width_ = 16;
+            cluster_width_ = 14;
             break;
         case 3:
             // GPU 3D binning is not implemented
@@ -1241,11 +1241,17 @@ void Params::compute()
         }
     }
 
-    // Verify that cluster_width_ divides n_space[0]
-    if( n_space[0]%cluster_width_ != 0 ) {
-        ERROR_NAMELIST(
-            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
-            LINK_NAMELIST + std::string("#main-variables") );
+    // Verify that cluster_width_ divides n_space[0] or n_space[n] in GPU mode
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id )
+#else
+    const std::size_t dimension_id = 0;
+#endif
+    {
+        if( ( n_space[dimension_id] % cluster_width_ ) != 0 ) {
+            ERROR_NAMELIST( "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
+                            LINK_NAMELIST + std::string( "#main-variables" ) );
+        }
     }
 
     // Define domain decomposition if double grids are used for particles and fields

@@ -276,15 +276,20 @@ int main( int argc, char *argv[] )
 
         // TODO(Etienne M): GPU restart handling
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        ERROR( "Restart not tested on GPU !" );
+
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
         vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
+        // TODO(Etienne M): Can we expect the particles to be stored/loaded with
+        // a respected chunk ordering ?
+        vecPatches.initialParticleSorting( params );
 #endif
 
     } else {
-        
+
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
 
 #if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
@@ -439,6 +444,7 @@ int main( int argc, char *argv[] )
         // the host, we introduce the GPU only at it's end.
         vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
+        vecPatches.initialParticleSorting( params );
 #endif
     }
     
@@ -693,6 +699,9 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
         
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+            ERROR( "Load balancing not tested on GPU !" );
+#endif
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {

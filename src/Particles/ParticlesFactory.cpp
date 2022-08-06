@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 //
-//! \file ParticleCreator.cpp
+//! \file ParticleFactory.cpp
 //
-//! \brief Factory to select the right Particles type
+//! \brief Factory to select the right Particles logic (CPU/GPU)
 //
 // -----------------------------------------------------------------------------
 #include "ParticlesFactory.h"
