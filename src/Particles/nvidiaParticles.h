@@ -53,33 +53,6 @@ public:
     //! Update the particles from device to host
     void syncCPU() override;
 
-    //! Position vector on device
-    std::vector< thrust::device_vector<double> > nvidia_position_;
-    
-    //! Momentum vector on device 
-    std::vector< thrust::device_vector<double> > nvidia_momentum_;
-
-    //! Weight
-    thrust::device_vector<double> nvidia_weight_;
-
-    //! Charge on GPU
-    thrust::device_vector<short>  nvidia_charge_;
-
-    //! cell_keys of the particle
-    thrust::device_vector<int> nvidia_cell_keys_;
-
-    //! Quantum parameter
-    thrust::device_vector<double> nvidia_chi_;
-
-    //! Monte-Carlo parameter
-    thrust::device_vector<double> nvidia_tau_;
-
-    //! List of double* arrays
-    std::vector< thrust::device_vector<double>* > nvidia_double_prop_;
-    
-    //! List of short* arrays
-    std::vector< thrust::device_vector<short>* > nvidia_short_prop_;
-
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidia_position_[idim].data() );
     };
@@ -133,7 +106,97 @@ public:
     //! See the Particles class for documentation.
     void importAndSortParticles( const Particles* particles_to_inject ) override;
 
-    // Number of particles on device
+protected:
+    //! Redefine first_index and last_index according to the binning algorithm
+    //! used on GPU.
+    //! We simulate one bin on the host and use multiple bin on the GPU.
+    //!
+    //! NOTE: The bin partitioning initially implemented in Smilei works
+    //! decently on CPU. The typical binning is done by sorting particles
+    //! according to their x coordinate.
+    //!
+    //! On GPU we need large volume of data to process. We'd like a sorting in
+    //! cluster/tiles such that it would be possible to load the fields of such
+    //! cluster into GPU shared/LDS memory.
+    //! A good cluster size would be, in 2D, 16x16 which lead to 14x14 due to
+    //! the 2nd order scheme used in current deposition. Thus we must sort in
+    //! 14x14 tiles. To represent which particle is in which bin, we re-use
+    //! last_index. This array contains
+    //! "n_cell_per_patch/getGPUClusterCellVolume()" values, each representing
+    //! the end of the bin. ie: last_index[0] is the last particle id
+    //! (excluded), of bin 0 and the first particle (included) of bin 1.
+    //! The last value of last_index is the number of particle of a given
+    //! species in this patch.
+    //! 
+    //! One should always use first_index.size() to get the number of "host
+    //! visible bin" but note that it may be different than the "true"
+    //! number of bin used on the device. It's done this way only to trick Smilei
+    //! into passing large particle quatities to the operators because they know
+    //! best how to process the data (in bin or not in bin). The Smilei
+    //! "structural" code should not have to deal with the fine details (most of
+    //! the time).
+    //! 
+    //! In GPU mode, there is only one "host visible bin", it contains all the
+    //! particles of a species on a patch.
+    //! 
+    //! In GPU mode, the new interface for first_index and last_index is:
+    //! first_index.size() : number of bin on the host (always 1)
+    //! last_index.size()  : number of bin on the device (should be seldom used
+    //!                      on the host!)
+    //! last_index.back(), last_index[last_index.size()-1] and last_index[0]:
+    //! number of particles (NOTE: last_index[0] is mandatory to simulate one bin
+    //! on the host).
+    //!
+    //! Everything else is UNDEFINED (!), dont use it. This workaround with
+    //! first_index/last_index is not pretty but require few modifications to
+    //! Smilei.
+    //!
+    //! params.cluster_width_ is hard coded in Params::compute().
+    //!
+    //! If the function succeed, last_index is allocated on GPU.
+    //!
+    //! returns -1 on error (binning is not supported for this object).
+    //!
+    int prepareBinIndex();
+
+    //! Memcpy of the particle at the end. No sorting or binning.
+    //!
+    void naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject );
+
+    //! Sorting by cluster and binning
+    //! 
+    void importAndSortParticles( const nvidiaParticles* particles_to_inject );
+
+    //! Position vector on device
+    std::vector<thrust::device_vector<double>> nvidia_position_;
+
+    //! Momentum vector on device
+    std::vector<thrust::device_vector<double>> nvidia_momentum_;
+
+    //! Weight
+    thrust::device_vector<double> nvidia_weight_;
+
+    //! Charge on GPU
+    thrust::device_vector<short> nvidia_charge_;
+
+    //! cell_keys of the particle
+    thrust::device_vector<int> nvidia_cell_keys_;
+
+    //! Quantum parameter
+    thrust::device_vector<double> nvidia_chi_;
+
+    //! Monte-Carlo parameter
+    thrust::device_vector<double> nvidia_tau_;
+
+    //! List of double* arrays
+    std::vector<thrust::device_vector<double>*> nvidia_double_prop_;
+
+    //! List of short* arrays
+    std::vector<thrust::device_vector<short>*> nvidia_short_prop_;
+
+    const Params* parameters_;
+
+    //! Number of particles on device
     int gpu_nparts_;
 };
 

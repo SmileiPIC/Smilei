@@ -54,7 +54,6 @@ extern double normal( double stddev );
 // ---------------------------------------------------------------------------------------------------------------------
 class Params
 {
-
 public:
     //! Creator for Params
     Params( SmileiMPI *, std::vector<std::string> );
@@ -368,7 +367,36 @@ public:
 
     //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
-    
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+    //! returns true if the dimension of the simulation is supported for the
+    //! binning.
+    //!
+    bool isGPUBinningAvailable() const;
+
+    //! Given nDim_particle in [0, 3), return for nDim_particle == :
+    //! 1: the 1D value (not implemented)
+    //! 2: the 2D value
+    //! 3: the 3D value (not implemented)
+    //! 
+    //! returns -1 if not implemented
+    //!
+    int getGPUClusterWidth() const;
+
+    //! Compute pow(getGPUClusterWidth(), nDim_particle)
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUClusterCellVolume() const;
+
+    //! Compute the number of cluster/bin/tile per patch
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUBinCount() const;
+#endif
+
     //! For gpu branch compatibility, not used for the moment
     bool gpu_computing;
 };

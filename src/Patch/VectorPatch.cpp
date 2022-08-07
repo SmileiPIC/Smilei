@@ -303,83 +303,12 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::initialParticleSorting( Params &params )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // Sort the particles in bins and compute the bin index. We completly
-    // ignore/discard/overwrite what's done in ParticleCreator::create.
-    // NOTE: maybe it should not be doing particle  binning and should only be
-    // responsible for particle initialization.
-
-    // At this point we expect the particles to be fully allocated and
-    // initialized on the GPU.
-
-    // We are forced to deal with first_index even though its completly
-    // redundant as long as the bins are dense (no holes).
-
-    std::size_t cell_in_cluster_volume = 1;
-
-    for( std::size_t dimension_id = 0; dimension_id < params.nDim_particle; ++dimension_id ) {
-        // Compute pow(cluster_width_, params.nDim_particle)
-        cell_in_cluster_volume *= params.cluster_width_;
-    }
-
-    const std::size_t kGPUBinCount = params.n_cell_per_patch / cell_in_cluster_volume;
-
-    SMILEI_ASSERT( ( kGPUBinCount * cell_in_cluster_volume ) == params.n_cell_per_patch );
-
-    for( auto &a_patch : patches_ ) {
-        for( auto &a_species : a_patch->vecSpecies ) {
-            // We simulate one bin on the host. More details below.
-            auto      &particles      = a_species->particles;
-            const auto particle_count = particles->last_index.back();
-
-            particles->first_index.resize( 1 );
-            particles->last_index.resize( kGPUBinCount );
-
-            // By definition it should be zero, so this is a redundant assignment
-            particles->first_index.back() = 0;
-            particles->last_index.back()  = particle_count;
-            particles->last_index[0]      = particles->last_index.back();
-        }
-    }
-
-    // NOTE: On GPU we need large volume of data to process. The bin
-    // partitioning initially implemented in Smilei works decently on CPU.
-    // The typical binning is done by sorting particles according to their
-    // x coordinate.
-    // On GPU we'd like a sorting in chunk/tiles such that it would be possible
-    // to load the fields of such chunk into GPU shared/LDS memory. A good
-    // chunk size would be, in 2D, 16x16 which lead to 14x14 due to the 2nd
-    // order scheme used in current deposition. Thus we must sort in 14x14
-    // tiles. To represent which particle is in which bin/tile, we re-use
-    // last_index. This array contains
-    // "n_cell_per_patch/cell_in_cluster_volume" values, each representing
-    // the end of the bin. ie: last_index[0] is the last particle id (excluded),
-    // of bin 0 and the first particle (included) of bin 1.
-    // As such, the last value of last_index is the number of particle of a
-    // given species in this patch.
-
-    // One should always use first_index.size() to get the number of "host
-    // visible bin" but note that it will be different than the "true"
-    // number of bin used on the device. It's done this way only to trick Smilei
-    // into passing large particle quatities to the operators because they know
-    // best how to process the data (in bin or not in bin). The Smilei
-    // "structural" code should not have to deal with the fine details (most of
-    // the time).
-    // In GPU mode, there is only one "host visible bin", it contains all the
-    // particles of a species on a patch.
-
-    // In GPU mode, the new interface for first_index and last_index is:
-    // first_index.size() : number of bin on the host (always 1)
-    // last_index.size()  : number of bin on the device (should be seldom used
-    //                      on the host!)
-    // last_index.back(), last_index[last_index.size()-1] and last_index[0]:
-    // number of particles (NOTE: last_index[0] is mandatory to simulate one bin 
-    // on the host).
-    //
-    // Everything else is UNDEFINED (!), dont use it. This workaround with
-    // first_index/last_index is not pretty but require few modifications to
-    // Smilei.
-    //
-    // params.cluster_width_ is ahrd coded in Params::compute().
+    // Initialy I wanted to control the GPU particle sorting/bin initialization
+    // here. In the end it was put in initializeDataOnDevice which is more 
+    // meaningful. 
+    // On that note, maybe the _VECTO/cell sorting 
+    // code should probably also be incapsulated in the particle class 
+    // (or a vectorized variant).
 #elif defined( _VECTO )
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
@@ -4324,6 +4253,10 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Async allocation ?
+
+    // TODO(Etienne M): FREE. If we have load balancing or other patch
+    // creation/destruction available (which is not the case on GPU ATM),
+    // we should be taking care of freeing this GPU memory.
 
     const int npatches = this->size();
 

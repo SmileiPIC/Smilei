@@ -1182,27 +1182,12 @@ void Params::compute()
 
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        switch( nDim_particle ) {
-            case 1:
-                // GPU 1D is not implemented
-                cluster_width_ = n_space[0];
-                break;
-            case 2:
-                // 16x16 clusters used for charge deposition
-                cluster_width_ = 14;
-                break;
-            case 3:
-                // GPU 3D binning is not implemented
-                cluster_width_ = n_space[0];
-                break;
-            default:
-                SMILEI_ASSERT( false );
-                break;
-        }
-#elif defined( _GPU )
-        // default value
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
         cluster_width_ = n_space[0];
+        // On GPU, dont do the CPU automatic cluster_width computation, only one 
+        // bin is expected.
+        // NOTE: In OMP GPU offloading and 2D, the true number of cluster is
+        // redefined in nvidiaParticles::prepareBinIndex.
 #else
         // default value
         cluster_width_ = n_space[0];
@@ -1246,12 +1231,21 @@ void Params::compute()
 
     // Verify that cluster_width_ divides n_space[0] or n_space[n] in GPU mode
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id )
+    const int kClusterWidth = getGPUClusterWidth();
+
+    if( kClusterWidth < 0 ) {
+        // getGPUClusterWidth failing means that binning is not supported for 
+        // nDim_particle space dimensions. cluster_width_ shall default to 
+        // n_space[0] which is guarenteed to divide itself, no need to check.
+    } else
+        // What an ugly trick
+        for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id )
 #else
-    const std::size_t dimension_id = 0;
+    const int         kClusterWidth = cluster_width_;
+    const std::size_t  dimension_id = 0;
 #endif
     {
-        if( ( n_space[dimension_id] % cluster_width_ ) != 0 ) {
+        if( ( n_space[dimension_id] % kClusterWidth ) != 0 ) {
             ERROR_NAMELIST( "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
                             LINK_NAMELIST + std::string( "#main-variables" ) );
         }
@@ -1898,3 +1892,51 @@ string Params::speciesField( string field_name )
     }
     return "";
 }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+bool Params::isGPUBinningAvailable() const {
+    return getGPUClusterWidth() != -1;
+}
+
+int Params::getGPUClusterWidth() const
+{
+    // For 2D:
+    // 16x16 clusters used for charge deposition. Due to the 2nd order
+    // scheme, we need 2 wide cell band on each sides so the chunk do
+    // not overlap during particle deposition.
+    //
+    constexpr int kGPUChunkWidth[3]{ -1, 16 - 2, -1 };
+    // // Stop when accessing a non implemented value.
+    // SMILEI_ASSERT( kGPUChunkWidth[nDim_particle - 1] < 1 );
+    return kGPUChunkWidth[nDim_particle - 1];
+}
+
+int Params::getGPUClusterCellVolume() const
+{
+    // Compute pow(getGPUClusterWidth(), nDim_particle)
+    static const int kClusterCellVolume = getGPUClusterWidth() *
+                                          ( nDim_particle >= 2 ? getGPUClusterWidth() : 1 ) *
+                                          ( nDim_particle >= 3 ? getGPUClusterWidth() : 1 );
+    return isGPUBinningAvailable() ?
+               kClusterCellVolume :
+               -1; // Propagate the error if the dimension is not supported
+}
+
+int Params::getGPUBinCount() const
+{
+    const int cells_in_cluster_volume = getGPUClusterCellVolume();
+
+    if( cells_in_cluster_volume < 0 ) {
+        // Unsupported dimension
+        return -1;
+    }
+
+    const int kGPUBinCount = n_cell_per_patch / cells_in_cluster_volume;
+
+    SMILEI_ASSERT( ( kGPUBinCount * cells_in_cluster_volume ) == n_cell_per_patch );
+
+    return kGPUBinCount;
+}
+
+#endif

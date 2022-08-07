@@ -422,6 +422,9 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
+    //! Make a copy of the host particles and does some computation like 
+    //! bin discovery.
+    //!
     virtual void initializeDataOnDevice();
     virtual void syncGPU();
     virtual void syncCPU();
@@ -471,8 +474,12 @@ public:
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
     virtual int injectParticles( Particles *particles_to_inject );
 
-    //! Implementation of an somewhat efficient particle injection, sorting 
-    //! (including removing old, leaving particles) and binning for GPU.
+    //! Implementation of a somewhat efficient particle injection, sorting
+    //! (including removing leaving particles) and binning for GPU if
+    //! available for the configuration of offloading technology
+    //! (OpenMP/OpenACC) and implemented for the space dimension of the
+    //! simulation. Else, fallback to the old naive, plain memcpy 
+    //! implementation.
     //!
     //! last_index is modified appropriately.
     //!

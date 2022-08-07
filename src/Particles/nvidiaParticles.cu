@@ -10,6 +10,7 @@
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
+#include "gpu.h"
 #include "nvidiaParticles.h"
 
 //! Structure with specific function count_if_out for thrust::tuple operator
@@ -25,6 +26,7 @@ struct count_if_out
 
 nvidiaParticles::nvidiaParticles( const Params& parameters )
     : Particles{}
+    , parameters_{ &parameters }
     , gpu_nparts_{}
 {
     // EMPTY
@@ -109,6 +111,8 @@ void nvidiaParticles::deviceClear()
 void nvidiaParticles::initializeDataOnDevice()
 {
     SMILEI_ASSERT( Position.size() > 0 );
+    // The world shall end if we call this function multiple times
+    SMILEI_ASSERT( nvidia_double_prop_.empty() );
 
     // "Over-reserve" to minimise the cost of future reallcoation, it might be 
     // interesting to set the value to 1.2F ~~
@@ -122,42 +126,57 @@ void nvidiaParticles::initializeDataOnDevice()
 
     gpu_nparts_ = kHostParticleCount;
 
-    if( gpu_nparts_ == 0 ) {
+    // Initialize the list of pointers
+
+    for( unsigned int i = 0; i < kPositionDimension; i++ ) {
+        nvidia_double_prop_.push_back( &nvidia_position_[i] );
+    }
+
+    for( unsigned int i = 0; i < 3; i++ ) {
+        nvidia_double_prop_.push_back( &nvidia_momentum_[i] );
+    }
+
+    nvidia_double_prop_.push_back( &nvidia_weight_ );
+
+    nvidia_short_prop_.push_back( &nvidia_charge_ );
+
+    // Quantum parameter (for QED effects):
+    // - if radiation reaction (continuous or discontinuous)
+    // - if multiphoton-Breit-Wheeler if photons
+    if( isQuantumParameter ) {
+        nvidia_double_prop_.push_back( &nvidia_chi_ );
+    }
+
+    // Optical Depth for Monte-Carlo processes:
+    // - if the discontinuous (Monte-Carlo) radiation reaction
+    // is activated, tau is the incremental optical depth to emission
+    if( isMonteCarlo ) {
+        nvidia_double_prop_.push_back( &nvidia_tau_ );
+    }
+
+    if( gpu_size() == 0 ) {
         reserveParticles( 100 );
-    } else {
-        syncGPU();
+        // Continue, we may have to re-initialize the bins, eventhough there is
+        // no particles yet.
     }
 
-    if( nvidia_double_prop_.empty() ) {
-        // Initialize the list of pointers
-        // Done only once
+    syncGPU();
 
-        for( unsigned int i = 0; i < kPositionDimension; i++ ) {
-            nvidia_double_prop_.push_back( &nvidia_position_[i] );
-        }
-
-        for( unsigned int i = 0; i < 3; i++ ) {
-            nvidia_double_prop_.push_back( &nvidia_momentum_[i] );
-        }
-
-        nvidia_double_prop_.push_back( &nvidia_weight_ );
-
-        nvidia_short_prop_.push_back( &nvidia_charge_ );
-
-        // Quantum parameter (for QED effects):
-        // - if radiation reaction (continuous or discontinuous)
-        // - if multiphoton-Breit-Wheeler if photons
-        if( isQuantumParameter ) {
-            nvidia_double_prop_.push_back( &nvidia_chi_ );
-        }
-
-        // Optical Depth for Monte-Carlo processes:
-        // - if the discontinuous (Monte-Carlo) radiation reaction
-        // is activated, tau is the incremental optical depth to emission
-        if( isMonteCarlo ) {
-            nvidia_double_prop_.push_back( &nvidia_tau_ );
-        }
+    if( prepareBinIndex() < 0 ) {
+        // Either we deal with a simulation with unsupported space dimensions 
+        // (1D/3D) or we are not using OpenMP.
+        // We'll use the old, naive, unsorted particles injection 
+        // implementation.
+        return;
     }
+
+    // At this point, a copy of the host particles and last_index is on the 
+    // device and we know we support the space dimension.
+
+    // TODO(Etienne M): Implement initial binning:
+    // - nothing do do except computing bins.
+    // - assert that everything is properly sorted. It should be, due to how particls are created.
+    // - compute bin should be constant template member function that write to it's argument's range.
 }
 
 //! Copy the particles from host to device
@@ -459,6 +478,82 @@ void nvidiaParticles::createParticles( int n_additional_particles )
 void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inject )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    if( parameters_->isGPUBinningAvailable() )
+#else
+    // Always take the naive path
+    if( false )
+#endif
+    {
+        importAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
+    } else {
+        // GPU particle binning is not supported
+        naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
+    }
+}
+
+int nvidiaParticles::prepareBinIndex()
+{
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+    if( first_index.size() == 0 ) {
+        // Some Particles object like particles_to_move do not have allocated
+        // bins, we skip theses.
+        return -1;
+    }
+
+    const int kGPUBinCount = parameters_->getGPUBinCount();
+
+    if( kGPUBinCount < 0 ) {
+        // Unsupported space dimension, dont do GPU binning
+        return -1;
+    }
+
+    // We completly ignore/discard/overwrite what's done in
+    // ParticleCreator::create regarding binning.
+    // NOTE: maybe ParticleCreator::create should not be doing the particle
+    // binning and should only be responsible for particle initialization (pos
+    // mementum etc.).
+    // We are forced to deal with first_index even though its completly
+    // redundant as long as the bins are dense (no holes).
+
+    const auto particle_count = last_index.back();
+
+    first_index.resize( 1 );
+    last_index.resize( kGPUBinCount );
+
+    // By definition it should be zero, so this is a redundant assignment
+    first_index.back() = 0;
+    last_index.back()  = particle_count;
+    last_index[0]      = last_index.back();
+
+    // Dont try to allocate 2 times, even if it's harmless, that would be a bug!
+    SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( last_index.data() ) );
+
+    // We'll need that to be on the GPU.
+
+    // TODO(Etienne M): FREE. If we have load balancing or other patch 
+    // creation/destruction available (which is not the case on GPU ATM),
+    // we should be taking care of freeing this GPU memory.
+    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( last_index );
+
+    return 0;
+#else
+    return -1;
+#endif
+}
+
+void nvidiaParticles::naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject )
+{
+    // Erase particles that leaves this patch
+    last_index.back() += eraseLeavingParticles();
+
+    // Inject newly arrived particles in particles_to_inject
+    last_index.back() += injectParticles( const_cast<nvidiaParticles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
+    last_index[0] = last_index.back();
+}
+
+void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_to_inject )
+{
     // So basicaly, we got a 5 to 14ms budget to:
     // - erase the leaving particles
     // - import the entering particles
@@ -467,17 +562,8 @@ void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inje
     // - do the particle to grid current deposition
     // All that, for 11kk particles.
 
-    // #elif defined( _GPU )
-
-    // Erase particles that leaves this patch
-    last_index.back() += eraseLeavingParticles();
-
-    // Inject newly arrived particles in particles_to_inject
-    last_index.back() += injectParticles( const_cast<Particles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
-    last_index[0] = last_index.back();
-#else
-    ERROR( "importAndSortParticles does not support this environment!" );
-#endif
+    naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
+    // TODO(Etienne M): Implement
 }
 
 extern "C" {

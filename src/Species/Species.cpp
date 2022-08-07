@@ -385,6 +385,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+        // Make sure some precondition are respected
+        SMILEI_ASSERT( particles->first_index.size() == 1 );
+        SMILEI_ASSERT( particles->last_index.size() >= 1 );
+        SMILEI_ASSERT( particles->last_index.back() == particles->last_index[0] );
+
         const int particule_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
