@@ -5,12 +5,6 @@
 #include <cstring>
 #include <type_traits>
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #include <omp.h>
-#elif defined( _GPU )
-    #include <openacc.h>
-#endif
-
 #include "Tools.h"
 
 namespace smilei {
@@ -111,6 +105,8 @@ namespace smilei {
             /// You should be able to use this header whether or not you ahve GPU support
             /// enabled.
             ///
+            /// Do not allocate classes using non trivial constructor/destructor !
+            ///
             /// Note:
             /// - The OpenACC implementation is not complete!
             /// - You can exploit virtual memory and allocate a large part of the memory on the
@@ -125,43 +121,45 @@ namespace smilei {
             /// better if you do it yourself (without using HostDeviceMemoryManagment) because it can be
             /// quite tricky. HostDeviceMemoryManagment is the best solution to allocate/copy large chunks
             /// at the beginning of the program.
+            /// - Everything is hidden in gpu.cpp so we dont get conflicts between GPU specific languages (HIP/Cuda)
+            /// and OpenMP/OpenACC (the cray compiler can't enable both hip and openmp support at the same time).
             ///
             struct HostDeviceMemoryManagment
             {
             public:
                 template <typename T>
-                static void DeviceAllocate( const T* a_pointer, std::size_t a_size );
+                static void DeviceAllocate( const T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void DeviceAllocate( const Container& a_vector );
 
                 template <typename T>
-                static void DeviceAllocateAndCopyHostToDevice( const T* a_pointer, std::size_t a_size );
+                static void DeviceAllocateAndCopyHostToDevice( const T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void DeviceAllocateAndCopyHostToDevice( const Container& a_vector );
 
                 template <typename T>
-                static void CopyHostToDevice( const T* a_pointer, std::size_t a_size );
+                static void CopyHostToDevice( const T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void CopyHostToDevice( const Container& a_vector );
 
                 template <typename T>
-                static void CopyDeviceToHost( T* a_pointer, std::size_t a_size );
+                static void CopyDeviceToHost( T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void CopyDeviceToHost( Container& a_vector );
 
                 template <typename T>
-                static void CopyDeviceToHostAndDeviceFree( T* a_pointer, std::size_t a_size );
+                static void CopyDeviceToHostAndDeviceFree( T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void CopyDeviceToHostAndDeviceFree( Container& a_vector );
 
                 template <typename T>
-                static void DeviceFree( T* a_pointer, std::size_t a_size );
+                static void DeviceFree( T* a_host_pointer, std::size_t a_count );
                 template <typename Container>
                 static void DeviceFree( Container& a_vector );
 
-                /// If OpenMP or OpenACC are enabled and if a_pointer is mapped, returns the pointer on the device.
+                /// If OpenMP or OpenACC are enabled and if a_host_pointer is mapped, returns the pointer on the device.
                 ///                                      else return nullptr
-                /// else return a_pointer (untouched)
+                /// else return a_host_pointer (untouched)
                 ///
                 /// Note:
                 /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this
@@ -195,6 +193,16 @@ namespace smilei {
                 ///
                 template <typename T>
                 static void DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count );
+
+            protected:
+                static void  DoDeviceAllocate( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void  DoDeviceAllocateAndCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void  DoCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void  DoCopyDeviceToHost( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void  DoCopyDeviceToHostAndDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void  DoDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size );
+                static void* DoGetDevicePointer( const void* a_host_pointer );
+                static void  DoDeviceMemoryCopy( void* a_destination, const void* a_source, std::size_t a_count, std::size_t an_object_size );
             };
 
 
@@ -348,17 +356,10 @@ namespace smilei {
             ////////////////////////////////////////////////////////////////////////////////
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceAllocate( const T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::DeviceAllocate( const T* a_host_pointer, std::size_t a_count )
             {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target enter data map( alloc \
-                                       : a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc enter data create( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoDeviceAllocate( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
@@ -368,36 +369,23 @@ namespace smilei {
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
             {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target enter data map( to \
-                                       : a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc enter data copyin( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoDeviceAllocateAndCopyHostToDevice( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
             void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const Container& a_vector )
             {
-                DeviceAllocAndCopyHostToDevice( a_vector.data(), a_vector.size() );
+                DeviceAllocateAndCopyHostToDevice( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyHostToDevice( const T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::CopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
             {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target update to( a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc update device( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoCopyHostToDevice( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
@@ -407,17 +395,11 @@ namespace smilei {
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyDeviceToHost( T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::CopyDeviceToHost( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target update from( a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc update host( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoCopyDeviceToHost( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
@@ -427,18 +409,11 @@ namespace smilei {
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target exit data map( from \
-                                      : a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc exit data copyout( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoCopyDeviceToHostAndDeviceFree( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
@@ -448,18 +423,11 @@ namespace smilei {
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceFree( T* a_pointer, std::size_t a_size )
+            void HostDeviceMemoryManagment::DeviceFree( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target exit data map( delete \
-                                      : a_pointer [0:a_size] )
-#elif defined( _GPU )
-    #pragma acc exit data delete( a_pointer [0:a_size] )
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-#endif
+                static_assert( std::is_pod<T>::value, "" );
+                DoDeviceFree( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
@@ -471,33 +439,7 @@ namespace smilei {
             template <typename T>
             T* HostDeviceMemoryManagment::GetDevicePointer( T* a_host_pointer )
             {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                const int device_num = ::omp_get_default_device();
-
-                // Omp Std 5.0: A list item in a use_device_ptr clause must hold
-                // the address of an object that has a corresponding list item
-                // in the device data environment.
-                // To be fully compliant we need to use ::omp_target_is_present
-
-                if( ::omp_target_is_present( a_host_pointer, device_num ) == 0 ) {
-                    return nullptr;
-                }
-
-                T* a_device_pointer = nullptr;
-
-    #pragma omp target data use_device_ptr( a_host_pointer )
-                {
-                    a_device_pointer = a_host_pointer;
-                }
-
-                SMILEI_ASSERT( a_device_pointer != nullptr );
-
-                return a_device_pointer;
-#elif defined( _GPU )
-                return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );
-#else
-                return a_host_pointer;
-#endif
+                return static_cast<T*>( DoGetDevicePointer( static_cast<const void*>( a_host_pointer ) ) );
             }
 
             template <typename T>
@@ -519,21 +461,7 @@ namespace smilei {
             template <typename T>
             void HostDeviceMemoryManagment::DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count )
             {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                const int device_num = ::omp_get_default_device();
-                if( ::omp_target_memcpy( a_destination,
-                                         a_source,
-                                         a_count * sizeof( T ), 0, 0, device_num, device_num ) != 0 ) {
-                    ERROR( "omp_target_memcpy failed" );
-                }
-#elif defined( _GPU )
-                // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
-                // https://www.openacc.org/sites/default/files/inline-files/OpenACC.2.7.pdf
-                // void acc_memcpy_device( d_void* dest, d_void* src, size_t bytes );
-                ::acc_memcpy_device( a_destination, const_cast<T*>( a_source ), a_count * sizeof( T ) );
-#else
-                std::memcpy( a_destination, a_source, a_count * sizeof( T ) );
-#endif
+                DoDeviceMemoryCopy( a_destination, a_source, a_count, sizeof( T ) );
             }
 
         } // namespace gpu
