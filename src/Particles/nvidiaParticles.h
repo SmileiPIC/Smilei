@@ -30,15 +30,17 @@ public:
     virtual ~nvidiaParticles() {};
 
     //! Allocate the right amount of position and momentum dimensions
-    void allocateDimensions( unsigned int nDim );
+    void resizeDimensions( unsigned int nDim );
 
     //! Reserve space for particle_count particles. Must be called after 
     //! allocateDimensions()
-    void reserveParticles( unsigned int particle_count );
+    void reserve( unsigned int particle_count );
 
     //! Allocate particle_count particles. Must be called after
     //! allocateDimensions()
-    void allocateParticles( unsigned int particle_count );
+    //! Set the size (gpu_size) of nvidiaParticles to particle_count.
+    //!
+    void resize( unsigned int particle_count );
 
     //! Reset Particles vectors
     void deviceClear();
@@ -148,10 +150,10 @@ protected:
     //! on the host).
     //!
     //! Everything else is UNDEFINED (!), dont use it. This workaround with
-    //! first_index/last_index is not pretty but require few modifications to
+    //! first_index/last_index is not pretty but requires few modifications to
     //! Smilei.
     //!
-    //! params.cluster_width_ is hard coded in Params::compute().
+    //! The cluster width is hard coded in Params::getGPUClusterWidth.
     //!
     //! If the function succeed, last_index is allocated on GPU.
     //!
