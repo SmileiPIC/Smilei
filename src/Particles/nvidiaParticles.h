@@ -17,6 +17,103 @@
 #include "Params.h"
 #include "Particles.h"
 
+// TODO(Etienne M): The makefile does not add this file to the list of 
+// dependencies.
+
+////////////////////////////////////////////////////////////////////////////////
+// Cluster manipulation functor definition
+////////////////////////////////////////////////////////////////////////////////
+
+//! Common values/type for Cluster
+//!
+struct Cluster
+{
+public:
+    //! Same type as what is used in nvidia_cell_keys_
+    //!
+    using IDType   = int;
+    using SizeType = unsigned int;
+
+public:
+};
+
+//! Compute the cell key of a_particle. a_particle shall be a tuple (from a
+//! zipiterator).
+//! The first value of a_particle is the cell key value, the other values are
+//! the positions x and y.
+//!
+struct Cluster2D : public Cluster
+{
+public:
+public:
+    template <Cluster::SizeType kClusterWidth>
+    struct Indexer
+    {
+    public:
+        Indexer( double   cell_size_in_x,
+                 double   cell_size_in_y,
+                 SizeType x_dimension_cell_count )
+            : inverse_of_cell_size_in_x_{ 1.0 / cell_size_in_x }
+            , inverse_of_cell_size_in_y_{ 1.0 / cell_size_in_y }
+            , x_dimension_cluster_count_{ x_dimension_cell_count / kClusterWidth }
+        {
+            // EMPTY
+        }
+
+        template <typename Tuple>
+        __host__ __device__ IDType
+        Index( const Tuple& a_particle ) const
+        {
+            const SizeType x_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<0>( a_particle ) * inverse_of_cell_size_in_x_ );
+            const SizeType y_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<1>( a_particle ) * inverse_of_cell_size_in_y_ );
+
+            // These divisions will be optimized.
+            // The integer division rounding behavior is expected.
+
+            const SizeType cluster_index = ( y_cell_coordinate / kClusterWidth ) * x_dimension_cluster_count_ +
+                                           x_cell_coordinate / kClusterWidth;
+
+            return static_cast<IDType>( cluster_index );
+        }
+
+    protected:
+        double   inverse_of_cell_size_in_x_;
+        double   inverse_of_cell_size_in_y_;
+        SizeType x_dimension_cluster_count_; //! x_dim_width / kClusterWidth
+        // 32 bits padding
+    };
+
+public:
+};
+
+//! This functor assign a cluster key to a_particle.
+//!
+template <typename ComputeClusterIndex>
+class AssignClusterIndex
+{
+public:
+public:
+    AssignClusterIndex( ComputeClusterIndex cluster_indexer )
+        : cluster_indexer_{ cluster_indexer }
+    {
+        // EMPTY
+    }
+
+    template <typename Tuple>
+    __host__ __device__ void
+    operator()( Tuple& a_particle ) const
+    {
+        thrust::get<0>( a_particle ) = cluster_indexer_.Index( a_particle );
+    }
+
+protected:
+    ComputeClusterIndex cluster_indexer_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// nvidiaParticles definition
+////////////////////////////////////////////////////////////////////////////////
+
 /*! \class nvidiaParticles
     \brief Particle class for GPUs
 */
@@ -129,7 +226,7 @@ protected:
     //! (excluded), of bin 0 and the first particle (included) of bin 1.
     //! The last value of last_index is the number of particle of a given
     //! species in this patch.
-    //! 
+    //!
     //! One should always use first_index.size() to get the number of "host
     //! visible bin" but note that it may be different than the "true"
     //! number of bin used on the device. It's done this way only to trick Smilei
@@ -137,10 +234,10 @@ protected:
     //! best how to process the data (in bin or not in bin). The Smilei
     //! "structural" code should not have to deal with the fine details (most of
     //! the time).
-    //! 
+    //!
     //! In GPU mode, there is only one "host visible bin", it contains all the
     //! particles of a species on a patch.
-    //! 
+    //!
     //! In GPU mode, the new interface for first_index and last_index is:
     //! first_index.size() : number of bin on the host (always 1)
     //! last_index.size()  : number of bin on the device (should be seldom used
@@ -160,6 +257,34 @@ protected:
     //! returns -1 on error (binning is not supported for this object).
     //!
     int prepareBinIndex();
+
+    //! Compute the cell key of a particle range with 2 space dimensions.
+    //! InputIterator shall be a thrust::zip_iterator with the cell key as first
+    //! value, followed by the 2 positions x and y.
+    //!
+    //! NOTE: This is only for 2D particles !
+    //!
+    template <typename InputIterator,
+              typename Indexer>
+    static void computeParticleClusterKey( InputIterator first,
+                                           InputIterator last,
+                                           Indexer       an_indexer );
+
+    template <typename InputIterator>
+    void compute2DParticleClusterKey( InputIterator first,
+                                      InputIterator last ) const;
+
+    //! precondition:
+    //!     - nvidia_cell_keys_ shall be sorted in non decreasing order
+    //!     - last_index.data() is a pointer mapped to GPU via
+    //!       HostDeviceMemoryManagment
+    //!
+    void computeBinIndex();
+
+    //! Set last_index.back() and last_index[0] to match the number of GPU
+    //! particle (gpu_size).
+    //!
+    void setHostBinIndex();
 
     //! Memcpy of the particle at the end. No sorting or binning.
     //!
@@ -201,5 +326,33 @@ protected:
     //! Number of particles on device
     int gpu_nparts_;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// nvidiaParticles method definitions
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename InputIterator,
+          typename Indexer>
+void nvidiaParticles::computeParticleClusterKey( InputIterator first,
+                                                 InputIterator last,
+                                                 Indexer       an_indexer )
+{
+    thrust::for_each( thrust::device,
+                      first,
+                      last,
+                      AssignClusterIndex<Indexer>{ an_indexer } );
+}
+
+template <typename InputIterator>
+void nvidiaParticles::compute2DParticleClusterKey( InputIterator first,
+                                                   InputIterator last ) const
+{
+    static constexpr auto kClusterWidth = Params::getGPUClusterWidth( 2 );
+    computeParticleClusterKey( first, last,
+                               Cluster2D::Indexer<kClusterWidth>{ parameters_->cell_length[0],
+                                                                  parameters_->cell_length[1],
+                                                                  parameters_->n_space[0] } );
+}
 
 #endif

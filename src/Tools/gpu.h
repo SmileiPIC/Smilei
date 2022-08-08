@@ -215,7 +215,7 @@ namespace smilei {
 ///
 /// Makes sure the host pointer is mapped on the device through OpenACC/OpenMP.
 /// This can be used to simulate the present() clause of OpenACC in an OpenMP
-/// context. There is not present() clause in OpenMP
+/// context. There is no present() clause in OpenMP.
 ///
 /// Example usage:
 ///

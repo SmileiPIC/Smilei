@@ -165,7 +165,8 @@ void nvidiaParticles::initializeDataOnDevice()
 
     if( prepareBinIndex() < 0 ) {
         // Either we deal with a simulation with unsupported space dimensions
-        // (1D/3D) or we are not using OpenMP.
+        // (1D/3D) or we are not using OpenMP or we are dealing with particle
+        // object without allocated bin (particle_to_move for instance).
         // We'll use the old, naive, unsorted particles injection
         // implementation.
         return;
@@ -173,6 +174,16 @@ void nvidiaParticles::initializeDataOnDevice()
 
     // At this point, a copy of the host particles and last_index is on the
     // device and we know we support the space dimension.
+
+    // For now we support 2D only.
+    const auto first = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_cell_keys_ ),
+                                                                      std::cbegin( nvidia_position_[0] ),
+                                                                      std::cbegin( nvidia_position_[1] ) ) );
+    const auto last  = first + gpu_size();
+
+    compute2DParticleClusterKey( first, last );
+    computeBinIndex();
+    setHostBinIndex();
 
     // TODO(Etienne M): Implement initial binning:
     // - nothing do do except computing bins.
@@ -473,13 +484,7 @@ void nvidiaParticles::createParticles( int n_additional_particles )
 
 void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inject )
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    if( parameters_->isGPUBinningAvailable() )
-#else
-    // Always take the naive path
-    if( false )
-#endif
-    {
+    if( parameters_->isGPUParticleBinningAvailable() ) {
         importAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
     } else {
         // GPU particle binning is not supported
@@ -489,8 +494,6 @@ void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inje
 
 int nvidiaParticles::prepareBinIndex()
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-
     if( first_index.size() == 0 ) {
         // Some Particles object like particles_to_move do not have allocated
         // bins, we skip theses.
@@ -500,7 +503,8 @@ int nvidiaParticles::prepareBinIndex()
     const int kGPUBinCount = parameters_->getGPUBinCount();
 
     if( kGPUBinCount < 0 ) {
-        // Unsupported space dimension, dont do GPU binning
+        // Unsupported space dimension or the offloading technology is not
+        // supported, dont do GPU binning.
         return -1;
     }
 
@@ -519,33 +523,56 @@ int nvidiaParticles::prepareBinIndex()
 
     // By definition it should be zero, so this is a redundant assignment
     first_index.back() = 0;
-    last_index.back()  = particle_count;
-    last_index[0]      = last_index.back();
 
     // Dont try to allocate 2 times, even if it's harmless, that would be a bug!
     SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( last_index.data() ) );
 
     // We'll need that to be on the GPU.
 
-    // TODO(Etienne M): FREE. If we have load balancing or other patch 
+    // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( last_index );
 
     return 0;
-#else
-    return -1;
-#endif
+}
+
+void nvidiaParticles::computeBinIndex()
+{
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( last_index.data() );
+
+    Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( last_index.data() );
+
+    // TODO(Etienne M): REMOVE. After the implementation is stable
+    SMILEI_ASSERT( thrust::is_sorted( std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ) ) );
+
+    // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
+    // it so fast anyway..)
+
+    // thrust::upper_bound( thrust::device,
+    //                      std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
+    //                      std::cbegin( key_bound_to_search ), std::cend( key_bound_to_search ),
+    //                      bin_upper_bound );
+
+    thrust::upper_bound( thrust::device,
+                         std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
+                         thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
+                         thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( last_index.size() ) },
+                         bin_upper_bound );
+
+    // TODO(Etienne M): REMOVE. After the implementation is stable
+    SMILEI_ASSERT( thrust::is_sorted( bin_upper_bound, bin_upper_bound + last_index.size() ) );
 }
 
 void nvidiaParticles::naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject )
 {
     // Erase particles that leaves this patch
-    last_index.back() += eraseLeavingParticles();
+    eraseLeavingParticles();
 
     // Inject newly arrived particles in particles_to_inject
-    last_index.back() += injectParticles( const_cast<nvidiaParticles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
-    last_index[0] = last_index.back();
+    injectParticles( const_cast<nvidiaParticles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
+
+    setHostBinIndex();
 }
 
 void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_to_inject )
@@ -562,7 +589,21 @@ void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_t
     // TODO(Etienne M): Implement
 }
 
-extern "C" {
+void nvidiaParticles::setHostBinIndex()
+{
+    // TODO(Etienne M): You may want to inject, create etc. into a non binned
+    // nvidiaParticles object. For now, we assert it does not happen. 
+    // To be fix it, I think it only require:
+    //  if( last_index.empty() ) { return; }
+    //
+    SMILEI_ASSERT( !last_index.empty() );
+
+    last_index.back() = gpu_size();
+    last_index[0]     = last_index.back();
+}
+
+extern "C"
+{
     void* CreateGPUParticles( const void* parameters )
     {
         return new nvidiaParticles{ *static_cast<const Params*>( parameters ) };
