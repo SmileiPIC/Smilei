@@ -155,7 +155,7 @@ void nvidiaParticles::initializeDataOnDevice()
     }
 
     if( gpu_size() == 0 ) {
-        // At this pint, it means that kHostParticleCount == 0
+        // At this point, it means that kHostParticleCount == 0
         reserve( 100 );
         // Continue, we may have to re-initialize the bins, eventhough there is
         // no particles yet.

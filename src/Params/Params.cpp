@@ -1893,23 +1893,13 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-
-bool Params::isGPUBinningAvailable() const {
+bool Params::isGPUParticleBinningAvailable() const {
     return getGPUClusterWidth() != -1;
 }
 
 int Params::getGPUClusterWidth() const
 {
-    // For 2D:
-    // 16x16 clusters used for charge deposition. Due to the 2nd order
-    // scheme, we need 2 wide cell band on each sides so the chunk do
-    // not overlap during particle deposition.
-    //
-    constexpr int kGPUChunkWidth[3]{ -1, 16 - 2, -1 };
-    // // Stop when accessing a non implemented value.
-    // SMILEI_ASSERT( kGPUChunkWidth[nDim_particle - 1] < 1 );
-    return kGPUChunkWidth[nDim_particle - 1];
+    return getGPUClusterWidth( nDim_particle );
 }
 
 int Params::getGPUClusterCellVolume() const
@@ -1918,7 +1908,7 @@ int Params::getGPUClusterCellVolume() const
     static const int kClusterCellVolume = getGPUClusterWidth() *
                                           ( nDim_particle >= 2 ? getGPUClusterWidth() : 1 ) *
                                           ( nDim_particle >= 3 ? getGPUClusterWidth() : 1 );
-    return isGPUBinningAvailable() ?
+    return isGPUParticleBinningAvailable() ?
                kClusterCellVolume :
                -1; // Propagate the error if the dimension is not supported
 }
@@ -1938,5 +1928,3 @@ int Params::getGPUBinCount() const
 
     return kGPUBinCount;
 }
-
-#endif
