@@ -13,6 +13,20 @@
 #include "gpu.h"
 #include "nvidiaParticles.h"
 
+////////////////////////////////////////////////////////////////////////////////
+// Cell key manipulation functor definition
+////////////////////////////////////////////////////////////////////////////////
+
+//! Structure with specific function count_if_out for thrust::tuple operator
+//! Return True if the entry is -1 as in the cell keys vector for instance
+struct count_if_out
+{
+    constexpr __host__ __device__ bool
+    operator()( const int& x ) const
+    {
+        return x == -1;
+    }
+};
 
 namespace detail {
 
@@ -54,56 +68,67 @@ namespace detail {
         //!
         static inline void
         importAndSortParticles( nvidiaParticles& particle_container,
-                                nvidiaParticles& particle_to_inject );
+                                nvidiaParticles& particle_to_inject,
+                                const Params&    parameters );
 
     protected:
         template <typename InputIterator,
-                  typename Indexer>
-        static void doComputeParticleClusterKey( InputIterator first,
-                                                 InputIterator last,
-                                                 Indexer       an_indexer );
+                  typename ClusterType>
+        static void
+        doComputeParticleClusterKey( InputIterator first,
+                                     InputIterator last,
+                                     ClusterType   cluster_type );
+
+        template <typename ClusterType>
+        static void
+        doImportAndSortParticles( nvidiaParticles& particle_container,
+                                  nvidiaParticles& particle_to_inject,
+                                  ClusterType      cluster_type );
     };
 
-    //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
-    //! zipiterator).
-    //! The first value of a_particle is the cell key value, the other values are
-    //! the positions x and y.
-    //!
+
+    template <Cluster::DifferenceType kClusterWidth>
     struct Cluster2D : public Cluster
     {
     public:
-        template <Cluster::DifferenceType kClusterWidth>
-        struct Indexer
-        {
-        public:
-            __host__ __device__
-            Indexer( double   cell_size_in_x,
-                     double   cell_size_in_y,
-                     SizeType x_dimension_cell_count );
+    public:
+        __host__ __device__
+        Cluster2D( double   cell_size_in_x,
+                   double   cell_size_in_y,
+                   SizeType x_dimension_cell_count );
 
-            template <typename Tuple>
-            __host__ __device__ IDType
-            Index( const Tuple& a_particle ) const;
+        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
+        //! zipiterator).
+        //! The first value of a_particle is the cell key value, the other values are
+        //! the positions x and y.
+        //!
+        template <typename Tuple>
+        __host__ __device__ IDType
+        Index( const Tuple& a_particle ) const;
 
-        protected:
-            double   inverse_of_cell_size_in_x_;
-            double   inverse_of_cell_size_in_y_;
-            SizeType x_dimension_cluster_count_; //! x_dim_width / kClusterWidth
-            // 32 bits padding
-        };
+        //! Return the appropriate thrust::zip_iterator depending on the
+        //! simulation's parameters
+        //!
+        static auto
+        beginParticles( nvidiaParticles& particle_container );
 
     public:
+        double   inverse_of_cell_size_in_x_;
+        double   inverse_of_cell_size_in_y_;
+        SizeType x_dimension_cluster_count_; //! x_dim_width / kClusterWidth
+        // 32 bits padding :(
     };
+
 
     //! This functor assign a cluster key to a_particle.
     //!
-    template <typename ComputeClusterIndex>
+    template <typename ClusterType>
     class AssignClusterIndex
     {
     public:
     public:
-        AssignClusterIndex( ComputeClusterIndex cluster_indexer )
-            : cluster_indexer_{ cluster_indexer }
+        AssignClusterIndex( ClusterType cluster_type )
+            : cluster_type_{ cluster_type }
         {
             // EMPTY
         }
@@ -112,11 +137,51 @@ namespace detail {
         __host__ __device__ void
         operator()( Tuple& a_particle ) const
         {
-            thrust::get<0>( a_particle ) = cluster_indexer_.Index( a_particle );
+            thrust::get<0>( a_particle ) = cluster_type_.Index( a_particle );
         }
 
     protected:
-        ComputeClusterIndex cluster_indexer_;
+        ClusterType cluster_type_;
+    };
+
+
+    //! This functor assign a cluster key to a_particle.
+    //!
+    template <typename ClusterType>
+    struct OutOfClusterPredicate
+    {
+    public:
+    public:
+        OutOfClusterPredicate( ClusterType cluster_type )
+            : cluster_type_{ cluster_type }
+        {
+            // EMPTY
+        }
+
+        template <typename Tuple>
+        __host__ __device__ bool
+        operator()( const Tuple& a_particle ) const
+        {
+            // NOTE: its ub to set the cluster key to wrongly keyed particles
+            // now..
+            return thrust::get<0>( a_particle ) /* cluster key */ == cluster_type_.Index( a_particle );
+        }
+
+    protected:
+        ClusterType cluster_type_;
+    };
+
+    //! If the particle's cell/cluster key is -1 it means that it needs to be
+    //! evicted.
+    //!
+    struct OutOfBoundaryPredicate
+    {
+        template <typename Tuple>
+        __host__ __device__ bool
+        operator()( const Tuple& a_particle ) const
+        {
+            return thrust::get<0>( a_particle ) /* cluster key */ == -1;
+        }
     };
 
 
@@ -137,12 +202,11 @@ namespace detail {
                                                                                   static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
                 const auto last  = first + particle_container.gpu_size();
 
-                static constexpr auto kClusterWidth = Params::getGPUClusterWidth( 2 );
-
+                // TODO(Etienne M): Do something like Cluster2D::beginParticles
                 doComputeParticleClusterKey( first, last,
-                                             Cluster2D::Indexer<kClusterWidth>{ parameters.cell_length[0],
-                                                                                parameters.cell_length[1],
-                                                                                parameters.n_space[0] } );
+                                             Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
+                                                                                         parameters.cell_length[1],
+                                                                                         parameters.n_space[0] } );
                 break;
             }
             default:
@@ -160,7 +224,8 @@ namespace detail {
         Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( particle_container.last_index.data() );
 
         // TODO(Etienne M): REMOVE. After the implementation is stable
-        SMILEI_ASSERT( thrust::is_sorted( static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
+        SMILEI_ASSERT( thrust::is_sorted( thrust::device,
+                                          static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
                                           static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
 
         // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
@@ -179,13 +244,16 @@ namespace detail {
                              bin_upper_bound );
 
         // TODO(Etienne M): REMOVE. After the implementation is stable
-        SMILEI_ASSERT( thrust::is_sorted( bin_upper_bound,
+        SMILEI_ASSERT( thrust::is_sorted( thrust::device,
+                                          bin_upper_bound,
                                           bin_upper_bound + particle_container.last_index.size() ) );
+        // TODO(Etienne M): Print the bins
     }
 
     inline void
     Cluster::importAndSortParticles( nvidiaParticles& particle_container,
-                                     nvidiaParticles& particle_to_inject )
+                                     nvidiaParticles& particle_to_inject,
+                                     const Params&    parameters )
     {
         // This is where we do a runtime dispatch depending on the simulation parameters.
 
@@ -206,16 +274,11 @@ namespace detail {
                     if( particle_container.isMonteCarlo ) {
                         SMILEI_ASSERT( false );
                     } else {
-                        // Erase particles that leaves this patch
-                        particle_container.eraseLeavingParticles();
-
-                        // Inject newly arrived particles in particles_to_inject
-                        particle_container.injectParticles( &particle_to_inject );
-
-                        SMILEI_ASSERT( !particle_container.last_index.empty() );
-
-                        particle_container.last_index.back() = particle_container.gpu_size();
-                        particle_container.last_index[0]     = particle_container.last_index.back();
+                        doImportAndSortParticles( particle_container,
+                                                  particle_to_inject,
+                                                  Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
+                                                                                              parameters.cell_length[1],
+                                                                                              parameters.n_space[0] } );
                     }
                 }
                 break;
@@ -228,26 +291,112 @@ namespace detail {
     }
 
     template <typename InputIterator,
-              typename Indexer>
+              typename ClusterType>
     void Cluster::doComputeParticleClusterKey( InputIterator first,
                                                InputIterator last,
-                                               Indexer       an_indexer )
+                                               ClusterType   cluster_type )
     {
         thrust::for_each( thrust::device,
                           first, last,
-                          AssignClusterIndex<Indexer>{ an_indexer } );
+                          AssignClusterIndex<ClusterType>{ cluster_type } );
+    }
+
+    template <typename ClusterType>
+    void
+    Cluster::doImportAndSortParticles( nvidiaParticles& particle_container,
+                                       nvidiaParticles& particle_to_inject,
+                                       ClusterType      cluster_type )
+    {
+        // So basicaly, we got a 5 to 14ms budget to:
+        // - erase the leaving particles
+        // - import the entering particles
+        // - sort everything
+        // - re-compute the bins bondaries | 0.094 to 0.15ms via upper_bound
+        // - do the particle to grid current deposition
+        // All theses durations are for 11kk particles.
+
+        // const auto first_particle = cluster_type.beginParticles( particle_container );
+
+        // auto last_particle = first_particle +
+        //                      particle_container.gpu_size(); // Obviously, we use half open ranges
+
+        // // Remove out of bound particles
+        // // Using more memory, we could use the faster remove_copy_if
+        // last_particle = thrust::remove_if( thrust::device,
+        //                                    first_particle,
+        //                                    last_particle,
+        //                                    OutOfBoundaryPredicate{} );
+
+        // // particle_container.eraseLeavingParticles();
+
+        // // Idea 1: - remove_copy_if instead of copy_if
+        // //         - sort(the_particles_to_inject)
+        // //         - merge
+        // //         - compute bins
+
+        // const auto new_particle_to_inject_count = particle_to_inject.gpu_size();
+        // const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
+        //                                                                                         last_particle );
+
+        // // NOTE: We realy want a non-initializing vector here!
+        // // It's possible to give a custom allocator to thrust::device_vector.
+        // // Create one with construct(<>) as a noop and derive from
+        // // thrust::device_malloc_allocator
+        // particle_to_inject.resize( new_particle_count );
+
+        // // Copy out of cluster/tile/chunk particles
+        // // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
+        // // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
+        // //  - 4.5ms on GPU
+
+        // const auto partitioned_particles_bounds_true  = thrust::copy_if( thrust::device,
+        //                                                                  first_particle, last_particle,
+        //                                                                  // Dont overwrite the particle_to_inject (at the start of the array)
+        //                                                                  cluster_type.beginParticles( particle_to_inject ) + new_particle_to_inject_count,
+        //                                                                  OutOfClusterPredicate<ClusterType>{ cluster_type } );
+        // const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
+        //                                                                         first_particle, last_particle,
+        //                                                                         // In reverse, starting from end(particle_to_inject) !
+        //                                                                         thrust::make_reverse_iterator( cluster_type.beginParticles( particle_to_inject ) +
+        //                                                                                                        particle_to_inject.gpu_size() ),
+        //                                                                         OutOfClusterPredicate<ClusterType>{cluster_type} );
+
+        // // Compute or recompute the chunk id of the particles to inject
+        // // NOTE:
+        // // - we can "save" some work here if chunk_key is already computed for
+        // // the new particles to inject (not the one we got with copy_if).
+        // // So we could start at: begin(the_particles_to_inject) + new_particle_to_inject_count
+        // //
+        // // - 1ms on GPU
+        // doComputeParticleClusterKey( cluster_type.beginParticles( particle_to_inject ),
+        //                              partitioned_particles_bounds_true,
+        //                              cluster_type );
+
+        {
+            // Erase particles that leaves this patch
+            particle_container.eraseLeavingParticles();
+
+            // Inject newly arrived particles in particles_to_inject
+            particle_container.injectParticles( &particle_to_inject );
+
+            SMILEI_ASSERT( !particle_container.last_index.empty() );
+
+            particle_container.last_index.back() = particle_container.gpu_size();
+            particle_container.last_index[0]     = particle_container.last_index.back();
+        }
+
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Cluster2D::Indexer method definitions
+    // Cluster2D method definitions
     ////////////////////////////////////////////////////////////////////////////////
 
     template <Cluster::DifferenceType kClusterWidth>
     __host__ __device__
-    Cluster2D::Indexer<kClusterWidth>::Indexer( double   cell_size_in_x,
-                                                double   cell_size_in_y,
-                                                SizeType x_dimension_cell_count )
+    Cluster2D<kClusterWidth>::Cluster2D( double   cell_size_in_x,
+                                         double   cell_size_in_y,
+                                         SizeType x_dimension_cell_count )
         : inverse_of_cell_size_in_x_{ 1.0 / cell_size_in_x }
         , inverse_of_cell_size_in_y_{ 1.0 / cell_size_in_y }
         , x_dimension_cluster_count_{ x_dimension_cell_count / kClusterWidth }
@@ -257,8 +406,8 @@ namespace detail {
 
     template <Cluster::DifferenceType kClusterWidth>
     template <typename Tuple>
-    __host__ __device__ Cluster2D::IDType
-                        Cluster2D::Indexer<kClusterWidth>::Index( const Tuple& a_particle ) const
+    __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
+    Cluster2D<kClusterWidth>::Index( const Tuple& a_particle ) const
     {
         const SizeType x_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<0>( a_particle ) * inverse_of_cell_size_in_x_ );
         const SizeType y_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<1>( a_particle ) * inverse_of_cell_size_in_y_ );
@@ -272,23 +421,20 @@ namespace detail {
         return static_cast<IDType>( cluster_index );
     }
 
-} // namespace detail
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Cell key manipulation functor definition
-////////////////////////////////////////////////////////////////////////////////
-
-//! Structure with specific function count_if_out for thrust::tuple operator
-//! Return True if the entry is -1 as in the cell keys vector for instance
-struct count_if_out
-{
-    constexpr __host__ __device__ bool
-    operator()( const detail::Cluster::IDType& x ) const
+    template <Cluster::DifferenceType kClusterWidth>
+    auto Cluster2D<kClusterWidth>::beginParticles( nvidiaParticles& particle_container )
     {
-        return x == -1;
+        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                              particle_container.getPtrPosition( 0 ),
+                                                              particle_container.getPtrPosition( 1 ),
+                                                              particle_container.getPtrMomentum( 0 ),
+                                                              particle_container.getPtrMomentum( 1 ),
+                                                              particle_container.getPtrMomentum( 2 ),
+                                                              particle_container.getPtrWeight(),
+                                                              particle_container.getPtrCharge() ) );
     }
-};
+
+} // namespace detail
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -750,7 +896,8 @@ void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
 {
     if( parameters_->isGPUParticleBinningAvailable() ) {
         detail::Cluster::importAndSortParticles( *static_cast<nvidiaParticles*>( this ),
-                                                 *static_cast<nvidiaParticles*>( particles_to_inject ) );
+                                                 *static_cast<nvidiaParticles*>( particles_to_inject ),
+                                                 *parameters_ );
     } else {
         // GPU particle binning is not supported
         naiveImportAndSortParticles( static_cast<nvidiaParticles*>( particles_to_inject ) );

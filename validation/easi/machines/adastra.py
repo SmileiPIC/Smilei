@@ -170,11 +170,13 @@ LaunchRocmProfile() {{
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy L2CacheHit MemUnitBusy MemUnitStalled WriteUnitStalled ALUStalledByLDS LDSBankConflict' > hw_counters.txt
     # LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
+    # To create a roofline model check https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#roofline-profiling
+
     # HIP RT tracing + consolidated kernel stats
     # LaunchSRun bash -c "rocprof --hip-trace --stats -o hip_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
     # ROCm RT (low level) tracing + consolidated kernel stats
     # LaunchSRun bash -c "rocprof --hsa-trace --stats -o hsa_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
-    # HIP/HSA tracing + consolidated kernel stats
+    # HIP/HSA tracing + consolidated kernel stats | After the program exits, rocprof takes a long time to process the generated data !
     LaunchSRun bash -c "rocprof --sys-trace --stats -o sys_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 }}
 

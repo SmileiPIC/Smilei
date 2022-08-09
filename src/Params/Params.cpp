@@ -1234,22 +1234,23 @@ void Params::compute()
     const int kClusterWidth = getGPUClusterWidth();
 
     if( kClusterWidth < 0 ) {
-        // getGPUClusterWidth failing means that binning is not supported for 
-        // nDim_particle space dimensions. cluster_width_ shall default to 
+        // getGPUClusterWidth failing means that binning is not supported for
+        // nDim_particle space dimensions. cluster_width_ shall default to
         // n_space[0] which is guarenteed to divide itself, no need to check.
-    } else
-        // What an ugly trick
-        for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id )
-#else
-    const int         kClusterWidth = cluster_width_;
-    const std::size_t  dimension_id = 0;
-#endif
-    {
-        if( ( n_space[dimension_id] % kClusterWidth ) != 0 ) {
-            ERROR_NAMELIST( "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
-                            LINK_NAMELIST + std::string( "#main-variables" ) );
+    } else {
+        for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id ) {
+            if( ( n_space[dimension_id] % kClusterWidth ) != 0 ) {
+                ERROR_NAMELIST( "The parameter `cluster_width`==" << kClusterWidth << " must divide the number of cells in a patch, in all dimensions.",
+                                LINK_NAMELIST + std::string( "#main-variables" ) );
+            }
         }
     }
+#else
+    if( ( n_space[0] % cluster_width_ ) != 0 ) {
+        ERROR_NAMELIST( "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
+                        LINK_NAMELIST + std::string( "#main-variables" ) );
+    }
+#endif
 
     // Define domain decomposition if double grids are used for particles and fields
     if ( multiple_decomposition ) {
