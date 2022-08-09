@@ -13,16 +13,235 @@
 #include "gpu.h"
 #include "nvidiaParticles.h"
 
+
+namespace detail {
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Cluster manipulation functor definition
+    ////////////////////////////////////////////////////////////////////////////////
+
+    //! Basic functionnality for cluster manipulation.
+    //! NOTE: This only focus on GPU data manipulation. The host data is shall
+    //! not be handled here !
+    //!
+    struct Cluster
+    {
+    public:
+        //! Same type as what is used in nvidia_cell_keys_
+        //!
+        using IDType         = int;
+        using SizeType       = unsigned int;
+        using DifferenceType = int;
+
+    public:
+        //! Compute the cell key of a particle range.
+        //!
+        static inline void
+        computeParticleClusterKey( nvidiaParticles& particle_container,
+                                   const Params&    parameters );
+
+        //! precondition:
+        //!     - nvidia_cell_keys_ shall be sorted in non decreasing order
+        //!     - last_index.data() is a pointer mapped to GPU via
+        //!       HostDeviceMemoryManagment
+        //!
+        static inline void
+        computeBinIndex( nvidiaParticles& particle_container );
+
+    protected:
+        template <typename InputIterator,
+                  typename Indexer>
+        static void doComputeParticleClusterKey( InputIterator first,
+                                                 InputIterator last,
+                                                 Indexer       an_indexer );
+    };
+
+    //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
+    //! zipiterator).
+    //! The first value of a_particle is the cell key value, the other values are
+    //! the positions x and y.
+    //!
+    struct Cluster2D : public Cluster
+    {
+    public:
+        template <Cluster::DifferenceType kClusterWidth>
+        struct Indexer
+        {
+        public:
+            __host__ __device__
+            Indexer( double   cell_size_in_x,
+                     double   cell_size_in_y,
+                     SizeType x_dimension_cell_count );
+
+            template <typename Tuple>
+            __host__ __device__ IDType
+            Index( const Tuple& a_particle ) const;
+
+        protected:
+            double   inverse_of_cell_size_in_x_;
+            double   inverse_of_cell_size_in_y_;
+            SizeType x_dimension_cluster_count_; //! x_dim_width / kClusterWidth
+            // 32 bits padding
+        };
+
+    public:
+    };
+
+    //! This functor assign a cluster key to a_particle.
+    //!
+    template <typename ComputeClusterIndex>
+    class AssignClusterIndex
+    {
+    public:
+    public:
+        AssignClusterIndex( ComputeClusterIndex cluster_indexer )
+            : cluster_indexer_{ cluster_indexer }
+        {
+            // EMPTY
+        }
+
+        template <typename Tuple>
+        __host__ __device__ void
+        operator()( Tuple& a_particle ) const
+        {
+            thrust::get<0>( a_particle ) = cluster_indexer_.Index( a_particle );
+        }
+
+    protected:
+        ComputeClusterIndex cluster_indexer_;
+    };
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Cluster manipulation functor method definitions
+    ////////////////////////////////////////////////////////////////////////////////
+
+    inline void
+    Cluster::computeParticleClusterKey( nvidiaParticles& particle_container,
+                                        const Params&    parameters )
+    {
+        // This is where we do a runtime dispatch depending on the simulation parameters.
+
+        switch( particle_container.dimension() ) {
+            case 2: {
+                const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                                  static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
+                                                                                  static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
+                const auto last  = first + particle_container.gpu_size();
+
+                static constexpr auto kClusterWidth = Params::getGPUClusterWidth( 2 );
+
+                doComputeParticleClusterKey( first, last,
+                                             Cluster2D::Indexer<kClusterWidth>{ parameters.cell_length[0],
+                                                                                parameters.cell_length[1],
+                                                                                parameters.n_space[0] } );
+                break;
+            }
+            default:
+                // Not implemented, only 2D for the moment
+                SMILEI_ASSERT( false );
+                break;
+        }
+    }
+
+    inline void
+    Cluster::computeBinIndex( nvidiaParticles& particle_container )
+    {
+        SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( particle_container.last_index.data() );
+
+        Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( particle_container.last_index.data() );
+
+        // TODO(Etienne M): REMOVE. After the implementation is stable
+        SMILEI_ASSERT( thrust::is_sorted( static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
+                                          static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
+
+        // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
+        // it so fast anyway..)
+
+        // thrust::upper_bound( thrust::device,
+        //                      std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
+        //                      std::cbegin( key_bound_to_search ), std::cend( key_bound_to_search ),
+        //                      bin_upper_bound );
+
+        thrust::upper_bound( thrust::device,
+                             static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
+                             static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size(),
+                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
+                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
+                             bin_upper_bound );
+
+        // TODO(Etienne M): REMOVE. After the implementation is stable
+        SMILEI_ASSERT( thrust::is_sorted( bin_upper_bound,
+                                          bin_upper_bound + particle_container.last_index.size() ) );
+    }
+
+    template <typename InputIterator,
+              typename Indexer>
+    void Cluster::doComputeParticleClusterKey( InputIterator first,
+                                               InputIterator last,
+                                               Indexer       an_indexer )
+    {
+        thrust::for_each( thrust::device,
+                          first, last,
+                          AssignClusterIndex<Indexer>{ an_indexer } );
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Cluster2D::Indexer method definitions
+    ////////////////////////////////////////////////////////////////////////////////
+
+    template <Cluster::DifferenceType kClusterWidth>
+    __host__ __device__
+    Cluster2D::Indexer<kClusterWidth>::Indexer( double   cell_size_in_x,
+                                                double   cell_size_in_y,
+                                                SizeType x_dimension_cell_count )
+        : inverse_of_cell_size_in_x_{ 1.0 / cell_size_in_x }
+        , inverse_of_cell_size_in_y_{ 1.0 / cell_size_in_y }
+        , x_dimension_cluster_count_{ x_dimension_cell_count / kClusterWidth }
+    {
+        // EMPTY
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ Cluster2D::IDType
+                        Cluster2D::Indexer<kClusterWidth>::Index( const Tuple& a_particle ) const
+    {
+        const SizeType x_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<0>( a_particle ) * inverse_of_cell_size_in_x_ );
+        const SizeType y_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<1>( a_particle ) * inverse_of_cell_size_in_y_ );
+
+        // These divisions will be optimized.
+        // The integer division rounding behavior is expected.
+
+        const SizeType cluster_index = ( y_cell_coordinate / kClusterWidth ) * x_dimension_cluster_count_ +
+                                       ( x_cell_coordinate / kClusterWidth );
+
+        return static_cast<IDType>( cluster_index );
+    }
+
+} // namespace detail
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Cell key manipulation functor definition
+////////////////////////////////////////////////////////////////////////////////
+
 //! Structure with specific function count_if_out for thrust::tuple operator
 //! Return True if the entry is -1 as in the cell keys vector for instance
 struct count_if_out
 {
-    __host__ __device__ bool
-    operator()( const short x )
+    constexpr __host__ __device__ bool
+    operator()( const detail::Cluster::IDType& x ) const
     {
         return x == -1;
     }
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// nvidiaParticles method definitions
+////////////////////////////////////////////////////////////////////////////////
 
 nvidiaParticles::nvidiaParticles( const Params& parameters )
     : Particles{}
@@ -175,15 +394,8 @@ void nvidiaParticles::initializeDataOnDevice()
     // At this point, a copy of the host particles and last_index is on the
     // device and we know we support the space dimension.
 
-    // For now we support 2D only.
-    const auto first = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_cell_keys_ ),
-                                                                      std::cbegin( nvidia_position_[0] ),
-                                                                      std::cbegin( nvidia_position_[1] )
-                                                                      /* , std::cbegin( nvidia_position_[2] ) */ ) );
-    const auto last  = first + gpu_size();
-
-    compute2DParticleClusterKey( first, last );
-    computeBinIndex();
+    detail::Cluster::computeParticleClusterKey( *this, *parameters_ );
+    detail::Cluster::computeBinIndex( *this );
     setHostBinIndex();
 }
 
@@ -523,7 +735,7 @@ int nvidiaParticles::prepareBinIndex()
     // Dont try to allocate 2 times, even if it's harmless, that would be a bug!
     SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( last_index.data() ) );
 
-    // We'll need that to be on the GPU.
+    // We'll need last_index to be on the GPU.
 
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
@@ -531,33 +743,6 @@ int nvidiaParticles::prepareBinIndex()
     smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( last_index );
 
     return 0;
-}
-
-void nvidiaParticles::computeBinIndex()
-{
-    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( last_index.data() );
-
-    Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( last_index.data() );
-
-    // TODO(Etienne M): REMOVE. After the implementation is stable
-    SMILEI_ASSERT( thrust::is_sorted( std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ) ) );
-
-    // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
-    // it so fast anyway..)
-
-    // thrust::upper_bound( thrust::device,
-    //                      std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
-    //                      std::cbegin( key_bound_to_search ), std::cend( key_bound_to_search ),
-    //                      bin_upper_bound );
-
-    thrust::upper_bound( thrust::device,
-                         std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
-                         thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                         thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( last_index.size() ) },
-                         bin_upper_bound );
-
-    // TODO(Etienne M): REMOVE. After the implementation is stable
-    SMILEI_ASSERT( thrust::is_sorted( bin_upper_bound, bin_upper_bound + last_index.size() ) );
 }
 
 void nvidiaParticles::setHostBinIndex()
@@ -597,7 +782,7 @@ void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_t
     // All that, for 11kk particles.
 
     naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
-    // TODO(Etienne M): Implement
+
 }
 
 extern "C"
