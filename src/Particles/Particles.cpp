@@ -1082,7 +1082,7 @@ int Particles::injectParticles( Particles *particles_to_inject )
     return 0;
 }
 
-void Particles::importAndSortParticles( const Particles *particles_to_inject )
+void Particles::importAndSortParticles( Particles *particles_to_inject )
 {
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
 }

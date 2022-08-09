@@ -483,7 +483,7 @@ public:
     //!
     //! last_index is modified appropriately.
     //!
-    virtual void importAndSortParticles( const Particles *particles_to_inject );
+    virtual void importAndSortParticles( Particles *particles_to_inject );
 
     virtual unsigned int gpu_size() const;
 

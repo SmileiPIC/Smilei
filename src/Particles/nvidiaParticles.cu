@@ -48,6 +48,14 @@ namespace detail {
         static inline void
         computeBinIndex( nvidiaParticles& particle_container );
 
+        //! Sorting by cluster and binning
+        //!
+        //! TODO(Etienne M): precondition
+        //!
+        static inline void
+        importAndSortParticles( nvidiaParticles& particle_container,
+                                nvidiaParticles& particle_to_inject );
+
     protected:
         template <typename InputIterator,
                   typename Indexer>
@@ -175,6 +183,50 @@ namespace detail {
                                           bin_upper_bound + particle_container.last_index.size() ) );
     }
 
+    inline void
+    Cluster::importAndSortParticles( nvidiaParticles& particle_container,
+                                     nvidiaParticles& particle_to_inject )
+    {
+        // This is where we do a runtime dispatch depending on the simulation parameters.
+
+        switch( particle_container.dimension() ) {
+            case 2: {
+                // NOTE: For now we support 2D only (no qed/radiation). Performance comes from specialization. Whats hard his
+                // hiding this specialization.
+
+                // TODO(Etienne M): We should have a function that does the dispatch for each dimensions instead of
+                // implementing the dispatch directly in the switch. This is unreadable and un-maintainable.
+                if( particle_container.isQuantumParameter ) {
+                    if( particle_container.isMonteCarlo ) {
+                        SMILEI_ASSERT( false );
+                    } else {
+                        SMILEI_ASSERT( false );
+                    }
+                } else {
+                    if( particle_container.isMonteCarlo ) {
+                        SMILEI_ASSERT( false );
+                    } else {
+                        // Erase particles that leaves this patch
+                        particle_container.eraseLeavingParticles();
+
+                        // Inject newly arrived particles in particles_to_inject
+                        particle_container.injectParticles( &particle_to_inject );
+
+                        SMILEI_ASSERT( !particle_container.last_index.empty() );
+
+                        particle_container.last_index.back() = particle_container.gpu_size();
+                        particle_container.last_index[0]     = particle_container.last_index.back();
+                    }
+                }
+                break;
+            }
+            default:
+                // Not implemented, only 2D for the moment
+                SMILEI_ASSERT( false );
+                break;
+        }
+    }
+
     template <typename InputIterator,
               typename Indexer>
     void Cluster::doComputeParticleClusterKey( InputIterator first,
@@ -283,6 +335,10 @@ void nvidiaParticles::reserve( unsigned int particle_count )
 
 void nvidiaParticles::resize( unsigned int particle_count )
 {
+
+    // TODO(Etienne M): Use non-initializing vector/allocator (dont pay the cost 
+    // of what you dont use) ?
+
     for( int idim = 0; idim < nvidia_position_.size(); idim++ ) {
         nvidia_position_[idim].resize( particle_count );
     }
@@ -690,13 +746,14 @@ void nvidiaParticles::createParticles( int n_additional_particles )
     gpu_nparts_ = new_size;
 }
 
-void nvidiaParticles::importAndSortParticles( const Particles* particles_to_inject )
+void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
 {
     if( parameters_->isGPUParticleBinningAvailable() ) {
-        importAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
+        detail::Cluster::importAndSortParticles( *static_cast<nvidiaParticles*>( this ),
+                                                 *static_cast<nvidiaParticles*>( particles_to_inject ) );
     } else {
         // GPU particle binning is not supported
-        naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
+        naiveImportAndSortParticles( static_cast<nvidiaParticles*>( particles_to_inject ) );
     }
 }
 
@@ -758,31 +815,15 @@ void nvidiaParticles::setHostBinIndex()
     last_index[0]     = last_index.back();
 }
 
-void nvidiaParticles::naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject )
+void nvidiaParticles::naiveImportAndSortParticles( nvidiaParticles* particles_to_inject )
 {
     // Erase particles that leaves this patch
     eraseLeavingParticles();
 
     // Inject newly arrived particles in particles_to_inject
-    injectParticles( const_cast<nvidiaParticles*>( particles_to_inject ) /* TODO(Etienne M): Remove that ugly cast */ );
+    injectParticles( particles_to_inject );
 
     setHostBinIndex();
-}
-
-void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_to_inject )
-{
-    // TODO(Etienne M): Use non initializing vector/allocator (dont pay the cost of what you dont use)
-
-    // So basicaly, we got a 5 to 14ms budget to:
-    // - erase the leaving particles
-    // - import the entering particles
-    // - sort everything
-    // - re-compute the bins bondaries | 0.094 to 0.15ms via upper_bound
-    // - do the particle to grid current deposition
-    // All that, for 11kk particles.
-
-    naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
-
 }
 
 extern "C"

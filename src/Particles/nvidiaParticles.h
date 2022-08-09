@@ -113,7 +113,7 @@ public:
     void createParticles( int n_additional_particles ) override;
 
     //! See the Particles class for documentation.
-    void importAndSortParticles( const Particles* particles_to_inject ) override;
+    void importAndSortParticles( Particles* particles_to_inject ) override;
 
 protected:
     //! Redefine first_index and last_index according to the binning algorithm
@@ -175,11 +175,7 @@ protected:
 
     //! Memcpy of the particle at the end. No sorting or binning.
     //!
-    void naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject );
-
-    //! Sorting by cluster and binning
-    //! 
-    void importAndSortParticles( const nvidiaParticles* particles_to_inject );
+    void naiveImportAndSortParticles( nvidiaParticles* particles_to_inject );
 
     //! Position vector on device
     std::vector<thrust::device_vector<double>> nvidia_position_;
