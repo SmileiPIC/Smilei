@@ -178,17 +178,13 @@ void nvidiaParticles::initializeDataOnDevice()
     // For now we support 2D only.
     const auto first = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_cell_keys_ ),
                                                                       std::cbegin( nvidia_position_[0] ),
-                                                                      std::cbegin( nvidia_position_[1] ) ) );
+                                                                      std::cbegin( nvidia_position_[1] )
+                                                                      /* , std::cbegin( nvidia_position_[2] ) */ ) );
     const auto last  = first + gpu_size();
 
     compute2DParticleClusterKey( first, last );
     computeBinIndex();
     setHostBinIndex();
-
-    // TODO(Etienne M): Implement initial binning:
-    // - nothing do do except computing bins.
-    // - assert that everything is properly sorted. It should be, due to how particls are created.
-    // - compute bin should be constant template member function that write to it's argument's range.
 }
 
 //! Copy the particles from host to device
@@ -511,7 +507,7 @@ int nvidiaParticles::prepareBinIndex()
     // We completly ignore/discard/overwrite what's done in
     // ParticleCreator::create regarding binning.
     // NOTE: maybe ParticleCreator::create should not be doing the particle
-    // binning and should only be responsible for particle initialization (pos
+    // binning and should only be responsible for particle initialization (pos,
     // mementum etc.).
     // We are forced to deal with first_index even though its completly
     // redundant as long as the bins are dense (no holes).
@@ -564,6 +560,19 @@ void nvidiaParticles::computeBinIndex()
     SMILEI_ASSERT( thrust::is_sorted( bin_upper_bound, bin_upper_bound + last_index.size() ) );
 }
 
+void nvidiaParticles::setHostBinIndex()
+{
+    // TODO(Etienne M): You may want to inject, create etc. into a non binned
+    // nvidiaParticles object. For now, we assert it does not happen. 
+    // To be fix it, I think it only require:
+    //  if( last_index.empty() ) { return; }
+    //
+    SMILEI_ASSERT( !last_index.empty() );
+
+    last_index.back() = gpu_size();
+    last_index[0]     = last_index.back();
+}
+
 void nvidiaParticles::naiveImportAndSortParticles( const nvidiaParticles* particles_to_inject )
 {
     // Erase particles that leaves this patch
@@ -577,6 +586,8 @@ void nvidiaParticles::naiveImportAndSortParticles( const nvidiaParticles* partic
 
 void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_to_inject )
 {
+    // TODO(Etienne M): Use non initializing vector/allocator (dont pay the cost of what you dont use)
+
     // So basicaly, we got a 5 to 14ms budget to:
     // - erase the leaving particles
     // - import the entering particles
@@ -587,19 +598,6 @@ void nvidiaParticles::importAndSortParticles( const nvidiaParticles* particles_t
 
     naiveImportAndSortParticles( static_cast<const nvidiaParticles*>( particles_to_inject ) );
     // TODO(Etienne M): Implement
-}
-
-void nvidiaParticles::setHostBinIndex()
-{
-    // TODO(Etienne M): You may want to inject, create etc. into a non binned
-    // nvidiaParticles object. For now, we assert it does not happen. 
-    // To be fix it, I think it only require:
-    //  if( last_index.empty() ) { return; }
-    //
-    SMILEI_ASSERT( !last_index.empty() );
-
-    last_index.back() = gpu_size();
-    last_index[0]     = last_index.back();
 }
 
 extern "C"

@@ -262,14 +262,14 @@ protected:
     //! InputIterator shall be a thrust::zip_iterator with the cell key as first
     //! value, followed by the 2 positions x and y.
     //!
-    //! NOTE: This is only for 2D particles !
-    //!
     template <typename InputIterator,
               typename Indexer>
     static void computeParticleClusterKey( InputIterator first,
                                            InputIterator last,
                                            Indexer       an_indexer );
 
+    //! NOTE: This is only for 2D particles !
+    //!
     template <typename InputIterator>
     void compute2DParticleClusterKey( InputIterator first,
                                       InputIterator last ) const;
