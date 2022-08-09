@@ -31,8 +31,9 @@ struct Cluster
 public:
     //! Same type as what is used in nvidia_cell_keys_
     //!
-    using IDType   = int;
-    using SizeType = unsigned int;
+    using IDType         = int;
+    using SizeType       = unsigned int;
+    using DifferenceType = int;
 
 public:
 };
@@ -46,7 +47,7 @@ struct Cluster2D : public Cluster
 {
 public:
 public:
-    template <Cluster::SizeType kClusterWidth>
+    template <Cluster::DifferenceType kClusterWidth>
     struct Indexer
     {
     public:
