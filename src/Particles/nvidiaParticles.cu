@@ -34,7 +34,7 @@ namespace detail {
     // Cluster manipulation functor definition
     ////////////////////////////////////////////////////////////////////////////////
 
-    //! Basic functionnality for cluster manipulation.
+    //! Cluster manipulation functionnalities common to all dimension.
     //! NOTE: This only focus on GPU data manipulation. The host data is shall
     //! not be handled here !
     //!
@@ -48,7 +48,7 @@ namespace detail {
         using DifferenceType = int;
 
     public:
-        //! Compute the cell key of a particle range.
+        //! Compute the cell key for all the particles (not only a subset).
         //!
         static inline void
         computeParticleClusterKey( nvidiaParticles& particle_container,
@@ -107,6 +107,17 @@ namespace detail {
         template <typename Tuple>
         __host__ __device__ IDType
         Index( const Tuple& a_particle ) const;
+
+        //! Compute the cell key of a particle range.
+        //!
+        static void
+        computeParticleClusterKey( nvidiaParticles& particle_container,
+                                   const Params&    parameters );
+
+        static void
+        importAndSortParticles( nvidiaParticles& particle_container,
+                                nvidiaParticles& particle_to_inject,
+                                const Params&    parameters );
 
     public:
         double   inverse_of_cell_size_in_x_;
@@ -189,20 +200,13 @@ namespace detail {
     Cluster::computeParticleClusterKey( nvidiaParticles& particle_container,
                                         const Params&    parameters )
     {
-        // This is where we do a runtime dispatch depending on the simulation parameters.
+        // This is where we do a runtime dispatch depending on the simulation's 
+        // dimensions.
 
         switch( particle_container.dimension() ) {
             case 2: {
-                const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
-                                                                                  static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
-                                                                                  static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
-                const auto last  = first + particle_container.gpu_size();
-
-                // TODO(Etienne M): Do something like Cluster2D::beginParticles
-                doComputeParticleClusterKey( first, last,
-                                             Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
-                                                                                         parameters.cell_length[1],
-                                                                                         parameters.n_space[0] } );
+                Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
+                                                                                       parameters );
                 break;
             }
             default:
@@ -225,7 +229,7 @@ namespace detail {
                                           static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
 
         // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
-        // it so fast anyway..)
+        // it's so fast anyway..)
 
         // thrust::upper_bound( thrust::device,
         //                      std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
@@ -251,48 +255,14 @@ namespace detail {
                                      nvidiaParticles& particle_to_inject,
                                      const Params&    parameters )
     {
-        // This is where we do a runtime dispatch depending on the simulation parameters.
+        // This is where we do a runtime dispatch depending on the simulation's 
+        // dimensions.
 
         switch( particle_container.dimension() ) {
             case 2: {
-                // NOTE: For now we support 2D only (no qed/radiation). Performance comes from specialization. Whats hard his
-                // hiding this specialization.
-
-                // TODO(Etienne M): We should have a function that does the dispatch for each dimensions instead of
-                // implementing the dispatch directly in the switch. This is unreadable and un-maintainable.
-                if( particle_container.isQuantumParameter ) {
-                    if( particle_container.isMonteCarlo ) {
-                        SMILEI_ASSERT( false );
-                    } else {
-                        SMILEI_ASSERT( false );
-                    }
-                } else {
-                    if( particle_container.isMonteCarlo ) {
-                        SMILEI_ASSERT( false );
-                    } else {
-                        const Cluster2D<Params::getGPUClusterWidth( 2 )> cluster_manipulator{ parameters.cell_length[0],
-                                                                                              parameters.cell_length[1],
-                                                                                              parameters.n_space[0] };
-
-                        // Return the appropriate thrust::zip_iterator for the
-                        // current simulation's parameters
-                        const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
-                            return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
-                                                                                  particle_container.getPtrPosition( 0 ),
-                                                                                  particle_container.getPtrPosition( 1 ),
-                                                                                  particle_container.getPtrMomentum( 0 ),
-                                                                                  particle_container.getPtrMomentum( 1 ),
-                                                                                  particle_container.getPtrMomentum( 2 ),
-                                                                                  particle_container.getPtrWeight(),
-                                                                                  particle_container.getPtrCharge() ) );
-                        };
-
-                        doImportAndSortParticles( particle_container,
-                                                  particle_to_inject,
-                                                  cluster_manipulator,
-                                                  particle_iterator_provider );
-                    }
-                }
+                Cluster2D<Params::getGPUClusterWidth( 2 )>::importAndSortParticles( particle_container,
+                                                                                    particle_to_inject,
+                                                                                    parameters );
                 break;
             }
             default:
@@ -432,6 +402,73 @@ namespace detail {
                                        ( x_cell_coordinate / kClusterWidth );
 
         return static_cast<IDType>( cluster_index );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    void
+    Cluster2D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
+                                                         const Params&    parameters )
+    {
+        const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
+                                                                          static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
+        const auto last  = first + particle_container.gpu_size();
+
+        // TODO(Etienne M): Do something like "particle_iterator_provider"
+        doComputeParticleClusterKey( first, last,
+                                     Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
+                                                                                 parameters.cell_length[1],
+                                                                                 parameters.n_space[0] } );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    void
+    Cluster2D<kClusterWidth>::importAndSortParticles( nvidiaParticles& particle_container,
+                                                      nvidiaParticles& particle_to_inject,
+                                                      const Params&    parameters )
+    {
+        // This is where we do a runtime dispatch depending on the simulation's
+        // qed/radiation settings.
+
+        // NOTE: For now we support dont support qed/radiations. Performance
+        // comes from specialization.
+
+        // TODO(Etienne M): Find a better way to dispatch at runtime. This is
+        // complex to read and to maintainable.
+
+        const Cluster2D cluster_manipulator{ parameters.cell_length[0],
+                                             parameters.cell_length[1],
+                                             parameters.n_space[0] };
+
+        if( particle_container.isQuantumParameter ) {
+            if( particle_container.isMonteCarlo ) {
+                SMILEI_ASSERT( false );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+        } else {
+            if( particle_container.isMonteCarlo ) {
+                SMILEI_ASSERT( false );
+            } else {
+                // Returns the appropriate thrust::zip_iterator for the
+                // current simulation's parameters
+                const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
+                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrPosition( 1 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge() ) );
+                };
+
+                doImportAndSortParticles( particle_container,
+                                          particle_to_inject,
+                                          cluster_manipulator,
+                                          particle_iterator_provider );
+            }
+        }
     }
 
 } // namespace detail
