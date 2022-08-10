@@ -49,7 +49,11 @@ public:
     #pragma omp distribute parallel for
 #endif
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // Dont reset the key
+#else
             cell_keys[ipart] = 0;
+#endif
         }
 
         double energy_change = 0.;

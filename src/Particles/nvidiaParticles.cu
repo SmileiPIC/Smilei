@@ -54,6 +54,12 @@ namespace detail {
         computeParticleClusterKey( nvidiaParticles& particle_container,
                                    const Params&    parameters );
 
+        //! Sort the particle on GPU by their cluster/cell key.
+        //!
+        static inline void
+        sortParticleByKey( nvidiaParticles& particle_container,
+                           const Params&    parameters );
+
         //! precondition:
         //!     - nvidia_cell_keys_ shall be sorted in non decreasing order
         //!     - last_index.data() is a pointer mapped to GPU via
@@ -65,7 +71,10 @@ namespace detail {
         //! Sorting by cluster and binning
         //!
         //! precondition:
-        //!     - particle_container is already sorted by chunk
+        //!     - particle_container is already sorted by cluster or 
+        //!       particle_container is not sorted anymore (after a push) but
+        //!       still contain the old cluster key un touched.
+        //!       PartBoundCond::apply will set the keys to zero !
         //!
         static inline void
         importAndSortParticles( nvidiaParticles& particle_container,
@@ -79,6 +88,13 @@ namespace detail {
         doComputeParticleClusterKey( InputIterator first,
                                      InputIterator last,
                                      ClusterType   cluster_type );
+
+        template <typename RandomAccessIterator0,
+                  typename RandomAccessIterator1>
+        static void
+        doSortParticleByKey( RandomAccessIterator0 key_first,
+                             RandomAccessIterator0 key_last,
+                             RandomAccessIterator1 value_first );
 
         template <typename ClusterType,
                   typename ParticleIteratorProvider,
@@ -97,10 +113,9 @@ namespace detail {
     {
     public:
     public:
-        __host__ __device__
         Cluster2D( double   cell_size_in_x,
                    double   cell_size_in_y,
-                   SizeType x_dimension_cell_count );
+                   SizeType y_dimension_cluster_count_ /* per patch */ );
 
         //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
         //! zipiterator).
@@ -118,6 +133,10 @@ namespace detail {
                                    const Params&    parameters );
 
         static void
+        sortParticleByKey( nvidiaParticles& particle_container,
+                           const Params&    parameters );
+
+        static void
         importAndSortParticles( nvidiaParticles& particle_container,
                                 nvidiaParticles& particle_to_inject,
                                 const Params&    parameters );
@@ -125,7 +144,7 @@ namespace detail {
     public:
         double   inverse_of_cell_size_in_x_;
         double   inverse_of_cell_size_in_y_;
-        SizeType x_dimension_cluster_count_; //! x_dim_width / kClusterWidth
+        SizeType y_dimension_cluster_count_; //! y_patch_dim_width / kClusterWidth
         // 32 bits padding :(
     };
 
@@ -147,7 +166,7 @@ namespace detail {
         __host__ __device__ void
         operator()( Tuple& a_particle ) const
         {
-            thrust::get<0>( a_particle ) = cluster_type_.Index( a_particle );
+            thrust::get<0>( a_particle ) /* cluster key */ = cluster_type_.Index( a_particle );
         }
 
     protected:
@@ -174,7 +193,7 @@ namespace detail {
         {
             // NOTE: its ub to set the cluster key to wrongly keyed particles
             // now..
-            return thrust::get<0>( a_particle ) /* cluster key */ == cluster_type_.Index( a_particle );
+            return thrust::get<0>( a_particle ) /* cluster key */ != cluster_type_.Index( a_particle );
         }
 
     protected:
@@ -203,13 +222,33 @@ namespace detail {
     Cluster::computeParticleClusterKey( nvidiaParticles& particle_container,
                                         const Params&    parameters )
     {
-        // This is where we do a runtime dispatch depending on the simulation's 
+        // This is where we do a runtime dispatch depending on the simulation's
         // dimensions.
 
         switch( particle_container.dimension() ) {
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
                                                                                        parameters );
+                break;
+            }
+            default:
+                // Not implemented, only 2D for the moment
+                SMILEI_ASSERT( false );
+                break;
+        }
+    }
+
+    inline void
+    Cluster::sortParticleByKey( nvidiaParticles& particle_container,
+                                const Params&    parameters )
+    {
+        // This is where we do a runtime dispatch depending on the simulation's
+        // dimensions.
+
+        switch( particle_container.dimension() ) {
+            case 2: {
+                Cluster2D<Params::getGPUClusterWidth( 2 )>::sortParticleByKey( particle_container,
+                                                                               parameters );
                 break;
             }
             default:
@@ -258,7 +297,7 @@ namespace detail {
                                      nvidiaParticles& particle_to_inject,
                                      const Params&    parameters )
     {
-        // This is where we do a runtime dispatch depending on the simulation's 
+        // This is where we do a runtime dispatch depending on the simulation's
         // dimensions.
 
         switch( particle_container.dimension() ) {
@@ -277,13 +316,26 @@ namespace detail {
 
     template <typename InputIterator,
               typename ClusterType>
-    void Cluster::doComputeParticleClusterKey( InputIterator first,
-                                               InputIterator last,
-                                               ClusterType   cluster_type )
+    void
+    Cluster::doComputeParticleClusterKey( InputIterator first,
+                                          InputIterator last,
+                                          ClusterType   cluster_type )
     {
         thrust::for_each( thrust::device,
                           first, last,
                           AssignClusterIndex<ClusterType>{ cluster_type } );
+    }
+
+    template <typename RandomAccessIterator0,
+              typename RandomAccessIterator1>
+    void
+    Cluster::doSortParticleByKey( RandomAccessIterator0 key_first,
+                                  RandomAccessIterator0 key_last,
+                                  RandomAccessIterator1 value_first )
+    {
+        thrust::sort_by_key( thrust::device,
+                             key_first, key_last,
+                             value_first );
     }
 
     template <typename ClusterType,
@@ -304,102 +356,93 @@ namespace detail {
         // - do the particle to grid current deposition
         // All theses durations are for 11kk particles.
 
-        // const auto first_particle = particle_iterator_provider( particle_container );
+        const auto first_particle = particle_iterator_provider( particle_container );
 
-        // auto last_particle = first_particle +
-        //                      particle_container.gpu_size(); // Obviously, we use half open ranges
+        auto last_particle = first_particle +
+                             particle_container.gpu_size(); // Obviously, we use half open ranges
 
-        // // Remove out of bound particles
-        // // Using more memory, we could use the faster remove_copy_if
-        // last_particle = thrust::remove_if( thrust::device,
-        //                                    first_particle,
-        //                                    last_particle,
-        //                                    OutOfBoundaryPredicate{} );
+        // Remove out of bound particles
+        // Using more memory, we could use the faster remove_copy_if
+        // NOTE: remove_if is stable.
+        last_particle = thrust::remove_if( thrust::device,
+                                           first_particle,
+                                           last_particle,
+                                           OutOfBoundaryPredicate{} );
 
-        // // Idea 1: - remove_copy_if instead of copy_if
-        // //         - sort(the_particles_to_inject)
-        // //         - merge
-        // //         - compute bins
-        // // NOTE: This method consumes a lot of memory ! O(N)
+        // Idea 1: - remove_copy_if instead of copy_if
+        //         - sort(the_particles_to_inject)
+        //         - merge
+        //         - compute bins
+        // NOTE: This method consumes a lot of memory ! O(N)
 
-        // const auto new_particle_to_inject_count = particle_to_inject.gpu_size();
-        // const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
-        //                                                                                         last_particle );
+        const auto new_particle_to_inject_count = particle_to_inject.gpu_size();
+        const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
+                                                                                                last_particle );
 
-        // // NOTE: We realy want a non-initializing vector here!
-        // // It's possible to give a custom allocator to thrust::device_vector.
-        // // Create one with construct(<>) as a noop and derive from
-        // // thrust::device_malloc_allocator
-        // particle_to_inject.resize( new_particle_count ); // We probably invalidated the iterators
+        // NOTE: We realy want a non-initializing vector here!
+        // It's possible to give a custom allocator to thrust::device_vector.
+        // Create one with construct(<>) as a noop and derive from
+        // thrust::device_malloc_allocator
+        particle_to_inject.resize( new_particle_count ); // We probably invalidated the iterators
 
-        // // Copy out of cluster/tile/chunk particles
-        // // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
-        // // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
+        // Copy out of cluster/tile/chunk particles
+        // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
+        // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
 
-        // const auto first_particle_to_inject = particle_iterator_provider( particle_to_inject );
+        const auto first_particle_to_inject = particle_iterator_provider( particle_to_inject );
 
-        // const auto partitioned_particles_bounds_true  = thrust::copy_if( thrust::device,
-        //                                                                  first_particle, last_particle,
-        //                                                                  // Dont overwrite the particle_to_inject (at the start of the array)
-        //                                                                  first_particle_to_inject + new_particle_to_inject_count,
-        //                                                                  OutOfClusterPredicate<ClusterType>{ cluster_type } );
-        // const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
-        //                                                                         first_particle, last_particle,
-        //                                                                         // In reverse, starting from end(particle_to_inject) !
-        //                                                                         thrust::make_reverse_iterator( first_particle_to_inject +
-        //                                                                                                        new_particle_count ),
-        //                                                                         OutOfClusterPredicate<ClusterType>{ cluster_type } );
+        // NOTE: copy_if/remove_copy_if are stable.
+        const auto partitioned_particles_bounds_true  = thrust::copy_if( thrust::device,
+                                                                         first_particle, last_particle,
+                                                                         // Dont overwrite the particle_to_inject (at the start of the array)
+                                                                         first_particle_to_inject + new_particle_to_inject_count,
+                                                                         OutOfClusterPredicate<ClusterType>{ cluster_type } );
+        const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
+                                                                                first_particle, last_particle,
+                                                                                // In reverse, starting from end(particle_to_inject) !
+                                                                                thrust::make_reverse_iterator( first_particle_to_inject +
+                                                                                                               new_particle_count ),
+                                                                                OutOfClusterPredicate<ClusterType>{ cluster_type } );
 
-        // // Compute or recompute the cluster index of the particle_to_inject
-        // // NOTE:
-        // // - we can "save" some work here if cluster index is already computed
-        // // for the new particles to inject (not the one we got with copy_if).
-        // //
-        // doComputeParticleClusterKey( first_particle_to_inject,
-        //                              partitioned_particles_bounds_true,
-        //                              cluster_type );
+        // Compute or recompute the cluster index of the particle_to_inject
+        // NOTE:
+        // - we can "save" some work here if cluster index is already computed
+        // for the new particles to inject (not the one we got with copy_if).
+        //
+        doComputeParticleClusterKey( first_particle_to_inject,
+                                     partitioned_particles_bounds_true,
+                                     cluster_type );
 
-        // const auto first_particle_to_inject_no_key = particle_no_key_iterator_provider( particle_to_inject );
-        // const auto particle_to_rekey_count         = std::distance( first_particle_to_inject,
-        //                                                             partitioned_particles_bounds_true );
+        const auto first_particle_to_inject_no_key = particle_no_key_iterator_provider( particle_to_inject );
+        const auto particle_to_rekey_count         = std::distance( first_particle_to_inject,
+                                                                    partitioned_particles_bounds_true );
 
-        // thrust::sort_by_key( thrust::device,
-        //                      first_particle_to_inject_no_key,
-        //                      first_particle_to_inject_no_key + particle_to_rekey_count,
-        //                      particle_to_inject.getPtrCellKeys() );
+        doSortParticleByKey( particle_to_inject.getPtrCellKeys(),
+                             particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,
+                             first_particle_to_inject_no_key );
 
-        // // Same as for particle_to_inject, uninitializing vector is best
-        // particle_container.resize( new_particle_count );
+        // Same as for particle_to_inject, uninitializing vector is best
+        particle_container.resize( new_particle_count );
 
-        // // Merge by key
-        // // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
-        // // TODO(Etienne M): Does the order (which range is the first in the argument) matters for perfs ?
-        // //
-        // last_particle = thrust::merge_by_key( thrust::device,
-        //                                       particle_to_inject.getPtrCellKeys(),                                                            // Input range 1, first key
-        //                                       particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,                                  // Input range 1, last key
-        //                                       thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + new_particle_count ),      // Input range 2, first key (in reverse)
-        //                                       thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + particle_to_rekey_count ), // Input range 2, last key (in reverse)
-        //                                       first_particle_to_inject_no_key,                                                                // Input range 1, first value
-        //                                       thrust::make_reverse_iterator( first_particle_to_inject_no_key + new_particle_count ),          // Input range 2, first value
-        //                                       particle_no_key_iterator_provider( particle_container ),                                        // Output range first value
-        //                                       particle_container.getPtrCellKeys() );                                                          // Output range first key
+        // Merge by key
+        // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
+        // TODO(Etienne M): Does the order (which range is the first in the argument) matters for perfs ?
+        //
+        thrust::merge_by_key( thrust::device,
+                              particle_to_inject.getPtrCellKeys(),                                                            // Input range 1, first key
+                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,                                  // Input range 1, last key
+                              thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + new_particle_count ),      // Input range 2, first key (in reverse)
+                              thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + particle_to_rekey_count ), // Input range 2, last key (in reverse)
+                              first_particle_to_inject_no_key,                                                                // Input range 1, first value
+                              thrust::make_reverse_iterator( first_particle_to_inject_no_key + new_particle_count ),          // Input range 2, first value
+                              particle_container.getPtrCellKeys(),                                                            // Output range first key
+                              particle_no_key_iterator_provider( particle_container ) );                                      // Output range first value
 
-        // // Recompute bins
-        // computeBinIndex( particle_container );
+        // Recompute bins
+        computeBinIndex( particle_container );
 
-        {
-            // Erase particles that leaves this patch
-            particle_container.eraseLeavingParticles();
-
-            // Inject newly arrived particles in particles_to_inject
-            particle_container.injectParticles( &particle_to_inject );
-
-            SMILEI_ASSERT( !particle_container.last_index.empty() );
-
-            particle_container.last_index.back() = particle_container.gpu_size();
-            particle_container.last_index[0]     = particle_container.last_index.back();
-        }
+        // // Clear particle_to_inject (done in Species::sortParticles)
+        // particle_to_inject.resize( 0 );
     }
 
 
@@ -408,13 +451,12 @@ namespace detail {
     ////////////////////////////////////////////////////////////////////////////////
 
     template <Cluster::DifferenceType kClusterWidth>
-    __host__ __device__
     Cluster2D<kClusterWidth>::Cluster2D( double   cell_size_in_x,
                                          double   cell_size_in_y,
-                                         SizeType x_dimension_cell_count )
+                                         SizeType y_dimension_cell_count )
         : inverse_of_cell_size_in_x_{ 1.0 / cell_size_in_x }
         , inverse_of_cell_size_in_y_{ 1.0 / cell_size_in_y }
-        , x_dimension_cluster_count_{ x_dimension_cell_count / kClusterWidth }
+        , y_dimension_cluster_count_{ y_dimension_cell_count / kClusterWidth }
     {
         // EMPTY
     }
@@ -424,14 +466,18 @@ namespace detail {
     __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
     Cluster2D<kClusterWidth>::Index( const Tuple& a_particle ) const
     {
-        const SizeType x_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<0>( a_particle ) * inverse_of_cell_size_in_x_ );
-        const SizeType y_cell_coordinate = static_cast<SizeType>( /* std::floor ? */ thrust::get<1>( a_particle ) * inverse_of_cell_size_in_y_ );
+        const SizeType x_cell_coordinate = static_cast<SizeType>( thrust::get<1>( a_particle ) * inverse_of_cell_size_in_x_ );
+        const SizeType y_cell_coordinate = static_cast<SizeType>( thrust::get<2>( a_particle ) * inverse_of_cell_size_in_y_ );
 
         // These divisions will be optimized.
         // The integer division rounding behavior is expected.
 
-        const SizeType cluster_index = ( y_cell_coordinate / kClusterWidth ) * x_dimension_cluster_count_ +
-                                       ( x_cell_coordinate / kClusterWidth );
+        const SizeType x_cluster_coordinate = x_cell_coordinate / kClusterWidth;
+        const SizeType y_cluster_coordinate = y_cell_coordinate / kClusterWidth;
+
+        // The order is: x * ywidth * zwidth + y * zwidth + z
+        const SizeType cluster_index = x_cluster_coordinate * y_dimension_cluster_count_ +
+                                       y_cluster_coordinate;
 
         return static_cast<IDType>( cluster_index );
     }
@@ -449,7 +495,49 @@ namespace detail {
         doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
                                                                                  parameters.cell_length[1],
-                                                                                 parameters.n_space[0] } );
+                                                                                 parameters.n_space[1] } );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    void
+    Cluster2D<kClusterWidth>::sortParticleByKey( nvidiaParticles& particle_container,
+                                                 const Params& )
+    {
+        // This is where we do a runtime dispatch depending on the simulation's
+        // qed/radiation settings.
+
+        // NOTE: For now we support dont support qed/radiations. Performance
+        // comes from specialization.
+
+        // TODO(Etienne M): Find a better way to dispatch at runtime. This is
+        // complex to read and to maintainable.
+
+        if( particle_container.isQuantumParameter ) {
+            if( particle_container.isMonteCarlo ) {
+                SMILEI_ASSERT( false );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+        } else {
+            if( particle_container.isMonteCarlo ) {
+                SMILEI_ASSERT( false );
+            } else {
+                // The appropriate thrust::zip_iterator for the current
+                // simulation's parameters
+
+                const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                        particle_container.getPtrPosition( 1 ),
+                                                                                        particle_container.getPtrMomentum( 0 ),
+                                                                                        particle_container.getPtrMomentum( 1 ),
+                                                                                        particle_container.getPtrMomentum( 2 ),
+                                                                                        particle_container.getPtrWeight(),
+                                                                                        particle_container.getPtrCharge() ) );
+
+                doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                     particle_container.getPtrCellKeys() + particle_container.gpu_size(),
+                                     value_first );
+            }
+        }
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -469,7 +557,7 @@ namespace detail {
 
         const Cluster2D cluster_manipulator{ parameters.cell_length[0],
                                              parameters.cell_length[1],
-                                             parameters.n_space[0] };
+                                             parameters.n_space[1] };
 
         if( particle_container.isQuantumParameter ) {
             if( particle_container.isMonteCarlo ) {
@@ -561,7 +649,7 @@ void nvidiaParticles::reserve( unsigned int particle_count )
 void nvidiaParticles::resize( unsigned int particle_count )
 {
 
-    // TODO(Etienne M): Use non-initializing vector/allocator (dont pay the cost 
+    // TODO(Etienne M): Use non-initializing vector/allocator (dont pay the cost
     // of what you dont use) ?
 
     for( int idim = 0; idim < nvidia_position_.size(); idim++ ) {
@@ -676,6 +764,7 @@ void nvidiaParticles::initializeDataOnDevice()
     // device and we know we support the space dimension.
 
     detail::Cluster::computeParticleClusterKey( *this, *parameters_ );
+    detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
     detail::Cluster::computeBinIndex( *this );
     setHostBinIndex();
 }
@@ -978,9 +1067,11 @@ void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
                                                  *static_cast<nvidiaParticles*>( particles_to_inject ),
                                                  *parameters_ );
     } else {
-        // GPU particle binning is not supported
+        // When GPU particle binning is not supported, fallback to a naive implementation
         naiveImportAndSortParticles( static_cast<nvidiaParticles*>( particles_to_inject ) );
     }
+
+    setHostBinIndex();
 }
 
 int nvidiaParticles::prepareBinIndex()
@@ -1048,8 +1139,6 @@ void nvidiaParticles::naiveImportAndSortParticles( nvidiaParticles* particles_to
 
     // Inject newly arrived particles in particles_to_inject
     injectParticles( particles_to_inject );
-
-    setHostBinIndex();
 }
 
 extern "C"
