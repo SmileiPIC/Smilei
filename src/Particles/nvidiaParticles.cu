@@ -442,7 +442,6 @@ namespace detail {
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
         const auto last  = first + particle_container.gpu_size();
 
-        // TODO(Etienne M): Do something like "particle_iterator_provider"
         doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
                                                                                  parameters.cell_length[1],
@@ -1017,8 +1016,8 @@ int nvidiaParticles::prepareBinIndex()
 void nvidiaParticles::setHostBinIndex()
 {
     // TODO(Etienne M): You may want to inject, create etc. into a non binned
-    // nvidiaParticles object. For now, we assert it does not happen. 
-    // To be fix it, I think it only require:
+    // nvidiaParticles object (without allocated first/last_index). For now, we
+    // assert it does not happen. I think a fix only requires:
     //  if( last_index.empty() ) { return; }
     //
     SMILEI_ASSERT( !last_index.empty() );
