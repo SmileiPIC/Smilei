@@ -64,7 +64,8 @@ namespace detail {
 
         //! Sorting by cluster and binning
         //!
-        //! TODO(Etienne M): precondition
+        //! precondition:
+        //!     - particle_container is already sorted by chunk
         //!
         static inline void
         importAndSortParticles( nvidiaParticles& particle_container,
@@ -295,7 +296,7 @@ namespace detail {
         // - erase the leaving particles
         // - import the entering particles
         // - sort everything
-        // - re-compute the bins bondaries | 0.094 to 0.15ms via upper_bound
+        // - re-compute the bins boundaries
         // - do the particle to grid current deposition
         // All theses durations are for 11kk particles.
 
@@ -315,6 +316,7 @@ namespace detail {
         // //         - sort(the_particles_to_inject)
         // //         - merge
         // //         - compute bins
+        // // NOTE: This method consumes a lot of memory ! O(N)
 
         // const auto new_particle_to_inject_count = particle_to_inject.gpu_size();
         // const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
@@ -329,7 +331,6 @@ namespace detail {
         // // Copy out of cluster/tile/chunk particles
         // // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
         // // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
-        // //  - 4.5ms on GPU
 
         // const auto first_particle_to_inject = particle_iterator_provider( particle_to_inject );
 
@@ -342,7 +343,7 @@ namespace detail {
         //                                                                         first_particle, last_particle,
         //                                                                         // In reverse, starting from end(particle_to_inject) !
         //                                                                         thrust::make_reverse_iterator( first_particle_to_inject +
-        //                                                                                                        particle_to_inject.gpu_size() ),
+        //                                                                                                        new_particle_count ),
         //                                                                         OutOfClusterPredicate<ClusterType>{ cluster_type } );
 
         // // Compute or recompute the cluster index of the particle_to_inject
@@ -350,10 +351,38 @@ namespace detail {
         // // - we can "save" some work here if cluster index is already computed
         // // for the new particles to inject (not the one we got with copy_if).
         // //
-        // // - 1ms on GPU
         // doComputeParticleClusterKey( first_particle_to_inject,
         //                              partitioned_particles_bounds_true,
         //                              cluster_type );
+
+        // const auto first_particle_to_inject_no_key = particle_no_key_iterator_provider( particle_to_inject );
+        // const auto particle_to_rekey_count         = std::distance( first_particle_to_inject,
+        //                                                             partitioned_particles_bounds_true );
+
+        // thrust::sort_by_key( thrust::device,
+        //                      first_particle_to_inject_no_key,
+        //                      first_particle_to_inject_no_key + particle_to_rekey_count,
+        //                      particle_to_inject.getPtrCellKeys() );
+
+        // // Same as for particle_to_inject, uninitializing vector is best
+        // particle_container.resize( new_particle_count );
+
+        // // Merge by key
+        // // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
+        // // TODO(Etienne M): Does the order (which range is the first in the argument) matters for perfs ?
+        // //
+        // last_particle = thrust::merge_by_key( thrust::device,
+        //                                       particle_to_inject.getPtrCellKeys(),                                                            // Input range 1, first key
+        //                                       particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,                                  // Input range 1, last key
+        //                                       thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + new_particle_count ),      // Input range 2, first key (in reverse)
+        //                                       thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + particle_to_rekey_count ), // Input range 2, last key (in reverse)
+        //                                       first_particle_to_inject_no_key,                                                                // Input range 1, first value
+        //                                       thrust::make_reverse_iterator( first_particle_to_inject_no_key + new_particle_count ),          // Input range 2, first value
+        //                                       particle_no_key_iterator_provider( particle_container ),                                        // Output range first value
+        //                                       particle_container.getPtrCellKeys() );                                                          // Output range first key
+
+        // // Recompute bins
+        // computeBinIndex();
 
         {
             // Erase particles that leaves this patch
@@ -367,7 +396,6 @@ namespace detail {
             particle_container.last_index.back() = particle_container.gpu_size();
             particle_container.last_index[0]     = particle_container.last_index.back();
         }
-
     }
 
 
