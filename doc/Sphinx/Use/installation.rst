@@ -31,7 +31,7 @@ There are various ways to install all dependencies, depending on the platform:
 The command ``make help`` can give you some information about your environment.
 
 If you have successfully installed these dependencies on other platforms,
-please :doc:`contact us <partners>` and share!
+please :doc:`contact us </Overview/partners>` and share!
 
 
 ----

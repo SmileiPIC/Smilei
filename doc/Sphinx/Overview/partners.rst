@@ -1,43 +1,43 @@
 Partners
 --------
 
-.. |mdls| image:: _static/labs/mdls.png
+.. |mdls| image:: /_static/labs/mdls.png
   :width: 6em
   :align: middle
 
-.. |luli| image:: _static/labs/luli.png
+.. |luli| image:: /_static/labs/luli.png
   :width: 6em
   :align: middle
 
-.. |llr| image:: _static/labs/llr.png
+.. |llr| image:: /_static/labs/llr.png
   :width: 6em
   :align: middle
 
-.. |idris| image:: _static/labs/idris.png
+.. |idris| image:: /_static/labs/idris.png
   :width: 6em
   :align: middle
 
-.. |lpp| image:: _static/labs/lpp.png
+.. |lpp| image:: /_static/labs/lpp.png
   :width: 6em
   :align: middle
 
-.. |intel| image:: _static/labs/intel.png
+.. |intel| image:: /_static/labs/intel.png
   :width: 6em
   :align: middle
 
-.. |IAPRAS| image:: _static/labs/iapras.png
+.. |IAPRAS| image:: /_static/labs/iapras.png
   :width: 6em
   :align: middle
 
-.. |IRAMIS| image:: _static/labs/iramis.png
+.. |IRAMIS| image:: /_static/labs/iramis.png
   :width: 6em
   :align: middle
 
-.. |IRAP| image:: _static/labs/irap.png
+.. |IRAP| image:: /_static/labs/irap.png
   :width: 6em
   :align: middle
 
-.. |GOTHB| image:: _static/labs/gothenburg.png
+.. |GOTHB| image:: /_static/labs/gothenburg.png
   :width: 6em
   :align: middle
 
@@ -45,7 +45,7 @@ Partners
 
 +------------+---------------------------------------------------------------------------------------------------------+
 | |mdls|     |                                                                                                         |
-|            |   `Maison de la Simulation <http://www.maisondelasimulation.fr/>`_ (MdlS), USR 3441                     |
+|            |   `Maison de la Simulation <https://mdls.fr/>`_ (MdlS), USR 3441                                        |
 |            |                                                                                                         |
 +            +---------------------------------------------------------------------------------------------------------+
 |            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
@@ -59,7 +59,7 @@ Partners
 
 +------------+-------------------------------------------------------------------------------------------------------------+
 | |luli|     |                                                                                                             |
-|            |   `Laboratoire pour l'Utilisation des Lasers Intenses <http://www.luli.polytechnique.fr>`_ (LULI), UMR 7605 |
+|            |   `Laboratoire pour l'Utilisation des Lasers Intenses <https://luli.ip-paris.fr/>`_ (LULI), UMR 7605        |
 |            |                                                                                                             |
 +            +-------------------------------------------------------------------------------------------------------------+
 |            |   * `Mickael Grech <mickael.grech@polytechnique.edu>`_                                                      |
@@ -75,7 +75,7 @@ Partners
 
 +------------+---------------------------------------------------------------------------------------------------------+
 | |llr|      |                                                                                                         |
-|            |   `Laboratoire Leprince-Ringuet <http://polywww.in2p3.fr>`_ (LLR), UMR 7638                             |
+|            |   `Laboratoire Leprince-Ringuet <https://llr.in2p3.fr>`_ (LLR), UMR 7638                                |
 +            +---------------------------------------------------------------------------------------------------------+
 |            |                                                                                                         |
 |            |   * `Arnaud Beck <beck@llr.in2p3.fr>`_                                                                  |
@@ -165,7 +165,7 @@ Partners
 Related projects
 ^^^^^^^^^^^^^^^^
 
-.. |picsar| image:: _static/labs/picsar.jpg
+.. |picsar| image:: /_static/labs/picsar.jpg
   :width: 6em
   :align: middle
 
@@ -178,7 +178,7 @@ Related projects
 +------------+-----------------------------------------------------------------------------+
 
 
-.. |openpmd| image:: _static/labs/openpmd.jpg
+.. |openpmd| image:: /_static/labs/openpmd.jpg
   :width: 6em
   :align: middle
 
@@ -197,15 +197,15 @@ Acknowledgments
 
 Financial support from the *Laboratoires d'Excellence*:
 
-.. |plasapar| image:: _static/labs/plasapar.png
+.. |plasapar| image:: /_static/labs/plasapar.png
   :width: 130px
   :align: middle
 
-.. |palm| image:: _static/labs/palm.png
+.. |palm| image:: /_static/labs/palm.png
   :width: 130px
   :align: middle
 
-.. |P2IO| image:: _static/labs/p2io.png
+.. |P2IO| image:: /_static/labs/p2io.png
   :width: 6em
   :align: middle
 

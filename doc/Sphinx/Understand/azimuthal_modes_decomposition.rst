@@ -13,7 +13,7 @@ This requires a system with cylindrical symmetry or close to cylindrical symmetr
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: _static/Coordinate_Reference_AMcylindrical.png
+.. figure:: /_static/Coordinate_Reference_AMcylindrical.png
   :width: 11cm
   
   Coordinates in azimuthal geometry.
@@ -34,7 +34,7 @@ The mode :math:`m=0` has cylindrical symmetry (no dependence
 on :math:`\theta`). The following figure shows the real part
 of the first four azimuthal modes.
 
-.. figure:: _static/AM_modes.png
+.. figure:: /_static/AM_modes.png
   :width: 15cm
 
   Real part of the first four pure azimuthal modes :math:`exp(-im\theta)`
@@ -147,7 +147,7 @@ The azimuthal decomposition concerns only the grid quantities
 but macro-particles evolve in a full three-dimensional
 space with cartesian coordinates.
 
-.. figure:: _static/AM_grid_particles.jpg
+.. figure:: /_static/AM_grid_particles.jpg
   :width: 10cm
 
   Blue arrows: the ``x`` and ``r`` axes of the 2D grid (red)
@@ -189,7 +189,7 @@ the AM and 3D geometries:
 * The origin of the coordinates is on the axis of the cylinder
   (see figure below).
 
-.. figure:: _static/AMcylindrical_vs_cartesian.png
+.. figure:: /_static/AMcylindrical_vs_cartesian.png
 
   Origin of coordinates in AM cylindrical and 3D cartesian.
 
@@ -313,7 +313,7 @@ All equations in this section are given for this specific case.
 For different numbers of ghost cells, simply add the difference in all indices.
 :math:`jp` and :math:`jd` stand for the primal and dual indices.
 
-.. figure:: _static/transverse_axis.png
+.. figure:: /_static/transverse_axis.png
    :width: 10cm
 
 Cancellation on axis

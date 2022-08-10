@@ -5,7 +5,7 @@ Laser envelope model
 In many physical situations, the spatial and temporal scales of interest (e.g. the plasma wavelength :math:`\lambda_p`) are much larger than the scales related to the laser central wavelength :math:`\lambda_0`.
 In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the computation time can be substantially reduced: one only needs to sample the laser envelope instead of :math:`\lambda_0`, as depicted in the following figure.
 
-.. figure:: _static/Envelope_Figure.png
+.. figure:: /_static/Envelope_Figure.png
   :width: 10cm
 
   Blue: laser vector potential component :math:`\hat{A}` along the transverse direction. Red: the module of its complex envelope :math:`|\tilde{A}|`. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten. 

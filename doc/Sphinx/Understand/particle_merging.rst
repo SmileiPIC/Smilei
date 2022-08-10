@@ -50,7 +50,7 @@ Fig. :numref:`fig_vranic_particle_merging`, consists in 3 main steps:
 
 .. _fig_vranic_particle_merging:
 
-.. figure:: _static/vranic_particle_merging.png
+.. figure:: /_static/vranic_particle_merging.png
   :width: 100%
 
   Basic description of M. Vranic merging method in 2D geometry.
@@ -81,7 +81,7 @@ In each cell, for each coordinate :math:`\alpha`:
 
 .. _fig_vranic_momentum_discretization:
 
-.. figure:: _static/vranic_momentum_discretization.png
+.. figure:: /_static/vranic_momentum_discretization.png
   :width: 100%
 
   Cartesian and spherical momentum discretizations, in 2D.
@@ -97,7 +97,7 @@ The spherical components are related to the Cartesian momentum components by:
 
 .. _fig_spherical_coordinates:
 
-.. figure:: _static/spherical_coordinates.png
+.. figure:: /_static/spherical_coordinates.png
   :width: 50%
 
   Spherical coordinates used for the momentum cell discretization.
@@ -164,7 +164,7 @@ and same energy :math:`\varepsilon_a = \varepsilon_b = \varepsilon_t / w_t`.
 
 .. _fig_vranic_planar_merging:
 
-.. figure:: _static/vranic_planar_merging.png
+.. figure:: /_static/vranic_planar_merging.png
   :width: 100%
 
   View of the plane made by vector :math:`\mathbf{d}` and :math:`\mathbf{p_t}`.
@@ -192,7 +192,7 @@ where the macro-particles are located.
 
 .. _fig_momentum_cell_vector:
 
-.. figure:: _static/vranic_momentum_cell_vector.png
+.. figure:: /_static/vranic_momentum_cell_vector.png
   :width: 100%
 
   Sub-group coordinate vector in Cartesian and spherical geometries.
@@ -229,7 +229,7 @@ Finally, the new macro-particle momentums are:
 
 .. _fig_3d_schematic:
 
-.. figure:: _static/vranic_3d_schematics.png
+.. figure:: /_static/vranic_3d_schematics.png
   :width: 100%
 
   3D view of the different vectors involved in the merging method.
@@ -343,7 +343,7 @@ span similar solid-angles, as they becomes arbitrarily small at the poles.
 
 .. _fig_spherical_discretization:
 
-.. figure:: _static/spherical_discretization.png
+.. figure:: /_static/spherical_discretization.png
   :width: 100%
 
   Rudimentary spherical discretization (a) and the spherical discretization
@@ -388,14 +388,14 @@ as shown in :numref:`fig_magnetic_shower_photon_energy_distribution` a).
 
 .. _fig_magnetic_shower_photon_energy_distribution:
 
-.. figure:: _static/figures/magnetic_shower_photon_energy_distribution.png
+.. figure:: /_static/figures/magnetic_shower_photon_energy_distribution.png
   :width: 100%
 
   Photon energy distribution at the end of the simulation.
   
 .. _fig_magnetic_shower_photon_pxpy_distribution:
 
-.. figure:: _static/figures/magnetic_shower_photon_pxpy_distribution.png
+.. figure:: /_static/figures/magnetic_shower_photon_pxpy_distribution.png
   :width: 100%
 
   Photon px-py momentum distribution at the end of the simulation.
@@ -419,7 +419,7 @@ the distribution obtained without merging.
 
 .. _magnetic_shower_gamma_distribution_log:
 
-.. figure:: _static/figures/magnetic_shower_gamma_distribution_log.png
+.. figure:: /_static/figures/magnetic_shower_gamma_distribution_log.png
   :width: 100%
 
   Photon energy distribution for the 3D magnetic shower benchmark
@@ -456,7 +456,7 @@ chosen as circularly-polarized plane waves.
 
 .. _fig_qed_pair_cascade:
 
-.. figure:: _static/figures/qed_pair_cascade.png
+.. figure:: /_static/figures/qed_pair_cascade.png
   :width: 100%
 
   QED pair cascade configuration with two counter-propagating lasers.
@@ -485,7 +485,7 @@ the momentum distribution and influence the physical processes.
 
 .. _fig_qed_cascade_scalar:
 
-.. figure:: _static/figures/QED_cascade_scalar.png
+.. figure:: /_static/figures/QED_cascade_scalar.png
   :width: 100%
 
   Effect of various merging configurations on the
@@ -501,7 +501,7 @@ due to the accumulation effect.
 
 .. _fig_qed_cascade_photon_gamma_spectrum:
 
-.. figure:: _static/figures/QED_cascade_gamma_spectrum.png
+.. figure:: /_static/figures/QED_cascade_gamma_spectrum.png
   :width: 100%
 
   Effect of various merging configurations on energy spectra.
@@ -514,7 +514,7 @@ reference distribution.
 
 .. _fig_qed_cascade_photon_pxpy_spectrum:
 
-.. figure:: _static/figures/QED_cascade_photon_px_py_distribution.png
+.. figure:: /_static/figures/QED_cascade_photon_px_py_distribution.png
   :width: 100%
 
   :math:`k_x-k_y` photon momentum distributions at simulation
@@ -526,7 +526,7 @@ reference distribution.
 
 .. _fig_qed_cascade_electron_pxpy_spectrum:
 
-.. figure:: _static/figures/QED_cascade_electron_px_py_distribution.png
+.. figure:: /_static/figures/QED_cascade_electron_px_py_distribution.png
   :width: 100%
 
   :math:`p_x-p_y` electron momentum distributions at simulation
@@ -545,7 +545,7 @@ similar to the original cartesian method described in [Vranic2005]_.
 
 .. _fig_qed_cascade_iteration_time:
 
-.. figure:: _static/figures/QED_cascade_iteration_time.png
+.. figure:: /_static/figures/QED_cascade_iteration_time.png
   :width: 100%
 
   Computation time per iteration as a function of time.

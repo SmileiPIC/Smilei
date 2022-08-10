@@ -89,21 +89,21 @@ ratios of particle weights: 0.1, 1, and 10.
 
 .. _beam1:
 
-.. figure:: _static/beam_relaxation123.png
+.. figure:: /_static/beam_relaxation123.png
   :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.05, ion charge = 1.
   
 .. _beam2:
 
-.. figure:: _static/beam_relaxation456.png
+.. figure:: /_static/beam_relaxation456.png
   :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 1.
 
 .. _beam3:
 
-.. figure:: _static/beam_relaxation789.png
+.. figure:: /_static/beam_relaxation789.png
   :width: 10cm
   
   Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 3.
@@ -133,7 +133,7 @@ They are plotted in :numref:`thermalization`.
 
 .. _thermalization:
 
-.. figure:: _static/thermalisation_ei123.png
+.. figure:: /_static/thermalisation_ei123.png
   :width: 9cm
   
   Thermalization between two species.
@@ -157,7 +157,7 @@ as shown in :numref:`temperature_isotropization`.
 
 .. _temperature_isotropization:
 
-.. figure:: _static/temperature_isotropization1.png
+.. figure:: /_static/temperature_isotropization1.png
   :width: 10cm
   
   Temperature isotropization of an electron population.
@@ -181,7 +181,7 @@ as shown in :numref:`maxwellianization`.
 
 .. _maxwellianization:
 
-.. figure:: _static/Maxwellianization1.png
+.. figure:: /_static/Maxwellianization1.png
   :width: 10cm
   
   Maxwellianization of an electron population.
@@ -199,7 +199,7 @@ as shown in :numref:`stoppingpower`.
 
 .. _stoppingpower:
 
-.. figure:: _static/Stopping_power123.png
+.. figure:: /_static/Stopping_power123.png
   :width: 10cm
   
   Stopping power of test electrons into a background electron population.
@@ -217,7 +217,7 @@ The resulting conductivity :math:`\sigma=en_ev_f/E` is compared in
 
 .. _conductivity:
 
-.. figure:: _static/conductivity.png
+.. figure:: /_static/conductivity.png
   :width: 10cm
   
   Conductivity of solid-density copper. Each point is one simulation.
@@ -338,7 +338,7 @@ to three different weight ratios between electrons and ions.
 
 .. _IonizationRate:
 
-.. figure:: _static/ionization_rate.png
+.. figure:: /_static/ionization_rate.png
   :width: 10cm
   
   Ionization of an aluminium plasma by drifting electrons.
@@ -361,7 +361,7 @@ work below a certain average ionization energy, in our case :math:`\sim 200` eV.
 
 .. _IonizationStoppinPower:
 
-.. figure:: _static/ionization_stopping_power.png
+.. figure:: /_static/ionization_stopping_power.png
   :width: 14cm
   
   Left: ionization slowing down versus time, for electrons injected at various
@@ -383,7 +383,7 @@ secondary electron density is monitored versus time in :numref:`IonizationMultip
 
 .. _IonizationMultiple:
 
-.. figure:: _static/ionization_multiple.png
+.. figure:: /_static/ionization_multiple.png
   :width: 10cm
   
   Secondary electron density *vs* time, for cold plasmas traversed by a 1 MeV electron beam.
@@ -408,7 +408,7 @@ from [Desjarlais2001]_.
 
 .. _IonizationRecombination:
 
-.. figure:: _static/ionization_recombination.png
+.. figure:: /_static/ionization_recombination.png
   :width: 12cm
   
   Final charge state of various plasmas at various temperatures.

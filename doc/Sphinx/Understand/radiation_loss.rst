@@ -146,7 +146,7 @@ on the radiating particle dynamics) is usually used (see [Timokhin2010]_, [Elkin
 More details on the implementation are given below.
 
 In :program:`Smilei` the corresponding description is accessible for an electron species by defining
-``radiation_model = "Monte-Carlo"`` or ``"MC"`` in the ``Species()`` block (see :doc:`namelist` for details).
+``radiation_model = "Monte-Carlo"`` or ``"MC"`` in the ``Species()`` block (see :doc:`/Use/namelist` for details).
 
 
 Intermediate, moderately quantum regime :math:`\chi \lesssim 1`
@@ -192,7 +192,7 @@ where we recognize 3 terms:
       + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}
 
 In :program:`Smilei` the corresponding description is accessible for an electron species by defining
-``radiation_model = "Niel"`` in the ``Species()`` block (see :doc:`namelist` for details).
+``radiation_model = "Niel"`` in the ``Species()`` block (see :doc:`/Use/namelist` for details).
 
 
 The classical regime :math:`\chi \ll 1`
@@ -221,7 +221,7 @@ with
   {\bf F}_{\rm rad} = -P_{\alpha} \chi^2 g(\chi)\,\mathbf{u} / \left( \mathbf{u}^2 c\right)
 
 In :program:`Smilei` the corresponding description is accessible for an electron species by defining
-``radiation_model = "corrected-Landau-Lifshitz"`` or ``"cLL"`` in the ``Species()`` block (see :doc:`namelist` for details).
+``radiation_model = "corrected-Landau-Lifshitz"`` or ``"cLL"`` in the ``Species()`` block (see :doc:`/Use/namelist` for details).
 
 .. note::
 
@@ -247,22 +247,24 @@ the most appropriate radiation reaction model for your simulation.
 
 .. _radiationRegimes:
 
-+-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Regime                              | :math:`\chi` value       | Description                                    | Models                    |
-+=====================================+==========================+================================================+===========================+
-| Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\gamma_\gamma  \ll \gamma`,             | Landau-Lifshitz           |
-|                                     |                          | radiated energy overestimated for              |                           |
-|                                     |                          | :math:`\chi > 10^{-2}`                         |                           |
-+-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\gamma_\gamma  \ll \gamma`,             | Corrected Landau-Lifshitz |
-|                                     |                          | no stochastic effects                          |                           |
-+-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\gamma_\gamma < \gamma`,                | Stochastic model of       |
-|                                     |                          | :math:`\gamma_\gamma \gg mc^2`                 | Niel `et al` / Monte-Carlo|
-+-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Quantum regime                      | :math:`\chi \sim 1`      | :math:`\gamma_\gamma \gtrsim \gamma`           | Monte-Carlo               |
-|                                     |                          |                                                |                           |
-+-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
+.. table:: Radiation model regimes
+
+  +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
+  | Regime                              | :math:`\chi` value       | Description                                    | Models                    |
+  +=====================================+==========================+================================================+===========================+
+  | Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\gamma_\gamma  \ll \gamma`,             | Landau-Lifshitz           |
+  |                                     |                          | radiated energy overestimated for              |                           |
+  |                                     |                          | :math:`\chi > 10^{-2}`                         |                           |
+  +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
+  | Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\gamma_\gamma  \ll \gamma`,             | Corrected Landau-Lifshitz |
+  |                                     |                          | no stochastic effects                          |                           |
+  +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
+  | Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\gamma_\gamma < \gamma`,                | Stochastic model of       |
+  |                                     |                          | :math:`\gamma_\gamma \gg mc^2`                 | Niel `et al` / Monte-Carlo|
+  +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
+  | Quantum regime                      | :math:`\chi \sim 1`      | :math:`\gamma_\gamma \gtrsim \gamma`           | Monte-Carlo               |
+  |                                     |                          |                                                |                           |
+  +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 
 
 --------------------------------------------------------------------------------
@@ -290,7 +292,7 @@ As explained below, many functions have been tabulated because of
 the cost of their computation for each particle.
 Tables can be generated by the external tool
 :program:`smilei_tables`.
-More information can be found in :doc:`tables`.
+More information can be found in :doc:`/Use/tables`.
 
 Continuous, Landau-Lifshitz-like models
 """""""""""""""""""""""""""""""""""""""
@@ -452,7 +454,7 @@ This enables to find a lower bound to the :math:`\chi_\gamma` range
 (discretization in the log domain) so that the
 remaining part is negligible in term of radiated energy.
 The parameter :math:`\epsilon` is called ``xi_threshold`` in
-:ref:`RadiationReaction <RadiationReaction>` and the tool :program:`smilei_tables` (:doc:`tables`.).
+:ref:`RadiationReaction <RadiationReaction>` and the tool :program:`smilei_tables` (:doc:`/Use/tables`.).
 
 The Monte-Carlo model is accessible in the species configuration
 under the name ``Monte-Carlo`` or ``mc``.
@@ -491,7 +493,7 @@ More details on the impact of the model on both the electron and photon distribu
 
 .. _radSpectra:
 
-.. figure:: _static/figSpectra_LR.png
+.. figure:: /_static/figSpectra_LR.png
   :width: 15cm
 
   Energy distribution (power spectrum) of the photon emitted by an ultra-relativistic electron bunch in a constant magnetic field.
@@ -513,7 +515,7 @@ value reached during the simulation is around 0.5.
 
 .. _rad_counter_prop_scalar:
 
-.. figure:: _static/rad_counter_prop_scalar.png
+.. figure:: /_static/rad_counter_prop_scalar.png
   :width: 15cm
 
   Kinetic, radiated and total energy plotted respectively with solid, dashed and dotted lines for
@@ -530,7 +532,7 @@ because the interaction happens mainly in the quantum regime.
 
 .. _rad_counter_prop_track:
 
-.. figure:: _static/rad_counter_prop_track.png
+.. figure:: /_static/rad_counter_prop_track.png
   :width: 18cm
 
   Evolution of the normalized kinetic energy
@@ -588,7 +590,7 @@ total energy is between :math:`2 \times 10^{-9}` and :math:`3 \times 10^{-9}`.
 
 .. _synchrotron_scalar:
 
-.. figure:: _static/synchrotron_scalar.png
+.. figure:: /_static/synchrotron_scalar.png
   :width: 15cm
 
   Kinetic, radiated and total energies plotted respectively with solid, dashed and dotted
@@ -615,7 +617,7 @@ recoil is the most important.
 
 .. _synchrotron_x_y_gamma:
 
-.. figure:: _static/synchrotron_x_y_gamma.png
+.. figure:: /_static/synchrotron_x_y_gamma.png
   :width: 18cm
 
   Average normalized kinetic energy at time :math:`25 \omega_r^{-1}`
@@ -654,7 +656,7 @@ electron groups having the same initial energy.
 
 .. _synchrotron_t_gamma_ne:
 
-.. figure:: _static/synchrotron_t_gamma_ne.png
+.. figure:: /_static/synchrotron_t_gamma_ne.png
   :width: 18cm
 
   Time evolution of the electron energy distribution for the Monte-Carlo, the Niel
@@ -708,7 +710,7 @@ acceleration mechanisms.
 
 .. _thin_foil_x_chi_ne:
 
-.. figure:: _static/thin_foil_x_chi_ne.png
+.. figure:: /_static/thin_foil_x_chi_ne.png
   :width: 18cm
 
   :math:`x - \chi` electron distribution at time 47 fs for the Monte-Carlo,
@@ -732,7 +734,7 @@ showing a difference close to 20% with the :red:`non-radiative` run.
 
 .. _thin_foil_scalar:
 
-.. figure:: _static/thin_foil_scalar.png
+.. figure:: /_static/thin_foil_scalar.png
   :width: 18cm
 
   Time evolution of the electron kinetic energy (solid lines), the carbon ion
@@ -751,7 +753,7 @@ The maximum electron energy is almost twice lower with radiation reaction.
 
 .. _thin_foil_x_px_ne:
 
-.. figure:: _static/thin_foil_x_px_ne.png
+.. figure:: /_static/thin_foil_x_px_ne.png
   :width: 18cm
 
   :math:`x - p_x` electron distribution at time 47 fs for the Monte-Carlo,
@@ -774,24 +776,26 @@ the Monte-Carlo radiation process.
 
 .. _radiationTimes:
 
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
-+=====================================+============+==========+==============+==========+=====================+
-| Counter-propagating Plane Wave 1D   | 0.2s       | 0.23s    | 0.24s        | 0.26s    | 0.3s                |
-| Haswell (Jureca)                    |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 15s                 |
-| :math:`\chi=0.05`,  :math:`B=100`   |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 22s                 |
-| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Synchrotron 2D KNL (Frioul)         | 21s        | 23s      | 23s          | 73s      | 47s                 |
-| :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
-| Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.8s     | 6.8s                |
-| 2D Sandy Bridge (Poincare)          |            |          |              |          |                     |
-+-------------------------------------+------------+----------+--------------+----------+---------------------+
+.. table:: Radiation model performances
+
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Radiation model                     | None       | LL       | CLL          | Niel     | MC                  |
+  +=====================================+============+==========+==============+==========+=====================+
+  | Counter-propagating Plane Wave 1D   | 0.2s       | 0.23s    | 0.24s        | 0.26s    | 0.3s                |
+  | Haswell (Jureca)                    |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 15s                 |
+  | :math:`\chi=0.05`,  :math:`B=100`   |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D Haswell (Jureca)     | 10s        | 11s      | 12s          | 14s      | 22s                 |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Synchrotron 2D KNL (Frioul)         | 21s        | 23s      | 23s          | 73s      | 47s                 |
+  | :math:`\chi=0.5`,  :math:`B=100`    |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
+  | Interaction with a carbon thin foil | 6.5s       | 6.5s     | 6.6s         | 6.8s     | 6.8s                |
+  | 2D Sandy Bridge (Poincare)          |            |          |              |          |                     |
+  +-------------------------------------+------------+----------+--------------+----------+---------------------+
 
 
 Descriptions of the cases:

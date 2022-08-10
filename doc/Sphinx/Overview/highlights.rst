@@ -5,7 +5,7 @@ Improved performance using vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` computational performance has been recently enhanced with
-:doc:`vectorized operations<vectorization>`,
+:doc:`vectorized operations</Understand/vectorization>`,
 in particular the projection of currents and the interpolation of fields.
 Typically, the new algorithms are more efficient than the old ones above
 10 particles per cell, up to 3 times faster. An *adaptive* switching technique
@@ -17,7 +17,7 @@ in :numref:`weibel_3d_ne_vecto_it510_fig1` (watch the `video <https://youtu.be/-
 
 .. _weibel_3d_ne_vecto_it510_fig1:
 
-.. figure:: _static/Weibel_3d_ne_vecto_it510.jpg
+.. figure:: /_static/Weibel_3d_ne_vecto_it510.jpg
     :width: 90%
     :align: center
     :name: weibel_3d_ne_vecto_it510
@@ -31,7 +31,7 @@ High-density regions are switched to vectorized operators while low-density
 regions remain scalar (they have only 8 particles per cell).
 In this particular case, the treatment of particles can be sped-up by 2.
 
-For more details, checkout the :doc:`doc<vectorization>` and this
+For more details, checkout the :doc:`doc</Understand/vectorization>` and this
 `ArXiV paper <https://arxiv.org/abs/1810.03949>`_.
 
 ----
@@ -44,7 +44,7 @@ hotspot of electrons, which makes the simulation strongly imbalanced.
 This spot represent a large part of the total calculations, so that
 more computing power should be allocated on it.
 
-Please refer to the doc :doc:`parallelization` to learn the basics of the
+Please refer to the doc :doc:`/Understand/parallelization` to learn the basics of the
 parallelization techniques employed in this section.
 
 .. rubric :: 1. OpenMP
@@ -57,7 +57,7 @@ MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is
 the total number of MPI processes, and :math:`M` is the number of threads
 in each MPI process.
 
-.. image:: _static/openMP_balancing.png
+.. image:: /_static/openMP_balancing.png
     :width: 500px
     :align: center
 
@@ -74,7 +74,7 @@ the simulation box (*patches*) between MPI processes, so that each MPI
 process owns a fair amount of the simulation load. The following figure
 shows how this balancing reduces the time of the simulation.
 
-.. image:: _static/DLB_balancing.png
+.. image:: /_static/DLB_balancing.png
     :width: 500px
     :align: center
 
@@ -84,7 +84,7 @@ the black curve corresponds to the DLB algorithm enabled.
 The portion of the box belonging to each MPI process varies when the load balancing
 occurs. The following figure shows how each of these portions evolve with time.
 
-.. image:: _static/Patch_loadcomparision.jpg
+.. image:: /_static/Patch_loadcomparision.jpg
 
 The four panels correspond to four timesteps during the simulation.
 The colorscale represents the log-scaled load of each patch.
@@ -119,7 +119,7 @@ the incident pulse (at time :math:`t_0`). The plasma electron density is shown i
 A close-up view of the interaction region is given in the bottom panel, illustrating
 the electron bunches being pulled out from the plasma surface.
 
-.. image:: _static/hhg1.jpg
+.. image:: /_static/hhg1.jpg
     :width: 13cm
     :align: center
 
@@ -127,7 +127,7 @@ Fourier analysis of the reflected laser field, in space and time, provides the
 angular distribution of the frequency spectrum of the reflected light, shown in the
 following figure (top panel). High harmonics appear up to order 16.
 
-.. image:: _static/hhg2.jpg
+.. image:: /_static/hhg2.jpg
     :width: 13cm
     :align: center
 
@@ -169,7 +169,7 @@ of the pump and seed intensities in the head-on collision at three different tim
 The blue-yellow maps correspond to the plasma density while the white-red maps
 correspond to the lasers intensity.
 
-.. image:: _static/pump_seed.jpg
+.. image:: /_static/pump_seed.jpg
     :align: center
 
 The final seed intensity is nearly 5 times its initial intensity
@@ -222,7 +222,7 @@ We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
 50 of the speed of light by the Alfvén velocity.
 There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
 
-.. image:: _static/reconnection.jpg
+.. image:: /_static/reconnection.jpg
     :width: 15cm
     :align: center
 
@@ -285,7 +285,7 @@ reflected flows, resulting in the creation, before the shock
 of filamentary structures in both the magnetic field (panel a) and
 the total plasma density (panel b).
 
-.. image:: _static/shock1.jpg
+.. image:: /_static/shock1.jpg
     :width: 15cm
     :align: center
 
@@ -299,7 +299,7 @@ in the downstream particle energy distribution.
 It is characteristic of first-order Fermi acceleration at the shock front,
 and appears to follow a :math:`\gamma^{-2.5}` power law.
 
-.. image:: _static/shock3.jpg
+.. image:: /_static/shock3.jpg
     :width: 11cm
     :align: center
 

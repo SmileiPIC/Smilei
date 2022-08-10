@@ -16,7 +16,7 @@ of the current iteration but they are taken into account in the diagnostics.
 
 .. _fig_particle_injector:
 
-.. figure:: _static/figures/particle_injector.png
+.. figure:: /_static/figures/particle_injector.png
     :width: 100%
 
 
@@ -39,7 +39,7 @@ Recommendation
 
 .. _fig_particle_injector_regular_random:
 
-.. figure:: _static/figures/particle_injector_regular_random.png
+.. figure:: /_static/figures/particle_injector_regular_random.png
     :width: 100%
 
 ----

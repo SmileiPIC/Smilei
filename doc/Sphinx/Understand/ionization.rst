@@ -150,7 +150,7 @@ with a short (few optical-cycle long) laser with wavelength :math:`\lambda_0 = 0
 
 .. _FigFieldIonization:
 
-.. figure:: _static/FieldIonization.png
+.. figure:: /_static/FieldIonization.png
 
   Results of two benchmarks for the field ionization Model.
   Top: Average charge state of hydrogen ions as a function of time when irradiated by a laser.
@@ -316,7 +316,7 @@ Super-imposed (in red) is the corresponding theoretical prediction.
 
 .. _FigFromRateIonization:
 
-.. figure:: _static/userDefinedRate.png
+.. figure:: /_static/userDefinedRate.png
 
   Results of the two benchmarks for the ionization model using user-defined rates as described above.
 

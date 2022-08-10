@@ -177,7 +177,7 @@ In the end, the prescribed laser profile lies in a plane located at a distance
 :math:`\delta` and rotated around :math:`z` by an angle :math:`\theta`, according to the
 following figure.
 
-.. figure:: _static/LaserOffsetAngle.png
+.. figure:: /_static/LaserOffsetAngle.png
   :width: 9cm
   
   The position of the plane where the laser profile is defined, with respect to the box.

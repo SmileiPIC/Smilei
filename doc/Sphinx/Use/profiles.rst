@@ -145,7 +145,7 @@ Pre-defined *spatial* profiles
 
 .. rubric:: Illustrations of the pre-defined spatial profiles
 
-.. image:: _static/pythonprofiles.png
+.. image:: /_static/pythonprofiles.png
 
 ----
 
@@ -212,7 +212,7 @@ Pre-defined *temporal* profiles
 
 .. rubric:: Illustrations of the pre-defined temporal profiles
 
-.. image:: _static/pythonprofiles_t.png
+.. image:: /_static/pythonprofiles_t.png
 
 
 ----

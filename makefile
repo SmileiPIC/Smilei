@@ -464,7 +464,7 @@ help:
 	@echo 'Intel Inspector environment:'
 	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
 	@echo
-	@echo 'http://www.maisondelasimulation.fr/smilei'
+	@echo 'https://smileipic.github.io/Smilei/'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
 	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi

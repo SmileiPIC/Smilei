@@ -43,7 +43,7 @@ Some methods can be implemented in a data container for managing or accessing th
 
 .. _dataContainer:
 
-.. figure:: _static/figures/data_container.png
+.. figure:: /_static/figures/data_container.png
   :width: 8cm
 
   Data container.
@@ -61,7 +61,7 @@ for instance, the particle interpolation, push and proection are operators.
 
 .. _operator:
 
-.. figure:: _static/figures/operator.png
+.. figure:: /_static/figures/operator.png
   :width: 10cm
 
   Operator.
@@ -89,7 +89,7 @@ The ``push`` factory will determine the right one to use.
 
 .. _factory:
 
-.. figure:: _static/figures/factories.png
+.. figure:: /_static/figures/factories.png
   :width: 15cm
 
   Description of the factory concept.
@@ -112,7 +112,7 @@ Each cell contains a certain population of particles (that can differ from cell 
 
 .. _full_domain:
 
-.. figure:: _static/figures/domain.png
+.. figure:: /_static/figures/domain.png
   :width: 20cm
 
   Example of a full domain with 960 cells.
@@ -122,7 +122,7 @@ The domain becomes a collection of patches as shown in :numref:`patch_domain_dec
 
 .. _patch_domain_decomposition:
 
-.. figure:: _static/figures/patch_domain_decomposition.png
+.. figure:: /_static/figures/patch_domain_decomposition.png
   :width: 20cm
 
   The domain in :program:`Smilei` is a collection of patches.
@@ -138,7 +138,7 @@ The distribution can be ensured in an equal cartesian way or using a load balanc
 
 .. _mpi_patch_collection:
 
-.. figure:: _static/figures/mpi_patch_collection.png
+.. figure:: /_static/figures/mpi_patch_collection.png
   :width: 20cm
 
   Patches are then distributed among MPI processes in so-called MPI patch collections.
@@ -158,7 +158,7 @@ The patch can be decomposed into bins as shown in :numref:`bin_decomposition`.
 
 .. _bin_decomposition:
 
-.. figure:: _static/figures/bin_decomposition.png
+.. figure:: /_static/figures/bin_decomposition.png
   :width: 12cm
 
   Bin decomposition.
@@ -172,7 +172,7 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 
 .. _decomposition_summary:
 
-.. figure:: _static/figures/decomposition_summary.png
+.. figure:: /_static/figures/decomposition_summary.png
   :width: 15cm
 
   Domain decomposition summary.
@@ -300,7 +300,7 @@ The whole picture is shown in :numref:`data_structure`.
 
 .. _data_structure:
 
-.. figure:: _static/figures/data_structure.png
+.. figure:: /_static/figures/data_structure.png
   :width: 20cm
 
   General of the main tree-like data structure of Smilei.
@@ -472,7 +472,7 @@ The time loop is schematically described in :numref:`smilei_main_loop`.
 
 .. _smilei_main_loop:
 
-.. figure:: _static/figures/smilei_main_loop.png
+.. figure:: /_static/figures/smilei_main_loop.png
   :width: 20cm
 
   Smilei main loop implementation (click on the figure for more details).
