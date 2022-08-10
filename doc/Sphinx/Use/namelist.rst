@@ -45,7 +45,7 @@ General rules
 * You are free to import any installed *python* package into the namelist.
   For instance, you may obtain :math:`\pi` using ``from math import pi``.
 
-* All quantities are normalized to arbitrary values: see :doc:`units`.
+* All quantities are normalized to arbitrary values: see :doc:`/Understand/units`.
 
 ----
 
@@ -116,7 +116,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
+  * ``"AMcylindrical"``: cylindrical geometry with :doc:`/Understand/azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates
   depend on the ``geometry``.
@@ -191,7 +191,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
   It is also strongly advised to have more patches than the total number of openMP threads.
-  See :doc:`parallelization`.
+  See :doc:`/Understand/parallelization`.
 
 
 .. py:data:: patch_arrangement
@@ -206,7 +206,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
     row-major (C-style) ordering.
   * ``"linearized_YX"`` in 2D or ``"linearized_ZYX"`` in 3D: following the
     column-major (fortran-style) ordering. This prevents the usage of
-    :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
+    :ref:`Fields diagnostics<DiagFields>` (see :doc:`/Understand/parallelization`).
 
 .. py:data:: cluster_width
 
@@ -253,7 +253,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
    :default: False
 
    Decides if relativistic Poisson problem must be solved for at least one species.
-   See :doc:`relativistic_fields_initialization` for more details.
+   See :doc:`/Understand/relativistic_fields_initialization` for more details.
 
 .. py:data:: relativistic_poisson_max_iteration
 
@@ -342,7 +342,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   **only needed when collisions, ionization, radiation losses
   or multiphoton Breit-Wheeler pair creation are requested**.
   This frequency is related to the normalization length according to :math:`L_r\omega_r = c`
-  (see :doc:`units`).
+  (see :doc:`/Understand/units`).
 
 
 .. py:data:: print_every
@@ -487,7 +487,7 @@ Multiple decomposition of the domain
 
 The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases.
 When present, it activates
-the :doc:`SDMD` (SDMD) technique
+the :doc:`/Understand/SDMD` (SDMD) technique
 which separates the decomposition of the field grids from that of the particles.
 Fields are set on large sub-domain called *regions* (1 region per MPI process) while
 particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
@@ -519,7 +519,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck2019]_ and summarized in :doc:`this doc <vectorization>`.
+The technique is detailed in Ref. [Beck2019]_ and summarized in :doc:`this doc </Understand/vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
@@ -840,7 +840,7 @@ Each species has to be defined in a ``Species`` block::
   :type: float or :doc:`profile <profiles>`
 
   The absolute value of the charge density or number density (choose one only)
-  of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
+  of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`/Understand/units`).
 
 
 .. py:data:: charge
@@ -977,7 +977,7 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
+  The **radiation reaction** model used for this species (see :doc:`/Understand/radiation_loss`).
 
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
@@ -1038,7 +1038,7 @@ Each species has to be defined in a ``Species`` block::
   :default: ``False``
 
   Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
-  This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
+  This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`/Understand/relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
   To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.
 
 
@@ -1048,7 +1048,7 @@ Each species has to be defined in a ``Species`` block::
   :default: ``[None,None]``
 
   An list of the :py:data:`name` of two species: electrons and positrons created through
-  the :doc:`multiphoton_Breit_Wheeler`.
+  the :doc:`/Understand/multiphoton_Breit_Wheeler`.
   By default, the process is not activated.
 
   This parameter can **only** be assigned to photons species (mass = 0).
@@ -1058,7 +1058,7 @@ Each species has to be defined in a ``Species`` block::
   :default: ``[1,1]``
 
   A list of two integers: the number of electrons and positrons generated per photon decay
-  in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
+  in the :doc:`/Understand/multiphoton_Breit_Wheeler`. The total macro-particle weight is still
   conserved.
 
   Large numbers may rapidly slow down the performances and lead to memory saturation.
@@ -1175,7 +1175,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     :default: parameters provided the species
 
     The absolute value of the number density or charge density (choose one only)
-    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`/Understand/units`)
 
 .. py:data:: regular_number
 
@@ -1194,7 +1194,7 @@ Particle Merging
 ^^^^^^^^^^^^^^^^
 
 The macro-particle merging method is documented in
-the :doc:`corresponding page <particle_merging>`.
+the :doc:`corresponding page </Understand/particle_merging>`.
 Note that for merging to be able to operate either vectorization or cell sorting must be activated.
 It is optionnally specified in the ``Species`` block::
 
@@ -1283,7 +1283,7 @@ It is optionnally specified in the ``Species`` block::
   :default: ``True``
 
   :red:`[for experts]` Activates the accumulation correction
-  (see :doc:`particle_merging` for more information).
+  (see :doc:`/Understand/particle_merging` for more information).
   The correction only works in linear scale.
 
 
@@ -1683,7 +1683,7 @@ Laser envelope model
 
 In all the available geometries, it is possible to model a laser pulse
 propagating in the ``x`` direction
-using an envelope model (see :doc:`laser_envelope` for the advantages
+using an envelope model (see :doc:`/Understand/laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
 quantities of the simulation, including the electromagnetic fields and
@@ -1712,7 +1712,8 @@ two counterpropagating lasers, or two lasers with different carrier frequency.
 
 
 Please note that describing a laser through its complex envelope loses physical accuracy if its
-characteristic space-time variation scales are too small, i.e. of the order of the laser central wavelength (see :doc:`laser_envelope`).
+characteristic space-time variation scales are too small, i.e. of the order of the laser
+central wavelength (see :doc:`/Understand/laser_envelope`).
 Thus, space-time profiles with variation scales larger than this length should be used.
 
 .. rubric:: 1. Defining a generic laser envelope
@@ -1749,7 +1750,7 @@ Following is the generic laser envelope creator ::
    laser envelope in vacuum, separated from the plasma, to avoid unphysical
    results.
    Envelopes with variation scales near to the laser wavelength do not
-   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   satisfy the assumptions of the envelope model (see :doc:`/Understand/laser_envelope`),
    yielding inaccurate results.
 
 .. py:data:: envelope_solver
@@ -1863,7 +1864,7 @@ with some differences:
    laser envelope in vacuum, separated from the plasma, to avoid unphysical
    results.
    Temporal envelopes with variation scales near to the laser wavelength do not
-   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   satisfy the assumptions of the envelope model (see :doc:`/Understand/laser_envelope`),
    yielding inaccurate results.
 
 .. py:data:: waist
@@ -1877,14 +1878,14 @@ It is important to remember that the profile defined through the blocks
 correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
-component in that direction is described in :doc:`laser_envelope`.
+component in that direction is described in :doc:`/Understand/laser_envelope`.
 
 Note that only order 2 interpolation and projection are supported in presence of
 the envelope model for the laser.
 
 The parameters ``polarization_phi`` and ``ellipticity`` specify the polarization state of the laser. In envelope model implemented in :program:`Smilei`,
 they are only used to compute the rate of ionization and the initial momentum of the electrons newly created by ionization,
-where the polarization of the laser plays an important role (see :doc:`ionization`).
+where the polarization of the laser plays an important role (see :doc:`/Understand/ionization`).
 For all other purposes (e.g. the particles equations of motions, the computation of the ponderomotive force,
 the evolution of the laser), the polarization of the laser plays no role in the envelope model.
 
@@ -1913,7 +1914,7 @@ An constant external field can be applied over the whole box
   :type: float or :doc:`profile <profiles>`
 
   The initial spatial profile of the applied field.
-  Refer to :doc:`units` to understand the units of this field.
+  Refer to :doc:`/Understand/units` to understand the units of this field.
 
 
 ----
@@ -1956,7 +1957,7 @@ This feature is accessible using the ``PrescribedField`` block::
 
   The spatio-temporal profile of the applied field: a *python* function
   with arguments (*x*, *t*) or (*x*, *y*, *t*), etc.
-  Refer to :doc:`units` to understand the units of this field.
+  Refer to :doc:`/Understand/units` to understand the units of this field.
 
 
 ----
@@ -1984,7 +1985,7 @@ It is applied using an ``Antenna`` block::
   :type: float or :doc:`profile <profiles>`
 
   The initial spatial profile of the applied antenna.
-  Refer to :doc:`units` to understand the units of this current.
+  Refer to :doc:`/Understand/units` to understand the units of this current.
 
 
 .. py:data:: time_profile
@@ -2038,7 +2039,7 @@ reflect, stop, thermalize or kill particles which reach it::
 Collisions & reactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:doc:`collisions` account for short-range Coulomb interactions of particles (shorter than the 
+:doc:`/Understand/collisions` account for short-range Coulomb interactions of particles (shorter than the 
 cell size), but also include other effects such as impact ionization and nuclear reactions.
 These are gathered under this section because they are treated as *binary processes* (meaning
 they happen during the encounter of two macro-particles).
@@ -2181,7 +2182,7 @@ Radiation reaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The block ``RadiationReaction()`` enables to tune the radiation loss properties
-(see :doc:`radiation_loss`).
+(see :doc:`/Understand/radiation_loss`).
 Many parameters are used for the generation of the cross-section tables
 for the Monte-Carlo emission process.
 If the tables already exist in the simulation directory, then they will be read
@@ -2256,7 +2257,7 @@ Multiphoton Breit-Wheeler
 
 The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
 multiphoton Breit-Wheeler process and particularly the table generation.
-For more information on this physical mechanism, see :doc:`multiphoton_Breit_Wheeler`.
+For more information on this physical mechanism, see :doc:`/Understand/multiphoton_Breit_Wheeler`.
 
 There are three tables used for the multiphoton Breit-Wheeler refers to as the
 *integration_dT_dchi*, *min_particle_chi_for_xi* and *xi* table.
@@ -2507,7 +2508,7 @@ This is done by including a block ``DiagFields``::
   |  The same notation works for Jl, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),
   the following fields are also available:
 
   .. rst-class:: fancy
@@ -2655,7 +2656,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
     of a given species named ``"abc"``
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
 .. py:data:: time_integral
@@ -3035,7 +3036,7 @@ for instance::
 
 A *radiation spectrum diagnostic* computes (at a given time) the instantaneous
 power spectrum following from the incoherent emission of high-energy
-photons by accelerated charge (see :doc:`radiation_loss` for more details
+photons by accelerated charge (see :doc:`/Understand/radiation_loss` for more details
 on the emission process and its implementation in :program:`Smilei`).
 
 It is similar to the :ref:`particle binning diagnostics <DiagParticleBinning>`,
@@ -3291,7 +3292,7 @@ where
 
 For more clarity, this graph illustrates the five syntaxes for time selections:
 
-.. image:: _static/TimeSelections.png
+.. image:: /_static/TimeSelections.png
   :width: 33em
   :align: center
 

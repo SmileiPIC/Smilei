@@ -99,7 +99,7 @@ Above this threshold, the energy dispersion increases with :math:`\chi_\gamma`.
 
 .. _synchrotron_pairs_dNdt:
 
-.. figure:: _static/synchrotron_pairs_dNdt.png
+.. figure:: /_static/synchrotron_pairs_dNdt.png
   :width: 18cm
 
   (left) - Normalized total pair production distribution given by Eq. :eq:`BWproductionRate`.
@@ -218,7 +218,7 @@ Tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 External tables can be generated using an external tools called :program:`smilei_tables`.
-More information can be found in :doc:`tables`.
+More information can be found in :doc:`/Use/tables`.
 
 --------------------------------------------------------------------------------
 
@@ -260,7 +260,7 @@ The total energy is well constant and conserved in time.
 
 .. _synchrotron_pairs_energy_spectra_chi1:
 
-.. figure:: _static/synchrotron_pairs_energy_spectra_chi1.png
+.. figure:: /_static/synchrotron_pairs_energy_spectra_chi1.png
   :width: 18cm
 
   (left) - Electron energy spectrum at the end of the run.
@@ -286,7 +286,7 @@ The total energy is well constant and conserved in time.
 
 .. _synchrotron_pairs_energy_spectra_chi20:
 
-.. figure:: _static/synchrotron_pairs_energy_spectra_chi20.png
+.. figure:: /_static/synchrotron_pairs_energy_spectra_chi20.png
   :width: 18cm
 
   (left) - Electron energy spectrum at the end of the run.
@@ -333,7 +333,7 @@ as the electron energy decreases.
 
 .. _counter_pair_smilei:
 
-.. figure:: _static/counter_pair_smilei.png
+.. figure:: /_static/counter_pair_smilei.png
   :width: 18cm
 
   (left) - Energy balance of the simulation. In the legend, **Photon** represents the macro-photon

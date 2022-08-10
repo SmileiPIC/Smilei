@@ -28,7 +28,7 @@ This hardware architecture is summarized in :numref:`NodesCoresThreads`.
 
 .. _NodesCoresThreads:
 
-.. figure:: _static/NodesCoresThreads.png
+.. figure:: /_static/NodesCoresThreads.png
   :width: 11cm
   
   Simplified super-computer architecture.
@@ -49,7 +49,7 @@ the two processes cannot access to the same memory.
 
 .. _NodeWith2Processes:
 
-.. figure:: _static/NodeWith2Processes.png
+.. figure:: /_static/NodeWith2Processes.png
   :width: 6cm
   
   An example where two processes share the same node.
@@ -77,7 +77,7 @@ An illustration of the roles of MPI and OpenMP is provided in :numref:`MPIandOpe
 
 .. _MPIandOpenMP:
 
-.. figure:: _static/MPIandOpenMP.png
+.. figure:: /_static/MPIandOpenMP.png
   :width: 9cm
   
   MPI handles process-to-process communications, while OpenMP manages threads in a given process.
@@ -112,7 +112,7 @@ Note that these collections are connex, but not necessarily rectangular.
 
 .. _PatchDecomposition:
 
-.. figure:: _static/PatchDecomposition.svg
+.. figure:: /_static/PatchDecomposition.svg
   :width: 600
   
   Decomposition of a grid in *patches* and *MPI patch collections*.
@@ -122,7 +122,7 @@ Each MPI patch collection is handled by all the threads of the process. For exam
 4 threads will handle 10 patches. The 4 threads will work in parallel, patch by patch,
 until all patches are done.
 
-.. figure:: _static/PatchDecompositionNodes.svg
+.. figure:: /_static/PatchDecompositionNodes.svg
   :width: 700
   
   Each process handles one collection of patches. Patches are treated one by one by
@@ -160,7 +160,7 @@ operation every now and then, we ensure that all regions manage an equitable com
 
 .. _PatchDecompositionHilbert:
 
-.. figure:: _static/PatchDecompositionHilbert.svg
+.. figure:: /_static/PatchDecompositionHilbert.svg
   :width: 400
   
   The shape of the Hilbert curve which determines the patch order.
@@ -170,7 +170,7 @@ operation every now and then, we ensure that all regions manage an equitable com
 Practical setup
 ^^^^^^^^^^^^^^^
 
-The user must choose the number of processes and threads (see :doc:`run`).
+The user must choose the number of processes and threads (see :doc:`/Use/run`).
 Furthermore, they must define how the whole domain is split into patches
 (see :py:data:`number_of_patches`). Here are a few rules and recommendations
 to help deciding this splitting.

@@ -82,7 +82,7 @@ normalized to :math:`T_r` and :math:`L_r`, respectively.
 Tips for the namelist
 ^^^^^^^^^^^^^^^^^^^^^
 
-In the :doc:`namelist <namelist>`, the user must provide all parameters in units of :math:`Q_r`,
+In the :doc:`namelist </Use/namelist>`, the user must provide all parameters in units of :math:`Q_r`,
 :math:`M_r`, :math:`V_r`, :math:`K_r`, :math:`P_r`, :math:`T_r`, :math:`L_r`, :math:`E_r`,
 :math:`B_r`, :math:`N_r` or :math:`J_r`.
 

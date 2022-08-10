@@ -477,7 +477,7 @@ and only one mode between those three.
 Specifying units
 ^^^^^^^^^^^^^^^^
 
-By default, all the diagnostics data is in code units (see :doc:`units`).
+By default, all the diagnostics data is in code units (see :doc:`/Understand/units`).
 
 To change the units, all the methods :py:meth:`Scalar() <Scalar>`,
 :py:meth:`Field() <Field>`, :py:meth:`Probe() <Probe>`,

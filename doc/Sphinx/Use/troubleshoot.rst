@@ -53,15 +53,26 @@ Physical error in the results.
 
 The physical results are not the ones you expect. 
 
-* Read the doc on the physical methods you are using (e.g. :doc:`collisions`, :doc:`ionization`, :doc:`laser_envelope`, ...). Are the underlying physical assumptions satisfied?
-* Check that the units given in the input namelist are properly normalized. See also :doc:`units`.
-* Some physical processes like :doc:`collisions`, :doc:`ionization` need a reference frequency in SI in the ``Main`` block of the input namelist. Did you provide it? See also :doc:`namelist`.
-* Check the CFL condition in the input namelist. See :doc:`algorithms`
-* See with the Scalar diagnostics (See :doc:`post-processing` ) if the kinetic energy ``Ukin`` or electromagnetic energy ``Uelm`` display strange behaviours (e.g. exponential growths).
-* Verify the overall consistency of the physical set-up, e.g. only immobile or almost immobile particles while using a Poisson solver.
-* Verify that the physical initialization is correct. Should you use a classical or relativistic Poisson solver (See :doc:`relativistic_fields_initialization`) for the initial fields. Is it necessary to use a Poisson solver?
-* Check the presence of numerical effects running the simulation with different numerical parameters, e.g. changing the resolution, timestep, in the input namelist.
-* If using the ``AMcylindrical`` geometry, check that the origin of the axes you are using in the input namelist is the one described in See :doc:`azimuthal_modes_decomposition`.
+* Read the doc on the physical methods you are using (e.g. :doc:`/Understand/collisions`,
+  :doc:`/Understand/ionization`, :doc:`/Understand/laser_envelope`, ...).
+  Are the underlying physical assumptions satisfied?
+* Check that the units given in the input namelist are properly normalized.
+  See also :doc:`/Understand/units`.
+* Some physical processes like :doc:`/Understand/collisions`, :doc:`/Understand/ionization`
+  need a reference frequency in SI in the ``Main`` block of the input namelist. Did you provide it?
+  See also :doc:`namelist`.
+* Check the CFL condition in the input namelist. See :doc:`/Understand/algorithms`
+* See with the Scalar diagnostics (See :doc:`post-processing` ) if the kinetic energy ``Ukin``
+  or electromagnetic energy ``Uelm`` display strange behaviours (e.g. exponential growths).
+* Verify the overall consistency of the physical set-up, e.g. only immobile or almost immobile
+  particles while using a Poisson solver.
+* Verify that the physical initialization is correct. Should you use a classical or
+  relativistic Poisson solver (See :doc:`/Understand/relativistic_fields_initialization`)
+  for the initial fields. Is it necessary to use a Poisson solver?
+* Check the presence of numerical effects running the simulation with different numerical
+  parameters, e.g. changing the resolution, timestep, in the input namelist.
+* If using the ``AMcylindrical`` geometry, check that the origin of the axes you are using
+  in the input namelist is the one described in See :doc:`/Understand/azimuthal_modes_decomposition`.
 
 ----
 
@@ -71,8 +82,11 @@ Performances issues
 The simulation is very slow / the performances are not as expected.
 
 * Change the number of MPI process and OpenMP threads.
-* Change the number of patches and/or their distribution in each direction. See also :doc:`parallelization`.
-* Check that ``LoadBalancing`` is activated in the :doc:`namelist` (if the physical set-up is suitable for its use). See also :doc:`parallelization`.
-* If using :doc:`vectorization`, check that the compilation flags for vectorization were correctly used. See also :doc:`installation`.
+* Change the number of patches and/or their distribution in each direction.
+  See also :doc:`/Understand/parallelization`.
+* Check that ``LoadBalancing`` is activated in the :doc:`namelist`
+  (if the physical set-up is suitable for its use). See also :doc:`/Understand/parallelization`.
+* If using :doc:`/Understand/vectorization`, check that the compilation flags for vectorization
+  were correctly used. See also :doc:`installation`.
 
 

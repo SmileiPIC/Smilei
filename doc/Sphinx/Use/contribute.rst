@@ -20,7 +20,7 @@ Guidelines for new developments are:
 Add my publication to the list on Smilei's website
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can easily add your paper to the :doc:`material`.
+You can easily add your paper to the :doc:`/Overview/material`.
 
 * On GitHub, edit the file
   `material.rst <https://github.com/SmileiPIC/Smilei/blob/master/doc/Sphinx/material.rst>`_.

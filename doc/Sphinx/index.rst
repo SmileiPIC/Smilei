@@ -4,7 +4,7 @@
 
 ..
 
-  .. image:: _static/smileiLogo.svg
+  .. image:: /_static/smileiLogo.svg
 
 
 **Smilei** is a Particle-In-Cell code for plasma simulation.
@@ -15,9 +15,9 @@ interaction to astrophysics.
 .. raw:: html
 
   <div style="width:100%; text-align:center; margin-bottom:8em;">
-  <a href="releases.html" class="icon">
+  <a href="Overview/releases.html" class="icon">
 
-.. image:: _static/download.svg
+.. image:: /_static/download.svg
 
 .. raw:: html
 
@@ -28,7 +28,7 @@ interaction to astrophysics.
 
   <a href="https://github.com/SmileiPIC/Smilei" class="icon">
 
-.. image:: _static/github-logo.svg
+.. image:: /_static/github-logo.svg
 
 .. raw:: html
 
@@ -39,7 +39,7 @@ interaction to astrophysics.
 
   <a href="https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org" class="icon">
 
-.. image:: _static/element-logo.svg
+.. image:: /_static/element-logo.svg
 
 .. raw:: html
 
@@ -48,9 +48,9 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <a href="partners.html" class="icon">
+  <a href="Overview/partners.html" class="icon">
 
-.. image:: _static/people.svg
+.. image:: /_static/people.svg
 
 .. raw:: html
 
@@ -59,9 +59,9 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <a href="material.html" class="icon">
+  <a href="Overview/material.html" class="icon">
 
-.. image:: _static/paper.svg
+.. image:: /_static/paper.svg
 
 .. raw:: html
 
@@ -73,7 +73,7 @@ interaction to astrophysics.
 
   <a href="https://smileipic.github.io/tutorials" class="icon">
 
-.. image:: _static/smileiIconRed.svg
+.. image:: /_static/smileiIconRed.svg
 
 .. raw:: html
 
@@ -90,4 +90,4 @@ interaction to astrophysics.
    overview
    understand
    use
-   more
+   site

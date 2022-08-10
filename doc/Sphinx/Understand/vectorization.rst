@@ -24,7 +24,7 @@ Modern SIMD vectorization is described in :numref:`simd_fig`.
 
 .. _simd_fig:
 
-.. figure:: _static/SIMD.png
+.. figure:: /_static/SIMD.png
     :width: 90%
     :align: center
 
@@ -80,19 +80,21 @@ The numerical parameters are given in :numref:`vecto_numerical_parameters`.
 
 .. _vecto_numerical_parameters:
 
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
-| Cluster                             | Architecture                                          | Number of patches | Configuration             |
-+=====================================+=======================================================+===================+===========================+
-| Jean Zay, IDRIS, France             | 2 x Cascade Lake (Intel® Xeon® Gold 6248, 20 cores)   | 5 x 8 x 8         | Intel 19, IntelMPI 19     |
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
-| Irene Joliot-Curie, TGCC, France    | 2 x skylake (Intel® Skylake 8168, 24 cores)           | 6 x 8 x 8         | Intel 18, IntelMPI 18     |
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
-| Frioul, Cines, France               | 2 x Knights Landing (Intel® Xeon® Phi 7250, 68 cores) | 8 x 8 x 8         | Intel 18, IntelMPI 18     |
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
-| Tornado, LPP, France                | 2 x Broadwell (Intel® Xeon® E5-2697 v4, 16 cores)     | 4 x 8 x 8         | Intel 17, openMPI 1.6.5   |
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
-| Jureca, Juelich, Germany            | 2 x Haswell (Intel® Xeon® E5-2680 v3, 12 cores)       | 3 x 8 x 8         | Intel 18, IntelMPI 18     |
-+-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+.. table:: Numerical parameters for vectorization
+
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+  | Cluster                             | Architecture                                          | Number of patches | Configuration             |
+  +=====================================+=======================================================+===================+===========================+
+  | Jean Zay, IDRIS, France             | 2 x Cascade Lake (Intel® Xeon® Gold 6248, 20 cores)   | 5 x 8 x 8         | Intel 19, IntelMPI 19     |
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+  | Irene Joliot-Curie, TGCC, France    | 2 x skylake (Intel® Skylake 8168, 24 cores)           | 6 x 8 x 8         | Intel 18, IntelMPI 18     |
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+  | Frioul, Cines, France               | 2 x Knights Landing (Intel® Xeon® Phi 7250, 68 cores) | 8 x 8 x 8         | Intel 18, IntelMPI 18     |
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+  | Tornado, LPP, France                | 2 x Broadwell (Intel® Xeon® E5-2697 v4, 16 cores)     | 4 x 8 x 8         | Intel 17, openMPI 1.6.5   |
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+  | Jureca, Juelich, Germany            | 2 x Haswell (Intel® Xeon® E5-2680 v3, 12 cores)       | 3 x 8 x 8         | Intel 18, IntelMPI 18     |
+  +-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
 
 The results of the simulation tests (shape factor of order 2) for both scalar and vectorized versions are
 shown in :numref:`vecto_particle_times_o2_all`.
@@ -101,7 +103,7 @@ It shows improved efficiency, compared to the scalar mode, above a certain numbe
 
 .. _vecto_particle_times_o2_all:
 
-.. figure:: _static/vecto_particle_times_o2_all.png
+.. figure:: /_static/vecto_particle_times_o2_all.png
   :width: 100%
 
   Particle computational cost as a function of the number of particles per cell. Vectorized
@@ -121,19 +123,21 @@ The performance results are summarized in :numref:`vecto_performance_results`.
 
 .. _vecto_performance_results:
 
-+-------------------------------------+-------------------------------------------------------+------------------------+
-| Architecture (Cluster)              | Inversion point (particles per cell)                  | Vectorization speed-up |
-+=====================================+=======================================================+========================+
-| Cascade lake (Jean Zay)             | 8 particles per cell                                  | x2                     |
-+-------------------------------------+-------------------------------------------------------+------------------------+
-| Skylake (Irene Joliot-Curie)        | 10 particles per cell (most advanced instruction set) | x2.1                   |
-+-------------------------------------+-------------------------------------------------------+------------------------+
-| KNL (Frioul)                        | 12 particles per cell                                 | x2.8                   |
-+-------------------------------------+-------------------------------------------------------+------------------------+
-| Broadwell (LLR)                     | 10 particles per cell                                 | x1.9                   |
-+-------------------------------------+-------------------------------------------------------+------------------------+
-| Haswell (Jureca)                    | 10 particles per cell                                 | x1.9                   |
-+-------------------------------------+-------------------------------------------------------+------------------------+
+.. table:: Vectorization performance
+
+  +-------------------------------------+-------------------------------------------------------+------------------------+
+  | Architecture (Cluster)              | Inversion point (particles per cell)                  | Vectorization speed-up |
+  +=====================================+=======================================================+========================+
+  | Cascade lake (Jean Zay)             | 8 particles per cell                                  | x2                     |
+  +-------------------------------------+-------------------------------------------------------+------------------------+
+  | Skylake (Irene Joliot-Curie)        | 10 particles per cell (most advanced instruction set) | x2.1                   |
+  +-------------------------------------+-------------------------------------------------------+------------------------+
+  | KNL (Frioul)                        | 12 particles per cell                                 | x2.8                   |
+  +-------------------------------------+-------------------------------------------------------+------------------------+
+  | Broadwell (LLR)                     | 10 particles per cell                                 | x1.9                   |
+  +-------------------------------------+-------------------------------------------------------+------------------------+
+  | Haswell (Jureca)                    | 10 particles per cell                                 | x1.9                   |
+  +-------------------------------------+-------------------------------------------------------+------------------------+
 
 Vectorization efficiency increases with the number of particles per cell above the inversion point.
 It tends to stabilize far from the inversion point above 256 particles per cell.
@@ -155,7 +159,7 @@ The concept is schematically described in :numref:`fig_vecto_domain_decompositio
 
 .. _fig_vecto_domain_decomposition:
 
-.. figure:: _static/vecto_domain_decomposition.png
+.. figure:: /_static/vecto_domain_decomposition.png
   :width: 100%
 
   Description of the adaptive vectorization withn the multi-stage domain decomposition.
@@ -170,7 +174,7 @@ The comparision of all normalized curves is presented in :numref:`fig_vecto_effi
 
 .. _fig_vecto_efficiency_o2_all_mc:
 
-.. figure:: _static/vecto_efficiency_o2_all_mc.png
+.. figure:: /_static/vecto_efficiency_o2_all_mc.png
   :width: 100%
 
   Normalized time per particle spent for all particle operators in
@@ -202,7 +206,7 @@ The polynomial regressions are shown in :numref:`vecto_efficiency_o2_all_fit`.
 
 .. _vecto_efficiency_o2_all_fit:
 
-.. figure:: _static/vecto_efficiency_o2_all_fit.png
+.. figure:: /_static/vecto_efficiency_o2_all_fit.png
   :width: 100%
 
   Averages of the curves of :numref:`fig_vecto_efficiency_o2_all_mc` , and polynomial regressions.
@@ -248,7 +252,7 @@ The volume rendering at the bottom shows and patch computational state for the e
 
 .. _fig_weibel_3d_ne_vecto_it510:
 
-.. figure:: _static/Weibel_3d_ne_vecto_it510.jpg
+.. figure:: /_static/Weibel_3d_ne_vecto_it510.jpg
     :width: 100%
     :align: center
     :target: https://youtu.be/-ENUekyE_A4

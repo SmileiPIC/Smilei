@@ -17,7 +17,7 @@ To face the diverse needs of the Smilei community, it offers modularity:
 
 The **user-friendly interface** consists in input files written in the Python language,
 and a whole set of run-time diagnostics (outputs in HDF5) and user-friendly (Python)
-:doc:`post-processing <post-processing>` tools complement the code.
+:doc:`post-processing </Use/post-processing>` tools complement the code.
 
 Co-developed by HPC specialists and physicists, Smilei is **designed for high performances**
 on massively-parallel super-computers. It benefits from a state-of-the-art hybrid
@@ -34,10 +34,10 @@ Charge deposition follows a charge-conservation scheme.
 As a multi-purpose code, Smilei is applied to a **wide range of physics-related studies**:
 from relativistic laser-plasma interaction to astrophysics. Smilei thus benefits from
 various additional physics modules, among which :ref:`field ionization <field_ionization>`,
-:doc:`binary collisions and impact ionization <collisions>`. QED processes, such as
-high-energy photon emission and its :doc:`back-reaction <radiation_loss>`
+:doc:`binary collisions and impact ionization </Understand/collisions>`. QED processes, such as
+high-energy photon emission and its :doc:`back-reaction </Understand/radiation_loss>`
 on the electron dynamics, as well as
-:doc:`pair production <multiphoton_Breit_Wheeler>` through the Breit-Wheeler
+:doc:`pair production </Understand/multiphoton_Breit_Wheeler>` through the Breit-Wheeler
 process, are also included.
 
 An initial detailed account (as of 2018) of Smilei's capabilities is given in

@@ -9,8 +9,8 @@ For this reason, :program:`Smilei` can read external tables.
 
 Several physical mechanisms can use external tables to work:
 
-* Radiation loss and photon emission via nonlinear inverse Compton scattering (see :doc:`radiation_loss`)
-* Electron-positon pair creation via the Multiphoton Breit-Wheeler (see :doc:`multiphoton_Breit_Wheeler`)
+* Radiation loss and photon emission via nonlinear inverse Compton scattering (see :doc:`/Understand/radiation_loss`)
+* Electron-positon pair creation via the Multiphoton Breit-Wheeler (see :doc:`/Understand/multiphoton_Breit_Wheeler`)
 
 An external tool called :program:`smilei_tables` is available to generate these tables.
 
@@ -205,7 +205,7 @@ Nonlinear Inverse Compton Scattering
 """"""""""""""""""""""""""""""""""""
 
 The file ``radiation_tables.h5`` is used for the nonlinear inverse Compton scattering radiation
-mechanism described in :doc:`the dedicated section <radiation_loss>`.
+mechanism described in :doc:`the dedicated section </Understand/radiation_loss>`.
 
 It first contains the ``integfochi`` table that represents
 the integration of the synchortron emissivity of Ritus *et al*:
@@ -228,7 +228,7 @@ This table is used by the Monte-Carlo method to compute the radiation emission c
 
 .. _nics_integration_F_over_chi:
 
-.. figure:: _static/nics/nics_integration_F_over_chi.png
+.. figure:: /_static/nics/nics_integration_F_over_chi.png
   :scale: 50 %
 
   Plot of the integfochi table for a particle quantum parameter ranging
@@ -246,7 +246,7 @@ It is given by the following integration:
   
 .. _nics_h_for_niel:
 
-.. figure:: _static/nics/nics_h_niel.png
+.. figure:: /_static/nics/nics_h_niel.png
   :scale: 50 %
 
   Plot of the h table for a particle quantum parameter ranging
@@ -274,7 +274,7 @@ For instance, a ``xi_power`` of 4 as used for our tables mean that we look for a
 
 .. _nics_min_photon_chi:
 
-.. figure:: _static/nics/nics_min_photon_chi.png
+.. figure:: /_static/nics/nics_min_photon_chi.png
   :scale: 50 %
 
   Plot of the minimal photon quantum parameter :math:`\chi_{\gamma,\min}`
@@ -297,7 +297,7 @@ For a given :math:`\chi_\pm`, :math:`\chi_\gamma` ranges from :math:`\chi_{\gamm
 
 .. _nics_xi:
 
-.. figure:: _static/nics/nics_xi.png
+.. figure:: /_static/nics/nics_xi.png
   :scale: 50 %
 
   Plot of the xi table as a function of the particle quantum parameter :math:`\chi_\pm`
@@ -310,7 +310,7 @@ Multiphoton Breit-Wheeler
 """"""""""""""""""""""""""""""""""""
 
 The file ``multiphoton_breit_wheeler_tables.h5`` is used for the multiphoton Breit-Wheeler process
-described in :doc:`the dedicated section <multiphoton_Breit_Wheeler>`.
+described in :doc:`the dedicated section </Understand/multiphoton_Breit_Wheeler>`.
 
 It first contains the ``T`` table that represents
 the following integration:
@@ -342,7 +342,7 @@ In the Monte-Carlo algorithm, it is used to determine the photon decay probabili
 
 .. _mbw_T:
 
-.. figure:: _static/mbw/mbw_T.png
+.. figure:: /_static/mbw/mbw_T.png
   :scale: 50 %
 
   Plot of the table ``T``
@@ -372,7 +372,7 @@ For instance, a ``xi_power`` of 4 as used for our tables mean that we look for a
  
 .. _mbw_min_particle_chi:
 
-.. figure:: _static/mbw/mbw_min_particle_chi.png
+.. figure:: /_static/mbw/mbw_min_particle_chi.png
   :scale: 50 %
 
   Plot of the minimal particle quantum parameter :math:`\chi_{\pm,\min}` corresponding to the minimum boundary of the xi table
@@ -396,7 +396,7 @@ For a given :math:`\chi_\gamma`, :math:`\chi_\pm` ranges from :math:`\chi_{\pm,\
 
 .. _mbw_xi:
 
-.. figure:: _static/mbw/mbw_xi.png
+.. figure:: /_static/mbw/mbw_xi.png
   :scale: 50 %
 
   Plot of the xi table as a function of the photon quantum parameter :math:`\chi_\gamma`

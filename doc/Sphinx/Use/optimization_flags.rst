@@ -9,7 +9,7 @@ While some share a common syntax, others provide more fine tuning options for sp
 
 Some optimization flags are automatically set in the makefile;
 others are specified in the *machine files* because they are specific to given compilers, hardwares or processor families.
-:doc:`SIMD vectorization <vectorization>` in Smilei, for instance,
+:doc:`SIMD vectorization </Understand/vectorization>` in Smilei, for instance,
 can be automatic, or can rely on OpenMP's directive ``#pragma omp simd``.
 
 

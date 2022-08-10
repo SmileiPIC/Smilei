@@ -121,7 +121,7 @@ spatial-centering of the discretized curl operators in Maxwell's equations.
 The following figure summarizes at which points of the Yee-grid are defined the
 electromagnetic fields as well as charge and density currents.
 
-.. image:: _static/figYee.png
+.. image:: /_static/figYee.png
    :width: 13cm
 
 Similarly, the time-centering

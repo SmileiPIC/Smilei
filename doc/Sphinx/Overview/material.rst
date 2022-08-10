@@ -40,7 +40,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. _fig_paper_topics:
 
-.. figure:: _static/figures/paper_topics.png
+.. figure:: /_static/figures/paper_topics.png
   :width: 50%
 
 .. READ THIS 

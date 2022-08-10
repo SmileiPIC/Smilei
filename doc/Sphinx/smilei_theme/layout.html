@@ -16,17 +16,19 @@
         {%- set this_menu = sections[1].split("%") %}
         {%- set this_menu_url = this_menu[0] | trim | safe %}
         {%- set this_menu_name = this_menu[1] | trim | safe %}
-        {%- set this_menu = [this_menu_url, this_menu_name] %}
-        {%- for section in sections[2:] %}
-            {%- set this_section = section.split("%")%}
-            {%- set this_section_url = this_section[0] | trim | safe %}
-            {%- set this_section_name = this_section[1] | trim | safe %}
-            {%- if this_section_name == title %}
-                {%- set _ = current_menu.append(this_menu_name) %}
-            {%- endif %}
-            {%- set _ = this_menu.append([this_section_url, this_section_name]) %}
-        {%- endfor %}
-        {%- set _ = menus.append(this_menu) %}
+        {%- if this_menu_name != "Index" %}
+            {%- set this_menu = [this_menu_url, this_menu_name] %}
+            {%- for section in sections[2:] %}
+                {%- set this_section = section.split("%")%}
+                {%- set this_section_url = this_section[0] | trim | safe %}
+                {%- set this_section_name = this_section[1] | trim | safe %}
+                {%- if this_section_name == title %}
+                    {%- set _ = current_menu.append(this_menu_name) %}
+                {%- endif %}
+                {%- set _ = this_menu.append([this_section_url, this_section_name]) %}
+            {%- endfor %}
+            {%- set _ = menus.append(this_menu) %}
+        {%- endif %}
     {%- endif %}
 {%- endfor %}
 {%- set last_menu = menus[-1][1] %}
@@ -61,13 +63,13 @@
             {%- set url = section[0] %}
             {%- set entry = section[1] %}
             {%- if entry == title %}
-            </ul>
+        </ul>
                 {{ toc }}
-            <ul>
+        <ul>
             {%- else %}
-                <li class="outer">
-                    <a href="{{ url }}">{{ entry }}</a>
-                </li>
+            <li class="outer">
+                <a href="{{ url }}">{{ entry }}</a>
+            </li>
             {%- endif %}
         {%- endfor %}
         </ul>
