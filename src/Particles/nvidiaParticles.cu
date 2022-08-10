@@ -79,11 +79,13 @@ namespace detail {
                                      InputIterator last,
                                      ClusterType   cluster_type );
 
-        template <typename ClusterType>
+        template <typename ClusterType,
+                  typename ParticleIteratorProvider>
         static void
-        doImportAndSortParticles( nvidiaParticles& particle_container,
-                                  nvidiaParticles& particle_to_inject,
-                                  ClusterType      cluster_type );
+        doImportAndSortParticles( nvidiaParticles&         particle_container,
+                                  nvidiaParticles&         particle_to_inject,
+                                  ClusterType              cluster_type,
+                                  ParticleIteratorProvider particle_iterator_provider );
     };
 
 
@@ -105,12 +107,6 @@ namespace detail {
         template <typename Tuple>
         __host__ __device__ IDType
         Index( const Tuple& a_particle ) const;
-
-        //! Return the appropriate thrust::zip_iterator depending on the
-        //! simulation's parameters
-        //!
-        static auto
-        beginParticles( nvidiaParticles& particle_container );
 
     public:
         double   inverse_of_cell_size_in_x_;
@@ -274,11 +270,27 @@ namespace detail {
                     if( particle_container.isMonteCarlo ) {
                         SMILEI_ASSERT( false );
                     } else {
+                        const Cluster2D<Params::getGPUClusterWidth( 2 )> cluster_manipulator{ parameters.cell_length[0],
+                                                                                              parameters.cell_length[1],
+                                                                                              parameters.n_space[0] };
+
+                        // Return the appropriate thrust::zip_iterator for the
+                        // current simulation's parameters
+                        const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
+                            return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                                  particle_container.getPtrPosition( 0 ),
+                                                                                  particle_container.getPtrPosition( 1 ),
+                                                                                  particle_container.getPtrMomentum( 0 ),
+                                                                                  particle_container.getPtrMomentum( 1 ),
+                                                                                  particle_container.getPtrMomentum( 2 ),
+                                                                                  particle_container.getPtrWeight(),
+                                                                                  particle_container.getPtrCharge() ) );
+                        };
+
                         doImportAndSortParticles( particle_container,
                                                   particle_to_inject,
-                                                  Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
-                                                                                              parameters.cell_length[1],
-                                                                                              parameters.n_space[0] } );
+                                                  cluster_manipulator,
+                                                  particle_iterator_provider );
                     }
                 }
                 break;
@@ -301,11 +313,13 @@ namespace detail {
                           AssignClusterIndex<ClusterType>{ cluster_type } );
     }
 
-    template <typename ClusterType>
+    template <typename ClusterType,
+              typename ParticleIteratorProvider>
     void
-    Cluster::doImportAndSortParticles( nvidiaParticles& particle_container,
-                                       nvidiaParticles& particle_to_inject,
-                                       ClusterType      cluster_type )
+    Cluster::doImportAndSortParticles( nvidiaParticles&         particle_container,
+                                       nvidiaParticles&         particle_to_inject,
+                                       ClusterType              cluster_type,
+                                       ParticleIteratorProvider particle_iterator_provider )
     {
         // So basicaly, we got a 5 to 14ms budget to:
         // - erase the leaving particles
@@ -315,7 +329,7 @@ namespace detail {
         // - do the particle to grid current deposition
         // All theses durations are for 11kk particles.
 
-        // const auto first_particle = cluster_type.beginParticles( particle_container );
+        // const auto first_particle = particle_iterator_provider( particle_container );
 
         // auto last_particle = first_particle +
         //                      particle_container.gpu_size(); // Obviously, we use half open ranges
@@ -326,8 +340,6 @@ namespace detail {
         //                                    first_particle,
         //                                    last_particle,
         //                                    OutOfBoundaryPredicate{} );
-
-        // // particle_container.eraseLeavingParticles();
 
         // // Idea 1: - remove_copy_if instead of copy_if
         // //         - sort(the_particles_to_inject)
@@ -342,33 +354,34 @@ namespace detail {
         // // It's possible to give a custom allocator to thrust::device_vector.
         // // Create one with construct(<>) as a noop and derive from
         // // thrust::device_malloc_allocator
-        // particle_to_inject.resize( new_particle_count );
+        // particle_to_inject.resize( new_particle_count ); // We probably invalidated the iterators
 
         // // Copy out of cluster/tile/chunk particles
         // // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
         // // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
         // //  - 4.5ms on GPU
 
+        // const auto first_particle_to_inject = particle_iterator_provider( particle_to_inject );
+
         // const auto partitioned_particles_bounds_true  = thrust::copy_if( thrust::device,
         //                                                                  first_particle, last_particle,
         //                                                                  // Dont overwrite the particle_to_inject (at the start of the array)
-        //                                                                  cluster_type.beginParticles( particle_to_inject ) + new_particle_to_inject_count,
+        //                                                                  first_particle_to_inject + new_particle_to_inject_count,
         //                                                                  OutOfClusterPredicate<ClusterType>{ cluster_type } );
         // const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
         //                                                                         first_particle, last_particle,
         //                                                                         // In reverse, starting from end(particle_to_inject) !
-        //                                                                         thrust::make_reverse_iterator( cluster_type.beginParticles( particle_to_inject ) +
+        //                                                                         thrust::make_reverse_iterator( first_particle_to_inject +
         //                                                                                                        particle_to_inject.gpu_size() ),
-        //                                                                         OutOfClusterPredicate<ClusterType>{cluster_type} );
+        //                                                                         OutOfClusterPredicate<ClusterType>{ cluster_type } );
 
-        // // Compute or recompute the chunk id of the particles to inject
+        // // Compute or recompute the cluster index of the particle_to_inject
         // // NOTE:
-        // // - we can "save" some work here if chunk_key is already computed for
-        // // the new particles to inject (not the one we got with copy_if).
-        // // So we could start at: begin(the_particles_to_inject) + new_particle_to_inject_count
+        // // - we can "save" some work here if cluster index is already computed
+        // // for the new particles to inject (not the one we got with copy_if).
         // //
         // // - 1ms on GPU
-        // doComputeParticleClusterKey( cluster_type.beginParticles( particle_to_inject ),
+        // doComputeParticleClusterKey( first_particle_to_inject,
         //                              partitioned_particles_bounds_true,
         //                              cluster_type );
 
@@ -419,19 +432,6 @@ namespace detail {
                                        ( x_cell_coordinate / kClusterWidth );
 
         return static_cast<IDType>( cluster_index );
-    }
-
-    template <Cluster::DifferenceType kClusterWidth>
-    auto Cluster2D<kClusterWidth>::beginParticles( nvidiaParticles& particle_container )
-    {
-        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
-                                                              particle_container.getPtrPosition( 0 ),
-                                                              particle_container.getPtrPosition( 1 ),
-                                                              particle_container.getPtrMomentum( 0 ),
-                                                              particle_container.getPtrMomentum( 1 ),
-                                                              particle_container.getPtrMomentum( 2 ),
-                                                              particle_container.getPtrWeight(),
-                                                              particle_container.getPtrCharge() ) );
     }
 
 } // namespace detail
