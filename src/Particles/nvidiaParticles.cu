@@ -81,12 +81,14 @@ namespace detail {
                                      ClusterType   cluster_type );
 
         template <typename ClusterType,
-                  typename ParticleIteratorProvider>
+                  typename ParticleIteratorProvider,
+                  typename ParticleNoKeyIteratorProvider>
         static void
-        doImportAndSortParticles( nvidiaParticles&         particle_container,
-                                  nvidiaParticles&         particle_to_inject,
-                                  ClusterType              cluster_type,
-                                  ParticleIteratorProvider particle_iterator_provider );
+        doImportAndSortParticles( nvidiaParticles&              particle_container,
+                                  nvidiaParticles&              particle_to_inject,
+                                  ClusterType                   cluster_type,
+                                  ParticleIteratorProvider      particle_iterator_provider,
+                                  ParticleNoKeyIteratorProvider particle_no_key_iterator_provider );
     };
 
 
@@ -285,12 +287,14 @@ namespace detail {
     }
 
     template <typename ClusterType,
-              typename ParticleIteratorProvider>
+              typename ParticleIteratorProvider,
+              typename ParticleNoKeyIteratorProvider>
     void
-    Cluster::doImportAndSortParticles( nvidiaParticles&         particle_container,
-                                       nvidiaParticles&         particle_to_inject,
-                                       ClusterType              cluster_type,
-                                       ParticleIteratorProvider particle_iterator_provider )
+    Cluster::doImportAndSortParticles( nvidiaParticles&              particle_container,
+                                       nvidiaParticles&              particle_to_inject,
+                                       ClusterType                   cluster_type,
+                                       ParticleIteratorProvider      particle_iterator_provider,
+                                       ParticleNoKeyIteratorProvider particle_no_key_iterator_provider )
     {
         // So basicaly, we got a 5 to 14ms budget to:
         // - erase the leaving particles
@@ -382,7 +386,7 @@ namespace detail {
         //                                       particle_container.getPtrCellKeys() );                                                          // Output range first key
 
         // // Recompute bins
-        // computeBinIndex();
+        // computeBinIndex( particle_container );
 
         {
             // Erase particles that leaves this patch
@@ -490,10 +494,21 @@ namespace detail {
                                                                           particle_container.getPtrCharge() ) );
                 };
 
+                const auto particle_no_key_iterator_provider = []( nvidiaParticles& particle_container ) {
+                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrPosition( 1 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge() ) );
+                };
+
                 doImportAndSortParticles( particle_container,
                                           particle_to_inject,
                                           cluster_manipulator,
-                                          particle_iterator_provider );
+                                          particle_iterator_provider,
+                                          particle_no_key_iterator_provider );
             }
         }
     }
