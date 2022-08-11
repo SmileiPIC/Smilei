@@ -422,9 +422,12 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
-    virtual void initializeDataOnDevice() { ERROR( "Should not have come here" ); };
-    virtual void syncGPU() { ERROR( "Should not have come here" ); };
-    virtual void syncCPU() { ERROR( "Should not have come here" ); };
+    //! Make a copy of the host particles and does some computation like 
+    //! bin discovery.
+    //!
+    virtual void initializeDataOnDevice();
+    virtual void syncGPU();
+    virtual void syncCPU();
 
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
@@ -455,27 +458,36 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put 
+    //! Extract particles from the Particles object and put
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( Particles* particles_to_move );
-    
+    virtual void extractParticles( Particles *particles_to_move );
+
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
     // -----------------------------------------------------------------------------
-    virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
-    
+    virtual int eraseLeavingParticles();
+
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put 
+    //! Inject particles from particles_to_move object and put
     //! them in the Particles object
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
-    virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortParticles. Should not have come here" ); return 0;};
+    virtual int injectParticles( Particles *particles_to_inject );
 
-    virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
+    //! Implementation of a somewhat efficient particle injection, sorting
+    //! (including removing leaving particles) and binning for GPU if
+    //! available for the configuration of offloading technology
+    //! (OpenMP/OpenACC) and implemented for the space dimension of the
+    //! simulation. Else, fallback to the old naive, plain memcpy 
+    //! implementation.
+    //!
+    //! last_index is modified appropriately.
+    //!
+    virtual void importAndSortParticles( Particles *particles_to_inject );
 
+    virtual unsigned int gpu_size() const;
 
 private:
-
 };
 
 #endif

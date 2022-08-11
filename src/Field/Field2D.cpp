@@ -289,15 +289,19 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
     const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) &&
                                               smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data() );
     if( should_manipulate_gpu_memory ) {
-        // At initialization, this data() is NOT on the GPU so we dont map it to the GPU.
-        // On the other hand, later in the pic loop, data() will be on GPU and we
-        // need to map the exchange buffers.
+        // At initialization, data() is NOT on the GPU so we dont map the 
+        // exchange buffers to the GPU.
+        // On the other hand, later in the pic loop, data() will be on GPU and
+        // we need to map the exchange buffers.
         const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data();
         const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
         const int           dSize = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
 
-        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( dsend );
+        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
         if( !is_already_mapped_on_gpu ) {
+            // TODO(Etienne M): FREE. If we have load balancing or other patch
+            // creation/destruction available (which is not the case on GPU ATM),
+            // we should be taking care of freeing this GPU memory.
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }

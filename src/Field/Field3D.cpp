@@ -341,6 +341,12 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
             const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
             const int           dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
 
+            // TODO(Etienne M): DIAGS. Apply the same fix done for the 2D to the
+            // 3D mode.
+
+            // TODO(Etienne M): FREE. If we have load balancing or other patch
+            // creation/destruction available (which is not the case on GPU ATM),
+            // we should be taking care of freeing this GPU memory.
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }

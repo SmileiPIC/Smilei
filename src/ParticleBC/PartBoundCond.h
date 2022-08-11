@@ -39,17 +39,27 @@ public:
     inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_tot )
     {
         int *const cell_keys = species->particles->getPtrCellKeys();
+
+        // TODO(Etienne M): Clearing the key should be a member fonction of particle
+        const auto key_zeroing = [&]() {
 #if defined( _GPU )
-        #pragma acc parallel deviceptr(cell_keys)
-        #pragma acc loop gang worker vector
+    #pragma acc parallel deviceptr( cell_keys )
+    #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* tofrom */ \
                                       cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams
     #pragma omp distribute parallel for
 #endif
-        for (int ipart=imin ; ipart<imax ; ipart++ ) {
-            cell_keys[ipart] = 0;
+            for( int ipart = imin; ipart < imax; ipart++ ) {
+                cell_keys[ipart] = 0;
+            }
+        };
+       
+        if( parameters_->isGPUParticleBinningAvailable() ) {
+            // EMPTY, we need (!) the keys not to be cleared for the gpu binning
+        } else {
+            key_zeroing();
         }
 
         double energy_change = 0.;
@@ -97,7 +107,7 @@ private:
     bool isAM;
 
     double dt_;
-
+    const Params *parameters_;
 };
 
 #endif

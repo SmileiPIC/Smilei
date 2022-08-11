@@ -54,7 +54,6 @@ extern double normal( double stddev );
 // ---------------------------------------------------------------------------------------------------------------------
 class Params
 {
-
 public:
     //! Creator for Params
     Params( SmileiMPI *, std::vector<std::string> );
@@ -368,7 +367,53 @@ public:
 
     //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
-    
+
+    //! returns true if the dimension of the simulation is supported for the
+    //! binning.
+    //!
+    bool isGPUParticleBinningAvailable() const;
+
+    //! Given dimension_id in [0, 3), return for dimension_id == :
+    //! 1: the 1D value (not implemented)
+    //! 2: the 2D value
+    //! 3: the 3D value (not implemented)
+    //!
+    //! returns -1 if not implemented
+    //!
+    static constexpr int
+    getGPUClusterWidth( unsigned int dimension_id )
+    {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        // For 2D:
+        // 16x16 clusters used for charge deposition. Due to the 2nd order
+        // scheme, we need 2 wide cell band on each sides so the clusters do
+        // not overlap during particle deposition.
+        //
+        constexpr int kGPUClusterWidth[3]{ -1, 16 - 2, -1 };
+        // // Stop when accessing a non implemented value.
+        // SMILEI_ASSERT( kGPUClusterWidth[dimension_id - 1] < 1 );
+        return kGPUClusterWidth[dimension_id - 1];
+#else
+        return -1;
+#endif
+    }
+
+    //! Call getGPUClusterWidth( nDim_particle )
+    //!
+    int getGPUClusterWidth() const;
+
+    //! Compute pow(getGPUClusterWidth(), nDim_particle)
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUClusterCellVolume() const;
+
+    //! Compute the number of cluster/bin/tile per patch
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUBinCount() const;
+
     //! For gpu branch compatibility, not used for the moment
     bool gpu_computing;
 };

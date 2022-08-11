@@ -303,8 +303,12 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::initialParticleSorting( Params &params )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // Sort the particles in bins and compute the bin index.
-    // TODO(Etienne M): Initial sorting
+    // Initialy I wanted to control the GPU particle sorting/bin initialization
+    // here. In the end it was put in initializeDataOnDevice which is more 
+    // meaningful. 
+    // On that note, maybe the _VECTO/cell sorting 
+    // code should probably also be incapsulated in the particle class 
+    // (or a vectorized variant).
 #elif defined( _VECTO )
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
@@ -4249,6 +4253,10 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Async allocation ?
+
+    // TODO(Etienne M): FREE. If we have load balancing or other patch
+    // creation/destruction available (which is not the case on GPU ATM),
+    // we should be taking care of freeing this GPU memory.
 
     const int npatches = this->size();
 
