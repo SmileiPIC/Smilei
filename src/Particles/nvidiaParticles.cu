@@ -472,11 +472,28 @@ namespace detail {
         // These divisions will be optimized.
         // The integer division rounding behavior is expected.
 
-        const SizeType x_cluster_coordinate = x_cell_coordinate / kClusterWidth;
-        const SizeType y_cluster_coordinate = y_cell_coordinate / kClusterWidth;
+        // NOTE: If you wanna sort in "flat" tiles instead of square tiles, the
+        // first one being better for the naive projector, you can set
+        // x_cluster_width to 1.
+        // When x_cluster_width is set to 1 and the naive projector is used,
+        // y_cluster_width's best size seems to be 1 (aka sort by cell) with a
+        // y_stride of ~16.
+        static constexpr SizeType x_cluster_width = kClusterWidth; // 1;
+        static constexpr SizeType y_cluster_width = kClusterWidth;
+
+        const SizeType x_cluster_coordinate = x_cell_coordinate / x_cluster_width;
+        const SizeType y_cluster_coordinate = y_cell_coordinate / y_cluster_width;
+
+        // NOTE: You may want to use a stride smaller than
+        // y_dimension_cluster_count_. Your work distribution amongst the GPU's
+        // CUs/SIMD units creates less conflicts between atomic load/write could
+        // reduce false sharing etc. while still having the benefits of linear
+        // access.
+        // 16 is a good, size.
+        const SizeType y_stride = y_dimension_cluster_count_; // 16;
 
         // The order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = x_cluster_coordinate * y_dimension_cluster_count_ +
+        const SizeType cluster_index = x_cluster_coordinate * y_stride +
                                        y_cluster_coordinate;
 
         return static_cast<IDType>( cluster_index );
