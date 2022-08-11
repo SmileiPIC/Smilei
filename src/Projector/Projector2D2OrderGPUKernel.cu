@@ -66,11 +66,6 @@ namespace naive {
                                                      particle_momentum_z /* [0:particle_count] */, \
                                                      particle_charge /* [0:particle_count] */,     \
                                                      particle_weight /* [0:particle_count] */ )
-        //        map( from                                            \
-                    //  : Sx0_buffer_data [0:kTmpArraySize],            \ 
-                    //    Sx1_buffer_data [0:kTmpArraySize],            \
-                    //    Sy0_buffer_data [0:kTmpArraySize],            \
-                    //    Sy1_buffer_data [0:kTmpArraySize] )
         #pragma omp teams thread_limit( 64 )
         #pragma omp distribute parallel for
     #endif
@@ -252,6 +247,32 @@ namespace naive {
 } // namespace naive
 
 namespace hip {
+    namespace detail {
+        void checkErrors( ::hipError_t an_error_code,
+                          const char  *file_name,
+                          int          line )
+        {
+            if( an_error_code != ::hipError_t::hipSuccess ) {
+                std::cout << "HIP error at " << file_name << ":" << line
+                          << " -> " << ::hipGetErrorString( an_error_code );
+                std::exit( EXIT_FAILURE );
+            }
+        }
+    } // namespace detail
+
+    #define checkHIPErrors( an_expression )                           \
+        do {                                                          \
+            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
+        } while( 0 )
+
+    namespace kernel {
+        extern "C" __global__ void
+        helloWorld( const int number )
+        {
+            const auto local_index = blockIdx.x * blockDim.x + threadIdx.x;
+            printf( "Hello World from %d ! number: %d\n", local_index, number );
+        }
+    } // namespace kernel
 
     static inline void
     currentDepositionKernel( double *__restrict__ Jx,
@@ -280,16 +301,33 @@ namespace hip {
                              int    nprimy,
                              int    pxr )
     {
-        // SMILEI_ASSERT(only one gpu is available);
-        SMILEI_ASSERT( false );
+        int device_count;
+        checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
+        SMILEI_ASSERT( device_count == 1 );
+
+        // NOTE:
+        // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
+        // 3 streams (Jx Jy Jz)
+        // hipOccupancyMaxPotentialBlockSize
+        // __ldg
+        //
+
+        const ::dim3 kGridDimension{ 1, 1, 1 };
+        const ::dim3 kBlockDimension{ 64, 1, 1 };
+
+        hipLaunchKernelGGL( kernel::helloWorld,
+                            kGridDimension,
+                            kBlockDimension,
+                            0, // Shared memory
+                            0, // Stream
+                            42 );
+
+        checkHIPErrors( ::hipDeviceSynchronize() );
+
+        std::exit( 42 );
     }
 
 } // namespace hip
-
-// 3 streams (Jx Jy Jz)
-//
-
-// TODO(Etienne M): Change .cpp to .cu
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
@@ -322,21 +360,21 @@ currentDepositionKernel( double *__restrict__ Jx,
 {
     // naive::
     hip::
-    currentDepositionKernel( Jx, Jy, Jz,
-                             Jx_size, Jy_size, Jz_size,
-                             particle_position_x, particle_position_y,
-                             particle_momentum_z,
-                             particle_charge,
-                             particle_weight,
-                             bin_index, bin_count,
-                             invgf_,
-                             iold_, deltaold_,
-                             inv_cell_volume,
-                             dx_inv, dy_inv,
-                             dx_ov_dt, dy_ov_dt,
-                             i_domain_begin, j_domain_begin,
-                             nprimy,
-                             pxr );
+        currentDepositionKernel( Jx, Jy, Jz,
+                                 Jx_size, Jy_size, Jz_size,
+                                 particle_position_x, particle_position_y,
+                                 particle_momentum_z,
+                                 particle_charge,
+                                 particle_weight,
+                                 bin_index, bin_count,
+                                 invgf_,
+                                 iold_, deltaold_,
+                                 inv_cell_volume,
+                                 dx_inv, dy_inv,
+                                 dx_ov_dt, dy_ov_dt,
+                                 i_domain_begin, j_domain_begin,
+                                 nprimy,
+                                 pxr );
 }
 
 #endif

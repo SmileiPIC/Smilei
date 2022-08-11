@@ -118,15 +118,20 @@ int main( int argc, char *argv[] )
         if( gpu_count < 1 ) {
             ERROR( "Simlei needs one accelerator, none detected." );
         } else if( gpu_count > 1 ) {
-            WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
-            WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
+            // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
+            // (nor in OpenACC). This makes managment of the device completly
+            // oblivious to the program (only one, the one by default).
+            // This could be a missed but very advanced optimization for some
+            // kernels/exchange.
+            ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
+            // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
-            // This assumes the MPI rank on a node are sequential
-            const int this_process_gpu = smpi.getRank() % gpu_count;
+            // // This assumes the MPI rank on a node are sequential
+            // const int this_process_gpu = smpi.getRank() % gpu_count;
 
-            // std::cout << "Using GPU id: " << this_process_gpu << "\n";
+            // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
 
-            ::omp_set_default_device( this_process_gpu );
+            // ::omp_set_default_device( this_process_gpu );
         } else {
             // ::omp_set_default_device(0);
         }
