@@ -272,6 +272,8 @@ void hipCurrentDepositionKernel( double *__restrict__ Jx,
                                  int    nprimy,
                                  int    pxr )
 {
+    // SMILEI_ASSERT(only one gpu is available);
+    SMILEI_ASSERT( false );
 }
 
 // 3 streams (Jx Jy Jz)
@@ -308,31 +310,22 @@ currentDepositionKernel( double *__restrict__ Jx,
                          int    nprimy,
                          int    pxr )
 {
-    naiveCurrentDepositionKernel( Jx,
-                                  Jy,
-                                  Jz,
-                                  Jx_size,
-                                  Jy_size,
-                                  Jz_size,
-                                  particle_position_x,
-                                  particle_position_y,
-                                  particle_momentum_z,
-                                  particle_charge,
-                                  particle_weight,
-                                  bin_index,
-                                  bin_count,
-                                  invgf_,
-                                  iold_,
-                                  deltaold_,
-                                  inv_cell_volume,
-                                  dx_inv,
-                                  dy_inv,
-                                  dx_ov_dt,
-                                  dy_ov_dt,
-                                  i_domain_begin,
-                                  j_domain_begin,
-                                  nprimy,
-                                  pxr );
+    // naiveCurrentDepositionKernel
+    hipCurrentDepositionKernel( Jx, Jy, Jz,
+                                Jx_size, Jy_size, Jz_size,
+                                particle_position_x, particle_position_y,
+                                particle_momentum_z,
+                                particle_charge,
+                                particle_weight,
+                                bin_index, bin_count,
+                                invgf_,
+                                iold_, deltaold_,
+                                inv_cell_volume,
+                                dx_inv, dy_inv,
+                                dx_ov_dt, dy_ov_dt,
+                                i_domain_begin, j_domain_begin,
+                                nprimy,
+                                pxr );
 }
 
 #endif
