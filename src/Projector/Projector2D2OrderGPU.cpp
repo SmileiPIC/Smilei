@@ -34,6 +34,7 @@ Projector2D2OrderGPU::~Projector2D2OrderGPU()
 
 namespace { // Unnamed namespace == static == internal linkage == no exported symbols
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     extern "C" void
     currentDepositionKernel( double *__restrict__ Jx,
                              double *__restrict__ Jy,
@@ -46,7 +47,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                              const double *__restrict__ particle_momentum_z,
                              const short *__restrict__ particle_charge,
                              const double *__restrict__ particle_weight,
-                             int particle_count,
+                             int *bin_index,
+                             int  bin_count,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
                              const double *__restrict__ deltaold_,
@@ -59,6 +61,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                              int    j_domain_begin,
                              int    nprimy,
                              int    pxr );
+#endif
 
     /// Project global current densities (EMfields->Jx_/Jy_/Jz_)
     ///
@@ -86,6 +89,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               double,
               int pxr )
     {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         currentDepositionKernel( Jx,
                                  Jy,
                                  Jz,
@@ -97,7 +101,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  particles.getPtrMomentum( 2 ),
                                  particles.getPtrCharge(),
                                  particles.getPtrWeight(),
-                                 particles.last_index.back(),
+                                 particles.last_index.data(),
+                                 particles.last_index.size(),
                                  invgf_,
                                  iold_,
                                  deltaold_,
@@ -110,6 +115,9 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  nprimy,
                                  pxr );
+#else
+        SMILEI_ASSERT( false );
+#endif
     }
 
     /// Like currents(), project the particle current on the grid (Jx_/Jy_/Jz_)
