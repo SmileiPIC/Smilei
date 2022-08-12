@@ -1,10 +1,28 @@
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
 
-    #include <hip/hip_runtime.h>
+    //! Simple switch to jump between the reference (omp) implementation and the
+    //! hip one.
+    //! NOTE: If you wanna use the OMP version, you must rename this file to
+    //! .cpp instead of .cu for the HIP. The preprocessor and the Smilei
+    //! makefile will take care of the rest.
+    //!
+    #if defined( __HIP__ )
+    // HIP compiler support enabled (for .cu files)
+    #else
+        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION = 1
+    #endif
 
-    #include <cmath>
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
+        #include <cmath>
 
-    #include "Tools.h"
+        #include "Tools.h"
+    #else
+        #include <hip/hip_runtime.h>
+
+        #include "gpu.h"
+    #endif
+
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
 
 namespace naive {
 
@@ -20,7 +38,7 @@ namespace naive {
                              const double *__restrict__ particle_momentum_z,
                              const short *__restrict__ particle_charge,
                              const double *__restrict__ particle_weight,
-                             int *__restrict__ bin_index,
+                             const int *__restrict__ host_bin_index,
                              int bin_count,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
@@ -37,28 +55,25 @@ namespace naive {
     {
         SMILEI_ASSERT( bin_count > 0 );
 
-        const int particle_count = bin_index[bin_count - 1];
+        const int particle_count = host_bin_index[bin_count - 1];
 
-        // // Arrays used for the Esirkepov projection method
-        // static constexpr bool kAutoDeviceFree = true;
-        // const std::size_t     kTmpArraySize   = particle_count * 5;
+            // // Arrays used for the Esirkepov projection method
+            // static constexpr bool kAutoDeviceFree = true;
+            // const std::size_t     kTmpArraySize   = particle_count * 5;
 
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
-        // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
-        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
-        // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
+            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
+            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
+            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
+            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
+            // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
+            // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
 
-        // double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
-        // double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
-        // double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
-        // double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
-        // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
-        // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
-
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const int interpolation_range_2D_size = particle_count + 1 * particle_count;
+            // double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
+            // double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
+            // double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
+            // double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
+            // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
+            // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
 
         #pragma omp target     is_device_ptr /* map */ ( /* to: */                                     \
                                                      particle_position_x /* [0:particle_count] */, \
@@ -68,7 +83,6 @@ namespace naive {
                                                      particle_weight /* [0:particle_count] */ )
         #pragma omp teams thread_limit( 64 )
         #pragma omp distribute parallel for
-    #endif
         for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
@@ -189,21 +203,21 @@ namespace naive {
 
             for( unsigned int i = 0; i < 1; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
-                /* Jx[iloc] += tmpJx[0]; */
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+                    /* Jx[iloc] += tmpJx[0]; */
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                 Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; j++ ) {
                     tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                     Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                     Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
                                               Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
                 }
@@ -214,30 +228,30 @@ namespace naive {
             for( unsigned int i = 1; i < 5; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
                 tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                 Jx[iloc] += tmpJx[0];
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                 Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; ++j ) {
                     tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                     Jx[iloc + j] += tmpJx[j];
                     tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                     Jy[iloc + j + pxr * ( i + ipo )] += tmp;
 
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp atomic update
-    #endif
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp atomic update
+        #endif
                     Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
                                               Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
                 }
@@ -245,6 +259,8 @@ namespace naive {
         }
     }
 } // namespace naive
+
+    #else
 
 namespace hip {
     namespace detail {
@@ -260,17 +276,59 @@ namespace hip {
         }
     } // namespace detail
 
-    #define checkHIPErrors( an_expression )                           \
-        do {                                                          \
-            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
-        } while( 0 )
+        #define checkHIPErrors( an_expression )                           \
+            do {                                                          \
+                detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
+            } while( 0 )
 
     namespace kernel {
         extern "C" __global__ void
-        helloWorld( const int number )
+        depositeForAllCurrentDimensions( double *__restrict__ Jx,
+                                         double *__restrict__ Jy,
+                                         double *__restrict__ Jz,
+                                         int Jx_size,
+                                         int Jy_size,
+                                         int Jz_size,
+                                         const double *__restrict__ particle_position_x,
+                                         const double *__restrict__ particle_position_y,
+                                         const double *__restrict__ particle_momentum_z,
+                                         const short *__restrict__ particle_charge,
+                                         const double *__restrict__ particle_weight,
+                                         const int *__restrict__ gpu_bin_index,
+                                         int bin_count,
+                                         const double *__restrict__ invgf_,
+                                         const int *__restrict__ iold_,
+                                         const double *__restrict__ deltaold_,
+                                         double inv_cell_volume,
+                                         double dx_inv,
+                                         double dy_inv,
+                                         double dx_ov_dt,
+                                         double dy_ov_dt,
+                                         int    i_domain_begin,
+                                         int    j_domain_begin,
+                                         int    nprimy,
+                                         int    pxr )
         {
-            const auto local_index = blockIdx.x * blockDim.x + threadIdx.x;
-            printf( "Hello World from %d ! number: %d\n", local_index, number );
+            // const auto local_index = blockIdx.x * blockDim.x + threadIdx.x;
+
+            const unsigned int workgroup_size = blockDim.x;
+
+            const unsigned int workgroup_dedicated_bin_index = blockIdx.x;
+
+            // This workgroup has to process distance(last_particle,
+            // first_particle) particles
+            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : gpu_bin_index[workgroup_dedicated_bin_index - 1]; // __ldg
+            const unsigned int last_particle  = gpu_bin_index[workgroup_dedicated_bin_index];                                              // __ldg
+
+            // This stride should enable better memory access coalescing
+            const unsigned int loop_stride = workgroup_size;
+
+            for( unsigned int current_particle = first_particle;
+                 current_particle < last_particle;
+                 current_particle += loop_stride ) {
+            }
+
+            // printf( "Hello World from %d ! | blockIdx.x %d threadIdx.x %d\n", local_index, static_cast<int>( blockIdx.x ), static_cast<int>( threadIdx.x ) );
         }
     } // namespace kernel
 
@@ -286,7 +344,7 @@ namespace hip {
                              const double *__restrict__ particle_momentum_z,
                              const short *__restrict__ particle_charge,
                              const double *__restrict__ particle_weight,
-                             int *__restrict__ bin_index,
+                             const int *__restrict__ host_bin_index,
                              int bin_count,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
@@ -307,20 +365,37 @@ namespace hip {
 
         // NOTE:
         // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
-        // 3 streams (Jx Jy Jz)
+        // 1 or 3 streams (Jx Jy Jz) ?
         // hipOccupancyMaxPotentialBlockSize
-        // __ldg
+        // __ldg | non coherent cache | this is sometimes generated implicitly when using restricted ptrs
         //
 
-        const ::dim3 kGridDimension{ 1, 1, 1 };
-        const ::dim3 kBlockDimension{ 64, 1, 1 };
+        const int *__restrict__ gpu_bin_index = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_bin_index );
 
-        hipLaunchKernelGGL( kernel::helloWorld,
-                            kGridDimension,
-                            kBlockDimension,
+        const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( bin_count ), 1, 1 };
+        const ::dim3 kBlockDimensionInWorkItem{ 640, 1, 1 };
+
+        hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions,
+                            kGridDimensionInBlock,
+                            kBlockDimensionInWorkItem,
                             0, // Shared memory
                             0, // Stream
-                            42 );
+                            // Kernel arguments
+                            Jx, Jy, Jz,
+                            Jx_size, Jy_size, Jz_size,
+                            particle_position_x, particle_position_y,
+                            particle_momentum_z,
+                            particle_charge,
+                            particle_weight,
+                            gpu_bin_index, bin_count,
+                            invgf_,
+                            iold_, deltaold_,
+                            inv_cell_volume,
+                            dx_inv, dy_inv,
+                            dx_ov_dt, dy_ov_dt,
+                            i_domain_begin, j_domain_begin,
+                            nprimy,
+                            pxr );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 
@@ -328,6 +403,8 @@ namespace hip {
     }
 
 } // namespace hip
+
+    #endif
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
@@ -343,7 +420,7 @@ currentDepositionKernel( double *__restrict__ Jx,
                          const double *__restrict__ particle_momentum_z,
                          const short *__restrict__ particle_charge,
                          const double *__restrict__ particle_weight,
-                         int *__restrict__ bin_index,
+                         const int *__restrict__ host_bin_index,
                          int bin_count,
                          const double *__restrict__ invgf_,
                          const int *__restrict__ iold_,
@@ -358,15 +435,18 @@ currentDepositionKernel( double *__restrict__ Jx,
                          int    nprimy,
                          int    pxr )
 {
-    // naive::
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
+    naive::
+    #else
     hip::
+    #endif
         currentDepositionKernel( Jx, Jy, Jz,
                                  Jx_size, Jy_size, Jz_size,
                                  particle_position_x, particle_position_y,
                                  particle_momentum_z,
                                  particle_charge,
                                  particle_weight,
-                                 bin_index, bin_count,
+                                 host_bin_index, bin_count,
                                  invgf_,
                                  iold_, deltaold_,
                                  inv_cell_volume,
