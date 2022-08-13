@@ -35,6 +35,10 @@ public :
                                   unsigned int &istart_in_zone,
                                   unsigned int &istart_in_file,
                                   unsigned int &nsteps );
+    void findSubgridIntersection1( hsize_t idim,
+                                   hsize_t &zone_begin,
+                                   hsize_t &zone_npoints,
+                                   hsize_t &start_in_zone );
                                   
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override
