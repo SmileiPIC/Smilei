@@ -27,11 +27,10 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
     
     // Get the full size of the array in file
     vector<hsize_t> final_array_size(2);
-    final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
-    final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
     // Take subgrid into account
     for( unsigned int i=0; i<2; i++ ) {
         hsize_t start = 0;
+        final_array_size[i] = params.number_of_patches[i] * params.n_space[i] + 1;
         findSubgridIntersection1( i, start, final_array_size[i], start );
     }
     // Define the chunk size (necessary above 2^28 points)
@@ -50,6 +49,10 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
     }
     
     filespace = new H5Space( final_array_size, {}, {}, chunk_size );
+    memspace = new H5Space( 1 );
+    
+    // info for log output
+    total_dataset_size = final_size;
 }
 
 DiagnosticFields2D::~DiagnosticFields2D()
@@ -83,19 +86,6 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     }
     sort( patch_ixy.begin(), patch_ixy.end(), patch_sorting );
     
-    // Group patches by the same X
-    vector<vector<PatchIXY> > patch_ixy_grouped;
-    int current_x = -1;
-    for( unsigned int j=0 ; j<patch_ixy.size() ; j++ ) {
-        if( (int)( patch_ixy[j].x ) > current_x ) {
-            vector<PatchIXY> a( 1, patch_ixy[j] );
-            patch_ixy_grouped.push_back( a );
-            current_x = patch_ixy[j].x;
-        } else {
-            patch_ixy_grouped.back().push_back( patch_ixy[j] );
-        }
-    }
-    
     buffer_skip_x.resize( vecPatches.size() );
     buffer_skip_y.resize( vecPatches.size() );
     unsigned int current_y_skip = 0;
@@ -105,23 +95,22 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     // This loop does several things:
     //   - Add patches to the filespace one by one (this makes a combination of hyperslabs)
     //   - Calculate the way the data should be stored in the buffer so that it matches the filespace
-    for( unsigned int ix=0; ix<patch_ixy_grouped.size(); ix++ ) {
+    unsigned int i = 0;
+    while( i < patch_ixy.size() ) {
         
         // For this line of patches at a given X, find the number of points in X
-        Patch * p0 = vecPatches(  patch_ixy_grouped[ix][0].i );
-        offset[0] = p0->Pcoordinates[0] * patch_size[0] + ( ( p0->Pcoordinates[0]==0 )?0:1 );
-        npoints[0] = patch_size[0] + ( ( p0->Pcoordinates[0]==0 )?1:0 );
+        offset[0] = patch_ixy[i].x * patch_size[0] + ( ( patch_ixy[i].x==0 )?0:1 );
+        npoints[0] = patch_size[0] + ( ( patch_ixy[i].x==0 )?1:0 );
         findSubgridIntersection1( 0, offset[0], npoints[0], start_in_patch[0] );
         
-        // Now iterate on the patches along Y
-        unsigned int npoints_y = 0, npoints_x = npoints[0];
-        for( unsigned int iy=0; iy<patch_ixy_grouped[ix].size(); iy++ ) {
+        // Now iterate on the patches along Y that share the same X
+        unsigned int i0 = i, npoints_y = 0;
+        while( i < patch_ixy.size() && patch_ixy[i].x == patch_ixy[i0].x ) {
             
-            unsigned int ipatch = patch_ixy_grouped[ix][iy].i;
+            unsigned int ipatch = patch_ixy[i].i;
             // Find the number of points along Y for this patch
-            Patch * p = vecPatches( ipatch );
-            offset[1] = p->Pcoordinates[1] * patch_size[1] + ( ( p->Pcoordinates[1]==0 )?0:1 );
-            npoints[1] = patch_size[1] + ( ( p->Pcoordinates[1]==0 )?1:0 );
+            offset[1] = patch_ixy[i].y * patch_size[1] + ( ( patch_ixy[i].y==0 )?0:1 );
+            npoints[1] = patch_size[1] + ( ( patch_ixy[i].y==0 )?1:0 );
             findSubgridIntersection1( 1, offset[1], npoints[1], start_in_patch[1] );
             
             // Add this patch to the filespace
@@ -135,15 +124,19 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
             
             // Sum Y points to get the total X skip when writing to the buffer
             npoints_y += npoints[1];
+            
+            i++;
         }
         
-        // Now calculate the X skip for each patch
-        for( unsigned int iy=0; iy<patch_ixy_grouped[ix].size(); iy++ ) {
-            unsigned int ipatch = patch_ixy_grouped[ix][iy].i;
+        // Now calculate the X skip for each patch of that line
+        for( unsigned int j=i0; j<i; j++ ) {
+            unsigned int ipatch = patch_ixy[j].i;
             buffer_skip_x[ipatch] = npoints_y - buffer_skip_x[ipatch];
         }
-        current_y_skip += npoints_x * npoints_y;
+        current_y_skip += npoints[0] * npoints_y;
     }
+    
+    delete memspace;
     memspace = new H5Space( current_y_skip );
     data.resize( current_y_skip );
     
