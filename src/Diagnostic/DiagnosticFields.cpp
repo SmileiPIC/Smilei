@@ -10,13 +10,8 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     //MESSAGE("Starting diag field creation " );
-    tmp_dset_ = NULL;
     diag_n = ndiag;
     
-    filespace_firstwrite = NULL;
-    memspace_firstwrite = NULL;
-    filespace_reread = NULL;
-    memspace_reread = NULL;
     filespace = NULL;
     memspace = NULL;
     
@@ -203,18 +198,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
 DiagnosticFields::~DiagnosticFields()
 {
     closeFile();
-    if( filespace_firstwrite ) {
-        delete filespace_firstwrite;
-    }
-    if( memspace_firstwrite ) {
-        delete memspace_firstwrite;
-    }
-    if( filespace_reread ) {
-        delete filespace_reread;
-    }
-    if( memspace_reread ) {
-        delete memspace_reread;
-    }
     if( filespace ) {
         delete filespace;
     }
@@ -247,11 +230,6 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
 
 void DiagnosticFields::closeFile()
 {
-    
-    if( tmp_dset_ ) {
-        delete tmp_dset_;
-        tmp_dset_ = NULL;
-    }
     if( data_group_ ) {
         delete data_group_;
         data_group_ = NULL;
@@ -359,10 +337,6 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         double x_moved = simWindow ? simWindow->getXmoved() : 0.;
         iteration_group_->attr( "x_moved", x_moved );
         delete iteration_group_;
-        if( tmp_dset_ ) {
-            delete tmp_dset_;
-        }
-        tmp_dset_ = NULL;
         if( flush_timeSelection->theTimeIsNow( itime ) ) {
             file_->flush();
         }

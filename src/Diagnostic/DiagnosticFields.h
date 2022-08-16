@@ -87,18 +87,13 @@ protected :
     //! Copy patch field to current "data" buffer
     virtual void getField( Patch *patch, unsigned int ) = 0;
     
-    //! Temporary dataset that is used for folding the 2D hilbert curve
-    H5Write * tmp_dset_;
-    
     //! Variable to store the status of a dataset (whether it exists or not)
     bool status;
     
-    //! Tools for re-reading and re-writing the file in a folded pattern
-    hsize_t file_size, chunk_size_firstwrite;
+    //! Tools for writing to file
+    hsize_t file_size;
     std::vector<hsize_t> chunk_size;
     unsigned int one_patch_buffer_size, total_dataset_size;
-    H5Space *filespace_reread, *filespace_firstwrite, *memspace_reread, *memspace_firstwrite;
-    std::vector<double> data_reread, data_rewrite;
     
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
