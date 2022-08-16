@@ -36,6 +36,7 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
     // Define the chunk size (necessary above 2^28 points)
     const hsize_t max_size = 4294967295/2/sizeof( double );
     hsize_t final_size = final_array_size[0] * final_array_size[1];
+    vector<hsize_t> chunk_size;
     if( final_size > max_size ) {
         hsize_t n_chunks = 1 + ( final_size-1 ) / max_size;
         chunk_size.resize( 2 );
@@ -44,8 +45,6 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
         if( n_chunks * chunk_size[0] < final_array_size[0] ) {
             chunk_size[0]++;
         }
-    } else {
-        chunk_size.resize( 0 );
     }
     
     filespace = new H5Space( final_array_size, {}, {}, chunk_size );

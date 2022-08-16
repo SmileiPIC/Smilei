@@ -90,10 +90,8 @@ protected :
     //! Variable to store the status of a dataset (whether it exists or not)
     bool status;
     
-    //! Tools for writing to file
-    hsize_t file_size;
-    std::vector<hsize_t> chunk_size;
-    unsigned int one_patch_buffer_size, total_dataset_size;
+    //! Total size of the data in file (for estimating disk usage)
+    unsigned int total_dataset_size;
     
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
