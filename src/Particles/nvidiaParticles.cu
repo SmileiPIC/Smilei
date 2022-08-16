@@ -227,8 +227,8 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
-                                                                                       parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::computeParticleClusterKey( particle_container,
+                                                                                                                                 parameters );
                 break;
             }
             default:
@@ -247,8 +247,8 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 )>::sortParticleByKey( particle_container,
-                                                                               parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::sortParticleByKey( particle_container,
+                                                                                                                         parameters );
                 break;
             }
             default:
@@ -266,9 +266,9 @@ namespace detail {
         Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( particle_container.last_index.data() );
 
         // TODO(Etienne M): REMOVE. After the implementation is stable
-        SMILEI_ASSERT( thrust::is_sorted( thrust::device,
-                                          static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
-                                          static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
+        // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
+        //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
+        //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
 
         // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
         // it's so fast anyway..)
@@ -286,10 +286,9 @@ namespace detail {
                              bin_upper_bound );
 
         // TODO(Etienne M): REMOVE. After the implementation is stable
-        SMILEI_ASSERT( thrust::is_sorted( thrust::device,
-                                          bin_upper_bound,
-                                          bin_upper_bound + particle_container.last_index.size() ) );
-        // TODO(Etienne M): Print the bins
+        // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
+        //                                   bin_upper_bound,
+        //                                   bin_upper_bound + particle_container.last_index.size() ) );
     }
 
     inline void
@@ -302,9 +301,9 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 )>::importAndSortParticles( particle_container,
-                                                                                    particle_to_inject,
-                                                                                    parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::importAndSortParticles( particle_container,
+                                                                                                                              particle_to_inject,
+                                                                                                                              parameters );
                 break;
             }
             default:
@@ -510,9 +509,9 @@ namespace detail {
         const auto last  = first + particle_container.gpu_size();
 
         doComputeParticleClusterKey( first, last,
-                                     Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.cell_length[0],
-                                                                                 parameters.cell_length[1],
-                                                                                 parameters.n_space[1] } );
+                                     Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>{ parameters.cell_length[0],
+                                                                                                                           parameters.cell_length[1],
+                                                                                                                           parameters.n_space[1] } );
     }
 
     template <Cluster::DifferenceType kClusterWidth>

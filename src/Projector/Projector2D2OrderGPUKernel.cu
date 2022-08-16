@@ -19,6 +19,7 @@
     #else
         #include <hip/hip_runtime.h>
 
+        #include "Params.h"
         #include "gpu.h"
     #endif
 
@@ -300,12 +301,20 @@ namespace hip {
             const unsigned int workgroup_dedicated_bin_index = blockIdx.x;
             const unsigned int local_particle_index_offset   = threadIdx.x;
 
+            // // NOTE: We gain from the particles not being sorted inside a
+            // // cluster because it reduces the bank conflicts one gets when
+            // // accessing the same part of the shared memory. Such
+            // // "conflicted" accesses are serialied !
+            // __shared__ double Jx_field_scratch_space[Params::];
+            // __shared__ double Jy_field_scratch_space[Params::];
+            // __shared__ double Jz_field_scratch_space[Params::];
+
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
             // This workgroup has to process distance(last_particle,
             // first_particle) particles
-            const unsigned int first_particle = ( workgroup_dedicated_bin_index == 0 ? 0 :
-                                                                                       device_bin_index[workgroup_dedicated_bin_index - 1] );
+            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 :
+                                                                                     device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
             for( unsigned int particle_index = first_particle + local_particle_index_offset;
@@ -321,13 +330,6 @@ namespace hip {
                 double Sy1[5];
                 // double DSx[5];
                 // double DSy[5];
-
-                // double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - 0 );
-                // double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - 0 );
-                // double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - 0 );
-                // double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - 0 );
-                // // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - 0 );
-                // // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - 0 );
 
                 // Variable declaration & initialization
                 // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
@@ -401,21 +403,6 @@ namespace hip {
                 // DSy[2] = Sy1[2] - Sy0[2];
                 // DSy[3] = Sy1[3] - Sy0[3];
                 // DSy[4] = Sy1[4] - Sy0[4];
-                // }
-
-                // // Charge deposition on the grid
-
-                // for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
-                //     const double invgf                        = invgf_[particle_index];
-                //     const int *const __restrict__ iold        = &iold_[particle_index];
-                //     const double *const __restrict__ deltaold = &deltaold_[particle_index];
-
-                //     double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - 0 );
-                //     double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - 0 );
-                //     double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - 0 );
-                //     double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - 0 );
-                //     // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - 0 );
-                //     // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - 0 );
 
                 // (x,y,z) components of the current density for the macro-particle
                 const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
@@ -428,18 +415,7 @@ namespace hip {
                 const int ipo = iold[0 * particle_count] - 2;
                 const int jpo = iold[1 * particle_count] - 2;
 
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
-                    /* Jx[iloc] += tmpJx[0]; */
-                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
-                    double tmp = 0.0;
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-                        ::atomicAdd( &device_Jy[iloc + j + pxr * ( /* i + */ ipo )], tmp );
-                        ::atomicAdd( &device_Jz[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
-                                                                     Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
-                    }
-                }
+                // Jx
 
                 double tmpJx[5]{};
 
@@ -447,13 +423,49 @@ namespace hip {
                     const int iloc = ( i + ipo ) * nprimy + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
                     ::atomicAdd( &device_Jx[iloc], tmpJx[0] );
-                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
-                    double tmp = 0.0;
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
                         ::atomicAdd( &device_Jx[iloc + j], tmpJx[j] );
+                    }
+                }
+
+                // Jy
+
+                for( unsigned int i = 0; i < 1; ++i ) {
+                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    double    tmp  = 0.0;
+                    for( unsigned int j = 1; j < 5; j++ ) {
+                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                        ::atomicAdd( &device_Jy[iloc + j + pxr * ( /* i + */ ipo )], tmp );
+                    }
+                }
+
+                for( unsigned int i = 1; i < 5; ++i ) {
+                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    double    tmp  = 0.0;
+                    for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
                         ::atomicAdd( &device_Jy[iloc + j + pxr * ( i + ipo )], tmp );
+                    }
+                }
+
+                // Jz
+
+                for( unsigned int i = 0; i < 1; ++i ) {
+                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    /* Jx[iloc] += tmpJx[0]; */
+                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                    for( unsigned int j = 1; j < 5; j++ ) {
+                        ::atomicAdd( &device_Jz[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+                                                                     Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                    }
+                }
+
+                for( unsigned int i = 1; i < 5; ++i ) {
+                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
+                    double tmp = 0.0;
+                    for( unsigned int j = 1; j < 5; ++j ) {
                         ::atomicAdd( &device_Jz[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
                                                                      Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
                     }
@@ -492,6 +504,7 @@ namespace hip {
         int device_count;
         checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
         SMILEI_ASSERT( device_count == 1 );
+        // SMILEI_ASSERT(<binning is enabled/available>);
 
         // NOTE:
         // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
@@ -501,7 +514,7 @@ namespace hip {
         //
 
         const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( bin_count ), 1, 1 };
-        const ::dim3 kBlockDimensionInWorkItem{ 640, 1, 1 };
+        const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
 
         hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions,
                             kGridDimensionInBlock,

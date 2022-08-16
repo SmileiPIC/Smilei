@@ -368,8 +368,8 @@ public:
     //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
 
-    //! returns true if the dimension of the simulation is supported for the
-    //! binning.
+    //! returns true if the dimension and the interpolation order of the
+    //! simulation is supported for the binning.
     //!
     bool isGPUParticleBinningAvailable() const;
 
@@ -381,32 +381,74 @@ public:
     //! returns -1 if not implemented
     //!
     static constexpr int
-    getGPUClusterWidth( unsigned int dimension_id )
+    getGPUClusterWidth( int dimension_id, int interpolation_order )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        // For 2D:
-        // 16x16 clusters used for charge deposition. Due to the 2nd order
-        // scheme, we need 2 wide cell band on each sides so the clusters do
-        // not overlap during particle deposition.
-        //
-        constexpr int kGPUClusterWidth[3]{ -1, 16 - 2, -1 };
-        // // Stop when accessing a non implemented value.
-        // SMILEI_ASSERT( kGPUClusterWidth[dimension_id - 1] < 1 );
-        return kGPUClusterWidth[dimension_id - 1];
+        const int ghost_cell_border_width = 2 * getGPUClusterGhostCellBorderWidth( interpolation_order );
+        switch( dimension_id ) {
+            case 2:
+                // For 2D:
+                // 16x16 clusters used for charge deposition. Due to the 2nd order
+                // scheme, we need 2 wide cell band on each sides so the clusters do
+                // not overlap during particle deposition.
+                return 16 - ghost_cell_border_width;
+            case 1:
+            case 3:
+            default:
+                return -1;
+        }
 #else
         return -1;
 #endif
     }
 
-    //! Call getGPUClusterWidth( nDim_particle )
+    //! Call getGPUClusterWidth( nDim_particle, interpolation_order )
     //!
     int getGPUClusterWidth() const;
+
+    //! Return the ghost cell present at the border of the cluster.
+    //! This border is NOT accounted for by getGPUClusterWidth. That is, the
+    //! particles are sorted in chunk of width getGPUClusterWidth but the
+    //! projection/interpolation of a given bin will reach particles in a
+    //! cluster slightly larger by getGPUClusterGhostCellBorderWidth in
+    //! each coordinate component (forward and backward).
+    //!
+    static constexpr int
+    getGPUClusterGhostCellBorderWidth( int interpolation_order )
+    {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        constexpr int kGPUClusterGhostCellCount[3]{ -1,
+                                                    2,
+                                                    -1 };
+        return kGPUClusterGhostCellCount[interpolation_order - 1];
+#else
+        return -1;
+#endif
+    }
+
+    //! Calls getGPUClusterGhostCellBorderWidth( interpolation_order )
+    //!
+    int getGPUClusterGhostCellBorderWidth() const;
 
     //! Compute pow(getGPUClusterWidth(), nDim_particle)
     //!
     //! returns -1 if the binning is not supported
     //!
     int getGPUClusterCellVolume() const;
+
+    static constexpr int
+    getGPUInterpolationClusterCellVolume( int dimension_id, int interpolation_order )
+    {
+        // Compute pow(getGPUClusterWidth(), nDim_particle)
+        const int kClusterWidth = getGPUClusterWidth( dimension_id, interpolation_order ) +
+                                  getGPUClusterGhostCellBorderWidth( interpolation_order );
+        const int kClusterCellVolume = kClusterWidth *
+                                       ( dimension_id >= 2 ? kClusterWidth : 1 ) *
+                                       ( dimension_id >= 3 ? kClusterWidth : 1 );
+        return kClusterCellVolume;
+    }
+
+    int getGPUInterpolationClusterCellVolume() const;
 
     //! Compute the number of cluster/bin/tile per patch
     //!
