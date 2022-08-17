@@ -40,7 +40,8 @@ namespace naive {
                              const short *__restrict__ device_particle_charge,
                              const double *__restrict__ device_particle_weight,
                              const int *__restrict__ host_bin_index,
-                             int bin_count,
+                             unsigned int x_dimension_bin_count,
+                             unsigned int y_dimension_bin_count,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
                              const double *__restrict__ deltaold_,
@@ -54,6 +55,8 @@ namespace naive {
                              int    nprimy,
                              int    pxr )
     {
+        const unsigned int bin_count = x_dimension_bin_count * y_dimension_bin_count;
+
         SMILEI_ASSERT( bin_count > 0 );
 
         const int particle_count = host_bin_index[bin_count - 1];
@@ -281,7 +284,6 @@ namespace hip {
                                          const short *__restrict__ device_particle_charge,
                                          const double *__restrict__ device_particle_weight,
                                          const int *__restrict__ device_bin_index,
-                                         int bin_count,
                                          const double *__restrict__ device_invgf_,
                                          const int *__restrict__ device_iold_,
                                          const double *__restrict__ device_deltaold_,
@@ -295,19 +297,43 @@ namespace hip {
                                          int    nprimy,
                                          int    pxr )
         {
+            // TODO(Etienne M): refactor this function. Break it into smaller 
+            // pieces (lds init/store, coeff computation, deposition etc..)
             const unsigned int workgroup_size = blockDim.x;
+            const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
-            const unsigned int workgroup_dedicated_bin_index = blockIdx.x;
+            // It seems slightly faster to traverse the clusters the C indexing
+            // order (compared to the Smilei order).
+            const unsigned int workgroup_dedicated_bin_index = blockIdx.y * gridDim.x + blockIdx.x;
             const unsigned int local_particle_index_offset   = threadIdx.x;
 
-            // // NOTE: We gain from the particles not being sorted inside a
-            // // cluster because it reduces the bank conflicts one gets when
-            // // accessing the same part of the shared memory. Such
-            // // "conflicted" accesses are serialied !
-            // __shared__ double Jx_field_scratch_space[Params::];
-            // __shared__ double Jy_field_scratch_space[Params::];
-            // __shared__ double Jz_field_scratch_space[Params::];
+            // NOTE: We gain from the particles not being sorted inside a
+            // cluster because it reduces the bank conflicts one gets when
+            // multiple threads access the same part of the shared memory. Such
+            // "conflicted" accesses are serialized !
+            // NOTE: We use a bit to much LDS. For Jx, the first row could be 
+            // discarded, for Jy we could remove the last column (know that the
+            // access pattern is wierd (rhombus shaped)).
+
+            static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+
+            __shared__ double Jx_field_scratch_space[kFieldScratchSpaceSize];
+            __shared__ double Jy_field_scratch_space[kFieldScratchSpaceSize];
+            __shared__ double Jz_field_scratch_space[kFieldScratchSpaceSize];
+
+            // Init the shared memory
+
+            for( unsigned int field_index = threadIdx.x;
+                 field_index < kFieldScratchSpaceSize;
+                 field_index += workgroup_size ) {
+                // TODO(Etienne M): Should I try to remvoe the bank conflicts?
+                Jx_field_scratch_space[field_index] = 0.0;
+                Jy_field_scratch_space[field_index] = 0.0;
+                Jz_field_scratch_space[field_index] = 0.0;
+            }
+
+            __syncthreads();
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
@@ -358,6 +384,7 @@ namespace hip {
                 {
                     const double xpn      = device_particle_position_x[particle_index] * dx_inv;
                     const int    ip       = std::round( xpn );
+                    // const int    ip       = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
                     const int    ipo      = iold[0 * particle_count];
                     const int    ip_m_ipo = ip - ipo - i_domain_begin;
                     const double delta    = xpn - static_cast<double>( ip );
@@ -376,6 +403,7 @@ namespace hip {
                 {
                     const double ypn      = device_particle_position_y[particle_index] * dy_inv;
                     const int    jp       = std::round( ypn );
+                    // const int    jp       = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
                     const int    jpo      = iold[1 * particle_count];
                     const int    jp_m_jpo = jp - jpo - j_domain_begin;
                     const double delta    = ypn - static_cast<double>( jp );
@@ -471,6 +499,23 @@ namespace hip {
                     }
                 }
             }
+
+            __syncthreads();
+
+            // // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+            // const unsigned int x_cluster_coordinate = workgroup_dedicated_bin_index / <bin per y row>;
+            // const unsigned int y_cluster_coordinate = workgroup_dedicated_bin_index - x_cluster_coordinate * <bin per y row>;
+
+            for( unsigned int field_index = threadIdx.x;
+                 field_index < kFieldScratchSpaceSize;
+                 field_index += workgroup_size ) {
+                // TODO(Etienne M): Should I try to remove the bank conflicts?
+                // This could prevent coalescing the access to global memory!
+
+                ::atomicAdd( &device_Jx[/* TODO */ field_index], Jx_field_scratch_space[field_index] );
+                ::atomicAdd( &device_Jy[/* TODO */ field_index], Jy_field_scratch_space[field_index] );
+                ::atomicAdd( &device_Jz[/* TODO */ field_index], Jz_field_scratch_space[field_index] );
+            }
         }
     } // namespace kernel
 
@@ -487,7 +532,8 @@ namespace hip {
                              const short *__restrict__ device_particle_charge,
                              const double *__restrict__ device_particle_weight,
                              const int *__restrict__ host_bin_index,
-                             int bin_count,
+                             unsigned int x_dimension_bin_count,
+                             unsigned int y_dimension_bin_count,
                              const double *__restrict__ host_invgf_,
                              const int *__restrict__ host_iold_,
                              const double *__restrict__ host_deltaold_,
@@ -504,7 +550,6 @@ namespace hip {
         int device_count;
         checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
         SMILEI_ASSERT( device_count == 1 );
-        // SMILEI_ASSERT(<binning is enabled/available>);
 
         // NOTE:
         // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
@@ -513,7 +558,7 @@ namespace hip {
         // __ldg | non coherent cache | this is sometimes generated implicitly when using restricted ptrs
         //
 
-        const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( bin_count ), 1, 1 };
+        const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
 
         hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions,
@@ -532,7 +577,6 @@ namespace hip {
                             device_particle_charge,
                             device_particle_weight,
                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_bin_index ),
-                            bin_count,
                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_invgf_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_iold_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_deltaold_ ),
@@ -565,7 +609,8 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                          const short *__restrict__ device_particle_charge,
                          const double *__restrict__ device_particle_weight,
                          const int *__restrict__ host_bin_index,
-                         int bin_count,
+                         unsigned int x_dimension_bin_count,
+                         unsigned int y_dimension_bin_count,
                          const double *__restrict__ host_invgf_,
                          const int *__restrict__ host_iold_,
                          const double *__restrict__ host_deltaold_,
@@ -590,7 +635,9 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                                  device_particle_momentum_z,
                                  device_particle_charge,
                                  device_particle_weight,
-                                 host_bin_index, bin_count,
+                                 host_bin_index,
+                                 x_dimension_bin_count,
+                                 y_dimension_bin_count,
                                  host_invgf_,
                                  host_iold_, host_deltaold_,
                                  inv_cell_volume,

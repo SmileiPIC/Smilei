@@ -440,8 +440,11 @@ public:
     getGPUInterpolationClusterCellVolume( int dimension_id, int interpolation_order )
     {
         // Compute pow(getGPUClusterWidth(), nDim_particle)
+        const int ghost_cell_border_width = getGPUClusterGhostCellBorderWidth( interpolation_order );
+
         const int kClusterWidth = getGPUClusterWidth( dimension_id, interpolation_order ) +
-                                  getGPUClusterGhostCellBorderWidth( interpolation_order );
+                                  2 * ghost_cell_border_width;
+
         const int kClusterCellVolume = kClusterWidth *
                                        ( dimension_id >= 2 ? kClusterWidth : 1 ) *
                                        ( dimension_id >= 3 ? kClusterWidth : 1 );
@@ -449,6 +452,11 @@ public:
     }
 
     int getGPUInterpolationClusterCellVolume() const;
+
+    //! Return the cluster count in a given dimension
+    //! precondition: dimension_id in [1, 3].
+    //!
+    int getGPUBinCount( int dimension_id ) const;
 
     //! Compute the number of cluster/bin/tile per patch
     //!

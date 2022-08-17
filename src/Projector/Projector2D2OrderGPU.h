@@ -61,6 +61,8 @@ protected:
     double dts2;
     double dts4;
     int    pxr;
+    unsigned int x_dimension_bin_count_;
+    unsigned int y_dimension_bin_count_;
 };
 
 #endif

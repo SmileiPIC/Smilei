@@ -1928,6 +1928,15 @@ int Params::getGPUInterpolationClusterCellVolume() const
                -1; // Propagate the error if the dimension is not supported
 }
 
+int Params::getGPUBinCount( int dimension_id ) const
+{
+    const int cells_in_dimension = n_space[dimension_id - 1];
+
+    const int kGPUBinCount = cells_in_dimension / getGPUClusterWidth();
+
+    return kGPUBinCount;
+}
+
 int Params::getGPUBinCount() const
 {
     const int cells_in_cluster_volume = getGPUClusterCellVolume();

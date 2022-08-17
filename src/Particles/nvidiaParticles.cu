@@ -491,7 +491,7 @@ namespace detail {
         // 16 is a good, size.
         const SizeType y_stride = y_dimension_cluster_count_; // 16;
 
-        // The order is: x * ywidth * zwidth + y * zwidth + z
+        // The indexing order is: x * ywidth * zwidth + y * zwidth + z
         const SizeType cluster_index = x_cluster_coordinate * y_stride +
                                        y_cluster_coordinate;
 

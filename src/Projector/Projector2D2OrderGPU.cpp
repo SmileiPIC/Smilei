@@ -21,10 +21,12 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicititly initializing
     // Projector2D.
-    pxr  = !parameters.is_pxr;
-    dt   = parameters.timestep;
-    dts2 = dt / 2.0;
-    dts4 = dts2 / 2.0;
+    pxr                    = !parameters.is_pxr;
+    dt                     = parameters.timestep;
+    dts2                   = dt / 2.0;
+    dts4                   = dts2 / 2.0;
+    x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
+    y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
 }
 
 Projector2D2OrderGPU::~Projector2D2OrderGPU()
@@ -48,7 +50,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                              const short *__restrict__ particle_charge,
                              const double *__restrict__ particle_weight,
                              const int *__restrict__ host_bin_index,
-                             int bin_count,
+                             unsigned int x_dimension_bin_count,
+                             unsigned int y_dimension_bin_count,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
                              const double *__restrict__ deltaold_,
@@ -69,12 +72,12 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     currents( double *__restrict__ Jx,
               double *__restrict__ Jy,
               double *__restrict__ Jz,
-              int        Jx_size,
-              int        Jy_size,
-              int        Jz_size,
-              Particles &particles,
-              int,
-              int,
+              int          Jx_size,
+              int          Jy_size,
+              int          Jz_size,
+              Particles   &particles,
+              unsigned int x_dimension_bin_count,
+              unsigned int y_dimension_bin_count,
               const double *__restrict__ invgf_,
               const int *__restrict__ iold_,
               const double *__restrict__ deltaold_,
@@ -102,7 +105,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  particles.getPtrCharge(),
                                  particles.getPtrWeight(),
                                  particles.last_index.data(),
-                                 particles.last_index.size(),
+                                 x_dimension_bin_count,
+                                 y_dimension_bin_count,
                                  invgf_,
                                  iold_,
                                  deltaold_,
@@ -238,14 +242,14 @@ void Projector2D2OrderGPU::ionizationCurrents( Field      *Jx,
 void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       Particles   &particles,
                                                       SmileiMPI   *smpi,
-                                                      int          istart,
-                                                      int          iend,
-                                                      int          ithread,
-                                                      bool         diag_flag,
-                                                      bool         is_spectral,
-                                                      int          ispec,
-                                                      int          icell,
-                                                      int          ipart_ref )
+                                                      int,
+                                                      int,
+                                                      int  ithread,
+                                                      bool diag_flag,
+                                                      bool is_spectral,
+                                                      int  ispec,
+                                                      int  icell,
+                                                      int  ipart_ref )
 {
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
@@ -286,7 +290,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
 
         currents( Jx_, Jy_, Jz_,
                   EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
-                  particles, istart, iend,
+                  particles, x_dimension_bin_count_, y_dimension_bin_count_,
                   invgf.data(), iold.data(), delta.data(),
                   inv_cell_volume,
                   dx_inv_, dy_inv_,
@@ -314,7 +318,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         } else {
             currents( Jx_, Jy_, Jz_,
                       EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
-                      particles, istart, iend,
+                      particles, x_dimension_bin_count_, y_dimension_bin_count_,
                       invgf.data(), iold.data(), delta.data(),
                       inv_cell_volume,
                       dx_inv_, dy_inv_,
