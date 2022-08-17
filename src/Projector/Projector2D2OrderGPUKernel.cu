@@ -297,7 +297,7 @@ namespace hip {
                                          int    nprimy,
                                          int    pxr )
         {
-            // TODO(Etienne M): refactor this function. Break it into smaller 
+            // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
             const unsigned int workgroup_size = blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
@@ -305,14 +305,16 @@ namespace hip {
 
             // It seems slightly faster to traverse the clusters the C indexing
             // order (compared to the Smilei order).
-            const unsigned int workgroup_dedicated_bin_index = blockIdx.y * gridDim.x + blockIdx.x;
-            const unsigned int local_particle_index_offset   = threadIdx.x;
+            const unsigned int x_cluster_coordinate          = blockIdx.x;
+            const unsigned int y_cluster_coordinate          = blockIdx.y;
+            const unsigned int workgroup_dedicated_bin_index = y_cluster_coordinate * gridDim.x + x_cluster_coordinate;
+            const unsigned int thread_index_offset           = threadIdx.x;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
             // multiple threads access the same part of the shared memory. Such
             // "conflicted" accesses are serialized !
-            // NOTE: We use a bit to much LDS. For Jx, the first row could be 
+            // NOTE: We use a bit to much LDS. For Jx, the first row could be
             // discarded, for Jy we could remove the last column (know that the
             // access pattern is wierd (rhombus shaped)).
 
@@ -324,7 +326,7 @@ namespace hip {
 
             // Init the shared memory
 
-            for( unsigned int field_index = threadIdx.x;
+            for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
                 // TODO(Etienne M): Should I try to remvoe the bank conflicts?
@@ -343,7 +345,7 @@ namespace hip {
                                                                                      device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + local_particle_index_offset;
+            for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {
                 const double invgf                        = device_invgf_[particle_index];
@@ -382,8 +384,8 @@ namespace hip {
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
                 {
-                    const double xpn      = device_particle_position_x[particle_index] * dx_inv;
-                    const int    ip       = std::round( xpn );
+                    const double xpn = device_particle_position_x[particle_index] * dx_inv;
+                    const int    ip  = std::round( xpn );
                     // const int    ip       = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
                     const int    ipo      = iold[0 * particle_count];
                     const int    ip_m_ipo = ip - ipo - i_domain_begin;
@@ -401,8 +403,8 @@ namespace hip {
                     Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
                 }
                 {
-                    const double ypn      = device_particle_position_y[particle_index] * dy_inv;
-                    const int    jp       = std::round( ypn );
+                    const double ypn = device_particle_position_y[particle_index] * dy_inv;
+                    const int    jp  = std::round( ypn );
                     // const int    jp       = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
                     const int    jpo      = iold[1 * particle_count];
                     const int    jp_m_jpo = jp - jpo - j_domain_begin;
@@ -502,11 +504,7 @@ namespace hip {
 
             __syncthreads();
 
-            // // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-            // const unsigned int x_cluster_coordinate = workgroup_dedicated_bin_index / <bin per y row>;
-            // const unsigned int y_cluster_coordinate = workgroup_dedicated_bin_index - x_cluster_coordinate * <bin per y row>;
-
-            for( unsigned int field_index = threadIdx.x;
+            for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
                 // TODO(Etienne M): Should I try to remove the bank conflicts?
