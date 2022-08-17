@@ -331,7 +331,7 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                // TODO(Etienne M): Should I try to remvoe the bank conflicts?
+                // TODO(Etienne M): Should I try to remove the bank conflicts?
                 Jx_scratch_space[field_index] = 0.0;
                 Jy_scratch_space[field_index] = 0.0;
                 Jz_scratch_space[field_index] = 0.0;
@@ -485,22 +485,23 @@ namespace hip {
                 // Jz
 
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
+                                     jpo - global_y_scratch_space_coordinate_offset;
                     /* Jx[iloc] += tmpJx[0]; */
-                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        ::atomicAdd( &device_Jz[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
-                                                                     Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+                                                                            Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
-                    ::atomicAdd( &device_Jz[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
-                    double tmp = 0.0;
+                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
+                                     jpo - global_y_scratch_space_coordinate_offset;
+                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        ::atomicAdd( &device_Jz[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                                                     Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
+                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
+                                                                            Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
                     }
                 }
             }
