@@ -303,12 +303,14 @@ namespace hip {
             const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
-            // It seems slightly faster to traverse the clusters the C indexing
-            // order (compared to the Smilei order).
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
-            const unsigned int workgroup_dedicated_bin_index = y_cluster_coordinate * gridDim.x + x_cluster_coordinate;
+            const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y + y_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
             const unsigned int thread_index_offset           = threadIdx.x;
+
+            // The unit is the cell
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -320,9 +322,9 @@ namespace hip {
 
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
 
-            __shared__ double Jx_field_scratch_space[kFieldScratchSpaceSize];
-            __shared__ double Jy_field_scratch_space[kFieldScratchSpaceSize];
-            __shared__ double Jz_field_scratch_space[kFieldScratchSpaceSize];
+            __shared__ double Jx_scratch_space[kFieldScratchSpaceSize];
+            __shared__ double Jy_scratch_space[kFieldScratchSpaceSize];
+            __shared__ double Jz_scratch_space[kFieldScratchSpaceSize];
 
             // Init the shared memory
 
@@ -330,9 +332,9 @@ namespace hip {
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
                 // TODO(Etienne M): Should I try to remvoe the bank conflicts?
-                Jx_field_scratch_space[field_index] = 0.0;
-                Jy_field_scratch_space[field_index] = 0.0;
-                Jz_field_scratch_space[field_index] = 0.0;
+                Jx_scratch_space[field_index] = 0.0;
+                Jy_scratch_space[field_index] = 0.0;
+                Jz_scratch_space[field_index] = 0.0;
             }
 
             __syncthreads();
@@ -450,12 +452,13 @@ namespace hip {
                 double tmpJx[5]{};
 
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
+                                     jpo - global_y_scratch_space_coordinate_offset;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-                    ::atomicAdd( &device_Jx[iloc], tmpJx[0] );
+                    ::atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
-                        ::atomicAdd( &device_Jx[iloc + j], tmpJx[j] );
+                        ::atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
                     }
                 }
 
@@ -507,12 +510,23 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
+
+                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+                const unsigned int local_x_scratch_space_coordinate = field_index / Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+                const unsigned int local_y_scratch_space_coordinate = field_index % Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+
+                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
+                const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
+
+                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
+                const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
+
                 // TODO(Etienne M): Should I try to remove the bank conflicts?
                 // This could prevent coalescing the access to global memory!
-
-                ::atomicAdd( &device_Jx[/* TODO */ field_index], Jx_field_scratch_space[field_index] );
-                ::atomicAdd( &device_Jy[/* TODO */ field_index], Jy_field_scratch_space[field_index] );
-                ::atomicAdd( &device_Jz[/* TODO */ field_index], Jz_field_scratch_space[field_index] );
+                ::atomicAdd( &device_Jx[global_memory_index], Jx_scratch_space[scratch_space_index] );
+                ::atomicAdd( &device_Jy[global_memory_index + pxr * local_y_scratch_space_coordinate], Jy_scratch_space[scratch_space_index] );
+                ::atomicAdd( &device_Jz[global_memory_index], Jz_scratch_space[scratch_space_index] );
             }
         }
     } // namespace kernel

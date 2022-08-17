@@ -384,14 +384,15 @@ public:
     getGPUClusterWidth( int dimension_id, int interpolation_order )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const int ghost_cell_border_width = 2 * getGPUClusterGhostCellBorderWidth( interpolation_order );
+        const int ghost_cell_border_width = getGPUClusterGhostCellBorderWidth( interpolation_order );
+
         switch( dimension_id ) {
             case 2:
                 // For 2D:
                 // 16x16 clusters used for charge deposition. Due to the 2nd order
                 // scheme, we need 2 wide cell band on each sides so the clusters do
                 // not overlap during particle deposition.
-                return 16 - ghost_cell_border_width;
+                return 17 - ghost_cell_border_width;
             case 1:
             case 3:
             default:
@@ -400,6 +401,17 @@ public:
 #else
         return -1;
 #endif
+    }
+
+    //! Computes:
+    //! getGPUClusterWidth( dimension_id, interpolation_order ) +
+    //! 2 * getGPUClusterGhostCellBorderWidth( interpolation_order )
+    //!
+    static constexpr int
+    getGPUClusterWithGhostCellWidth( int dimension_id, int interpolation_order )
+    {
+        return getGPUClusterWidth( dimension_id, interpolation_order ) +
+               getGPUClusterGhostCellBorderWidth( interpolation_order );
     }
 
     //! Call getGPUClusterWidth( nDim_particle, interpolation_order )
@@ -418,7 +430,16 @@ public:
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         constexpr int kGPUClusterGhostCellCount[3]{ -1,
-                                                    2,
+                                                    2 * 2 /* each side of the dimension */ +
+                                                        // The round in the interpolator's coeffs function used to get 
+                                                        // the position of the particle requires that we reserve an 
+                                                        // other row and column.
+                                                        // TODO(Etienne M): Is that realy necessary ? We could take this
+                                                        // behavior in account during the sorting, but that would mean
+                                                        // one more bin row and column. The cluster on the sides would 
+                                                        // be less full than the middle ones.
+                                                        // Instead we add a row and column in the cached field value.
+                                                        1,
                                                     -1 };
         return kGPUClusterGhostCellCount[interpolation_order - 1];
 #else
@@ -439,11 +460,7 @@ public:
     static constexpr int
     getGPUInterpolationClusterCellVolume( int dimension_id, int interpolation_order )
     {
-        // Compute pow(getGPUClusterWidth(), nDim_particle)
-        const int ghost_cell_border_width = getGPUClusterGhostCellBorderWidth( interpolation_order );
-
-        const int kClusterWidth = getGPUClusterWidth( dimension_id, interpolation_order ) +
-                                  2 * ghost_cell_border_width;
+        const int kClusterWidth = getGPUClusterWithGhostCellWidth( dimension_id, interpolation_order );
 
         const int kClusterCellVolume = kClusterWidth *
                                        ( dimension_id >= 2 ? kClusterWidth : 1 ) *

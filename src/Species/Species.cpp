@@ -394,7 +394,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         const int particule_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
-        // TODO(Etienne M): This could be allocated on a "per bin" basis, at the cost of some overhead!
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
