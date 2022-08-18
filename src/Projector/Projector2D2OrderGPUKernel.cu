@@ -270,7 +270,16 @@ namespace hip {
             } while( 0 )
 
     namespace kernel {
-        template <typename Float>
+
+        template <typename T>
+        __device__ void
+        atomicAdd( T *a_pointer, T a_value )
+        {
+            ::atomicAdd( a_pointer, a_value );
+            // *a_pointer = a_value;
+        }
+
+        template <typename Float, unsigned int kPXREnabled>
         __global__ void
         depositeForAllCurrentDimensions( double *__restrict__ device_Jx,
                                          double *__restrict__ device_Jy,
@@ -294,8 +303,7 @@ namespace hip {
                                          Float dy_ov_dt,
                                          int   i_domain_begin,
                                          int   j_domain_begin,
-                                         int   nprimy,
-                                         int   pxr )
+                                         int   nprimy )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -494,10 +502,10 @@ namespace hip {
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<Float>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    ::atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
+                    atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<Float>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        ::atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
+                        atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
                     }
                 }
 
@@ -508,7 +516,7 @@ namespace hip {
                     Float     tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
+                        atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
@@ -517,7 +525,7 @@ namespace hip {
                     Float     tmp{};
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
+                        atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
@@ -525,19 +533,19 @@ namespace hip {
 
                 for( unsigned int i = 0; i < 1; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                    atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
-                                                                            Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                        atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
+                                                                          Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
+                    atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
-                                                                            Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
+                        atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                                                                          Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     }
                 }
             }
@@ -561,7 +569,7 @@ namespace hip {
 
                 // These atomics are basically free (very few of them).
                 ::atomicAdd( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ kPXREnabled * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 ::atomicAdd( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         }
@@ -598,6 +606,7 @@ namespace hip {
         int device_count;
         checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
         SMILEI_ASSERT( device_count == 1 );
+        SMILEI_ASSERT( pxr == 1 );
 
         // NOTE:
         // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
@@ -609,9 +618,11 @@ namespace hip {
         const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
 
-        using Float = float; // double
+        using Float = double; // float/double
 
-        hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions<Float>,
+        using KernelType = kernel::depositeForAllCurrentDimensions<Float, 1>;
+
+        hipLaunchKernelGGL( KernelType,
                             kGridDimensionInBlock,
                             kBlockDimensionInWorkItem,
                             0, // Shared memory
@@ -634,8 +645,7 @@ namespace hip {
                             dx_inv, dy_inv,
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
-                            nprimy,
-                            pxr );
+                            nprimy );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
     }
