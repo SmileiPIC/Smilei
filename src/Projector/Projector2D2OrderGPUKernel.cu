@@ -279,8 +279,9 @@ namespace hip {
             // *a_pointer = a_value;
         }
 
-        template <typename Float, unsigned int kPXREnabled>
+        template <typename Float>
         __global__ void
+        // __launch_bounds__(128, 4)
         depositeForAllCurrentDimensions( double *__restrict__ device_Jx,
                                          double *__restrict__ device_Jy,
                                          double *__restrict__ device_Jz,
@@ -303,7 +304,8 @@ namespace hip {
                                          Float dy_ov_dt,
                                          int   i_domain_begin,
                                          int   j_domain_begin,
-                                         int   nprimy )
+                                         int   nprimy,
+                                         int   pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -569,7 +571,7 @@ namespace hip {
 
                 // These atomics are basically free (very few of them).
                 ::atomicAdd( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ kPXREnabled * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 ::atomicAdd( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         }
@@ -606,7 +608,6 @@ namespace hip {
         int device_count;
         checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
         SMILEI_ASSERT( device_count == 1 );
-        SMILEI_ASSERT( pxr == 1 );
 
         // NOTE:
         // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
@@ -616,13 +617,16 @@ namespace hip {
         //
 
         const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
+        // On an MI100:
+        // 448 for F32 and 4x4 cluster width | past 128, the block size does not matter, we are atomic bound anyway
+        // 128 for F64 and 4x4 cluster width | atomic bound
         const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
 
         using Float = double; // float/double
 
-        using KernelType = kernel::depositeForAllCurrentDimensions<Float, 1>;
+        auto KernelFunction = kernel::depositeForAllCurrentDimensions<Float>;
 
-        hipLaunchKernelGGL( KernelType,
+        hipLaunchKernelGGL( KernelFunction,
                             kGridDimensionInBlock,
                             kBlockDimensionInWorkItem,
                             0, // Shared memory
@@ -645,7 +649,8 @@ namespace hip {
                             dx_inv, dy_inv,
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
-                            nprimy );
+                            nprimy,
+                            pxr );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
     }

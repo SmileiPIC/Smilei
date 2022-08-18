@@ -384,15 +384,9 @@ public:
     getGPUClusterWidth( int dimension_id, int interpolation_order )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const int ghost_cell_border_width = getGPUClusterGhostCellBorderWidth( interpolation_order );
-
         switch( dimension_id ) {
             case 2:
-                // For 2D:
-                // 16x16 clusters used for charge deposition. Due to the 2nd order
-                // scheme, we need 2 wide cell band on each sides so the clusters do
-                // not overlap during particle deposition.
-                return 17 - ghost_cell_border_width;
+                return 4;
             case 1:
             case 3:
             default:
@@ -430,7 +424,7 @@ public:
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         constexpr int kGPUClusterGhostCellCount[3]{ -1,
-                                                    // Order 2 ghost cell on each "sides" of the dimension
+                                                    // Order 2 ghost cells on each "sides" of the dimension
                                                     2 * 2 +
                                                         // The std::round in the interpolator's coeffs function used to
                                                         // get the position of the particle requires that we reserve an
