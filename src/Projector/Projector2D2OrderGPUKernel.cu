@@ -270,7 +270,7 @@ namespace hip {
             } while( 0 )
 
     namespace kernel {
-        // TODO(Etienne M): Template on WGs low dimension parameters
+        template <typename Float>
         __global__ void
         depositeForAllCurrentDimensions( double *__restrict__ device_Jx,
                                          double *__restrict__ device_Jy,
@@ -287,15 +287,15 @@ namespace hip {
                                          const double *__restrict__ device_invgf_,
                                          const int *__restrict__ device_iold_,
                                          const double *__restrict__ device_deltaold_,
-                                         double inv_cell_volume,
-                                         double dx_inv,
-                                         double dy_inv,
-                                         double dx_ov_dt,
-                                         double dy_ov_dt,
-                                         int    i_domain_begin,
-                                         int    j_domain_begin,
-                                         int    nprimy,
-                                         int    pxr )
+                                         Float inv_cell_volume,
+                                         Float dx_inv,
+                                         Float dy_inv,
+                                         Float dx_ov_dt,
+                                         Float dy_ov_dt,
+                                         int   i_domain_begin,
+                                         int   j_domain_begin,
+                                         int   nprimy,
+                                         int   pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -321,9 +321,9 @@ namespace hip {
 
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
 
-            __shared__ double Jx_scratch_space[kFieldScratchSpaceSize];
-            __shared__ double Jy_scratch_space[kFieldScratchSpaceSize];
-            __shared__ double Jz_scratch_space[kFieldScratchSpaceSize];
+            __shared__ Float Jx_scratch_space[kFieldScratchSpaceSize];
+            __shared__ Float Jy_scratch_space[kFieldScratchSpaceSize];
+            __shared__ Float Jz_scratch_space[kFieldScratchSpaceSize];
 
             // Init the shared memory
 
@@ -349,14 +349,14 @@ namespace hip {
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {
-                const double invgf                        = device_invgf_[particle_index];
+                const Float invgf                         = static_cast<Float>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
 
-                double Sx0[5];
-                double Sx1[5];
-                double Sy0[5];
-                double Sy1[5];
+                Float Sx0[5];
+                Float Sx1[5];
+                Float Sy0[5];
+                Float Sy1[5];
                 // double DSx[5];
                 // double DSy[5];
 
@@ -365,62 +365,62 @@ namespace hip {
 
                 // Locate the particle on the primal grid at former time-step & calculate coeff. S0
                 {
-                    const double delta  = deltaold[0 * particle_count];
-                    const double delta2 = delta * delta;
-                    Sx0[0]              = 0.0;
-                    Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                    Sx0[2]              = 0.75 - delta2;
-                    Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                    Sx0[4]              = 0.0;
+                    const Float delta  = deltaold[0 * particle_count];
+                    const Float delta2 = delta * delta;
+                    Sx0[0]             = static_cast<Float>( 0.0 );
+                    Sx0[1]             = static_cast<Float>( 0.5 ) * ( delta2 - delta + static_cast<Float>( 0.25 ) );
+                    Sx0[2]             = static_cast<Float>( 0.75 ) - delta2;
+                    Sx0[3]             = static_cast<Float>( 0.5 ) * ( delta2 + delta + static_cast<Float>( 0.25 ) );
+                    Sx0[4]             = static_cast<Float>( 0.0 );
                 }
                 {
-                    const double delta  = deltaold[1 * particle_count];
-                    const double delta2 = delta * delta;
-                    Sy0[0]              = 0.0;
-                    Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                    Sy0[2]              = 0.75 - delta2;
-                    Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                    Sy0[4]              = 0.0;
+                    const Float delta  = deltaold[1 * particle_count];
+                    const Float delta2 = delta * delta;
+                    Sy0[0]             = static_cast<Float>( 0.0 );
+                    Sy0[1]             = static_cast<Float>( 0.5 ) * ( delta2 - delta + static_cast<Float>( 0.25 ) );
+                    Sy0[2]             = static_cast<Float>( 0.75 ) - delta2;
+                    Sy0[3]             = static_cast<Float>( 0.5 ) * ( delta2 + delta + static_cast<Float>( 0.25 ) );
+                    Sy0[4]             = static_cast<Float>( 0.0 );
                 }
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
                 {
-                    const double xpn = device_particle_position_x[particle_index] * dx_inv;
-                    const int    ip  = std::round( xpn );
+                    const Float xpn = static_cast<Float>( device_particle_position_x[particle_index] ) * dx_inv;
+                    const int   ip  = std::round( xpn );
                     // const int    ip       = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const int    ipo      = iold[0 * particle_count];
-                    const int    ip_m_ipo = ip - ipo - i_domain_begin;
-                    const double delta    = xpn - static_cast<double>( ip );
-                    const double delta2   = delta * delta;
+                    const int   ipo      = iold[0 * particle_count];
+                    const int   ip_m_ipo = ip - ipo - i_domain_begin;
+                    const Float delta    = xpn - static_cast<Float>( ip );
+                    const Float delta2   = delta * delta;
 
-                    Sx1[0] = 0.0;
-                    Sx1[1] = 0.0;
+                    Sx1[0] = static_cast<Float>( 0.0 );
+                    Sx1[1] = static_cast<Float>( 0.0 );
                     // Sx1[2] = 0.0; // Always set below
-                    Sx1[3] = 0.0;
-                    Sx1[4] = 0.0;
+                    Sx1[3] = static_cast<Float>( 0.0 );
+                    Sx1[4] = static_cast<Float>( 0.0 );
 
-                    Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                    Sx1[ip_m_ipo + 2] = 0.75 - delta2;
-                    Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+                    Sx1[ip_m_ipo + 1] = static_cast<Float>( 0.5 ) * ( delta2 - delta + static_cast<Float>( 0.25 ) );
+                    Sx1[ip_m_ipo + 2] = static_cast<Float>( 0.75 ) - delta2;
+                    Sx1[ip_m_ipo + 3] = static_cast<Float>( 0.5 ) * ( delta2 + delta + static_cast<Float>( 0.25 ) );
                 }
                 {
-                    const double ypn = device_particle_position_y[particle_index] * dy_inv;
-                    const int    jp  = std::round( ypn );
+                    const Float ypn = static_cast<Float>( device_particle_position_y[particle_index] ) * dy_inv;
+                    const int   jp  = std::round( ypn );
                     // const int    jp       = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const int    jpo      = iold[1 * particle_count];
-                    const int    jp_m_jpo = jp - jpo - j_domain_begin;
-                    const double delta    = ypn - static_cast<double>( jp );
-                    const double delta2   = delta * delta;
+                    const int   jpo      = iold[1 * particle_count];
+                    const int   jp_m_jpo = jp - jpo - j_domain_begin;
+                    const Float delta    = ypn - static_cast<Float>( jp );
+                    const Float delta2   = delta * delta;
 
-                    Sy1[0] = 0.0;
-                    Sy1[1] = 0.0;
+                    Sy1[0] = static_cast<Float>( 0.0 );
+                    Sy1[1] = static_cast<Float>( 0.0 );
                     // Sy1[2] = 0.0; // Always set below
-                    Sy1[3] = 0.0;
-                    Sy1[4] = 0.0;
+                    Sy1[3] = static_cast<Float>( 0.0 );
+                    Sy1[4] = static_cast<Float>( 0.0 );
 
-                    Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                    Sy1[jp_m_jpo + 2] = 0.75 - delta2;
-                    Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+                    Sy1[jp_m_jpo + 1] = static_cast<Float>( 0.5 ) * ( delta2 - delta + static_cast<Float>( 0.25 ) );
+                    Sy1[jp_m_jpo + 2] = static_cast<Float>( 0.75 ) - delta2;
+                    Sy1[jp_m_jpo + 3] = static_cast<Float>( 0.5 ) * ( delta2 + delta + static_cast<Float>( 0.25 ) );
                 }
 
                 // DSx[0] = Sx1[0] - Sx0[0];
@@ -436,10 +436,10 @@ namespace hip {
                 // DSy[4] = Sy1[4] - Sy0[4];
 
                 // (x,y,z) components of the current density for the macro-particle
-                const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
-                const double crx_p         = charge_weight * dx_ov_dt;
-                const double cry_p         = charge_weight * dy_ov_dt;
-                const double crz_p         = charge_weight * ( 1.0 / 3.0 ) * device_particle_momentum_z[particle_index] * invgf;
+                const Float charge_weight = inv_cell_volume * static_cast<Float>( device_particle_charge[particle_index] ) * static_cast<Float>( device_particle_weight[particle_index] );
+                const Float crx_p         = charge_weight * dx_ov_dt;
+                const Float cry_p         = charge_weight * dy_ov_dt;
+                const Float crz_p         = charge_weight * static_cast<Float>( 1.0 / 3.0 ) * static_cast<Float>( device_particle_momentum_z[particle_index] ) * invgf;
 
                 // This is the particle position as grid index
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
@@ -452,14 +452,14 @@ namespace hip {
 
                 // Jx
 
-                double tmpJx[5]{};
+                Float tmpJx[5]{};
 
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
+                    tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<Float>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
                     ::atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+                        tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<Float>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
                         ::atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
                     }
                 }
@@ -468,18 +468,18 @@ namespace hip {
 
                 for( unsigned int i = 0; i < 1; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    double    tmp  = 0.0;
+                    Float     tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
                         ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    double    tmp  = 0.0;
+                    Float     tmp{};
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
                         ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
@@ -490,17 +490,17 @@ namespace hip {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
                                                                             Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
+                    ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                                                            Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
+                        ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                                                                            Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     }
                 }
             }
@@ -524,9 +524,9 @@ namespace hip {
 
                 // TODO(Etienne M): Should I try to remove the bank conflicts?
                 // This could prevent coalescing the access to global memory!
-                ::atomicAdd( &device_Jx[global_memory_index], Jx_scratch_space[scratch_space_index] );
-                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT */ pxr * global_x_scratch_space_coordinate], Jy_scratch_space[scratch_space_index] );
-                ::atomicAdd( &device_Jz[global_memory_index], Jz_scratch_space[scratch_space_index] );
+                ::atomicAdd( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
+                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                ::atomicAdd( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         }
     } // namespace kernel
@@ -573,7 +573,9 @@ namespace hip {
         const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
 
-        hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions,
+        using Float = float; // double
+
+        hipLaunchKernelGGL( kernel::depositeForAllCurrentDimensions<Float>,
                             kGridDimensionInBlock,
                             kBlockDimensionInWorkItem,
                             0, // Shared memory
