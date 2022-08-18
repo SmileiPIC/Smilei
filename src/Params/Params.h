@@ -430,15 +430,17 @@ public:
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         constexpr int kGPUClusterGhostCellCount[3]{ -1,
-                                                    2 * 2 /* each side of the dimension */ +
-                                                        // The round in the interpolator's coeffs function used to get 
-                                                        // the position of the particle requires that we reserve an 
+                                                    // Order 2 ghost cell on each "sides" of the dimension
+                                                    2 * 2 +
+                                                        // The std::round in the interpolator's coeffs function used to
+                                                        // get the position of the particle requires that we reserve an
                                                         // other row and column.
                                                         // TODO(Etienne M): Is that realy necessary ? We could take this
                                                         // behavior in account during the sorting, but that would mean
-                                                        // one more bin row and column. The cluster on the sides would 
+                                                        // one more bin row and column. The clusters on the sides would
                                                         // be less full than the middle ones.
-                                                        // Instead we add a row and column in the cached field value.
+                                                        // NOTE: Instead we add a row and column in the cached field
+                                                        // value.
                                                         1,
                                                     -1 };
         return kGPUClusterGhostCellCount[interpolation_order - 1];

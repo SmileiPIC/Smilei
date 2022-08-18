@@ -299,6 +299,8 @@ namespace hip {
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
+            // TODO(Etienne M): prefer unsigned int vs int. At least the reader
+            // knows the value wont be negative.
             const unsigned int workgroup_size = blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
@@ -321,6 +323,9 @@ namespace hip {
 
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
 
+            // NOTE: I tried having only one cache and reusing it. Doing that
+            // requires you to iterate multiple time over the particle which is
+            // possible but cost more bandwidth. The speedup was ~x0.92.
             __shared__ Float Jx_scratch_space[kFieldScratchSpaceSize];
             __shared__ Float Jy_scratch_space[kFieldScratchSpaceSize];
             __shared__ Float Jz_scratch_space[kFieldScratchSpaceSize];
@@ -330,7 +335,6 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                // TODO(Etienne M): Should I try to remove the bank conflicts?
                 Jx_scratch_space[field_index] = 0.0;
                 Jy_scratch_space[field_index] = 0.0;
                 Jz_scratch_space[field_index] = 0.0;
@@ -450,6 +454,39 @@ namespace hip {
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
+                // // Atomic optimized loops
+                // // Jx
+
+                // for( unsigned int i = 1; i < 5; ++i ) {
+                //     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                //     for( unsigned int j = 0; j < 5; ++j ) {
+                //         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<Float>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
+                //         ::atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
+                //     }
+                // }
+
+                // // Jy
+
+                // for( unsigned int i = 0; i < 5; ++i ) {
+                //     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                //     Float     tmp{};
+                //     for( unsigned int j = 1; j < 5; ++j ) {
+                //         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
+                //         ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
+                //     }
+                // }
+
+                // // Jz
+
+                // for( unsigned int i = 0; i < 5; ++i ) {
+                //     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                //     for( unsigned int j = 0; j < 5; ++j ) {
+                //         ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                //                                                             Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
+                //     }
+                // }
+
+                // Atomic optimized loops
                 // Jx
 
                 Float tmpJx[5]{};
@@ -522,10 +559,9 @@ namespace hip {
                 const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
                 const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
 
-                // TODO(Etienne M): Should I try to remove the bank conflicts?
-                // This could prevent coalescing the access to global memory!
+                // These atomics are basically free (very few of them).
                 ::atomicAdd( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 ::atomicAdd( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         }
@@ -639,7 +675,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                          int    pxr )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
-    naive::
+    naive:: // the naive, OMP version serves as a referance along with the CPU version
     #else
     hip::
     #endif
