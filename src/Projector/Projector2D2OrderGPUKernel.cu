@@ -275,8 +275,8 @@ namespace hip {
         __device__ void
         atomicAdd( T *a_pointer, T a_value )
         {
-            ::atomicAdd( a_pointer, a_value );
-            // *a_pointer = a_value;
+            ::atomicAdd( a_pointer, a_value ); // Atomic     | the kernel is correct
+            *a_pointer = a_value;              // Not atomic | the kernel is wrong but 10x faster
         }
 
         template <typename Float>
@@ -610,11 +610,8 @@ namespace hip {
         SMILEI_ASSERT( device_count == 1 );
 
         // NOTE:
-        // Doc at: https://github.com/RadeonOpenCompute/ROCm/tree/rocm-4.5.2
-        // 1 or 3 streams (Jx Jy Jz) ?
-        // hipOccupancyMaxPotentialBlockSize
-        // __ldg | non coherent cache | this is sometimes generated implicitly when using restricted ptrs
-        //
+        // This cluster is very strongly bound by atomic operations in LDS (shared memory)
+        // TODO(Etienne M): Find a way to lessen the atomic usage
 
         const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         // On an MI100:
