@@ -317,8 +317,7 @@ namespace hip {
             // multiple threads access the same part of the shared memory. Such
             // "conflicted" accesses are serialized !
             // NOTE: We use a bit to much LDS. For Jx, the first row could be
-            // discarded, for Jy we could remove the last column (know that the
-            // access pattern is wierd (rhombus shaped)).
+            // discarded, for Jy we could remove the first column.
 
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
 
@@ -444,16 +443,19 @@ namespace hip {
 
                 // This is the particle position as grid index
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-                const int ipo = iold[0 * particle_count] - 2;
-                const int jpo = iold[1 * particle_count] - 2;
+                const int ipo = iold[0 * particle_count] -
+                                2 /* Offset so we dont uses negative numbers in the loop */ -
+                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                const int jpo = iold[1 * particle_count] -
+                                2 /* Offset so we dont uses negative numbers in the loop */ -
+                                global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
                 // Jx
 
                 double tmpJx[5]{};
 
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
-                                     jpo - global_y_scratch_space_coordinate_offset;
+                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
                     ::atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
                     for( unsigned int j = 1; j < 5; ++j ) {
@@ -465,29 +467,27 @@ namespace hip {
                 // Jy
 
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     double    tmp  = 0.0;
                     for( unsigned int j = 1; j < 5; j++ ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-                        ::atomicAdd( &device_Jy[iloc + j + pxr * ( /* i + */ ipo )], tmp );
+                        ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * nprimy + jpo;
+                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     double    tmp  = 0.0;
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-                        ::atomicAdd( &device_Jy[iloc + j + pxr * ( i + ipo )], tmp );
+                        ::atomicAdd( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
                 // Jz
 
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
-                                     jpo - global_y_scratch_space_coordinate_offset;
-                    /* Jx[iloc] += tmpJx[0]; */
+                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
                         ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
@@ -496,8 +496,7 @@ namespace hip {
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo - global_x_scratch_space_coordinate_offset ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) +
-                                     jpo - global_y_scratch_space_coordinate_offset;
+                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     ::atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         ::atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
@@ -526,7 +525,7 @@ namespace hip {
                 // TODO(Etienne M): Should I try to remove the bank conflicts?
                 // This could prevent coalescing the access to global memory!
                 ::atomicAdd( &device_Jx[global_memory_index], Jx_scratch_space[scratch_space_index] );
-                ::atomicAdd( &device_Jy[global_memory_index + pxr * local_y_scratch_space_coordinate], Jy_scratch_space[scratch_space_index] );
+                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT */ pxr * global_x_scratch_space_coordinate], Jy_scratch_space[scratch_space_index] );
                 ::atomicAdd( &device_Jz[global_memory_index], Jz_scratch_space[scratch_space_index] );
             }
         }
