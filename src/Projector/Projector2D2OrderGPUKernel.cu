@@ -270,14 +270,42 @@ namespace hip {
             } while( 0 )
 
     namespace kernel {
+        namespace atomic {
+            namespace LDS {
+                __device__ void
+                AddNoReturn( float *a_pointer, float a_value )
+                {
+                    ::atomicAdd( a_pointer, a_value );
+                }
 
-        template <typename T>
-        __device__ void
-        atomicAdd( T *a_pointer, T a_value )
-        {
-            ::atomicAdd( a_pointer, a_value ); // Atomic     | the kernel is correct
-            *a_pointer = a_value;              // Not atomic | the kernel is wrong but 10x faster
-        }
+                __device__ void
+                AddNoReturn( double *a_pointer, double a_value )
+                {
+                    ::atomicAdd( a_pointer, a_value );
+                }
+            } // namespace LDS
+
+            namespace GDS {
+                __device__ void
+                AddNoReturn( float *a_pointer, float a_value )
+                {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+                    ::atomicAddNoRet( a_pointer, a_value );
+        #pragma clang diagnostic pop
+                }
+
+                __device__ void
+                AddNoReturn( double *a_pointer, double a_value )
+                {
+        #if defined( __gfx90a__ )
+                    ::unsafeAtomicAdd( a_pointer, a_value );
+        #else
+                    ::atomicAdd( a_pointer, a_value );
+        #endif
+                }
+            } // namespace GDS
+        }     // namespace atomic
 
         template <typename Float>
         __global__ void
@@ -504,10 +532,10 @@ namespace hip {
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<Float>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    atomicAdd( &Jx_scratch_space[iloc], tmpJx[0] );
+                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], tmpJx[0] );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<Float>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        atomicAdd( &Jx_scratch_space[iloc + j], tmpJx[j] );
+                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], tmpJx[j] );
                     }
                 }
 
@@ -518,7 +546,7 @@ namespace hip {
                     Float     tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomicAdd( &Jy_scratch_space[iloc + j], tmp );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
@@ -527,7 +555,7 @@ namespace hip {
                     Float     tmp{};
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<Float>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomicAdd( &Jy_scratch_space[iloc + j], tmp );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], tmp );
                     }
                 }
 
@@ -535,18 +563,18 @@ namespace hip {
 
                 for( unsigned int i = 0; i < 1; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
                                                                           Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     }
                 }
 
                 for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomicAdd( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomicAdd( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
                                                                           Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     }
                 }
@@ -570,9 +598,9 @@ namespace hip {
                 const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
-                ::atomicAdd( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                ::atomicAdd( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                ::atomicAdd( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         }
     } // namespace kernel
