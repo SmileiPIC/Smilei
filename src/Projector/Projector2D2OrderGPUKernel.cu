@@ -56,7 +56,7 @@ namespace naive {
                              int    pxr )
     {
         // The OMP implementation is NOT bin aware. As per the precondition on
-        // host_bin_index, index zero always contains the number of particle.
+        // host_bin_index, index zero always contains the number of particles.
         // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
