@@ -90,13 +90,13 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSz{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_sumX{ kTmpArraySize };
 
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sx0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sy0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sz0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSx );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSy );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSz );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_sumX );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSx );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSy );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSz );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_sumX );
 
     double *const __restrict__ Sx0  = host_device_Sx0.data();
     double *const __restrict__ Sy0  = host_device_Sy0.data();

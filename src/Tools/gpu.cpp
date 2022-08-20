@@ -17,7 +17,7 @@
 namespace smilei {
     namespace tools {
         namespace gpu {
-            void HostDeviceMemoryManagment::DoDeviceAllocate( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoDeviceAllocate( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 const unsigned char* byte_array = static_cast<const unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -32,7 +32,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoDeviceAllocateAndCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoDeviceAllocateAndCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 const unsigned char* byte_array = static_cast<const unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -47,7 +47,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoCopyHostToDevice( const void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 const unsigned char* byte_array = static_cast<const unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -61,7 +61,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoCopyDeviceToHost( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoCopyDeviceToHost( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 unsigned char* byte_array = static_cast<unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -75,7 +75,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoCopyDeviceToHostAndDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoCopyDeviceToHostAndDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 unsigned char* byte_array = static_cast<unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -90,7 +90,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoDeviceFree( void* a_host_pointer, std::size_t a_count, std::size_t an_object_size )
             {
                 unsigned char* byte_array = static_cast<unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -105,7 +105,7 @@ namespace smilei {
 #endif
             }
 
-            void* HostDeviceMemoryManagment::DoGetDevicePointer( const void* a_host_pointer )
+            void* HostDeviceMemoryManagement::DoGetDevicePointer( const void* a_host_pointer )
             {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int device_num = ::omp_get_default_device();
@@ -136,7 +136,7 @@ namespace smilei {
 #endif
             }
 
-            void HostDeviceMemoryManagment::DoDeviceMemoryCopy( void* a_destination, const void* a_source, std::size_t a_count, std::size_t an_object_size )
+            void HostDeviceMemoryManagement::DoDeviceMemoryCopy( void* a_destination, const void* a_source, std::size_t a_count, std::size_t an_object_size )
             {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 const int device_num = ::omp_get_default_device();

@@ -287,9 +287,9 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( data() );
+                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( data() );
     if( should_manipulate_gpu_memory ) {
-        // At initialization, data() is NOT on the GPU so we dont map the 
+        // At initialization, data() is NOT on the GPU so we dont map the
         // exchange buffers to the GPU.
         // On the other hand, later in the pic loop, data() will be on GPU and
         // we need to map the exchange buffers.
@@ -297,13 +297,13 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
         const int           dSize = sendFields_[iDim * 2 + iNeighbor]->globalDims_;
 
-        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
+        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
         if( !is_already_mapped_on_gpu ) {
             // TODO(Etienne M): FREE. If we have load balancing or other patch
             // creation/destruction available (which is not the case on GPU ATM),
             // we should be taking care of freeing this GPU memory.
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }
     }
 #endif
@@ -331,9 +331,9 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
     const bool should_manipulate_gpu_memory = name[0] == 'B' &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
-    SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) ==
-                   smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub ) );
+                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
+    SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) ==
+                   smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
@@ -371,8 +371,8 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
     const bool should_manipulate_gpu_memory = name[0] == 'B' &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
-    // SMILEI_ASSERT( /*iteration == 0 && */!smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
+                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( /*iteration == 0 && */!smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
@@ -412,8 +412,8 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
     const bool should_manipulate_gpu_memory = name[0] == 'J' &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
-    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
+                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
@@ -453,8 +453,8 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
     const bool should_manipulate_gpu_memory = name[0] == 'J' &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( sub );
-    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( field ) );
+                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
+    // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
 
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;

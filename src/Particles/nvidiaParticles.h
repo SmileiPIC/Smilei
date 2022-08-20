@@ -127,20 +127,17 @@ protected:
     //! On GPU we need large volume of data to process. We'd like a sorting in
     //! cluster/tiles such that it would be possible to load the fields of such
     //! cluster into GPU shared/LDS memory.
-    //! A good cluster size would be, in 2D, 16x16 which lead to 14x14 due to
-    //! the 2nd order scheme used in current deposition. Thus we must sort in
-    //! 14x14 tiles. To represent which particle is in which bin, we re-use
-    //! last_index. This array contains
-    //! "n_cell_per_patch/getGPUClusterCellVolume()" values, each representing
-    //! the end of the bin. ie: last_index[0] is the last particle id
-    //! (excluded), of bin 0 and the first particle (included) of bin 1.
+    //! To represent which particle is in which bin, we re-use last_index. This
+    //! array contains "n_cell_per_patch/getGPUClusterCellVolume()" values, each
+    //! representing the end of the bin. ie: last_index[0] is the last particle 
+    //! index (excluded), of bin 0 and the first particle (included) of bin 1.
     //! The last value of last_index is the number of particle of a given
     //! species in this patch.
     //!
     //! One should always use first_index.size() to get the number of "host
     //! visible bin" but note that it may be different than the "true"
     //! number of bin used on the device. It's done this way only to trick Smilei
-    //! into passing large particle quatities to the operators because they know
+    //! into passing large particle quantities to the operators because they know
     //! best how to process the data (in bin or not in bin). The Smilei
     //! "structural" code should not have to deal with the fine details (most of
     //! the time).
@@ -164,7 +161,8 @@ protected:
     //!
     //! If the function succeed, last_index is allocated on GPU.
     //!
-    //! returns -1 on error (binning is not supported for this object).
+    //! returns -1 on error (binning is not supported for this Particles 
+    //! object).
     //!
     int prepareBinIndex();
 
@@ -206,7 +204,8 @@ protected:
 
     const Params* parameters_;
     //! We are interested in having the patch coordinates. This allows us to
-    //! compute a bin index relative to the patch.
+    //! compute a bin index relative to the patch which in turns, makes the bin
+    //! index computation much easier.
     const Patch* parent_patch_;
 
     //! Number of particles on device

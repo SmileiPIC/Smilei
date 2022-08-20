@@ -303,11 +303,11 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::initialParticleSorting( Params &params )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // Initialy I wanted to control the GPU particle sorting/bin initialization
+    // Initially I wanted to control the GPU particle sorting/bin initialization
     // here. In the end it was put in initializeDataOnDevice which is more 
     // meaningful. 
     // On that note, maybe the _VECTO/cell sorting 
-    // code should probably also be incapsulated in the particle class 
+    // code should probably also be encapsulated in the particle class 
     // (or a vectorized variant).
 #elif defined( _VECTO )
     if( params.cell_sorting_ ) {
@@ -4308,22 +4308,22 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bz, sizeofBz );
 
         // TODO(Etienne M): We should create a function that does the copy of the radiation table.
         // Here we should only allocate data.
@@ -4331,7 +4331,7 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
         if( params.has_Niel_radiation_ ) {
             const double *const table = &( radiation_tables->niel_.table_[0] );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
         if( params.has_MC_radiation_ ) {
@@ -4340,9 +4340,9 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
             const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );
             const double *const table_xi             = &( radiation_tables->xi_.table_[0] );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
         }
     }
 #else
@@ -4381,17 +4381,17 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ez, sizeofEz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ez, sizeofEz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bz, sizeofBz );
     }
 #else
     ERROR( "GPU related code should not be reached in CPU mode!" );
@@ -4439,19 +4439,19 @@ void VectorPatch::copyDeviceStateToHost()
         double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
         double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        // TODO(Etienne M): Shouldnt Jx be copied too ? Depending on the diags
+        // TODO(Etienne M): Shouldn't Jx be copied too ? Depending on the diags
 
-        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jx, sizeofJx );
-        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jy, sizeofJy );
-        // smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ez, sizeofEz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
     }
 #else
     ERROR( "GPU related code should not be reached in CPU mode!" );

@@ -378,7 +378,7 @@ public:
     //! 2: the 2D value
     //! 3: the 3D value (not implemented)
     //!
-    //! returns -1 if not implemented, this'll disabled the sorting/binning
+    //! returns -1 if not implemented, this'll disable the sorting/binning
     //!
     static constexpr int
     getGPUClusterWidth( int dimension_id )
@@ -427,7 +427,7 @@ public:
                                                         // The std::round in the interpolator's coeffs function used to
                                                         // get the position of the particle requires that we reserve an
                                                         // other row and column.
-                                                        // TODO(Etienne M): Is that realy necessary ? We could take this
+                                                        // TODO(Etienne M): Is that really necessary ? We could take this
                                                         // behavior in account during the sorting, but that would mean
                                                         // one more bin row and column. The clusters on the sides would
                                                         // be less full than the middle ones.

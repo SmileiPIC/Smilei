@@ -35,7 +35,7 @@ namespace detail {
     // Cluster manipulation functor definition
     ////////////////////////////////////////////////////////////////////////////////
 
-    //! Cluster manipulation functionnalities common to all dimension.
+    //! Cluster manipulation functionalities common to all dimension.
     //! NOTE: This only focus on GPU data manipulation. The host data is shall
     //! not be handled here !
     //!
@@ -65,7 +65,7 @@ namespace detail {
         //! precondition:
         //!     - nvidia_cell_keys_ shall be sorted in non decreasing order
         //!     - last_index.data() is a pointer mapped to GPU via
-        //!       HostDeviceMemoryManagment
+        //!       HostDeviceMemoryManagement
         //!
         static inline void
         computeBinIndex( nvidiaParticles& particle_container );
@@ -75,7 +75,7 @@ namespace detail {
         //! precondition:
         //!     - particle_container is already sorted by cluster or
         //!       particle_container is not sorted anymore (after a push) but
-        //!       still contain the old cluster key un touched.
+        //!       still contains the old cluster key untouched.
         //!       PartBoundCond::apply will set the keys to zero !
         //!
         static inline void
@@ -275,9 +275,8 @@ namespace detail {
     {
         SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( particle_container.last_index.data() );
 
-        Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( particle_container.last_index.data() );
+        Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( particle_container.last_index.data() );
 
-        // TODO(Etienne M): REMOVE. After the implementation is stable
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
         //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size() ) );
@@ -300,7 +299,6 @@ namespace detail {
                              thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
                              bin_upper_bound );
 
-        // TODO(Etienne M): REMOVE. After the implementation is stable
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   bin_upper_bound,
         //                                   bin_upper_bound + particle_container.last_index.size() ) );
@@ -364,14 +362,6 @@ namespace detail {
                                        ParticleIteratorProvider      particle_iterator_provider,
                                        ParticleNoKeyIteratorProvider particle_no_key_iterator_provider )
     {
-        // So basicaly, we got a 5 to 14ms budget to:
-        // - erase the leaving particles
-        // - import the entering particles
-        // - sort everything
-        // - re-compute the bins boundaries
-        // - do the particle to grid current deposition
-        // All theses durations are for 11kk particles.
-
         const auto first_particle = particle_iterator_provider( particle_container );
 
         auto last_particle = first_particle +
@@ -395,7 +385,7 @@ namespace detail {
         const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
                                                                                                 last_particle );
 
-        // NOTE: We realy want a non-initializing vector here!
+        // NOTE: We really want a non-initializing vector here!
         // It's possible to give a custom allocator to thrust::device_vector.
         // Create one with construct(<>) as a noop and derive from
         // thrust::device_malloc_allocator
@@ -442,7 +432,6 @@ namespace detail {
 
         // Merge by key
         // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
-        // TODO(Etienne M): Does the order (which range is the first in the argument) matters for perfs ?
         //
         thrust::merge_by_key( thrust::device,
                               particle_to_inject.getPtrCellKeys(),                                                            // Input range 1, first key
@@ -739,7 +728,7 @@ void nvidiaParticles::deviceClear()
 }
 
 // -----------------------------------------------------------------------------
-//! Initialize the particle properties on devide as a mirror of the host definition
+//! Initialize the particle properties on device as a mirror of the host definition
 // -----------------------------------------------------------------------------
 void nvidiaParticles::initializeDataOnDevice()
 {
@@ -747,7 +736,7 @@ void nvidiaParticles::initializeDataOnDevice()
     // The world shall end if we call this function multiple times
     SMILEI_ASSERT( nvidia_double_prop_.empty() );
 
-    // "Over-reserve" to minimise the cost of future reallcoation, it might be
+    // "Over-reserve" to minimize the cost of future reallocation, it might be
     // interesting to set the value to 1.2F ~~
     const auto kGrowthFactor      = 1.0F;
     const auto kPositionDimension = Position.size();
@@ -788,7 +777,7 @@ void nvidiaParticles::initializeDataOnDevice()
     if( gpu_size() == 0 ) {
         // At this point, it means that kHostParticleCount == 0
         reserve( 100 );
-        // Continue, we may have to re-initialize the bins, eventhough there is
+        // Continue, we may have to re-initialize the bins, overthought there is
         // no particles yet.
     }
 
@@ -878,8 +867,9 @@ void nvidiaParticles::syncCPU()
 void nvidiaParticles::extractParticles( Particles* particles_to_move )
 {
     // TODO(Etienne M): We are doing extra work. We could use something like
-    // partition to output the invalidated particles in particles_to_move and
-    // keep the good ones.
+    // std::partition to output the invalidated particles in particles_to_move
+    // and keep the good ones. This would help us avoid the std::remove_if in 
+    // the particle injection and sorting algorithm.
 
     // Manage the send data structure
     nvidiaParticles* const cp_parts                 = static_cast<nvidiaParticles*>( particles_to_move );
@@ -1140,12 +1130,12 @@ int nvidiaParticles::prepareBinIndex()
         return -1;
     }
 
-    // We completly ignore/discard/overwrite what's done in
+    // We completely ignore/discard/overwrite what's done in
     // ParticleCreator::create regarding binning.
     // NOTE: maybe ParticleCreator::create should not be doing the particle
     // binning and should only be responsible for particle initialization (pos,
-    // mementum etc.).
-    // We are forced to deal with first_index even though its completly
+    // momentum etc.).
+    // We are forced to deal with first_index even though its completely
     // redundant as long as the bins are dense (no holes).
 
     const auto particle_count = last_index.back();
@@ -1157,14 +1147,14 @@ int nvidiaParticles::prepareBinIndex()
     first_index.back() = 0;
 
     // Dont try to allocate 2 times, even if it's harmless, that would be a bug!
-    SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( last_index.data() ) );
+    SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( last_index.data() ) );
 
     // We'll need last_index to be on the GPU.
 
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( last_index );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( last_index );
 
     return 0;
 }

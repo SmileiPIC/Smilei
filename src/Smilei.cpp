@@ -110,7 +110,7 @@ int main( int argc, char *argv[] )
         if( ::omp_get_max_threads() != 1 ) {
             // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei 
             // GPU to use only one thread.
-            WARNING( "Runing Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
+            WARNING( "Running Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
         }
 
         const int gpu_count = ::omp_get_num_devices();
@@ -119,7 +119,7 @@ int main( int argc, char *argv[] )
             ERROR( "Simlei needs one accelerator, none detected." );
         } else if( gpu_count > 1 ) {
             // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
-            // (nor in OpenACC). This makes managment of the device completly
+            // (nor in OpenACC). This makes management of the device completely
             // oblivious to the program (only one, the one by default).
             // This could be a missed but very advanced optimization for some
             // kernels/exchange.
@@ -342,7 +342,7 @@ int main( int argc, char *argv[] )
         // TODO(Etienne M): Dont we need to computeCharge() only if we
         // initialize the E/B fields by solving the appropriate poisson
         // equation? projectionForDiags will overwrite the result anyway.
-        // Shouldnt we call computeCharge() in runNonRelativisticPoissonModule,
+        // Shouldn't we call computeCharge() in runNonRelativisticPoissonModule,
         // like it's done in runRelativisticModule with
         // computeChargeRelativisticSpecies().
         vecPatches.computeCharge();

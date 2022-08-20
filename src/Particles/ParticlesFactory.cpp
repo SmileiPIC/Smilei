@@ -19,7 +19,7 @@ Particles* ParticlesFactory::create( const Params& parameters,
 
     if( parameters.gpu_computing ) {
 
-        // We export an appropriate interface to avoid potential ABI problems
+        // We export a C interface to avoid potential ABI problems
         // that could occur when using two different compilers (e.g., one to
         // compile cuda/hip and another one for the host code).
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )

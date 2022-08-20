@@ -347,8 +347,8 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
             // TODO(Etienne M): FREE. If we have load balancing or other patch
             // creation/destruction available (which is not the case on GPU ATM),
             // we should be taking care of freeing this GPU memory.
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }
 #endif
     }

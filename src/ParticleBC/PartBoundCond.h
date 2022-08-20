@@ -40,10 +40,11 @@ public:
     {
         int *const cell_keys = species->particles->getPtrCellKeys();
 
-        // TODO(Etienne M): Clearing the key should be a member function of 
-        // particle.
+        // TODO(Etienne M): Clearing the key should be a member function of the
+        // Particles class.
         // NOTE: we do not clear the cell keys because this gives us the ability
-        // of easily knowing which particle changed bin after a pushing step.
+        // of easily knowing which particle left it's bin after a pushing step.
+        // These particles need to be re-keyed and sorted.
         //
         const auto key_zeroing = [&]() {
 #if defined( _GPU )

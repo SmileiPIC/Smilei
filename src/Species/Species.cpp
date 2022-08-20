@@ -391,14 +391,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         SMILEI_ASSERT( particles->last_index.size() >= 1 );
         SMILEI_ASSERT( particles->last_index.back() == particles->last_index[0] );
 
-        const int particule_count = particles->last_index.back();
+        const int particle_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particule_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
 
         {
 
@@ -613,11 +613,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_iold[ithread].data(), particule_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
 #endif
     } //End if moving or ionized particles
 
@@ -1177,7 +1177,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     // Warning: the GPU version does not handle bin and sorting
     // Warning: the current GPU version does not handle tracked particles
 
-    // Inject paticles from source_particles
+    // Inject particles from source_particles
     particles->last_index.back() += particles->injectParticles( &source_particles );
     particles->last_index[0] = particles->last_index.back();
 #else

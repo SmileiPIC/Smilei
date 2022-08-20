@@ -663,19 +663,19 @@ namespace hip {
                             0, // Shared memory
                             0, // Stream
                             // Kernel arguments
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_Jx ),
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_Jy ),
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_Jz ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
                             Jx_size, Jy_size, Jz_size,
                             device_particle_position_x,
                             device_particle_position_y,
                             device_particle_momentum_z,
                             device_particle_charge,
                             device_particle_weight,
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_bin_index ),
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_invgf_ ),
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_iold_ ),
-                            smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( host_deltaold_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
                             inv_cell_volume,
                             dx_inv, dy_inv,
                             dx_ov_dt, dy_ov_dt,
@@ -721,7 +721,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                          int    pxr )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
-    naive:: // the naive, OMP version serves as a referance along with the CPU version
+    naive:: // the naive, OMP version serves as a reference along with the CPU version
     #else
     hip::
     #endif

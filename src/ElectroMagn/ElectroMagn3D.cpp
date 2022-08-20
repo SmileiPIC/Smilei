@@ -1029,20 +1029,20 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         double *const             Bz3D_m = Bz_m->data();
 
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
-        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
+        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( Bx3D );
 
         if( is_memory_on_device ) {
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D ),
-                                                                             nx_p * ny_d * nz_d );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bx3D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bx3D ),
+                                                                              nx_p * ny_d * nz_d );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D ),
-                                                                             nx_d * ny_p * nz_d );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( By3D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( By3D ),
+                                                                              nx_d * ny_p * nz_d );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
-                                                                             nx_d * ny_d * nz_p );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz3D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz3D ),
+                                                                              nx_d * ny_d * nz_p );
         } else {
             // Magnetic field Bx^(p,d,d)
             memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );

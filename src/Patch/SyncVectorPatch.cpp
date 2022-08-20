@@ -299,7 +299,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
     const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
-                                     smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
+                                     smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
 #endif
 
     for( int icomp=0 ; icomp<3 ; icomp++ ) {
@@ -432,7 +432,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         const bool is_memory_on_device = vecPatches.densitiesLocaly.size() > 0 &&
-                                         smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( vecPatches.densitiesLocaly[0]->data() );
+                                         smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocaly[0]->data() );
 #endif
 
         for( int icomp=0 ; icomp<3 ; icomp++ ) {
@@ -569,7 +569,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             const bool is_memory_on_device = vecPatches.densitiesLocalz.size() > 0 &&
-                                             smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalz[0]->data() );
+                                             smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalz[0]->data() );
 #endif
 
             for( int icomp=0 ; icomp<3 ; icomp++ ) {
@@ -1479,7 +1479,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
     // is_memory_on_device check.
     const bool is_memory_on_device = vecPatches.B_localx.size() > 0 &&
-                                     smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
+                                     smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
     for( int icomp=0 ; icomp<2 ; icomp++ ) {
@@ -1508,13 +1508,13 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 //for filter
 
                 if( is_memory_on_device ) {
-                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
-                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
-                                                                                     oversize * ny_ * nz_ );
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt2 ),
+                                                                                      smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt1 ),
+                                                                                      oversize * ny_ * nz_ );
 
-                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
-                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
-                                                                                     oversize * ny_ * nz_ );
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
+                                                                                      smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
+                                                                                      oversize * ny_ * nz_ );
                 } else {
                     // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
                     // IsHostPointerMappedOnDevice would prevent us from using the GPU memcpy function.
