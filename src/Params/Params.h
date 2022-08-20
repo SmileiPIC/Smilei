@@ -381,7 +381,7 @@ public:
     //! returns -1 if not implemented
     //!
     static constexpr int
-    getGPUClusterWidth( int dimension_id, int interpolation_order )
+    getGPUClusterWidth( int dimension_id )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
@@ -398,26 +398,24 @@ public:
     }
 
     //! Computes:
-    //! getGPUClusterWidth( dimension_id, interpolation_order ) +
+    //! getGPUClusterWidth( dimension_id ) +
     //! 2 * getGPUClusterGhostCellBorderWidth( interpolation_order )
     //!
     static constexpr int
     getGPUClusterWithGhostCellWidth( int dimension_id, int interpolation_order )
     {
-        return getGPUClusterWidth( dimension_id, interpolation_order ) +
+        return getGPUClusterWidth( dimension_id ) +
                getGPUClusterGhostCellBorderWidth( interpolation_order );
     }
 
-    //! Call getGPUClusterWidth( nDim_particle, interpolation_order )
+    //! Call getGPUClusterWidth( nDim_particle )
     //!
     int getGPUClusterWidth() const;
 
     //! Return the ghost cell present at the border of the cluster.
     //! This border is NOT accounted for by getGPUClusterWidth. That is, the
     //! particles are sorted in chunk of width getGPUClusterWidth but the
-    //! projection/interpolation of a given bin will reach particles in a
-    //! cluster slightly larger by getGPUClusterGhostCellBorderWidth in
-    //! each coordinate component (forward and backward).
+    //! projection of a given bin will overlap other bins.
     //!
     static constexpr int
     getGPUClusterGhostCellBorderWidth( int interpolation_order )

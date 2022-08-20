@@ -352,8 +352,8 @@ namespace hip {
             const unsigned int thread_index_offset           = threadIdx.x;
 
             // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */);
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */);
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -639,6 +639,9 @@ namespace hip {
         int device_count;
         checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
         SMILEI_ASSERT( device_count == 1 );
+
+        SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
+                       Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
 
         // NOTE:
         // This cluster is very strongly bound by atomic operations in LDS (shared memory)

@@ -1902,7 +1902,7 @@ bool Params::isGPUParticleBinningAvailable() const
 
 int Params::getGPUClusterWidth() const
 {
-    return getGPUClusterWidth( nDim_particle, interpolation_order );
+    return getGPUClusterWidth( nDim_particle );
 }
 
 int Params::getGPUClusterGhostCellBorderWidth() const

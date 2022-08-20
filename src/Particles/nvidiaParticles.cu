@@ -227,8 +227,8 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::computeParticleClusterKey( particle_container,
-                                                                                                                                 parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::computeParticleClusterKey( particle_container,
+                                                                                                parameters );
                 break;
             }
             default:
@@ -247,8 +247,8 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::sortParticleByKey( particle_container,
-                                                                                                                         parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::sortParticleByKey( particle_container,
+                                                                                        parameters );
                 break;
             }
             default:
@@ -301,9 +301,9 @@ namespace detail {
 
         switch( particle_container.dimension() ) {
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>::importAndSortParticles( particle_container,
-                                                                                                                              particle_to_inject,
-                                                                                                                              parameters );
+                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::importAndSortParticles( particle_container,
+                                                                                             particle_to_inject,
+                                                                                             parameters );
                 break;
             }
             default:
@@ -509,9 +509,9 @@ namespace detail {
         const auto last  = first + particle_container.gpu_size();
 
         doComputeParticleClusterKey( first, last,
-                                     Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ )>{ parameters.cell_length[0],
-                                                                                                                           parameters.cell_length[1],
-                                                                                                                           parameters.n_space[1] } );
+                                     Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>{ parameters.cell_length[0],
+                                                                                          parameters.cell_length[1],
+                                                                                          parameters.n_space[1] } );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
