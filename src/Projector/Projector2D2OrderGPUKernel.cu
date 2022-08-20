@@ -339,6 +339,9 @@ namespace hip {
             // pieces (lds init/store, coeff computation, deposition etc..)
             // TODO(Etienne M): prefer unsigned int vs int. At least the reader
             // knows the value wont be negative.
+            // TODO(Etienne M): __ldg could be used to slightly improve GDS load
+            // speed. This would only have an effect on Nvidia cards as this 
+            // operation is a no op on AMD.
             const unsigned int workgroup_size = blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
