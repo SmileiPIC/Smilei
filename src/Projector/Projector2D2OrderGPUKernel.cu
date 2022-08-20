@@ -9,7 +9,7 @@
     #if defined( __HIP__ )
     // HIP compiler support enabled (for .cu files)
     #else
-        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION = 1
+        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION 1
     #endif
 
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
@@ -40,8 +40,8 @@ namespace naive {
                              const short *__restrict__ device_particle_charge,
                              const double *__restrict__ device_particle_weight,
                              const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
+                             unsigned int,
+                             unsigned int,
                              const double *__restrict__ invgf_,
                              const int *__restrict__ iold_,
                              const double *__restrict__ deltaold_,
@@ -55,11 +55,11 @@ namespace naive {
                              int    nprimy,
                              int    pxr )
     {
-        const unsigned int bin_count = x_dimension_bin_count * y_dimension_bin_count;
-
-        SMILEI_ASSERT( bin_count > 0 );
-
-        const int particle_count = host_bin_index[bin_count - 1];
+        // The OMP implementation is NOT bin aware. As per the precondition on
+        // host_bin_index, index zero always contains the number of particle.
+        // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
+        const unsigned int bin_count      = 1;
+        const int          particle_count = host_bin_index[bin_count - 1];
 
             // // Arrays used for the Esirkepov projection method
             // static constexpr bool kAutoDeviceFree = true;

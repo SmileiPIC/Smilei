@@ -773,16 +773,23 @@ void nvidiaParticles::initializeDataOnDevice()
         // object without allocated bin (particle_to_move for instance).
         // We'll use the old, naive, unsorted particles injection
         // implementation.
-        return;
+
+        // Dont call setHostBinIndex. For particle that have binning this is a
+        // redundant call. But for the particle that should not get binned
+        // (ie: particle_to_move) , this is a bug (!) and will trigger an
+        // assertion.
+
+        // setHostBinIndex();
+    } else {
+
+        // At this point, a copy of the host particles and last_index is on the
+        // device and we know we support the space dimension.
+
+        detail::Cluster::computeParticleClusterKey( *this, *parameters_ );
+        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
+        detail::Cluster::computeBinIndex( *this );
+        setHostBinIndex();
     }
-
-    // At this point, a copy of the host particles and last_index is on the
-    // device and we know we support the space dimension.
-
-    detail::Cluster::computeParticleClusterKey( *this, *parameters_ );
-    detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
-    detail::Cluster::computeBinIndex( *this );
-    setHostBinIndex();
 }
 
 //! Copy the particles from host to device

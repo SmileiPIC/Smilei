@@ -378,7 +378,7 @@ public:
     //! 2: the 2D value
     //! 3: the 3D value (not implemented)
     //!
-    //! returns -1 if not implemented
+    //! returns -1 if not implemented, this'll disabled the sorting/binning
     //!
     static constexpr int
     getGPUClusterWidth( int dimension_id )

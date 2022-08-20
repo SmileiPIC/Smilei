@@ -21,10 +21,13 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicititly initializing
     // Projector2D.
-    pxr                    = !parameters.is_pxr;
-    dt                     = parameters.timestep;
-    dts2                   = dt / 2.0;
-    dts4                   = dts2 / 2.0;
+    pxr  = !parameters.is_pxr;
+    dt   = parameters.timestep;
+    dts2 = dt / 2.0;
+    dts4 = dts2 / 2.0;
+
+    // When sorting is disabled, these values are invalid (-1) and the HIP 
+    // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
 }
