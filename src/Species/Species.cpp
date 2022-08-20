@@ -86,8 +86,8 @@ Species::Species( Params &params, Patch *patch ) :
     merging_time_selection_( 0 )
 {
     // &particles_sorted[0]
-    particles         = ParticlesFactory::create( params );
-    particles_to_move = ParticlesFactory::create( params );
+    particles         = ParticlesFactory::create( params, *patch );
+    particles_to_move = ParticlesFactory::create( params, *patch );
 
     regular_number_array_.clear();
     partBoundCond = NULL;

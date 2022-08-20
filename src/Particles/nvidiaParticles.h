@@ -31,7 +31,7 @@ class nvidiaParticles : public Particles
 {
 public:
     //! Constructor for Particle
-    nvidiaParticles(const Params& parameters);
+    nvidiaParticles( const Params& parameters, const Patch& a_parent_patch );
 
     //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
@@ -205,6 +205,9 @@ protected:
     std::vector<thrust::device_vector<short>*> nvidia_short_prop_;
 
     const Params* parameters_;
+    //! We are interested in having the patch coordinates. This allows us to
+    //! compute a bin index relative to the patch.
+    const Patch* parent_patch_;
 
     //! Number of particles on device
     int gpu_nparts_;

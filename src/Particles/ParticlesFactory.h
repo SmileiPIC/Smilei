@@ -12,9 +12,11 @@
 #include "Params.h"
 #include "Particles.h"
 
-class ParticlesFactory {
+class ParticlesFactory
+{
 public:
-    static Particles* create(const Params& params);
+    static Particles* create( const Params& parameters,
+                              const Patch&  a_parent_patch );
 };
 
 #endif

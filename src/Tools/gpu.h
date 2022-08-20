@@ -37,7 +37,7 @@ namespace smilei {
             /// This NonInitializingVector can thus better make use of the virtual memory
             /// when used in cunjunction with the openMP/OpenACC device offloading.
             ///
-            /// Note:
+            /// NOTE:
             /// When seeking performance, more control often means more potential performance.
             /// This NonInitializingVector provides a way to automatically free the memory
             /// allocated on the device (avoid leaks) but requires the user to explicicly to
@@ -61,7 +61,7 @@ namespace smilei {
                 /// Named HostAlloc instead of just Alloc so that the user knows
                 /// that it does nothing on the device!
                 ///
-                /// Note:
+                /// NOTE:
                 /// Does not initialize memory, meaning, due to how the virtual
                 /// memory works, that only when the memory is "touched"/set will the
                 /// process' true memory usage increase. If you map to the device and never
@@ -107,7 +107,7 @@ namespace smilei {
             ///
             /// Do not allocate classes using non trivial constructor/destructor !
             ///
-            /// Note:
+            /// NOTE:
             /// - The OpenACC implementation is not complete!
             /// - You can exploit virtual memory and allocate a large part of the memory on the
             /// the host (malloc) and not use it. the OS will allocate address sapce and not physical
@@ -161,7 +161,7 @@ namespace smilei {
                 ///                                      else return nullptr
                 /// else return a_host_pointer (untouched)
                 ///
-                /// Note:
+                /// NOTE:
                 /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this
                 /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
                 ///

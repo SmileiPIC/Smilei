@@ -40,7 +40,11 @@ public:
     {
         int *const cell_keys = species->particles->getPtrCellKeys();
 
-        // TODO(Etienne M): Clearing the key should be a member fonction of particle
+        // TODO(Etienne M): Clearing the key should be a member function of 
+        // particle.
+        // NOTE: we do not clear the cell keys because this gives us the ability
+        // of easily knowing which particle changed bin after a pushing step.
+        //
         const auto key_zeroing = [&]() {
 #if defined( _GPU )
     #pragma acc parallel deviceptr( cell_keys )

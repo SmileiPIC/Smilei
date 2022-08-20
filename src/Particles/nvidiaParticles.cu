@@ -10,6 +10,7 @@
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
+#include "Patch.h"
 #include "gpu.h"
 #include "nvidiaParticles.h"
 
@@ -52,7 +53,8 @@ namespace detail {
         //!
         static inline void
         computeParticleClusterKey( nvidiaParticles& particle_container,
-                                   const Params&    parameters );
+                                   const Params&    parameters,
+                                   const Patch&     a_parent_patch );
 
         //! Sort the particle on GPU by their cluster/cell key.
         //!
@@ -71,7 +73,7 @@ namespace detail {
         //! Sorting by cluster and binning
         //!
         //! precondition:
-        //!     - particle_container is already sorted by cluster or 
+        //!     - particle_container is already sorted by cluster or
         //!       particle_container is not sorted anymore (after a push) but
         //!       still contain the old cluster key un touched.
         //!       PartBoundCond::apply will set the keys to zero !
@@ -79,7 +81,8 @@ namespace detail {
         static inline void
         importAndSortParticles( nvidiaParticles& particle_container,
                                 nvidiaParticles& particle_to_inject,
-                                const Params&    parameters );
+                                const Params&    parameters,
+                                const Patch&     a_parent_patch );
 
     protected:
         template <typename InputIterator,
@@ -113,9 +116,12 @@ namespace detail {
     {
     public:
     public:
-        Cluster2D( double   cell_size_in_x,
-                   double   cell_size_in_y,
-                   SizeType y_dimension_cluster_count_ /* per patch */ );
+        Cluster2D( double   x_cell_dimension,
+                   double   y_cell_dimension,
+                   SizeType local_x_dimension_in_cell,
+                   SizeType local_y_dimension_in_cell,
+                   SizeType global_x_patch_offset_in_cell,
+                   SizeType global_y_patch_offset_in_cell );
 
         //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
         //! zipiterator).
@@ -130,7 +136,8 @@ namespace detail {
         //!
         static void
         computeParticleClusterKey( nvidiaParticles& particle_container,
-                                   const Params&    parameters );
+                                   const Params&    parameters,
+                                   const Patch&     a_parent_patch );
 
         static void
         sortParticleByKey( nvidiaParticles& particle_container,
@@ -139,13 +146,15 @@ namespace detail {
         static void
         importAndSortParticles( nvidiaParticles& particle_container,
                                 nvidiaParticles& particle_to_inject,
-                                const Params&    parameters );
+                                const Params&    parameters,
+                                const Patch&     a_parent_patch );
 
     public:
-        double   inverse_of_cell_size_in_x_;
-        double   inverse_of_cell_size_in_y_;
-        SizeType y_dimension_cluster_count_; //! y_patch_dim_width / kClusterWidth
-        // 32 bits padding :(
+        double   inverse_of_x_cell_dimension_;
+        double   inverse_of_y_cell_dimension_;
+        SizeType local_y_dimension_in_cluster_;
+        SizeType global_x_patch_offset_in_cell_;
+        SizeType global_y_patch_offset_in_cell_;
     };
 
 
@@ -200,6 +209,7 @@ namespace detail {
         ClusterType cluster_type_;
     };
 
+
     //! If the particle's cell/cluster key is -1 it means that it needs to be
     //! evicted.
     //!
@@ -220,7 +230,8 @@ namespace detail {
 
     inline void
     Cluster::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                        const Params&    parameters )
+                                        const Params&    parameters,
+                                        const Patch&     a_parent_patch )
     {
         // This is where we do a runtime dispatch depending on the simulation's
         // dimensions.
@@ -228,7 +239,8 @@ namespace detail {
         switch( particle_container.dimension() ) {
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::computeParticleClusterKey( particle_container,
-                                                                                                parameters );
+                                                                                                parameters,
+                                                                                                a_parent_patch );
                 break;
             }
             default:
@@ -278,6 +290,9 @@ namespace detail {
         //                      std::cbegin( key_bound_to_search ), std::cend( key_bound_to_search ),
         //                      bin_upper_bound );
 
+        // NOTE: A particle is in a bin if the index of the bin is the same integer value as the particle's cell key.
+        // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
+        //
         thrust::upper_bound( thrust::device,
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.gpu_size(),
@@ -294,7 +309,8 @@ namespace detail {
     inline void
     Cluster::importAndSortParticles( nvidiaParticles& particle_container,
                                      nvidiaParticles& particle_to_inject,
-                                     const Params&    parameters )
+                                     const Params&    parameters,
+                                     const Patch&     a_parent_patch )
     {
         // This is where we do a runtime dispatch depending on the simulation's
         // dimensions.
@@ -303,7 +319,8 @@ namespace detail {
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::importAndSortParticles( particle_container,
                                                                                              particle_to_inject,
-                                                                                             parameters );
+                                                                                             parameters,
+                                                                                             a_parent_patch );
                 break;
             }
             default:
@@ -450,12 +467,17 @@ namespace detail {
     ////////////////////////////////////////////////////////////////////////////////
 
     template <Cluster::DifferenceType kClusterWidth>
-    Cluster2D<kClusterWidth>::Cluster2D( double   cell_size_in_x,
-                                         double   cell_size_in_y,
-                                         SizeType y_dimension_cell_count )
-        : inverse_of_cell_size_in_x_{ 1.0 / cell_size_in_x }
-        , inverse_of_cell_size_in_y_{ 1.0 / cell_size_in_y }
-        , y_dimension_cluster_count_{ y_dimension_cell_count / kClusterWidth }
+    Cluster2D<kClusterWidth>::Cluster2D( double   x_cell_dimension,
+                                         double   y_cell_dimension,
+                                         SizeType local_x_dimension_in_cell,
+                                         SizeType local_y_dimension_in_cell,
+                                         SizeType global_x_patch_offset_in_patch,
+                                         SizeType global_y_patch_offset_in_patch )
+        : inverse_of_x_cell_dimension_{ 1.0 / x_cell_dimension }
+        , inverse_of_y_cell_dimension_{ 1.0 / y_cell_dimension }
+        , local_y_dimension_in_cluster_{ local_y_dimension_in_cell / kClusterWidth }
+        , global_x_patch_offset_in_cell_{ global_x_patch_offset_in_patch * local_x_dimension_in_cell }
+        , global_y_patch_offset_in_cell_{ global_y_patch_offset_in_patch * local_y_dimension_in_cell }
     {
         // EMPTY
     }
@@ -465,35 +487,30 @@ namespace detail {
     __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
     Cluster2D<kClusterWidth>::Index( const Tuple& a_particle ) const
     {
-        const SizeType x_cell_coordinate = static_cast<SizeType>( thrust::get<1>( a_particle ) * inverse_of_cell_size_in_x_ );
-        const SizeType y_cell_coordinate = static_cast<SizeType>( thrust::get<2>( a_particle ) * inverse_of_cell_size_in_y_ );
+        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                                                    inverse_of_x_cell_dimension_ ) -
+                                                             global_x_patch_offset_in_cell_;
+        const SizeType local_y_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<2>( a_particle ) *
+                                                                                    inverse_of_y_cell_dimension_ ) -
+                                                             global_y_patch_offset_in_cell_;
 
         // These divisions will be optimized.
         // The integer division rounding behavior is expected.
 
-        // NOTE: If you wanna sort in "flat" tiles instead of square tiles, the
-        // first one being better for the naive projector, you can set
-        // x_cluster_width to 1.
-        // When x_cluster_width is set to 1 and the naive projector is used,
-        // y_cluster_width's best size seems to be 1 (aka sort by cell) with a
-        // y_stride of ~16.
-        static constexpr SizeType x_cluster_width = kClusterWidth; // 1;
-        static constexpr SizeType y_cluster_width = kClusterWidth;
+        // NOTE: Flat tiles have been studied but were not as efficient for the
+        // projection. The square provides the minimal perimeter (and thus ghost
+        // cell amount) for a given area.
+        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
+        static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
 
-        const SizeType x_cluster_coordinate = x_cell_coordinate / x_cluster_width;
-        const SizeType y_cluster_coordinate = y_cell_coordinate / y_cluster_width;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
 
-        // NOTE: You may want to use a stride smaller than
-        // y_dimension_cluster_count_. Your work distribution amongst the GPU's
-        // CUs/SIMD units creates less conflicts between atomic load/write could
-        // reduce false sharing etc. while still having the benefits of linear
-        // access.
-        // 16 is a good, size.
-        const SizeType y_stride = y_dimension_cluster_count_; // 16;
+        const SizeType y_stride = local_y_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = x_cluster_coordinate * y_stride +
-                                       y_cluster_coordinate;
+        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * y_stride +
+                                       local_y_particle_cluster_coordinate_in_cluster;
 
         return static_cast<IDType>( cluster_index );
     }
@@ -501,7 +518,8 @@ namespace detail {
     template <Cluster::DifferenceType kClusterWidth>
     void
     Cluster2D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                                         const Params&    parameters )
+                                                         const Params&    parameters,
+                                                         const Patch&     a_parent_patch )
     {
         const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
@@ -511,7 +529,10 @@ namespace detail {
         doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>{ parameters.cell_length[0],
                                                                                           parameters.cell_length[1],
-                                                                                          parameters.n_space[1] } );
+                                                                                          parameters.n_space[0],
+                                                                                          parameters.n_space[1],
+                                                                                          a_parent_patch.Pcoordinates[0],
+                                                                                          a_parent_patch.Pcoordinates[1] } );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -560,7 +581,8 @@ namespace detail {
     void
     Cluster2D<kClusterWidth>::importAndSortParticles( nvidiaParticles& particle_container,
                                                       nvidiaParticles& particle_to_inject,
-                                                      const Params&    parameters )
+                                                      const Params&    parameters,
+                                                      const Patch&     a_parent_patch )
     {
         // This is where we do a runtime dispatch depending on the simulation's
         // qed/radiation settings.
@@ -573,7 +595,10 @@ namespace detail {
 
         const Cluster2D cluster_manipulator{ parameters.cell_length[0],
                                              parameters.cell_length[1],
-                                             parameters.n_space[1] };
+                                             parameters.n_space[0],
+                                             parameters.n_space[1],
+                                             a_parent_patch.Pcoordinates[0],
+                                             a_parent_patch.Pcoordinates[1] };
 
         if( particle_container.isQuantumParameter ) {
             if( particle_container.isMonteCarlo ) {
@@ -624,9 +649,11 @@ namespace detail {
 // nvidiaParticles method definitions
 ////////////////////////////////////////////////////////////////////////////////
 
-nvidiaParticles::nvidiaParticles( const Params& parameters )
+nvidiaParticles::nvidiaParticles( const Params& parameters,
+                                  const Patch&  a_parent_patch )
     : Particles{}
     , parameters_{ &parameters }
+    , parent_patch_{ &a_parent_patch }
     , gpu_nparts_{}
 {
     // EMPTY
@@ -785,7 +812,7 @@ void nvidiaParticles::initializeDataOnDevice()
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
 
-        detail::Cluster::computeParticleClusterKey( *this, *parameters_ );
+        detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
         detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
         detail::Cluster::computeBinIndex( *this );
         setHostBinIndex();
@@ -868,7 +895,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     cp_parts->resize( nparts_to_move );
 
     // Iterator of the main data structure
-    // Note: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
+    // NOTE: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
     const auto source_iterator_first      = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
                                                                                            std::begin( nvidia_momentum_[0] ),
                                                                                            std::begin( nvidia_momentum_[1] ),
@@ -984,7 +1011,7 @@ int nvidiaParticles::eraseLeavingParticles()
         resize( gpu_nparts_ );
     }
 
-    return /* Note: the minus matters! */ -nparts_to_remove;
+    return /* NOTE: the minus matters! */ -nparts_to_remove;
 }
 
 int nvidiaParticles::injectParticles( Particles* particles_to_inject )
@@ -1016,7 +1043,6 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
                                                                                            std::begin( nvidia_momentum_[2] ),
                                                                                            std::begin( nvidia_weight_ ),
                                                                                            std::begin( nvidia_charge_ ) ) ) +
-                                            // /!\ Note the advance by nparts
                                             nparts;
 
     // Copy recv particles in main data structure
@@ -1088,7 +1114,8 @@ void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
     if( parameters_->isGPUParticleBinningAvailable() ) {
         detail::Cluster::importAndSortParticles( *static_cast<nvidiaParticles*>( this ),
                                                  *static_cast<nvidiaParticles*>( particles_to_inject ),
-                                                 *parameters_ );
+                                                 *parameters_,
+                                                 *parent_patch_ );
     } else {
         // When GPU particle binning is not supported, fallback to a naive implementation
         naiveImportAndSortParticles( static_cast<nvidiaParticles*>( particles_to_inject ) );
@@ -1166,8 +1193,9 @@ void nvidiaParticles::naiveImportAndSortParticles( nvidiaParticles* particles_to
 
 extern "C"
 {
-    void* CreateGPUParticles( const void* parameters )
+    void* CreateGPUParticles( const void* parameters, const void* a_parent_patch )
     {
-        return new nvidiaParticles{ *static_cast<const Params*>( parameters ) };
+        return new nvidiaParticles{ *static_cast<const Params*>( parameters ),
+                                    *static_cast<const Patch*>( a_parent_patch ) };
     }
 }

@@ -332,7 +332,7 @@ int main( int argc, char *argv[] )
         TITLE( "Initial fields setup" );
 
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species
+        // NOTE: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if( params.solve_relativistic_poisson == true ) {
             MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
@@ -523,7 +523,7 @@ int main( int argc, char *argv[] )
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species
+            // NOTE: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if( params.solve_relativistic_poisson == true ) {
                 vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
