@@ -339,12 +339,6 @@ int main( int argc, char *argv[] )
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
 
-        // TODO(Etienne M): Dont we need to computeCharge() only if we
-        // initialize the E/B fields by solving the appropriate poisson
-        // equation? projectionForDiags will overwrite the result anyway.
-        // Shouldn't we call computeCharge() in runNonRelativisticPoissonModule,
-        // like it's done in runRelativisticModule with
-        // computeChargeRelativisticSpecies().
         vecPatches.computeCharge();
 
         // TODO(Etienne M): redundant work is done here. We exchange current
@@ -386,7 +380,7 @@ int main( int argc, char *argv[] )
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
         }
         
-        // Comm and synch charge and current densities
+        // Comm and synch charge and current densities for a given species (rho_s, Jx_s...)
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
         // Upload corrected data on Regions

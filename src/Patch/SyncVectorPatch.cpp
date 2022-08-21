@@ -1476,7 +1476,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
+    // TODO(Etienne M): Can we somehow get a CPU pointer when GPU mode is enabled ? If not, remove the
     // is_memory_on_device check.
     const bool is_memory_on_device = vecPatches.B_localx.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );

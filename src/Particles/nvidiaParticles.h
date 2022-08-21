@@ -17,8 +17,6 @@
 #include "Params.h"
 #include "Particles.h"
 
-// TODO(Etienne M): The makefile does not add this file to the list of 
-// dependencies.
 
 ////////////////////////////////////////////////////////////////////////////////
 // nvidiaParticles definition

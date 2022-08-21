@@ -1,3 +1,9 @@
+
+// TODO(Etienne M): The makefile does not recognise this file and doesn't compute
+// it's dependencies. If you make a modification in one of the header this file
+// includes, you must `touch` this file. IF you dont do that you'll have ABI/ODR
+// issues (!).
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
 
     //! Simple switch to jump between the reference (omp) implementation and the

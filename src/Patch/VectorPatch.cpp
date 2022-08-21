@@ -4252,8 +4252,6 @@ void VectorPatch::initNewEnvelope( Params &params )
 void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Async allocation ?
-
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.

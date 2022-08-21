@@ -427,7 +427,7 @@ public:
                                                         // The std::round in the interpolator's coeffs function used to
                                                         // get the position of the particle requires that we reserve an
                                                         // other row and column.
-                                                        // TODO(Etienne M): Is that really necessary ? We could take this
+                                                        // NOTE: Is that really necessary ? We could take this
                                                         // behavior in account during the sorting, but that would mean
                                                         // one more bin row and column. The clusters on the sides would
                                                         // be less full than the middle ones.

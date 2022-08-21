@@ -1029,6 +1029,8 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         double *const             Bz3D_m = Bz_m->data();
 
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
+        // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
+        // is_memory_on_device check.
         const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( Bx3D );
 
         if( is_memory_on_device ) {

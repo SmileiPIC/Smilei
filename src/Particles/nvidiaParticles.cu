@@ -14,6 +14,11 @@
 #include "gpu.h"
 #include "nvidiaParticles.h"
 
+// TODO(Etienne M): The makefile does not recognise this file and doesn't compute
+// it's dependencies. If you make a modification in one of the header this file
+// includes, you must `touch` this file. IF you dont do that you'll have ABI/ODR
+// issues (!).
+
 ////////////////////////////////////////////////////////////////////////////////
 // Cell key manipulation functor definition
 ////////////////////////////////////////////////////////////////////////////////
