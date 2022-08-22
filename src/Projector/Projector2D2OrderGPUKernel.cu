@@ -15,10 +15,10 @@
     #if defined( __HIP__ )
     // HIP compiler support enabled (for .cu files)
     #else
-        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION 1
+        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
     #endif
 
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
         #include <cmath>
 
         #include "Tools.h"
@@ -29,7 +29,7 @@
         #include "gpu.h"
     #endif
 
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 
 namespace naive {
 
@@ -316,37 +316,37 @@ namespace hip {
         template <typename Float>
         __global__ void
         // __launch_bounds__(128, 4)
-        depositeForAllCurrentDimensions( double *__restrict__ device_Jx,
-                                         double *__restrict__ device_Jy,
-                                         double *__restrict__ device_Jz,
-                                         int Jx_size,
-                                         int Jy_size,
-                                         int Jz_size,
-                                         const double *__restrict__ device_particle_position_x,
-                                         const double *__restrict__ device_particle_position_y,
-                                         const double *__restrict__ device_particle_momentum_z,
-                                         const short *__restrict__ device_particle_charge,
-                                         const double *__restrict__ device_particle_weight,
-                                         const int *__restrict__ device_bin_index,
-                                         const double *__restrict__ device_invgf_,
-                                         const int *__restrict__ device_iold_,
-                                         const double *__restrict__ device_deltaold_,
-                                         Float inv_cell_volume,
-                                         Float dx_inv,
-                                         Float dy_inv,
-                                         Float dx_ov_dt,
-                                         Float dy_ov_dt,
-                                         int   i_domain_begin,
-                                         int   j_domain_begin,
-                                         int   nprimy,
-                                         int   pxr )
+        depositForAllCurrentDimensions( double *__restrict__ device_Jx,
+                                        double *__restrict__ device_Jy,
+                                        double *__restrict__ device_Jz,
+                                        int Jx_size,
+                                        int Jy_size,
+                                        int Jz_size,
+                                        const double *__restrict__ device_particle_position_x,
+                                        const double *__restrict__ device_particle_position_y,
+                                        const double *__restrict__ device_particle_momentum_z,
+                                        const short *__restrict__ device_particle_charge,
+                                        const double *__restrict__ device_particle_weight,
+                                        const int *__restrict__ device_bin_index,
+                                        const double *__restrict__ device_invgf_,
+                                        const int *__restrict__ device_iold_,
+                                        const double *__restrict__ device_deltaold_,
+                                        Float inv_cell_volume,
+                                        Float dx_inv,
+                                        Float dy_inv,
+                                        Float dx_ov_dt,
+                                        Float dy_ov_dt,
+                                        int   i_domain_begin,
+                                        int   j_domain_begin,
+                                        int   nprimy,
+                                        int   pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
             // TODO(Etienne M): prefer unsigned int vs int. At least the reader
             // knows the value wont be negative.
             // TODO(Etienne M): __ldg could be used to slightly improve GDS load
-            // speed. This would only have an effect on Nvidia cards as this 
+            // speed. This would only have an effect on Nvidia cards as this
             // operation is a no op on AMD.
             const unsigned int workgroup_size = blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
@@ -358,8 +358,8 @@ namespace hip {
             const unsigned int thread_index_offset           = threadIdx.x;
 
             // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */);
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */);
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -382,9 +382,9 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                Jx_scratch_space[field_index] = 0.0;
-                Jy_scratch_space[field_index] = 0.0;
-                Jz_scratch_space[field_index] = 0.0;
+                Jx_scratch_space[field_index] = static_cast<Float>( 0.0 );
+                Jy_scratch_space[field_index] = static_cast<Float>( 0.0 );
+                Jz_scratch_space[field_index] = static_cast<Float>( 0.0 );
             }
 
             __syncthreads();
@@ -575,7 +575,7 @@ namespace hip {
                     atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
                         atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
-                                                                          Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
+                                                                                         Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) );
                     }
                 }
 
@@ -584,7 +584,7 @@ namespace hip {
                     atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], crz_p * ( Sy1[0] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], crz_p * ( Sy0[j] * ( static_cast<Float>( 0.5 ) * Sx1[i] + Sx0[i] ) +
-                                                                          Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
+                                                                                         Sy1[j] * ( static_cast<Float>( 0.5 ) * Sx0[i] + Sx1[i] ) ) );
                     }
                 }
             }
@@ -661,7 +661,7 @@ namespace hip {
 
         using Float = double; // float/double
 
-        auto KernelFunction = kernel::depositeForAllCurrentDimensions<Float>;
+        auto KernelFunction = kernel::depositForAllCurrentDimensions<Float>;
 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimensionInBlock,
@@ -726,7 +726,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                          int    nprimy,
                          int    pxr )
 {
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLENTATION )
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     naive:: // the naive, OMP version serves as a reference along with the CPU version
     #else
     hip::
