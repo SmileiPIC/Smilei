@@ -288,6 +288,26 @@ namespace hip {
                 AddNoReturn( double *a_pointer, double a_value )
                 {
                     ::atomicAdd( a_pointer, a_value );
+
+                    // NOTE: 
+                    // On MI100, LDS (or GDS) double atomicAdd is compiled 
+                    // into a CAS loop such as the one below (which gives the
+                    // same performance).
+                    // On MI200, there is hardware support for this type of
+                    // atomic operation.
+                    //
+                    // Example of TAS CAS loop:
+                    // https://github.com/ROCm-Developer-Tools/HIP/pull/1816/files?diff=split&w=0
+                    //
+                    // unsigned long long *uaddr{ reinterpret_cast<unsigned long long *>( a_pointer ) };
+                    // unsigned long long  r{ __atomic_load_n( uaddr, __ATOMIC_RELAXED ) };
+                    // unsigned long long  assumed;
+                    // do {
+                    //     assumed = r;
+                    //     r       = ::atomicCAS( uaddr,
+                    //                            r,
+                    //                            __double_as_longlong( a_value + __longlong_as_double( r ) ) );
+                    // } while( assumed != r );
                 }
             } // namespace LDS
 
