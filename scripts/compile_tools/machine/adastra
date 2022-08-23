@@ -43,7 +43,6 @@
 # Compilers
 ################################################################################
 
-# SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
 SMILEICXX := $(CC)
 SMILEICXX.DEPS := $(SMILEICXX)
 # THRUSTCXX := hipcc
@@ -93,24 +92,24 @@ ADASTRA_OMP_FLAGS := -fopenmp
 ################################################################################
 
 ifneq (,$(call parse_config,gpu_amd))
-	# Add mi100/250x amd gpu arch
-	ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
-	ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
+    # Add mi100/250x amd gpu arch
+    ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
+    ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
     # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
 
     # TODO(Etienne M): This should be disabled right ? Unfortunatly its a mess to undefine from this machine file
-	# ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
+    # ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
 
     # When using OMP
-	ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP=1
+    ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP=1
     ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # When using hip/cuda to build kernels
     # When you ask CCE to drive the hip compilation
-	# NOTE: the -x hip flag MUSt come before the .cu files !
+    # NOTE: the -x hip flag MUST come before the .cu files !
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
-	# When you use hipcc directly
-	# ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    # When you use hipcc directly
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 endif
 
 ################################################################################

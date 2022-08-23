@@ -17,10 +17,10 @@ class MachineAdastra(Machine):
 # #SBATCH --gres=gpu:8
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank, Dont use that, it create problems with MPICH_GPU_SUPPORT_ENABLED=1 on intra node GPU to GPU coms
 # #SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
-#SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to conter the effect
+#SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to counter the effect
 #SBATCH --threads-per-core=1
 #SBATCH --hint=nomultithread
-#SBATCH --hint=memory_bound                    # Maximise memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
+#SBATCH --hint=memory_bound                    # Maximize memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
 #SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
 #SBATCH --output=output
 #SBATCH --error=output                         # stderr and stdout in the same file
@@ -95,7 +95,7 @@ LaunchSRun() {{
     # using --gpu-bind=closest.
     # 2): Use ROCR_VISIBLE_DEVICES to do the mapping, associating a GPU to a 
     # given, user specified task/rank. This may make things harder when we wanna
-    # map a task to a given GPU based on hardware/NUMA caracteristics.
+    # map a task to a given GPU based on hardware/NUMA characteristics.
     # 
     # The following script could be useful to bind an mpiproc to a given gpu on 
     # a given node https://slurm.schedmd.com/sbatch.html
@@ -166,7 +166,7 @@ LaunchRocmProfile() {{
     #  ALUStalledByLDS : The percentage of GPUTime ALU units are stalled by the LDS input queue being full or the output queue being not ready. If there are LDS bank conflicts, reduce them. Otherwise, try reducing the number of LDS accesses if possible. Value range: 0% (optimal) to 100% (bad).
     #  LDSBankConflict : The percentage of GPUTime LDS is stalled by bank conflicts. Value range: 0% (optimal) to 100% (bad).
 
-    # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completly broken)
+    # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completely broken)
     # High overhead (~15%)
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy GPUBusy MemUnitBusy MemUnitStalled Wavefronts FetchSize WriteSize' > hw_counters.txt
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy L2CacheHit MemUnitBusy MemUnitStalled WriteUnitStalled ALUStalledByLDS LDSBankConflict' > hw_counters.txt
