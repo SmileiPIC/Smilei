@@ -110,6 +110,7 @@ ifneq (,$(call parse_config,gpu_amd))
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
     # When you use hipcc directly
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
 endif
 
 ################################################################################
@@ -169,4 +170,4 @@ LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
 # Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
 # -v to dump omp kernel info (register alloc/spill etc.)
 LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v
-# LDFLAGS += --save-temps
+# LDFLAGS += --save-temps # OpenMP device kernel info. To use with the Cray compiler

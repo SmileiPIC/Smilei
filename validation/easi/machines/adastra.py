@@ -169,10 +169,18 @@ LaunchRocmProfile() {{
     # Basic kernel dump + consolidated kernel stats + hw counters (kernel duration/stats may be completely broken)
     # High overhead (~15%)
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy GPUBusy MemUnitBusy MemUnitStalled Wavefronts FetchSize WriteSize' > hw_counters.txt
+    #
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy L2CacheHit MemUnitBusy MemUnitStalled WriteUnitStalled ALUStalledByLDS LDSBankConflict' > hw_counters.txt
+    #
+    # How to do an AMD roofline:
+    # https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#roofline-profiling
+    # echo 'pmc : SQ_INSTS_VALU_ADD_F16 SQ_INSTS_VALU_MUL_F16 SQ_INSTS_VALU_FMA_F16 SQ_INSTS_VALU_TRANS_F16' > hw_counters.txt
+    # echo 'pmc : SQ_INSTS_VALU_ADD_F32 SQ_INSTS_VALU_MUL_F32 SQ_INSTS_VALU_FMA_F32 SQ_INSTS_VALU_TRANS_F32' > hw_counters.txt
+    # echo 'pmc : SQ_INSTS_VALU_ADD_F64 SQ_INSTS_VALU_MUL_F64 SQ_INSTS_VALU_FMA_F64 SQ_INSTS_VALU_TRANS_F64' > hw_counters.txt
+    # echo 'pmc : SQ_INSTS_VALU_MFMA_MOPS_F16 SQ_INSTS_VALU_MFMA_MOPS_BF16 SQ_INSTS_VALU_MFMA_MOPS_F32 SQ_INSTS_VALU_MFMA_MOPS_F64' > hw_counters.txt
+    # echo 'pmc : TCC_EA_RDREQ_32B_sum TCC_EA_RDREQ_sum TCC_EA_WRREQ_sum TCC_EA_WRREQ_64B_sum' > hw_counters.txt
+    #
     # LaunchSRun bash -c "rocprof -i hw_counters.txt --stats -o hw_counters_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
-
-    # To create a roofline model check https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#roofline-profiling
 
     # HIP RT tracing + consolidated kernel stats
     # LaunchSRun bash -c "rocprof --hip-trace --stats -o hip_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
