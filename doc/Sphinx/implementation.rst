@@ -274,7 +274,7 @@ Any if-statement should have curly brackets.
 
 For instance::
 
-    if (condition) {
+    if( condition ) {
         a = b + c*d;
     }
 
@@ -681,7 +681,7 @@ In the initialization part of the functor, we use pointers to simplify the acces
 The core of the pusher is then composed of a single vectorized loop (``omp simd``) over a group of macro-particles.
 
 .. literalinclude:: ../../src/Pusher/PusherBoris.cpp
-    :lines: 71-122
+    :lines: 52-98
     :linenos:
 
 Boris pusher for GPU
