@@ -28,7 +28,7 @@
 # module load perftools-base/22.06.0
 # module list
 #
-# Optionaly, you may want to use a virtual python environment in which to 
+# Optionally, you may want to use a virtual python environment in which to 
 # install the packages required by the Smilei validation script:
 #
 # python -m venv ~/.smilei_python_venv
@@ -93,11 +93,17 @@ ADASTRA_OMP_FLAGS := -fopenmp
 
 ifneq (,$(call parse_config,gpu_amd))
     # Add mi100/250x amd gpu arch
+	# xnack is a feature required to use the AMD unified memory (through 
+	# HMM/HSA). xnack- disable it, xnack+ enabled it, and if not specified,
+	# the compiler produces xnack agnostic code.
+	# Details at: https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#migration-of-memory-by-allocator-and-xnack-mode
     ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
     ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
+	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
     # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
+	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
 
-    # TODO(Etienne M): This should be disabled right ? Unfortunatly its a mess to undefine from this machine file
+    # TODO(Etienne M): This should be disabled right ? Unfortunately its a mess to undefine from this machine file
     # ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
 
     # When using OMP
@@ -141,7 +147,7 @@ ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 ################################################################################
 
 # Inherit of all the typical *.cpp compilation options
-# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesnt work as expected
+# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesn't work as expected
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)

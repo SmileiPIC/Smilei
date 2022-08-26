@@ -67,24 +67,6 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-            // // Arrays used for the Esirkepov projection method
-            // static constexpr bool kAutoDeviceFree = true;
-            // const std::size_t     kTmpArraySize   = particle_count * 5;
-
-            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx0_buffer{ kTmpArraySize };
-            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sx1_buffer{ kTmpArraySize };
-            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy0_buffer{ kTmpArraySize };
-            // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> Sy1_buffer{ kTmpArraySize };
-            // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSx_buffer{ kTmpArraySize };
-            // // smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> DSy_buffer{ kTmpArraySize };
-
-            // double *const __restrict__ Sx0_buffer_data = Sx0_buffer.data();
-            // double *const __restrict__ Sx1_buffer_data = Sx1_buffer.data();
-            // double *const __restrict__ Sy0_buffer_data = Sy0_buffer.data();
-            // double *const __restrict__ Sy1_buffer_data = Sy1_buffer.data();
-            // // double *const __restrict__ DSx_buffer_data = DSx_buffer.data();
-            // // double *const __restrict__ DSy_buffer_data = DSy_buffer.data();
-
         #pragma omp target     is_device_ptr /* map */ ( /* to: */                                            \
                                                      device_particle_position_x /* [0:particle_count] */, \
                                                      device_particle_position_y /* [0:particle_count] */, \
@@ -102,15 +84,6 @@ namespace naive {
             double Sx1[5];
             double Sy0[5];
             double Sy1[5];
-            // double DSx[5];
-            // double DSy[5];
-
-            // double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - 0 );
-            // double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - 0 );
-            // double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - 0 );
-            // double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - 0 );
-            // // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - 0 );
-            // // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - 0 );
 
             // Variable declaration & initialization
             // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
@@ -172,33 +145,6 @@ namespace naive {
                 Sy1[jp_m_jpo + 2] = 0.75 - delta2;
                 Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
             }
-
-            // DSx[0] = Sx1[0] - Sx0[0];
-            // DSx[1] = Sx1[1] - Sx0[1];
-            // DSx[2] = Sx1[2] - Sx0[2];
-            // DSx[3] = Sx1[3] - Sx0[3];
-            // DSx[4] = Sx1[4] - Sx0[4];
-
-            // DSy[0] = Sy1[0] - Sy0[0];
-            // DSy[1] = Sy1[1] - Sy0[1];
-            // DSy[2] = Sy1[2] - Sy0[2];
-            // DSy[3] = Sy1[3] - Sy0[3];
-            // DSy[4] = Sy1[4] - Sy0[4];
-            // }
-
-            // // Charge deposition on the grid
-
-            // for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
-            //     const double invgf                        = invgf_[particle_index];
-            //     const int *const __restrict__ iold        = &iold_[particle_index];
-            //     const double *const __restrict__ deltaold = &deltaold_[particle_index];
-
-            //     double *const __restrict__ Sx0 = Sx0_buffer_data + 5 * ( particle_index - 0 );
-            //     double *const __restrict__ Sx1 = Sx1_buffer_data + 5 * ( particle_index - 0 );
-            //     double *const __restrict__ Sy0 = Sy0_buffer_data + 5 * ( particle_index - 0 );
-            //     double *const __restrict__ Sy1 = Sy1_buffer_data + 5 * ( particle_index - 0 );
-            //     // double *const __restrict__ DSx = DSx_buffer_data + 5 * ( particle_index - 0 );
-            //     // double *const __restrict__ DSy = DSy_buffer_data + 5 * ( particle_index - 0 );
 
             // (x,y,z) components of the current density for the macro-particle
             const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
@@ -497,18 +443,6 @@ namespace hip {
                     Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
 
-                // DSx[0] = Sx1[0] - Sx0[0];
-                // DSx[1] = Sx1[1] - Sx0[1];
-                // DSx[2] = Sx1[2] - Sx0[2];
-                // DSx[3] = Sx1[3] - Sx0[3];
-                // DSx[4] = Sx1[4] - Sx0[4];
-
-                // DSy[0] = Sy1[0] - Sy0[0];
-                // DSy[1] = Sy1[1] - Sy0[1];
-                // DSy[2] = Sy1[2] - Sy0[2];
-                // DSy[3] = Sy1[3] - Sy0[3];
-                // DSy[4] = Sy1[4] - Sy0[4];
-
                 // (x,y,z) components of the current density for the macro-particle
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
                 const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
@@ -632,10 +566,6 @@ namespace hip {
                              int    nprimy,
                              int    pxr )
     {
-        int device_count;
-        checkHIPErrors( ::hipGetDeviceCount( &device_count ) );
-        SMILEI_ASSERT( device_count == 1 );
-
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
 
@@ -643,11 +573,11 @@ namespace hip {
         // This cluster is very strongly bound by atomic operations in LDS (shared memory)
         // TODO(Etienne M): Find a way to lessen the atomic usage
 
-        const ::dim3 kGridDimensionInBlock{ static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
+        const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         // On an MI100:
         // 448 for F32 and 4x4 cluster width | past 128, the block size does not matter, we are atomic bound anyway
         // 128 for F64 and 4x4 cluster width | atomic bound
-        const ::dim3 kBlockDimensionInWorkItem{ 128, 1, 1 };
+        const ::dim3 kBlockDimension /* In threads */ { 128, 1, 1 };
 
         // On MI100, using float for reduction reduces the amount of bank 
         // conflict and allows the compiler to generate better instruction.
@@ -660,8 +590,8 @@ namespace hip {
         auto KernelFunction = kernel::depositForAllCurrentDimensions<ComputeFloat, ReductionFloat>;
 
         hipLaunchKernelGGL( KernelFunction,
-                            kGridDimensionInBlock,
-                            kBlockDimensionInWorkItem,
+                            kGridDimension,
+                            kBlockDimension,
                             0, // Shared memory
                             0, // Stream
                             // Kernel arguments
