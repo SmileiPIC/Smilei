@@ -31,14 +31,12 @@ CollisionalIonization::CollisionalIonization( int Z, Params *params, int ionizat
     }
     if( Z>0 ) {
         dataBaseIndex = createDatabase( params->reference_angular_frequency_SI );
-        assignDatabase( dataBaseIndex );
     }
 }
 
 // Cloning Constructor
 CollisionalIonization::CollisionalIonization( CollisionalIonization *CI )
 {
-
     atomic_number = CI->atomic_number;
     rate .resize( atomic_number );
     irate.resize( atomic_number );
@@ -47,8 +45,6 @@ CollisionalIonization::CollisionalIonization( CollisionalIonization *CI )
     new_electrons.initialize( 0, CI->new_electrons );
     
     dataBaseIndex = CI->dataBaseIndex;
-    assignDatabase( dataBaseIndex );
-    
 }
 
 // Static members
@@ -137,17 +133,6 @@ unsigned int CollisionalIonization::createDatabase( double reference_angular_fre
     return DB_Z.size()-1;
 }
 
-
-// Assign the correct databases
-void CollisionalIonization::assignDatabase( unsigned int index )
-{
-
-    crossSection      = &( DB_crossSection     [index] );
-    transferredEnergy = &( DB_transferredEnergy[index] );
-    lostEnergy        = &( DB_lostEnergy       [index] );
-    
-}
-
 // Method to apply the ionization
 void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
 {
@@ -180,35 +165,40 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
     }
     
     // Calculate weights
-    double We = pe->weight( ie );
-    double Wi = pi->weight( ii );
+    const double We = pe->weight( ie );
+    const double Wi = pi->weight( ii );
     
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
     double K = coeff * sqrt( gamma_s*gamma_s-1. )/gammai;
     
+    // Fetch cross sections
+    const vector<vector<double> > & crossSection = DB_crossSection[dataBaseIndex];
+    const vector<vector<double> > & transferredEnergy = DB_transferredEnergy[dataBaseIndex];
+    const vector<vector<double> > & lostEnergy = DB_lostEnergy[dataBaseIndex];
+    
     // Loop for multiple ionization
     // k+1 is the number of ionizations
-    int kmax = atomic_number-Zstar-1;
-    double cs, w, e, cum_prob;
+    const int kmax = atomic_number-Zstar-1;
+    double cs, w, e, cum_prob = 0;
     for( int k = 0; k <= kmax;  k++ ) {
         // Calculate the location x (~log of energy) in the databases
-        double x = a2*log( a1*( gamma_s-1. ) );
+        const double x = a2*log( a1*( gamma_s-1. ) );
         
         // Interpolate the databases at location x
         if( x < 0. ) {
             break;    // if energy below Emin, do nothing
         }
         if( x < npointsm1 ) { // if energy within table range, interpolate
-            int i = int( x );
-            double a = x - ( double )i;
-            cs = ( ( *crossSection )[Zstar][i+1]-( *crossSection )[Zstar][i] )*a + ( *crossSection )[Zstar][i];
-            w  = ( ( *transferredEnergy )[Zstar][i+1]-( *transferredEnergy )[Zstar][i] )*a + ( *transferredEnergy )[Zstar][i];
-            e  = ( ( *lostEnergy )[Zstar][i+1]-( *lostEnergy )[Zstar][i] )*a + ( *lostEnergy )[Zstar][i];
+            const int i = int( x );
+            const double a = x - ( double )i;
+            cs = ( crossSection[Zstar][i+1]-crossSection[Zstar][i] )*a + crossSection[Zstar][i];
+            w  = ( transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i] )*a + transferredEnergy[Zstar][i];
+            e  = ( lostEnergy[Zstar][i+1]-lostEnergy[Zstar][i] )*a + lostEnergy[Zstar][i];
         } else { // if energy above table range, extrapolate
-            double a = x - npointsm1;
-            cs = ( ( *crossSection )[Zstar][npoints-1]-( *crossSection )[Zstar][npoints-2] )*a + ( *crossSection )[Zstar][npoints-1];
-            w  = ( *transferredEnergy )[Zstar][npoints-1];
-            e  = ( *lostEnergy )[Zstar][npoints-1];
+            const double a = x - npointsm1;
+            cs = ( crossSection[Zstar][npoints-1]-crossSection[Zstar][npoints-2] )*a + crossSection[Zstar][npoints-1];
+            w  = transferredEnergy[Zstar][npoints-1];
+            e  = lostEnergy[Zstar][npoints-1];
         }
         if( e > gamma_s-1. ) {
             break;
@@ -251,7 +241,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         }
         
         // Otherwise, we do the ionization
-        double p2 = gamma_s*gamma_s - 1.;
+        const double p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
         if( U2 < We/Wi ) {
             pi->charge( ii )++; // increase ion charge
