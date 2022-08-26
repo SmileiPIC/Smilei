@@ -164,7 +164,6 @@ Main(
     number_of_cells= [NumberOfCell_inX,NumberOfCell_inY],
     number_of_patches = [number_of_patchX,number_of_patchY],
     timestep = dt,
-    print_every=10,
     simulation_time = NumberOfTimeStep*dt,
     EM_boundary_conditions = [["periodic"],["periodic"]],
     random_seed = 0,
