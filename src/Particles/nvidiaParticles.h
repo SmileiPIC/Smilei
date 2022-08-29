@@ -32,12 +32,12 @@ public:
     nvidiaParticles( const Params& parameters, const Patch& a_parent_patch );
 
     //! Destructor for nvidiaParticles
-    virtual ~nvidiaParticles() {};
+    virtual ~nvidiaParticles(){};
 
     //! Allocate the right amount of position and momentum dimensions
     void resizeDimensions( unsigned int nDim );
 
-    //! Reserve space for particle_count particles. Must be called after 
+    //! Reserve space for particle_count particles. Must be called after
     //! allocateDimensions()
     void reserve( unsigned int particle_count );
 
@@ -47,13 +47,20 @@ public:
     //!
     void resize( unsigned int particle_count );
 
+    //! Assures that the memory holden by the nvidia_[position|momentum|weight|
+    //! charge|chi|tau|cell_keys]_ is freed. This is not something you can
+    //! achieve via a naive resize.
+    //! The pointers in nvidia_[double|short]_prop_ are not invalidated.
+    //!
+    void free();
+
     //! Reset Particles vectors
     void deviceClear();
 
-    //! Initialize the particle properties on devide as a mirror of the host definition
-    // 
+    //! Initialize the particle properties on the device as a mirror of the host
+    //!  definition
     void initializeDataOnDevice() override;
-    
+
     //! Send the particles from host to device
     void syncGPU() override;
     
@@ -127,7 +134,7 @@ protected:
     //! cluster into GPU shared/LDS memory.
     //! To represent which particle is in which bin, we re-use last_index. This
     //! array contains "n_cell_per_patch/getGPUClusterCellVolume()" values, each
-    //! representing the end of the bin. ie: last_index[0] is the last particle 
+    //! representing the end of the bin. ie: last_index[0] is the last particle
     //! index (excluded), of bin 0 and the first particle (included) of bin 1.
     //! The last value of last_index is the number of particle of a given
     //! species in this patch.
@@ -159,7 +166,7 @@ protected:
     //!
     //! If the function succeed, last_index is allocated on GPU.
     //!
-    //! returns -1 on error (binning is not supported for this Particles 
+    //! returns -1 on error (binning is not supported for this Particles
     //! object).
     //!
     int prepareBinIndex();

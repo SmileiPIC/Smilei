@@ -432,7 +432,8 @@ namespace detail {
                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,
                              first_particle_to_inject_no_key );
 
-        // Same as for particle_to_inject, uninitializing vector is best
+        // Same as for particle_to_inject, non-initializing vector is best
+        // particle_container.free();
         particle_container.resize( new_particle_count );
 
         // Merge by key
@@ -451,8 +452,9 @@ namespace detail {
         // Recompute bins
         computeBinIndex( particle_container );
 
-        // // Clear particle_to_inject (done in Species::sortParticles)
-        // particle_to_inject.resize( 0 );
+        // Try to completely free the memory allocated for particle_to_inject. A 
+        // simple resize does not do what you expect.
+        particle_to_inject.free();
     }
 
 
@@ -711,6 +713,46 @@ void nvidiaParticles::resize( unsigned int particle_count )
     nvidia_cell_keys_.resize( particle_count );
 
     gpu_nparts_ = particle_count;
+}
+
+void nvidiaParticles::free()
+{
+    for( auto& a_vector : nvidia_position_ ) {
+        thrust::device_vector<double> a_dummy_vector{};
+        std::swap( a_vector, a_dummy_vector );
+    }
+
+    for( auto& a_vector : nvidia_momentum_ ) {
+        thrust::device_vector<double> a_dummy_vector{};
+        std::swap( a_vector, a_dummy_vector );
+    }
+
+    {
+        thrust::device_vector<double> a_dummy_vector{};
+        std::swap( nvidia_weight_, a_dummy_vector );
+    }
+
+    {
+        thrust::device_vector<short> a_dummy_vector{};
+        std::swap( nvidia_charge_, a_dummy_vector );
+    }
+
+    if( isQuantumParameter ) {
+        thrust::device_vector<double> a_dummy_vector{};
+        std::swap( nvidia_chi_, a_dummy_vector );
+    }
+
+    if( isMonteCarlo ) {
+        thrust::device_vector<double> a_dummy_vector{};
+        std::swap( nvidia_tau_, a_dummy_vector );
+    }
+
+    {
+        thrust::device_vector<int> a_dummy_vector{};
+        std::swap( nvidia_cell_keys_, a_dummy_vector );
+    }
+
+    gpu_nparts_ = 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
