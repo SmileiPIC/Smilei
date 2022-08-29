@@ -84,8 +84,7 @@ class Diagnostic(object):
 			self.units.convertAxes(xunits, yunits, self._vunits)
 		
 		# Prepare data_log output
-		if self._data_log:
-			self._dataAtTime = self._dataLogAtTime
+		self._dataAtTime = self._dataLogAtTime if self._data_log else self._dataLinAtTime
 		
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
@@ -852,14 +851,14 @@ class Diagnostic(object):
 	def _mkdir(self, dir):
 		if not self._os.path.exists(dir): self._os.makedirs(dir)
 	
-	def _dataAtTime(self, t):
+	def _dataLinAtTime(self, t):
 		A = self._getDataAtTime(t)
 		# transform if requested
 		if callable(self._data_transform):
 			A = self._data_transform(A)
 		return self._vfactor*A
 	def _dataLogAtTime(self, t):
-		return self._np.log10( self._dataAtTime(t) )
+		return self._np.log10( self._dataLinAtTime(t) )
 	
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
