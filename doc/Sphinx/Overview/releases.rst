@@ -23,6 +23,7 @@ Changes made in the repository (not released)
 * Much faster ``DiagFields`` (speedup ~ x3)
 * Collisions: new parameter ``time_frozen``
 * Performances diagnostic: new parameter ``cumulative``
+* Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Bugfixes: 
 
