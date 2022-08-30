@@ -7,5 +7,5 @@ dt = S.namelist.dt
 
 # COMPARE THE Ex FIELD after 1 um 
 Ex = S.Probe(0, "Ex", timesteps=int(1000*um/dt)).getData()[0]
-Validate("Ex field after 1 um", Ex, 0.01)
+Validate("Ex field after 1 mm", Ex, 0.01)
 
