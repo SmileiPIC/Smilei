@@ -92,14 +92,14 @@ void MergingVranicSpherical::operator() (
         unsigned int phi_dim = dimensions_[2];
 //        std::vector <unsigned int> theta_dim(phi_dim,0);
         // unsigned int  * theta_dim = (unsigned int*) aligned_alloc(64, phi_dim*sizeof(unsigned int));
-        unsigned int theta_dim[phi_dim];
+        unsigned int  * theta_dim = new unsigned int [phi_dim];
 
         // Minima
         double mr_min;
         double theta_min_ref;
 //        std::vector <double> theta_min(phi_dim,0);
         // double  * theta_min = (double*) aligned_alloc(64, phi_dim*sizeof(double));
-        double  theta_min[phi_dim];
+        double  * theta_min = new double [phi_dim];
         double phi_min;
 
         // Maxima
@@ -107,21 +107,21 @@ void MergingVranicSpherical::operator() (
         double theta_max_ref;
 //        std::vector <double> theta_max(phi_dim,0);
         // double  * theta_max = (double*) aligned_alloc(64, phi_dim*sizeof(double));
-        double theta_max[phi_dim];
+        double  * theta_max = new double[phi_dim];
         double phi_max;
 
         // Delta
         double mr_delta;
         double theta_delta_ref;
 //        std::vector <double> theta_delta(phi_dim,0);
-        double theta_delta[phi_dim];
+        double  * theta_delta = new double[phi_dim];
         double phi_delta;
 
         // Inverse Delta
         double inv_mr_delta;
 //        std::vector <double> inv_theta_delta(phi_dim,0);
         //double  * inv_theta_delta = (double*) aligned_alloc(64, phi_dim*sizeof(double));
-        double  inv_theta_delta[phi_dim];
+        double  * inv_theta_delta = new double [phi_dim];
         double inv_phi_delta;
 
         // Interval
@@ -183,25 +183,25 @@ void MergingVranicSpherical::operator() (
         // Norm of the momentum
 //        std::vector <double> momentum_norm(number_of_particles,0);
         // double  * momentum_norm = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
-        double momentum_norm[number_of_particles];
+        double  * momentum_norm = new double [number_of_particles];
 
         // Local vector to store the momentum index in the momentum discretization
 //        std::vector <unsigned int> momentum_cell_index(number_of_particles,0);
         // unsigned int  * momentum_cell_index = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
-        unsigned int  momentum_cell_index[number_of_particles];
+        unsigned int  * momentum_cell_index = new unsigned int [number_of_particles];
 
         // Sorted array of particle index
 //        std::vector <unsigned int> sorted_particles(number_of_particles,0);
         // unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
-        unsigned int  sorted_particles[number_of_particles];
+        unsigned int  * sorted_particles = new unsigned int [number_of_particles];
 
         // Local vector to store the momentum angles in the spherical base
 //        std::vector <double> particles_phi(number_of_particles,0);
 //        std::vector <double> particles_theta(number_of_particles,0);
         // double  * particles_phi = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
-        double particles_phi[number_of_particles];
+        double  * particles_phi = new double [number_of_particles];
         // double  * particles_theta = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
-        double particles_theta[number_of_particles];
+        double  * particles_theta = new double [number_of_particles];
 
         // Computation of the particle momentum properties
         #pragma omp simd private(ipr)
@@ -449,13 +449,13 @@ void MergingVranicSpherical::operator() (
         // Array containing the number of particles per momentum cells
 //        std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
         //unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-        unsigned int particles_per_momentum_cells[momentum_cells];
+        unsigned int  * particles_per_momentum_cells = new unsigned int [momentum_cells];
 
         // Array containing the first particle index of each momentum cell
         // in the sorted particle array
 //        std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
         //unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-        unsigned int momentum_cell_particle_index[momentum_cells];
+        unsigned int  * momentum_cell_particle_index = new unsigned int [momentum_cells];
 //
 //         // Initialization when using aligned_alloc
         #pragma omp simd
@@ -468,7 +468,7 @@ void MergingVranicSpherical::operator() (
         // (necessary since the theta_dim depends on phi)
 //        std::vector <unsigned int>  theta_start_index (phi_dim);
         // unsigned int *  theta_start_index = (unsigned int *) aligned_alloc(64, phi_dim*sizeof(unsigned int));
-        unsigned int theta_start_index[phi_dim];
+        unsigned int *  theta_start_index = new unsigned int [phi_dim];
 
         // Computation of the first cell index for each phi
         theta_start_index[0] = 0;
@@ -486,9 +486,9 @@ void MergingVranicSpherical::operator() (
         // double  * cell_vec_x = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
         // double  * cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
         // double  * cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-        double  cell_vec_x[momentum_angular_cells];
-        double  cell_vec_y[momentum_angular_cells];
-        double  cell_vec_z[momentum_angular_cells];
+        double  * cell_vec_x = new double [momentum_angular_cells];
+        double  * cell_vec_y = new double [momentum_angular_cells];
+        double  * cell_vec_z = new double [momentum_angular_cells];
         
         for (phi_i = 0 ; phi_i < phi_dim ; phi_i ++) {
 
@@ -1028,6 +1028,24 @@ void MergingVranicSpherical::operator() (
         //free(theta_max);
         //free(theta_delta);
         //free(inv_theta_delta);
+        
+        delete [] momentum_norm;
+        delete [] momentum_cell_index;
+        delete [] cell_vec_x;
+        delete [] cell_vec_y;
+        delete [] cell_vec_z;
+        delete [] particles_phi;
+        delete [] particles_theta;
+        delete [] sorted_particles;
+        delete [] particles_per_momentum_cells;
+        delete [] momentum_cell_particle_index;
+        delete [] theta_start_index;
+        delete [] theta_dim;
+        delete [] theta_min;
+        delete [] theta_max;
+        delete [] theta_delta;
+        delete [] inv_theta_delta;
+        
     }
 
 }

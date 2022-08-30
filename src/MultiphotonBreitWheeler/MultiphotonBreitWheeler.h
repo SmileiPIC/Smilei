@@ -16,7 +16,6 @@
 #include <string>
 
 #include "MultiphotonBreitWheelerTables.h"
-#include "MultiphotonBreitWheelerTools.h"
 #include "Params.h"
 #include "Random.h"
 

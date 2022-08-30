@@ -227,13 +227,15 @@ public:
         return sum;
     }
 
-    inline void __attribute__((always_inline)) copyFrom( Field *from_field )
+    virtual void copyFrom( Field *from_field )
     {
         DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
         for( unsigned int i=0; i< globalDims_; i++ ) {
             ( *this )( i )=( *from_field )( i );
         }
     }
+
+    virtual Field* clone() = 0;
 
     virtual void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch  *outPatch ) = 0;
     virtual void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch  *outPatch ) = 0;

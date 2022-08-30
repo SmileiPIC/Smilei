@@ -4,8 +4,6 @@ import os, sys
 Makes a hexdump from the command line, in Smilei's format.
 This code is intended as replacement for xxd command
 
-http://www.maisondelasimulation.fr/smilei/
-
 Usage:
     python hexdump.py source_file dest_file
 '''

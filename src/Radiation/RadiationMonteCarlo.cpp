@@ -149,9 +149,9 @@ void RadiationMonteCarlo::operator()(
     // Table properties ----------------------------------------------------------------
 
     // Tables for MC
-    const double *const table_integfochi = &(RadiationTables.integfochi_.table_[0]);
-    const double *const table_min_photon_chi = &(RadiationTables.xi_.min_photon_chi_table_[0]);
-    double * table_xi = &(RadiationTables.xi_.table_[0]);
+    // const double *const table_integfochi = &(RadiationTables.integfochi_.data_[0]);
+    // const double *const table_min_photon_chi = &(RadiationTables.xi_.axis1_min_[0]);
+    // double * table_xi = &(RadiationTables.xi_.table_[0]);
 
     // _______________________________________________________________
     // Computation
@@ -215,7 +215,9 @@ void RadiationMonteCarlo::operator()(
             if( tau[ipart] > epsilon_tau_ ) {
 
                 // from the cross section
-                temp = RadiationTables.computePhotonProductionYield( particle_chi, particle_gamma, table_integfochi);
+                temp = RadiationTables.computePhotonProductionYield( 
+                                              particle_chi, 
+                                              particle_gamma);
 
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
@@ -235,7 +237,7 @@ void RadiationMonteCarlo::operator()(
 
                     // Get the photon quantum parameter from the table xip
                     // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
-                    double photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, xi,  table_min_photon_chi, table_xi);
+                    double photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, xi);
 
                     // compute the photon gamma factor
                     double photon_gamma = photon_chi/particle_chi*( particle_gamma-1.0 );

@@ -599,6 +599,11 @@ void ParticleCreator::createChargeProfile( struct SubSpace sub_space,
         species_->max_charge_ = 0;
     }
 
+    // Delete map xyz.
+    for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
+        delete xyz[idim];
+    }
+
 } // end createChargeProfile
 
 

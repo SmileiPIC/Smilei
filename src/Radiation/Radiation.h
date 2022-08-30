@@ -74,11 +74,11 @@ public:
                                       double Bx, double By, double Bz )
     {
 
-        return fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
-               * sqrt( fabs( pow( Ex*px + Ey*py + Ez*pz, 2 )
-                             - pow( gamma*Ex - By*pz + Bz*py, 2 )
-                             - pow( gamma*Ey - Bz*px + Bx*pz, 2 )
-                             - pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
+        return std::fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
+               * std::sqrt( std::fabs( std::pow( Ex*px + Ey*py + Ez*pz, 2 )
+                             - std::pow( gamma*Ex - By*pz + Bz*py, 2 )
+                             - std::pow( gamma*Ey - Bz*px + Bx*pz, 2 )
+                             - std::pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
     };
 
     //! Computation of the quantum parameter for the given

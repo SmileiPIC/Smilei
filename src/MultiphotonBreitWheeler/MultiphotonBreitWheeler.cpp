@@ -279,7 +279,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             // If epsilon_tau_ > 0
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTools::computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart], &mBW_tables );
+                temp = mBW_tables.computeBreitWheelerPairProductionRate( photon_chi[ipart], photon_gamma [ipart] );
 
                 // Time to decay
                 // If this time is above the remaining iteration time,
@@ -316,8 +316,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // pair quantum parameters
                     double pair_chi[2];
 
+                    const double xip = rand_->uniform();
+
                     // Get the pair quantum parameters to compute the energy
-                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], rand_ );
+                    mBW_tables.computePairQuantumParameter( photon_chi[ipart], &pair_chi[0], xip );
 
                     // pair propagation direction // direction of the photon
                     double ux = momentum_x[ipart]/photon_gamma[ipart];

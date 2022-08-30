@@ -485,8 +485,7 @@ class Performances(Diagnostic):
 	
 	def _plotOnAxes_2D_(self, ax, A):
 		# Display the data
-		self._plot = ax.imshow( self._np.flipud(A),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
+		self._plot = ax.imshow( self._np.flipud(A), extent=self._extent, **self.options.image)
 		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
 		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
 		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)

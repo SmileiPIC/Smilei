@@ -28,16 +28,6 @@ PusherBoris::~PusherBoris()
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
-    // std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
-    // std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
-
-    // double local_invgf;
-    // double umx, umy, umz; //upx, upy, upz;
-    // double inv_det_T, Tx, Ty, Tz;
-    //double Tx2, Ty2, Tz2;
-    //double TxTy, TyTz, TzTx;
-    //double alpha;
-
     const int nparts = vecto ? smpi->dynamics_Epart[ithread].size() / 3 :
                                particles.last_index.back(); // particles.size()
 
