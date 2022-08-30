@@ -21,11 +21,14 @@ Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
-* Collisions: new parameter ``time_frozen``
-* Performances post-processing: new parameter ``cumulative``
 * ``PML`` can now be used as a bounday condition for the envelope model too.
 * It is no longer necessary to use ``PML`` on all boundaries anymore.  
  * For developers: new table management for Monte-Carlo physical processes (transparent to users)
+* Much faster ``DiagFields`` (speedup ~ x3)
+* Collisions: new parameter ``time_frozen``
+* Performances diagnostic: new parameter ``cumulative``
+* Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
+* For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Bugfixes: 
 
   * Poisson Solver correction was not properly accounted for with SDMD.

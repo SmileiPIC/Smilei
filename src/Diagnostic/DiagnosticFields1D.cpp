@@ -28,8 +28,6 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI *smpi, VectorP
         0, global_size,
         istart, istart_in_file, nsteps
     );
-    file_size = nsteps;
-    one_patch_buffer_size = nsteps;
     total_dataset_size = nsteps;
 }
 
@@ -60,8 +58,8 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     );
     
     data.resize( nsteps );
-    filespace = new H5Space( file_size, MPI_start_in_file, nsteps );
-    memspace = new H5Space( file_size, 0, nsteps );
+    filespace = new H5Space( total_dataset_size, MPI_start_in_file, nsteps );
+    memspace = new H5Space( total_dataset_size, 0, nsteps );
 }
 
 

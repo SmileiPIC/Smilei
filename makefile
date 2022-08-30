@@ -47,7 +47,7 @@ VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
-    CXXFLAGS += -Wno-reorder
+    CXXFLAGS += -Wno-reorder -Wno-unused-parameter
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -Wdeprecated-register 
 endif
