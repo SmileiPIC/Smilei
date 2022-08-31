@@ -585,7 +585,7 @@ namespace hip {
         // is x1.3 times faster.
 
         using ComputeFloat   = double;
-        using ReductionFloat = double;
+        using ReductionFloat = double; // TODO(Etienne M): Change to float ?
 
         auto KernelFunction = kernel::depositForAllCurrentDimensions<ComputeFloat, ReductionFloat>;
 
