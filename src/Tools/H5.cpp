@@ -1,4 +1,5 @@
 #include "H5.h"
+#include <iomanip>
 
 //! Open HDF5 file + location
 H5::H5( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
@@ -13,16 +14,16 @@ void H5::init( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
     size_t l = file.length();
     size_t i_h5 = file.find( ".h5" ) + 3;
     size_t i_hdf5 = file.find( ".hdf5" ) + 5;
-    filepath = file;
-    grouppath = "";
+    filepath_ = file;
+    std::string grouppath = "";
     if( i_h5 < std::string::npos ) {
         if( i_h5 == l || ( i_h5 < l && file[i_h5] == '/' ) ) {
-            filepath = file.substr( 0, i_h5 );
+            filepath_ = file.substr( 0, i_h5 );
             grouppath = file.substr( i_h5 );
         }
     } else if( i_hdf5 < std::string::npos ) {
         if( i_hdf5 == l || ( i_hdf5 < l && file[i_hdf5] == '/' ) ) {
-            filepath = file.substr( 0, i_hdf5 );
+            filepath_ = file.substr( 0, i_hdf5 );
             grouppath = file.substr( i_hdf5 );
         }
     }
@@ -41,9 +42,9 @@ void H5::init( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
         H5Pset_fapl_mpio( fapl, *comm, MPI_INFO_NULL );
     }
     if( access == H5F_ACC_RDWR ) {
-        fid_ = H5Fcreate( filepath.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl );
+        fid_ = H5Fcreate( filepath_.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl );
     } else {
-        fid_ = H5Fopen( filepath.c_str(), access, fapl );
+        fid_ = H5Fopen( filepath_.c_str(), access, fapl );
     }
     H5Pclose( fapl );
     
@@ -73,7 +74,7 @@ void H5::init( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
     
     if( _raise ) {
         if( fid_ < 0 || id_ < 0 ) {
-            ERROR( "Cannot open file " << filepath );
+            ERROR( "Cannot open file " << filepath_ );
         }
     } else {
         // Restore previous error printing
@@ -100,7 +101,7 @@ H5::~H5()
         herr_t err = H5Fclose( fid_ );
         if( err < 0 ) {
             H5Eprint2( H5E_DEFAULT, NULL );
-            ERROR( "Can't close file " << filepath );
+            ERROR( "Can't close file " << filepath_ );
         }
     }
 }
@@ -110,9 +111,9 @@ H5::~H5()
 H5Space::H5Space( hsize_t size ) {
     dims_ = { size };
     global_ = size;
-    sid = H5Screate_simple( 1, &size, NULL );
+    sid_ = H5Screate_simple( 1, &size, NULL );
     if( size <= 0 ) {
-        H5Sselect_none( sid );
+        H5Sselect_none( sid_ );
     }
     chunk_.resize(0);
 }
@@ -121,12 +122,12 @@ H5Space::H5Space( hsize_t size ) {
 H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk ) {
     dims_ = { size };
     global_ = size;
-    sid = H5Screate_simple( 1, &size, NULL );
+    sid_ = H5Screate_simple( 1, &size, NULL );
     if( size <= 0 || npoints <= 0 ) {
-        H5Sselect_none( sid );
+        H5Sselect_none( sid_ );
     } else {
         hsize_t count = 1;
-        H5Sselect_hyperslab( sid, H5S_SELECT_SET, &offset, NULL, &count, &npoints );
+        H5Sselect_hyperslab( sid_, H5S_SELECT_SET, &offset, NULL, &count, &npoints );
     }
     if( chunk > 1 ) {
         chunk_.resize( 1, chunk );
@@ -142,17 +143,17 @@ H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::v
     for( unsigned int i=0; i<size.size(); i++ ) {
         global_ *= size[i];
     }
-    sid = H5Screate_simple( size.size(), &size[0], NULL );
+    sid_ = H5Screate_simple( size.size(), &size[0], NULL );
     if( global_ <= 0 ) {
-        H5Sselect_none( sid );
+        H5Sselect_none( sid_ );
     } else if( ! offset.empty() || ! npoints.empty() ) {
         unsigned int i;
         for( i=0; i<npoints.size() && npoints[i]>0; i++ ) {}
         if( i < npoints.size() ) {
-            H5Sselect_none( sid );
+            H5Sselect_none( sid_ );
         } else {
             std::vector<hsize_t> count( size.size(), 1 );
-            H5Sselect_hyperslab( sid, H5S_SELECT_SET, &offset[0], NULL, &count[0], &npoints[0] );
+            H5Sselect_hyperslab( sid_, H5S_SELECT_SET, &offset[0], NULL, &count[0], &npoints[0] );
         }
     }
     chunk_ = chunk;

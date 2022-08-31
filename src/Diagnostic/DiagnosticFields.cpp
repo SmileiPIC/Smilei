@@ -10,13 +10,8 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     //MESSAGE("Starting diag field creation " );
-    tmp_dset_ = NULL;
     diag_n = ndiag;
     
-    filespace_firstwrite = NULL;
-    memspace_firstwrite = NULL;
-    filespace_reread = NULL;
-    memspace_reread = NULL;
     filespace = NULL;
     memspace = NULL;
     
@@ -203,18 +198,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
 DiagnosticFields::~DiagnosticFields()
 {
     closeFile();
-    if( filespace_firstwrite ) {
-        delete filespace_firstwrite;
-    }
-    if( memspace_firstwrite ) {
-        delete memspace_firstwrite;
-    }
-    if( filespace_reread ) {
-        delete filespace_reread;
-    }
-    if( memspace_reread ) {
-        delete memspace_reread;
-    }
     if( filespace ) {
         delete filespace;
     }
@@ -247,11 +230,6 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
 
 void DiagnosticFields::closeFile()
 {
-    
-    if( tmp_dset_ ) {
-        delete tmp_dset_;
-        tmp_dset_ = NULL;
-    }
     if( data_group_ ) {
         delete data_group_;
         data_group_ = NULL;
@@ -310,7 +288,6 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         
         // Create group for this iteration
         ostringstream name_t;
-        name_t.str( "" );
         name_t << setfill( '0' ) << setw( 10 ) << itime;
         status = data_group_->has( name_t.str() );
         if( ! status ) {
@@ -351,19 +328,15 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             openPMD_->writeComponentAttributes( dset, field_type[ifield] );
         }
         #pragma omp barrier 
-
     }
     
     #pragma omp master
     {
+        
         // write x_moved
         double x_moved = simWindow ? simWindow->getXmoved() : 0.;
         iteration_group_->attr( "x_moved", x_moved );
         delete iteration_group_;
-        if( tmp_dset_ ) {
-            delete tmp_dset_;
-        }
-        tmp_dset_ = NULL;
         if( flush_timeSelection->theTimeIsNow( itime ) ) {
             file_->flush();
         }
@@ -445,4 +418,22 @@ void DiagnosticFields::findSubgridIntersection(
             }
         }
     }
+}
+
+void DiagnosticFields::findSubgridIntersection1(
+    hsize_t idim,
+    hsize_t &zone_offset,  // input = start of zone in full array / output = start of zone in the subgrid
+    hsize_t &zone_npoints, // input = npoints of the zone in full array / output = npoints zone in the subgrid
+    hsize_t &start_in_zone // output = start of subgrid in the zone
+)
+{
+    unsigned int istart_in_zone, istart_in_file, nsteps;
+    findSubgridIntersection(
+        subgrid_start_[idim], subgrid_stop_[idim], subgrid_step_[idim],
+        zone_offset, zone_offset + zone_npoints,
+        istart_in_zone, istart_in_file, nsteps
+    );
+    zone_offset = istart_in_file;
+    zone_npoints = nsteps;
+    start_in_zone = istart_in_zone;
 }
