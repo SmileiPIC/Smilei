@@ -32,15 +32,15 @@ namespace smilei {
             ////////////////////////////////////////////////////////////////////////////////
 
             /// Trivial container that does not initialize the memory after allocating.
-            /// This differ from the traditionnal std::vector which does initialize the memory,
+            /// This differ from the traditional std::vector which does initialize the memory,
             /// leading to a significant overhead (at initialization time).
             /// This NonInitializingVector can thus better make use of the virtual memory
-            /// when used in cunjunction with the openMP/OpenACC device offloading.
+            /// when used in conjunction with the openMP/OpenACC device offloading.
             ///
-            /// Note:
+            /// NOTE:
             /// When seeking performance, more control often means more potential performance.
             /// This NonInitializingVector provides a way to automatically free the memory
-            /// allocated on the device (avoid leaks) but requires the user to explicicly to
+            /// allocated on the device (avoid leaks) but requires the user to explicitly to
             /// the initial device allocation which, when done correctly, often source of
             /// speedup (async host<->device copies for instance).
             ///
@@ -61,7 +61,7 @@ namespace smilei {
                 /// Named HostAlloc instead of just Alloc so that the user knows
                 /// that it does nothing on the device!
                 ///
-                /// Note:
+                /// NOTE:
                 /// Does not initialize memory, meaning, due to how the virtual
                 /// memory works, that only when the memory is "touched"/set will the
                 /// process' true memory usage increase. If you map to the device and never
@@ -95,7 +95,7 @@ namespace smilei {
 
 
             ////////////////////////////////////////////////////////////////////////////////
-            // HostDeviceMemoryManagment
+            // HostDeviceMemoryManagement
             ////////////////////////////////////////////////////////////////////////////////
 
             /// Exploits the host and device memory mapping capabilities of OpenMP/OpenACC.
@@ -107,10 +107,10 @@ namespace smilei {
             ///
             /// Do not allocate classes using non trivial constructor/destructor !
             ///
-            /// Note:
+            /// NOTE:
             /// - The OpenACC implementation is not complete!
             /// - You can exploit virtual memory and allocate a large part of the memory on the
-            /// the host (malloc) and not use it. the OS will allocate address sapce and not physical
+            /// the host (malloc) and not use it. The OS will allocate address space and not physical
             /// memory until you touch the page. Before touching the page, the host physical memory allocation
             /// will be zero! You can exploit this fact by using NonInitializingVector to easily produce
             /// software optimized for GPU/CPU memory without worrying about consuming host memory when offloading
@@ -118,13 +118,13 @@ namespace smilei {
             /// a unique value, i.e. the returned pointer (as long as it is not freed).
             /// This unique value can be mapped to a valid chunk of memory allocated on the GPU.
             /// - Does not support asynchronous operations. If you need it, it is probably
-            /// better if you do it yourself (without using HostDeviceMemoryManagment) because it can be
-            /// quite tricky. HostDeviceMemoryManagment is the best solution to allocate/copy large chunks
+            /// better if you do it yourself (without using HostDeviceMemoryManagement) because it can be
+            /// quite tricky. HostDeviceMemoryManagement is the best solution to allocate/copy large chunks
             /// at the beginning of the program.
             /// - Everything is hidden in gpu.cpp so we dont get conflicts between GPU specific languages (HIP/Cuda)
-            /// and OpenMP/OpenACC (the cray compiler can't enable both hip and openmp support at the same time).
+            /// and OpenMP/OpenACC (the cray compiler can't enable both hip and OpenMP support at the same time).
             ///
-            struct HostDeviceMemoryManagment
+            struct HostDeviceMemoryManagement
             {
             public:
                 template <typename T>
@@ -161,9 +161,9 @@ namespace smilei {
                 ///                                      else return nullptr
                 /// else return a_host_pointer (untouched)
                 ///
-                /// Note:
+                /// NOTE:
                 /// the nvidia compiler of the NVHPC 21.3 stack has a bug in ::omp_target_is_present. You can't use this
-                /// function unless you first maek the runtime "aware" (explicit mapping) of the pointer!
+                /// function unless you first make the runtime "aware" (explicit mapping) of the pointer!
                 ///
                 /// #if defined( __NVCOMPILER )
                 ///     No-op workaround to prevent from a bug in Nvidia's OpenMP implementation:
@@ -223,7 +223,7 @@ namespace smilei {
 ///    for(...) { ... }
 ///
 //////////////////////////////////////
-#define SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( a_host_pointer ) )
+#define SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_host_pointer ) )
 
 
             ////////////////////////////////////////////////////////////////////////////////
@@ -272,7 +272,7 @@ namespace smilei {
                 if( do_device_free &&
                     // Unlike std::free, we check to avoid nullptr freeing
                     data_ != nullptr ) {
-                    HostDeviceMemoryManagment::DeviceFree( *this );
+                    HostDeviceMemoryManagement::DeviceFree( *this );
                 }
 
                 data_ = nullptr;
@@ -352,50 +352,50 @@ namespace smilei {
 
 
             ////////////////////////////////////////////////////////////////////////////////
-            // HostDeviceMemoryManagment methods definition
+            // HostDeviceMemoryManagement methods definition
             ////////////////////////////////////////////////////////////////////////////////
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceAllocate( const T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::DeviceAllocate( const T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( std::is_pod<T>::value, "" );
                 DoDeviceAllocate( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::DeviceAllocate( const Container& a_vector )
+            void HostDeviceMemoryManagement::DeviceAllocate( const Container& a_vector )
             {
                 DeviceAllocate( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( std::is_pod<T>::value, "" );
                 DoDeviceAllocateAndCopyHostToDevice( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const Container& a_vector )
+            void HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( const Container& a_vector )
             {
                 DeviceAllocateAndCopyHostToDevice( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::CopyHostToDevice( const T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( std::is_pod<T>::value, "" );
                 DoCopyHostToDevice( a_host_pointer, a_count, sizeof( T ) );
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::CopyHostToDevice( const Container& a_vector )
+            void HostDeviceMemoryManagement::CopyHostToDevice( const Container& a_vector )
             {
                 CopyHostToDevice( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyDeviceToHost( T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::CopyDeviceToHost( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
                 static_assert( std::is_pod<T>::value, "" );
@@ -403,13 +403,13 @@ namespace smilei {
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::CopyDeviceToHost( Container& a_vector )
+            void HostDeviceMemoryManagement::CopyDeviceToHost( Container& a_vector )
             {
                 CopyDeviceToHost( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
                 static_assert( std::is_pod<T>::value, "" );
@@ -417,13 +417,13 @@ namespace smilei {
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( Container& a_vector )
+            void HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( Container& a_vector )
             {
                 CopyDeviceToHostAndDeviceFree( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceFree( T* a_host_pointer, std::size_t a_count )
+            void HostDeviceMemoryManagement::DeviceFree( T* a_host_pointer, std::size_t a_count )
             {
                 static_assert( !std::is_const<T>::value, "" );
                 static_assert( std::is_pod<T>::value, "" );
@@ -431,19 +431,19 @@ namespace smilei {
             }
 
             template <typename Container>
-            void HostDeviceMemoryManagment::DeviceFree( Container& a_vector )
+            void HostDeviceMemoryManagement::DeviceFree( Container& a_vector )
             {
                 DeviceFree( a_vector.data(), a_vector.size() );
             }
 
             template <typename T>
-            T* HostDeviceMemoryManagment::GetDevicePointer( T* a_host_pointer )
+            T* HostDeviceMemoryManagement::GetDevicePointer( T* a_host_pointer )
             {
                 return static_cast<T*>( DoGetDevicePointer( static_cast<const void*>( a_host_pointer ) ) );
             }
 
             template <typename T>
-            T* HostDeviceMemoryManagment::GetDeviceOrHostPointer( T* a_host_pointer )
+            T* HostDeviceMemoryManagement::GetDeviceOrHostPointer( T* a_host_pointer )
             {
                 T* const a_device_pointer = GetDevicePointer( a_host_pointer );
                 return a_device_pointer == nullptr ?
@@ -452,14 +452,14 @@ namespace smilei {
             }
 
             template <typename T>
-            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_host_pointer )
+            bool HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( const T* a_host_pointer )
             {
                 // We could optimize the omp version by only using ::omp_target_is_present()
                 return GetDevicePointer( a_host_pointer ) != nullptr;
             }
 
             template <typename T>
-            void HostDeviceMemoryManagment::DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count )
+            void HostDeviceMemoryManagement::DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count )
             {
                 DoDeviceMemoryCopy( a_destination, a_source, a_count, sizeof( T ) );
             }

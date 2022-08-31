@@ -175,23 +175,7 @@ public:
 /// @def SMILEI_UNUSED
 ///
 /// Prevent a compiler warning for an unused variable.
-/// It is usefull when a lot of conditional compilation is used (#if XXX then compile code for ARM #else for x86 #endif).
-/// This has no performance overhead.
-///
-/// Example usage:
-///
-///     int a;
-///     SMILEI_UNUSED(a); // Without this macro, it would trigger a "variable unused" warning
-///     return;
-///
-//////////////////////////////////////
-#define SMILEI_UNUSED( an_arg ) static_cast<void>( an_arg )
-
-//////////////////////////////////////
-/// @def SMILEI_UNUSED
-///
-/// Prevent a compiler warning for an unused variable.
-/// It is usefull when a lot of conditional compilation is used (#if XXX then compile code for ARM #else for x86 #endif).
+/// It is useful when a lot of conditional compilation is used (#if XXX then compile code for ARM #else for x86 #endif).
 /// This has no performance overhead.
 ///
 /// Example usage:
@@ -210,7 +194,7 @@ public:
 ///
 /// Use this macro to assert a condition.
 /// One amy disable assertions by defining SMILEI_NO_ASSERTION before including
-/// this header (generaly you do that before any include). ie:
+/// this header (generally you do that before any include). ie:
 /// #define SMILEI_NO_ASSERTION 1
 /// #include <XX.h>
 /// <all my other includes>...
@@ -218,7 +202,7 @@ public:
 /// Example usage:
 ///
 ///     SMILEI_ASSERT(x > 10);
-///     SMILEI_ASSERT_VERBOSE(<someyhing that should always be true>,
+///     SMILEI_ASSERT_VERBOSE(<something that should always be true>,
 ///                           "Something is not true !");
 ///
 //////////////////////////////////////

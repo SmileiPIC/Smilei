@@ -58,6 +58,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         return;
     }
 
+    // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
+
     double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
     double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
     double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
@@ -90,13 +92,13 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSz{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_sumX{ kTmpArraySize };
 
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sx0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sy0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sz0 );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSx );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSy );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSz );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( host_device_sumX );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSx );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSy );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSz );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_sumX );
 
     double *const __restrict__ Sx0  = host_device_Sx0.data();
     double *const __restrict__ Sy0  = host_device_Sy0.data();
@@ -307,7 +309,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                         const int    jdx = idx + i * yz_size0;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jx[0:sizeofEx]) when CCE supports them, % perf benefit
+    #pragma omp atomic update
 #elif defined( _GPU )
     #pragma acc atomic
 #endif
@@ -387,7 +389,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                         const int    jdx = idx + j * z_size1;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jy[0:sizeofEy]) when CCE supports them, % perf benefit
+    #pragma omp atomic update
 #elif defined( _GPU )
     #pragma acc atomic
 #endif
@@ -467,7 +469,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                         const int    jdx = idx + k;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jz[0:sizeofEz]) when CCE supports them, % perf benefit
+    #pragma omp atomic update
 #elif defined( _GPU )
     #pragma acc atomic
 #endif

@@ -2,9 +2,6 @@
 # Machine file for the Adastra machine at CINES
 #
 # Note:
-# TODO(Etienne M): This gpu_amd config is not production ready and is meant, as
-# of 4th/03/22, to be used "only" on the cines GPU porting machines.
-# It expects the CCE (cray compiler).
 #
 # You'll want to compile smilei with the "gpu_amd" config flag enabled:
 # $ make machine="adastra_gpu" config="amd_gpu" -j
@@ -14,14 +11,30 @@
 # You'll want to associate one MPI proc per GCD (2 MPI/MI250X).
 #
 # To compile you may want these modules:
-# module load craype-network-ofi craype-x86-rome libfabric/1.13.1
-# module load PrgEnv-cray/8.1.0 cce/13.0.1
-# module load cray-mpich/8.1.13
-# module load rocm/4.5.0
-# # module load craype-accel-amd-gfx908 # MI100
-# module load craype-accel-amd-gfx90a # MI250X
-# module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
-# module load perftools-base/21.12.0
+#
+# module purge
+# # Hardware, libfabric is not loaded by craype-network-ofi cines01 (while it is on lumi01)
+# module load craype-network-ofi craype-x86-trento libfabric/1.15.0.0
+# # Compiler
+# module load PrgEnv-cray/8.3.3 cce/14.0.1
+# # MPI
+# module load cray-mpich/8.1.17
+# # GPU
+# module load craype-accel-amd-gfx90a
+# module load rocm/4.5.2
+# # Other libs
+# module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.12.1
+# # Introduce perftools-* in case the user needs it, note that this module is not advertised by "module av" !
+# module load perftools-base/22.06.0
+# module list
+#
+# Optionally, you may want to use a virtual python environment in which to 
+# install the packages required by the Smilei validation script:
+#
+# python -m venv ~/.smilei_python_venv
+# source ~/.smilei_python_venv/bin/activate
+# python -m pip install --upgrade --retries 0 --timeout 5 pip
+# pip3 install --retries 0 --timeout 5 numpy h5py matplotlib
 #
 #
 ################################################################################
@@ -30,7 +43,6 @@
 # Compilers
 ################################################################################
 
-# SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
 SMILEICXX := $(CC)
 SMILEICXX.DEPS := $(SMILEICXX)
 # THRUSTCXX := hipcc
@@ -80,24 +92,31 @@ ADASTRA_OMP_FLAGS := -fopenmp
 ################################################################################
 
 ifneq (,$(call parse_config,gpu_amd))
-	# Add mi100/250x amd gpu arch
-	ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
-	ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
+    # Add mi100/250x amd gpu arch
+	# xnack is a feature required to use the AMD unified memory (through 
+	# HMM/HSA). xnack- disable it, xnack+ enabled it, and if not specified,
+	# the compiler produces xnack agnostic code.
+	# Details at: https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#migration-of-memory-by-allocator-and-xnack-mode
+    ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
+    ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
+	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
     # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
+	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
 
-    # TODO(Etienne M): This should be disabled right ? Unfortunatly its a mess to undefine from this machine file
-	# ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
+    # TODO(Etienne M): This should be disabled right ? Unfortunately its a mess to undefine from this machine file
+    # ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
 
     # When using OMP
-	ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP
+    ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP=1
     ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # When using hip/cuda to build kernels
     # When you ask CCE to drive the hip compilation
-	# NOTE: the -x hip flag MUSt come before the .cu files !
+    # NOTE: the -x hip flag MUST come before the .cu files !
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
-	# When you use hipcc directly
-	# ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    # When you use hipcc directly
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
 endif
 
 ################################################################################
@@ -128,7 +147,7 @@ ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 ################################################################################
 
 # Inherit of all the typical *.cpp compilation options
-# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesnt work as expected
+# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesn't work as expected
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
@@ -157,4 +176,4 @@ LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
 # Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
 # -v to dump omp kernel info (register alloc/spill etc.)
 LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v
-# LDFLAGS += --save-temps
+# LDFLAGS += --save-temps # OpenMP device kernel info. To use with the Cray compiler

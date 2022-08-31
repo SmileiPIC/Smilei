@@ -1894,13 +1894,20 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-bool Params::isGPUParticleBinningAvailable() const {
-    return getGPUClusterWidth() != -1;
+bool Params::isGPUParticleBinningAvailable() const
+{
+    return getGPUClusterWidth() != -1 &&
+           getGPUClusterGhostCellBorderWidth() != -1;
 }
 
 int Params::getGPUClusterWidth() const
 {
     return getGPUClusterWidth( nDim_particle );
+}
+
+int Params::getGPUClusterGhostCellBorderWidth() const
+{
+    return getGPUClusterGhostCellBorderWidth( interpolation_order );
 }
 
 int Params::getGPUClusterCellVolume() const
@@ -1912,6 +1919,22 @@ int Params::getGPUClusterCellVolume() const
     return isGPUParticleBinningAvailable() ?
                kClusterCellVolume :
                -1; // Propagate the error if the dimension is not supported
+}
+
+int Params::getGPUInterpolationClusterCellVolume() const
+{
+    return isGPUParticleBinningAvailable() ?
+               getGPUInterpolationClusterCellVolume( nDim_particle, interpolation_order ) :
+               -1; // Propagate the error if the dimension is not supported
+}
+
+int Params::getGPUBinCount( int dimension_id ) const
+{
+    const int cells_in_dimension = n_space[dimension_id - 1];
+
+    const int kGPUBinCount = cells_in_dimension / getGPUClusterWidth();
+
+    return kGPUBinCount;
 }
 
 int Params::getGPUBinCount() const

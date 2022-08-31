@@ -110,7 +110,7 @@ int main( int argc, char *argv[] )
         if( ::omp_get_max_threads() != 1 ) {
             // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei 
             // GPU to use only one thread.
-            WARNING( "Runing Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
+            WARNING( "Running Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
         }
 
         const int gpu_count = ::omp_get_num_devices();
@@ -118,15 +118,20 @@ int main( int argc, char *argv[] )
         if( gpu_count < 1 ) {
             ERROR( "Simlei needs one accelerator, none detected." );
         } else if( gpu_count > 1 ) {
-            WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
-            WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
+            // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
+            // (nor in OpenACC). This makes management of the device completely
+            // oblivious to the program (only one, the one by default).
+            // This could be a missed but very advanced optimization for some
+            // kernels/exchange.
+            ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
+            // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
-            // This assumes the MPI rank on a node are sequential
-            const int this_process_gpu = smpi.getRank() % gpu_count;
+            // // This assumes the MPI rank on a node are sequential
+            // const int this_process_gpu = smpi.getRank() % gpu_count;
 
-            // std::cout << "Using GPU id: " << this_process_gpu << "\n";
+            // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
 
-            ::omp_set_default_device( this_process_gpu );
+            // ::omp_set_default_device( this_process_gpu );
         } else {
             // ::omp_set_default_device(0);
         }
@@ -327,19 +332,13 @@ int main( int argc, char *argv[] )
         TITLE( "Initial fields setup" );
 
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species
+        // NOTE: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if( params.solve_relativistic_poisson == true ) {
             MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
 
-        // TODO(Etienne M): Dont we need to computeCharge() only if we
-        // initialize the E/B fields by solving the appropriate poisson
-        // equation? projectionForDiags will overwrite the result anyway.
-        // Shouldnt we call computeCharge() in runNonRelativisticPoissonModule,
-        // like it's done in runRelativisticModule with
-        // computeChargeRelativisticSpecies().
         vecPatches.computeCharge();
 
         // TODO(Etienne M): redundant work is done here. We exchange current
@@ -381,7 +380,7 @@ int main( int argc, char *argv[] )
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
         }
         
-        // Comm and synch charge and current densities
+        // Comm and synch charge and current densities for a given species (rho_s, Jx_s...)
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
         // Upload corrected data on Regions
@@ -518,7 +517,7 @@ int main( int argc, char *argv[] )
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species
+            // NOTE: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if( params.solve_relativistic_poisson == true ) {
                 vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );

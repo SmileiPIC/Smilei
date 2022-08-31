@@ -274,7 +274,7 @@ public:
         return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
-    //! Partiles properties, respect type order : all double, all short, all unsigned int
+    //! Particles properties, respect type order : all double, all short, all unsigned int
 
     //! array containing the particle position
     std::vector< std::vector<double> > Position;

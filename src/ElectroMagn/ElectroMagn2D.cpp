@@ -876,22 +876,22 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
         double *const             Bz2D_m = Bz_m->data();
 
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
-        // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the 
+        // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
         // is_memory_on_device check.
-        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx2D );
+        const bool is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( Bx2D );
 
         if( is_memory_on_device ) {
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx2D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx2D ),
-                                                                             nx_p * ny_d );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bx2D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bx2D ),
+                                                                              nx_p * ny_d );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By2D ),
-                                                                             ( nx_p + 1 ) * ny_p );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( By2D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( By2D ),
+                                                                              ( nx_p + 1 ) * ny_p );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D_m ),
-                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz2D ),
-                                                                             ( nx_p + 1 ) * ny_d );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz2D_m ),
+                                                                              smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz2D ),
+                                                                              ( nx_p + 1 ) * ny_d );
         } else {
             // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
             // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.

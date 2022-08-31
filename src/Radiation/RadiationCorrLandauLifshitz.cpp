@@ -146,7 +146,7 @@ void RadiationCorrLandauLifshitz::operator()(
                                        momentum_z /* [istart:np] */, \
                                        weight /* [istart:np] */, \
                                        chi /* [istart:np] */ )
-        #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+        #pragma omp            teams
         #pragma omp distribute parallel for
     // CPU
     #else 
