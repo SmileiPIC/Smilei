@@ -116,8 +116,8 @@ Species(
   name = "plasmaelectrons",
   position_initialization = "regular",
   momentum_initialization = "cold",
-  particles_per_cell = 2, #4,
-  regular_number = [1,2,1], #[2,2,1],
+  particles_per_cell = 4,
+  regular_number = [2,2,1],
   c_part_max = 1.0,
   mass = 1.0,
   charge = -1.0,
@@ -143,7 +143,7 @@ bunch_energy_spread        = 0.01                            # initial rms energ
 bunch_normalized_emittance = 1.*mm_mrad                      # initial rms emittance, same emittance for both transverse planes
 gamma_bunch                = 200.                            # initial relativistic Lorentz factor of the bunch
 
-npart                      = 15000 #50000                           # number of computational macro-particles to model the electron bunch 
+npart                      = 30000 #50000                           # number of computational macro-particles to model the electron bunch 
 normalized_species_charge  = -1                              # For electrons
 Q_part                     = Q_bunch/npart                   # charge for every macroparticle in the electron bunch
 weight                     = Q_part/((c/omega0)**3*ncrit*normalized_species_charge)
