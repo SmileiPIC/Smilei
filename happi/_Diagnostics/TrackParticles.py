@@ -148,6 +148,13 @@ class TrackParticles(Diagnostic):
 		if self._timesteps.size < 1:
 			raise Exception("Timesteps not found")
 		
+		# Get x_moved if necessary
+		self._XmovedForTime = {}
+		for file in disorderedfiles:
+			with self._h5py.File(file, "r") as f:
+				for t in f["data"].keys():
+					self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+		
 		# Select particles
 		# -------------------------------------------------------------------
 		if sort:
@@ -190,13 +197,6 @@ class TrackParticles(Diagnostic):
 		else:
 			self.axes = self.available_properties
 		
-		# Get x_moved if necessary
-		if "moving_x" in self.axes:
-			self._XmovedForTime = {}
-			for file in disorderedfiles:
-				with self._h5py.File(file, "r") as f:
-					for t in f["data"].keys():
-						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
 		
 		# Then figure out axis units
 		self._type = self.axes
@@ -349,11 +349,16 @@ class TrackParticles(Diagnostic):
 						requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
 						# Loop times
 						for time in eval(timeSelector[k]):
-							if self._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+							if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/self.nParticles))
 							# Extract required properties from h5 files
 							it = self._locationForTime[time]
 							for prop in requiredProps:
-								self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+								if prop == "moving_x":
+									self._h5items["x"].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+									print(time, self._XmovedForTime)
+									properties[prop] -= self._XmovedForTime[time]
+								else:
+									self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
 							# Calculate the selector
 							selectionAtTimeT = eval(particleSelector[k]) # array of True or False
 							# Combine with selection of previous times
@@ -733,7 +738,7 @@ class TrackParticles(Diagnostic):
 						data[axis] = data_int16.copy()
 					elif axis == "moving_x":
 						group[properties["x"]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
-						data[axis] = data_double.copy()
+						data[axis] = data_double.copy() - self._XmovedForTime[timestep]
 					else:
 						group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
 						data[axis] = data_double.copy()
