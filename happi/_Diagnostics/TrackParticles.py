@@ -55,6 +55,15 @@ class TrackParticles(Diagnostic):
 			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz"
 		}
 		
+		# Get x_moved and add moving_x in the list of properties
+		self._XmovedForTime = {}
+		for file in disorderedfiles:
+			with self._h5py.File(file, "r") as f:
+				for t in f["data"]:
+					if "x_moved" in f["data"][t].attrs:
+						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+		extra_properties = ["moving_x"] if self._XmovedForTime else []
+		
 		# If sorting allowed, find out if ordering needed
 		needsOrdering = False
 		if sort:
@@ -94,7 +103,7 @@ class TrackParticles(Diagnostic):
 				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.items()}
 				f, _ = next(iter(self._locationForTime.values()))
 				T0 = next(iter(f["data"].values()))["particles/"+self.species]
-			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0]
+			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0] + extra_properties
 		
 		# If sorting allowed, then do the sorting
 		if sort:
@@ -109,23 +118,12 @@ class TrackParticles(Diagnostic):
 			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 				if prop in self._lastfile:
 					self._h5items[prop] = self._lastfile[prop]
-			self.available_properties = list(self._h5items.keys())
+			self.available_properties = list(self._h5items.keys()) + extra_properties
 			# Memorize the locations of timesteps in the files
 			self._locationForTime = {t:it for it, t in enumerate(self._lastfile["Times"])}
 			self._timesteps = self._np.array(sorted(self._lastfile["Times"]))
 			self._alltimesteps = self._np.copy(self._timesteps)
 			self.nParticles = self._h5items["Id"].shape[1]
-		
-		# Add moving_x in the list of properties
-		if "x" in self.available_properties:
-			file = disorderedfiles[0]
-			with self._h5py.File(file, "r") as f:
-				try: # python 2
-					D = next(f["data"].itervalues())
-				except: # python 3
-					D = next(iter(f["data"].values()))
-				if "x_moved" in D.attrs:
-					self.available_properties += ["moving_x"]
 		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
@@ -148,12 +146,6 @@ class TrackParticles(Diagnostic):
 		if self._timesteps.size < 1:
 			raise Exception("Timesteps not found")
 		
-		# Get x_moved if necessary
-		self._XmovedForTime = {}
-		for file in disorderedfiles:
-			with self._h5py.File(file, "r") as f:
-				for t in f["data"].keys():
-					self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
 		
 		# Select particles
 		# -------------------------------------------------------------------
@@ -355,7 +347,6 @@ class TrackParticles(Diagnostic):
 							for prop in requiredProps:
 								if prop == "moving_x":
 									self._h5items["x"].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
-									print(time, self._XmovedForTime)
 									properties[prop] -= self._XmovedForTime[time]
 								else:
 									self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
@@ -376,7 +367,6 @@ class TrackParticles(Diagnostic):
 				requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
 				# Loop times
 				for time in eval(timeSelector[k]):
-					if self._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
 					# Get group in file
 					[f, it] = self._locationForTime[time]
 					group = f["data/"+"%010i"%time+"/particles/"+self.species]
@@ -384,11 +374,16 @@ class TrackParticles(Diagnostic):
 					# Loop on chunks
 					selectionAtTimeT = []
 					for chunkstart, chunkstop, actual_chunksize in ChunkedRange(npart, chunksize):
+						if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/npart))
 						# Allocate buffers
 						properties = makeBuffers(actual_chunksize)
 						# Extract required properties from h5 files
 						for prop in requiredProps:
-							group[self._raw_properties_from_short[prop]].read_direct(properties[prop], source_sel=self._np.s_[chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+							if prop == "moving_x":
+								group[self._raw_properties_from_short["x"]].read_direct(properties[prop], source_sel=self._np.s_[chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+								properties[prop] -= self._XmovedForTime[time]
+							else:
+								group[self._raw_properties_from_short[prop]].read_direct(properties[prop], source_sel=self._np.s_[chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
 						# Calculate the selector
 						sel = eval(particleSelector[k]) # array of True or False
 						selectionAtTimeT.append(properties["Id"][sel])
