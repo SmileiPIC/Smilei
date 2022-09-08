@@ -563,7 +563,7 @@ then expanding longitudinally.
 .. raw:: html
 
   <video style="display:block; margin: 0 auto; width: 100%;" controls
-  src="http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/videos/qed_cascade.mp4"
+  src="https://mdls.fr/wp-content/uploads/2022/04/qed_cascade.mp4"
   width="100%">
   </video>
 
