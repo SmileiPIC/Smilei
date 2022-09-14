@@ -31,6 +31,8 @@ Changes made in the repository (not released)
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
   * C++11 compilation issue
   * Reading particle weights and momenta from hdf5 file
+  * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
+
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
