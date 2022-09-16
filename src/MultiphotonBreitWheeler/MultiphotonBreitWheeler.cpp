@@ -584,7 +584,10 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
                         (*Epart)[iDim*nparts+ipart] = (*Epart)[iDim*nparts+last_photon_index];
                         (*Bpart)[iDim*nparts+ipart] = (*Bpart)[iDim*nparts+last_photon_index];
                     }
-                    for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+
+                    int iDim_max_iold = n_dimensions_-1;
+                    if (thetaold) iDim_max_iold = 1; // in AMcylindrical iold and deltaold are defined in 2D
+                    for ( int iDim=iDim_max_iold ; iDim>=0 ; iDim-- ) {
                         (*iold)[iDim*nparts+ipart] = (*iold)[iDim*nparts+last_photon_index];
                         (*deltaold)[iDim*nparts+ipart] = (*deltaold)[iDim*nparts+last_photon_index];
                     }
@@ -611,7 +614,10 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
                 Epart->erase(Epart->begin()+iDim*nparts+last_photon_index+1,Epart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
                 Bpart->erase(Bpart->begin()+iDim*nparts+last_photon_index+1,Bpart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
             }
-            for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+
+            int iDim_max_iold = n_dimensions_-1;
+            if (thetaold) iDim_max_iold = 1; // in AMcylindrical iold and deltaold are defined in 2D
+            for ( int iDim=iDim_max_iold ; iDim>=0 ; iDim-- ) {
                 iold->erase(iold->begin()+iDim*nparts+last_photon_index+1,iold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
                 deltaold->erase(deltaold->begin()+iDim*nparts+last_photon_index+1,deltaold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
             }
