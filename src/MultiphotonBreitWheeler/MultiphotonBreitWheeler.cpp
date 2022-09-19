@@ -754,7 +754,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
         // Update of the bin boundaries
         // const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
 
-        // We photons deleted
+        // We suppress the deleted photons at the end of the bin
         if( last_photon_index + 1 < bmax[ibin] ) {
             bmax[ibin] = last_photon_index+1;
             

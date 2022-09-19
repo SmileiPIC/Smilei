@@ -533,12 +533,12 @@ void Species::dynamics( double time_dual,
                 // Suppression of the decayed photons into pairs
                 // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                 //     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
-                Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
-                    *particles, smpi, ibin, 
-                    particles->first_index.size(), 
-                    &particles->first_index[0], 
-                    &particles->last_index[0], 
-                    ithread );
+                // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
+                //     *particles, smpi, ibin, 
+                //     particles->first_index.size(), 
+                //     &particles->first_index[0], 
+                //     &particles->last_index[0], 
+                //     ithread );
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -554,7 +554,7 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
             
-            // Remove Particles while keeping the first index of each bin
+            // Remove Photons while keeping the first index of each bin
             // Concerns as well the smpi buffers
             removeParticlesKeepBinFirstIndex(smpi, ithread, false);
     
@@ -836,13 +836,28 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 
         // Multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
+            
             // Addition of the electron-positron particles
             for( int k=0; k<2; k++ ) {
+                
+#ifdef _GPU
+                // We first erase empty slots in the buffer of photons
+                // radiation_photons_->cell_keys is used as a mask
+                static_cast<nvidiaParticles*>(mBW_pair_species_[k])->eraseLeavingParticles();
+#endif
+                
                 mBW_pair_species_[k]->importParticles( params,
                                                       patch,
                                                       *mBW_pair_particles_[k],
                                                       localDiags );
+                                                      
+#ifdef _GPU
+                // We explicitely clear the device Particles
+                static_cast<nvidiaParticles*>(mBW_pair_species_[k])->deviceClear();
+#endif
+                                                      
             }
+            
         }
     }//END if time vs. time_frozen_
 }
@@ -1612,7 +1627,7 @@ void Species::removeParticlesKeepBinFirstIndex(
             // Update of the bin boundaries
             // const unsigned int nb_deleted_photon = last_index[ibin]-last_photon_index-1;
 
-            // We photons deleted
+            // We suppress the deleted photons
             if( last_photon_index + 1 < particles->last_index[ibin] ) {
                 particles->last_index[ibin] = last_photon_index+1;
                 
