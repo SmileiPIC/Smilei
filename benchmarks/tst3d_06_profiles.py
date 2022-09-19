@@ -78,8 +78,31 @@ for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	)
 
 
+import numpy as np
+npart = 10
+positions = np.array( [np.linspace(Main.grid_length[i]/10., Main.grid_length[i]*0.9, npart) for i in range(3)] + [np.ones(npart)] )
+momenta = np.array( [np.ones(npart)*1, np.ones(npart)*0.3, np.ones(npart)*0.2 ] )
+Species(
+	name = "from_numpy",
+	position_initialization = positions,
+	momentum_initialization = momenta,
+	mass = 1.0,
+	charge = 1.0,
+	time_frozen = 10000.0,
+	boundary_conditions = [
+		["periodic", "periodic"],
+		["periodic", "periodic"],
+		["periodic", "periodic"],
+	],
+)
+
+
 DiagFields(
 	every = 4,
 )
 
+DiagTrackParticles(
+	every = 10000,
+	species = "from_numpy"
+)
 

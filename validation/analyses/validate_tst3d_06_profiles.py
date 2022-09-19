@@ -52,3 +52,9 @@ for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	F = S.Field.Field0(field, timesteps=4, subset={"z":Lz/2.}).getData()[0][::10,::10]
 	Validate("prescribed "+field+" field", F, 0.01)
 
+# Verify initialization from numpy
+A = ["x","y","z","px","py","pz"]
+T = S.TrackParticles("from_numpy",axes=A)
+Validate("Number of particles from numpy", T.nParticles)
+D = T.getData()
+Validate("Particles from numpy", np.concatenate( [D[a] for a in A] ), 0.00001)
