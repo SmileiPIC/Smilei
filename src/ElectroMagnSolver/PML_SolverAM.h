@@ -23,10 +23,6 @@ public:
     void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax );
 
 protected:
-    double kappa_r_max;
-    double kappa_power_pml_r;
-    double kappa_l_max;
-    double kappa_power_pml_l;
     std::vector< Profile *> pml_sigma_;
     std::vector< Profile *> pml_kappa_;
 

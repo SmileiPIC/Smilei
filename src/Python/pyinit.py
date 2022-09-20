@@ -207,9 +207,9 @@ class Main(SmileiSingleton):
     def default_integrate_sigma(x):
         return 7. * x**3  
     def default_kappa(x):
-        return 80. * x**4  
+        return 1 + 79. * x**4  
     def default_integrate_kappa(x):
-        return 16. * x**5  
+        return x + 79./5. * x**5  
 
     pml_sigma = [default_sigma, default_sigma, default_integrate_sigma]
     pml_kappa = [default_kappa, default_kappa, default_integrate_kappa]
