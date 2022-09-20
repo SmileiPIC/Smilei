@@ -9,8 +9,8 @@
 
 PML_SolverAM::PML_SolverAM( Params &params ):
     SolverAM( params ),
-    pml_sigma_( 2, NULL ),
-    pml_integrate_sigma_r_( 1, NULL )
+    pml_sigma_( 3, NULL ),
+    pml_kappa_( 3, NULL )
 {
     //Define here the value of coefficient kappa_l_max, power_kappa_l, sigma_l_max, power_sigma_l
     kappa_l_max = params.pml_kappa_parameters[0][0];
@@ -20,13 +20,23 @@ PML_SolverAM::PML_SolverAM( Params &params ):
     kappa_power_pml_r = params.pml_kappa_parameters[1][1];
 
     std::vector<PyObject *> prof;
-    if( PyTools::extract_1orNProfiles( 2, "pml_sigma", "Main", 0,  prof ) ) {
+    if( PyTools::extract_pyProfiles( "pml_sigma", "Main", 0, prof )){
+        if(prof.size() != 3){
+            ERROR(" in pml_sigma, expecting a list of exactly 3 profiles.");
+        }
     // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
         pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_profile", params, true, false, false );
         pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_profile", params, true, false, false );
+        pml_sigma_[2] = new Profile( prof[2], 1, "pml_sigma_profile", params, true, false, false );
     }
-    if( PyTools::extract_1orNProfiles( 1, "pml_integrate_sigma_r", "Main", 0,  prof ) ) {
-        pml_integrate_sigma_r_[0] = new Profile( prof[0], 1, "pml_integrate_sigma_r_profile", params, true, false, false );
+    if( PyTools::extract_pyProfiles( "pml_kappa", "Main", 0, prof )){
+        if(prof.size() != 3){
+            ERROR(" in pml_kappa, expecting a list of exactly 3 profiles.");
+        }
+    // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
+        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_profile", params, true, false, false );
+        pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_profile", params, true, false, false );
+        pml_kappa_[2] = new Profile( prof[2], 1, "pml_kappa_profile", params, true, false, false );
     }
 
 }
@@ -36,7 +46,9 @@ PML_SolverAM::~PML_SolverAM()
     for( unsigned int i=0; i<pml_sigma_.size(); i++ ) {
         delete pml_sigma_[i];
     }
-    delete pml_integrate_sigma_r_[0];
+    for( unsigned int i=0; i<pml_kappa_.size(); i++ ) {
+        delete pml_kappa_[i];
+    }
 }
 
 void PML_SolverAM::operator()( ElectroMagn *fields )
@@ -246,7 +258,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_r_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dr/length_r_pml);
             integrate_kappa_r_p[j] = ( rmax + j*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
             //integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
-            integrate_sigma_r_p[j] = length_r_pml * pml_integrate_sigma_r_[0]->valueAt((j-startpml)*dr/length_r_pml);
+            integrate_sigma_r_p[j] = length_r_pml * pml_sigma_[2]->valueAt((j-startpml)*dr/length_r_pml);
         }
         // Dual grid
         // Longitudinal
@@ -284,7 +296,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_r_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dr/length_r_pml);
             integrate_kappa_r_d[j] = ( rmax + (j-0.5)*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml-0.5)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
             //integrate_sigma_r_d[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml-0.5)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
-            integrate_sigma_r_d[j] = length_r_pml * pml_integrate_sigma_r_[0]->valueAt((j-startpml-0.5)*dr/length_r_pml);
+            integrate_sigma_r_d[j] = length_r_pml * pml_sigma_[2]->valueAt((j-startpml-0.5)*dr/length_r_pml);
         }
     }
 

@@ -28,7 +28,7 @@ protected:
     double kappa_l_max;
     double kappa_power_pml_l;
     std::vector< Profile *> pml_sigma_;
-    std::vector< Profile *> pml_integrate_sigma_r_;
+    std::vector< Profile *> pml_kappa_;
 
     std::vector<double> kappa_r_p;
     std::vector<double> sigma_r_p;
