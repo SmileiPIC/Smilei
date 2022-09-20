@@ -264,9 +264,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Initialize initial seed for linear generator
     double initial_seed_1 = rand_->uniform();
     double initial_seed_2 = rand_->uniform();
-#endif
 
-#ifdef _GPU
+    int seed_curand_1;
+    int seed_curand_2;
+
     // _______________________________________________________________
     // Computation
 
@@ -292,12 +293,9 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         //curandState_t state_1;
         //curandState_t state_2;
         
-        double seed_curand_1;
-        double seed_curand_2;
         
         #pragma acc loop gang worker vector \
-        private(seed_curand_1, seed_curand_2) \
-        reduction(+:radiated_energy_loc) 
+        private(seed_curand_1, seed_curand_2) 
 
 #else
 
@@ -349,6 +347,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 #else
                     
                     seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
+                    //seed_curand_1 = std::fmod(a * seed_curand_1 + c, m); //Linear generator
                     seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
            		
                     prng_state_1.init( seed_curand_1, seq, offset ); //Cuda generator initialization
@@ -410,11 +409,12 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     const double random_number = rand_->uniform();
 #else
                     seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
+                    //seed_curand_2 = std::fmod(a * seed_curand_2 + c, m); //Linear generator
                     seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
                         
                     prng_state_2.init( seed_curand_2, seq, offset ); //Random generator initialization
 	
-                    random_number = prng_state_2.uniform(); //Generating number
+                    const double random_number = prng_state_2.uniform(); //Generating number
                     //random_number = curand_uniform(&state_2); //Generating number
 #endif
 
@@ -435,7 +435,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Start index in the pair buffer
                     int i_pair_start = nparticles - mBW_pair_creation_sampling_[0];
 #else 
-                    int i_pair_start = (istart + ipart)*mBW_pair_creation_sampling_[0]
+                    int i_pair_start = (istart + ipart)*mBW_pair_creation_sampling_[0];
 #endif
 
                     // For all new paticles
@@ -491,13 +491,14 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Create particle for the second pair species
                     new_pair[1]->createParticles( mBW_pair_creation_sampling_[1] );
 
+#ifndef _GPU
                     // Final size
                     nparticles = new_pair[1]->size();
-#ifndef _GPU
+
                     // Start index in the pair buffer
                     i_pair_start = nparticles - mBW_pair_creation_sampling_[1];
 #else 
-                    int i_pair_start = (istart + ipart)*mBW_pair_creation_sampling_[1]
+                    i_pair_start = (istart + ipart)*mBW_pair_creation_sampling_[1];
 #endif
 
                     // For all new paticles
@@ -705,7 +706,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
 
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
-        double *weight = particles.getPtrWeight();
+        double *const weight = particles.getPtrWeight();
         //int nb_deleted_photon;
 
         // Backward loop over the photons to find the first existing photon

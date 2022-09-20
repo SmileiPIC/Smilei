@@ -41,7 +41,10 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     double *const __restrict__ invgf       = &( smpi->dynamics_invgf[ithread][0] );
     
-    const int nparts = smpi->getBufferSize(ithread);
+    //const int nparts = smpi->getBufferSize(ithread);
+
+    const int nparts = particles.last_index.back(); // particles.size()
+
     const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
     const double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );
     const double *const __restrict__ Ez = &( ( smpi->dynamics_Epart[ithread] )[2*nparts] );
@@ -68,13 +71,13 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     const int istart_offset   = istart - ipart_buffer_offset;
     const int particle_number = iend - istart;
 
-    #pragma acc parallel present(Ex [istart_offset:particle_number],    \
-                                 Ey [istart_offset:particle_number],    \
-                                 Ez [istart_offset:particle_number],    \
-                                 Bx [istart_offset:particle_number],    \
-                                 By [istart_offset:particle_number],    \
-                                 Bz [istart_offset:particle_number],    \
-                                 invgf [istart_offset:particle_number]) \
+    #pragma acc parallel present(Ex [0:nparts],    \
+                                 Ey [0:nparts],    \
+                                 Ez [0:nparts],    \
+                                 Bx [0:nparts],    \
+                                 By [0:nparts],    \
+                                 Bz [0:nparts],    \
+                                 invgf [0:nparts]) \
         deviceptr(position_x,                                           \
                   position_y,                                           \
                   position_z,                                           \

@@ -349,7 +349,7 @@ Species::~Species()
     
     for (int k=0 ; k<2 ; k++) {
         if (mBW_pair_particles_[k]) {
-            delete mBW_pair_particles_[k];
+    //        delete mBW_pair_particles_[k];
         }
     }
 
@@ -409,10 +409,10 @@ void Species::dynamics( double time_dual,
             mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
             mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
 #else
-            static_cast<nvidiaParticles>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0) );
-            static_cast<nvidiaParticles>(mBW_pair_particles_[0])->resetCellKeys();
-            static_cast<nvidiaParticles>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1) );
-            static_cast<nvidiaParticles>(mBW_pair_particles_[1])->resetCellKeys();
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0) );
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1) );
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->resetCellKeys();
 #endif
             
 #ifdef  __DETAILED_TIMERS
@@ -429,11 +429,11 @@ void Species::dynamics( double time_dual,
         const int particule_count = particles->last_index.back();
 
         // smpi->dynamics_*'s pointer stability is guaranteed during the loop only if the size is not modified
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particule_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particule_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particule_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &smpi->dynamics_Epart[ithread][0], particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &smpi->dynamics_Bpart[ithread][0], particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &smpi->dynamics_invgf[ithread][0], particule_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &smpi->dynamics_iold[ithread][0], particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &smpi->dynamics_deltaold[ithread][0], particule_count * nDim_field );
 
         {
 
@@ -573,7 +573,7 @@ void Species::dynamics( double time_dual,
 #endif
 
         // Push the particles and the photons
-        ( *Push )( *particles, smpi, 0, particles->size(), ithread );
+        ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread );
         //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
@@ -843,7 +843,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 #ifdef _GPU
                 // We first erase empty slots in the buffer of photons
                 // radiation_photons_->cell_keys is used as a mask
-                static_cast<nvidiaParticles*>(mBW_pair_species_[k])->eraseLeavingParticles();
+                static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->eraseLeavingParticles();
 #endif
                 
                 mBW_pair_species_[k]->importParticles( params,
@@ -853,7 +853,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                                                       
 #ifdef _GPU
                 // We explicitely clear the device Particles
-                static_cast<nvidiaParticles*>(mBW_pair_species_[k])->deviceClear();
+                static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->deviceClear();
 #endif
                                                       
             }
@@ -1354,7 +1354,25 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     //     thetaold = &( smpi->dynamics_eithetaold[ithread] );
     
     const int nparts = smpi->dynamics_Epart[ithread].size()/3;
+
+#ifdef _GPU
+
+    double *const __restrict__ weight =  particles->getPtrWeight();
+
+    double *const __restrict__ position_x = particles->getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_particle > 1 ? particles->getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_particle > 2 ? particles->getPtrPosition( 2 ) : nullptr;
     
+    double *const __restrict__ momentum_x = particles->getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles->getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles->getPtrMomentum(2);
+
+    short *const __restrict__ charge = particles->getPtrCharge();
+    
+    double *const __restrict__ chi = particles->getPtrChi();
+    double *const __restrict__ tau = particles->getPtrTau();
+#endif
+
     double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
     double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );
     double *const __restrict__ Ez = &( ( smpi->dynamics_Epart[ithread] )[2*nparts] );
@@ -1377,15 +1395,18 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
     const int nbin = particles->numberOfBins();
     
 #ifdef _GPU
-    #pragma acc parallel seq \
-    present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts]\
-    Bx[0:nparts], By[0:nparts], Bz[0:nparts]\
-    deviceptr(
+    #pragma acc parallel \
+    present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts], \
+    Bx[0:nparts], By[0:nparts], Bz[0:nparts], \
+    deltaold[0:3*nparts], \
+    iold[0:3*nparts], \
+    gamma[0:nparts]) \
+    deviceptr( \
         position_x,position_y,position_z, \
         momentum_x,momentum_y,momentum_z, \
-        charge,weight,tau,chi
-    ) 
+        charge,weight,tau,chi)
     {
+    #pragma acc loop seq
 #endif
     
     for (auto ibin = 0 ; ibin < nbin-1 ; ibin++) {
@@ -1417,8 +1438,33 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
             }
             
             if (copy_particle_number>0) {
+
+#ifndef _GPU
                 particles->overwriteParticle(copy_first_index, particles->last_index[ibin], copy_particle_number, compute_cell_keys );
-                
+#else
+                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+                    const auto ipart_l = copy_first_index + ipart;
+                    const auto ipart_r = particles->last_index[ibin] + ipart;
+                    weight[ipart_l] = weight[ipart_r];
+                    position_x[ipart_l] = position_x[ipart_r];
+                    if( nDim_particle > 1 ) {
+                        position_y[ipart_l] = position_y[ipart_r];
+                        if( nDim_particle > 2 ) {
+                            position_z[ipart_l] = position_z[ipart_r];
+                        }
+                    }
+                    momentum_x[ipart_l] = momentum_x[ipart_r];
+                    momentum_y[ipart_l] = momentum_y[ipart_r];
+                    momentum_z[ipart_l] = momentum_z[ipart_r];
+                    charge[ipart_l] = charge[ipart_r];
+                    if( particles->isQuantumParameter ) {
+                        chi[ipart_l] = chi[ipart_r];
+                    }
+                    if( particles->isMonteCarlo ) {
+                        tau[ipart_l] = tau[ipart_r];
+                    }
+                }
+#endif
                 for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
                     Ex[copy_first_index + ipart] = Ex[particles->last_index[ibin] + ipart];
                     Ey[copy_first_index + ipart] = Ey[particles->last_index[ibin] + ipart];
@@ -1434,7 +1480,6 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
                 for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
                     gamma[copy_first_index + ipart] = gamma[particles->last_index[ibin] + ipart];
                 }
-                
                 for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
                     for ( int iDim=particles->dimension()-1; iDim>=0 ; iDim-- ) {
                         iold[iDim*nparts + copy_first_index + ipart] = iold[iDim*nparts + particles->last_index[ibin] + ipart];
@@ -1447,12 +1492,13 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
                     }
                 }
                 
+#ifndef _GPU 
                 if (thetaold) {
                     for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
                         thetaold[copy_first_index + ipart] = thetaold[particles->last_index[ibin] + ipart];
                     }
                 }
-                
+#endif    
             }
             //particles->eraseParticle( particles->last_index[ibin], bin_gap, true );
             
@@ -1521,36 +1567,36 @@ void Species::removeParticlesKeepBinFirstIndex(
     double * weight =  particles->getPtrWeight();
 
 #ifdef _GPU
-    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
-    double *const __restrict__ position_y = nDim_particle > 1 ? particles.getPtrPosition( 1 ) : nullptr;
-    double *const __restrict__ position_z = nDim_particle > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+    double *const __restrict__ position_x = particles->getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_particle > 1 ? particles->getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_particle > 2 ? particles->getPtrPosition( 2 ) : nullptr;
     
-    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles->getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles->getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles->getPtrMomentum(2);
 
-    short *const __restrict__ charge = particles.getPtrCharge();
+    short *const __restrict__ charge = particles->getPtrCharge();
     
-    double *const __restrict__ chi = particles.getPtrChi();
-    double *const __restrict__ tau = particles.getPtrTau();
+    double *const __restrict__ chi = particles->getPtrChi();
+    double *const __restrict__ tau = particles->getPtrTau();
 #endif
 
     // Total number of bins / cells
     const int nbin = particles->numberOfBins();
 
 #ifdef _GPU
-    #pragma acc parallel loop gang worker \
+    #pragma acc parallel  \
     present(Epart[0:nparts*3],\
     Bpart[0:nparts*3], \
     gamma[0:nparts], \
     iold[0:nparts*nDim_particle], \
-    deltaold[0:nparts*nDim_particle], \
-    deviceptr(
+    deltaold[0:nparts*nDim_particle]) \
+    deviceptr( \
         position_x,position_y,position_z, \
         momentum_x,momentum_y,momentum_z, \
-        charge,weight,tau,chi
-    ) 
+        charge,weight,tau,chi)
     {
+    #pragma acc loop gang worker
 #endif
 
     // loop over the bins
@@ -1595,10 +1641,10 @@ void Species::removeParticlesKeepBinFirstIndex(
                         momentum_y[ipart] = momentum_y[last_photon_index];
                         momentum_z[ipart] = momentum_z[last_photon_index];
                         charge[ipart] = charge[last_photon_index];
-                        if( isQuantumParameter ) {
+                        if( particles->isQuantumParameter ) {
                             chi[ipart] = chi[last_photon_index];
                         }
-                        if( isMonteCarlo ) {
+                        if( particles->isMonteCarlo ) {
                             tau[ipart] = tau[last_photon_index];
                         }
 

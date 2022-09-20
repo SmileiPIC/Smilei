@@ -117,9 +117,9 @@ public:
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
-#ifdef _GPU
-    #pragma acc routine seq
-#endif
+//#ifdef _GPU
+//    #pragma acc routine seq
+//#endif
     void removeDecayedPhotonsWithoutBinCompression(
         Particles &particles,
         SmileiMPI *smpi,

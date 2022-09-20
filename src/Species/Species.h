@@ -6,6 +6,9 @@
 //#include "PyTools.h"
 
 #include "Particles.h"
+#ifdef _GPU
+#include "nvidiaParticles.h"
+#endif
 #include "Params.h"
 //#include "PartBoundCond.h"
 
