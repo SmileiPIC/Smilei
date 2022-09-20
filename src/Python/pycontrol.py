@@ -87,6 +87,8 @@ def _smilei_check():
             input*1.
             return tconstant()
         except: return input
+    Main.pml_sigma = [ toSpaceProfile(p) for p in (Main.pml_sigma ) ]
+    Main.pml_integrate_sigma_r = [ toSpaceProfile(p) for p in (Main.pml_integrate_sigma_r ) ]
     for s in Species:
         s.number_density      = toSpaceProfile(s.number_density)
         s.charge_density  = toSpaceProfile(s.charge_density)

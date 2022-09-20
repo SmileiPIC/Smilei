@@ -2,27 +2,41 @@
 #include "ElectroMagnAM.h"
 #include "ElectroMagnBCAM_PML.h"
 #include "cField2D.h"
+#include "Tools.h"
 #include <complex>
 #include "dcomplex.h"
 #include "Patch.h"
 
-PML_SolverAM::PML_SolverAM( Params &params )
-    : SolverAM( params )
+PML_SolverAM::PML_SolverAM( Params &params ):
+    SolverAM( params ),
+    pml_sigma_( 2, NULL ),
+    pml_integrate_sigma_r_( 1, NULL )
 {
     //Define here the value of coefficient kappa_l_max, power_kappa_l, sigma_l_max, power_sigma_l
-    sigma_l_max = params.pml_sigma_parameters[0][0];
     kappa_l_max = params.pml_kappa_parameters[0][0];
-    sigma_power_pml_l = params.pml_sigma_parameters[0][1];
     kappa_power_pml_l = params.pml_kappa_parameters[0][1];
     //Define here the value of coefficient kappa_r_max, power_kappa_r, sigma_r_max, power_sigma_r
-    sigma_r_max = params.pml_sigma_parameters[1][0];
     kappa_r_max = params.pml_kappa_parameters[1][0];
-    sigma_power_pml_r = params.pml_sigma_parameters[1][1];
     kappa_power_pml_r = params.pml_kappa_parameters[1][1];
+
+    std::vector<PyObject *> prof;
+    if( PyTools::extract_1orNProfiles( 2, "pml_sigma", "Main", 0,  prof ) ) {
+    // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
+        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_profile", params, true, false, false );
+        pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_profile", params, true, false, false );
+    }
+    if( PyTools::extract_1orNProfiles( 1, "pml_integrate_sigma_r", "Main", 0,  prof ) ) {
+        pml_integrate_sigma_r_[0] = new Profile( prof[0], 1, "pml_integrate_sigma_r_profile", params, true, false, false );
+    }
+
 }
 
 PML_SolverAM::~PML_SolverAM()
 {
+    for( unsigned int i=0; i<pml_sigma_.size(); i++ ) {
+        delete pml_sigma_[i];
+    }
+    delete pml_integrate_sigma_r_[0];
 }
 
 void PML_SolverAM::operator()( ElectroMagn *fields )
@@ -54,30 +68,24 @@ void PML_SolverAM::operator()( ElectroMagn *fields )
 
 void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
 {
+    // Set global radial index where the PML domain begins j_glob_pml
+    //  and set PML sizes nl_p, nr_p ... which are first initialized as patches size.
     if ( iDim == 0 ) {
-        // Global radial index where begin the PML domain
-        // because j_glob is not define for this region
-        if (min_or_max==0) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
-        }
-        else if (min_or_max==1) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
-        }
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
         nl_p = ncells_pml_domain;
         nl_d = ncells_pml_domain+1;
+        // Size in R is the same as a normal patch => no need to adjust.
     }
     else if ( iDim == 1 ) {
-        // Global radial index where begin the PML domain
-        // because j_glob is not define for this region
         if (min_or_max==0) {
             j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain+oversize[iDim]+1;
         }
         else if (min_or_max==1) {
             j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1;
         }
-        // Redifine length of pml region
         nr_p = ncells_pml_domain;
         nr_d = ncells_pml_domain+1;
+        // Adjust size in l too in case there are overlapping pmls
         nl_p += ncells_pml_min[0] + ncells_pml_max[0];
         nl_d += ncells_pml_min[0] + ncells_pml_max[0];
     }
@@ -144,15 +152,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     c5_d_tfield.resize( nr_d, 1. ); // j-dependent
     c6_d_tfield.resize( nr_d, 0. ); // j-dependent
 
-    // if ( iDim == 0 ) {
-    //     rmax = 0. ;
-    //     r0 = 0. ;
-    // }
-    // else if( iDim == 1 ) {
-    //     rmax = patch->getDomainLocalMax( 1 ) ;
-    //     r0 = rmax + 3.*dr ; // Have to be oversize+1
-    // }
-
+         // What are rmax and r0 ??
     rmax = patch->getDomainLocalMax( 1 ) ;
     r0 = rmax + (oversize[1] + 1 )*dr ;
 
@@ -160,7 +160,6 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         // 2 cells are vaccum so the PML media begin at r0 which is :
         // Eventually the size of PML media is :
         length_l_pml =  (ncells_pml_domain-startpml+0.5)*dl ;
-        length_r_pml = 0 ;
         // Primal grid
         // Longitudinal
         // Params for first cell of PML-patch (vacuum) i = 0,1,2
@@ -172,7 +171,8 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         // Params for other cells (PML Media) when i>=3
         for ( int i=startpml ; i<nl_p ; i++ ) {
                 kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , kappa_power_pml_l ) / pow( length_l_pml , kappa_power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
+                //sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
+                sigma_l_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dl/length_l_pml);
         }
         // Radial
         for ( int j=0 ; j<nr_p ; j++ ) {
@@ -192,7 +192,8 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         // Params for other cells (PML Media) when j>=4
         for ( int i=startpml+1 ; i<nl_d ; i++ ) {
             kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml-0.5)*dl , kappa_power_pml_l ) / pow( length_l_pml , kappa_power_pml_l ) ;
-            sigma_l_d[i] = sigma_l_max * pow( (i-startpml-0.5)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
+            //sigma_l_d[i] = sigma_l_max * pow( (i-startpml-0.5)*dl , sigma_power_pml_l ) / pow( length_l_pml , sigma_power_pml_l ) ;
+            sigma_l_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dl/length_l_pml);
         }
         // Radial
         for ( int j=0 ; j<nr_d ; j++ ) {
@@ -218,13 +219,15 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmin , kappa_power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
+                //sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
+                sigma_l_p[i] = pml_sigma_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dl/length_l_pml_lmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
                 kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmax , kappa_power_pml_l ) ;
-                sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
+                //sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
+                sigma_l_p[i] = pml_sigma_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ))*dl/length_l_pml_lmax);
             }
         }
         // Radial
@@ -239,9 +242,11 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         // Params for other cells (PML Media) when j>=3
         for ( int j=startpml ; j<nr_p ; j++) {
             kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , kappa_power_pml_r ) / pow( length_r_pml , kappa_power_pml_r ) ;
-            sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            //sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            sigma_r_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dr/length_r_pml);
             integrate_kappa_r_p[j] = ( rmax + j*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
-            integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
+            //integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
+            integrate_sigma_r_p[j] = length_r_pml * pml_integrate_sigma_r_[0]->valueAt((j-startpml)*dr/length_r_pml);
         }
         // Dual grid
         // Longitudinal
@@ -252,13 +257,15 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmin , kappa_power_pml_l ) ;
-                sigma_l_d[i] = sigma_l_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
+                //sigma_l_d[i] =      sigma_l_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmin , sigma_power_pml_l ) ;
+                sigma_l_d[i] = pml_sigma_[0]->valueAt((( 0.5 + ncells_pml_min[0] - 1 - i ))*dl/length_l_pml_lmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1)+1 ; i<nl_d ; i++ ) {
                 kappa_l_d[i] = 1. + (kappa_l_max - 1.) * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , kappa_power_pml_l ) / pow( length_l_pml_lmax , kappa_power_pml_l ) ;
-                sigma_l_d[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
+                //sigma_l_d[i] =   sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl , sigma_power_pml_l ) / pow( length_l_pml_lmax , sigma_power_pml_l ) ;
+                sigma_l_d[i] = pml_sigma_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl/length_l_pml_lmax);
             }
         }
         // Radial
@@ -273,9 +280,11 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         // Params for other cells (PML Media) when j>=4
         for ( int j=startpml+1 ; j<nr_d ; j++) {
             kappa_r_d[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml-0.5)*dr , kappa_power_pml_r ) / pow( length_r_pml , kappa_power_pml_r ) ;
-            sigma_r_d[j] = sigma_r_max * pow( (j-startpml-0.5)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            //sigma_r_d[j] = sigma_r_max * pow( (j-startpml-0.5)*dr , sigma_power_pml_r ) / pow( length_r_pml , sigma_power_pml_r ) ;
+            sigma_r_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dr/length_r_pml);
             integrate_kappa_r_d[j] = ( rmax + (j-0.5)*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , kappa_power_pml_r ) * pow( (j-startpml-0.5)*dr , kappa_power_pml_r+1 ) / (kappa_power_pml_r+1) ;
-            integrate_sigma_r_d[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml-0.5)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
+            //integrate_sigma_r_d[j] = sigma_r_max / pow( length_r_pml , sigma_power_pml_r ) * pow( (j-startpml-0.5)*dr , sigma_power_pml_r+1 ) / ( sigma_power_pml_r+1 ) ;
+            integrate_sigma_r_d[j] = length_r_pml * pml_integrate_sigma_r_[0]->valueAt((j-startpml-0.5)*dr/length_r_pml);
         }
     }
 

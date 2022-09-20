@@ -199,8 +199,16 @@ class Main(SmileiSingleton):
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
     number_of_pml_cells = [[10,10],[10,10],[10,10]]
-    pml_sigma_parameters = [[20,2],[20,2],[20,2]]
+    pml_sigma_parameters = [[21,2],[21,2],[21,2]]
     pml_kappa_parameters = [[80,4],[80,4],[80,4]]
+
+    def default_sigma(x):
+        return 21. * x**2  
+    def default_integrate_sigma(x):
+        return 7. * x**3  
+
+    pml_sigma = [default_sigma]
+    pml_integrate_sigma_r = [default_integrate_sigma]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
