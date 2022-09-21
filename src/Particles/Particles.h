@@ -80,7 +80,24 @@ public:
     void clear(const bool compute_cell_keys = false);
 
     //! Get number of particules
+    inline unsigned int numberOfParticles() const
+    {
+        // If the notion of bin is not used, the vector size is the number of Particles
+        if (last_index.size() == 0) {
+            //ERROR("Particles object tried to use `numberOfParticles` but `last_index` is not initialized.")
+            return Weight.size();
+        }
+        return last_index.back();
+    }
+    
+    //! Get vector size on CPU
     inline unsigned int size() const
+    {
+        return Weight.size();
+    }
+
+    //! Get vector size on CPU
+    inline unsigned int hostVectorSize() const
     {
         return Weight.size();
     }

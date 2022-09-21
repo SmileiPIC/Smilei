@@ -84,7 +84,7 @@ void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xjn );
     
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     
     // Interpolate the fields from the Dual grid : Ex, By, Bz
     *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
@@ -128,7 +128,7 @@ void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     
     //Loop on bin particles
-    int npart_tot = particles.size();
+    int npart_tot = particles.numberOfParticles();
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, npart_tot, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -152,7 +152,7 @@ void Interpolator1D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
         
     } else {
     
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }

@@ -91,7 +91,7 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xpn, ypn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) = compute( &coeffxd_[1], &coeffyp_[1], Ex2D, id_, jp_ );
@@ -173,7 +173,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const int ny_d = ny_p + 1;                 // dual_grid_size_in_y
 
     // Loop on bin particles
-    const int nparts = particles.last_index.back();
+    const int nparts = particles.numberOfParticles();
 
     const int first_index = *istart;
     const int last_index  = *iend;
@@ -192,7 +192,6 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     #pragma omp distribute parallel for
 #endif
     for( int ipart = first_index; ipart < last_index; ipart++ ) {
-
         // Interpolation on current particle
 
         // Normalized particle position
@@ -225,6 +224,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         iold[1*nparts+ipart]  = idx_p[1];
         delta[0*nparts+ipart] = delta_p[0];
         delta[1*nparts+ipart] = delta_p[1];
+        
     }
 }
 
@@ -248,7 +248,7 @@ void Interpolator2D2Order::fieldsSelection( ElectroMagn *EMfields,
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
@@ -276,7 +276,7 @@ void Interpolator2D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -331,7 +331,7 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position

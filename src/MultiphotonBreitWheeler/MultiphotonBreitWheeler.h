@@ -127,7 +127,7 @@ public:
         int *bmin, int *bmax, int ithread );
 
     //! Return the sampling for each pair 
-    int get_pair_creation_sampling(int i) {
+    int getPairCreationSampling(int i) {
         return mBW_pair_creation_sampling_[i];
     }
 

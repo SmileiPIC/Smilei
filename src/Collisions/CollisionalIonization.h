@@ -33,8 +33,6 @@ public:
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
     virtual unsigned int createDatabase( double );
-    //! Assigns the correct databases
-    virtual void assignDatabase( unsigned int );
     
     //! Coefficients used for interpolating the energy over a given initial list
     static const double a1, a2, npointsm1;
