@@ -12,14 +12,11 @@ install:
   stage: install
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
     - radiation_GPU
-=======
     - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     # Force workdir cleaning in case of retried
@@ -38,16 +35,11 @@ compile_default:
   stage: compile_default
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
     - radiation_GPU
-    
-=======
     - adaptation_for_gpu
     - diagfield_rework
-
->>>>>>> origin/adaptation_for_gpu
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -56,18 +48,13 @@ compile_default:
 
 run1D:
   stage: run_default
-  only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
     - radiation_GPU
-    
-=======
     - adaptation_for_gpu
     - diagfield_rework
 
->>>>>>> origin/adaptation_for_gpu
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -79,17 +66,12 @@ run2D:
   stage: run_default
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    # - radiation_GPU
-    
-=======
+    - radiation_GPU
     - adaptation_for_gpu
     - diagfield_rework
 
-
->>>>>>> origin/adaptation_for_gpu
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -103,16 +85,11 @@ run3D:
   stage: run_default
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-    # - radiation_GPU
-    
-=======
+    - radiation_GPU
     - adaptation_for_gpu
     - diagfield_rework
-
->>>>>>> origin/adaptation_for_gpu
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -127,13 +104,11 @@ runAM:
   stage: run_default
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     # Move in test dir
@@ -145,13 +120,11 @@ runCollisions:
   stage: run_default
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     # Move in test dir
@@ -163,13 +136,11 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -180,13 +151,11 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -196,13 +165,11 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -213,13 +180,11 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -230,13 +195,11 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-<<<<<<< HEAD
     - develop_gpu_omp_for_nvidia
     - develop_gpu_omp
-=======
-    #- adaptation_for_gpu
+    - radiation_GPU
+    - adaptation_for_gpu
     - diagfield_rework
->>>>>>> origin/adaptation_for_gpu
 
 
   script:
