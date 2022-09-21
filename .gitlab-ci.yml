@@ -40,6 +40,7 @@ compile_default:
     - radiation_GPU
     - adaptation_for_gpu
     - diagfield_rework
+    
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -90,6 +91,7 @@ run3D:
     - radiation_GPU
     - adaptation_for_gpu
     - diagfield_rework
+    
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
