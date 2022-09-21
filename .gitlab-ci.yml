@@ -45,7 +45,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    #- adaptation_for_gpu
+    - adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -59,7 +59,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    #- adaptation_for_gpu
+    - adaptation_for_gpu
     - diagfield_rework
 
 
@@ -76,7 +76,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    #- adaptation_for_gpu
+    - adaptation_for_gpu
     - diagfield_rework
 
   script:

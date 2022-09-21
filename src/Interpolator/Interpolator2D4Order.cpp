@@ -112,7 +112,7 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields,
     // Calculate coeffs
     coeffs( xpn, ypn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
@@ -161,7 +161,7 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // std::cerr << "ipart: " << ipart
@@ -203,7 +203,7 @@ void Interpolator2D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }

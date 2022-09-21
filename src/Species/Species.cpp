@@ -973,7 +973,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     int nbNeighbors_ = 2;
     int n_part_recv;
 
-    particles->eraseParticleTrail( particles->last_index.back() );
+    particles->eraseParticleTrail( particles->numberOfParticles() );
 
     //Evaluation of the necessary shift of all bins.2
     //idim=0
@@ -1193,7 +1193,8 @@ void Species::countSortParticles( Params &params )
 // Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
-    unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
+    unsigned int npart = source_particles.size();
+    unsigned int nbin  = particles->numberOfBins();
     double inv_cell_length = 1./ params.cell_length[0];
 
     // If this species is tracked, set the particle IDs
