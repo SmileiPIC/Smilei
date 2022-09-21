@@ -1,4 +1,4 @@
-#- adaptation_for_gpustages:
+stages:
     - install
     - compile_default
     - run_default
