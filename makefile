@@ -128,10 +128,12 @@ ifneq (,$(call parse_config,debug))
 # With gdb
 else ifneq (,$(call parse_config,gdb))
     CXXFLAGS += -g -D__DEBUG -O0
-
+# With gdb
+else ifneq (,$(call parse_config,ddt))
+    CXXFLAGS += -g -O0
 # With valgrind
 else ifneq (,$(call parse_config,valgrind))
-    CXXFLAGS += -g  -O3
+    CXXFLAGS += -g -O3
 
 # Scalasca
 else ifneq (,$(call parse_config,scalasca))
@@ -228,18 +230,25 @@ ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
     THRUSTCXX = nvcc
 
-    ACCELERATOR_GPU_FLAGS += -w
+    ifneq (,$(call parse_config,ddt))
+        ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
+        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G -cudart shared --std c++14 $(DIRS:%=-I%)
+        ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+    else
 
-    # To enable OpenMP support, comment _GPU and uncomment SMILEI_ACCELERATOR_GPU_OMP.
+        ACCELERATOR_GPU_FLAGS += -w
 
-    ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
-    # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
+        # To enable OpenMP support, comment _GPU and uncomment SMILEI_ACCELERATOR_GPU_OMP.
+
+        ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
+        # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
+
+        ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+        ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+    endif
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
-
-    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
-    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
 
     OBJS += $(GPU_KERNEL_OBJS)
 endif

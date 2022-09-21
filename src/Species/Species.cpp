@@ -396,7 +396,7 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-        smpi->resizeBuffers( ithread, nDim_field, particles->size(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
