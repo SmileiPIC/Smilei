@@ -179,8 +179,8 @@ void Species::initCluster( Params &params )
 void Species::resizeCluster( Params &params )
 {
 
-    // We keep the current number of particles
-    int npart = particles->numberOfParticles();
+    // We keep the current number of particles (from the vector size)
+    int npart = particles->hostVectorSize();
     int size = params.n_space[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins

@@ -86,7 +86,7 @@ public:
     }
     inline unsigned int size() const
     {
-        return last_index.back();
+        return Weight.size();
     }
 
 
