@@ -80,7 +80,17 @@ public:
     void clear(const bool compute_cell_keys = false);
 
     //! Get number of particules
+    inline unsigned int numberOfParticles() const
+    {
+        return last_index.back();
+    }
     inline unsigned int size() const
+    {
+        return last_index.back();
+    }
+
+
+    inline unsigned int hostVectorSize() const
     {
         return Weight.size();
     }

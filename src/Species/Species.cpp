@@ -180,7 +180,7 @@ void Species::resizeCluster( Params &params )
 {
 
     // We keep the current number of particles
-    int npart = particles->size();
+    int npart = particles->numberOfParticles();
     int size = params.n_space[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
@@ -407,7 +407,7 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-        smpi->resizeBuffers( ithread, nDim_field, particles->size(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
         
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
@@ -416,8 +416,8 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
             
-            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
-            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
+            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
             
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -429,7 +429,7 @@ void Species::dynamics( double time_dual,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1577,7 +1577,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
         smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) { // loop on ibin
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1661,7 +1661,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
         smpi->resizeBuffers( ithread, nDim_particle, particles->last_index.back(), false );
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) { // loop on ibin
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();

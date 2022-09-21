@@ -354,7 +354,7 @@ public:
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const
     {
-        return particles->size();
+        return particles->numberOfParticles();
     }
     // capacity() = vect ever oversize
     //! \todo define particles.capacity = min.capacity

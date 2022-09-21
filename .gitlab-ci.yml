@@ -1,4 +1,4 @@
-stages:
+#- adaptation_for_gpustages:
     - install
     - compile_default
     - run_default
@@ -45,7 +45,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -59,7 +59,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
 
@@ -76,7 +76,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -93,7 +93,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -106,7 +106,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -119,7 +119,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -131,7 +131,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -142,7 +142,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -154,7 +154,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
   script:
@@ -166,7 +166,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - adaptation_for_gpu
+    #- adaptation_for_gpu
     - diagfield_rework
 
 
