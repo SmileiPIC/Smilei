@@ -230,10 +230,17 @@ ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
     THRUSTCXX = nvcc
 
-    ifneq (,$(call parse_config,ddt))
+    ifneq (,$(call parse_config,debug))
         ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
-        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G -cudart shared --std c++14 $(DIRS:%=-I%)
+        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
+        += $(shell $(PYTHONCONFIG) --includes)
+
+    else ifneq (,$(call parse_config,ddt))
+        ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
+	# -cudart shared
+        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
         ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+
     else
 
         ACCELERATOR_GPU_FLAGS += -w
@@ -243,7 +250,7 @@ ifneq (,$(call parse_config,gpu_nvidia))
         ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
         # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
-        ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+        ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -G --std c++14 $(DIRS:%=-I%)
         ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
     endif
 
