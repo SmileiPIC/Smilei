@@ -409,9 +409,9 @@ void Species::dynamics( double time_dual,
             mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
             mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 #else
-            static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0) );
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
-            static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1) );
+            static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->resetCellKeys();
 #endif
             

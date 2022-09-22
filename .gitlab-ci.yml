@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    #- radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -57,7 +57,7 @@ run2D:
   only:
     - develop
     - radiation_GPU_for_nvidia
-    #- radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -72,8 +72,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - radiation_GPU_for_nvidia
-    #- radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir

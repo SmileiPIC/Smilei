@@ -130,7 +130,8 @@ else ifneq (,$(call parse_config,gdb))
     CXXFLAGS += -g -D__DEBUG -O0
 # With gdb
 else ifneq (,$(call parse_config,ddt))
-    CXXFLAGS += -g -O0
+    # -g
+    CXXFLAGS += -O0 -g
 # With valgrind
 else ifneq (,$(call parse_config,valgrind))
     CXXFLAGS += -g -O3
@@ -230,17 +231,19 @@ ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
     THRUSTCXX = nvcc
 
+    # Debugging mode
     ifneq (,$(call parse_config,debug))
         ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
         ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
         += $(shell $(PYTHONCONFIG) --includes)
-
+    # DDT mode
     else ifneq (,$(call parse_config,ddt))
-        ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
-	# -cudart shared
+        # -g
+        ACCELERATOR_GPU_FLAGS += -w -D_GPU -Minfo=accel
+	# -cudart shared -G
         ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
         ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-
+    # Normal mode
     else
 
         ACCELERATOR_GPU_FLAGS += -w
@@ -351,7 +354,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) -L/gpfslocalsys/cuda/11.2/lib64/stubs
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode
