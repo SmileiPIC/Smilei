@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - radiation_GPU
+    #- radiation_GPU
 
   script:
     # Move in test dir
@@ -57,7 +57,7 @@ run2D:
   only:
     - develop
     - radiation_GPU_for_nvidia
-    - radiation_GPU
+    #- radiation_GPU
 
   script:
     # Move in test dir
@@ -73,7 +73,7 @@ run3D:
   only:
     - develop
     - radiation_GPU_for_nvidia
-    - radiation_GPU
+    #- radiation_GPU
 
   script:
     # Move in test dir
@@ -89,7 +89,6 @@ runAM:
   stage: run_default
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
   script:
@@ -102,8 +101,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - radiation_GPU_for_nvidia
-    - radiation_GPU
+    #- radiation_GPU
 
   script:
     # Move in test dir
@@ -115,7 +113,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
   script:
@@ -127,7 +124,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
   script:
@@ -138,7 +134,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
   script:
@@ -150,7 +145,6 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
   script:
@@ -162,7 +156,6 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - radiation_GPU_for_nvidia
     - radiation_GPU
 
 
