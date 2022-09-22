@@ -621,10 +621,12 @@ public:
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_pos_init ) ) {
             //Initialize position from this array
-            PyArrayObject *np_ret = reinterpret_cast<PyArrayObject *>( py_pos_init );
-
+            PyArrayObject * A = PyArray_GETCONTIGUOUS( ( PyArrayObject* ) py_pos_init );
+            this_species->position_initialization_array_ = A;
+            Py_INCREF( A );
+            
             //Check dimensions
-            unsigned int ndim_local = PyArray_NDIM( np_ret );
+            unsigned int ndim_local = PyArray_NDIM( A );
             if( ndim_local != 2 ) {
                 ERROR_NAMELIST(
                     "For species '" << species_name 
@@ -632,9 +634,9 @@ public:
                     LINK_NAMELIST + std::string("#species") 
                 );
             }
-
+            
             //Check number of coordinates provided
-            ndim_local = PyArray_SHAPE( np_ret )[0];
+            ndim_local = PyArray_SHAPE( A )[0];
             if( ndim_local != params.nDim_particle + 1 ) {
                 ERROR_NAMELIST(
                     "For species '" << species_name
@@ -643,16 +645,10 @@ public:
                     LINK_NAMELIST + std::string("#species")  
                 );
             }
-
+            
             //Get number of particles. Do not initialize any more if this is a restart.
             if( !params.restart ) {
-                this_species->n_numpy_particles_ =  PyArray_SHAPE( np_ret )[1];
-            }
-            this_species->position_initialization_array_ = new double[ndim_local*this_species->n_numpy_particles_] ;
-            for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )this_species->n_numpy_particles_; ipart++ ) {
-                    this_species->position_initialization_array_[idim*this_species->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
-                }
+                this_species->n_numpy_particles_ =  PyArray_SHAPE( A )[1];
             }
         }
 #endif
@@ -745,20 +741,23 @@ public:
                     LINK_NAMELIST + std::string("#species")
                 );
             }
-
-            PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject *>( py_mom_init );
+            
+            PyArrayObject * A = PyArray_GETCONTIGUOUS( ( PyArrayObject* ) py_mom_init );
+            this_species->momentum_initialization_array_ = A;
+            Py_INCREF( A );
+            
             //Check dimensions
-            unsigned int ndim_local = PyArray_NDIM( np_ret_mom ) ; //Ok
+            unsigned int ndim_local = PyArray_NDIM( A ) ; //Ok
             if( ndim_local != 2 ) {
                 ERROR_NAMELIST(
                     "For species '" << species_name 
-                    << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.",
+                    << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array. Provided array has "<<ndim_local<<" dims.",
                     LINK_NAMELIST + std::string("#species")
                 );
             }
 
             //Check number of coordinates provided
-            ndim_local =  PyArray_SHAPE( np_ret_mom )[0]; // ok
+            ndim_local =  PyArray_SHAPE( A )[0]; // ok
             if( ndim_local != 3 ) {
                 ERROR_NAMELIST( 
                     "For species '" << species_name 
@@ -769,18 +768,12 @@ public:
             }
 
             //Get number of particles
-            if( !params.restart && this_species->n_numpy_particles_ != PyArray_SHAPE( np_ret_mom )[1] ) {
+            if( !params.restart && this_species->n_numpy_particles_ != PyArray_SHAPE( A )[1] ) {
                 ERROR_NAMELIST(
                     "For species '" << species_name 
                     << "' momentum_initialization must provide as many particles as position_initialization.",
                     LINK_NAMELIST + std::string("#species") 
                 );
-            }
-            this_species->momentum_initialization_array_ = new double[ndim_local*this_species->n_numpy_particles_] ;
-            for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )this_species->n_numpy_particles_; ipart++ ) {
-                    this_species->momentum_initialization_array_[idim*this_species->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
-                }
             }
         }
 #endif
@@ -1197,7 +1190,7 @@ public:
         new_species->file_position_npart_                      = species->file_position_npart_;
         new_species->file_momentum_npart_                      = species->file_momentum_npart_;
         new_species->regular_number_array_                     = species->regular_number_array_;
-        new_species->n_numpy_particles_                        = species->n_numpy_particles_            ;
+        new_species->n_numpy_particles_                        = species->n_numpy_particles_;
         new_species->momentum_initialization_                  = species->momentum_initialization_;
         new_species->momentum_initialization_array_            = species->momentum_initialization_array_;
         new_species->c_part_max_                               = species->c_part_max_;

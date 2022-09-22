@@ -825,7 +825,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->numberOfParticles();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle, params.keep_position_old );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {

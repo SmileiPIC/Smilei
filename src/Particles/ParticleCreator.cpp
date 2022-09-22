@@ -283,7 +283,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // If requested, copy positions from other species
         if( position_initialization_on_species_ ) {
             unsigned int ispec = species_->position_initialization_on_species_index;
-            if( species_->getNbrOfParticles() != patch->vecSpecies[ispec]->getNbrOfParticles() ) {
+            if( species_->particles->size() != patch->vecSpecies[ispec]->particles->size() ) {
                 ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
             }
             particles_->Position = patch->vecSpecies[ispec]->particles->Position;
@@ -355,26 +355,33 @@ int ParticleCreator::create( struct SubSpace sub_space,
         std::vector< std::vector<double> > arrays( 4+species_->nDim_particle );
         std::vector<unsigned int> my_particles_indices(0);
         bool init_momentum = species_->momentum_initialization_array_ || ( species_->file_momentum_npart_ > 0 );
+        
+#ifdef SMILEI_USE_NUMPY
         // Case of numpy array
         if( species_->position_initialization_array_ ) {
-            
             // Position arrays
             for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
-                position[idim] = &( species_->position_initialization_array_[idim*species_->n_numpy_particles_] );
+                position[idim] = ( double * )PyArray_GETPTR2( ( PyArrayObject* ) species_->position_initialization_array_, idim, 0 );
             }
+            
             // Weight array
-            weight = &( species_->position_initialization_array_[species_->nDim_particle*species_->n_numpy_particles_] );
+            weight = ( double * )PyArray_GETPTR2( ( PyArrayObject* ) species_->position_initialization_array_, species_->nDim_particle, 0 );
+            
             // Momentum arrays
             if( init_momentum ) {
                 for( unsigned int idim = 0; idim < 3; idim++ ) {
-                    momentum[idim] = &( species_->momentum_initialization_array_[idim*species_->n_numpy_particles_] );
+                    momentum[idim] = ( double * )PyArray_GETPTR2( ( PyArrayObject* ) species_->momentum_initialization_array_, idim, 0 );
                 }
             }
+            
             // Find particles in the patch
             my_particles_indices = patch->indicesInDomain( position, species_->n_numpy_particles_ );
             
+        } else
+#endif
+        
         // Case of HDF5 file
-        } else if( ! species_->position_initialization_.empty() ) {
+        if( ! species_->position_initialization_.empty() ) {
             // Open files
             H5Read fp( species_->position_initialization_ );
             H5Read fm;
@@ -597,6 +604,11 @@ void ParticleCreator::createChargeProfile( struct SubSpace sub_space,
     } else {
         charge.put_to( 0. );
         species_->max_charge_ = 0;
+    }
+
+    // Delete map xyz.
+    for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
+        delete xyz[idim];
     }
 
 } // end createChargeProfile

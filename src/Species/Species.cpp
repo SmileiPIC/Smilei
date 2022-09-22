@@ -169,8 +169,8 @@ void Species::initCluster( Params &params )
 void Species::resizeCluster( Params &params )
 {
 
-    // We keep the current number of particles
-    int npart = particles->size();
+    // We keep the current number of particles (from the vector size)
+    int npart = particles->hostVectorSize();
     int size = params.n_space[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
@@ -396,7 +396,7 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-        smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
         
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
@@ -406,8 +406,8 @@ void Species::dynamics( double time_dual,
 #endif
             
 #ifndef _GPU
-            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0));
-            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(1));
+            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 #else
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->get_pair_creation_sampling(0) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
@@ -438,7 +438,7 @@ void Species::dynamics( double time_dual,
         {
 
 #endif
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1032,7 +1032,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     int nbNeighbors_ = 2;
     int n_part_recv;
 
-    particles->eraseParticleTrail( particles->last_index.back() );
+    particles->eraseParticleTrail( particles->numberOfParticles() );
 
     //Evaluation of the necessary shift of all bins.2
     //idim=0
@@ -1269,8 +1269,9 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
 
     } else {
     
-        unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
-        double inv_cell_length = 1./ params.cell_length[0];
+        const unsigned int npart     = source_particles.size();
+        const unsigned int nbin      = particles->numberOfBins();
+        const double inv_cell_length = 1./ params.cell_length[0];
 
         // If this species is tracked, set the particle IDs
         if( particles->tracked ) {
@@ -1551,20 +1552,20 @@ void Species::removeParticlesKeepBinFirstIndex(
     bool compute_cell_keys)
 {
     // Buffers for particles
-    double *const Epart     = smpi->dynamics_Epart[ithread].data();
-    double *const Bpart     = smpi->dynamics_Bpart[ithread].data();
-    double *const gamma     = smpi->dynamics_invgf[ithread].data();
-    int *const iold         = smpi->dynamics_iold[ithread].data();
-    double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
+    double *const __restrict__ Epart     = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ Bpart     = smpi->dynamics_Bpart[ithread].data();
+    double *const __restrict__ gamma     = smpi->dynamics_invgf[ithread].data();
+    int *const __restrict__ iold         = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ deltaold  = smpi->dynamics_deltaold[ithread].data();
 
-    std::complex<double> * thetaold = NULL;
+    std::complex<double> * __restrict__ thetaold = NULL;
     if ( smpi->dynamics_eithetaold.size() )
         thetaold = smpi->dynamics_eithetaold[ithread].data();
 
     const int nparts = smpi->getBufferSize(ithread);
 
     // Weight shortcut
-    double * weight =  particles->getPtrWeight();
+    double *const __restrict__ weight =  particles->getPtrWeight();
 
 #ifdef _GPU
     double *const __restrict__ position_x = particles->getPtrPosition( 0 );
@@ -1779,7 +1780,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
         smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) { // loop on ibin
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1863,7 +1864,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
         smpi->resizeBuffers( ithread, nDim_particle, particles->last_index.back(), false );
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+        for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) { // loop on ibin
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();

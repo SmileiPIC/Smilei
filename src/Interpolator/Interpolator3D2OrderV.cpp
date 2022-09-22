@@ -419,7 +419,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
     // probes are interpolated one by one for now
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
 
     double * __restrict__ Epart[3], * __restrict__ Bpart[3];

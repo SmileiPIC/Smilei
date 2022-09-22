@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-//#include "PyTools.h"
+// #include "PyTools.h"
 
 #include "Particles.h"
 #ifdef _GPU
@@ -153,11 +153,11 @@ public:
     unsigned int file_momentum_npart_;
 
     //! Pointer toward position array
-    double *position_initialization_array_;
+    void *position_initialization_array_;
     //! Pointer toward regular number of particles array
     std::vector<int> regular_number_array_;
     //! Number of particles in the init array
-    double *momentum_initialization_array_;
+    void *momentum_initialization_array_;
     //! Number of particles in the init array
     unsigned int n_numpy_particles_;
     //! Boolean to know if we initialize particles one specie on another species
@@ -357,7 +357,7 @@ public:
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const
     {
-        return particles->size();
+        return particles->numberOfParticles();
     }
     // capacity() = vect ever oversize
     //! \todo define particles.capacity = min.capacity

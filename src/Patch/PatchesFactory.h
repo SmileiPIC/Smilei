@@ -90,7 +90,7 @@ public:
             // If position from numpy array
             if( s->position_initialization_array_ ) {
                 // delete the array but DO NOT set to NULL (to remember setting)
-                delete s->position_initialization_array_;
+                Py_DECREF( s->position_initialization_array_ );
                 // and never again create particles from this array
                 for( unsigned int ipatch=0 ; ipatch < npatches ; ipatch++ ) {
                     vecPatches.patches_[ipatch]->vecSpecies[ispec]->n_numpy_particles_ = 0;
@@ -98,7 +98,7 @@ public:
                 // If momentum from numpy array as well
                 if( s->momentum_initialization_array_ ) {
                     // delete the array but DO NOT set to NULL (to remember setting)
-                    delete s->momentum_initialization_array_;
+                    Py_DECREF( s->momentum_initialization_array_ );
                 }
             //If a species was initialized via a HDF5 file
             } else if( s->file_position_npart_ > 0 ) {

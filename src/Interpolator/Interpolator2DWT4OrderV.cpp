@@ -47,7 +47,7 @@ void Interpolator2DWT4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
     // std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     //
     // //Loop on bin particles
-    // int nparts( particles.size() );
+    // int nparts( particles.numberOfParticles() );
     // for( int ipart=*istart ; ipart<*iend; ipart++ ) {
     //     //Interpolation on current particle
     //     fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );

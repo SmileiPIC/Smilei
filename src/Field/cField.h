@@ -92,6 +92,17 @@ public:
     
     std::complex<double> *cdata_;
 
+    void copyFrom( Field *from_field ) override
+    {
+        DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
+        cField *from_cfield = dynamic_cast<cField*>(from_field);
+        DEBUGEXEC( if( from_cfield == NULL ) ERROR( "Cannot copy real field "<< from_field->name << " to complex field " << name ) );
+
+        for( unsigned int i=0; i< globalDims_; i++ ) {
+            ( *this )( i )=( *from_cfield )( i );
+        }
+    }
+
     void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override = 0;
     void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override = 0;
     void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) override = 0;

@@ -131,7 +131,7 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xpn, rpn );
     
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     
     // Interpolation of El^(d,p)
     *( ELoc+0*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
@@ -253,7 +253,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
     std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -283,7 +283,7 @@ void InterpolatorAM2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
         
     } else {
     
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
@@ -319,7 +319,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
     
     // auxiliary quantities    
     double delta2, xpn, r, rpn;
-    int nparts = particles.size() ;
+    int nparts = particles.numberOfParticles() ;
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
@@ -401,7 +401,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     
     double r, delta2, xpn, rpn;
     //Loop on bin particles
-    int nparts =  particles.size() ;
+    int nparts =  particles.numberOfParticles() ;
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
     
         // Normalized particle position

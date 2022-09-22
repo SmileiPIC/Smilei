@@ -571,7 +571,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     // probes are interpolated one by one for now
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
 
     double *Epart[3], *Bpart[3];
