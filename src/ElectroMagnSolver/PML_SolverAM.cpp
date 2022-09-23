@@ -14,24 +14,31 @@ PML_SolverAM::PML_SolverAM( Params &params ):
 {
     std::vector<PyObject *> prof;
     if( PyTools::extract_pyProfiles( "pml_sigma", "Main", 0, prof )){
-        if(prof.size() != 3){
-            ERROR(" in pml_sigma, expecting a list of exactly 3 profiles.");
+        if( prof.size() < 2 ){
+            ERROR(" in pml_sigma, expecting a list of at least 2 profiles.");
         }
     // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
-        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_profile", params, true, false, false );
-        pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_profile", params, true, false, false );
-        pml_sigma_[2] = new Profile( prof[2], 1, "pml_sigma_profile", params, true, false, false );
+        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_l_profile", params, true, false, false );
+        if( prof.size() == 2){ 
+            pml_sigma_[1] = new Profile( prof[0], 1, "pml_sigma_r_profile", params, true, false, false );
+        } else {
+            pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_r_profile", params, true, false, false );
+        }
+        // The last profile of the least is taken as the integrate_sigma. Profiles after the 2nd and before the last are neglected.
+        pml_sigma_[2] = new Profile( prof[prof.size()-1], 1, "pml_integrate_sigma_profile", params, true, false, false );
     }
     if( PyTools::extract_pyProfiles( "pml_kappa", "Main", 0, prof )){
-        if(prof.size() != 3){
-            ERROR(" in pml_kappa, expecting a list of exactly 3 profiles.");
+        if(prof.size() < 2){
+            ERROR(" in pml_kappa, expecting a list of at least 2 profiles.");
         }
-    // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
-        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_profile", params, true, false, false );
-        pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_profile", params, true, false, false );
-        pml_kappa_[2] = new Profile( prof[2], 1, "pml_kappa_profile", params, true, false, false );
+        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_l_profile", params, true, false, false );
+        if( prof.size() == 2){ 
+            pml_kappa_[1] = new Profile( prof[0], 1, "pml_kappa_r_profile", params, true, false, false );
+        } else{
+            pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_r_profile", params, true, false, false );
+        }
+        pml_kappa_[2] = new Profile( prof[prof.size()-1], 1, "pml_integrate_kappa_profile", params, true, false, false );
     }
-
 }
 
 PML_SolverAM::~PML_SolverAM()
@@ -47,28 +54,6 @@ PML_SolverAM::~PML_SolverAM()
 void PML_SolverAM::operator()( ElectroMagn *fields )
 {
     ERROR( "This is not a solver for the main domain" );
-
-    // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-    // 
-    //     // Static-cast of the fields_SolverAM_norm.cpp
-    //     //cField2D *Dl = ( static_cast<ElectroMagnAM *>( fields ) )->Dl_[imode];
-    //     //cField2D *Dr = ( static_cast<ElectroMagnAM *>( fields ) )->Dr_[imode];
-    //     //cField2D *Dt = ( static_cast<ElectroMagnAM *>( fields ) )->Dt_[imode];
-    //     cField2D *El = ( static_cast<ElectroMagnAM *>( fields ) )->El_[imode];
-    //     cField2D *Er = ( static_cast<ElectroMagnAM *>( fields ) )->Er_[imode];
-    //     cField2D *Et = ( static_cast<ElectroMagnAM *>( fields ) )->Et_[imode];
-    //     cField2D *Bl = ( static_cast<ElectroMagnAM *>( fields ) )->Bl_[imode];
-    //     cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
-    //     cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
-    //     //cField2D *Hl = ( static_cast<ElectroMagnAM *>( fields ) )->Hl_[imode];
-    //     //cField2D *Hr = ( static_cast<ElectroMagnAM *>( fields ) )->Hr_[imode];
-    //     //cField2D *Ht = ( static_cast<ElectroMagnAM *>( fields ) )->Ht_[imode];
-    //     cField2D *Jl = ( static_cast<ElectroMagnAM *>( fields ) )->Jl_[imode];
-    //     cField2D *Jr = ( static_cast<ElectroMagnAM *>( fields ) )->Jr_[imode];
-    //     cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
-    //     int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
-    //     bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-    // }
 }
 
 void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
@@ -90,7 +75,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
         nr_p = ncells_pml_domain;
         nr_d = ncells_pml_domain+1;
-        // Adjust size in l too in case there are overlapping pmls
+        // Adjust size in x too in case there are corners to take care of.
         nl_p += ncells_pml_min[0] + ncells_pml_max[0];
         nl_d += ncells_pml_min[0] + ncells_pml_max[0];
     }

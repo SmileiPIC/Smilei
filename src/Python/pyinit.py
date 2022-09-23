@@ -203,16 +203,16 @@ class Main(SmileiSingleton):
     pml_kappa_parameters = [[80,4],[80,4],[80,4]]
 
     def default_sigma(x):
-        return 21. * x**2  
+        return 20. * x**2  
     def default_integrate_sigma(x):
-        return 7. * x**3  
+        return 20./3. * x**3  
     def default_kappa(x):
         return 1 + 79. * x**4  
     def default_integrate_kappa(x):
         return x + 79./5. * x**5  
 
-    pml_sigma = [default_sigma, default_sigma, default_integrate_sigma]
-    pml_kappa = [default_kappa, default_kappa, default_integrate_kappa]
+    pml_sigma = [default_sigma, default_sigma, default_sigma, default_integrate_sigma]
+    pml_kappa = [default_kappa, default_kappa, default_kappa, default_integrate_kappa]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
