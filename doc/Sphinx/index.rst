@@ -81,6 +81,9 @@ interaction to astrophysics.
 
   </div>
 
+**Job offer: 2-years fixed-term position at Maison de la Simulation, CEA Saclay.**
+
+Maison de la Simulation Laboratory (CEA Saclay, France) is looking for a computer science specialist to explore task-based programming models in Smilei. `See more <https://mdls.fr/task-based-programming-for-kinetic-plasma-simulations//>`_ 
 
 
 .. toctree::
