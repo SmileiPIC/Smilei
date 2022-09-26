@@ -16,9 +16,9 @@ PML_Solver2D_Yee::PML_Solver2D_Yee( Params &params ):
             ERROR(" in pml_sigma, expecting a list of at least 1 profile.");
         }
     // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
-        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_profile", params, true, false, false );
+        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_x_profile", params, true, false, false );
         if( prof.size() == 1){ 
-            pml_sigma_[1] = new Profile( prof[0], 1, "pml_sigma_x_profile", params, true, false, false );
+            pml_sigma_[1] = new Profile( prof[0], 1, "pml_sigma_y_profile", params, true, false, false );
         } else {
             pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_y_profile", params, true, false, false );
         }
@@ -27,11 +27,11 @@ PML_Solver2D_Yee::PML_Solver2D_Yee( Params &params ):
         if(prof.size() == 0){
             ERROR(" in pml_kappa, expecting a list of at least 1 profile.");
         }
-        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_profile", params, true, false, false );
+        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_x_profile", params, true, false, false );
         if( prof.size() == 1){ 
-            pml_kappa_[1] = new Profile( prof[0], 1, "pml_kappa_profile", params, true, false, false );
+            pml_kappa_[1] = new Profile( prof[0], 1, "pml_kappa_y_profile", params, true, false, false );
         } else {
-            pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_profile", params, true, false, false );
+            pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_y_profile", params, true, false, false );
         }
     }
 }
@@ -147,7 +147,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         for ( unsigned int i=startpml; i<nx_p ; i++ ) {
             //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
             //sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
-            kappa_x_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dx/length_x_pml);
+            kappa_x_p[i] = pml_kappa_[0]->valueAt((i-startpml)*dx/length_x_pml);
             sigma_x_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dx/length_x_pml);
         }
         // Y-direction
@@ -172,7 +172,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         for ( unsigned int i=startpml+1 ; i<nx_d ; i++ ) {
             //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml-0.5)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
             //sigma_x_d[i] = sigma_x_max * pow( (i-startpml-0.5)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
-            kappa_x_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
+            kappa_x_d[i] = pml_kappa_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
             sigma_x_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
         }
         // Y-direction
@@ -203,7 +203,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
                 //sigma_x_p[i] = sigma_x_max * pow( ( ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
-                kappa_x_p[i] = pml_sigma_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
+                kappa_x_p[i] = pml_kappa_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
                 sigma_x_p[i] = pml_sigma_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
             }
         }
@@ -211,7 +211,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
                 //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
                 //sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
-                kappa_x_p[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
+                kappa_x_p[i] = pml_kappa_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
                 sigma_x_p[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
             }
         }
@@ -226,7 +226,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         for ( unsigned int j=startpml ; j<ny_p ; j++ ) {
             //kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
             //sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
-            kappa_y_d[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
+            kappa_y_d[j] = pml_kappa_[1]->valueAt((j-startpml)*dy/length_y_pml);
             sigma_y_d[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
         }
         // Z-direction
@@ -244,7 +244,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
                 //sigma_x_d[i] = sigma_x_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
-                kappa_x_d[i] = pml_sigma_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
+                kappa_x_d[i] = pml_kappa_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
                 sigma_x_d[i] = pml_sigma_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
             }
         }
@@ -252,7 +252,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( unsigned int i=nx_p-ncells_pml_max[0]+1 ; i<nx_d ; i++ ) {
                 //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
                 //sigma_x_d[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
-                kappa_x_d[i] = pml_sigma_[0]->valueAt((i - nx_p + ncells_pml_max[0] - 0.5 )*dx/length_x_pml_xmax);
+                kappa_x_d[i] = pml_kappa_[0]->valueAt((i - nx_p + ncells_pml_max[0] - 0.5 )*dx/length_x_pml_xmax);
                 sigma_x_d[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0] - 0.5)*dx/length_x_pml_xmax);
             }
         }
@@ -267,7 +267,7 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         for ( unsigned int j=startpml+1 ; j<ny_d ; j++ ) {
             //kappa_y_d[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml-0.5)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
             //sigma_y_d[j] = sigma_y_max * pow( (j-startpml-0.5)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
-            kappa_y_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
+            kappa_y_d[j] = pml_kappa_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
             sigma_y_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
         }
         // Z-direction
