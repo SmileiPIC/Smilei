@@ -80,13 +80,13 @@ interaction to astrophysics.
   Tutorials</a>
 
   </div>
-
-**Job offer: 2-years fixed-term position at Maison de la Simulation, CEA Saclay, France**
-
-We are looking for a computer science specialist to explore task-based programming models in Smilei. `See more <https://mdls.fr/task-based-programming-for-kinetic-plasma-simulations//>`_ 
-
-.. raw:: html
-
+  
+  <a href="https://mdls.fr/task-based-programming-for-kinetic-plasma-simulations" style="color:#3E4349; text-decoration:none">
+      <div style="text-align:center; background-color:#e6f0ff; padding:0.3em; border-radius:0.8em;border-left:0.3em #0672BA solid; border-right:0.3em #0672BA solid;">
+          <b>Job offer:</b> 2-year position (computer science specialist to explore task programming) at Maison de la Simulation, CEA Saclay, France
+      </div>
+  </a>
+  
   <div style="width:100%; text-align:center; margin-bottom:2em;">
   </div>
   
