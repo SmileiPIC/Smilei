@@ -79,8 +79,6 @@ protected:
     // double lmax;
     // double l0;
     int j_glob_pml;
-    double rmax;
-    double r0;
     double length_r_pml;
     double length_l_pml;
     double length_l_pml_lmin;
