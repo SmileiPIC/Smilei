@@ -145,8 +145,6 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         // Params for other cells (PML Media) when i>=3
         for ( unsigned int i=startpml; i<nx_p ; i++ ) {
-            //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
-            //sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
             kappa_x_p[i] = pml_kappa_[0]->valueAt((i-startpml)*dx/length_x_pml);
             sigma_x_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dx/length_x_pml);
         }
@@ -170,8 +168,6 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         // Params for other cells (PML Media) when j>=4
         for ( unsigned int i=startpml+1 ; i<nx_d ; i++ ) {
-            //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml-0.5)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
-            //sigma_x_d[i] = sigma_x_max * pow( (i-startpml-0.5)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
             kappa_x_d[i] = pml_kappa_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
             sigma_x_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
         }
@@ -201,16 +197,12 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
-                //sigma_x_p[i] = sigma_x_max * pow( ( ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
                 kappa_x_p[i] = pml_kappa_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
                 sigma_x_p[i] = pml_sigma_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for ( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
-                //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
-                //sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
                 kappa_x_p[i] = pml_kappa_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
                 sigma_x_p[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
             }
@@ -224,8 +216,6 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         // Params for other cells (PML Media) when j>=3
         for ( unsigned int j=startpml ; j<ny_p ; j++ ) {
-            //kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
-            //sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
             kappa_y_p[j] = pml_kappa_[1]->valueAt((j-startpml)*dy/length_y_pml);
             sigma_y_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
         }
@@ -242,16 +232,12 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
-                //sigma_x_d[i] = sigma_x_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
                 kappa_x_d[i] = pml_kappa_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
                 sigma_x_d[i] = pml_sigma_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for ( unsigned int i=nx_p-ncells_pml_max[0]+1 ; i<nx_d ; i++ ) {
-                //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
-                //sigma_x_d[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
                 kappa_x_d[i] = pml_kappa_[0]->valueAt((i - nx_p + ncells_pml_max[0] - 0.5 )*dx/length_x_pml_xmax);
                 sigma_x_d[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0] - 0.5)*dx/length_x_pml_xmax);
             }
@@ -265,8 +251,6 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         }
         // Params for other cells (PML Media) when j>=4
         for ( unsigned int j=startpml+1 ; j<ny_d ; j++ ) {
-            //kappa_y_d[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml-0.5)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
-            //sigma_y_d[j] = sigma_y_max * pow( (j-startpml-0.5)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
             kappa_y_d[j] = pml_kappa_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
             sigma_y_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
         }
