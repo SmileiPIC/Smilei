@@ -226,8 +226,8 @@ void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
         for ( unsigned int j=startpml ; j<ny_p ; j++ ) {
             //kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
             //sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
-            kappa_y_d[j] = pml_kappa_[1]->valueAt((j-startpml)*dy/length_y_pml);
-            sigma_y_d[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
+            kappa_y_p[j] = pml_kappa_[1]->valueAt((j-startpml)*dy/length_y_pml);
+            sigma_y_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
         }
         // Z-direction
         for ( int k=0 ;k<1 ; k++ ) {
