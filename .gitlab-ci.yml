@@ -114,6 +114,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
+    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -124,6 +125,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -133,6 +135,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
+    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -143,6 +146,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
+    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -153,7 +157,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-
+    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
