@@ -45,14 +45,14 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
     nDim_fields_ = params.nDim_field;
 
     initStep1( params );
-    
+
 
 #ifdef  __DETAILED_TIMERS
 
     #ifdef _OPENMP
         thread_number_ = omp_get_num_threads();
     #else
-        threads_numbers_= 1;
+        thread_number_= 1;
     #endif
 
     // Initialize timers
@@ -92,7 +92,7 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition
 #ifdef _OPENMP
     thread_number_ = omp_get_num_threads();
 #else
-    threads_numbers_= 1;
+    thread_number_= 1;
 #endif
 
     // Initialize timers
@@ -125,10 +125,10 @@ void Patch::initStep1( Params &params )
     for( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         oversize[iDim] = params.oversize[iDim];
     }
-    
+
     // Initialize the random number generator
     rand_ = new Random( params.random_seed + hindex );
-    
+
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
 }
@@ -166,7 +166,7 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     //    max_local_[1] += params.cell_length[1]/2.;
     //    center_   [1] += params.cell_length[1]/2.;
     //}
-    
+
 }
 
 void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition )
@@ -372,16 +372,16 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
             cell_starting_global_index[0] -= oversize[0];
         } // Fin 1D
-    
+
         if (nDim_fields_==2) {
 
             for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
                 for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
                     for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
-                        
+
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
-                            
-           
+
+
                             Pcoordinates[0] =xDom ;
                             Pcoordinates[1] =yDom;
 
@@ -402,7 +402,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             //    max_local_[1] += params.cell_length[1]/2.;
                             //    center_   [1] += params.cell_length[1]/2.;
                             //}
- 
+
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
                             cell_starting_global_index[1] = params.offset_map[1][yDom];
 
@@ -449,13 +449,13 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 xcall[0] += domain_decomposition->ndomain_[0];
             }
             neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
-    
+
             xcall[0] = Pcoordinates[0]+1;
             if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)params.number_of_region[0] ) {
                 xcall[0] -= params.number_of_region[0];
             }
             neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
-    
+
             // 2nd direction
             xcall[0] = Pcoordinates[0];
             xcall[1] = Pcoordinates[1]-1;
@@ -463,7 +463,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 xcall[1] += domain_decomposition->ndomain_[1];
             }
             neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
-    
+
             xcall[1] = Pcoordinates[1]+1;
             if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= (int)params.number_of_region[1] ) {
                 xcall[1] -=  params.number_of_region[1];
@@ -522,7 +522,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
 
-                               
+
                             // ---------------- Y ----------------
                             if (yDom>0)
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
@@ -580,7 +580,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 xcall[0] -= domain_decomposition->ndomain_[0];
             }
             neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
-    
+
             // 2st direction
             xcall[0] = Pcoordinates[0];
             xcall[1] = Pcoordinates[1]-1;
@@ -594,7 +594,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 xcall[1] -= domain_decomposition->ndomain_[1];
             }
             neighbor_[1][1] =  domain_decomposition->getDomainId( xcall );
-    
+
             // 3st direction
             xcall[0] = Pcoordinates[0];
             xcall[1] = Pcoordinates[1];
@@ -656,7 +656,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     }
 
     radius = sqrt(radius);
-    
+
 
     //cart_updateMPIenv(smpi);
 
@@ -675,7 +675,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             neighbor_[i][1] = MPI_PROC_NULL;
         }
     }*/
-    
+
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecPatch( 0 )->vecSpecies, this );
 
     vecSpecies.resize( 0 );
@@ -683,7 +683,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     partWalls = NULL;
     probes.resize( 0 );
     probesInterp = NULL;
-    
+
     if( has_an_MPI_neighbor() ) {
         createType2( params );
     }
@@ -700,7 +700,7 @@ Patch::~Patch()
 {
 
     if (probesInterp) delete probesInterp;
-    
+
     for( unsigned int i=0; i<probes.size(); i++ ) {
         delete probes[i];
     }
@@ -722,9 +722,9 @@ Patch::~Patch()
         delete vecSpecies[ispec];
     }
     vecSpecies.clear();
-    
+
     delete rand_;
-    
+
 } // END Patch::~Patch
 
 
@@ -1432,7 +1432,7 @@ void Patch::finalizeSumField( Field *field, int iDim )
 
 
 void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params, bool diag_flag)
-{   // in this patch, for the species ispec, for all its bins, 
+{   // in this patch, for the species ispec, for all its bins,
     // copy the current/charge densities in the patch grid
     Species *spec = vecSpecies[ispec];
     int Nbins = spec->Nbins;
@@ -1455,7 +1455,7 @@ void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params,
 }
 
 void Patch::copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &params, bool diag_flag)
-{   // in this patch, for the species ispec, for all its bins, 
+{   // in this patch, for the species ispec, for all its bins,
     // copy the current/charge densities in the patch grid
     Species *spec = vecSpecies[ispec];
     int Nbins = spec->Nbins;
