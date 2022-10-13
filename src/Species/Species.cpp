@@ -93,10 +93,10 @@ Species::Species( Params &params, Patch *patch ) :
     nDim_field(    params.nDim_field  ),
     merging_time_selection_( 0 )
 {
-    
+
     particles         = ParticlesFactory::create( params );
     particles_to_move = ParticlesFactory::create( params );
-    
+
     regular_number_array_.clear();
     partBoundCond = NULL;
     min_loc = patch->getDomainLocalMin( 0 );
@@ -119,10 +119,10 @@ Species::Species( Params &params, Patch *patch ) :
     merge_momentum_cell_size_.resize(3);
 
     merge_min_momentum_cell_length_.resize(3);
-    
+
     mBW_pair_species_index_[0] = -1;
     mBW_pair_species_index_[1] = -1;
-    
+
     mBW_pair_creation_sampling_[0] = 1;
     mBW_pair_creation_sampling_[1] = 1;
 
@@ -211,7 +211,7 @@ void Species::resizeCluster( Params &params )
 // Create the particles once the namelist is read
 void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
 {
-    
+
     // Area for particle creation
     struct SubSpace init_space;
     init_space.cell_index_[0] = 0;
@@ -308,7 +308,7 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
-    
+
     delete particles;
     delete particles_to_move;
 
@@ -357,7 +357,7 @@ Species::~Species()
     if (radiated_photons_) {
         delete radiated_photons_;
     }
-    
+
     for (int k=0 ; k<2 ; k++) {
         if (mBW_pair_particles_[k]) {
             delete mBW_pair_particles_[k];
@@ -838,20 +838,21 @@ void Species::sortParticles( Params &params, Patch * patch )
     int ndim = params.nDim_field;
     int idim;
 
-    int total_number_part_recv = 0;
+    // Compute total number of particles received
+    // int total_number_part_recv = 0;
     //Merge all MPI_buffer_.partRecv in particles_to_move
-    for( int idim = 0; idim < ndim; idim++ ) {
-        for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-            if( ( n_part_recv!=0 ) ) {
-                 // insert n_part_recv in particles_to_move from 0
-                //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-                total_number_part_recv += n_part_recv;
-                //particles->last_index[particles->last_index.size()-1] += n_part_recv;
-                //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
-            }
-        }
-    }
+    // for( int idim = 0; idim < ndim; idim++ ) {
+    //     for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
+    //         int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+    //         if( ( n_part_recv!=0 ) ) {
+    //              // insert n_part_recv in particles_to_move from 0
+    //             //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
+    //             total_number_part_recv += n_part_recv;
+    //             //particles->last_index[particles->last_index.size()-1] += n_part_recv;
+    //             //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
+    //         }
+    //     }
+    // }
     //cout << "\t Species id : " << species_number_ << " - nparticles recv : " << blabla << endl;
 
 
