@@ -891,7 +891,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
         currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
-        double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
+        /*double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
         double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
         double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
@@ -905,6 +905,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         for( int ipart=istart ; ipart<iend; ipart++ ) {
             basic( rho, particles,  ipart, 0 );
         }
+        */
         //for( int ipart=istart ; ipart<iend; ipart++ ) {
         //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
         //}
