@@ -26,7 +26,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
-    // When sorting is disabled, these values are invalid (-1) and the HIP 
+    // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );

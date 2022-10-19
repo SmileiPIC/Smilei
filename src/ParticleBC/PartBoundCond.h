@@ -32,11 +32,11 @@ public:
     void ( *bc_zmin )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Zmax particles boundary conditions pointers
     void ( *bc_zmax )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
-    
+
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
     //! Conditions along X are applied first, then Y, then Z.
-    inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_tot )
+    inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random *rand, double &energy_tot )
     {
         if( parameters_->isGPUParticleBinningAvailable() ) {
             // EMPTY because we need the keys NOT to be cleared for the gpu particle clustering/binning.
@@ -75,9 +75,8 @@ public:
                 energy_tot += energy_change;
             }
         }
+    }
 
-    };
-    
     ////! Set the condition window if restart (patch position not read)
     //inline void updateMvWinLimits( double x_moved ) {
     //}
