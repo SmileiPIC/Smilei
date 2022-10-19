@@ -225,21 +225,11 @@ ifneq (,$(call parse_config,no_mpi_tm))
 endif
 
 ifneq (,$(call parse_config,gpu_nvidia))
-    SMILEICXX.DEPS = g++
-    THRUSTCXX = nvcc
-
-    ACCELERATOR_GPU_FLAGS += -w
-
-    # To enable OpenMP support, comment _GPU and uncomment SMILEI_ACCELERATOR_GPU_OMP.
-
-    ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
-    # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
+    # To toggle between OpenACC/OpenMP support, see the jean_zay_gpu machinefile
+    # By default we provide the OpenACC version on JeanZay
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
-
-    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
-    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
 
     OBJS += $(GPU_KERNEL_OBJS)
 endif
