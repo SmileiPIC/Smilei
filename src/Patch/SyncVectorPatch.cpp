@@ -296,7 +296,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
     // iDim = 0, local
     const int nFieldLocalx = vecPatches.densitiesLocalx.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( _GPU )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
     const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
@@ -334,7 +334,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
-                #pragma acc parallel present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
+                #pragma acc parallel if ( is_memory_on_device) \
+                present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_memory_on_device )
@@ -470,7 +471,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->globalDims_;
                     int blabla = n_space[1];
-                    #pragma acc parallel present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
+                    #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_memory_on_device )
@@ -608,7 +609,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                         int ptsize = vecPatches.densitiesLocalz[ifield]->globalDims_;
                         int blabla = n_space[2];
-                        #pragma acc parallel present(pt1[0-blabla:ptsize],pt2[0:ptsize])
+                        #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_memory_on_device )
