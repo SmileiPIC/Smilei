@@ -9,6 +9,8 @@
 
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
+#include <thrust/binary_search.h>
+#include <thrust/execution_policy.h>
 
 #include "Patch.h"
 #include "gpu.h"
@@ -289,7 +291,7 @@ namespace detail {
         // NOTE: On some benchmark, I found this upper_bound usage faster than the counting_iterator (by a lot(!) ~x3, but
         // it's so fast anyway..)
 
-        // thrust::upper_bound( thrust::device,
+        //thrust::upper_bound( thrust::device,
         //                      std::cbegin( nvidia_cell_keys_ ), std::cend( nvidia_cell_keys_ ),
         //                      std::cbegin( key_bound_to_search ), std::cend( key_bound_to_search ),
         //                      bin_upper_bound );
