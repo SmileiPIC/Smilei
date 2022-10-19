@@ -12,8 +12,6 @@
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
-#include <thrust/binary_search.h>
-#include <thrust/execution_policy.h>
 
 #include "Patch.h"
 #include "gpu.h"

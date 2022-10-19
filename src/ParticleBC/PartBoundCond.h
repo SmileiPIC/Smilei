@@ -48,7 +48,7 @@ public:
         //
         const auto key_zeroing = [&imin, &imax, &cell_keys]() {
 #if defined( _GPU )
-    #pragma acc parallel deviceptr(cell_keys)
+    #pragma acc parallel deviceptr( cell_keys )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* tofrom */ \
