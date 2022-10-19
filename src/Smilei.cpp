@@ -108,8 +108,9 @@ int main( int argc, char *argv[] )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     if( params.gpu_computing ) {
         if( ::omp_get_max_threads() != 1 ) {
-            // TODO(Etienne M): I beleive there is a race condition inside the CCE OpenMP runtime
-            WARNING( "Runing Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
+            // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei 
+            // GPU to use only one thread.
+            WARNING( "Running Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
         }
 
         const int gpu_count = ::omp_get_num_devices();
@@ -117,15 +118,20 @@ int main( int argc, char *argv[] )
         if( gpu_count < 1 ) {
             ERROR( "Simlei needs one accelerator, none detected." );
         } else if( gpu_count > 1 ) {
-            WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
-            WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
+            // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
+            // (nor in OpenACC). This makes management of the device completely
+            // oblivious to the program (only one, the one by default).
+            // This could be a missed but very advanced optimization for some
+            // kernels/exchange.
+            ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
+            // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
-            // This assumes the MPI rank on a node are sequential
-            const int this_process_gpu = smpi.getRank() % gpu_count;
+            // // This assumes the MPI rank on a node are sequential
+            // const int this_process_gpu = smpi.getRank() % gpu_count;
 
-            // std::cout << "Using GPU id: " << this_process_gpu << "\n";
+            // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
 
-            ::omp_set_default_device( this_process_gpu );
+            // ::omp_set_default_device( this_process_gpu );
         } else {
             // ::omp_set_default_device(0);
         }
@@ -139,8 +145,6 @@ int main( int argc, char *argv[] )
             WARNING( "Smilei can break if dynamic is not used." );
         }
     } else {
-        // TODO(Etienne M): We may not need that check. When the GPU implementation is complete, a user should be able
-        // to turn the GPU offloading on/off without recompiling, right ?
         ERROR( "Smilei was compiled to offload computation to a GPU. Please enable the GPU mode in the Python input file." );
     }
 #endif
@@ -253,8 +257,12 @@ int main( int argc, char *argv[] )
         // }
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
-        vecPatches.sortAllParticles( params );
-        
+
+#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ) )
+        // CPU only, its too early to sort on GPU
+        vecPatches.initialParticleSorting( params );
+#endif
+
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
         
@@ -270,17 +278,27 @@ int main( int argc, char *argv[] )
         
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
-        
+
+        // TODO(Etienne M): GPU restart handling
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        ERROR( "Restart not tested on GPU !" );
+
+        TITLE( "GPU allocation and copy of the fields and particles" );
+        // Because most of the initialization "needs" (for now) to be done on
+        // the host, we introduce the GPU only at it's end.
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.copyEMFieldsFromHostToDevice();
+        // The initial particle binning is done in initializeDataOnDevice.
+#endif
+
     } else {
-        
+
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
-        vecPatches.sortAllParticles( params );
 
-
-        if (params.gpu_computing) {
-            TITLE( "Initialize GPU data" );
-            vecPatches.initializeDataOnDevice( params, &smpi, &radiation_tables_ );
-        }
+#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
+        // CPU only, its too early to sort on GPU
+        vecPatches.initialParticleSorting( params );
+#endif
 
         // Initialize the electromagnetic fields
         // -------------------------------------
@@ -314,28 +332,28 @@ int main( int argc, char *argv[] )
         TITLE( "Initial fields setup" );
 
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species
+        // NOTE: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if( params.solve_relativistic_poisson == true ) {
             MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
-        
+
         vecPatches.computeCharge();
+
+        // TODO(Etienne M): redundant work is done here. We exchange current
+        // density J when in fact, only charge density Rho needs to be exchanged.
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        
+
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             MESSAGE( 1, "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
-        
+
         MESSAGE( 1, "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
-        if (params.gpu_computing) {
-            vecPatches.syncFieldFromHostToDevice();
-        }
         
         MESSAGE( 1, "Applying prescribed fields at time t = 0" );
         vecPatches.applyPrescribedFields( time_prim );
@@ -356,13 +374,13 @@ int main( int argc, char *argv[] )
         
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
-        
+
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
         }
         
-        // Comm and synch charge and current densities
+        // Comm and synch charge and current densities for a given species (rho_s, Jx_s...)
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
         // Upload corrected data on Regions
@@ -412,13 +430,21 @@ int main( int argc, char *argv[] )
             }
         }
 
-       
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        TITLE( "GPU allocation and copy of the fields and particles" );
+        // Because most of the initialization "needs" (for now) to be done on
+        // the host, we introduce the GPU only at it's end.
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.copyEMFieldsFromHostToDevice();
+        // The initial particle binning is done in initializeDataOnDevice.
+#endif
     }
-    
+
     TITLE( "Species creation summary" );
     vecPatches.printGlobalNumberOfParticlesPerSpecies( &smpi );
     
@@ -491,7 +517,7 @@ int main( int argc, char *argv[] )
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species
+            // NOTE: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if( params.solve_relativistic_poisson == true ) {
                 vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
@@ -670,6 +696,9 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
         
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+            ERROR( "Load balancing not tested on GPU !" );
+#endif
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {

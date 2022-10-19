@@ -32,13 +32,14 @@ Lz = 32*dz
 # Simulation time
 simulation_time  = 2001*dt
 
+# particles_per_cell = 64
 particles_per_cell = 8
 
 number_of_patches = [4,4,4]
 
 position_initialization = 'random'
 
-vectorization = "off"
+vectorization = "on"
 
 Main(
     geometry = "3Dcartesian",
@@ -57,8 +58,9 @@ Main(
 
     print_every = 100,
 
-    gpu_computing = True,
+    gpu_computing = False,
 
+    # random_seed = 0xDEADBEEF,
     random_seed = smilei_mpi_rank,
 )
 

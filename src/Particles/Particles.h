@@ -54,7 +54,7 @@ public:
     void initialize( unsigned int nParticles, Particles &part );
 
     //! Set capacity of Particles vectors and change dimensionality
-    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  );
+    void reserve( unsigned int reserved_particles, unsigned int nDim, bool keep_position_old );
 
     //! Set capacity of Particles vectors and keep dimensionality
     void reserve( unsigned int reserved_particles );
@@ -62,7 +62,7 @@ public:
     //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
-    //! //! Resize Particle vectors and change dimensionality according to nDim
+    //! Resize Particle vectors and change dimensionality according to nDim
     void resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Resize Particles vectors
@@ -77,19 +77,19 @@ public:
     //! Reset Particles vectors
     void clear();
 
-    //! Get number of particules
+    //! Get number of particles
     inline unsigned int size() const
     {
         return Weight.size();
     }
 
-    //! Get number of particules
+    //! Get number of particles
     inline unsigned int capacity() const
     {
         return Weight.capacity();
     }
 
-    //! Get dimension of particules
+    //! Get dimension of particles
     inline unsigned int dimension() const
     {
         return Position.size();
@@ -274,7 +274,7 @@ public:
         return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
-    //! Partiles properties, respect type order : all double, all short, all unsigned int
+    //! Particles properties, respect type order : all double, all short, all unsigned int
 
     //! array containing the particle position
     std::vector< std::vector<double> > Position;
@@ -422,9 +422,12 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
-    virtual void initializeDataOnDevice() { ERROR( "Should not have come here" ); };
-    virtual void syncGPU() { ERROR( "Should not have come here" ); };
-    virtual void syncCPU() { ERROR( "Should not have come here" ); };
+    //! Make a copy of the host particles and does some computation like 
+    //! bin discovery.
+    //!
+    virtual void initializeDataOnDevice();
+    virtual void syncGPU();
+    virtual void syncCPU();
 
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
@@ -455,27 +458,36 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put 
+    //! Extract particles from the Particles object and put
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( Particles* particles_to_move );
-    
+    virtual void extractParticles( Particles *particles_to_move );
+
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
     // -----------------------------------------------------------------------------
-    virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
-    
+    virtual int eraseLeavingParticles();
+
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put 
+    //! Inject particles from particles_to_move object and put
     //! them in the Particles object
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
-    virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
+    virtual int injectParticles( Particles *particles_to_inject );
 
-    virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
+    //! Implementation of a somewhat efficient particle injection, sorting
+    //! (including removing leaving particles) and binning for GPU if
+    //! available for the configuration of offloading technology
+    //! (OpenMP/OpenACC) and implemented for the space dimension of the
+    //! simulation. Else, fallback to the old naive, plain memcpy 
+    //! implementation.
+    //!
+    //! last_index is modified appropriately.
+    //!
+    virtual void importAndSortParticles( Particles *particles_to_inject );
 
+    virtual unsigned int gpu_size() const;
 
 private:
-
 };
 
 #endif

@@ -1180,14 +1180,15 @@ void Params::compute()
         }
     }
 
-
-    // Set clrw if not set by the user
-    if (gpu_computing) {
-        cluster_width_ = n_space[0];
-    }
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+        cluster_width_ = n_space[0];
+        // On GPU, dont do the CPU automatic cluster_width computation, only one 
+        // bin is expected.
+        // NOTE: In OMP GPU offloading and 2D, the true number of cluster is
+        // redefined in nvidiaParticles::prepareBinIndex.
+#else
         // default value
         cluster_width_ = n_space[0];
 
@@ -1212,7 +1213,11 @@ void Params::compute()
             }
             WARNING( "Particles cluster width `cluster_width` set to : " << cluster_width_ );
         }
-
+#endif
+    } else {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        ERROR( "Cluster width size is not specifiable in OpenMP GPU mode! " );
+#endif
     }
 
     // cluster_width_ != n_space[0] is not compatible
@@ -1224,19 +1229,34 @@ void Params::compute()
         }
     }
 
-    // Verify that cluster_width_ divides n_space[0]
-    if( n_space[0]%cluster_width_ != 0 ) {
-        ERROR_NAMELIST(
-            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
-            LINK_NAMELIST + std::string("#main-variables") );
+    // Verify that cluster_width_ divides n_space[0] or n_space[n] in GPU mode
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    const int kClusterWidth = getGPUClusterWidth();
+
+    if( kClusterWidth < 0 ) {
+        // getGPUClusterWidth failing means that binning is not supported for
+        // nDim_particle space dimensions. cluster_width_ shall default to
+        // n_space[0] which is guarenteed to divide itself, no need to check.
+    } else {
+        for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id ) {
+            if( ( n_space[dimension_id] % kClusterWidth ) != 0 ) {
+                ERROR_NAMELIST( "The parameter `cluster_width`==" << kClusterWidth << " must divide the number of cells in a patch, in all dimensions.",
+                                LINK_NAMELIST + std::string( "#main-variables" ) );
+            }
+        }
     }
+#else
+    if( ( n_space[0] % cluster_width_ ) != 0 ) {
+        ERROR_NAMELIST( "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
+                        LINK_NAMELIST + std::string( "#main-variables" ) );
+    }
+#endif
 
     // Define domain decomposition if double grids are used for particles and fields
     if ( multiple_decomposition ) {
         multiple_decompose();
         full_B_exchange = true;
     }
-
 }
 
 
@@ -1872,4 +1892,63 @@ string Params::speciesField( string field_name )
         }
     }
     return "";
+}
+
+bool Params::isGPUParticleBinningAvailable() const
+{
+    return getGPUClusterWidth() != -1 &&
+           getGPUClusterGhostCellBorderWidth() != -1;
+}
+
+int Params::getGPUClusterWidth() const
+{
+    return getGPUClusterWidth( nDim_particle );
+}
+
+int Params::getGPUClusterGhostCellBorderWidth() const
+{
+    return getGPUClusterGhostCellBorderWidth( interpolation_order );
+}
+
+int Params::getGPUClusterCellVolume() const
+{
+    // Compute pow(getGPUClusterWidth(), nDim_particle)
+    static const int kClusterCellVolume = getGPUClusterWidth() *
+                                          ( nDim_particle >= 2 ? getGPUClusterWidth() : 1 ) *
+                                          ( nDim_particle >= 3 ? getGPUClusterWidth() : 1 );
+    return isGPUParticleBinningAvailable() ?
+               kClusterCellVolume :
+               -1; // Propagate the error if the dimension is not supported
+}
+
+int Params::getGPUInterpolationClusterCellVolume() const
+{
+    return isGPUParticleBinningAvailable() ?
+               getGPUInterpolationClusterCellVolume( nDim_particle, interpolation_order ) :
+               -1; // Propagate the error if the dimension is not supported
+}
+
+int Params::getGPUBinCount( int dimension_id ) const
+{
+    const int cells_in_dimension = n_space[dimension_id - 1];
+
+    const int kGPUBinCount = cells_in_dimension / getGPUClusterWidth();
+
+    return kGPUBinCount;
+}
+
+int Params::getGPUBinCount() const
+{
+    const int cells_in_cluster_volume = getGPUClusterCellVolume();
+
+    if( cells_in_cluster_volume < 0 ) {
+        // Unsupported dimension
+        return -1;
+    }
+
+    const int kGPUBinCount = n_cell_per_patch / cells_in_cluster_volume;
+
+    SMILEI_ASSERT( ( kGPUBinCount * cells_in_cluster_volume ) == n_cell_per_patch );
+
+    return kGPUBinCount;
 }

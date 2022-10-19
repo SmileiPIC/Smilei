@@ -335,7 +335,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode
@@ -428,6 +428,7 @@ tables_clean:
 	@echo "Cleaning $(TABLES_BUILD_DIR)"
 	@rm -r $(TABLES_BUILD_DIR)
 
+# TODO(Etienne M): This does not get the dependencies of the .cu files !
 # Calculate dependencies
 $(TABLES_BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"

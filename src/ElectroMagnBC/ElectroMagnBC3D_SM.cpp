@@ -41,9 +41,9 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
         B_val[axis1_] = new Field2D( dims1, "B_val" );
         B_val[axis2_] = new Field2D( dims2, "B_val" );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[0]->data_, B_val[0]->globalDims_ );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[1]->data_, B_val[1]->globalDims_ );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( B_val[2]->data_, B_val[2]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[0]->data_, B_val[0]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[1]->data_, B_val[1]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[2]->data_, B_val[2]->globalDims_ );
 
         B_val[0]->put_to( 0. );
         B_val[1]->put_to( 0. );
@@ -74,15 +74,15 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
 ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
 {
     if( B_val[0] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
         delete B_val[0];
     }
     if( B_val[1] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
         delete B_val[1];
     }
     if( B_val[2] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
         delete B_val[2];
     }
 }
@@ -121,9 +121,9 @@ void ElectroMagnBC3D_SM::save_fields( Field *my_field, Patch *patch )
 
 void ElectroMagnBC3D_SM::disableExternalFields()
 {
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
-    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
     delete B_val[0];
     B_val[0] = NULL;
     delete B_val[1];
@@ -211,7 +211,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db1, b1_size );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( db1, b1_size );
 
         // B1
         if( axis0_ == 0 ) {
@@ -285,7 +285,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
         
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db1, b1_size );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( db1, b1_size );
 
         // Component along axis 2
         // Lasers
@@ -301,7 +301,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
 
         // B2
         if( axis0_ == 0 ) {
@@ -375,6 +375,6 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( db2, b2_size );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( db2, b2_size );
     }
 }

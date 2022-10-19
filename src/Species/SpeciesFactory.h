@@ -1369,7 +1369,7 @@ public:
                             }
                             patch->vecSpecies[ispec1]->photon_species_index = ispec2;
                             patch->vecSpecies[ispec1]->photon_species_ = patch->vecSpecies[ispec2];
-                            patch->vecSpecies[ispec1]->radiated_photons_ = ParticlesFactory::create( params );
+                            patch->vecSpecies[ispec1]->radiated_photons_ = ParticlesFactory::create( params, *patch );
                             patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
@@ -1469,7 +1469,7 @@ public:
                     patch->vecSpecies[i]->photon_species_ = patch->vecSpecies[patch->vecSpecies[i]->photon_species_index];
                     //patch->vecSpecies[i]->Radiate->new_photons_.initialize(patch->vecSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    patch->vecSpecies[i]->radiated_photons_ = ParticlesFactory::create( params );
+                    patch->vecSpecies[i]->radiated_photons_ = ParticlesFactory::create( params, *patch );
                     patch->vecSpecies[i]->radiated_photons_->tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
                     patch->vecSpecies[i]->radiated_photons_->isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
                     patch->vecSpecies[i]->radiated_photons_->isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;

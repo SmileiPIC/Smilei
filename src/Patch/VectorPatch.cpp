@@ -58,10 +58,10 @@ void VectorPatch::close( SmileiMPI *smpiData )
             delete patches_[0]->vecBPs[icoll]->debug_file_;
         }
     }
-    
+
     // Close diagnostics
     closeAllDiags( smpiData );
-    
+
     if( diag_timers_.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
@@ -70,12 +70,12 @@ void VectorPatch::close( SmileiMPI *smpiData )
         MPI_Reduce( &diag_timers_[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         MESSAGE( "\t\t" << setw( 20 ) << diag_timers_[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
-    
+
     for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
         delete diag_timers_[idiag];
     }
     diag_timers_.clear();
-    
+
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
     }
@@ -300,9 +300,16 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sortAllParticles( Params &params )
+void VectorPatch::initialParticleSorting( Params &params )
 {
-#ifdef _VECTO
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // Initially I wanted to control the GPU particle sorting/bin initialization
+    // here. In the end it was put in initializeDataOnDevice which is more
+    // meaningful.
+    // On that note, maybe the _VECTO/cell sorting
+    // code should probably also be encapsulated in the particle class
+    // (or a vectorized variant).
+#elif defined( _VECTO )
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -342,7 +349,7 @@ void VectorPatch::dynamics( Params &params,
             if( params.keep_position_old ) {
                 spec->particles->savePositions();
             }
-            
+
             if( params.Laser_Envelope_model ) {
                 continue;
             }
@@ -541,33 +548,33 @@ void VectorPatch::cleanParticlesOverhead(Params &params, Timers &timers, int iti
 //! Particle injection from the boundaries
 void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, unsigned int itime )
 {
-    
+
     timers.particleInjection.restart();
-    
+
     //#pragma omp for schedule(runtime)
     #pragma omp single
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        
+
         Patch * patch = ( *this )( ipatch );
-        
+
         // Only for patch at the domain boundary
         if( ! patch->isAnyBoundary() ) continue;
-        
+
         // Local buffer of particles
         vector<Particles> local_particles_vector( patch->particle_injector_vector_.size() );
-        
+
         // Creation of the new particles for all injectors
         // Create particles as if t0 with ParticleCreator
         for( unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++ ) {
-            
+
             // Pointer to the current particle injector
             ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
-            
+
             unsigned int axis = particle_injector->axis();
             unsigned int min_max = particle_injector->min_max();
-            
+
             if( !patch->isBoundary( axis, min_max ) ) continue;
-            
+
             // Area for injection
             struct SubSpace init_space;
             init_space.cell_index_[0] = 0;
@@ -576,26 +583,26 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space.box_size_[0]   = params.n_space[0];
             init_space.box_size_[1]   = params.n_space[1];
             init_space.box_size_[2]   = params.n_space[2];
-            
+
             if( min_max == 1 ) {
                 init_space.cell_index_[axis] = params.n_space[axis]-1;
             }
             init_space.box_size_[axis] = 1;
-            
+
             // We first get the species id associated to this injector
             unsigned int i_species = particle_injector->getSpeciesNumber();
             Species * injector_species = patch->vecSpecies[i_species];
-            
+
             // Pointer to simplify the code
             Particles* particles = &local_particles_vector[i_injector];
-            
+
             // No particles at the begining
             particles->initialize( 0, *injector_species->particles );
-            
+
             // Particle creator object
             ParticleCreator particle_creator;
             particle_creator.associate( particle_injector, particles, injector_species );
-            
+
             // Creation of the particles in local_particles_vector
             particle_creator.create( init_space, params, patch, itime );
 
@@ -625,13 +632,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
             // }
             //delete [] mask;
-            
+
             // Update positions from momentum
             // Particle not created at the same position of another species
             if( !particle_injector->position_initialization_on_injector_ ) {
-                
+
                 unsigned int number_of_particles = local_particles_vector[i_injector].size();
-                
+
                 // Shift to update the positions
                 double position_shift[3] = {0., 0., 0.};
                 if( min_max == 0 ) {
@@ -649,7 +656,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 double * __restrict__ momentum_z = local_particles_vector[i_injector].getPtrMomentum( 2 );
 
                 if (params.nDim_field == 1) {
-                
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
@@ -658,9 +665,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_x[ip] += ( momentum_x[ip]
                                                     * inverse_gamma + position_shift[0]);
                     }
-                
+
                 } else if (params.nDim_field == 2) {
-                    
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
@@ -671,10 +678,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_y[ip] += ( momentum_y[ip]
                                                     * inverse_gamma + position_shift[1]);
                     }
-                    
-                    
+
+
                 } else if (params.nDim_field == 3) {
-                    
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip]
@@ -687,7 +694,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_z[ip] += ( momentum_z[ip]
                                                     * inverse_gamma + position_shift[2]);
                     }
-                        
+
                 } // end if ndim_field
             } // end if new particle positions
         } // end loop injector
@@ -734,20 +741,20 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
                         px[ip] = lpvx[ip];
                     }
-                } // if nDim_field 
+                } // if nDim_field
             } // if particle positions
-            
+
             // Filter particles when initialized on different position
             if( local_particles_vector[i_injector].size() > 0 ) {
-                
+
                 // We first get the species id associated to this injector
                 unsigned int i_species = particle_injector->getSpeciesNumber();
                 Species * injector_species = species( ipatch, i_species );
                 Particles* particles = &local_particles_vector[i_injector];
-                
+
                 // Then the new number of particles in species
                 int new_particle_number = particles->size() - 1;
-                
+
                 // Suppr not interesting parts ...
                 for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
                     for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
@@ -759,9 +766,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         }
                     }
                 }
-                
+
                 new_particle_number += 1;
-                
+
                 // New energy from particles
                 double energy = 0.;
                 // Matter particle case
@@ -778,18 +785,18 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     }
                     injector_species->nrj_new_part_ += energy;
                 }
-                
+
                 // Insertion of the particles as a group in the vector of species
                 if( new_particle_number > 0 ) {
-                    
+
                     particles->eraseParticleTrail( new_particle_number );
                     injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
-                    
+
                 }
             } // if particles > 0
         } // end for i_injector
     } // end for ipatch
-    
+
     timers.particleInjection.update( params.printNow( itime ) );
 }
 
@@ -853,6 +860,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
+            break;
         }
     }
     if( !some_particles_are_moving  && !diag_flag ) {
@@ -1253,6 +1261,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
+// NOTE: This function will pull the GPU data unless we are at t=0
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
@@ -1268,14 +1277,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
-            { 
+            {
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1290,7 +1298,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         if( binning && binning->has_auto_limits_ ) {
             #pragma omp single
             binning->theTimeIsNow_ = binning->theTimeIsNow( itime );
-            
+
             if( binning->theTimeIsNow_ ) {
                 #pragma omp master
                 {
@@ -1355,10 +1363,10 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
-        
+
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
-        
+
         if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
             #pragma omp for schedule(runtime)
@@ -1381,14 +1389,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[globalDiags.size()+idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
-            { 
+            {
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -2010,13 +2017,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     uint64_t nparticles_global( 0 );
     MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
 
     //Timer ptimer("global");
     //ptimer.init(smpi);
     //ptimer.restart();
 
     double gamma_mean = gamma_global/( double )nparticles_global;
+
+    MESSAGE( "GAMMA = " << gamma_mean );
 
     unsigned int iteration_max = params.relativistic_poisson_max_iteration;
     double           error_max = params.relativistic_poisson_max_error;
@@ -3733,20 +3741,20 @@ void VectorPatch::applyAntennas( double time )
 
     // Loop antennas
     for( unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++ ) {
-        
+
         // Space-time profile
         if( patches_[0]->EMfields->antennas[iAntenna].spacetime ) {
-            
+
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 Antenna * A = &( patches_[ipatch]->EMfields->antennas[iAntenna] );
                 Field *field = patches_[ipatch]->EMfields->allFields[A->index];
                 patches_[ipatch]->EMfields->applyPrescribedField( field, A->space_time_profile, patches_[ipatch], time );
             }
-        
+
         // Separated profiles for space & time
         } else {
-            
+
             // Get intensity from antenna of the first patch
             #pragma omp single
             antenna_intensity_ = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
@@ -3756,7 +3764,7 @@ void VectorPatch::applyAntennas( double time )
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity_ );
             }
-            
+
         }
     }
 }
@@ -4241,11 +4249,12 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
+void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Maybe we could just alloc the memory here and initialize 
-    // it on the GPU instead of CPU initializing then copying to the GPU
+    // TODO(Etienne M): FREE. If we have load balancing or other patch
+    // creation/destruction available (which is not the case on GPU ATM),
+    // we should be taking care of freeing this GPU memory.
 
     const int npatches = this->size();
 
@@ -4263,19 +4272,19 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
     const int size_of_table_min_photon_chi = radiation_tables->xi_.size_particle_chi_;
     const int size_of_table_xi             = radiation_tables->xi_.size_particle_chi_ * radiation_tables->xi_.size_photon_chi_;
 
-    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
 
         // Initialize particles data structures on GPU, and synchronize it
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
-            
+
             // Create photon species on the device
             if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
                 spec->radiated_photons_->initializeDataOnDevice();
             }
-            
+
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
@@ -4297,27 +4306,30 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
-        //smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bz, sizeofBz );
+
+        // TODO(Etienne M): We should create a function that does the copy of the radiation table.
+        // Here we should only allocate data.
 
         if( params.has_Niel_radiation_ ) {
-
             const double *const table = &( radiation_tables->niel_.table_[0] );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
+
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
         if( params.has_MC_radiation_ ) {
@@ -4326,17 +4338,19 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );
             const double *const table_xi             = &( radiation_tables->xi_.table_[0] );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
         }
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
 
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
-void VectorPatch::syncFieldFromHostToDevice()
+void VectorPatch::copyEMFieldsFromHostToDevice()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
@@ -4365,28 +4379,37 @@ void VectorPatch::syncFieldFromHostToDevice()
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ez, sizeofEz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ez, sizeofEz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
 
 //! Sync all data (fields and particles) from device to host
-void VectorPatch::syncDataFromDeviceToHost()
+void VectorPatch::copyDeviceStateToHost()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Diags may need more data copied back from the GPU.
+    // We need to either have more of these functions, or to copy everything
+    // from the GPU to the CPU.
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
+
+    // const int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
+    // const int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
+    // const int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
 
     const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
     const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
@@ -4402,6 +4425,10 @@ void VectorPatch::syncDataFromDeviceToHost()
             spec->particles->syncCPU();
         }
 
+        // double *const Jx = patches_[ipatch]->EMfields->Jx_->data();
+        // double *const Jy = patches_[ipatch]->EMfields->Jy_->data();
+        // double *const Jz = patches_[ipatch]->EMfields->Jz_->data();
+
         double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
         double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
         double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
@@ -4410,13 +4437,21 @@ void VectorPatch::syncDataFromDeviceToHost()
         double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
         double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ez, sizeofEz );
+        // TODO(Etienne M): Shouldn't Jx be copied too ? Depending on the diags
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmz, sizeofBz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
