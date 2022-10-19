@@ -7,6 +7,9 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <thrust/binary_search.h>
+#include <thrust/device_vector.h>
+#include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 

@@ -266,8 +266,7 @@ class Validation(object):
         
         # Get state of smilei bin in root folder
         chdir(self.smilei_path.root)
-        STAT_SMILEI_R_OLD = stat(SMILEI_R) if exists(SMILEI_R) else ' '
-        
+
         # CLEAN
         # If no smilei bin in the workdir, or it is older than the one in smilei directory,
         # clean to force compilation

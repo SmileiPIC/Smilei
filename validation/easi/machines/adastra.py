@@ -29,6 +29,8 @@ class MachineAdastra(Machine):
 # Dump all executed commands (very, VERY verbose)
 # set +x
 
+# set -e
+
 # TODO(Etienne M): dunno the partition/feature/constraints for adastra yet
 # # --feature=MI200
 # #SBATCH --gpus=mi100:1 or mi200:1
