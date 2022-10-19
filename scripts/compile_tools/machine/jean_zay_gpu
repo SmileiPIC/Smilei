@@ -12,7 +12,7 @@ ACCELERATOR_GPU_FLAGS += -ta=tesla:cc70 -std=c++14  -lcurand -Minfo=all
 LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
 
 # To turn on Omp support, uncomment these two lines
-# ACCELERATOR_GPU_FLAGS += -mp=gpu -Minfo=mp
+# ACCELERATOR_GPU_FLAGS += -mp=gpu -Minfo=mp -DSMILEI_ACCELERATOR_GPU_OMP
 # LDFLAGS += -mp=gpu
 
 ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_70

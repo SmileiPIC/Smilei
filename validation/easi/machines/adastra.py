@@ -51,7 +51,7 @@ module load cray-mpich/8.1.13
 module load rocm/4.5.0
 module load craype-accel-amd-gfx908 # MI100
 # module load craype-accel-amd-gfx90a # MI250X
-module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
+module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.7.1
 
 # Info on the node
 rocm-smi
