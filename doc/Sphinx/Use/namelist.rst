@@ -133,7 +133,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
     You can alternatively use ``"PML"`` for any EM boundary.
-    Vectorization, collisions and
+    Collisions and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -326,21 +326,37 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. rst-class:: experimental
 
-.. py:data:: pml_sigma_parameters
+.. py:data:: pml_sigma
 
-  :type: List of list of integers
-  :default: [[20,2],[20,2],[20,2]]
+  :type: List of profiles
+  :default: [lambda x : 20 * x**2]
 
-  Defines [sigma_max,power_sigma] for each dimension.
+  Defines the sigma profiles across the transverse dimension of the PML for each dimension of the simulation.
+  It must be expressed as a list of profiles (1 per dimension).
+
+  If a single profile is given, it will be used for all dimensions.
+
+  For a given dimension, the same profile is applied to both sides of the domain.
+
+  The profile is given as a single variable function defined on the interval [0,1] where 0 is the inner bound of the PML and 1 is the outer bound of the PML. 
+  Please refer to :doc:`/Understand/PML` if needed in AM geometry.
 
 .. rst-class:: experimental
 
-.. py:data:: pml_kappa_parameters
+.. py:data:: pml_kappa
 
-  :type: List of lists of integers
-  :default: [[80,4],[80,4],[80,4]]
+  :type: List of profiles
+  :default: [lambda x : 1 + 79 * x**4]
 
-  Defines [kappa_max,power_kappa] for each dimension.
+  Defines the kappa profiles across the transverse dimension of the PML for each dimension of the simulation.
+  It must be expressed as a list of profiles (1 per dimension).
+
+  If a single profile is given, it will be used for all dimensions.
+
+  For a given dimension, the same profile is applied to both sides of the domain.
+
+  The profile is given as a single variable function defined on the interval [0,1] where 0 is the inner bound of the PML and 1 is the outer bound of the PML. 
+  Please refer to :doc:`/Understand/PML` if needed in AM geometry.
 
 .. py:data:: time_fields_frozen
 
