@@ -41,14 +41,6 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params):
     alpha_y =  alpha;
     alpha_x =  alpha;
 
-    // Use in order to test extended stencil without PML coefficient
-    // Ax    = alpha_x*dt/dx;
-    // Ay    = alpha_y*dt/dy;
-    // Bx    = beta_xy*dt/dx;
-    // By    = beta_yx*dt/dy;
-    // Dx    = delta_x*dt/dy;
-    // Dy    = delta_y*dt/dy;
-
     // Use in order to test extended stencil with PML coefficient
     Ax    = alpha_x/dx;
     Ay    = alpha_y/dy;

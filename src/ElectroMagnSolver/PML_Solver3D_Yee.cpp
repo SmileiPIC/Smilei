@@ -63,7 +63,6 @@ PML_Solver3D_Yee::~PML_Solver3D_Yee()
     for( unsigned int i=0; i<pml_kappa_.size(); i++ ) {
         delete pml_kappa_[i];
     }
-
 }
 
 void PML_Solver3D_Yee::operator()( ElectroMagn *fields )
@@ -157,12 +156,6 @@ void PML_Solver3D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
     c4_d_zfield.resize( ny_d ); // j-dependent
     c5_d_zfield.resize( nz_d ); // k-dependent
     c6_d_zfield.resize( nz_d ); // k-dependent
-
-    // Quote of the first primal grid-point where PML solver will be apply
-    // The first dual grid-point is at getDomainLocalMax( 0 ) - 0.5*dx and getDomainLocalMax( 1 ) - 0.5*dy
-    // xmax = patch->getDomainLocalMax( 0 );
-    // ymax = patch->getDomainLocalMax( 1 );
-    // zmax = patch->getDomainLocalMax( 2 );
 
     if ( iDim == 0 ) {
         // 3 cells (oversize) are vaccum so the PML media begin at y0 which is :
@@ -338,8 +331,8 @@ void PML_Solver3D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
                 //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
                 //sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
-                kappa_x_p[i] = pml_kappa_[0]->valueAt(( i - nx_p-ncells_pml_max[0] )*dx/length_x_pml_xmax);
-                sigma_x_p[i] = pml_sigma_[0]->valueAt(( i - nx_p-ncells_pml_max[0] )*dx/length_x_pml_xmax);
+                kappa_x_p[i] = pml_kappa_[0]->valueAt(( i - nx_p+ncells_pml_max[0] )*dx/length_x_pml_xmax);
+                sigma_x_p[i] = pml_sigma_[0]->valueAt(( i - nx_p+ncells_pml_max[0] )*dx/length_x_pml_xmax);
             }
         }
         // Y-direction
@@ -359,8 +352,8 @@ void PML_Solver3D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, i
             for ( int j=(ny_p-1)-(ncells_pml_max[1]-1) ; j<ny_p ; j++ ) {
                 //kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( ( j - ( (ny_p-1)-(ncells_pml_max[1]-1) ) )*dy , kappa_power_pml_y ) / pow( length_y_pml_ymax , kappa_power_pml_y ) ;
                 //sigma_y_p[j] = sigma_y_max * pow( (j - ( (ny_p-1)-(ncells_pml_max[1]-1) ) )*dy , sigma_power_pml_y ) / pow( length_y_pml_ymax , sigma_power_pml_y ) ;
-                kappa_y_p[j] = pml_kappa_[1]->valueAt(( j - ny_p-ncells_pml_max[1] )*dy/length_y_pml_ymax);
-                sigma_y_p[j] = pml_sigma_[1]->valueAt(( j - ny_p-ncells_pml_max[1] )*dy/length_y_pml_ymax);
+                kappa_y_p[j] = pml_kappa_[1]->valueAt(( j - ny_p+ncells_pml_max[1] )*dy/length_y_pml_ymax);
+                sigma_y_p[j] = pml_sigma_[1]->valueAt(( j - ny_p+ncells_pml_max[1] )*dy/length_y_pml_ymax);
             }
         }
         // Z-direction

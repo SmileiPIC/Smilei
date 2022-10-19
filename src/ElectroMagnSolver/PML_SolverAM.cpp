@@ -211,8 +211,8 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
-                kappa_l_p[i] = pml_kappa_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ))*dl/length_l_pml_lmax);
-                sigma_l_p[i] = pml_sigma_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ))*dl/length_l_pml_lmax);
+                kappa_l_p[i] = pml_kappa_[0]->valueAt((i - nl_p + ncells_pml_max[0])*dl/length_l_pml_lmax);
+                sigma_l_p[i] = pml_sigma_[0]->valueAt((i - nl_p + ncells_pml_max[0])*dl/length_l_pml_lmax);
             }
         }
         // Radial
@@ -245,8 +245,8 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1)+1 ; i<nl_d ; i++ ) {
-                kappa_l_d[i] = pml_kappa_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl/length_l_pml_lmax);
-                sigma_l_d[i] = pml_sigma_[0]->valueAt((i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dl/length_l_pml_lmax);
+                kappa_l_d[i] = pml_kappa_[0]->valueAt((i -  nl_p + ncells_pml_max[0] - 0.5 )*dl/length_l_pml_lmax);
+                sigma_l_d[i] = pml_sigma_[0]->valueAt((i -  nl_p + ncells_pml_max[0] - 0.5 )*dl/length_l_pml_lmax);
             }
         }
         // Radial
