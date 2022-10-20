@@ -25,25 +25,25 @@ ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomp
     ElectroMagn( params, domain_decomposition, vecSpecies, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() ),
-    isZmax( patch->isZmax() ),
-    isZmin( patch->isZmin() )
+    isZmin( patch->isZmin() ),
+    isZmax( patch->isZmax() )
 {
 
     initElectroMagn3DQuantities( params, patch );
-    
+
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         Jx_s[ispec]  = FieldFactory::create( Tools::merge("Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
         Jy_s[ispec]  = FieldFactory::create( Tools::merge("Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
         Jz_s[ispec]  = FieldFactory::create( Tools::merge("Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
         rho_s[ispec] = new Field3D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        
+
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
-        
+
     }
-    
+
 }//END constructor Electromagn3D
 
 
@@ -51,12 +51,12 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
     ElectroMagn( emFields, params, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() ),
-    isZmax( patch->isZmax() ),
-    isZmin( patch->isZmin() )
+    isZmin( patch->isZmin() ),
+    isZmax( patch->isZmax() )
 {
 
     initElectroMagn3DQuantities( params, patch );
-    
+
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) { // end loop on ispec
         if ( emFields->Jx_s[ispec] != NULL ) {
@@ -84,7 +84,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
                 rho_s[ispec]  = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
             }
         }
-        
+
         if( params.Laser_Envelope_model ) {
             if( emFields->Env_Chi_s[ispec] != NULL ) {
                 if( emFields->Env_Chi_s[ispec]->data_ != NULL ) {
@@ -94,12 +94,12 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
                 }
             }
         }
-        
-        
-        
+
+
+
     } // loop on ispec
-    
-    
+
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -111,29 +111,29 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     // --------------------------------------------------
     // Calculate quantities related to the simulation box
     // --------------------------------------------------
-    
+
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
     dx       = cell_length[0];
     dt_ov_dx = timestep/dx;
     dx_ov_dt = 1.0/dt_ov_dx;
-    
+
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
     dy       = cell_length[1];
     dt_ov_dy = timestep/dy;
     dy_ov_dt = 1.0/dt_ov_dy;
-    
+
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the z-direction)
     dz       = cell_length[2];
     dt_ov_dz = timestep/dz;
     dz_ov_dt = 1.0/dt_ov_dz;
-    
+
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-    
+
     dimPrim.resize( nDim_field );
     dimDual.resize( nDim_field );
-    
+
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<nDim_field ; i++ ) {
         // Standard scheme
@@ -152,7 +152,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     // number of nodes of the primal and dual grid in the z-direction
     nz_p = n_space[2]+1+2*oversize[2];
     nz_d = n_space[2]+2+2*oversize[2]-(params.is_pxr);
-    
+
     // Allocation of the EM fields
     Ex_  = FieldFactory::create( dimPrim, 0, false, "Ex", params );
     Ey_  = FieldFactory::create( dimPrim, 1, false, "Ey", params );
@@ -169,20 +169,20 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
         Env_E_abs_ = new Field3D( dimPrim, "Env_E_abs" );
 	Env_Ex_abs_= new Field3D( dimPrim, "Env_Ex_abs" );
     }
-    
+
     // Total charge currents and densities
     Jx_   = FieldFactory::create( dimPrim, 0, false, "Jx", params );
     Jy_   = FieldFactory::create( dimPrim, 1, false, "Jy", params );
     Jz_   = FieldFactory::create( dimPrim, 2, false, "Jz", params );
     rho_  = new Field3D(dimPrim, "Rho" );
-    
+
     //Edge coeffs are organized as follow and do not account for corner points
     //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax
     //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax
     //zmin/xmin - zmin/xmax - zmin/ymin - zmin/ymax - zmaz/xmin - zmaz/xmax - zmax/ymin - zmax/ymax
     beta_edge.resize( 24 );
     S_edge.resize( 24 );
-    
+
         if(params.is_pxr == true) {
         rhoold_ = new Field3D( dimPrim, "RhoOld" );
     }
@@ -200,8 +200,8 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
      MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
      << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
      */
-    
-    
+
+
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
     // istart
@@ -217,22 +217,22 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
             }
         }
     }
-    
+
     // bufsize = nelements
     for( unsigned int i=0 ; i<3 ; i++ )
         for( unsigned int isDual=0 ; isDual<2 ; isDual++ ) {
             bufsize[i][isDual] = 1;
         }
-        
+
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
             bufsize[i][isDual] = n_space[i] + 1;
         }
-        
+
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
             bufsize[i][isDual] += isDual;
             if( params.number_of_patches[i]!=1 ) {
-            
+
                 if( ( !isDual ) && ( patch->Pcoordinates[i]!=0 ) ) {
                     bufsize[i][isDual]--;
                 } else if( isDual ) {
@@ -241,7 +241,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
                         bufsize[i][isDual]--;
                     }
                 }
-                
+
             } // if ( params.number_of_patches[i]!=1 )
         } // for (int isDual=0 ; isDual
     } // for (unsigned int i=0 ; i<nDim_field
@@ -273,16 +273,16 @@ ElectroMagn3D::~ElectroMagn3D()
 void ElectroMagn3D::initPoisson( Patch *patch )
 {
     Field3D *rho3D = static_cast<Field3D *>( rho_ );
-    
+
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
     //     ghost cells are used only for the (non-periodic) boundaries
     // dual indexes suppressed during "patchization"
     // ----------------------------------------------------------------------------------
-    
+
     index_min_p_.resize( 3, 0 );
     index_max_p_.resize( 3, 0 );
-    
+
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
     index_min_p_[2] = oversize[2];
@@ -295,13 +295,13 @@ void ElectroMagn3D::initPoisson( Patch *patch )
     if( patch->isXmax() ) {
         index_max_p_[0] = nx_p-1;
     }
-    
+
     phi_ = new Field3D( dimPrim );  // scalar potential
     r_   = new Field3D( dimPrim );  // residual vector
     p_   = new Field3D( dimPrim );  // direction vector
     Ap_  = new Field3D( dimPrim );  // A*p vector
-    
-    
+
+
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
             for( unsigned int k=0; k<nz_p; k++ ) {
@@ -311,7 +311,7 @@ void ElectroMagn3D::initPoisson( Patch *patch )
             }
         }//j
     }//i
-    
+
 } // initPoisson
 
 double ElectroMagn3D::compute_r()
@@ -333,7 +333,7 @@ void ElectroMagn3D::compute_Ap( Patch *patch )
     double one_ov_dy_sq       = 1.0/( dy*dy );
     double one_ov_dz_sq       = 1.0/( dz*dz );
     double two_ov_dx2dy2dz2 = 2.0*( 1.0/( dx*dx )+1.0/( dy*dy )+1.0/( dz*dz ) );
-    
+
     // vector product Ap = A*p
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
@@ -345,8 +345,8 @@ void ElectroMagn3D::compute_Ap( Patch *patch )
             }//k
         }//j
     }//i
-    
-    
+
+
     // Xmin BC
     if( patch->isXmin() ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
@@ -375,10 +375,10 @@ void ElectroMagn3D::compute_Ap( Patch *patch )
                                         +                   one_ov_dz_sq*( ( *p_ )( 0, ny_p-1, nz_p-2 ) )
                                         -                   two_ov_dx2dy2dz2*( *p_ )( 0, ny_p-1, nz_p-1 );
     }
-    
+
     // Xmax BC
     if( patch->isXmax() ) {
-    
+
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
                 ( *Ap_ )( nx_p-1, j, k ) = one_ov_dx_sq*( ( *p_ )( nx_p-2, j, k ) )
@@ -405,7 +405,7 @@ void ElectroMagn3D::compute_Ap( Patch *patch )
                                              +                   one_ov_dz_sq*( ( *p_ )( nx_p-1, ny_p-1, nz_p-2 ) )
                                              -                   two_ov_dx2dy2dz2*( *p_ )( nx_p-1, ny_p-1, nz_p-1 );
     }
-    
+
 } // compute_Ap
 
 void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean )
@@ -413,12 +413,12 @@ void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_
 
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
-    
+
     double one_ov_dx_sq_ov_gamma_sq       = 1.0/( dx*dx )/( gamma_mean*gamma_mean );
     double one_ov_dy_sq                   = 1.0/( dy*dy );
     double one_ov_dz_sq                   = 1.0/( dz*dz );
     double two_ov_dxgam2dy2dz2            = 2.0*( 1.0/( dx*dx )/( gamma_mean*gamma_mean )+1.0/( dy*dy )+1.0/( dz*dz ) );
-    
+
     // vector product Ap = A*p
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
@@ -430,8 +430,8 @@ void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_
             }//k
         }//j
     }//i
-    
-    
+
+
     // Xmin BC
     if( patch->isXmin() ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
@@ -460,10 +460,10 @@ void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_
                                         +                   one_ov_dz_sq*( ( *p_ )( 0, ny_p-1, nz_p-2 ) )
                                         -                   two_ov_dxgam2dy2dz2*( *p_ )( 0, ny_p-1, nz_p-1 );
     }
-    
+
     // Xmax BC
     if( patch->isXmax() ) {
-    
+
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
                 ( *Ap_ )( nx_p-1, j, k ) = one_ov_dx_sq_ov_gamma_sq*( ( *p_ )( nx_p-2, j, k ) )
@@ -490,7 +490,7 @@ void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_
                                              +                   one_ov_dz_sq*( ( *p_ )( nx_p-1, ny_p-1, nz_p-2 ) )
                                              -                   two_ov_dxgam2dy2dz2*( *p_ )( nx_p-1, ny_p-1, nz_p-1 );
     }
-    
+
 } // compute_Ap_relativistic_Poisson
 
 double ElectroMagn3D::compute_pAp()
@@ -517,7 +517,7 @@ void ElectroMagn3D::update_pand_r( double r_dot_r, double p_dot_Ap )
             }
         }
     }
-    
+
 } // update_pand_r
 
 void ElectroMagn3D::update_p( double rnew_dot_rnew, double r_dot_r )
@@ -538,7 +538,7 @@ void ElectroMagn3D::initE( Patch *patch )
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_ );
     Field3D *rho3D = static_cast<Field3D *>( rho_ );
-    
+
     // ------------------------------------------
     // Compute the electrostatic fields Ex and Ey
     // ------------------------------------------
@@ -568,7 +568,7 @@ void ElectroMagn3D::initE( Patch *patch )
             }
         }
     }
-    
+
     // Apply BC on Ex and Ey
     // ---------------------
     // Ex / Xmin
@@ -593,30 +593,30 @@ void ElectroMagn3D::initE( Patch *patch )
             }
         }
     }
-    
+
     delete phi_;
     delete r_;
     delete p_;
     delete Ap_;
-    
+
 } // initE
 
 void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
-    
+
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_rel_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_rel_ );
     Field3D *rho3D = static_cast<Field3D *>( rho_ );
-    
+
     // ------------------------------------------
     // Compute the fields Ex, Ey and Ez
     // ------------------------------------------
-    
-    
-    
+
+
+
     // Ex
     MESSAGE( 1, "Computing Ex from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=1; i<nx_d-1; i++ ) {
@@ -647,7 +647,7 @@ void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
         }
     }
     MESSAGE( 1, "Ez: done" );
-    
+
     // Apply BC on Ex, Ey and Ez
     // ---------------------
     // Ex / Xmin
@@ -672,7 +672,7 @@ void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
             }
         }
     }
-    
+
     // // Ey / Ymin
     // if (patch->isYmin()) {
     //     DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
@@ -720,29 +720,29 @@ void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
     //         }
     //     }
     // }
-    
+
     delete phi_;
     delete r_;
     delete p_;
     delete Ap_;
-    
+
 } // initE_relativistic_Poisson
 
 void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
-    
+
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_rel_ );
-    
+
     // Bx is zero everywhere
     Field3D *Bx3D  = static_cast<Field3D *>( Bx_rel_ );
     Field3D *By3D  = static_cast<Field3D *>( By_rel_ );
     Field3D *Bz3D  = static_cast<Field3D *>( Bz_rel_ );
-    
+
     double beta_mean = sqrt( 1.-1./gamma_mean/gamma_mean );
-    
+
     // ------------------------------------------
     // Compute the fields Ex and Ey
     // ------------------------------------------
@@ -757,7 +757,7 @@ void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
         }
     }
     MESSAGE( 1, "Bx: done" );
-    
+
     // By
     MESSAGE( 1, "Computing By from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=0; i<nx_p; i++ ) {
@@ -778,29 +778,29 @@ void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
         }
     }
     MESSAGE( 1, "Bz: done" );
-    
-    
-    
+
+
+
 } // initB_relativistic_Poisson
 
 void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
 {
     // ------ Init temporary fields for relativistic field initialization
-    
+
     // E fields centered as in FDTD, to be added to the already present electric fields
     Ex_rel_  = new Field3D( dimPrim, 0, false, "Ex_rel" );
     Ey_rel_  = new Field3D( dimPrim, 1, false, "Ey_rel" );
     Ez_rel_  = new Field3D( dimPrim, 2, false, "Ez_rel" );
-    
-    
+
+
     // B fields centered as the E fields in FDTD (Bx null)
     Bx_rel_  = new Field3D( dimPrim, 0, true,  "Bx_rel" ); // will be identically zero (hypothesis of negligible transverse current with respect to longitudinal current)
     By_rel_  = new Field3D( dimPrim, 2, false,  "By_rel" ); // is equal to -beta*Ez, thus it inherits the same centering of Ez
     Bz_rel_  = new Field3D( dimPrim, 1, false,  "Bz_rel" ); // is equal to  beta*Ey, thus it inherits the same centering of Ey
-    
-    
+
+
     // ----- B fields centered as in FDTD, to be added to the already present magnetic fields
-    
+
     // B field advanced by dt/2
     Bx_rel_t_plus_halfdt_  = new Field3D( dimPrim, 0, true,  "Bx_rel_t_plus_halfdt" );
     By_rel_t_plus_halfdt_  = new Field3D( dimPrim, 1, true,  "By_rel_t_plus_halfdt" );
@@ -809,8 +809,8 @@ void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
     Bx_rel_t_minus_halfdt_  = new Field3D( dimPrim, 0, true,  "Bx_rel_t_plus_halfdt" );
     By_rel_t_minus_halfdt_  = new Field3D( dimPrim, 1, true,  "By_rel_t_plus_halfdt" );
     Bz_rel_t_minus_halfdt_  = new Field3D( dimPrim, 2, true,  "Bz_rel_t_plus_halfdt" );
-    
-    
+
+
 } // initRelativisticPoissonFields
 
 void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
@@ -818,17 +818,17 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
     Field3D *Ex3Drel  = static_cast<Field3D *>( Ex_rel_ );
     Field3D *Ey3Drel  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3Drel  = static_cast<Field3D *>( Ez_rel_ );
-    
+
     // B_t_plus_halfdt
     Field3D *Bx_rel_t_plus_halfdt = static_cast<Field3D *>( Bx_rel_t_plus_halfdt_ );
     Field3D *By_rel_t_plus_halfdt = static_cast<Field3D *>( By_rel_t_plus_halfdt_ );
     Field3D *Bz_rel_t_plus_halfdt = static_cast<Field3D *>( Bz_rel_t_plus_halfdt_ );
-    
+
     // B_t_minus_halfdt
     Field3D *Bx_rel_t_minus_halfdt = static_cast<Field3D *>( Bx_rel_t_minus_halfdt_ );
     Field3D *By_rel_t_minus_halfdt = static_cast<Field3D *>( By_rel_t_minus_halfdt_ );
     Field3D *Bz_rel_t_minus_halfdt = static_cast<Field3D *>( Bz_rel_t_minus_halfdt_ );
-    
+
     // E and B fields already existing on the grid
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_ );
@@ -839,7 +839,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
     Field3D *Bx3D0  = static_cast<Field3D *>( Bx_m );
     Field3D *By3D0  = static_cast<Field3D *>( By_m );
     Field3D *Bz3D0  = static_cast<Field3D *>( Bz_m );
-    
+
     // Ex (d,p,p)
     for( unsigned int i=0; i<nx_d; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -848,7 +848,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
+
     // Ey (p,d,p)
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_d; j++ ) {
@@ -857,7 +857,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
+
     // Ez (p,p,d)
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -866,20 +866,20 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
-    
-    
+
+
+
     // Since Brel is centered in time as E, it is inconsistent with FDTD,
     // where E and B are staggered in time.
     // Possible solution:
     // Use FDTD scheme to integrate Maxwell-Faraday equation forward in time by dt/2 to obtain B
     // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
     // Add the forward-evolved and backward-evolved fields to the grid fields
-    
+
     double half_dt_ov_dx = 0.5 * timestep / dx;
     double half_dt_ov_dy = 0.5 * timestep / dy;
     double half_dt_ov_dz = 0.5 * timestep / dz;
-    
+
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -894,7 +894,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
@@ -909,7 +909,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
+
     // Magnetic field Bz^(d,d,p)
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -924,8 +924,8 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
             }
         }
     }
-    
-    
+
+
     // delete temporary fields used for relativistic initialization
     delete Ex_rel_;
     delete Ey_rel_;
@@ -933,15 +933,15 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
     delete Bx_rel_;
     delete By_rel_;
     delete Bz_rel_;
-    
+
     delete Bx_rel_t_plus_halfdt;
     delete By_rel_t_plus_halfdt;
     delete Bz_rel_t_plus_halfdt;
     delete Bx_rel_t_minus_halfdt;
     delete By_rel_t_minus_halfdt;
     delete Bz_rel_t_minus_halfdt;
-    
-    
+
+
 } // sum_rel_fields_to_em_fields
 
 
@@ -950,7 +950,7 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_ );
-    
+
     // Centering electrostatic fields
     for( unsigned int i=0; i<nx_d; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -973,7 +973,7 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
             }
         }
     }
-    
+
 } // centeringE
 
 void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
@@ -981,7 +981,7 @@ void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_rel_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_rel_ );
-    
+
     // Centering electrostatic fields
     for( unsigned int i=0; i<nx_d; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -1004,7 +1004,7 @@ void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
             }
         }
     }
-    
+
 } // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1025,13 +1025,13 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
         Field3D *By3D_m = static_cast<Field3D *>( By_m );
         Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
-        
+
         // Magnetic field Bx^(p,d,d)
         memcpy( &( ( *Bx3D_m )( 0, 0, 0 ) ), &( ( *Bx3D )( 0, 0, 0 ) ), nx_p*ny_d*nz_d*sizeof( double ) );
-        
+
         // Magnetic field By^(d,p,d)
         memcpy( &( ( *By3D_m )( 0, 0, 0 ) ), &( ( *By3D )( 0, 0, 0 ) ), nx_d*ny_p*nz_d*sizeof( double ) );
-        
+
         // Magnetic field Bz^(d,d,p)
         memcpy( &( ( *Bz3D_m )( 0, 0, 0 ) ), &( ( *Bz3D )( 0, 0, 0 ) ), nx_d*ny_d*nz_p*sizeof( double ) );
     } else {
@@ -1122,7 +1122,7 @@ void ElectroMagn3D::centerMagneticFields()
     Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
     Field3D *By3D_m = static_cast<Field3D *>( By_m );
     Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
-    
+
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
@@ -1131,7 +1131,7 @@ void ElectroMagn3D::centerMagneticFields()
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
@@ -1140,7 +1140,7 @@ void ElectroMagn3D::centerMagneticFields()
             }
         }
     }
-    
+
     // Magnetic field Bz^(d,d,p)
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
@@ -1149,8 +1149,8 @@ void ElectroMagn3D::centerMagneticFields()
             }
         } // end for j
     } // end for i
-    
-    
+
+
 }//END centerMagneticFields
 
 
@@ -1163,7 +1163,7 @@ void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
     Field3D *Jy3D = static_cast<Field3D *>( Jy_ );
     Field3D *Jz3D = static_cast<Field3D *>( Jz_ );
-    
+
     // applying a single pass of the binomial filter along X
     if (ipass < passes[0]){
         // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
@@ -1480,7 +1480,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
     Field3D *Bx3Drel  = static_cast<Field3D *>( Bx_rel_ );
     Field3D *By3Drel  = static_cast<Field3D *>( By_rel_ );
     Field3D *Bz3Drel  = static_cast<Field3D *>( Bz_rel_ );
-    
+
     // B field centered in time at time t+dt/2
     Field3D *Bx3D  = static_cast<Field3D *>( Bx_rel_t_plus_halfdt_ );
     Field3D *By3D  = static_cast<Field3D *>( By_rel_t_plus_halfdt_ );
@@ -1489,13 +1489,13 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
     Field3D *Bx3D0  = static_cast<Field3D *>( Bx_rel_t_minus_halfdt_ );
     Field3D *By3D0  = static_cast<Field3D *>( By_rel_t_minus_halfdt_ );
     Field3D *Bz3D0  = static_cast<Field3D *>( Bz_rel_t_minus_halfdt_ );
-    
-    
+
+
     // The B_rel fields, centered as B, will be advanced by dt/2 and -dt/2
     // for proper centering in FDTD, but first they have to be centered in space
     // The advance by dt and -dt and the sum to the existing grid fields is performed in
     // ElectroMagn3D::sum_rel_fields_to_em_fields
-    
+
     // Bx (p,d,d)   Bx_rel is identically zero and centered as Bx, no special interpolation of indices
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_d; j++ ) {
@@ -1505,7 +1505,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
             }
         }
     }
-    
+
     // ---------- center the B fields
     // By (d,p,d) - remember that Byrel is centered as Ezrel (p,p,d)
     for( unsigned int i=1; i<nx_d-1; i++ ) {
@@ -1516,7 +1516,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
             }
         }
     }
-    
+
     // Bz (d,d,p) - remember that Bzrel is centered as Eyrel (p,d,p)
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=0; j<ny_d; j++ ) {
@@ -1526,7 +1526,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
             }
         }
     }
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1539,8 +1539,8 @@ void ElectroMagn3D::computeTotalRhoJ()
     Field3D *Jy3D    = static_cast<Field3D *>( Jy_ );
     Field3D *Jz3D    = static_cast<Field3D *>( Jz_ );
     Field3D *rho3D   = static_cast<Field3D *>( rho_ );
-    
-    
+
+
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------
@@ -1577,7 +1577,7 @@ void ElectroMagn3D::computeTotalRhoJ()
                         ( *rho3D )( i, j, k ) += ( *rho3D_s )( i, j, k );
                     }
         }
-        
+
     }//END loop on species ispec
 //END computeTotalRhoJ
 }
@@ -1589,7 +1589,7 @@ void ElectroMagn3D::computeTotalEnvChi()
 {
     // static cast of the total susceptibility
     Field3D *Env_Chi3D   = static_cast<Field3D *>( Env_Chi_ );
-    
+
     // -----------------------------------
     // Species susceptibility
     // -----------------------------------
@@ -1616,54 +1616,54 @@ void ElectroMagn3D::computePoynting( unsigned int axis, unsigned int side )
     Field3D *Bx3D_m   = static_cast<Field3D *>( Bx_m );
     Field3D *By3D_m   = static_cast<Field3D *>( By_m );
     Field3D *Bz3D_m   = static_cast<Field3D *>( Bz_m );
-    
+
     double sign = ( side == 0 ) ? 1. : -1;
-        
+
     if( axis == 0 ) {
-        
+
         unsigned int offset = ( side == 0 ) ? 0. : bufsize[0][Ey3D  ->isDual( 0 )];
 
         unsigned int iEy = istart[0][Ey3D  ->isDual( 0 )] + offset;
         unsigned int iBz = istart[0][Bz3D_m->isDual( 0 )] + offset;
         unsigned int iEz = istart[0][Ez3D  ->isDual( 0 )] + offset;
         unsigned int iBy = istart[0][By3D_m->isDual( 0 )] + offset;
-            
+
         unsigned int jEy = istart[1][Ey3D  ->isDual( 1 )];
         unsigned int jBz = istart[1][Bz3D_m->isDual( 1 )];
         unsigned int jEz = istart[1][Ez3D  ->isDual( 1 )];
         unsigned int jBy = istart[1][By3D_m->isDual( 1 )];
-                                     
+
         unsigned int kEy = istart[2][Ey3D  ->isDual( 2 )];
         unsigned int kBz = istart[2][Bz3D_m->isDual( 2 )];
         unsigned int kEz = istart[2][Ez3D  ->isDual( 2 )];
         // unsigned int kBy = istart[2][By3D_m->isDual( 2 )];
-    
+
         poynting_inst[side][0] = 0.;
         for( unsigned int j=0; j<bufsize[1][Ez3D->isDual( 1 )]; j++ ) {
             for( unsigned int k=0; k<bufsize[2][Ey3D->isDual( 2 )]; k++ ) {
-            
+
                 double Ey__ = 0.5 *( ( *Ey3D )( iEy, jEy+j,   kEy+k )   + ( *Ey3D )( iEy,   jEy+j+1, kEy+k ) );
                 double Bz__ = 0.25*( ( *Bz3D_m )( iBz, jBz+j,   kBz+k )   + ( *Bz3D_m )( iBz+1, jBz+j,   kBz+k )
                                      +( *Bz3D_m )( iBz, jBz+j+1, kBz+k )   + ( *Bz3D_m )( iBz+1, jBz+j+1, kBz+k ) );
                 double Ez__ = 0.5 *( ( *Ez3D )( iEz, jEz+j, kEz+k )   + ( *Ez3D )( iEz,   jEz+j,   kEz+k+1 ) );
                 double By__ = 0.25*( ( *By3D_m )( iBy, jBy+j,   kEz+k )   + ( *By3D_m )( iBy+1, jBy+j,   kEz+k )
                                      +( *By3D_m )( iBy, jBy+j,   kEz+k+1 ) + ( *By3D_m )( iBy+1, jBy+j,   kEz+k+1 ) );
-                                     
+
                 poynting_inst[side][0] += Ey__*Bz__ - Ez__*By__;
             }
         }
         poynting_inst[side][0] *= dy*dz*timestep;
         poynting[side][0] += sign * poynting_inst[side][0];
-    
+
     } else if( axis == 1 ) {
-    
+
         unsigned int offset = ( side == 0 ) ? 0. : bufsize[1][Ez3D->isDual( 1 )];
-        
+
         unsigned int iEz = istart[0][Ez_ ->isDual( 0 )];
         unsigned int iBx = istart[0][Bx_m->isDual( 0 )];
         unsigned int iEx = istart[0][Ex_ ->isDual( 0 )];
         unsigned int iBz = istart[0][Bz_m->isDual( 0 )];
-        
+
         unsigned int jEz = istart[1][Ez_ ->isDual( 1 )] + offset;
         unsigned int jBx = istart[1][Bx_m->isDual( 1 )] + offset;
         unsigned int jEx = istart[1][Ex_ ->isDual( 1 )] + offset;
@@ -1673,7 +1673,7 @@ void ElectroMagn3D::computePoynting( unsigned int axis, unsigned int side )
         unsigned int kBx = istart[2][Bx_m->isDual( 2 )];
         unsigned int kEx = istart[2][Ex_ ->isDual( 2 )];
         // unsigned int kBz = istart[2][Bz_m->isDual( 2 )];
-        
+
         poynting_inst[side][1] = 0.;
         for( unsigned int i=0; i<bufsize[0][Ez3D->isDual( 0 )]; i++ ) {
             for( unsigned int k=0; k<bufsize[2][Ex3D->isDual( 2 )]; k++ ) {
@@ -1683,27 +1683,27 @@ void ElectroMagn3D::computePoynting( unsigned int axis, unsigned int side )
                 double Ex__ = 0.5 *( ( *Ex3D )( iEx+i, jEx,   kEx+k )   + ( *Ex3D )( iEx+i+1, jEx,   kEx+k ) );
                 double Bz__ = 0.25*( ( *Bz3D_m )( iBz+i, jBz,   kEx+k )   + ( *Bz3D_m )( iBz+i+1, jBz,   kEx+k )
                                      +( *Bz3D_m )( iBz+i, jBz+1, kEx+k )   + ( *Bz3D_m )( iBz+i+1, jBz+1, kEx+k ) );
-                                     
+
                 poynting_inst[side][1] += Ez__*Bx__ - Ex__*Bz__;
         }
     }
         poynting_inst[side][1] *= dx*dz*timestep;
         poynting[side][1] += sign * poynting_inst[side][1];
-    
+
     } else if( axis == 2 ) {
-    
+
         unsigned int offset = ( side == 0 ) ? 0. : bufsize[2][Ex_->isDual( 2 )];
-        
+
         unsigned int iEx = istart[0][Ex_ ->isDual( 0 )];
         unsigned int iBy = istart[0][By_m->isDual( 0 )];
         unsigned int iEy = istart[0][Ey_ ->isDual( 0 )];
         unsigned int iBx = istart[0][Bx_m->isDual( 0 )];
-        
+
         unsigned int jEx = istart[1][Ex_ ->isDual( 1 )];
         unsigned int jBy = istart[1][By_m->isDual( 1 )];
         unsigned int jEy = istart[1][Ey_ ->isDual( 1 )];
         unsigned int jBx = istart[1][Bx_m->isDual( 1 )];
-        
+
         unsigned int kEx = istart[2][Ex_ ->isDual( 2 )] + offset;
         unsigned int kBy = istart[2][By_m->isDual( 2 )] + offset;
         unsigned int kEy = istart[2][Ey_ ->isDual( 2 )] + offset;
@@ -1712,14 +1712,14 @@ void ElectroMagn3D::computePoynting( unsigned int axis, unsigned int side )
         poynting_inst[side][2] = 0.;
         for( unsigned int i=0; i<bufsize[0][Ez3D->isDual( 0 )]; i++ ) {
             for( unsigned int j=0; j<bufsize[1][Ex3D->isDual( 1 )]; j++ ) {
-            
+
                 double Ex__ = 0.5 *( ( *Ex3D )( iEx+i, jEx+j, kEx )   + ( *Ex3D )( iEx+i+1, jEx+j,   kEx ) );
                 double By__ = 0.25*( ( *By3D_m )( iBy+i, jBy+j, kBy )   + ( *By3D_m )( iBy+i+1, jBy+j,   kBy )
                                      +( *By3D_m )( iBy+i, jBy+j, kBy+1 ) + ( *By3D_m )( iBy+i+1, jBy+j,   kBy+1 ) );
                 double Ey__ = 0.5 *( ( *Ey3D )( iEy+i, jEy+j, kEy )   + ( *Ey3D )( iEy+i,   jEy+j+1, kEy ) );
                 double Bx__ = 0.25*( ( *Bx3D_m )( iBx+i, jBx+j, kEx )   + ( *Bx3D_m )( iBx+i,   jBx+j+1, kEx )
                                      +( *Bx3D_m )( iBx+i, jBx+j, kEx+1 ) + ( *Bx3D_m )( iBx+i,   jBx+j+1, kEx+1 ) );
-                                     
+
                 poynting_inst[side][2] += Ex__*By__ - Ey__*Bx__;
             }
         }
@@ -1732,7 +1732,7 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
 {
 
     Field3D *field3D = static_cast<Field3D *>( my_field );
-    
+
     vector<bool> dual(3, false);
     string sub = field3D->name.substr(0,2);
     if( sub == "Jx" || sub == "Ex" ) {
@@ -1751,17 +1751,17 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         dual[0] = true;
         dual[1] = true;
     }
-    
+
     vector<double> pos( 3 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( dual[0]?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( dual[1]?-0.5:0. ) );
     double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( dual[2]?-0.5:0. ) );
-    
+
     vector<Field *> xyz( 3 );
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         xyz[idim] = new Field3D( field3D->dims_ );
     }
-    
+
     for( unsigned int i=0 ; i<field3D->dims_[0] ; i++ ) {
         pos[1] = pos1;
         for( unsigned int j=0 ; j<field3D->dims_[1] ; j++ ) {
@@ -1776,37 +1776,37 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         }
         pos[0] += dx;
     }
-    
-    vector<double> global_origin = { 
+
+    vector<double> global_origin = {
         dx * ( ( field3D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
         dy * ( ( field3D->isDual( 1 )?-0.5:0. ) - oversize[1] ),
         dz * ( ( field3D->isDual( 2 )?-0.5:0. ) - oversize[2] )
     };
     profile->valuesAt( xyz, global_origin, *field3D, 1 );
-    
+
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-    
+
 }
 
 void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
 
     Field3D *field3D = static_cast<Field3D *>( my_field );
-    
+
     vector<double> pos( 3 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field3D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field3D->isDual( 1 )?-0.5:0. ) );
     double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( field3D->isDual( 2 )?-0.5:0. ) );
-    
+
     // Create the x,y,z maps where profiles will be evaluated
     vector<Field *> xyz( 3 );
     vector<unsigned int> dims = { field3D->dims_[0], field3D->dims_[1], field3D->dims_[2] };
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         xyz[idim] = new Field3D( dims );
     }
-    
+
     for( unsigned int i=0 ; i<dims[0] ; i++ ) {
         pos[1] = pos1;
         for( unsigned int j=0 ; j<dims[1] ; j++ ) {
@@ -1821,18 +1821,18 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         }
         pos[0] += dx;
     }
-    
-    vector<double> global_origin = { 
+
+    vector<double> global_origin = {
         dx * ( ( field3D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
         dy * ( ( field3D->isDual( 1 )?-0.5:0. ) - oversize[1] ),
         dz * ( ( field3D->isDual( 2 )?-0.5:0. ) - oversize[2] )
     };
     profile->valuesAt( xyz, global_origin, *field3D, 3, time );
-    
+
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-    
+
 }
 
 
@@ -1851,11 +1851,10 @@ void ElectroMagn3D::initAntennas( Patch *patch, Params& params )
         } else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }
-        
+
         if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }
-    
-}
 
+}
