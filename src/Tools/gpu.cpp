@@ -1,7 +1,22 @@
 #include "gpu.h"
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) && defined( _GPU )
+    #error "You can not enable both OpenACC and OpenMP GPU support"
+#endif
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #if defined( _OPENMP )
+        #if _OPENMP < 201811
+        // 200505 2.5
+        // 200805 3.0
+        // 201107 3.1
+        // 201307 4.0
+        // 201511 4.5
+        // 201811 5.0
+        // 202011 5.1
+            #error "OpenMP 5.0 is required"
+        #endif
+
         #include <omp.h>
     #else
         #error "Asking for OpenMP support without enabling compiler support for OpenMP"

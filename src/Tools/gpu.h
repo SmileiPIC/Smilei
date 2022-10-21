@@ -7,10 +7,6 @@
 
 #include "Tools.h"
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) &&  defined( _GPU )
-    #error "You can not enable both OpenACC and OpenMP GPU support"
-#endif
-
 namespace smilei {
     namespace tools {
         namespace gpu {
