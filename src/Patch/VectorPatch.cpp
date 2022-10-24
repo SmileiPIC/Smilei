@@ -4263,9 +4263,13 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
     const int sizeofJz  = patches_[0]->EMfields->Jz_->globalDims_;
     const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
 
-    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
-    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
-    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
+    const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
+    const int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
+
+    const int sizeofBx = patches_[0]->EMfields->Bx_->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_->globalDims_;
 
     const int size_of_table_niel           = radiation_tables->niel_.size_particle_chi_;
     const int size_of_table_integfochi     = radiation_tables->integfochi_.size_particle_chi_;
@@ -4311,9 +4315,9 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofEz );
 
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
@@ -4400,24 +4404,24 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 void VectorPatch::copyDeviceStateToHost()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Diags may need more data copied back from the GPU.
-    // We need to either have more of these functions, or to copy everything
-    // from the GPU to the CPU.
-    // TODO(Etienne M): Check if we can get better throughput by using async calls
+    // TODO(Etienne M): DIAGS may need more or less data copied from the GPU. We
+    // need to either have more versatile copy functions, or to copy everything
+    // from the GPU to the CPU (which is what we do ATM).
 
     const int npatches = this->size();
 
-    // const int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
-    // const int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
-    // const int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
+    const int sizeofJx  = patches_[0]->EMfields->Jx_->globalDims_;
+    const int sizeofJy  = patches_[0]->EMfields->Jy_->globalDims_;
+    const int sizeofJz  = patches_[0]->EMfields->Jz_->globalDims_;
+    // const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
 
     const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
     const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
     const int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
 
-    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
-    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
-    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    const int sizeofBx = patches_[0]->EMfields->Bx_->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_->globalDims_;
 
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
         for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
@@ -4425,9 +4429,10 @@ void VectorPatch::copyDeviceStateToHost()
             spec->particles->syncCPU();
         }
 
-        // double *const Jx = patches_[ipatch]->EMfields->Jx_->data();
-        // double *const Jy = patches_[ipatch]->EMfields->Jy_->data();
-        // double *const Jz = patches_[ipatch]->EMfields->Jz_->data();
+        double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+        double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+        double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+        // double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
         double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
         double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
@@ -4437,19 +4442,26 @@ void VectorPatch::copyDeviceStateToHost()
         double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
         double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        // TODO(Etienne M): Shouldn't Jx be copied too ? Depending on the diags
+        double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        double *const By = patches_[ipatch]->EMfields->By_->data();
+        double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofJz );
 
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bz, sizeofBz );
     }
 #else
     ERROR( "GPU related code should not be reached in CPU mode!" );
