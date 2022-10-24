@@ -756,6 +756,10 @@ int main( int argc, char *argv[] )
         }
         
         itime++;
+
+        if( itime > 60 ) {
+            break;
+        }
         
     }//END of the time loop
     

@@ -6,14 +6,22 @@
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #if defined( _OPENMP )
+        // NOTE: Nvidia offers poor support for OpenMP (they 
+        // prefer OpenACC).
+        // - NVHPC-sdk 21.3 only support OpenMP 4.0.
+        // - We require OpenMP 4.5 and up (Clang has partial 
+        // support for 5.0 and AMD GPU).
+
+        // Ask for OpenMP 5.0 so the user has the feature he 
+        // would expect from a up to date OpenMP implementation
         #if _OPENMP < 201811
-        // 200505 2.5
-        // 200805 3.0
-        // 201107 3.1
-        // 201307 4.0
-        // 201511 4.5
-        // 201811 5.0
-        // 202011 5.1
+            // 200505 2.5
+            // 200805 3.0
+            // 201107 3.1
+            // 201307 4.0
+            // 201511 4.5
+            // 201811 5.0
+            // 202011 5.1
             #error "OpenMP 5.0 is required"
         #endif
 
