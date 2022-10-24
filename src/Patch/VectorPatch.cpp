@@ -58,10 +58,10 @@ void VectorPatch::close( SmileiMPI *smpiData )
             delete patches_[0]->vecBPs[icoll]->debug_file_;
         }
     }
-    
+
     // Close diagnostics
     closeAllDiags( smpiData );
-    
+
     if( diag_timers_.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
@@ -70,12 +70,12 @@ void VectorPatch::close( SmileiMPI *smpiData )
         MPI_Reduce( &diag_timers_[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         MESSAGE( "\t\t" << setw( 20 ) << diag_timers_[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
-    
+
     for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
         delete diag_timers_[idiag];
     }
     diag_timers_.clear();
-    
+
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
     }
@@ -304,10 +304,10 @@ void VectorPatch::initialParticleSorting( Params &params )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // Initially I wanted to control the GPU particle sorting/bin initialization
-    // here. In the end it was put in initializeDataOnDevice which is more 
-    // meaningful. 
-    // On that note, maybe the _VECTO/cell sorting 
-    // code should probably also be encapsulated in the particle class 
+    // here. In the end it was put in initializeDataOnDevice which is more
+    // meaningful.
+    // On that note, maybe the _VECTO/cell sorting
+    // code should probably also be encapsulated in the particle class
     // (or a vectorized variant).
 #elif defined( _VECTO )
     if( params.cell_sorting_ ) {
@@ -349,7 +349,7 @@ void VectorPatch::dynamics( Params &params,
             if( params.keep_position_old ) {
                 spec->particles->savePositions();
             }
-            
+
             if( params.Laser_Envelope_model ) {
                 continue;
             }
@@ -548,33 +548,33 @@ void VectorPatch::cleanParticlesOverhead(Params &params, Timers &timers, int iti
 //! Particle injection from the boundaries
 void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, unsigned int itime )
 {
-    
+
     timers.particleInjection.restart();
-    
+
     //#pragma omp for schedule(runtime)
     #pragma omp single
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        
+
         Patch * patch = ( *this )( ipatch );
-        
+
         // Only for patch at the domain boundary
         if( ! patch->isAnyBoundary() ) continue;
-        
+
         // Local buffer of particles
         vector<Particles> local_particles_vector( patch->particle_injector_vector_.size() );
-        
+
         // Creation of the new particles for all injectors
         // Create particles as if t0 with ParticleCreator
         for( unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++ ) {
-            
+
             // Pointer to the current particle injector
             ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
-            
+
             unsigned int axis = particle_injector->axis();
             unsigned int min_max = particle_injector->min_max();
-            
+
             if( !patch->isBoundary( axis, min_max ) ) continue;
-            
+
             // Area for injection
             struct SubSpace init_space;
             init_space.cell_index_[0] = 0;
@@ -583,26 +583,26 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space.box_size_[0]   = params.n_space[0];
             init_space.box_size_[1]   = params.n_space[1];
             init_space.box_size_[2]   = params.n_space[2];
-            
+
             if( min_max == 1 ) {
                 init_space.cell_index_[axis] = params.n_space[axis]-1;
             }
             init_space.box_size_[axis] = 1;
-            
+
             // We first get the species id associated to this injector
             unsigned int i_species = particle_injector->getSpeciesNumber();
             Species * injector_species = patch->vecSpecies[i_species];
-            
+
             // Pointer to simplify the code
             Particles* particles = &local_particles_vector[i_injector];
-            
+
             // No particles at the begining
             particles->initialize( 0, *injector_species->particles );
-            
+
             // Particle creator object
             ParticleCreator particle_creator;
             particle_creator.associate( particle_injector, particles, injector_species );
-            
+
             // Creation of the particles in local_particles_vector
             particle_creator.create( init_space, params, patch, itime );
 
@@ -632,13 +632,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
             // }
             //delete [] mask;
-            
+
             // Update positions from momentum
             // Particle not created at the same position of another species
             if( !particle_injector->position_initialization_on_injector_ ) {
-                
+
                 unsigned int number_of_particles = local_particles_vector[i_injector].size();
-                
+
                 // Shift to update the positions
                 double position_shift[3] = {0., 0., 0.};
                 if( min_max == 0 ) {
@@ -656,7 +656,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 double * __restrict__ momentum_z = local_particles_vector[i_injector].getPtrMomentum( 2 );
 
                 if (params.nDim_field == 1) {
-                
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
@@ -665,9 +665,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_x[ip] += ( momentum_x[ip]
                                                     * inverse_gamma + position_shift[0]);
                     }
-                
+
                 } else if (params.nDim_field == 2) {
-                    
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
@@ -678,10 +678,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_y[ip] += ( momentum_y[ip]
                                                     * inverse_gamma + position_shift[1]);
                     }
-                    
-                    
+
+
                 } else if (params.nDim_field == 3) {
-                    
+
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip]
@@ -694,7 +694,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         position_z[ip] += ( momentum_z[ip]
                                                     * inverse_gamma + position_shift[2]);
                     }
-                        
+
                 } // end if ndim_field
             } // end if new particle positions
         } // end loop injector
@@ -741,20 +741,20 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
                         px[ip] = lpvx[ip];
                     }
-                } // if nDim_field 
+                } // if nDim_field
             } // if particle positions
-            
+
             // Filter particles when initialized on different position
             if( local_particles_vector[i_injector].size() > 0 ) {
-                
+
                 // We first get the species id associated to this injector
                 unsigned int i_species = particle_injector->getSpeciesNumber();
                 Species * injector_species = species( ipatch, i_species );
                 Particles* particles = &local_particles_vector[i_injector];
-                
+
                 // Then the new number of particles in species
                 int new_particle_number = particles->size() - 1;
-                
+
                 // Suppr not interesting parts ...
                 for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
                     for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
@@ -766,9 +766,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         }
                     }
                 }
-                
+
                 new_particle_number += 1;
-                
+
                 // New energy from particles
                 double energy = 0.;
                 // Matter particle case
@@ -785,18 +785,18 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     }
                     injector_species->nrj_new_part_ += energy;
                 }
-                
+
                 // Insertion of the particles as a group in the vector of species
                 if( new_particle_number > 0 ) {
-                    
+
                     particles->eraseParticleTrail( new_particle_number );
                     injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
-                    
+
                 }
             } // if particles > 0
         } // end for i_injector
     } // end for ipatch
-    
+
     timers.particleInjection.update( params.printNow( itime ) );
 }
 
@@ -1281,7 +1281,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
-            { 
+            {
                 // Must be done by one and only one thread
                 copyDeviceStateToHost();
             }
@@ -1298,7 +1298,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         if( binning && binning->has_auto_limits_ ) {
             #pragma omp single
             binning->theTimeIsNow_ = binning->theTimeIsNow( itime );
-            
+
             if( binning->theTimeIsNow_ ) {
                 #pragma omp master
                 {
@@ -1363,10 +1363,10 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
-        
+
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
-        
+
         if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
             #pragma omp for schedule(runtime)
@@ -1393,7 +1393,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
-            { 
+            {
                 // Must be done by one and only one thread
                 copyDeviceStateToHost();
             }
@@ -3741,20 +3741,20 @@ void VectorPatch::applyAntennas( double time )
 
     // Loop antennas
     for( unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++ ) {
-        
+
         // Space-time profile
         if( patches_[0]->EMfields->antennas[iAntenna].spacetime ) {
-            
+
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 Antenna * A = &( patches_[ipatch]->EMfields->antennas[iAntenna] );
                 Field *field = patches_[ipatch]->EMfields->allFields[A->index];
                 patches_[ipatch]->EMfields->applyPrescribedField( field, A->space_time_profile, patches_[ipatch], time );
             }
-        
+
         // Separated profiles for space & time
         } else {
-            
+
             // Get intensity from antenna of the first patch
             #pragma omp single
             antenna_intensity_ = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
@@ -3764,7 +3764,7 @@ void VectorPatch::applyAntennas( double time )
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity_ );
             }
-            
+
         }
     }
 }
@@ -4288,7 +4288,7 @@ void VectorPatch::allocateDataOnDevice( Params &params, SmileiMPI *smpi, Radiati
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
-        // Initialize field data strucures on GPU and synchronize it
+        // Allocate field data structures on GPU
         const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
         const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
         const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
