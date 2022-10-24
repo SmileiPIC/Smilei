@@ -39,12 +39,12 @@ dt  = 0.5 * dx/m.sqrt(2.)
 number_part_per_cell = 180 # 1800
 rapport_de_masse=1836.
 
-NumberOfCell_inX=1024
-NumberOfCell_inY=1024
+NumberOfCell_inX=256
+NumberOfCell_inY=256
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=256
+SizePatch=128
 
 #################################
 NumberOfTimeStep=600
