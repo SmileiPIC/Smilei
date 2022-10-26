@@ -49,7 +49,7 @@ COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -Wno-reorder -Wno-unused-parameter
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -Wdeprecated-register 
+    CXXFLAGS += -Wdeprecated-register
 endif
 
 
@@ -80,7 +80,7 @@ CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -std=c++11 -Wall
+    CXXFLAGS += -std=c++11 -Wall -Wno-unused-command-line-argument 
 else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
@@ -402,7 +402,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-COMPILER_INFO
 
 #-----------------------------------------------------
 # Smilei tables

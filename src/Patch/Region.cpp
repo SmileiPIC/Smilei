@@ -38,18 +38,18 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     } else {
         decomposition_ = DomainDecompositionFactory::createGlobal( params );
     }
-    
+
     if( global_region && rk ) {
         return;
     }
-    
+
     patch_ = PatchesFactory::create( params, smpi, decomposition_, vecPatch_.refHindex_ );
     patch_->setLocationAndAllocateFields( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
-    
+
     //vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
     vecPatch_.updateFieldList( smpi );
-    
+
     //vecPatch_.updateFieldList(0, smpi);
     vecPatch_.patches_[0]->finalizeMPIenvironment( params );
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
@@ -58,7 +58,7 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, n_moved, false);
     if (params.is_spectral)
         patch_->EMfields->saveMagneticFields( true );
-        
+
 }
 
 
@@ -90,11 +90,11 @@ void Region::clean()
     if( decomposition_ !=NULL ) {
         delete decomposition_;
     }
-    
+
     if( fake_patch!=NULL ) {
         delete fake_patch;
     }
-    
+
 }
 
 void Region::solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
@@ -106,7 +106,7 @@ void Region::solveMaxwell( Params &params, SimWindow *simWindow, int itime, doub
 void Region::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
 {
     double delta_moving_win( simWindow->getNmoved()*params.cell_length[0] );
-    
+
     //cout << "patch_->getDomainLocalMin(0) = " << patch_->getDomainLocalMin(0) << endl;
     //cout << "patch_->getDomainLocalMax(0) = " << patch_->getDomainLocalMax(0) << endl;
     //cout << "patch_->getDomainLocalMin(1) = " << patch_->getDomainLocalMin(1) << endl;
@@ -119,7 +119,7 @@ void Region::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
     double domain_max( 0 );
 
     for ( unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
-        
+
         bool patch_is_in( true );
         for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
             if ( vecPatch_.patches_.size() ) {
@@ -136,7 +136,7 @@ void Region::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
             additional_patches_ranks.push_back( hrank_global_region( vecPatches(ipatch)->hindex, params, vecPatches ) );
         }
     }
-    
+
     //cout << smpi->getRank() << " - additional : ";
     //for (int i = 0 ; i < additional_patches_.size() ; i++)
     //    cout << additional_patches_[i] << " " ;
@@ -172,7 +172,7 @@ int Region::hrank_global_region( int hindex, Params& params, VectorPatch& vecPat
         }
         rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ][ rank_coordinates[2] ];
     }
-    else { // Gather everything on MPI 0 
+    else { // Gather everything on MPI 0
         rank = 0;
     }
 
@@ -189,7 +189,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
 
     std::vector<int> patch_min_coord(patch_->getDomainLocalMin().size());
     std::vector<int> patch_max_coord(patch_->getDomainLocalMin().size());
-    int npatch_domain(1);
+    //int npatch_domain(1);
 
     if (decomposition_!=NULL) { // SDMD
         for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
@@ -199,28 +199,28 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
             else
                 patch_max_coord[iDim] = params.n_space_global[iDim] / params.n_space[iDim] - 1;
 
-            npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
+            //npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
         }
     }
     else { // Global mode for rotational cleaning
         for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             patch_min_coord[iDim] = (int)( patch_->getDomainLocalMin(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] );
             patch_max_coord[iDim] = (int)( patch_->getDomainLocalMax(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] ) - 1;
-            npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
+            //npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
         }
     }
 
     //cout << patch_min_coord[0] << " " << patch_min_coord[1] << endl;
     //cout << patch_max_coord[0] << " " << patch_max_coord[1] << endl;
-    
+
     //MPI_Alltoall or gather/bcast (npatch_domain);
 
     int patch_min_id = vecPatches.domain_decomposition_->getDomainId( patch_min_coord );
     int patch_max_id = vecPatches.domain_decomposition_->getDomainId( patch_max_coord );
     //cout << patch_min_id << " " << patch_max_id << "\t npatche theoritical : " << npatch_domain << endl; 
 
-    int hmin = min (patch_min_id,patch_max_id); 
-    int hmax = max (patch_min_id,patch_max_id); 
+    int hmin = min (patch_min_id,patch_max_id);
+    int hmax = max (patch_min_id,patch_max_id);
 
 
     if (params.nDim_field==1) {
@@ -237,7 +237,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
                     hmin = hindex;
                 if (hindex > hmax)
                     hmax = hindex;
-                
+
             }
         }
     }
@@ -260,21 +260,21 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     }
 
     for ( int idx = hmin ; idx <=hmax ; idx++ ) {
-        
+
         // test if (idx is in domain)
         bool patch_is_in( true );
 
         vector<unsigned int> Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( idx );
         for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             double center = ( 2. * (double)Pcoordinates[iDim] + 1. )* (double)params.n_space[iDim]*params.cell_length[iDim] / 2.;
-            
+
             if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) ) {
                 patch_is_in = false;
             }
         }
         if (!patch_is_in)
             continue;
-        
+
         if ( (idx < (int)vecPatches(0)->hindex) || (idx > (int)vecPatches(vecPatches.size()-1)->hindex) ) {
             missing_patches_.push_back( idx );
             missing_patches_ranks.push_back(  smpi->hrank( idx ) );
@@ -292,7 +292,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     //for (int i = 0 ; i < missing_patches_.size() ; i++)
     //    cout << missing_patches_ranks[i] << " " ;
     //cout << endl;
-    // 
+    //
     //cout << smpi->getRank() << " - local : " ;
     //for (int i = 0 ; i < local_patches_.size() ; i++)
     //    cout << local_patches_[i] << " " ;
@@ -332,7 +332,7 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
             else {
                 ref2 = irk;
             }
-                
+
         }
     }
     //cout << "Target : " << ref << " or " << ref2 << "\n";
@@ -448,7 +448,7 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
         }
         if (att == false) {
             for (int j=0 ; j< smpi->getSize() ;j++) {
-                if (target_map[j] == -1 ){                    
+                if (target_map[j] == -1 ){
                     target_map[j] = i;
                     break;
                 }
@@ -476,7 +476,7 @@ void Region::define_regions_map(int* target_map, SmileiMPI* smpi, Params& params
                 mpi_map[i] = j;
         }
 
-        
+
     }
 
     //cout << "TARGET MAP " << endl;
@@ -588,7 +588,7 @@ void Region::define_regions_map(int* target_map, SmileiMPI* smpi, Params& params
 void Region::solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
     vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
-    
+
 }
 
 void Region::reset_mapping()

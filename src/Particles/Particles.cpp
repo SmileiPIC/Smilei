@@ -54,12 +54,12 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
     //if (nParticles > Weight.capacity()) {
     //    WARNING("You should increase c_part_max in specie namelist");
     //}
-    if( Weight.size()==0 ) {
-        float c_part_max =1.2;
+    //if( Weight.size()==0 ) {
+        //float c_part_max =1.2;
         //float c_part_max = part.c_part_max;
         //float c_part_max = params.species_param[0].c_part_max;
         //reserve( round( c_part_max * nParticles ), nDim );
-    }
+    //}
 
     resize( nParticles, nDim, keep_position_old );
     //cell_keys.resize( nParticles );
@@ -143,7 +143,7 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim, bool keep_p
             Position_old[i].reserve( n_part_max );
         }
     }
-    
+
     //Momentum.resize( 3 );
     for( unsigned int i=0 ; i< 3 ; i++ ) {
         Momentum[i].reserve( n_part_max );
@@ -178,48 +178,48 @@ void Particles::reserve( unsigned int n_part_max)
     for( unsigned int i=0 ; i< Position.size() ; i++ ) {
         Position[i].reserve( n_part_max );
     }
-    
+
     if (Position_old.size() > 0) {
         for( unsigned int i=0 ; i< Position_old.size() ; i++ ) {
             Position_old[i].reserve( n_part_max );
         }
     }
-    
+
     //Momentum.resize( 3 );
     for( unsigned int i=0 ; i< Momentum.size() ; i++ ) {
         Momentum[i].reserve( n_part_max );
     }
     Weight.reserve( n_part_max );
     Charge.reserve( n_part_max );
-    
+
     if( tracked ) {
         Id.reserve( n_part_max );
     }
-    
+
     if( isQuantumParameter ) {
         Chi.reserve( n_part_max );
     }
-    
+
     if( isMonteCarlo ) {
         Tau.reserve( n_part_max );
     }
-    
+
     cell_keys.reserve( n_part_max );
-    
+
     // for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
     //     ( *double_prop_[iprop] ).reserve( n_part_max);
     // }
-    // 
+    //
     // for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
     //     ( *short_prop_[iprop] ).reserve( n_part_max );
     // }
-    // 
+    //
     // for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
     //     ( *uint64_prop_[iprop] ).reserve( n_part_max );
     // }
-    // 
+    //
     // cell_keys.reserve( n_part_max );
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Resize Particle vectors and change dimensionality according to nDim
-// 
+//
 void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
 {
     Position.resize( nDim );

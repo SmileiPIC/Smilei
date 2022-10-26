@@ -345,12 +345,12 @@ void VectorPatch::dynamics( Params &params,
     }
 #endif
 
-#  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     if( !params.Laser_Envelope_model ) {
         diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
         if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
     }
-#  endif
+#endif
 
 #ifndef _OMPTASKS
     // if tasks are not activated
@@ -1831,14 +1831,14 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
             Ap_AM_.push_back( emAM->Ap_AM_ );
         }
 
-        unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
-        //if ( Ex_[0]->dims_.size()>1 ) {
-        if( El_Poisson_[0]->dims_.size()>1 ) {
-            nx_p2_global *= ( params.n_space_global[1]+1 );
-            if( El_Poisson_[0]->dims_.size()>2 ) {
-                nx_p2_global *= ( params.n_space_global[2]+1 );
-            }
-        }
+        // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        // //if ( Ex_[0]->dims_.size()>1 ) {
+        // if( El_Poisson_[0]->dims_.size()>1 ) {
+        //     nx_p2_global *= ( params.n_space_global[1]+1 );
+        //     if( El_Poisson_[0]->dims_.size()>2 ) {
+        //         nx_p2_global *= ( params.n_space_global[2]+1 );
+        //     }
+        // }
 
         // compute control parameter
         double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
@@ -2157,14 +2157,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
     }
 
-    unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
-    //if ( Ex_[0]->dims_.size()>1 ) {
-    if( Ex_rel_[0]->dims_.size()>1 ) {
-        nx_p2_global *= ( params.n_space_global[1]+1 );
-        if( Ex_rel_[0]->dims_.size()>2 ) {
-            nx_p2_global *= ( params.n_space_global[2]+1 );
-        }
-    }
+    // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+    // //if ( Ex_[0]->dims_.size()>1 ) {
+    // if( Ex_rel_[0]->dims_.size()>1 ) {
+    //     nx_p2_global *= ( params.n_space_global[1]+1 );
+    //     if( Ex_rel_[0]->dims_.size()>2 ) {
+    //         nx_p2_global *= ( params.n_space_global[2]+1 );
+    //     }
+    // }
 
 
     // compute control parameter
@@ -2597,13 +2597,13 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             Ap_AM_.push_back( emAM->Ap_AM_ );
         }
 
-        unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
-        if( El_rel_[0]->dims_.size()>1 ) {
-            nx_p2_global *= ( params.n_space_global[1]+1 );
-            if( El_rel_[0]->dims_.size()>2 ) {
-                nx_p2_global *= ( params.n_space_global[2]+1 );
-            }
-        }
+        // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        // if( El_rel_[0]->dims_.size()>1 ) {
+        //     nx_p2_global *= ( params.n_space_global[1]+1 );
+        //     if( El_rel_[0]->dims_.size()>2 ) {
+        //         nx_p2_global *= ( params.n_space_global[2]+1 );
+        //     }
+        // }
 
         // compute control parameter
         double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
