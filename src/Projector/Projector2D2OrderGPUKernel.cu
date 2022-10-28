@@ -235,8 +235,8 @@ namespace hip {
                 {
                     ::atomicAdd( a_pointer, a_value );
 
-                    // NOTE: 
-                    // On MI100, LDS (or GDS) double atomicAdd is compiled 
+                    // NOTE:
+                    // On MI100, LDS (or GDS) double atomicAdd is compiled
                     // into a CAS loop such as the one below (which gives the
                     // same performance).
                     // On MI200, there is hardware support for this type of
@@ -280,33 +280,34 @@ namespace hip {
         }     // namespace atomic
 
         template <typename ComputeFloat,
-                  typename ReductionFloat>
+                  typename ReductionFloat,
+                  std::size_t kWorkgroupSize>
         __global__ void
-        // __launch_bounds__(128, 4)
-        depositForAllCurrentDimensions( double *__restrict__ device_Jx,
-                                        double *__restrict__ device_Jy,
-                                        double *__restrict__ device_Jz,
-                                        int Jx_size,
-                                        int Jy_size,
-                                        int Jz_size,
-                                        const double *__restrict__ device_particle_position_x,
-                                        const double *__restrict__ device_particle_position_y,
-                                        const double *__restrict__ device_particle_momentum_z,
-                                        const short *__restrict__ device_particle_charge,
-                                        const double *__restrict__ device_particle_weight,
-                                        const int *__restrict__ device_bin_index,
-                                        const double *__restrict__ device_invgf_,
-                                        const int *__restrict__ device_iold_,
-                                        const double *__restrict__ device_deltaold_,
-                                        ComputeFloat inv_cell_volume,
-                                        ComputeFloat dx_inv,
-                                        ComputeFloat dy_inv,
-                                        ComputeFloat dx_ov_dt,
-                                        ComputeFloat dy_ov_dt,
-                                        int          i_domain_begin,
-                                        int          j_domain_begin,
-                                        int          nprimy,
-                                        int          pxr )
+        // __launch_bounds__(kWorkgroupSize, 1)
+        DepositCurrentDensity_2D_Order2( double *__restrict__ device_Jx,
+                                         double *__restrict__ device_Jy,
+                                         double *__restrict__ device_Jz,
+                                         int Jx_size,
+                                         int Jy_size,
+                                         int Jz_size,
+                                         const double *__restrict__ device_particle_position_x,
+                                         const double *__restrict__ device_particle_position_y,
+                                         const double *__restrict__ device_particle_momentum_z,
+                                         const short *__restrict__ device_particle_charge,
+                                         const double *__restrict__ device_particle_weight,
+                                         const int *__restrict__ device_bin_index,
+                                         const double *__restrict__ device_invgf_,
+                                         const int *__restrict__ device_iold_,
+                                         const double *__restrict__ device_deltaold_,
+                                         ComputeFloat inv_cell_volume,
+                                         ComputeFloat dx_inv,
+                                         ComputeFloat dy_inv,
+                                         ComputeFloat dx_ov_dt,
+                                         ComputeFloat dy_ov_dt,
+                                         int          i_domain_begin,
+                                         int          j_domain_begin,
+                                         int          nprimy,
+                                         int          pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -315,7 +316,7 @@ namespace hip {
             // TODO(Etienne M): __ldg could be used to slightly improve GDS load
             // speed. This would only have an effect on Nvidia cards as this
             // operation is a no op on AMD.
-            const unsigned int workgroup_size = blockDim.x;
+            const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
@@ -575,11 +576,13 @@ namespace hip {
 
         const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
         // On an MI100:
-        // 448 for F32 and 4x4 cluster width | past 128, the block size does not matter, we are atomic bound anyway
-        // 128 for F64 and 4x4 cluster width | atomic bound
-        const ::dim3 kBlockDimension /* In threads */ { 128, 1, 1 };
+        // We are strongly bound by LDS atomics.
+        // good results can be achieved with kWorkgroupSize=640, ReductionFloat=float and getGPUClusterWidth(2)=16
 
-        // On MI100, using float for reduction reduces the amount of bank 
+        static constexpr std::size_t kWorkgroupSize = 128;
+        const ::dim3                 kBlockDimension /* In threads */ { kWorkgroupSize, 1, 1 };
+
+        // On MI100, using float for reduction reduces the amount of bank
         // conflict and allows the compiler to generate better instruction.
         // The relative error is ~10^13 compared to pure double operations but
         // is x1.3 times faster.
@@ -587,7 +590,7 @@ namespace hip {
         using ComputeFloat   = double;
         using ReductionFloat = double; // TODO(Etienne M): Change to float ?
 
-        auto KernelFunction = kernel::depositForAllCurrentDimensions<ComputeFloat, ReductionFloat>;
+        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,

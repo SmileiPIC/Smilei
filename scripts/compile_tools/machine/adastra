@@ -117,7 +117,10 @@ ifneq (,$(call parse_config,gpu_amd))
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
     # When you use hipcc directly
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+
+    # Diagnostics
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += -Rpass-analysis=kernel-resource-usage
 endif
 
 ################################################################################
