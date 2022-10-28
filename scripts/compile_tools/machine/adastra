@@ -78,8 +78,9 @@ ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADAS
 ################################################################################
 
 # To check for leaks, use this feature
-# ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined 
-ADASTRA_DEBUG_FLAGS           := -g $(ADASTRA_DEBUG_SANITIZER_FLAGS)
+# ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined
+# -g and -ggdb have no know runtime overhead expect for program size
+ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS)
 
 ################################################################################
 # Omp flags

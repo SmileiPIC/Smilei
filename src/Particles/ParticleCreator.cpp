@@ -568,7 +568,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             int    coeff_array[3];
 
             if ( regular_number_array.size()==0){
-                const double coeff = std::pow( static_cast<double>(nPart), static_cast<double>(species->inv_nDim_particles) );
+                const double coeff = std::pow( static_cast<double>(nPart), species->inv_nDim_particles );
                 // When using O3, we can get error in this check. the solution is using std::round instead of std::floor
                 if( nPart != static_cast<unsigned int>( std::floor( std::pow( std::round( coeff ), static_cast<double>( species->nDim_particle ) ) ) ) ) {
                     ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
