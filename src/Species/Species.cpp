@@ -556,8 +556,8 @@ void Species::dynamics( double time_dual,
 
 #ifdef _GPU
             removeTaggedParticles(smpi,
-                                particles->first_index[ibin],
-                                particles->last_index[ibin],
+                                particles->first_index[0],
+                                particles->last_index[0],
                                 ithread,
                                 false);
 #else
@@ -1831,7 +1831,7 @@ void Species::removeTaggedParticles(
         // We suppress the deleted photons
         if( last_moving_index + 1 < last_index ) {
 #ifdef _GPU
-            static_cast<nvidiaParticles*>(particles)->deviceResize();
+            static_cast<nvidiaParticles*>(particles)->deviceResize(last_moving_index + 1);
 #endif
 
         }
