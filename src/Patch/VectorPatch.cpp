@@ -4260,8 +4260,9 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi,
             }
 
             // Create pair species on the device
-            if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
-                spec->radiated_photons_->initializeDataOnDevice();
+            if ( spec->mBW_pair_species_[0] && spec->mBW_pair_species_[1]) {
+                 spec->mBW_pair_particles_[0]->initializeDataOnDevice();
+                 spec->mBW_pair_particles_[1]->initializeDataOnDevice();
             }
 
             //#pragma acc enter data copyin(spec->nrj_radiation)
