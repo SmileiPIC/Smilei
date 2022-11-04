@@ -42,7 +42,7 @@ COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -Wno-reorder -Wno-unused-parameter
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -Wdeprecated-register 
+    CXXFLAGS += -Wdeprecated-register
 endif
 
 #-----------------------------------------------------
@@ -354,7 +354,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) -L/gpfslocalsys/cuda/11.2/lib64/stubs
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) #-L/gpfslocalsys/cuda/11.2/lib64/stubs
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode

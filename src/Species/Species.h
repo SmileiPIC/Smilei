@@ -108,7 +108,7 @@ public:
 
     //! Iteration for which the species field is initialized in case of relativistic initialization
     int iter_relativistic_initialization_;
-    
+
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
 
@@ -327,7 +327,7 @@ public:
 
     //! Merging
     Merging *Merge;
-    
+
     //! Particle Computation time evaluation
     PartCompTime *part_comp_time_ = NULL;
 
@@ -486,7 +486,7 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-    
+
     inline double computeEnergy()
     {
         double nrj( 0. );
@@ -520,21 +520,30 @@ public:
     //! Method to import particles in this species while conserving the sorting among bins
     //! \param[in] Params the main Smilei parameters
     //! \param[in,out] Patch current patch
-    //! \param[in,out] source_particles Particles object containing the particles to import 
+    //! \param[in,out] source_particles Particles object containing the particles to import
     //! \param[in,out] localDiags vector of diags for tracked particles
     virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
 
-    //! This method eliminates the space gap between the bins 
+    //! This method eliminates the space gap between the bins
     //! (presence of empty particles between the bins)
-    void compress(SmileiMPI *smpi, 
-        int ithread, 
+    void compress(SmileiMPI *smpi,
+        int ithread,
         bool compute_cell_keys = false);
 
-    //! This method removes particles with a negative weight 
+    //! This method removes particles with a negative weight
     //! without changing the bin first index
     //! Bins are therefore potentially seperated by empty particle slots
-    void removeParticlesKeepBinFirstIndex(
+    void removeTaggedParticlesPerBin(
         SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
+
+    //! This method removes particles with a negative weight
+    //! when a single bin is used
+    void removeTaggedParticles(
+        SmileiMPI *smpi,
+        const int first_index,
+        const int last_index,
         int ithread,
         bool compute_cell_keys = false);
 
