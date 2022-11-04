@@ -2661,7 +2661,10 @@ To add one probe diagnostic, include the block ``DiagProbe``::
     of a given species named ``"abc"``
 
   In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),
-  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
+  the following fields are also available: ``"Env_Chi"``, ``"Env_A_abs"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
+  They are respectively the susceptibility, the envelope of the laser transverse vector potential,
+  the envelope of the laser transverse electric field and the envelope of the laser longitudinal
+  electric field.
 
 .. py:data:: time_integral
 
