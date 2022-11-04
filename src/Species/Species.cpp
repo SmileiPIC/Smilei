@@ -556,8 +556,8 @@ void Species::dynamics( double time_dual,
 
 #ifdef _GPU
             removeTaggedParticles(smpi,
-                                particles->first_index[0],
-                                particles->last_index[0],
+                                &particles->first_index[0],
+                                &particles->last_index[0],
                                 ithread,
                                 false);
 #else
@@ -1704,8 +1704,8 @@ void Species::removeTaggedParticlesPerBin(
 //! when a single bin is used
 void Species::removeTaggedParticles(
     SmileiMPI *smpi,
-    const int first_index,
-    const int last_index,
+    int *const first_index,
+    int *const last_index,
     int ithread,
     bool compute_cell_keys)
 {
@@ -1740,8 +1740,14 @@ void Species::removeTaggedParticles(
     double *const __restrict__ tau = particles->getPtrTau();
 #endif
 
+    // Only if there are particles 
+    if( nparts > 0 ) {
+
+    int last_moving_index = *last_index-1; // Index of the last existing photon (weight > 0)
+
 #ifdef _GPU
-    #pragma acc parallel  \
+//    #pragma acc kernels  
+    #pragma acc serial  \
     present(Epart[0:nparts*3],\
     Bpart[0:nparts*3], \
     gamma[0:nparts], \
@@ -1753,19 +1759,15 @@ void Species::removeTaggedParticles(
         charge,weight,tau,chi)
     {
 #endif
-
-    if( nparts > 0 ) {
-
         //int nb_deleted_photon;
 
         // Backward loop over the tagged particles to find the first existing photon
-        int last_moving_index = last_index-1; // Index of the last existing photon (weight > 0)
-        int first_moving_index = first_index ; // Index of the first photon
-        while( ( last_moving_index >= first_index )
+        int first_moving_index = *first_index ; // Index of the first photon
+        while( ( last_moving_index >= *first_index )
                 && ( weight[last_moving_index] <= 0 ) ) {
             last_moving_index--;
         }
-        while( ( first_moving_index < last_index )
+        while( ( first_moving_index < *last_index )
                 && ( weight[first_moving_index] > 0 ) ) {
             first_moving_index++;
         }
@@ -1773,10 +1775,10 @@ void Species::removeTaggedParticles(
         // that will not be erased
 
         // Backward loop over the tagged particles to fill holes in the photon particle array (at the bin level only)
-#ifdef _GPU
-        #pragma acc loop seq
-#endif
-        for( int ipart=last_moving_index-1 ; ipart>=first_index; ipart-- ) {
+//#ifdef _GPU
+//        #pragma acc loop seq
+//#endif
+        for( int ipart=last_moving_index-1 ; ipart>=*first_index; ipart-- ) {
             if( weight[ipart] <= 0 ) {
                 if( ipart < last_moving_index ) {
                     // The last existing photon comes to the position of
@@ -1825,21 +1827,19 @@ void Species::removeTaggedParticles(
             }
         } // end for ipart
 
-        // Update of the bin boundaries
-        // const unsigned int nb_deleted_photon = last_index[ibin]-last_photon_index-1;
-
-        // We suppress the deleted photons
-        if( last_moving_index + 1 < last_index ) {
-#ifdef _GPU
-            static_cast<nvidiaParticles*>(particles)->deviceResize(last_moving_index + 1);
-#endif
-
-        }
-    } // if nparts > 0
-
 #ifdef _GPU
     } // end parallel region
 #endif
+
+    // We suppress the deleted photons
+    if( last_moving_index + 1 < *last_index ) {
+#ifdef _GPU
+        static_cast<nvidiaParticles*>(particles)->deviceResize(last_moving_index + 1);
+        *last_index = last_moving_index + 1;
+#endif
+    }
+    } // if nparts > 0
+
 }
 
 // ------------------------------------------------

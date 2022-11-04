@@ -542,8 +542,8 @@ public:
     //! when a single bin is used
     void removeTaggedParticles(
         SmileiMPI *smpi,
-        const int first_index,
-        const int last_index,
+        int *const first_index,
+        int *const last_index,
         int ithread,
         bool compute_cell_keys = false);
 

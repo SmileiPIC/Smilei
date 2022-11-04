@@ -272,13 +272,14 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Computation
 
     #pragma acc parallel \
-    present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts],\
+    present(photon_gamma[0:nparts], \
+    Ex[0:nparts],Ey[0:nparts],Ez[0:nparts],\
     Bx[0:nparts],By[0:nparts],Bz[0:nparts], \
     mBW_tables.T_.data_[0:mBW_tables.T_.size_], \
     mBW_tables.xi_.data_[0:mBW_tables.xi_.size_], \
     mBW_tables.xi_.axis1_min_[0:mBW_tables.xi_.dim_size_[0]]) \
     deviceptr(position_x, position_y, position_z, \
-            momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
+            momentum_x,momentum_y,momentum_z,charge,weight,tau,photon_chi, \
             pair0_position_x, pair0_position_y, pair0_position_z, \
             pair0_momentum_x, pair0_momentum_y, pair0_momentum_z, \
             pair0_weight, pair0_charge, pair0_chi, pair0_tau, \
