@@ -18,71 +18,71 @@ public:
     //! Destructor for ElectroMagn3D
     ~ElectroMagn3D();
 
-    void initPoisson( Patch *patch );
-    double compute_r();
-    void compute_Ap( Patch *patch );
-    void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean );
+    void initPoisson( Patch *patch ) override;
+    double compute_r() override;
+    void compute_Ap( Patch *patch ) override;
+    void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override;
     //Access to Ap
-    double compute_pAp();
-    void update_pand_r( double r_dot_r, double p_dot_Ap );
-    void update_p( double rnew_dot_rnew, double r_dot_r );
-    void initE( Patch *patch );
-    void initE_relativistic_Poisson( Patch *patch, double gamma_mean );
-    void initB_relativistic_Poisson( Patch *patch, double gamma_mean );
-    void center_fields_from_relativistic_Poisson( Patch *patch );
-    void initRelativisticPoissonFields( Patch *patch );
-    void sum_rel_fields_to_em_fields( Patch *patch );
-    void centeringE( std::vector<double> E_Add );
-    void centeringErel( std::vector<double> E_Add );
+    double compute_pAp() override;
+    void update_pand_r( double r_dot_r, double p_dot_Ap ) override;
+    void update_p( double rnew_dot_rnew, double r_dot_r ) override;
+    void initE( Patch *patch ) override;
+    void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override;
+    void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override;
+    void center_fields_from_relativistic_Poisson( Patch *patch ) override;
+    void initRelativisticPoissonFields( Patch *patch ) override;
+    void sum_rel_fields_to_em_fields( Patch *patch ) override;
+    void centeringE( std::vector<double> E_Add ) override;
+    void centeringErel( std::vector<double> E_Add ) override;
 
-    double getEx_Xmin()
+    double getEx_Xmin() override
     {
         return 0.;
     }
-    double getEx_Xmax()
-    {
-        return 0.;
-    }
-
-    double getExrel_Xmin()
-    {
-        return 0.;
-    }
-    double getExrel_Xmax()
+    double getEx_Xmax() override
     {
         return 0.;
     }
 
-    double getEx_XminYmax()
+    double getExrel_Xmin() override
     {
         return 0.;
     }
-    double getEy_XminYmax()
-    {
-        return 0.;
-    }
-    double getEx_XmaxYmin()
-    {
-        return 0.;
-    }
-    double getEy_XmaxYmin()
+    double getExrel_Xmax() override
     {
         return 0.;
     }
 
-    double getExrel_XminYmax()
+    double getEx_XminYmax() override
     {
         return 0.;
     }
-    double getEyrel_XminYmax()
+    double getEy_XminYmax() override
     {
         return 0.;
     }
-    double getExrel_XmaxYmin()
+    double getEx_XmaxYmin() override
     {
         return 0.;
     }
-    double getEyrel_XmaxYmin()
+    double getEy_XmaxYmin() override
+    {
+        return 0.;
+    }
+
+    double getExrel_XminYmax() override
+    {
+        return 0.;
+    }
+    double getEyrel_XminYmax() override
+    {
+        return 0.;
+    }
+    double getExrel_XmaxYmin() override
+    {
+        return 0.;
+    }
+    double getEyrel_XmaxYmin() override
     {
         return 0.;
     }
@@ -91,7 +91,7 @@ public:
 //    void solveMaxwellAmpere();
 
     //! Method used to save the Magnetic fields (used to center them)
-    void saveMagneticFields( bool );
+    void saveMagneticFields( bool ) override;
 
     //! Method used to center the Magnetic fields (used to push the particles)
     void centerMagneticFields() override;
