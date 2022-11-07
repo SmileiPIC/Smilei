@@ -1709,6 +1709,12 @@ void Species::removeTaggedParticles(
     int ithread,
     bool compute_cell_keys)
 {
+
+#ifdef _GPU
+
+    unsigned int new_n_parts = 0;
+    unsigned int nb_deleted  = 0;
+
     // Buffers for particles
     double *const __restrict__ Epart     = smpi->dynamics_Epart[ithread].data();
     double *const __restrict__ Bpart     = smpi->dynamics_Bpart[ithread].data();
@@ -1725,7 +1731,6 @@ void Species::removeTaggedParticles(
     // Weight shortcut
     double *const __restrict__ weight =  particles->getPtrWeight();
 
-#ifdef _GPU
     double *const __restrict__ position_x = particles->getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_particle > 1 ? particles->getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_particle > 2 ? particles->getPtrPosition( 2 ) : nullptr;
@@ -1738,15 +1743,13 @@ void Species::removeTaggedParticles(
 
     double *const __restrict__ chi = particles->getPtrChi();
     double *const __restrict__ tau = particles->getPtrTau();
-#endif
 
-    // Only if there are particles 
+    // Only if there are particles
     if( nparts > 0 ) {
 
     int last_moving_index = *last_index-1; // Index of the last existing photon (weight > 0)
 
-#ifdef _GPU
-//    #pragma acc kernels  
+//    #pragma acc kernels
     #pragma acc serial  \
     present(Epart[0:nparts*3],\
     Bpart[0:nparts*3], \
@@ -1758,7 +1761,6 @@ void Species::removeTaggedParticles(
         momentum_x,momentum_y,momentum_z, \
         charge,weight,tau,chi)
     {
-#endif
         //int nb_deleted_photon;
 
         // Backward loop over the tagged particles to find the first existing photon
@@ -1783,9 +1785,7 @@ void Species::removeTaggedParticles(
                 if( ipart < last_moving_index ) {
                     // The last existing photon comes to the position of
                     // the deleted photon
-#ifndef _GPU
-                    particles->overwriteParticle( last_moving_index, ipart, compute_cell_keys );
-#else
+
                     weight[ipart] = weight[last_moving_index];
                     position_x[ipart] = position_x[last_moving_index];
                     if( nDim_particle > 1 ) {
@@ -1805,7 +1805,6 @@ void Species::removeTaggedParticles(
                         tau[ipart] = tau[last_moving_index];
                     }
 
-#endif
                     // Overwrite bufferised data
                     for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
                         Epart[iDim*nparts+ipart] = Epart[iDim*nparts+last_moving_index];
@@ -1817,28 +1816,45 @@ void Species::removeTaggedParticles(
                     }
                     gamma[ipart] = gamma[0*nparts+last_moving_index];
 
-#ifndef _GPU
                     if (thetaold) {
                         thetaold[0*nparts+ipart] = thetaold[0*nparts+last_moving_index];
                     }
-#endif
+
                     last_moving_index --;
                 }
             }
         } // end for ipart
 
-#ifdef _GPU
-    } // end parallel region
-#endif
+        // We suppress the deleted photons
 
-    // We suppress the deleted photons
-    if( last_moving_index + 1 < *last_index ) {
-#ifdef _GPU
-        static_cast<nvidiaParticles*>(particles)->deviceResize(last_moving_index + 1);
-        *last_index = last_moving_index + 1;
-#endif
+        // Removal of the photons
+        unsigned int new_n_parts = last_moving_index + 1;
+        unsigned int nb_deleted = *last_index-new_n_parts;
+
+        // Update the bin size
+        *last_index = new_n_parts;
+
+        // Update the buffers (remove empty space between them)
+        for (auto ip = 0 ; ip < nb_deleted ; ip++) {
+            for ( int idim=1 ; idim<2 ; idim++ ) {
+                Epart[idim*new_n_parts+i] = Epart[idim*nparts+nparts-1-i];
+                Bpart[idim*new_n_parts+i] = Bpart[idim*nparts+nparts-1-i];
+            }
+            for ( int idim=1; idim < nDim_particle; idim++ ) {
+                iold[idim*new_n_parts+i] = iold[idim*nparts+nparts-1-i];
+                deltaold[idim*new_n_parts+i] = deltaold[idim*nparts+nparts-1-i];
+            }
+        }
+
+    } // end openacc region
+
+    if( nb_deleted > 0 ) {
+        // Update the size of the particle vectors
+        static_cast<nvidiaParticles*>(particles)->deviceResize(new_n_parts);
     }
     } // if nparts > 0
+
+#endif
 
 }
 
