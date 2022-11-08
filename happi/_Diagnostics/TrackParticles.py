@@ -341,7 +341,7 @@ class TrackParticles(Diagnostic):
 						requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
 						# Loop times
 						for time in eval(timeSelector[k]):
-							if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/self.nParticles))
+							if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/self.nParticles*100))
 							# Extract required properties from h5 files
 							it = self._locationForTime[time]
 							for prop in requiredProps:
@@ -374,7 +374,7 @@ class TrackParticles(Diagnostic):
 					# Loop on chunks
 					selectionAtTimeT = []
 					for chunkstart, chunkstop, actual_chunksize in ChunkedRange(npart, chunksize):
-						if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/npart))
+						if self._verbose: print("   Selecting block `%s)`, at time %d     (%.2f%% of particles)" % (selstr[k],time,chunkstop/npart*100))
 						# Allocate buffers
 						properties = makeBuffers(actual_chunksize)
 						# Extract required properties from h5 files

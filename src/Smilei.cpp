@@ -200,7 +200,7 @@ int main( int argc, char *argv[] )
         
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
-        
+
         // Create SDMD grids 
         if( params.multiple_decomposition ) {
             TITLE( "Create SDMD grids" );
@@ -329,7 +329,12 @@ int main( int argc, char *argv[] )
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+
+#ifdef _OMPTASKS
+            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+#else
+            vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+#endif
     }
     
     TITLE( "Species creation summary" );
@@ -562,7 +567,11 @@ int main( int argc, char *argv[] )
             }
             
             // call the various diagnostics
+#ifdef _OMPTASKS
+            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
+#else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+#endif
 
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );

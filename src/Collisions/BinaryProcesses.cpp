@@ -59,7 +59,7 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs )
     timesteps_frozen_   = BPs->timesteps_frozen_  ;
     filename_           = BPs->filename_          ;
     debug_file_         = BPs->debug_file_        ;
-    
+
     processes_.clear();
     for( unsigned int i=0; i<BPs->processes_.size(); i++ ) {
         if( Collisions * coll = dynamic_cast<Collisions*>( BPs->processes_[i] ) ) {
@@ -72,7 +72,7 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs )
             ERROR( "Undefined binary process" );
         }
     }
-    
+
 }
 
 
@@ -92,34 +92,38 @@ bool BinaryProcesses::debye_length_required_;
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
 void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
 {
-    Species    *s;
+    Species   *s;
     Particles *p;
     double coeff = 299792458./( 3.*params.reference_angular_frequency_SI*2.8179403267e-15 ); // c / (3 omega re)
-    
+
     unsigned int nspec = patch->vecSpecies.size(); // number of species
     if( nspec==0 ) {
         return;
     }
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
-    
+
     patch->debye_length_squared.resize( nbin );
+
+#ifdef  __DEBUG
     double mean_debye_length = 0.;
+#endif
+
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
         double density_max = 0.;
         double inv_D2 = 0.;
         double inv_cell_volume = 0.;
-        
+
         for( unsigned int ispec=0 ; ispec<nspec ; ispec++ ) { // loop all species
             s  = patch->vecSpecies[ispec];
             p  = s->particles;
-            
+
             // Skip when no particles
             if( p->last_index[ibin] <= p->first_index[ibin] ) continue;
-            
+
             if( inv_cell_volume == 0. ) {
                 inv_cell_volume = 1. / patch->getPrimalCellVolume( p, p->first_index[ibin], params );
             }
-            
+
             // Calculation of particles density, mean charge, and temperature
             // Density is the sum of weights
             // Temperature definition is the average <v*p> divided by 3
@@ -151,7 +155,7 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
                 }
             }
         }
-        
+
         // if there were particles,
         if( inv_D2 > 0. ) {
             // compute debye length squared in code units
@@ -164,14 +168,17 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
         } else {
             patch->debye_length_squared[ibin] = 0.;
         }
-        
+#ifdef  __DEBUG
         mean_debye_length += sqrt( patch->debye_length_squared[ibin] );
+#endif
     }
-    
+
+#ifdef  __DEBUG
     mean_debye_length /= nbin;
     DEBUG( "Mean Debye length in code length units = " << scientific << setprecision( 3 ) << mean_debye_length );
     mean_debye_length *= 299792458./params.reference_angular_frequency_SI; // switch to SI
     DEBUG( "Mean Debye length in meters = " << scientific << setprecision( 3 ) << mean_debye_length );
+#endif
 }
 
 
@@ -181,7 +188,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     if( itime < timesteps_frozen_ || itime % every_ != 0 ) {
         return;
     }
-    
+
     vector<unsigned int> *sg1, *sg2, index1, index2;
     unsigned int nspec1, nspec2; // numbers of species in each group
     unsigned int npart1, npart2; // numbers of macro-particles in each group
@@ -190,20 +197,20 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     unsigned int ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
-    
+
     sg1 = &species_group1_;
     sg2 = &species_group2_;
-    
+
     for( unsigned int i=0; i<processes_.size(); i++ ) {
         processes_[i]->prepare();
     }
-    
+
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
-        
+
         BinaryProcessData D;
-        
+
         // get number of particles for all necessary species
         for( unsigned int i=0; i<2; i++ ) { // try twice to ensure group 1 has more macro-particles
             nspec1 = sg1->size();
@@ -229,12 +236,12 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             }
         }
         // now group1 has more macro-particles than group2
-        
+
         // skip to next bin if no particles
         if( npart1==0 || npart2==0 ) {
             continue;
         }
-        
+
         // Shuffle particles to have random pairs
         //    (It does not really exchange them, it is just a temporary re-indexing)
         index1.resize( npart1 );
@@ -265,10 +272,10 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             }
             N2max = npart2; // number of not-repeated particles (in group 2 only)
         }
-        
+
         // Data for ionization
         D.electronFirst = patch->vecSpecies[( *sg1 )[0]]->atomic_number_==0 ? true : false;
-        
+
         // Calculate the densities
         double n1  = 0.; // density of group 1
         for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
@@ -286,7 +293,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                 n2 += p2->weight( i );
             }
         }
-        
+
         // Get cell volume
         ispec1 = -1;
         do {
@@ -294,12 +301,12 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             p1 = patch->vecSpecies[( *sg1 )[ispec1]]->particles;
         } while( ispec1<nspec1 && p1->first_index[ibin] == p1->last_index[ibin] );
         double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, p1->first_index[ibin], params );
-        
+
         // Set the debye length
         if( BinaryProcesses::debye_length_required_ ) {
             D.debye2 = patch->debye_length_squared[ibin];
         }
-        
+
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_ ? 2*npairs-1 : npairs;
         double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
@@ -309,12 +316,12 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         n2  *= inv_cell_volume;
         D.n123 = pow( n1, 2./3. );
         D.n223 = pow( n2, 2./3. );
-        
+
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
         for( unsigned int i = 0; i<npairs; i++ ) {
-            
+
             // find species and index i1 of particle "1"
             D.i1 = index1[i];
             for( ispec1=0 ; D.i1>=np1[ispec1]; ispec1++ ) {
@@ -325,41 +332,41 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             for( ispec2=0 ; D.i2>=np2[ispec2]; ispec2++ ) {
                 D.i2 -= np2[ispec2];
             }
-            
+
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
             D.i1 += s1->particles->first_index[ibin];
             D.i2 += s2->particles->first_index[ibin];
             D.p1 = s1->particles;
             D.p2 = s2->particles;
-            
+
             D.m1 = s1->mass_;
             D.m2 = s2->mass_;
             D.m12 = s1->mass_ / s2->mass_;
-            
+
             D.minW = D.p1->weight(D.i1);
             D.maxW = D.p2->weight(D.i2);
             if( D.minW > D.maxW ) {
                 swap( D.minW, D.maxW );
             }
-            
+
             // If one weight is zero, then skip. Can happen after nuclear reaction
             if( D.minW <= 0. ) continue;
-            
+
             D.dt_correction = D.maxW * dt_corr;
             if( i % N2max <= (npairs-1) % N2max ) {
                 D.dt_correction *= weight_correction_2 ;
             } else {
                 D.dt_correction *= weight_correction_1;
             }
-            
+
             // Get momenta and calculate gammas
-            
+
             D.gamma1 = D.p1->LorentzFactor( D.i1 );
             D.gamma2 = D.p2->LorentzFactor( D.i2 );
             double gamma12 = D.m12 * D.gamma1 + D.gamma2;
             double gamma12_inv = 1./gamma12;
-            
+
             // Calculate the center-of-mass (COM) frame
             // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
             // They are NOT quantities relative to the COM.
@@ -367,7 +374,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             D.COM_vy = ( D.m12 * ( D.p1->momentum( 1, D.i1 ) ) + D.p2->momentum( 1, D.i2 ) ) * gamma12_inv;
             D.COM_vz = ( D.m12 * ( D.p1->momentum( 2, D.i1 ) ) + D.p2->momentum( 2, D.i2 ) ) * gamma12_inv;
             double COM_vsquare = D.COM_vx*D.COM_vx + D.COM_vy*D.COM_vy + D.COM_vz*D.COM_vz;
-            
+
             // Change the momentum to the COM frame (we work only on particle 1)
             // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
             if( COM_vsquare < 1e-6 ) {
@@ -387,22 +394,22 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             D.pz_COM = D.p1->momentum( 2, D.i1 ) + term2*D.COM_vz;
             double p2_COM = D.px_COM*D.px_COM + D.py_COM*D.py_COM + D.pz_COM*D.pz_COM;
             D.p_COM  = sqrt( p2_COM );
-            
+
             // Calculate some intermediate quantities
             D.term3 = D.COM_gamma * gamma12_inv;
             double term4 = D.gamma1_COM * D.gamma2_COM;
             D.term5 = term4/p2_COM + D.m12;
             D.vrel = D.p_COM / ( D.term3 * term4 ); // | v2_COM - v1_COM |
             D.vrel_corr = D.p_COM / ( D.term3 * D.gamma1 * D.gamma2 );
-            
+
             for( unsigned int i=0; i<processes_.size(); i++ ) {
                 processes_[i]->apply( patch->rand_, D );
             }
-            
+
         } // end loop on pairs of particles
-        
+
     } // end loop on bins
-    
+
     for( unsigned int i=0; i<processes_.size(); i++ ) {
         processes_[i]->finish( params, patch, localDiags, intra_, species_group1_, species_group2_, itime );
     }
@@ -414,24 +421,24 @@ void BinaryProcesses::debug( Params &params, int itime, unsigned int icoll, Vect
 
     int debug_every = vecPatches( 0 )->vecBPs[icoll]->debug_every_;
     if( debug_every > 0 && itime % debug_every == 0 ) {
-    
+
         unsigned int npatch = vecPatches.size();
-        
+
         vector<double> smean( npatch, 0. );
         vector<double> logLmean( npatch, 0. );
         vector<double> debye_length( npatch, 0. );
         vector<double> nuclear_reaction_multiplier( npatch, 0. );
-        
+
         // Collect info for all patches
         for( unsigned int ipatch=0; ipatch<npatch; ipatch++ ) {
-            
+
             // debye length
             unsigned int nbin = vecPatches( ipatch )->debye_length_squared.size();
             for( unsigned int ibin=0; ibin<nbin; ibin++ ) {
                 debye_length[ipatch] += vecPatches( ipatch )->debye_length_squared[ibin];
             }
             debye_length[ipatch] = sqrt( debye_length[ipatch] / nbin );
-            
+
             // Data from processes
             vector<BinaryProcess*> vBP = vecPatches( ipatch )->vecBPs[icoll]->processes_;
             for( unsigned int iBP=0; iBP<vBP.size(); iBP++ ) {
@@ -443,7 +450,7 @@ void BinaryProcesses::debug( Params &params, int itime, unsigned int icoll, Vect
                 }
             }
         }
-        
+
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
@@ -454,7 +461,7 @@ void BinaryProcesses::debug( Params &params, int itime, unsigned int icoll, Vect
         g.vect( "debyelength"                , debye_length               [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
         g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier[0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
         vecPatches( 0 )->vecBPs[icoll]->debug_file_->flush();
-        
+
     }
-    
+
 }

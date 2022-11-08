@@ -88,12 +88,18 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
     
+#ifdef  __DETAILED_TIMERS
+    
+    // OpenMP properties
+    // -----------------------
+    
+    int thread_number_;
+    
     // Detailed timers
     // -----------------------
     
-#ifdef  __DETAILED_TIMERS
     //! Timers for the patch
-    std::vector<double> patch_timers;
+    std::vector<double> patch_timers_;
 #endif
     
     // Random number generator.
@@ -347,7 +353,9 @@ public:
     std::vector<MPI_Request> requests_;
     
     bool is_small = true;
-    
+
+    void copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params, bool diag_flag);
+    void copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &params, bool diag_flag);
         
 protected:
     // Complementary members for the description of the geometry

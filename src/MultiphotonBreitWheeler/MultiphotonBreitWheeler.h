@@ -48,8 +48,7 @@ public:
                      double & pair_energy,
                      int istart,
                      int iend,
-                     int ithread, int ipart_ref = 0 );
-
+                     int ithread, int ibin = 0, int ipart_ref = 0 );
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
     //! \param kx photon x momentum
@@ -123,7 +122,7 @@ public:
         int ibin, int nbin,
         int *bmin, int *bmax, int ithread );
 
-    //! Return the sampling for each pair 
+    //! Return the sampling for each pair
     int getPairCreationSampling(int i) {
         return mBW_pair_creation_sampling_[i];
     }
@@ -136,6 +135,12 @@ public:
 
     // Local array of new pairs of electron-positron
     // Particles new_pair[2];
+
+    // Local array of new pairs of electron-positron per bin
+    std::vector<Particles *> new_pair_per_bin;
+
+    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
+    void joinNewElectronPositronPairs(Particles **new_pair,unsigned int Nbins);
 
 private:
 

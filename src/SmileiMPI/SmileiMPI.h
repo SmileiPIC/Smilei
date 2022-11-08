@@ -102,7 +102,7 @@ public:
 
     void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
     void recv( int *integer, int from, int tag, unsigned int );
-    
+
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
     void irecv( Field* field, int from, int tag, MPI_Request& request );
@@ -156,19 +156,19 @@ public:
     {
         return smilei_omp_max_threads;
     }
-    
+
     //! Return local number of cores
     inline int getNumCores()
     {
         return number_of_cores;
     }
-    
+
     //! Return global number of cores
     inline int getGlobalNumCores()
     {
         return global_number_of_cores;
     }
-    
+
     //! Return tag upper bound of this MPI implementation
     inline int getTagUB()
     {
@@ -206,14 +206,17 @@ public:
     std::vector<std::vector<double>> dynamics_EnvEabs_part;
     //! value of the EnvEabs used for envelope ionization
     std::vector<std::vector<double>> dynamics_EnvExabs_part;
-    
+
     //! Return buffer size in thread ithread
     inline int __attribute__((always_inline)) getBufferSize(const int ithread)
     {
         return dynamics_invgf[ithread].size();
     }
-    
-    // Resize buffers for a given number of particles
+
+    //! Erase Particles from istart ot the end in the buffers of thread ithread
+    void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
+
+    // Resize buffers for a given number of particles (threaded version)
     inline void resizeBuffers( int ithread, int ndim_field, int npart, bool isAM = false )
     {
         dynamics_Epart[ithread].resize( 3*npart );
@@ -237,11 +240,58 @@ public:
             }
         }
     }
-    
-    //! Erase Particles from istart ot the end in the buffers of thread ithread
-    void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
-        
-    
+
+
+        // Resize buffers vector for a given number of buffers
+    inline void resizeBuffers( int n_buffers, bool isAM = false)
+    {
+        dynamics_Epart.resize( n_buffers );
+        dynamics_Bpart.resize( n_buffers );
+        dynamics_invgf.resize( n_buffers );
+        dynamics_iold.resize( n_buffers );
+        dynamics_deltaold.resize( n_buffers );
+        if( isAM ) {
+            dynamics_eithetaold.resize( n_buffers );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart.resize( n_buffers );
+            dynamics_GradPHI_mpart.resize( n_buffers );
+            dynamics_PHIpart.resize( n_buffers );
+            dynamics_PHI_mpart.resize( n_buffers );
+            dynamics_inv_gamma_ponderomotive.resize( n_buffers );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part.resize( n_buffers );
+                dynamics_EnvExabs_part.resize( n_buffers );
+            }
+        }
+    }
+
+    // Resize buffers to avoid memory leak with tasks
+    inline void reduceDynamicsBufferSize( int buffer_id, bool isAM = false )
+    {
+        dynamics_Epart[buffer_id].resize( 1 );
+        dynamics_Bpart[buffer_id].resize( 1 );
+        dynamics_invgf[buffer_id].resize( 1 );
+        dynamics_iold[buffer_id].resize( 1 );
+        dynamics_deltaold[buffer_id].resize( 1 );
+        if( isAM ) {
+            dynamics_eithetaold[buffer_id].resize( 1 );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart[buffer_id].resize( 1 );
+            dynamics_GradPHI_mpart[buffer_id].resize( 1 );
+            dynamics_PHIpart[buffer_id].resize( 1 );
+            dynamics_PHI_mpart[buffer_id].resize( 1 );
+            dynamics_inv_gamma_ponderomotive[buffer_id].resize( 1 );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part[buffer_id].resize( 1 );
+                dynamics_EnvExabs_part[buffer_id].resize( 1 );
+            }
+        }
+    }
+
     // Resize buffers for old properties only
     inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )
     {
@@ -251,7 +301,7 @@ public:
             dynamics_eithetaold[ithread].resize( npart );
         }
     }
-    
+
     // Compute global number of particles
     //     - deprecated with patch introduction
     //! \todo{Patch managmen}
@@ -263,6 +313,41 @@ public:
     }
 
     bool test_mode;
+
+    // Task tracing diag
+    std::vector<std::vector<double>> particle_event_tracing_event_time_;
+    std::vector<std::vector<unsigned int>> particle_event_tracing_start_or_end_;
+    std::vector<std::vector<int>> particle_event_tracing_event_name_;
+    int iter_frequency_particle_event_tracing_;
+    double reference_time_;
+
+    // determine if "task" tracing is performed at this iteration
+    bool diagPartEventTracing(double time_dual, double timestep ){
+        bool diagTracing = false;
+        if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_particle_event_tracing_)==0){
+            diagTracing = true;
+        }
+        return diagTracing;
+    }
+    // trace event or "task"
+    void trace_event(int thread, double event_time,unsigned int event_start_or_end, int event_name)
+    {
+        particle_event_tracing_event_time_[thread].push_back(event_time);           // write time
+        particle_event_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
+        particle_event_tracing_event_name_[thread].push_back(event_name);           // write Event Name
+    };
+
+    // If particle event tracing diagnostic is activated, trace event
+    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread,
+                                 unsigned int event_start_or_end, int event_name)
+    {
+        // If particle event tracing diagnostic is activated, trace event
+        // otherwise, this becomes an empty method
+        #  ifdef _PARTEVENTTRACING
+        if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
+        #  endif
+    };
+
 
 protected:
     //! Global MPI Communicator

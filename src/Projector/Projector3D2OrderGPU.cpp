@@ -441,7 +441,7 @@ void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *J
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local densities only (Frozen species)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -519,7 +519,7 @@ void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned i
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
     

@@ -4,17 +4,17 @@
 //
 //! \brief contains the Particles class description
 //
-//! The Particles Class is the main data structure for handling particle list. 
+//! The Particles Class is the main data structure for handling particle list.
 //! It contains the main particles properties:
-//! - positions 
-//! - momentums 
-//! - charge 
+//! - positions
+//! - momentums
+//! - charge
 //! - weight
 //! - quantum parameter (chi) for QED effects
 //! - optical depth for Monte-Carlo processes
 //! - tag id for tracked particles
 //
-//! The class also contains many functions to manage particles. 
+//! The class also contains many functions to manage particles.
 // -----------------------------------------------------------------------------
 
 #ifndef PARTICLES_H
@@ -89,7 +89,7 @@ public:
         }
         return last_index.back();
     }
-    
+
     //! Get vector size on CPU
     inline unsigned int size() const
     {
@@ -119,7 +119,7 @@ public:
     {
         return first_index.size();
     }
-    
+
     //! Tells if old positions are kept (true) or not
     inline bool keepOldPositions() const
     {
@@ -205,10 +205,10 @@ public:
     //! between istart and iend
     // void eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased);
 
-    //! This method eliminates the space between the bins 
+    //! This method eliminates the space between the bins
     //! (presence of empty particles beteen the bins)
     void compress(bool compute_cell_keys = false);
-    
+
     //! Sum the vectors
     void sum(int ibin_min, int ibin_max);
 
@@ -420,7 +420,7 @@ public:
     virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
-    
+
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
     };
@@ -488,7 +488,7 @@ public:
 
     //! Indices of the first particles of each bin (or cells) in the Particles object
     std::vector<int> first_index;
-    
+
     //! Indexes of the last particles + 1 in each bin (or cells) in the Particles object
     std::vector<int> last_index;
 
