@@ -296,7 +296,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[0] += MPI_Wtime() - timer;
+            patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
 
         }
