@@ -721,7 +721,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     {
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
         // why was this used if the array is resized later?
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Prepare for sorting
         for( unsigned int i=0; i<count.size(); i++ ) {
@@ -729,7 +729,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         }
 
         int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-        smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );
+        smpi->resizeBuffers( buffer_id, nDim_field, nparts_in_pack );
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){
 #ifdef  __DETAILED_TIMERS
@@ -1999,7 +1999,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
@@ -2413,7 +2413,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
 # endif
 
-    int bin_size0 = b_dim[0];
+    //int bin_size0 = b_dim[0];
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
@@ -2436,7 +2436,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             count[i] = 0;
         }
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS

@@ -468,7 +468,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
                             // Momentum
                             double p = std::sqrt( std::pow( 1.+pair_chi[k]*inv_chiph_gammaph, 2 )-1 );
-                            double u[3];
+                            
                             new_pair_per_bin[ibin][k].momentum( 0, idNew ) = p*ux ;
                             new_pair_per_bin[ibin][k].momentum( 1, idNew ) = p*uy ;
                             new_pair_per_bin[ibin][k].momentum( 2, idNew ) = p*uz ;

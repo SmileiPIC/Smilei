@@ -409,7 +409,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     // -------------------------------
 
     // why was this used if the array is resized later?
-    smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+    smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
     //Prepare for sorting
     for( unsigned int i=0; i<count.size(); i++ ) {
@@ -417,7 +417,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     }
 
     int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-    smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );
+    smpi->resizeBuffers( buffer_id, nDim_field, nparts_in_pack );
 
     #pragma omp taskgroup
     {
@@ -1245,7 +1245,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
@@ -1574,7 +1574,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
     // -------------------------------
     if( time_dual>time_frozen_ ) {
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Prepare for sorting
         for( unsigned int i=0; i<count.size(); i++ ) {

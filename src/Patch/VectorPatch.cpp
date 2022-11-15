@@ -327,15 +327,16 @@ void VectorPatch::dynamics( Params &params,
 
     timers.particles.restart();
     ostringstream t;
-
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
     double reference_time;
+#endif
 
 #ifdef _OMPTASKS
     #pragma omp single
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
-        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+        smpi->resizeBuffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
 
     #pragma omp for schedule(static)
@@ -4206,7 +4207,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     #pragma omp single
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
-        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+        smpi->resizeBuffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
 #endif
 
@@ -4271,7 +4272,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #pragma omp single
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
-        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+        smpi->resizeBuffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
 #endif
 

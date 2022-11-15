@@ -1335,7 +1335,7 @@ public:
 #ifdef _OMPTASKS
                         unsigned int Nbins = patch->vecSpecies[ispec1]->Nbins;
                         for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                            patch->vecSpecies[ispec1]->Ionize->new_electrons_per_bin[ibin].initializeReserve(max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles);
+                            patch->vecSpecies[ispec1]->Ionize->new_electrons_per_bin[ibin].initializeReserve(0, *patch->vecSpecies[ispec1]->electron_species->particles);
                         }
 #endif
                         break;
