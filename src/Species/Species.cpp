@@ -1741,8 +1741,8 @@ void Species::removeTaggedParticles(
 
     short *const __restrict__ charge = particles->getPtrCharge();
 
-    double *const __restrict__ chi = particles->getPtrChi();
-    double *const __restrict__ tau = particles->getPtrTau();
+    double *const __restrict__ chi = particles->isQuantumParameter ? particles->getPtrChi() : nullptr;
+    double *const __restrict__ tau = particles->isMonteCarlo ? particles->getPtrTau() : nullptr;
 
     // Only if there are particles
     if( nparts > 0 ) {
@@ -1756,6 +1756,7 @@ void Species::removeTaggedParticles(
     gamma[0:nparts], \
     iold[0:nparts*nDim_particle], \
     deltaold[0:nparts*nDim_particle]) \
+    thetaold[0:nparts * (thetaold ? 1: 0) ] \
     deviceptr( \
         position_x,position_y,position_z, \
         momentum_x,momentum_y,momentum_z, \
