@@ -284,7 +284,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         if( position_initialization_on_species_ ) {
             unsigned int ispec = species_->position_initialization_on_species_index;
 
-            if( species_->getParticlesSize() != patch->vecSpecies[ispec]->getNbrOfParticles() ) {
+            if( species_->getParticlesSize() != patch->vecSpecies[ispec]->getParticlesSize() ) {
                 ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
             }
             particles_->Position = patch->vecSpecies[ispec]->particles->Position;
