@@ -126,7 +126,7 @@ EOF
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
-LaunchSRunPatProfile() {{
+LaunchSRunPATProfile() {{
     module load perftools-base/21.12.0
     module load perftools
 
@@ -151,7 +151,7 @@ LaunchSRunPatProfile() {{
 }}
 
 # Try to use this profiling on only one GPU
-LaunchRocmProfile() {{
+LaunchROCmProfile() {{
     # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
     # Low overhead
     LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
@@ -193,8 +193,8 @@ LaunchRocmProfile() {{
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
-# LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
-# LaunchRocmProfile {a_task_command} {a_task_command_arguments}
+# LaunchSRunPATProfile {a_task_command} {a_task_command_arguments}
+# LaunchROCmProfile {a_task_command} {a_task_command_arguments}
 
 kRETVAL=$?
 

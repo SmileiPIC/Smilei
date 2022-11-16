@@ -204,7 +204,8 @@ namespace naive {
 
 namespace hip {
     namespace detail {
-        void checkErrors( ::hipError_t an_error_code,
+        static inline void
+        checkErrors( ::hipError_t an_error_code,
                           const char  *file_name,
                           int          line )
         {
