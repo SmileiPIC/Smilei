@@ -571,10 +571,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space.box_size_[1]   = params.n_space[1];
             init_space.box_size_[2]   = params.n_space[2];
 
+            // Box size of 1 cell
+            init_space.box_size_[axis] = 1;
+
+            // If injection from the max boundary
             if( min_max == 1 ) {
                 init_space.cell_index_[axis] = params.n_space[axis]-1;
             }
-            init_space.box_size_[axis] = 1;
 
             // We first get the species id associated to this injector
             unsigned int i_species = particle_injector->getSpeciesNumber();
@@ -742,7 +745,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 // Suppr not interesting parts ...
                 for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
                     for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
-                        if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] > params.grid_length[axis] ) {
+                        if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] >= params.cell_length[axis]*params.n_space_global[axis]  ) {
                             if( new_particle_number > ip ) {
                                 particles->overwriteParticle( new_particle_number, ip );
                             }
@@ -4200,8 +4203,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     diag_flag = needsRhoJsNow( itime );
 
     timers.particles.restart();
-
+    
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
+#endif
 
 #ifdef _OMPTASKS
     #pragma omp single
@@ -4221,10 +4226,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     } // end ipatch
 #endif
 
-#  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
     if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
-#  endif
+#endif
 
 
     #pragma omp single
@@ -4261,7 +4266,10 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     diag_flag = needsRhoJsNow( itime );
 
     timers.particles.restart();
+    
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
+#  endif
 
 #  ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
@@ -4336,11 +4344,14 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                             double time_dual, Timers &timers, int itime )
 {
+    
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
+#endif
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -4398,11 +4409,13 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
+#endif
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are not activated
     #pragma omp for schedule(runtime)
@@ -4443,11 +4456,11 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
+    
+#ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
-
-    #  ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are not activated
     #pragma omp for schedule(runtime)
