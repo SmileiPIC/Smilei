@@ -1425,11 +1425,11 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     unsigned int iPart;
 
-    double * __restrict__ position_x = particles->getPtrPosition(0);
-    double * __restrict__ position_y = particles->getPtrPosition(1);
-    double * __restrict__ position_z = particles->getPtrPosition(2);
-
     if (params.geometry == "AMcylindrical"){
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+        const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
         double min_loc_l = round(min_loc_vec[0]*dx_inv_[0]);
         double min_loc_r = round(min_loc_vec[1]*dx_inv_[1]);
@@ -1445,6 +1445,10 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
        }
 
     } else if (nDim_field == 3) {
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+        const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
         double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
         double min_loc_y = round (min_loc_vec[1] * dx_inv_[1]);
@@ -1464,6 +1468,9 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     } else if (nDim_field == 2) {
 
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+
         double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
         double min_loc_y = round (min_loc_vec[1] * dx_inv_[1]);
 
@@ -1478,6 +1485,8 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
             }
         }
     } else if (nDim_field == 1) {
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
 
         double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
 

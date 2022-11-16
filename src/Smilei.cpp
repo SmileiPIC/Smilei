@@ -139,7 +139,7 @@ int main( int argc, char *argv[] )
         checkpoint.readPatchDistribution( &smpi, simWindow );
         // allocate patches according to smpi.patch_count
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
-        
+
         // allocate region according to dump
         if( params.multiple_decomposition ) {
             TITLE( "Create SDMD grids" );
@@ -158,7 +158,7 @@ int main( int argc, char *argv[] )
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
         }
-        
+
         // vecPatches data read in restartAll according to smpi.patch_count
 
         // if (params.multiple_decomposition) {
@@ -179,29 +179,29 @@ int main( int argc, char *argv[] )
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
         vecPatches.sortAllParticles( params );
-        
+
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
-        
+
         // Patch reconfiguration for the adaptive vectorization
         if( params.has_adaptive_vectorization ) {
             vecPatches.configuration( params, timers, 0 );
         }
-        
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
-        
+
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
-        
+
     } else {
-        
+
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
 
-        // Create SDMD grids 
+        // Create SDMD grids
         if( params.multiple_decomposition ) {
             TITLE( "Create SDMD grids" );
             region.vecPatch_.refHindex_ = smpi.getRank();
@@ -211,11 +211,11 @@ int main( int argc, char *argv[] )
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-            
+
             region.reset_fitting( &smpi, params );
             region.clean();
             region.reset_mapping();
-            
+
             region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
@@ -223,12 +223,12 @@ int main( int argc, char *argv[] )
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
         }
-        
+
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
-        
+
         TITLE( "Initial fields setup" );
-        
+
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
@@ -236,45 +236,45 @@ int main( int argc, char *argv[] )
             MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
-        
+
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        
+
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             MESSAGE( 1, "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
-        
+
         MESSAGE( 1, "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
-        
+
         MESSAGE( 1, "Applying prescribed fields at time t = 0" );
         vecPatches.applyPrescribedFields( time_prim );
-        
+
         MESSAGE( 1, "Applying antennas at time t = 0" );
         vecPatches.applyAntennas( 0.5 * params.timestep );
-        
+
         // Patch reconfiguration
         if( params.has_adaptive_vectorization ) {
             vecPatches.configuration( params, timers, 0 );
         }
-        
+
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if( params.Laser_Envelope_model ) {
             MESSAGE( 1, "Initialize envelope" );
             vecPatches.initNewEnvelope( params );
         }
-        
+
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
-        
+
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
         }
-        
+
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
@@ -295,7 +295,7 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        
+
         // rotational cleaning on a single global region for AM spectral
         if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
@@ -325,7 +325,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-       
+
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
@@ -336,10 +336,10 @@ int main( int argc, char *argv[] )
             vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 #endif
     }
-    
+
     TITLE( "Species creation summary" );
     vecPatches.printGlobalNumberOfParticlesPerSpecies( &smpi );
-    
+
     if( params.is_pxr ){
         if( params.multiple_decomposition ) {
             region.coupling( params, false );
@@ -347,20 +347,20 @@ int main( int argc, char *argv[] )
             vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
         }
     }
-    
+
     if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
     }
-    
+
     timers.reboot();
     timers.global.reboot();
-    
+
     // ------------------------------------------------------------------------
     // Check expected disk usage
     // ------------------------------------------------------------------------
     TITLE( "Expected disk usage (approximate)" );
     vecPatches.checkExpectedDiskUsage( &smpi, params, checkpoint );
-    
+
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
@@ -379,9 +379,9 @@ int main( int argc, char *argv[] )
     if( smpi.isMaster() ) {
         params.print_timestep_headers( &smpi );
     }
-    
+
     int count_dlb = 0;
-    
+
     unsigned int itime=checkpoint.this_run_start_step+1;
     while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
 
@@ -451,7 +451,7 @@ int main( int argc, char *argv[] )
                     }
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
-                
+
             }
         }
         else { //if ( params.multiple_decomposition ) {
@@ -553,7 +553,7 @@ int main( int argc, char *argv[] )
 
             // Finalize field synchronization and exchanges
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
-            
+
             if( !params.multiple_decomposition ) {
                 if( time_dual > params.time_fields_frozen ) {
                     // Standard fields operations (maxwell + comms + boundary conditions) are completed
@@ -565,7 +565,7 @@ int main( int argc, char *argv[] )
                     }
                 }
             }
-            
+
             // call the various diagnostics
 #ifdef _OMPTASKS
             vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
@@ -582,16 +582,15 @@ int main( int argc, char *argv[] )
                     simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
             }
             timers.movWindow.update();
-            // ----------------------------------------------------------------------
-            // Validate restart  : to do
-            // Restart patched moving window : to do
+
+            // Checkpointing: dump data
             #pragma omp master
             checkpoint.dump( vecPatches, region, itime, &smpi, simWindow, params );
             #pragma omp barrier
-            // ----------------------------------------------------------------------
-            
+
+
         } //End omp parallel region
-        
+
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
@@ -603,14 +602,14 @@ int main( int argc, char *argv[] )
                     }
                 }
             }
-            
+
             timers.loadBal.restart();
             #pragma omp single
             vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
             timers.loadBal.update( params.printNow( itime ) );
-            
+
             if( params.multiple_decomposition ) {
-                
+
                 if( count_dlb%5 == 0 ) {
                     region.reset_fitting( &smpi, params );
                     region.clean();
@@ -621,7 +620,7 @@ int main( int argc, char *argv[] )
                     }
                     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     region.identify_missing_patches( &smpi, vecPatches, params );
-                    
+
                     if ( params.geometry != "AMcylindrical" ) {
                         DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
                     } else {
@@ -629,7 +628,7 @@ int main( int argc, char *argv[] )
                             DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                         }
                     }
-                    
+
                 } else {
                     region.reset_mapping();
                     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -637,22 +636,22 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        
+
         // print message at given time-steps
         // --------------------------------
         if( params.printNow( itime ) ) {
             double npart = vecPatches.getGlobalNumberOfParticles( &smpi );
             params.print_timestep( &smpi, itime, time_dual, timers.global, npart ); //contains a timer.update !!!
-            
+
             #pragma omp master
             timers.consolidate( &smpi );
             #pragma omp barrier
         }
-        
+
         itime++;
-        
+
     }//END of the time loop
-    
+
     smpi.barrier();
 
     // ------------------------------------------------------------------
