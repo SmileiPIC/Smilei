@@ -67,7 +67,7 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                            \
+        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                        \
                                                      device_particle_position_x /* [0:particle_count] */, \
                                                      device_particle_position_y /* [0:particle_count] */, \
                                                      device_particle_momentum_z /* [0:particle_count] */, \
@@ -312,8 +312,6 @@ namespace hip {
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
-            // TODO(Etienne M): prefer unsigned int vs int. At least the reader
-            // knows the value wont be negative.
             // TODO(Etienne M): __ldg could be used to slightly improve GDS load
             // speed. This would only have an effect on Nvidia cards as this
             // operation is a no op on AMD.
@@ -576,20 +574,17 @@ namespace hip {
         // TODO(Etienne M): Find a way to lessen the atomic usage
 
         const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
-        // On an MI100:
-        // We are strongly bound by LDS atomics.
-        // good results can be achieved with kWorkgroupSize=640, ReductionFloat=float and getGPUClusterWidth(2)=16
 
         static constexpr std::size_t kWorkgroupSize = 128;
-        const ::dim3                 kBlockDimension /* In threads */ { kWorkgroupSize, 1, 1 };
+        const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
 
-        // On MI100, using float for reduction reduces the amount of bank
-        // conflict and allows the compiler to generate better instruction.
-        // The relative error is ~10^13 compared to pure double operations but
-        // is x1.3 times faster.
-
+        // NOTE: On cards lacking hardware backed Binary64 atomic operations,
+        // falling back to Binary32 (supposing hardware support for atomic
+        // operations) can lead to drastic performance improvement.
+        // One just need to assign 'float' to ReductionFloat.
+        //
         using ComputeFloat   = double;
-        using ReductionFloat = double; // TODO(Etienne M): Change to float ?
+        using ReductionFloat = double;
 
         auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
