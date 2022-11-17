@@ -2,6 +2,7 @@
 #define PARTCOMPTIMEFACTORY_H
 
 #include "PartCompTime.h"
+#include "PartCompTime1D2Order.h"
 #include "PartCompTime2D2Order.h"
 #include "PartCompTime2D4Order.h"
 #include "PartCompTime3D2Order.h"
@@ -21,19 +22,20 @@ public:
         // ---------------
         // 1Dcartesian simulation
         // ---------------
-        // if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-        // 
-        //     // part_comp_time = new PartCompTime1D2Order( params, patch );
-        // 
-        // } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
-        // 
-        //     // part_comp_time = new PartCompTime1D4Order( params, patch );
-        // 
+        if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+        
+            part_comp_time = new PartCompTime1D2Order();
+        
         // }
+        // else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+        //
+        //     // part_comp_time = new PartCompTime1D4Order( params, patch );
+        //
+        }
         // ---------------
         // 2Dcartesian simulation
         // ---------------
-        if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+        else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
             
             part_comp_time = new PartCompTime2D2Order();
 

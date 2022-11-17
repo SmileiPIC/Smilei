@@ -298,9 +298,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         LINK_NAMELIST + std::string("#main-variables"));
     }
 
-    if( ( interpolator_  == "wt") && 
-        (geometry != "1Dcartesian")                &&  
-        (geometry != "2Dcartesian")                && 
+    if( ( interpolator_  == "wt") &&
+        (geometry != "1Dcartesian")                &&
+        (geometry != "2Dcartesian")                &&
         (geometry != "3Dcartesian")               ) {
         ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
         LINK_NAMELIST + std::string("#main-variables") );
@@ -617,7 +617,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of patches
     // --------------------
     if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
-        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  
+        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",
         LINK_NAMELIST + std::string("#main-variables")  );
     }
 
@@ -755,7 +755,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             // cell sorting explicitely set off
             } else {
                 if (!( vectorization_mode == "off")) {
-                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",  
+                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",
                         LINK_NAMELIST + std::string("#vectorization"))
                 }
             }
@@ -766,7 +766,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization"   );
         if( !( adaptive_default_mode == "off" ||
                 adaptive_default_mode == "on" ) ) {
-            ERROR_NAMELIST( "In block `Vectorization`, parameter `default` must be `off` or `on`",  LINK_NAMELIST + std::string("#vectorization") );
+            ERROR_NAMELIST( "In block `Vectorization`, parameter `initial_mode` must be `off` or `on`",  LINK_NAMELIST + std::string("#vectorization") );
         }
 
         // get parameter "every" which describes a timestep selection
@@ -787,13 +787,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
 
-        if (!defined_cell_sort && !cell_sorting_) {
-            if (vectorization_mode == "off") {
-                cell_sorting_ = true;
-                vectorization_mode = "on";
-                WARNING("For collisions, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
-            }
-        }
+        // Force cell sorting and later the adaptive vectorization mode in scalar mode
+        cell_sorting_ = true;
         
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
@@ -801,9 +796,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
         }
 
-        if( vectorization_mode == "adaptive_mixed_sort" ) {
-            ERROR_NAMELIST( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#collisions-reactions") );
-        }
     }
 
     // Read the "print_every" parameter
@@ -847,15 +839,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use particle merging.",  LINK_NAMELIST + std::string("#collisions-reactions"));
             }
 
-            if (!defined_cell_sort && !cell_sorting_) {
-                if (vectorization_mode == "off") {
-                    cell_sorting_ = true;
-                    vectorization_mode = "on";
-                    if (geometry != "1Dcartesian" ) {
-                        WARNING("For particle merging, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
-                    }
-                }
-            }
+            // Force cell sorting and later the adaptive vectorization mode in scalar mode
+            cell_sorting_ = true;
+            
+        }
+    }
+
+    // Force adaptive vectorization in scalar mode if cell_sorting requested
+    if ( cell_sorting_ ) {
+        
+        if( vectorization_mode == "adaptive_mixed_sort" ) {
+            ERROR_NAMELIST( "Cell sorting (required by Collision or Merging) is incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#vectorization") );
+        } else if ( vectorization_mode == "off" ) {
+            vectorization_mode            = "adaptive";
+            has_adaptive_vectorization    = true;
+            adaptive_default_mode         = "off";
+            adaptive_vecto_time_selection = new TimeSelection();
         }
     }
 
@@ -1184,7 +1183,7 @@ void Params::compute()
     // Verify that cluster_width_ divides patch_size_[0]
     if( patch_size_[0]%cluster_width_ != 0 ) {
         ERROR_NAMELIST(
-            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
+            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)",
             LINK_NAMELIST + std::string("#main-variables") );
     }
 
@@ -1210,14 +1209,7 @@ void Params::check_consistency()
         // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
         //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
         // }
-
-        if( hasMultiphotonBreitWheeler ) {
-            WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
-            WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
-        }
-
     }
-
 }
 
 
@@ -1288,11 +1280,8 @@ void Params::print_init()
     }
     MESSAGE( 1, sr.str() );
 
-    ostringstream cs;
-    cs << "cell sorting: ";
     if (cell_sorting_) {
-        cs << "Activated";
-        MESSAGE( 1, cs.str() );
+        MESSAGE( 1, "Cell sorting: activated" );
     }
 
     TITLE( "Electromagnetic boundary conditions" );
@@ -1795,9 +1784,9 @@ void Params::multiple_decompose_3D()
         }
     }
     if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != (unsigned int)sz ) && (!rk) )
-        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2] 
-                << ") is not equal to the number of MPI processes (" 
-                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2] 
+        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2]
+                << ") is not equal to the number of MPI processes ("
+                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2]
                 << " != " << sz << ")" );
 
 
