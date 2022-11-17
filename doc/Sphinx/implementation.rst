@@ -518,7 +518,7 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
                                      MultiphotonBreitWheelerTables,
                                      time_dual, timers, itime );
 
-* **Envelop module**: ...
+* **Envelope module**: ...
 
 .. code-block:: c++
 
@@ -772,3 +772,102 @@ Radiation Tools
 
 The class ``RadiationTools`` contains some function tools for the radiation.
 Some methods provide function fit from tabulated values obtained numerically.
+
+Task Parallelization
+---------------------------------------
+As explained in the dedicated page, if OpenMP tasks are activated, the 
+macro-particle operations, in particular those inside ``vecPatches::dynamics``,
+are parallelized with the task programming paradigm. 
+
+Inside ``vecPatches::dynamics``, instead of using an ``#pragma omp for schedule(dynamics)``
+on the patch loop, a task is generated for each of the ``ipatch-ispec`` combination.
+Instead of the thread number, a ``buffer_id`` is given as input to the ``Species::dynamicsTasks``
+method, to avoid race conditions. Indeed, a buffer (indices, ``deltaold``, etc.)
+is created for each of the ``ipatch-ispec`` combination.
+
+The method ``Species::dynamicsTasks`` replaces the use of the usual ``Species::dynamics``
+method (to be used when tasks are not activated).
+
+Inside each call to ``Species::dynamics`` a task is generated for each ``operator-ibin``
+combination, using ``depend`` to ensure the correct order of execution of the operators.
+For example, for macro-particles inside a given combination ``ipatch-ispec-ibin``
+the Pusher operator can be executed only after the Interpolator, and so on.
+The bins have a size of ``cluster_width`` cells along the x direction.
+
+To further avoid race conditions, the Interpolators must use local variables for the 
+temporary indices and coefficients they compute.
+
+The Pusher and the Boundary Conditions operators do not present risks of race 
+conditions.
+
+Operators which create new macro-particles, as Ionization, must create them in
+separated lists for each bin.
+
+Probably the most critical operator for task parallelization is the Projector.
+To avoid race conditions, each ``ipatch-ispec-ibin`` combination has its own 
+copy of the grid representing the physical space where its macro-particles belong.
+The Projector operator must thus project on these independent subgrids.
+For this, with tasks the ``bin_shift`` argument in the operator is used; without tasks it is
+zero by default.
+
+These operators acting on a certain ``ipatch-ispec`` combination are enclosed in 
+a ``#pragma omp taskgroup`` directive to ensure that they are completed before 
+other tasks are generated in that scope.
+
+Afterwards, in ``vecPatches::dynamics`` some tasks containing reductions are generated.
+The densities in the subgrids are summed in the main grid, and the lists containing the new
+macro-particles (e.g. from ionization) for each bin are joined in the main lists
+with the new particles.
+
+Before the synchronisations, a ``#pragma omp taskwait`` directive is used to wait 
+that the tasks are completed.
+
+The same concepts are used for the envelope module and for the vectorized versions
+of ``dynamics``. In particular, for the envelope module the Projector for 
+susceptibility uses a local subgrid.
+
+  .. warning::
+
+    Without tasks, the number buffer vectors (for each buffer) is equal to the number of OpenMP
+    threads. Each time a thread treats a ``Species`` inside a patch it is trating,
+    the corresponding buffer is resized to the number of macro-particles inside
+    that ``Species`` in that patch. 
+    With tasks, the number of buffer vectors (for each buffer) is equal to the 
+    number of patches times the number of ``Species``. To avoid a memory leak,
+    at the end of ``Species::dynamicsTasks`` these vectors are resized to 1 element.
+    This operation, as all ``resize`` operations on the macro-particle buffers,
+    takes memory and time, but unfortunately no better solution has been found.
+    With the envelope loop, this precaution does not seem necessary, since typically
+    less macro-particles are used. This memory increase, summed to the one given 
+    by the mentioned subgrids, make tasks memory-consuming. It is advised to 
+    use them with a lot of computing units to avoid using too much memory for each
+    unit.
+
+  .. warning::
+
+    A word on debugging with tasks. The typical non-trivial bugs which arise developing
+    with tasks are given by bad synchronizations which cause data races, causing 
+    segfaults. Since using a debugger (e.g. allinea ddt) changes the execution time 
+    and the syncrhonization, often these bugs disappear, making them tricky to detect. 
+    The best strategies to avoid these bugs with tasks are 1) use local variables 
+    as much as possible and 2) First check if the code works with all ``omp task`` 
+    directives commented (i.e. not using tasks). Then, progressively decomment 
+    these directives, one by one, introducing a barrier like a ``#pragma omp taskwait`` 
+    between them and check which task introduces the segfault.
+
+Particle Event Tracing
+---------------------------------------
+To visualize the scheduling of operations, with or without tasks, an macro-particle
+event tracing diagnostic saves the time when each OpenMP thread executes one of these 
+operations and the involved thread's number. The PIC operators (and the advanced ones like 
+Ionization, Radiation) acting on each ``ipatch-ispec-ibin`` combination are 
+included in this diagnostic.
+This way, the macro-particle operations executed by each OpenMP thread in each
+MPI process can be visualized. The information of which bin, ``Species``, patch
+is involved is not stored, since it would be difficult to visualize this level of
+detail. However it can be added to this diagnostic in principle.
+
+This visualization becomes clearer when a small number of patches, ``Species``, 
+bins is used. In other cases the plot may become unreadable.
+
+

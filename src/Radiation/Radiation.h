@@ -51,6 +51,7 @@ public:
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin = 0,
         int             ipart_ref = 0) = 0;
 
     //! Computation of the Lorentz invariant quantum parameter
@@ -95,9 +96,16 @@ public:
                               int ithread,
                               int ipart_ref = 0 );
 
+    // join the lists of photons created through Monte Carlo when tasks are used
+    void joinNewPhotons(Particles * photons,unsigned int Nbins);
+                              
     // Local array of new photons
+    Particles *new_photons_per_bin_;
+
     // Particles new_photons_;
 
+
+    
 protected:
 
     // ________________________________________

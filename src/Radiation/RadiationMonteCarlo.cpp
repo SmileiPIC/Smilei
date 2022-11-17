@@ -59,9 +59,12 @@ void RadiationMonteCarlo::operator()(
     int             istart,
     int             iend,
     int             ithread,
+    int             ibin,
     int             ipart_ref)
 {
-
+#ifdef _OMPTASKS
+    photons = &(new_photons_per_bin_[ibin]);
+#endif
     // _______________________________________________________________
     // Parameters
 
@@ -71,7 +74,7 @@ void RadiationMonteCarlo::operator()(
 
     // Total number of particles
     const int nparts = Epart->size()/3;
-    
+
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -84,9 +87,18 @@ void RadiationMonteCarlo::operator()(
 
     // Radiated energy
     double cont_rad_energy;
-
+    
     // Temporary double parameter
     double temp;
+    
+    // Time to emission
+    double emission_time;
+    
+    // time spent in the iteration
+    double local_it_time;
+    
+    // Number of Monte-Carlo iteration
+    int mc_it_nb;
 
     // Particle properties ----------------------------------------------------------------
 
@@ -99,7 +111,7 @@ void RadiationMonteCarlo::operator()(
     double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
     double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
     double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
-    
+
     // Charge shortcut
     const short *const __restrict__ charge = particles.getPtrCharge();
 
@@ -111,12 +123,12 @@ void RadiationMonteCarlo::operator()(
 
     // Optical depth for the Monte-Carlo process
     double *const __restrict__ chi = &( particles.chi(0));
-    
+
     // Photon properties ----------------------------------------------------------------
-    
+
     // Number of photons
     int nphotons;
-    
+
     if (photons) {
         nphotons = photons->size();
         // We reserve a large number of potential particles since we can't reallocate on device
@@ -124,7 +136,7 @@ void RadiationMonteCarlo::operator()(
     } else {
         nphotons = 0;
     }
-    
+
     // Photon position shortcut
     double *const __restrict__ photon_position_x = photons ? photons->getPtrPosition( 0 ) : nullptr;
     double *const __restrict__ photon_position_y = photons ? (nDim_ > 1 ? photons->getPtrPosition( 1 ) : nullptr) : nullptr;
@@ -143,7 +155,7 @@ void RadiationMonteCarlo::operator()(
 
     // Quantum Parameter
     double *const __restrict__ photon_chi_array = photons ? (photons->isQuantumParameter ? photons->getPtrChi() : nullptr) : nullptr;
-    
+
     double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
 
     // Table properties ----------------------------------------------------------------
@@ -155,28 +167,28 @@ void RadiationMonteCarlo::operator()(
 
     // _______________________________________________________________
     // Computation
-
+    
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        
+
         // charge / mass^2
         const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Time to emission
         double emission_time = 0;
-        
+
         // time spent in the iteration
         double local_it_time = 0;
-        
+
         // Number of Monte-Carlo iteration
         int mc_it_nb = 0;
-        
+
         // Number of emitted photons per particles
         int i_photon_emission = 0;
 
         // Monte-Carlo Manager inside the time step
         while( ( local_it_time < dt_ )
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
-
+    
             // Gamma
             const double particle_gamma = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                           + momentum_y[ipart]*momentum_y[ipart]
@@ -185,7 +197,7 @@ void RadiationMonteCarlo::operator()(
             if( particle_gamma < 1.1 ){
                 break;
             }
-
+    
             // Computation of the Lorentz invariant quantum parameter
             const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
@@ -195,7 +207,7 @@ void RadiationMonteCarlo::operator()(
 
             // Update the quantum parameter in species
             // chi[ipart] = particle_chi;
-
+    
             // Discontinuous emission: New emission
             // If tau[ipart] <= 0, this is a new emission
             // We also check that particle_chi > chipa_threshold,
@@ -207,30 +219,30 @@ void RadiationMonteCarlo::operator()(
                     //tau[ipart] = -log( 1.-Rand::uniform() );
                     tau[ipart] = -std::log( 1.-rand_->uniform() );
                 }
-
+    
             }
-
+    
             // Discontinuous emission: emission under progress
             // If epsilon_tau_ > 0
             if( tau[ipart] > epsilon_tau_ ) {
-
+    
                 // from the cross section
-                temp = RadiationTables.computePhotonProductionYield( 
-                                              particle_chi, 
+                temp = RadiationTables.computePhotonProductionYield(
+                                              particle_chi,
                                               particle_gamma);
 
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
                 // we have a synchronization
                 emission_time = std::min( tau[ipart]/temp, dt_ - local_it_time );
-
+    
                 // Update of the optical depth
                 tau[ipart] -= temp*emission_time;
 
                 // If the final optical depth is reached, photons are emitted
                 if( tau[ipart] <= epsilon_tau_ ) {
 
-                    // Emission of a photon
+                    // Emission of a photon without tasks
                     // Radiated energy is incremented only if the macro-photon is not created
 
                     double xi = rand_->uniform();
@@ -264,12 +276,12 @@ void RadiationMonteCarlo::operator()(
                     // Creation of macro-photons if requested
                     // Check that the photons is defined and the threshold on the energy
                     if(          photons
-                            && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
+                            && ( photon_gamma >= radiation_photon_gamma_threshold_ )
                             && ( i_photon_emission < max_photon_emissions_)) {
-                                
+
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );
-                        
+
                         // New number of photons
                         nphotons += radiation_photon_sampling_;
 
@@ -282,9 +294,9 @@ void RadiationMonteCarlo::operator()(
                         for( auto iphoton=nphotons-radiation_photon_sampling_; iphoton<nphotons; iphoton++ ) {
 
                             // std::cerr  << photons << " "
-                            //            << iphoton << " " 
-                            //            << photons->size() << " " 
-                            //            << radiation_photon_sampling_ << " " 
+                            //            << iphoton << " "
+                            //            << photons->size() << " "
+                            //            << radiation_photon_sampling_ << " "
                             //            << ipart << " "
                             //            << photon_position_x << " "
                             //            << photons->getPtrPosition( 0 ) << " "
@@ -318,10 +330,10 @@ void RadiationMonteCarlo::operator()(
                             }
 
                         } // end for iphoton
-                        
+
                         // Number of emitted photons
                         i_photon_emission += 1;
-                        
+
                     }
                     // If no emiision of a macro-photon:
                     // Addition of the emitted energy in the cumulating parameter
@@ -338,14 +350,14 @@ void RadiationMonteCarlo::operator()(
                     // at the next Monte-Carlo iteration
                     tau[ipart] = -1.;
                 }
-
+    
                 // Incrementation of the Monte-Carlo iteration counter
                 mc_it_nb ++;
                 // Update of the local time
                 local_it_time += emission_time;
-
+    
             }
-
+    
             // Continuous emission
             // particle_chi needs to be below the discontinuous threshold
             // particle_chi needs to be above the continuous thresholdF
@@ -382,9 +394,9 @@ void RadiationMonteCarlo::operator()(
             else { // if (particle_chi < RadiationTables.getMinimumChiContinuous())
                 local_it_time = dt_;
             }
-
+    
         }
-
+    
     }
 
     // ____________________________________________________

@@ -218,6 +218,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
+  .. warning::
+
+    The size of clusters becomes particularly important when :doc:`task_parallelization` is used.
+
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
@@ -2688,7 +2692,10 @@ To add one probe diagnostic, include the block ``DiagProbe``::
     of a given species named ``"abc"``
 
   In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),
-  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
+  the following fields are also available: ``"Env_Chi"``, ``"Env_A_abs"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
+  They are respectively the susceptibility, the envelope of the laser transverse vector potential,
+  the envelope of the laser transverse electric field and the envelope of the laser longitudinal
+  electric field.
 
 .. py:data:: time_integral
 

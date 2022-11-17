@@ -37,7 +37,7 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     mBW_pair_creation_sampling_[1] = species->mBW_pair_creation_sampling_[1];
     mBW_pair_creation_inv_sampling_[1] = 1. / mBW_pair_creation_sampling_[1];
-    
+
     // Get the respectiv charge
     // mBW_pair_species_charge_[0] = species->mBW_pair_species_[0]->max_charge_;
     // mBW_pair_species_charge_[1] = species->mBW_pair_species_[1]->max_charge_;
@@ -47,6 +47,18 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     // Local random generator
     rand_ = rand;
+
+  
+#ifdef _OMPTASKS
+    unsigned int Nbins = species->Nbins;
+      
+    //! vector of electron-positron pairs per bin
+    new_pair_per_bin.resize(Nbins);
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        // the pair electron-positron
+        new_pair_per_bin[ibin]  = new Particles[2];
+    }
+#endif
 
 }
 
@@ -84,7 +96,7 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
     const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
-    
+
     // Particles Momentum shortcut
     const double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
     const double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
@@ -96,7 +108,7 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
     // _______________________________________________________________
     // Computation
 
-    
+
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
@@ -138,18 +150,18 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         double &                      pair_energy,
         int                           istart,
         int                           iend,
-        int ithread, int ipart_ref )
+        int ithread, int ibin, int ipart_ref )
 {
     // _______________________________________________________________
     // Parameters
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    
+
     // We use dynamics_invgf to store gamma
     double * const __restrict__ photon_gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     int nparts = Epart->size()/3;
-    
+
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -200,21 +212,21 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair0_position_x = new_pair[0]->getPtrPosition( 0 );
     double *const __restrict__ pair0_position_y = (n_dimensions_ > 1 ? new_pair[0]->getPtrPosition( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_z = (n_dimensions_ > 2 ? new_pair[0]->getPtrPosition( 2 ) : nullptr) ;
-    
+
     double *const __restrict__ pair0_position_old_x = particles.Position_old.size() > 0 ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
     double *const __restrict__ pair0_position_old_y = (particles.Position_old.size() > 1 ? new_pair[0]->getPtrPositionOld( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_old_z = (particles.Position_old.size() > 2 ? new_pair[0]->getPtrPositionOld( 2 ) : nullptr) ;
-    
+
     double *const __restrict__ pair0_momentum_x = new_pair[0]->getPtrMomentum( 0 );
     double *const __restrict__ pair0_momentum_y = new_pair[0]->getPtrMomentum( 1 );
     double *const __restrict__ pair0_momentum_z = new_pair[0]->getPtrMomentum( 2 );
-    
+
     double *const __restrict__ pair0_weight = new_pair[0]->getPtrWeight();
     short *const __restrict__ pair0_charge = new_pair[0]->getPtrCharge();
 
     double *const __restrict__ pair0_chi = new_pair[0]->isQuantumParameter ? new_pair[0]->getPtrChi() : nullptr;
     double *const __restrict__ pair0_tau = new_pair[0]->isMonteCarlo ? new_pair[0]->getPtrTau() : nullptr;
-    
+
     double *const __restrict__ pair1_position_x = new_pair[1]->getPtrPosition( 0 );
     double *const __restrict__ pair1_position_y = (n_dimensions_ > 1 ? new_pair[1]->getPtrPosition( 1 ) : nullptr);
     double *const __restrict__ pair1_position_z = (n_dimensions_ > 2 ? new_pair[1]->getPtrPosition( 2 ) : nullptr);
@@ -304,7 +316,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
-                    // Generation of the pairs
+// withou tasks
+
                     // pair_energy += MultiphotonBreitWheeler::pair_emission( ipart,
                     //                                         particles,
                     //                                         ( *gamma )[ipart],
@@ -325,6 +338,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double ux = momentum_x[ipart]/photon_gamma[ipart];
                     double uy = momentum_y[ipart]/photon_gamma[ipart];
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
+#ifndef _OMPTASKS
+                    // Without tasks
 
                     // Creation of new electrons in the temporary array new_pair[0]
                     new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
@@ -431,10 +446,68 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         }
                     }
 
+#else
+                    // With tasks
+                    for( int k=0 ; k < 2 ; k++ ) {
+                        
+                        // Creation of new electrons in the temporary array new_pair[0]
+                        new_pair_per_bin[ibin][k].createParticles( mBW_pair_creation_sampling_[k] );
+        
+                        // Final size
+                        int nparticles = new_pair_per_bin[ibin][k].size();
+
+                        // For all new electrons/positrons ...
+                        for( int idNew=nparticles-mBW_pair_creation_sampling_[k]; idNew<nparticles; idNew++ ) {
+
+                            // Momentum
+                            double p = std::sqrt( std::pow( 1.+pair_chi[k]*inv_chiph_gammaph, 2 )-1 );
+                            double u[3];
+                            new_pair_per_bin[ibin][k].momentum( 0, idNew ) = p*ux ;
+                            new_pair_per_bin[ibin][k].momentum( 1, idNew ) = p*uy ;
+                            new_pair_per_bin[ibin][k].momentum( 2, idNew ) = p*uz ;
+
+                            // gamma
+                            //inv_gamma = 1./sqrt(1.+p*p);
+
+                            // Positions
+                            new_pair_per_bin[ibin][k].position( 0, idNew )=position_x[ipart];
+                            if (n_dimensions_>1) {
+                                new_pair_per_bin[ibin][k].position( 1, idNew )=position_y[ipart];
+                                if (n_dimensions_>2) {
+                                    new_pair_per_bin[ibin][k].position( 2, idNew )=position_z[ipart];
+                                }
+                            }
+                //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
+
+                            // Old positions
+                            if( particles.Position_old.size() > 0 ) {
+                                new_pair_per_bin[ibin][k].position_old( 0, idNew )=position_x[ipart] ;
+                                if (n_dimensions_>1) {
+                                    new_pair_per_bin[ibin][k].position_old( 1, idNew )=position_y[ipart] ;
+                                }
+                                if (n_dimensions_>2) {
+                                    new_pair_per_bin[ibin][k].position_old( 2, idNew )=position_z[ipart] ;
+                                }
+                            }
+
+
+                            new_pair_per_bin[ibin][k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling_[k];
+                            new_pair_per_bin[ibin][k].charge( idNew )= new_pair_species[k]->max_charge_;
+
+                            if( new_pair_per_bin[ibin][k].isQuantumParameter ) {
+                                new_pair_per_bin[ibin][k].chi( idNew ) = pair_chi[k];
+                            }
+
+                            if( new_pair_per_bin[ibin][k].isMonteCarlo ) {
+                                new_pair_per_bin[ibin][k].tau( idNew ) = -1.;
+                            }
+                        } // end loop on new particles of a given species
+                    } // end loop on pairs
+
+#endif
 
                     // Total energy converted into pairs during the current timestep
                     pair_energy += weight[ipart]*photon_gamma[ipart];
-
                     // The photon with negtive weight will be deleted latter
                     weight[ipart] = -1;
 
@@ -562,3 +635,55 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
         }
     }
 }
+
+void MultiphotonBreitWheeler::joinNewElectronPositronPairs(Particles **new_pair, unsigned int Nbins)
+{
+
+    for( int k=0 ; k < 2 ; k++ ) {
+       for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+           // number of particles to add from the bin
+           unsigned int nparticles_to_add = new_pair_per_bin[ibin][k].size();
+           new_pair[k]->createParticles(nparticles_to_add);
+           
+           for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
+              
+              int idNew = (new_pair[k]->size() - nparticles_to_add) + ipart;
+           
+              // momenta
+              for( int i=0; i<3; i++ ) {
+                  new_pair[k]->momentum( i, idNew ) = new_pair_per_bin[ibin][k].momentum( i, ipart );
+              }
+           
+              // positions
+              for( int i=0; i<n_dimensions_; i++ ) {
+                  new_pair[k]->position( i, idNew ) = new_pair_per_bin[ibin][k].position( i, ipart );
+              }
+           
+              // old positions
+              if( new_pair[k]->Position_old.size() > 0 ) {
+                  for( int i=0; i<n_dimensions_; i++ ) {
+                      new_pair[k]->position_old( i, idNew ) = new_pair_per_bin[ibin][k].position_old( i, ipart );
+                  }
+              }
+           
+              // weight 
+              new_pair[k]->weight( idNew ) = new_pair_per_bin[ibin][k].weight( ipart );
+           
+              // charge
+              new_pair[k]->charge( idNew ) = new_pair_per_bin[ibin][k].charge( ipart );
+           
+              // chi
+              if( new_pair[k]->isQuantumParameter ) {
+                  new_pair[k]->chi( idNew ) = new_pair_per_bin[ibin][k].chi( ipart );
+              }
+           
+              //tau
+              if( new_pair[k]->isMonteCarlo ) {
+                  new_pair[k]->tau( idNew ) = new_pair_per_bin[ibin][k].tau( ipart );
+              }
+           } // end ipart 
+           new_pair_per_bin[ibin][k].clear();
+       } // end ibin loop
+    } // end k loop (different species loop)
+
+} // end joinNewElectronPositronPairs

@@ -23,6 +23,7 @@ InterpolatorAM2Order::InterpolatorAM2Order( Params &params, Patch *patch ) : Int
     D_inv_[0] = 1.0/params.cell_length[0];
     D_inv_[1] = 1.0/params.cell_length[1];
     nmodes_ = params.nmodes;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,13 +50,10 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs
-
-
-
     coeffs( xpn, rpn );
-   
+
     //std::cout << "thetas = " << exp_m_theta_ << " " << 2.*std::real(exp_m_theta_) - exp_m_theta_ << std::endl;
- 
+
     //Here we assume that mode 0 is real !!
     // Interpolation of El^(d,p)
     *( ELoc+0*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
@@ -90,7 +88,7 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
         *( BLoc+1*nparts ) += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ )* exp_mm_theta ) ;
         *( BLoc+2*nparts ) += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ )* exp_mm_theta ) ;
     }
-    //std::cout << "mode 1 " <<*( ELoc+0*nparts ) << " " <<*( ELoc+1*nparts )   << " " <<*( ELoc+2*nparts )<<" " <<*( BLoc+0*nparts ) << " " <<*( BLoc+1*nparts )   << " " <<*( BLoc+2*nparts ) << endl; 
+    //std::cout << "mode 1 " <<*( ELoc+0*nparts ) << " " <<*( ELoc+1*nparts )   << " " <<*( ELoc+2*nparts )<<" " <<*( BLoc+0*nparts ) << " " <<*( BLoc+1*nparts )   << " " <<*( BLoc+2*nparts ) << endl;
     
     //Translate field into the cartesian y,z coordinates
     double delta2 = std::real( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( ELoc+2*nparts );
@@ -236,39 +234,102 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, 
-                                          Particles &particles, 
-                                          SmileiMPI *smpi, 
-                                          int *istart, 
-                                          int *iend, 
-                                          int ithread, 
-                                          unsigned int scell, 
+void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
+                                          Particles &particles,
+                                          SmileiMPI *smpi,
+                                          int *istart,
+                                          int *iend,
+                                          int ithread,
+                                          unsigned int scell,
                                           int ipart_ref )
 {
 
-    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
+    double *Epart = &( smpi->dynamics_Epart[ithread][0] );
+    double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );
+    int *iold = &( smpi->dynamics_iold[ithread][0] );
+    double *delta = &( smpi->dynamics_deltaold[ithread][0] );
+    std::complex<double> *eitheta_old = &( smpi->dynamics_eithetaold[ithread][0] );
     
     //Loop on bin particles
     int nparts( particles.size() );
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        //Interpolation on current particle
-        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
-        
-        //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        
-        ( *delta )[ipart+0*nparts] = deltax_;
-        ( *delta )[ipart+1*nparts] = deltar_;    
-        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
-        
-    }
-}
 
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        complex<double> exp_m_theta_local ;
+        complex<double> exp_mm_theta_local = 1. ; 
+     
+        // Normalized particle position
+        double xpn = particles.position( 0, ipart ) * D_inv_[0];
+        double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        double rpn = r * D_inv_[1];
+        exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
+                                                                 //exp(-i m theta)
+
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+
+        // Static cast of the electromagnetic fields, mode 0
+        cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+        cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+        cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+        cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+        cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+        cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+
+        //Here we assume that mode 0 is real !!
+        // Interpolation of El^(d,p)
+        *( Epart+0*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
+        // Interpolation of Er^(p,d)
+        *( Epart+1*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
+        // Interpolation of Et^(p,p)
+        *( Epart+2*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
+        // Interpolation of Bl^(p,d)
+        *( Bpart+0*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
+        // Interpolation of Br^(d,p)
+        *( Bpart+1*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
+        // Interpolation of Bt^(d,d)
+        *( Bpart+2*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
+        
+        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+            El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+            Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+            Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+            Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+            Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+            Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+            
+            exp_mm_theta_local *= exp_m_theta_local ;
+            
+            *( Epart+0*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            *( Epart+1*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            *( Epart+2*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+            *( Bpart+0*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            *( Bpart+1*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            *( Bpart+2*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+        }
+        
+        //Translate field into the cartesian y,z coordinates
+        double delta2 = std::real( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+        *( Epart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+        *( Epart+1*nparts+ipart ) = delta2 ;
+        delta2 = std::real( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+        *( Bpart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+        *( Bpart+1*nparts+ipart ) = delta2 ;
+
+        // store indices and delta
+        *( iold+0*nparts+ipart)  = idx_p[0];
+        *( iold+1*nparts+ipart)  = idx_p[1];
+        *( delta+0*nparts+ipart) = delta_p[0];
+        *( delta+1*nparts+ipart) = delta_p[1];
+        *( eitheta_old+ipart )     = 2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+
+    }
+
+}
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
 void InterpolatorAM2Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
@@ -292,7 +353,6 @@ void InterpolatorAM2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 
 void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
@@ -314,17 +374,23 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+        complex<double> exp_m_theta_local ;
+        complex<double> exp_mm_theta_local = 1. ; 
+
         // Normalized particle position
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
-        complex<double> exp_mm_theta = 1.;
-    
-        // Calculate coeffs
-        coeffs( xpn, rpn );
+
+        // Compute coefficients
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
     
         
-        // mode 0 is treated first 
+        // mode 0 is treated first
 
         // Interpolate E, B
         cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
@@ -335,30 +401,30 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
 
         // Interpolation of El^(d,p)
-        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
+        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
         // Interpolation of Er^(p,d)
-        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) );
+        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
         // Interpolation of Et^(p,p)
-        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) );
+        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
         // Interpolation of Bl^(p,d)
-        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) );
+        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
         // Interpolation of Br^(d,p)
-        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
+        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
         // Interpolation of Bt^(d,d)
-        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
+        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
         // Interpolation of Phi^(p,p)
-        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp_[1], &coeffyp_[1], Phi, ip_, jp_ ) ;
+        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp[1], &coeffyp[1], Phi, idx_p[0], idx_p[1] ) ;
         // Interpolation of GradPhil^(p,p)
-        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) ;
+        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhil, idx_p[0], idx_p[1] ) ;
         // Interpolation of GradPhir^(p,p)
-        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) ;
+        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhir, idx_p[0], idx_p[1] ) ;
         // GradPhit = 0 in cylindrical symmetry
         ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
    
         if (r > 0){ 
-            exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+            exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         } else {
-            exp_m_theta_ = 1. ;
+            exp_m_theta_local = 1. ;
         }
         for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
             El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -367,41 +433,39 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
             Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
             Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
-            
-            exp_mm_theta *= exp_m_theta_ ;
-            
-            ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ )* exp_mm_theta ) ;
-            ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ )* exp_mm_theta ) ;
-            ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ )* exp_mm_theta ) ;
-            ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ )* exp_mm_theta ) ;
-            ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ )* exp_mm_theta ) ;
-            ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ )* exp_mm_theta ) ;
+
+            exp_mm_theta_local *= exp_m_theta_local ;
+
+            ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
         }
 
         // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
-        delta2 = std::real( exp_m_theta_ ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_ ) * ( *Epart ) [ 2*nparts+ipart ];
-        ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_ ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_ ) * ( *Epart ) [ 2*nparts+ipart ];
+        delta2 = std::real( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
+        ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
         ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
-        delta2 = std::real( exp_m_theta_ ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_ ) *  ( *Bpart ) [ 2*nparts+ipart ];
-        ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_ ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_ ) * ( *Bpart ) [ 2*nparts+ipart ];
+        delta2 = std::real( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) *  ( *Bpart ) [ 2*nparts+ipart ];
+        ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Bpart ) [ 2*nparts+ipart ];
         ( *Bpart ) [ 1*nparts+ipart ] = delta2 ;
 
-        delta2 = std::real( exp_m_theta_ ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ; 
-        ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_ ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+        delta2 = std::real( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+        ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
         ( *GradPHIpart ) [ 1*nparts+ipart ] = delta2 ;
 
         //Buffering of iold and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *delta )[ipart+0*nparts] = deltax_;
-        ( *delta )[ipart+1*nparts] = deltar_;
-        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
-
+        ( *iold )[ipart+0*nparts]  = idx_p[0];
+        ( *iold )[ipart+1*nparts]  = idx_p[1];
+        ( *delta )[ipart+0*nparts] = delta_p[0];
+        ( *delta )[ipart+1*nparts] = delta_p[1];
+        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
 
     }
     
 } // END InterpolatorAM2Order
-
 
 void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
@@ -419,6 +483,8 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     double r, delta2, xpn, rpn;
+
+    complex<double> exp_m_theta_local ;
     //Loop on bin particles
     int nparts =  particles.size() ;
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
@@ -427,26 +493,31 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
-    
+
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+
         // Compute coefficients
-        coeffs( xpn, rpn );
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
         // only mode 0 is used
     
         // -------------------------
         // Interpolation of Phi_m^(p,p)
         // -------------------------
-        ( *PHI_mpart )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi_m2Dcyl, ip_, jp_ );
+        ( *PHI_mpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], Phi_m2Dcyl, idx_p[0], idx_p[1] );
     
         // -------------------------
         // Interpolation of GradPhi_m^(p,p), l component
         // -------------------------
-        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil_m2Dcyl, ip_, jp_ );
+        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyp[1], GradPhil_m2Dcyl, idx_p[0], idx_p[1] );
     
         // -------------------------
         // Interpolation of GradPhi_m^(p,p), r component
         // -------------------------
-        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir_m2Dcyl, ip_, jp_ );
+        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyp[1], GradPhir_m2Dcyl, idx_p[0], idx_p[1] );
     
         // -------------------------
         // Interpolation of GradPhi_m^(p,p), theta component
@@ -455,24 +526,24 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 
 
         if (r > 0){ 
-            exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+            exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         } else {
-            exp_m_theta_ = 1. ;
+            exp_m_theta_local = 1. ;
         }
 
 
         // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
-        delta2 = std::real( exp_m_theta_ ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ; 
-        ( *GradPHI_mpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_ ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ;
+        delta2 = std::real( exp_m_theta_local ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ; 
+        ( *GradPHI_mpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ;
         ( *GradPHI_mpart ) [ 1*nparts+ipart ] = delta2 ;
 
         //Buffering of iold and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-      
-        ( *delta )[ipart+0*nparts] = deltax_;
-        ( *delta )[ipart+1*nparts] = deltar_;
-        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
+        // store indices and delta
+        ( *iold )[0*nparts+ipart]  = idx_p[0];
+        ( *iold )[1*nparts+ipart]  = idx_p[1];
+        ( *delta )[0*nparts+ipart] = delta_p[0];
+        ( *delta )[1*nparts+ipart] = delta_p[1];
+        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
       
     
     }
@@ -536,21 +607,26 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
-                                     
+        
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+
         // Compute coefficients
-        coeffs( xpn, rpn );
- 
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );                             
+    
         // only mode 0 is used
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p)
         // ---------------------------------
-        ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvEabs, ip_, jp_ );
+        ( *EnvEabs_part )[ipart] = compute( &coeffxp[1], &coeffyp[1], EnvEabs, idx_p[0], idx_p[1] );
   
         // ---------------------------------
         // Interpolation of Env_Ex_abs^(p,p)
         // ---------------------------------
-        ( *EnvExabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvExabs, ip_, jp_ );
+        ( *EnvExabs_part )[ipart] = compute( &coeffxp[1], &coeffyp[1], EnvExabs, idx_p[0], idx_p[1] );
     
     }
     

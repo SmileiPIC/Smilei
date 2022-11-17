@@ -239,6 +239,9 @@ public:
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
+    //! sub dual dimensions of fields
+    unsigned int f_dim0_d, f_dim1_d, f_dim2_d;
+
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
     //! Accumulate energy lost with moving window
@@ -408,6 +411,12 @@ public:
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
     virtual void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
@@ -546,6 +555,85 @@ public:
 
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
+
+#ifdef _OMPTASKS
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
+    virtual void dynamicsTasks(     double time, unsigned int ispec,
+                            ElectroMagn *EMfields,
+                            Params &params, bool diag_flag,
+                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                            RadiationTables &RadiationTables,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
+    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                                  RadiationTables &RadiationTables,
+                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+#endif
+
+    // ---- Variables for tasks
+
+    // Number of bins for the use of tasks
+    unsigned int Nbins;
+
+    // Number of cells used fot tasks + vectorization
+    int Ncells;
+
+    // buffers for bin projection when tasks are used
+    std::vector<double *> b_Jx;
+    std::vector<double *> b_Jy;
+    std::vector<double *> b_Jz;
+    std::vector<double *> b_rho;
+    std::vector<double *> b_Chi;
+
+    // Tags for the task dependencies of the particle operations
+    int *bin_has_interpolated;
+    int *bin_has_pushed;
+    int *bin_has_done_particles_BC;
+    int *bin_has_projected_chi;
+    int *bin_has_projected;
+
+    // buffers for bin projection when tasks are used
+    std::vector< std::complex<double> *> b_Jl;
+    std::vector< std::complex<double> *> b_Jr;
+    std::vector< std::complex<double> *> b_Jt;
+    std::vector< std::complex<double> *> b_rhoAM;
+    std::vector<double *> b_ChiAM;
+
+    //! Size of the projection buffer
+    unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
+    unsigned int size_proj_buffer_Jl,size_proj_buffer_Jr,size_proj_buffer_Jt,size_proj_buffer_rhoAM;
+    std::string geometry;
+    double *nrj_lost_per_bin;
+    double *radiated_energy_per_bin;
 
 protected:
 

@@ -7,6 +7,8 @@ stages:
     - compile_debug
     - compile_no_mpi_threadmultiple
     - compile_no_openmp
+    - compile_omptasks
+    - run_omptasks
 
 install:
   stage: install
@@ -157,8 +159,28 @@ compile_no_openmp:
     - develop
     - envelope_Nmodes
 
-
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - python validation/validation.py -k noopenmp -c -v
+
+compile_omptasks:
+  stage: compile_omptasks
+  only:
+    - task_tracing
+    - develop
+
+  script:
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - python validation/validation.py -k omptasks -c -v
+
+run_omptasks:
+  stage: run_omptasks
+  only:
+    - task_tracing
+    - develop
+
+  script:
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v

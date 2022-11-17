@@ -35,6 +35,10 @@ Radiation::Radiation( Params &params, Species *species, Random * rand )
     // Pointer to the local patch random generator
     rand_ = rand;
 
+#ifdef _OMPTASKS
+    new_photons_per_bin_ = new Particles[species->Nbins];
+#endif
+    
     // Dimension for particles
     nDim_          = params.nDim_particle;
 
@@ -116,4 +120,40 @@ void Radiation::computeParticlesChi( Particles &particles,
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
 
     }
+}
+
+void Radiation::joinNewPhotons(Particles * photons,unsigned int Nbins)
+{
+
+    // if tasks on bins are used for Radiation, join the lists of new photons
+    // created in each bin, to have the list of new photons for this species and patch
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+
+        unsigned int nparticles_to_add = new_photons_per_bin_[ibin].size();
+        photons->createParticles(nparticles_to_add);
+
+        for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
+            int idNew = (photons->size() - nparticles_to_add) + ipart;
+            
+            for( unsigned int i=0; i<photons->dimension(); i++ ) {
+                photons->position( i, idNew ) = (new_photons_per_bin_[ibin]).position( i, ipart );
+            }
+            for( unsigned int i=0; i<3; i++ ) {
+                photons->momentum( i, idNew ) = (new_photons_per_bin_[ibin]).momentum( i, ipart );
+            }
+            photons->weight( idNew ) = (new_photons_per_bin_[ibin]).weight( ipart );
+            photons->charge( idNew ) = (new_photons_per_bin_[ibin]).charge( ipart );
+
+            if( photons->isQuantumParameter ) {
+                photons->chi( idNew ) = (new_photons_per_bin_[ibin]).chi( ipart );
+            }
+
+            if( photons->isMonteCarlo ) {
+                photons->tau( idNew ) = (new_photons_per_bin_[ibin]).tau( ipart );
+            }
+       
+        } // end ipart
+        new_photons_per_bin_[ibin].clear();
+    } // end ibin
+
 }

@@ -61,7 +61,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
                                              int * __restrict__ iold,
                                              double * __restrict__ deltaold,
                                              unsigned int buffer_size,
-                                             int ipart_ref )
+                                             int ipart_ref, int bin_shift )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -97,7 +97,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
     }
 
     // Jx, Jy, Jz
-    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
+    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref, bin_shift );
 
     // rho^(p,p,d)
     cell_nparts = ( int )iend-( int )istart;
@@ -201,7 +201,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -400,7 +400,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
                                    int * __restrict__ iold,
                                    double * __restrict__ deltaold,
                                    unsigned int buffer_size,
-                                   int ipart_ref )
+                                   int ipart_ref, int bin_shift )
 {
 
     // std::cerr << "Projection" << std::endl;

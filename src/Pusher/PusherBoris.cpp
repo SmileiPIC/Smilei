@@ -103,7 +103,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
     //     }
     // }
-    // 
+    //
     // if (nDim_>2) {
     //     #pragma omp simd
     //     for( int ipart=istart ; ipart<iend; ipart++ ) {
