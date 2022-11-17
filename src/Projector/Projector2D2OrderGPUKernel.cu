@@ -211,16 +211,16 @@ namespace hip {
         {
             if( an_error_code != ::hipError_t::hipSuccess ) {
                 std::cout << "HIP error at " << file_name << ":" << line
-                          << " -> " << ::hipGetErrorString( an_error_code );
+                          << " -> " << ::hipGetErrorString( an_error_code ) << std::endl;;
                 std::exit( EXIT_FAILURE );
             }
         }
     } // namespace detail
 
-        #define checkHIPErrors( an_expression )                           \
-            do {                                                          \
-                detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
-            } while( 0 )
+    #define checkHIPErrors( an_expression )                           \
+        do {                                                          \
+            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
+        } while( 0 )
 
     namespace kernel {
         namespace atomic {
