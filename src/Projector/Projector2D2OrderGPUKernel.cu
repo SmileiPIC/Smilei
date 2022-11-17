@@ -206,12 +206,12 @@ namespace hip {
     namespace detail {
         static inline void
         checkErrors( ::hipError_t an_error_code,
-                          const char  *file_name,
-                          int          line )
+                     const char  *file_name,
+                     int          line )
         {
             if( an_error_code != ::hipError_t::hipSuccess ) {
                 std::cout << "HIP error at " << file_name << ":" << line
-                          << " -> " << ::hipGetErrorString( an_error_code ) << std::endl;;
+                          << " -> " << ::hipGetErrorString( an_error_code ) << std::endl;
                 std::exit( EXIT_FAILURE );
             }
         }
@@ -407,9 +407,9 @@ namespace hip {
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
                 {
-                    const ComputeFloat xpn = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip  = std::round( xpn );
-                    // const int    ip       = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
+                    const int          ip       = std::round( xpn );
                     const int          ipo      = iold[0 * particle_count];
                     const int          ip_m_ipo = ip - ipo - i_domain_begin;
                     const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
@@ -426,9 +426,9 @@ namespace hip {
                     Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
                 {
-                    const ComputeFloat ypn = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp  = std::round( ypn );
-                    // const int    jp       = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
+                    const int          jp       = std::round( ypn );
                     const int          jpo      = iold[1 * particle_count];
                     const int          jp_m_jpo = jp - jpo - j_domain_begin;
                     const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );

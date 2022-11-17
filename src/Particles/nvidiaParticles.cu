@@ -413,9 +413,9 @@ namespace detail {
                                                                          OutOfClusterPredicate<ClusterType>{ cluster_type } );
         const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
                                                                                 first_particle, last_particle,
-                                                                                // In reverse, starting from end(particle_to_inject) !
-                                                                                thrust::make_reverse_iterator( first_particle_to_inject +
-                                                                                                               new_particle_count ),
+                                                                                // Do the copy with a destination
+                                                                                // starting from partitioned_particles_bounds_true
+                                                                                partitioned_particles_bounds_true,
                                                                                 OutOfClusterPredicate<ClusterType>{ cluster_type } );
 
         // Compute or recompute the cluster index of the particle_to_inject
@@ -443,14 +443,14 @@ namespace detail {
         // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
         //
         thrust::merge_by_key( thrust::device,
-                              particle_to_inject.getPtrCellKeys(),                                                            // Input range 1, first key
-                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,                                  // Input range 1, last key
-                              thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + new_particle_count ),      // Input range 2, first key (in reverse)
-                              thrust::make_reverse_iterator( particle_to_inject.getPtrCellKeys() + particle_to_rekey_count ), // Input range 2, last key (in reverse)
-                              first_particle_to_inject_no_key,                                                                // Input range 1, first value
-                              thrust::make_reverse_iterator( first_particle_to_inject_no_key + new_particle_count ),          // Input range 2, first value
-                              particle_container.getPtrCellKeys(),                                                            // Output range first key
-                              particle_no_key_iterator_provider( particle_container ) );                                      // Output range first value
+                              particle_to_inject.getPtrCellKeys(),                           // Input range 1, first key
+                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 1, last key
+                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 2, first key
+                              particle_to_inject.getPtrCellKeys() + new_particle_count,      // Input range 2, last key
+                              first_particle_to_inject_no_key,                               // Input range 1, first value
+                              first_particle_to_inject_no_key + particle_to_rekey_count,     // Input range 2, first value
+                              particle_container.getPtrCellKeys(),                           // Output range first key
+                              particle_no_key_iterator_provider( particle_container ) );     // Output range first value
 
         // Recompute bins
         computeBinIndex( particle_container );
