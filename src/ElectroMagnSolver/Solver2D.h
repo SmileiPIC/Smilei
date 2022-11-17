@@ -13,19 +13,6 @@ public:
     //! Creator for Solver
     Solver2D( Params &params ) : Solver( params )
     {
-        std::vector<unsigned int> n_space(params.n_space);
-        if (params.multiple_decomposition)
-            n_space = params.n_space_region;
-
-        std::vector<unsigned int> oversize(params.oversize);
-        if (params.multiple_decomposition)
-            oversize = params.region_oversize;
-
-        nx_p = n_space[0] +1+2*oversize[0];
-        nx_d = n_space[0] +2+2*oversize[0];
-        ny_p = n_space[1] +1+2*oversize[1];
-        ny_d = n_space[1] +2+2*oversize[1];
-
         dt = params.timestep;
         dx = params.cell_length[0];
         dy = params.cell_length[1];
@@ -38,10 +25,6 @@ public:
     virtual void operator()( ElectroMagn *fields ) = 0;
     
 protected:
-    unsigned int nx_p;
-    unsigned int nx_d;
-    unsigned int ny_p;
-    unsigned int ny_d;
     double dt;
     double dx;
     double dy;

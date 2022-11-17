@@ -165,11 +165,6 @@ void MergingVranicSpherical::operator() (
         double e2_norm;
 
         // Momentum shortcut
-        double* momentum[3];
-        for ( int i = 0 ; i<3 ; i++ )
-            momentum[i] =  &( particles.momentum(i,0) );
-
-        // Momentum shortcut
         double * __restrict__ momentum_x = particles.getPtrMomentum(0);
         double * __restrict__ momentum_y = particles.getPtrMomentum(1);
         double * __restrict__ momentum_z = particles.getPtrMomentum(2);

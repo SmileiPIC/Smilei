@@ -79,8 +79,8 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
     }
 
     length_[0]=0;
-    length_[1]=params.n_space[1]+1;
-    length_[2]=params.n_space[2]+1;
+    length_[1]=params.patch_size_[1]+1;
+    length_[2]=params.patch_size_[2]+1;
 
     dx_inv_[0] = 1./cell_length[0];
     dx_inv_[1] = 1./cell_length[1];
@@ -110,7 +110,7 @@ void SpeciesV::initCluster( Params &params )
 {
     int ncells = 1;
     for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-        ncells *= ( params.n_space[iDim]+1 );
+        ncells *= ( params.patch_size_[iDim]+1 );
     }
     particles->last_index.resize( ncells, 0 );
     particles->first_index.resize( ncells, 0 );
@@ -119,20 +119,20 @@ void SpeciesV::initCluster( Params &params )
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
-    Nbins = (params.n_space[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
+    Nbins = (params.patch_size_[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
     //Primal dimension of fields.
-    f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
-    f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
-    f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
+    f_dim0 =  params.patch_size_[0] + 2 * oversize[0] +1;
+    f_dim1 =  params.patch_size_[1] + 2 * oversize[1] +1;
+    f_dim2 =  params.patch_size_[2] + 2 * oversize[2] +1;
 
     //Dual dimension of fields.
-    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
-    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
-    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+    f_dim0_d =  params.patch_size_[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.patch_size_[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.patch_size_[2] + 2 * oversize[2] +2;
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_field == 1 ) {
@@ -912,8 +912,8 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             // Variables to compute cell_keys for the sorting
             unsigned int length[3];
             length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
+            length[1]=params.patch_size_[1]+1;
+            length[2]=params.patch_size_[2]+1;
 
 
 
@@ -1258,7 +1258,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     unsigned int ip_src;
 
     //Number of dual cells
-    ncell = ( params.n_space[0]+1 );
+    ncell = ( params.patch_size_[0]+1 );
     for( unsigned int i=1; i < nDim_field; i++ ) {
         ncell *= length_[i];
     }

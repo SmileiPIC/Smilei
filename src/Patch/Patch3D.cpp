@@ -61,7 +61,6 @@ void Patch3D::initStep2( Params &params, DomainDecomposition *domain_decompositi
     std::vector<int> xcall( 3, 0 );
     
     // define patch coordinates
-    Pcoordinates.resize( 3 );
     Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
 #ifdef _DEBUG
     cout << "\tPatch coords : ";
@@ -135,9 +134,9 @@ Patch3D::~Patch3D()
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::createType2( Params &params )
 {
-    //int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
-    int nz0 = params.n_space_region[2] + 1 + 2*oversize[2];
+    //int nx0 = params.region_size_[0] + 1 + 2*oversize[0];
+    int ny0 = params.region_size_[1] + 1 + 2*oversize[1];
+    int nz0 = params.region_size_[2] + 1 + 2*oversize[2];
     
     int ny, nz;
     //int nx_sum, ny_sum, nz_sum;
@@ -152,9 +151,9 @@ void Patch3D::createType2( Params &params )
                 // Still used ???
                 ntype_[ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 if (!params.is_pxr)
-                    MPI_Type_contiguous(nz*ny*params.n_space[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
+                    MPI_Type_contiguous(nz*ny*params.patch_size_[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
                 else
-                    MPI_Type_contiguous(nz*ny*(params.n_space[0]), MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
+                    MPI_Type_contiguous(nz*ny*(params.patch_size_[0]), MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
                 MPI_Type_commit( &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]) );
             }
         }

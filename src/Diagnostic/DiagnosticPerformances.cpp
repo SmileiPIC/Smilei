@@ -54,7 +54,7 @@ DiagnosticPerformances::DiagnosticPerformances( Params &params, SmileiMPI *smpi 
     // Calculate the number of cells per patch
     ncells_per_patch = 1;
     for( unsigned int idim = 0; idim < params.nDim_field; idim++ ) {
-        ncells_per_patch *= params.n_space[idim]+2*params.oversize[idim];
+        ncells_per_patch *= params.patch_size_[idim]+2*params.oversize[idim];
     }
     
 } // END DiagnosticPerformances::DiagnosticPerformances

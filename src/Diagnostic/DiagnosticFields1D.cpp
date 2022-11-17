@@ -16,10 +16,10 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI *smpi, VectorP
     patch_offset_in_grid[0] = params.oversize[0]+1;
     
     // Calculate the patch size
-    total_patch_size = params.n_space[0];
+    total_patch_size = params.patch_size_[0];
     
     // define space in file and in memory
-    // All patch write n_space elements except, patch 0 which write n_space+1
+    // All patch write patch_size_ elements except, patch 0 which write patch_size_+1
     unsigned int global_size = tot_number_of_patches * total_patch_size + 1;
     // Take subgrid into account
     unsigned int istart, istart_in_file, nsteps;
@@ -29,6 +29,9 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI *smpi, VectorP
         istart, istart_in_file, nsteps
     );
     total_dataset_size = nsteps;
+    
+    filespace = new H5Space( total_dataset_size, 0, 1 );
+    memspace = new H5Space( total_dataset_size, 0, 1 );
 }
 
 DiagnosticFields1D::~DiagnosticFields1D()
@@ -58,7 +61,10 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     );
     
     data.resize( nsteps );
+    
+    delete filespace;
     filespace = new H5Space( total_dataset_size, MPI_start_in_file, nsteps );
+    delete memspace;
     memspace = new H5Space( total_dataset_size, 0, nsteps );
 }
 

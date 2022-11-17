@@ -91,15 +91,6 @@ void RadiationMonteCarlo::operator()(
     // Temporary double parameter
     double temp;
     
-    // Time to emission
-    double emission_time;
-    
-    // time spent in the iteration
-    double local_it_time;
-    
-    // Number of Monte-Carlo iteration
-    int mc_it_nb;
-
     // Particle properties ----------------------------------------------------------------
 
     // Particles position shortcut

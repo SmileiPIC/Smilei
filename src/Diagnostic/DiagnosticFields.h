@@ -71,7 +71,7 @@ protected :
     //! Number of cells to skip in each direction
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
-    std::vector<unsigned int> patch_size;
+    std::vector<unsigned int> patch_size_;
     //! Buffer for the output of a field
     std::vector<double> data;
     

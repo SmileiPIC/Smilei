@@ -106,20 +106,10 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     // Electromagnetic fields
     // ----------------------
     // number of nodes of the primal-grid
-    nx_p = n_space[0]+1 + 2*oversize[0];
+    nx_p = size_[0]+1 + 2*oversize[0];
     // number of nodes of the dual-grid
-    nx_d = n_space[0]+2 + 2*oversize[0];
+    nx_d = size_[0]+2 + 2*oversize[0];
     // dimPrim/dimDual = nx_p/nx_d
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
     
     // Allocation of the EM fields
     Ex_  = new Field1D( dimPrim, 0, false, "Ex" );
@@ -180,7 +170,7 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         

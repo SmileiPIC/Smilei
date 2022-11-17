@@ -114,26 +114,12 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-    //! \todo Homogenize 1D/2D dimPrim/dimDual or nx_p/nx_d/ny_p/ny_d
-    
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    
-    // Dimension of the primal and dual grids
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2-(params.is_pxr);
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
+    nx_p = size_[0]+1+2*oversize[0];
+    nx_d = size_[0]+2+2*oversize[0]-(params.is_pxr);
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
+    ny_p = size_[1]+1+2*oversize[1];
+    ny_d = size_[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
     Ex_  = FieldFactory::create( dimPrim, 0, false, "Ex", params );
@@ -218,7 +204,7 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         for( int isDual=0 ; isDual<2 ; isDual++ ) {

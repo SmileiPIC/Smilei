@@ -217,7 +217,7 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate(
     }
     // If photon_chi is above the upper bound of the table
     // An asymptotic approximation is used
-    else if( ichiph >= T_.size_-1 ) {
+    else if( (unsigned int) ichiph >= T_.size_-1 ) {
         ichiph = T_.size_-2;
         dNBWdt = 2.067731275227008*std::pow( photon_chi, 5.0/3.0 );
     } else {

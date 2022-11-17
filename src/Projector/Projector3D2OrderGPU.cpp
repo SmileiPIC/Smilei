@@ -24,8 +24,8 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &params, Patch *patch ) : Pro
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
     
-    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
+    nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
     
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );

@@ -88,6 +88,9 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
     
+    std::vector<unsigned int> size_;
+    std::vector<unsigned int> oversize;
+    
 #ifdef  __DETAILED_TIMERS
     
     // OpenMP properties
@@ -383,8 +386,6 @@ protected:
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
-    
-    std::vector<unsigned int> oversize;
     
     double cell_volume;
     

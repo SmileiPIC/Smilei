@@ -23,9 +23,9 @@ public:
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) = 0;
 
-    virtual void setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch ) {ERROR("Not using PML");};
-    virtual void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solver_min, int solver_max ) {ERROR("Not using PML");};
-    virtual void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solver_min, int solver_max ) {ERROR("Not using PML");};
+    virtual void setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch ) {ERROR("Not using PML");};
+    virtual void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solver_min, int solver_max ) {ERROR("Not using PML");};
+    virtual void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solver_min, int solver_max ) {ERROR("Not using PML");};
 
 protected:
 

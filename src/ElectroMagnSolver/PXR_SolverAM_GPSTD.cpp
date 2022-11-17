@@ -50,37 +50,25 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     int ovl, ovr;
     // unable to convert unsigned int to an iso_c_binding supported type
     
-    std::vector<unsigned int> n_space(params.n_space);
-    if (full_domain)
-        n_space = params.n_space_global;
-    else if (params.multiple_decomposition)
-        n_space = params.n_space_region;
+    nl=( int ) (0 + EMfields->size_[0]);
+    nr=( int ) (0 + EMfields->size_[1]);
     
-    nl=( int ) (0 + n_space[0]);
-    nr=( int ) (0 + n_space[1]);
-    
-    if (params.multiple_decomposition) {
-        ovl=( int ) params.region_oversize[0];
-        ovr=( int ) params.region_oversize[1];
-    }
-    else {
-        ovl=( int ) params.oversize[0];
-        ovr=( int ) params.oversize[1];
-    }
+    ovl=( int ) EMfields->oversize[0];
+    // ovr=( int ) EMfields->oversize[1];
     ovr=0;
 
     std::vector<unsigned int> dimPrim( 3 );
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i+1] = n_space[i]+1;
+        dimPrim[i+1] = size[i]+1;
         if (params.multiple_decomposition)
             dimPrim[i+1] += 2*params.region_oversize[i];
         else
             dimPrim[i+1] += 2*params.oversize[i];
     }
     dimPrim[0] = params.nmodes;
-    dimPrim[2] = n_space[1]+1;
+    dimPrim[2] = size[1]+1;
 
     El_pxr = new cField3D( dimPrim );
     Er_pxr = new cField3D( dimPrim );

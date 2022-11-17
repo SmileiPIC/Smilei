@@ -164,18 +164,18 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2-(params.is_pxr);
+        dimPrim[i] = size_[i]+1;
+        dimDual[i] = size_[i]+2-(params.is_pxr);
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
-    nl_p = n_space[0]+1+2*oversize[0];
-    nl_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
+    nl_p = size_[0]+1+2*oversize[0];
+    nl_d = size_[0]+2+2*oversize[0]-(params.is_pxr);
     // number of nodes of the primal and dual grid in the y-direction
-    nr_p = n_space[1]+1+2*oversize[1];
-    nr_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
+    nr_p = size_[1]+1+2*oversize[1];
+    nr_d = size_[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
     
@@ -268,7 +268,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         for( int isDual=0 ; isDual<2 ; isDual++ ) {

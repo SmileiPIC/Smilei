@@ -26,7 +26,7 @@ Projector2D2OrderV::Projector2D2OrderV( Params &params, Patch *patch ) : Project
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nscelly_ = params.n_space[1] + 1;
+    nscelly_ = params.patch_size_[1] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     nprimy = nscelly_ + 2*oversize[1];

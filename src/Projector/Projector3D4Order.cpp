@@ -28,8 +28,8 @@ Projector3D4Order::Projector3D4Order( Params &params, Patch *patch ) : Projector
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
     k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
     
-    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
+    nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
     
     DEBUG( "cell_length "<< params.cell_length[0] );
     

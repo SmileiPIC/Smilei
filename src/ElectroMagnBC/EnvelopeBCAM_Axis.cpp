@@ -23,12 +23,12 @@ EnvelopeBCAM_Axis::EnvelopeBCAM_Axis( Params &params, Patch *patch, unsigned int
     oversize_ = params.oversize[0];
     
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
-    nx_d = params.n_space[0]+2+2*params.oversize[0];
+    nx_p = params.patch_size_[0]+1+2*params.oversize[0];
+    nx_d = params.patch_size_[0]+2+2*params.oversize[0];
     
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]+1+2*params.oversize[1];
-    ny_d = params.n_space[1]+2+2*params.oversize[1];
+    ny_p = params.patch_size_[1]+1+2*params.oversize[1];
+    ny_d = params.patch_size_[1]+2+2*params.oversize[1];
     
     
 }

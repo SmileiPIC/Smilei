@@ -259,8 +259,8 @@ public:
     //! Volume of the single cell (from params)
     const double cell_volume;
     
-    //! n_space (from params) always 3D
-    std::vector<unsigned int> n_space;
+    //! size_ (from params) always 3D
+    std::vector<unsigned int> size_;
     
     //! Index of starting elements in arrays without duplicated borders
     //! By constuction 1 element is shared in primal field, 2 in dual

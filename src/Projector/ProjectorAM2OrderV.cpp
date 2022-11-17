@@ -30,11 +30,11 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nscellr_ = params.n_space[1] + 1;
+    nscellr_ = params.patch_size_[1] + 1;
     oversize_[0] = params.oversize[0];
     oversize_[1] = params.oversize[1];
     nprimr_ = nscellr_ + 2*oversize_[1];
-    npriml_ = params.n_space[0] + 1 + 2*oversize_[0];
+    npriml_ = params.patch_size_[0] + 1 + 2*oversize_[0];
 
     Nmode_=params.nmodes;
     dq_inv_[0] = dl_inv_;

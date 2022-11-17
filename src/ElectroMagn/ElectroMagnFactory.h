@@ -55,7 +55,7 @@ public:
             Laser *laser = new Laser( params, ilaser, patch, first_creation );
             if( EMfields->emBoundCond[laser->i_boundary_] ) {
                 if( patch->isBoundary( laser->i_boundary_ ) ) {
-                    laser->createFields( params, patch );
+                    laser->createFields( params, patch, EMfields );
                 }
                 EMfields->emBoundCond[laser->i_boundary_]->vecLaser.push_back( laser );
             } else {
@@ -269,7 +269,7 @@ public:
                     Laser *laser = new Laser( EMfields->emBoundCond[iBC]->vecLaser[ilaser], params );
                     // If patch is on border, then fill the fields arrays
                     if( iBC == laser->i_boundary_ && patch->isBoundary( iBC ) ) {
-                        laser->createFields( params, patch );
+                        laser->createFields( params, patch, newEMfields );
                     }
                     // Append the laser to the vector
                     newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );

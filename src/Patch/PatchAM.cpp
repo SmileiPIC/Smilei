@@ -57,7 +57,6 @@ PatchAM::PatchAM( PatchAM *patch, Params &params, SmileiMPI *smpi, DomainDecompo
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decomposition )
 {
-    Pcoordinates.resize( 2 );
     Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
     
     std::vector<int> xcall( 2, 0 );
@@ -96,8 +95,8 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             
         }
     }
-    int j_glob_ = Pcoordinates[1]*params.n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-    int nr_p = params.n_space[1]+1+2*params.oversize[1];
+    int j_glob_ = Pcoordinates[1]*params.patch_size_[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
+    int nr_p = params.patch_size_[1]+1+2*params.oversize[1];
     double dr = params.cell_length[1];
     invR.resize( nr_p );
 
@@ -184,8 +183,8 @@ void PatchAM::createType2( Params &params )
         return;
     }
     
-    // int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
+    // int nx0 = params.region_size_[0] + 1 + 2*oversize[0];
+    int ny0 = params.region_size_[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.cluster_width_;
 
     // MPI_Datatype ntype_[nDim][primDual][primDual]
@@ -197,7 +196,7 @@ void PatchAM::createType2( Params &params )
             
             // Still used ??? Yes, for moving window and SDMD
             ntype_complex_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(2*ny*params.n_space[0], MPI_DOUBLE, &(ntype_complex_[ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_contiguous(2*ny*params.patch_size_[0], MPI_DOUBLE, &(ntype_complex_[ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &( ntype_complex_[ix_isPrim][iy_isPrim] ) );
         }
     }

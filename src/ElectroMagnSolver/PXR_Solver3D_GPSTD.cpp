@@ -23,24 +23,13 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     int ov0, ov1, ov2;
     // unable to convert unsigned int to an iso_c_binding supported type
     
-    std::vector<unsigned int> n_space(params.n_space);
-    std::vector<unsigned int> oversize(params.oversize);
-    if (full_domain) {
-        n_space = params.n_space_global;
-        oversize = params.region_oversize;
-    }
-    else if (params.multiple_decomposition) {
-        n_space = params.n_space_region;
-        oversize = params.region_oversize;
-    }
+    n0=( int ) (0 + EMfields->size_[0]);
+    n1=( int ) (0 + EMfields->size_[1]);
+    n2=( int ) (0 + EMfields->size_[2]);
     
-    n0=( int ) (0 + n_space[0]);
-    n1=( int ) (0 + n_space[1]);
-    n2=( int ) (0 + n_space[2]);
-    
-    ov0=( int ) oversize[0];
-    ov1=( int ) oversize[1];
-    ov2=( int ) oversize[2];
+    ov0=( int ) EMfields->oversize[0];
+    ov1=( int ) EMfields->oversize[1];
+    ov2=( int ) EMfields->oversize[2];
     
     Field3D* Ex3D_pxr = static_cast<Field3D*>( EMfields->Ex_);
     Field3D* Ey3D_pxr = static_cast<Field3D*>( EMfields->Ey_);

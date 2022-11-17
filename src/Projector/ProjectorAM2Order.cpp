@@ -30,8 +30,8 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
 
-    nprimr_ = params.n_space[1] + 2*params.oversize[1] + 1;
-    npriml_ = params.n_space[0] + 2*params.oversize[0] + 1;
+    nprimr_ = params.patch_size_[1] + 2*params.oversize[1] + 1;
+    npriml_ = params.patch_size_[0] + 2*params.oversize[0] + 1;
 
     invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);

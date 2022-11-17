@@ -344,9 +344,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     }
     
     // Pre-calculate patch size
-    patch_size.resize( nDim_particle );
+    patch_length.resize( nDim_particle );
     for( unsigned int k=0; k<nDim_particle; k++ ) {
-        patch_size[k] = params.n_space[k]*params.cell_length[k];
+        patch_length[k] = params.patch_size_[k]*params.cell_length[k];
     }
 
     // Create filename
@@ -475,20 +475,20 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
         if( geometry == "AMcylindrical" ) {
             mins[0] = numeric_limits<double>::max();
             maxs[0] = numeric_limits<double>::lowest();
-            patchMin[0] = ( vecPatches( ipatch )->Pcoordinates[0] )*patch_size[0];
-            patchMax[0] = ( vecPatches( ipatch )->Pcoordinates[0]+1 )*patch_size[0];
+            patchMin[0] = ( vecPatches( ipatch )->Pcoordinates[0] )*patch_length[0];
+            patchMax[0] = ( vecPatches( ipatch )->Pcoordinates[0]+1 )*patch_length[0];
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[1]+1 )*patch_length[1];
                 patchMin[k] = - patchMax[k] ; //patchMin = -rmax for the first filter
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] =  numeric_limits<double>::lowest();
-                patchMin[k] = ( vecPatches( ipatch )->Pcoordinates[k] )*patch_size[k];
-                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[k]+1 )*patch_size[k];
+                patchMin[k] = ( vecPatches( ipatch )->Pcoordinates[k] )*patch_length[k];
+                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[k]+1 )*patch_length[k];
             }
         }
         // loop patch corners
@@ -545,7 +545,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
         particles->initialize( ntot, nDim_particle, false );
         // In AM, redefine patchmin as rmin and not -rmax anymore
         if( geometry == "AMcylindrical" ) {
-            patchMin[1] = patchMax[1] - ( double )patch_size[1];
+            patchMin[1] = patchMax[1] - patch_length[1];
         }
         // Loop useful probe points
         ipart_local=0;

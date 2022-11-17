@@ -116,7 +116,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
         unsigned int n;
         if( subgrids[isubgrid] == Py_None ) {
             subgrid_start_.push_back( 0 );
-            subgrid_stop_ .push_back( params.n_space_global[isubgrid]+2 );
+            subgrid_stop_ .push_back( params.global_size_[isubgrid]+2 );
             subgrid_step_ .push_back( 1 );
         } else if( PyTools::py2scalar( subgrids[isubgrid], n ) ) {
             subgrid_start_.push_back( n );
@@ -125,9 +125,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
         } else if( PySlice_Check( subgrids[isubgrid] ) ) {
             Py_ssize_t start, stop, step, slicelength;
 #if PY_MAJOR_VERSION == 2
-            if( PySlice_GetIndicesEx( ( PySliceObject * )subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
+            if( PySlice_GetIndicesEx( ( PySliceObject * )subgrids[isubgrid], params.global_size_[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
 #else
-            if( PySlice_GetIndicesEx( subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
+            if( PySlice_GetIndicesEx( subgrids[isubgrid], params.global_size_[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
 #endif
                 PyTools::checkPyError();
                 ERROR( "Diagnostic Fields #"<<ndiag<<" `subgrid` axis #"<<isubgrid<<" not understood" );

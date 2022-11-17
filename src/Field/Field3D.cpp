@@ -272,13 +272,13 @@ void Field3D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
-    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
-    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;    
+    int iout = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.patch_size_[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.patch_size_[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;    
     
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
-            for( unsigned int k = 0 ; k < params.n_space[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
+    for( unsigned int i = 0 ; i < params.patch_size_[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.patch_size_[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < params.patch_size_[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
                 ( *out3D )( iout+i+params.region_oversize[0]-params.oversize[0], jout+j+params.region_oversize[1]-params.oversize[1], kout+k+params.region_oversize[2]-params.oversize[2] ) = ( *this )( i, j, k );
             }
         }
@@ -293,13 +293,13 @@ void Field3D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
-    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
-    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;
+    int iout = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.patch_size_[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.patch_size_[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;
     
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
-            for( unsigned int k = 0 ; k < params.n_space[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
+    for( unsigned int i = 0 ; i < params.patch_size_[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.patch_size_[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < params.patch_size_[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
                 ( *out3D )( iout+i+params.region_oversize[0]-params.oversize[0], jout+j+params.region_oversize[1]-params.oversize[1], kout+k+params.region_oversize[2]-params.oversize[2] ) += ( *this )( i, j, k );
             }
         }
@@ -313,13 +313,13 @@ void Field3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
     
     std::vector<unsigned int> dual =  in3D->isDual_;
     
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] );
-    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] );
-    int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - ( inPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] );
+    int iin = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] );
+    int jin = thisPatch->Pcoordinates[1]*params.patch_size_[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] );
+    int kin = thisPatch->Pcoordinates[2]*params.patch_size_[2] - ( inPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] );
     
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
-            for( unsigned int k = 0 ; k < params.n_space[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
+    for( unsigned int i = 0 ; i < params.patch_size_[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.patch_size_[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < params.patch_size_[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
                 ( *this )( i, j, k ) = ( *in3D )( iin+i+params.region_oversize[0]-params.oversize[0], jin+j+params.region_oversize[1]-params.oversize[1], kin+k+params.region_oversize[2]-params.oversize[2] );
             }
         }
@@ -329,24 +329,24 @@ void Field3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
 
 void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
     if( sendFields_[iDim*2+iNeighbor] == NULL ) {
-        sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
-        recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+        sendFields_[iDim*2+iNeighbor] = new Field3D(size);
+        recvFields_[iDim*2+iNeighbor] = new Field3D(size);
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
-        sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+        sendFields_[iDim*2+iNeighbor] = new Field3D(size);
         delete recvFields_[iDim*2+iNeighbor];
-        recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+        recvFields_[iDim*2+iNeighbor] = new Field3D(size);
     }
 }
 
 void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
 
     vector<int> idx( 3, 0 );
     idx[iDim] = 1;
@@ -355,9 +355,9 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    int NX = size[0];
+    int NY = size[1];
+    int NZ = size[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
@@ -375,8 +375,8 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
 void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
 
     vector<int> idx( 3, 0 );
     idx[iDim] = 1;
@@ -385,9 +385,9 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    int NX = size[0];
+    int NY = size[1];
+    int NZ = size[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
@@ -405,8 +405,8 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
 void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = 2*ghost_size+1+isDual_[iDim];
 
     vector<int> idx( 3, 0 );
     idx[iDim] = 1;
@@ -415,9 +415,9 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    int NX = size[0];
+    int NY = size[1];
+    int NZ = size[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
@@ -435,8 +435,8 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
 void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = 2*ghost_size+1+isDual_[iDim];
 
     vector<int> idx( 3, 0 );
     idx[iDim] = 1;
@@ -445,9 +445,9 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    int NX = size[0];
+    int NY = size[1];
+    int NZ = size[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];

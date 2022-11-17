@@ -58,7 +58,6 @@ void Patch2D::initStep2( Params &params, DomainDecomposition *domain_decompositi
 {
     std::vector<int> xcall( 2, 0 );
     
-    Pcoordinates.resize( 2 );
     Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
     
     // 1st direction
@@ -118,8 +117,8 @@ void Patch2D::createType2( Params &params )
         return;
     }
     
-    //sint nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
+    //sint nx0 = params.region_size_[0] + 1 + 2*oversize[0];
+    int ny0 = params.region_size_[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.cluster_width_;
     
     int ny;
@@ -132,7 +131,7 @@ void Patch2D::createType2( Params &params )
             
             // Still used ???
             ntype_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(ny*params.n_space[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_contiguous(ny*params.patch_size_[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &( ntype_[ix_isPrim][iy_isPrim] ) );
 
         }

@@ -19,6 +19,10 @@ MF_Solver2D_Yee::~MF_Solver2D_Yee()
 
 void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
 {
+    // const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
     // Static-cast of the fields
     Field2D *Ex2D;
     Field2D *Ey2D;

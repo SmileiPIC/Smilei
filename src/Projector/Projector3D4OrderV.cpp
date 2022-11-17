@@ -28,8 +28,8 @@ Projector3D4OrderV::Projector3D4OrderV( Params &params, Patch *patch ) : Project
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
     k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
 
-    nscelly = params.n_space[1] + 1;
-    nscellz = params.n_space[2] + 1;
+    nscelly = params.patch_size_[1] + 1;
+    nscellz = params.patch_size_[2] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     oversize[2] = params.oversize[2];

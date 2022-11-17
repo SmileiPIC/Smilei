@@ -191,7 +191,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         if( k_times !=0 ) {
             // loop on all the ionization levels that have been ionized for this ion:
             // each level creates an electron
-            for (int ionized_level = 0; ionized_level < k_times ; ionized_level++){
+            for( unsigned int ionized_level = 0; ionized_level < k_times ; ionized_level++){
 #ifndef _OMPTASKS
                 // Creation of electrons without tasks
 

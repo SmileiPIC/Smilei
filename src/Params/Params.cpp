@@ -1090,9 +1090,9 @@ void Params::compute()
 
     // grid/cell-related parameters
     // ----------------------------
-    n_space.resize( 3, 1 );
+    patch_size_.resize( 3, 1 );
     cell_length.resize( 3 );
-    n_space_global.resize( 3, 1 ); //! \todo{3 but not real size !!! Pbs in Species::Species}
+    global_size_.resize( 3, 1 );
     oversize.resize( 3, 0 );
     region_oversize.resize( 3, 0 );
     patch_dimensions.resize( 3, 0. );
@@ -1103,9 +1103,9 @@ void Params::compute()
 
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        n_space[i] = round( grid_length[i]/cell_length[i] );
+        patch_size_[i] = round( grid_length[i]/cell_length[i] );
         double entered_grid_length = grid_length[i];
-        grid_length[i] = ( double )( n_space[i] )*cell_length[i]; // ensure that nspace = grid_length/cell_length
+        grid_length[i] = ( double )( patch_size_[i] )*cell_length[i]; // ensure that nspace = grid_length/cell_length
         if( grid_length[i]!=entered_grid_length ) {
             WARNING( "grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision( 4 ) << grid_length[i]-entered_grid_length <<")" );
         }
@@ -1114,7 +1114,7 @@ void Params::compute()
     if( geometry == "AMcylindrical" ) {
         cell_volume *= 2 * M_PI;
     }
-    // create a 3d equivalent of n_space & cell_length
+    // create a 3d equivalent of patch_size_ & cell_length
     for( unsigned int i=nDim_field; i<3; i++ ) {
         cell_length[i]=0.0;
     }
@@ -1130,53 +1130,30 @@ void Params::compute()
         } else {
             oversize[i] = interpolation_order + ( exchange_particles_each-1 );
         }
-        n_space_global[i] = n_space[i];
-        n_space[i] /= number_of_patches[i];
-        if( n_space_global[i]%number_of_patches[i] !=0 ) {
-            ERROR_NAMELIST( "ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i], LINK_NAMELIST + std::string("#main-variables") );
+        global_size_[i] = patch_size_[i];
+        patch_size_[i] /= number_of_patches[i];
+        if( global_size_[i]%number_of_patches[i] !=0 ) {
+            ERROR_NAMELIST( "ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide global_size_ = " << global_size_[i], LINK_NAMELIST + std::string("#main-variables") );
         }
-        if( n_space[i] <= 2*oversize[i]+1 ) {
-            ERROR_NAMELIST( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. ",LINK_NAMELIST + std::string("#main-variables") );
+        if( patch_size_[i] <= 2*oversize[i]+1 ) {
+            ERROR_NAMELIST( "ERROR in dimension " << i <<". Patches length = "<<patch_size_[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. ",LINK_NAMELIST + std::string("#main-variables") );
         }
-        patch_dimensions[i] = n_space[i] * cell_length[i];
-        n_cell_per_patch *= n_space[i];
+        patch_dimensions[i] = patch_size_[i] * cell_length[i];
+        n_cell_per_patch *= patch_size_[i];
     }
-
-    if( multiple_decomposition ) {
-        if( is_spectral ) {
-            for( unsigned int i=0; i<nDim_field; i++ ){
-                region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
-            }
-        } else {
-            for( unsigned int i=0; i<nDim_field; i++ ){
-                region_oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
-            }
-        }
-        PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
-        for( unsigned int i=0; i<nDim_field; i++ ) {
-            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
-        }
-        if( is_spectral && geometry == "AMcylindrical" )  {
-            //Force ghost cells number in L when spectral
-            region_oversize[0] = region_ghost_cells;
-            //Force zero ghost cells in R when spectral
-            WARNING("Forcing region ghost-cell size along r from " << region_oversize[1] << " to " <<  oversize[1])
-            region_oversize[1] = oversize[1];
-        }
-    }
-
+    
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
 
         // default value
-        cluster_width_ = n_space[0];
+        cluster_width_ = patch_size_[0];
 
         // check cache issue for interpolation/projection
         int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) )
         // Compute the "transversal bin size"
         int bin_size( 1 );
         for( unsigned int idim = 1 ; idim < nDim_field ; idim++ ) {
-            bin_size *= ( n_space[idim]+1+2*oversize[idim] );
+            bin_size *= ( patch_size_[idim]+1+2*oversize[idim] );
         }
 
         // IF Ionize or pair generation : cluster_width_ = n_space_x_pp ?
@@ -1184,7 +1161,7 @@ void Params::compute()
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if( clrw_max > 0 ) {
                 for( cluster_width_=clrw_max ; cluster_width_ > 0 ; cluster_width_-- )
-                    if( ( ( cluster_width_+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( n_space[0]%cluster_width_==0 ) ) {
+                    if( ( ( cluster_width_+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( patch_size_[0]%cluster_width_==0 ) ) {
                         break;
                     }
             } else {
@@ -1195,24 +1172,26 @@ void Params::compute()
 
     }
 
-    // cluster_width_ != n_space[0] is not compatible
+    // cluster_width_ != patch_size_[0] is not compatible
     // with the adaptive vectorization for the moment
     if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-        if( cluster_width_ != ( int )( n_space[0] ) ) {
-            cluster_width_ = ( int )( n_space[0] );
+        if( cluster_width_ != ( int )( patch_size_[0] ) ) {
+            cluster_width_ = ( int )( patch_size_[0] );
             WARNING( "Particles cluster width set to: " << cluster_width_ << " for the adaptive vectorization mode" );
         }
     }
 
-    // Verify that cluster_width_ divides n_space[0]
-    if( n_space[0]%cluster_width_ != 0 ) {
+    // Verify that cluster_width_ divides patch_size_[0]
+    if( patch_size_[0]%cluster_width_ != 0 ) {
         ERROR_NAMELIST(
             "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
             LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // Define domain decomposition if double grids are used for particles and fields
-    if ( multiple_decomposition ) {
+    region_size_ = patch_size_; // by default, region sizes are set to those of the patch
+    region_oversize = oversize;
+    if( multiple_decomposition ) {
         multiple_decompose();
         full_B_exchange = true;
     }
@@ -1298,7 +1277,7 @@ void Params::print_init()
     ostringstream nc;
     nc << "Number of cells: " ;
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
-        nc << n_space_global[i] << ( i<nDim_field-1 ? ", " : "" );
+        nc << global_size_[i] << ( i<nDim_field-1 ? ", " : "" );
     }
     MESSAGE( 1, nc.str() );
 
@@ -1456,9 +1435,9 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
         MESSAGE( 1, np.str() );
 
         ostringstream ps;
-        ps << "Number of cells in one patch: " << n_space[0];
+        ps << "Number of cells in one patch: " << patch_size_[0];
         for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
-            ps << " x " << n_space[iDim];
+            ps << " x " << patch_size_[iDim];
         }
         MESSAGE( 1, ps.str() );
 
@@ -1558,7 +1537,28 @@ void Params::cleanup( SmileiMPI *smpi )
 
 void Params::multiple_decompose()
 {
-    n_space_region.resize(3,1);
+    // Compute the oversize of the region
+    if( is_spectral ) {
+        for( unsigned int i=0; i<nDim_field; i++ ){
+            region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
+        }
+    } else {
+        for( unsigned int i=0; i<nDim_field; i++ ){
+            region_oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
+        }
+    }
+    PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
+    for( unsigned int i=0; i<nDim_field; i++ ) {
+        region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+    }
+    if( is_spectral && geometry == "AMcylindrical" )  {
+        //Force ghost cells number in L when spectral
+        region_oversize[0] = region_ghost_cells;
+        //Force zero ghost cells in R when spectral
+        WARNING("Forcing region ghost-cell size along r from " << region_oversize[1] << " to " <<  oversize[1])
+        region_oversize[1] = oversize[1];
+    }
+
     number_of_region.resize( 3, 1 );
 
     int rk(0);
@@ -1586,17 +1586,17 @@ void Params::multiple_decompose()
         //if ( nlocal_i*number_of_region[iDim] != number_of_patches[iDim] )
         //    nlocal_i++;
         for ( unsigned int iDom = 0 ; iDom < number_of_region[iDim] ; iDom++ ) {
-            offset_map[iDim][iDom] = iDom * nlocal_i * n_space[iDim];
+            offset_map[iDim][iDom] = iDom * nlocal_i * patch_size_[iDim];
         }
     }
 
     // Compute size of local domain
     for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
-        if ( coordinates[iDim] != (int)number_of_region[iDim]-1 ) {
-            n_space_region[iDim] = offset_map[iDim][coordinates[iDim]+1] - offset_map[iDim][coordinates[iDim]];
+        if ( region_coordinates[iDim] != (int)number_of_region[iDim]-1 ) {
+            region_size_[iDim] = offset_map[iDim][region_coordinates[iDim]+1] - offset_map[iDim][region_coordinates[iDim]];
         }
         else {
-            n_space_region[iDim] = n_space_global[iDim] - offset_map[iDim][coordinates[iDim]];
+            region_size_[iDim] = global_size_[iDim] - offset_map[iDim][region_coordinates[iDim]];
         }
     }
 
@@ -1625,10 +1625,10 @@ void Params::print_multiple_decomposition_params()
         if ( irk == rk) {
             cout << " MPI_rank = " << rk << endl;
             cout << "\tcoords = ";
-            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << coordinates[iDim] << " ";
+            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << region_coordinates[iDim] << " ";
             cout << endl;
             cout << "\tsize :  ";
-            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << n_space_region[iDim] << " ";
+            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << region_size_[iDim] << " ";
             cout << endl;
         }
         MPI_Barrier( MPI_COMM_WORLD );
@@ -1665,13 +1665,13 @@ void Params::multiple_decompose_1D()
             }
         }
 
-    coordinates.resize( nDim_field );
+    region_coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 1D
     for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
         for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
             for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
-                    coordinates[0] = xDom;
+                    region_coordinates[0] = xDom;
                 }
             }
         }
@@ -1738,15 +1738,15 @@ void Params::multiple_decompose_2D()
     //map_rank[1][0][0] = 3;
     //map_rank[1][1][0] = 2;
 
-    coordinates.resize( nDim_field );
+    region_coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 2D
     for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
         for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
             for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
                 //cout << xDom << " " << yDom << endl;
-                    coordinates[0] = xDom;
-                    coordinates[1] = yDom;
+                    region_coordinates[0] = xDom;
+                    region_coordinates[1] = yDom;
                     //coordinates[2] = zDom;
                 }
             }
@@ -1818,16 +1818,16 @@ void Params::multiple_decompose_3D()
                 new_rk++;
             }
 
-    coordinates.resize( nDim_field );
+    region_coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 3D
     for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
         for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ )
             for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
                     //cout << xDom << " " << yDom << endl;
-                    coordinates[0] = xDom;
-                    coordinates[1] = yDom;
-                    coordinates[2] = zDom;
+                    region_coordinates[0] = xDom;
+                    region_coordinates[1] = yDom;
+                    region_coordinates[2] = zDom;
                 }
             }
     //cout << "coords = " << coordinates[0] << " " << coordinates[1] << endl;

@@ -693,8 +693,8 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             // Variables to compute cell_keys for the sorting
             unsigned int length[3];
             length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
+            length[1]=params.patch_size_[1]+1;
+            length[2]=params.patch_size_[2]+1;
 
 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,2);
@@ -966,8 +966,8 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     particles->cell_keys.resize(nparts);
 
     length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
+    length[1]=params.patch_size_[1]+1;
+    length[2]=params.patch_size_[2]+1;
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
@@ -999,8 +999,8 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     float scalar_time = 0.;
 
     //split cell into smaller sub_cells for refined sorting
-    // cell = (params.n_space[0]+1);
-    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+    // cell = (params.patch_size_[0]+1);
+    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.patch_size_[i]+1);
 
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells

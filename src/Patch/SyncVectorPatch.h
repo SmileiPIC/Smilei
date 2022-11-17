@@ -38,7 +38,7 @@ public :
     template<typename T, typename F> static
     void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
     {
-        unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
+        unsigned int nx_, ny_, nz_, h0, oversize[3], size[3], gsp[3];
         T *pt1, *pt2;
         F* field1;
         F* field2;
@@ -50,9 +50,9 @@ public :
         oversize[1] = vecPatches( 0 )->EMfields->oversize[1];
         oversize[2] = vecPatches( 0 )->EMfields->oversize[2];
 
-        n_space[0] = vecPatches( 0 )->EMfields->n_space[0];
-        n_space[1] = vecPatches( 0 )->EMfields->n_space[1];
-        n_space[2] = vecPatches( 0 )->EMfields->n_space[2];
+        size[0] = vecPatches( 0 )->EMfields->size_[0];
+        size[1] = vecPatches( 0 )->EMfields->size_[1];
+        size[2] = vecPatches( 0 )->EMfields->size_[2];
 
         unsigned int nComp = fields.size()/nPatches;
 
@@ -98,7 +98,7 @@ public :
                     //The patch to the west belongs to the same MPI process than I.
                     field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[0][0]-h0+icomp*nPatches] );
                     field2 = static_cast<F *>( fields[ifield] );
-                    pt1 = &( *field1 )( n_space[0]*ny_*nz_ );
+                    pt1 = &( *field1 )( size[0]*ny_*nz_ );
                     pt2 = &( *field2 )( 0 );
                     //Sum 2 ==> 1
                     for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
@@ -173,7 +173,7 @@ public :
                         //The patch to the south belongs to the same MPI process than I.
                         field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches] );
                         field2 = static_cast<F *>( fields[ifield] );
-                        pt1 = &( *field1 )( n_space[1]*nz_ );
+                        pt1 = &( *field1 )( size[1]*nz_ );
                         pt2 = &( *field2 )( 0 );
                         for( unsigned int j = 0; j < nx_ ; j++ ) {
                             for( unsigned int i = 0; i < gsp[1]*nz_ ; i++ ) {
@@ -247,7 +247,7 @@ public :
                             //The patch below me belongs to the same MPI process than I.
                             field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches] );
                             field2 = static_cast<F *>( fields[ifield] );
-                            pt1 = &( *field1 )( n_space[2] );
+                            pt1 = &( *field1 )( size[2] );
                             pt2 = &( *field2 )( 0 );
                             for( unsigned int j = 0; j < nx_*ny_ ; j++ ) {
                                 for( unsigned int i = 0; i < gsp[2] ; i++ ) {

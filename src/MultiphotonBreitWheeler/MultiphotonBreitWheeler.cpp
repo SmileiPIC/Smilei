@@ -175,12 +175,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Time to event
     double event_time;
 
-    // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
-
     // Position shortcut
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = n_dimensions_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -308,13 +302,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
                     // Update of the position
                     // Move the photons
-
-//#ifdef  __DEBUG
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        particles.position_old(i,ipart) = position[i][ipart];
-//#endif
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
 // withou tasks
 

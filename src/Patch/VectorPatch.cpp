@@ -328,9 +328,6 @@ void VectorPatch::dynamics( Params &params,
     timers.particles.restart();
     ostringstream t;
 
-    bool diag_PartEventTracing {false};
-    double reference_time;
-
 #ifdef _OMPTASKS
     #pragma omp single
     {
@@ -346,6 +343,7 @@ void VectorPatch::dynamics( Params &params,
 #endif
 
 #ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     if( !params.Laser_Envelope_model ) {
         diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
         if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
@@ -364,7 +362,7 @@ void VectorPatch::dynamics( Params &params,
                           time_dual, timers, itime );
 #endif
 
-#  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     #ifdef _OMPTASKS
     #pragma omp taskwait
     #endif
@@ -566,12 +564,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space.cell_index_[0] = 0;
             init_space.cell_index_[1] = 0;
             init_space.cell_index_[2] = 0;
-            init_space.box_size_[0]   = params.n_space[0];
-            init_space.box_size_[1]   = params.n_space[1];
-            init_space.box_size_[2]   = params.n_space[2];
+            init_space.box_size_[0]   = params.patch_size_[0];
+            init_space.box_size_[1]   = params.patch_size_[1];
+            init_space.box_size_[2]   = params.patch_size_[2];
 
             if( min_max == 1 ) {
-                init_space.cell_index_[axis] = params.n_space[axis]-1;
+                init_space.cell_index_[axis] = params.patch_size_[axis]-1;
             }
             init_space.box_size_[axis] = 1;
 
@@ -1185,7 +1183,7 @@ void VectorPatch::initExternals( Params &params )
             if( patch->isBoundary(ib) && patch->EMfields->emBoundCond[ib] ) {
                 unsigned int nlaser = patch->EMfields->emBoundCond[ib]->vecLaser.size();
                 for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                    patch->EMfields->emBoundCond[ib]->vecLaser[ilaser]->initFields( params, patch );
+                    patch->EMfields->emBoundCond[ib]->vecLaser[ilaser]->initFields( params, patch, patch->EMfields );
                 }
             }
 
@@ -1547,11 +1545,11 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
     }
 
-    unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+    unsigned int nx_p2_global = ( params.global_size_[0]+1 );
     if( Ex_[0]->dims_.size()>1 ) {
-        nx_p2_global *= ( params.n_space_global[1]+1 );
+        nx_p2_global *= ( params.global_size_[1]+1 );
         if( Ex_[0]->dims_.size()>2 ) {
-            nx_p2_global *= ( params.n_space_global[2]+1 );
+            nx_p2_global *= ( params.global_size_[2]+1 );
         }
     }
 
@@ -1658,9 +1656,9 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Allreduce( &Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 )*( params.n_space[2]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 )*( params.n_space[2]+1 ) );;
-        E_Add[2] = -Ez_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+1 )*( params.n_space[2]+2 ) );;
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 )*( params.patch_size_[1]+1 )*( params.patch_size_[2]+1 ) );
+        E_Add[1] = -Ey_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+2 )*( params.patch_size_[2]+1 ) );;
+        E_Add[2] = -Ez_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+1 )*( params.patch_size_[2]+2 ) );;
     } else if( Ex_[0]->dims_.size()==2 ) {
         double Ex_XminYmax = 0.0;
         double Ey_XminYmax = 0.0;
@@ -1713,8 +1711,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         MPI_Allreduce( &Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 )*( params.patch_size_[1]+1 ) );
+        E_Add[1] = -Ey_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+2 ) );
 #endif
 
     } else if( Ex_[0]->dims_.size()==1 ) {
@@ -1744,7 +1742,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
 
         MPI_Allreduce( &Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 ) );
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 ) );
 #endif
 
     }
@@ -1831,12 +1829,12 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
             Ap_AM_.push_back( emAM->Ap_AM_ );
         }
 
-        // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        // unsigned int nx_p2_global = ( params.global_size_[0]+1 );
         // //if ( Ex_[0]->dims_.size()>1 ) {
         // if( El_Poisson_[0]->dims_.size()>1 ) {
-        //     nx_p2_global *= ( params.n_space_global[1]+1 );
+        //     nx_p2_global *= ( params.global_size_[1]+1 );
         //     if( El_Poisson_[0]->dims_.size()>2 ) {
-        //         nx_p2_global *= ( params.n_space_global[2]+1 );
+        //         nx_p2_global *= ( params.global_size_[2]+1 );
         //     }
         // }
 
@@ -2157,12 +2155,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
     }
 
-    // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+    // unsigned int nx_p2_global = ( params.global_size_[0]+1 );
     // //if ( Ex_[0]->dims_.size()>1 ) {
     // if( Ex_rel_[0]->dims_.size()>1 ) {
-    //     nx_p2_global *= ( params.n_space_global[1]+1 );
+    //     nx_p2_global *= ( params.global_size_[1]+1 );
     //     if( Ex_rel_[0]->dims_.size()>2 ) {
-    //         nx_p2_global *= ( params.n_space_global[2]+1 );
+    //         nx_p2_global *= ( params.global_size_[2]+1 );
     //     }
     // }
 
@@ -2288,9 +2286,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Allreduce( &Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 )*( params.n_space[2]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 )*( params.n_space[2]+1 ) );;
-        E_Add[2] = -Ez_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+1 )*( params.n_space[2]+2 ) );;
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 )*( params.patch_size_[1]+1 )*( params.patch_size_[2]+1 ) );
+        E_Add[1] = -Ey_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+2 )*( params.patch_size_[2]+1 ) );;
+        E_Add[2] = -Ez_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+1 )*( params.patch_size_[2]+2 ) );;
     } else if( Ex_rel_[0]->dims_.size()==2 ) {
         double Ex_XminYmax = 0.0;
         double Ey_XminYmax = 0.0;
@@ -2343,8 +2341,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         MPI_Allreduce( &Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );;
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 )*( params.patch_size_[1]+1 ) );
+        E_Add[1] = -Ey_avg/( ( params.patch_size_[0]+1 )*( params.patch_size_[1]+2 ) );;
 #endif
 
     }
@@ -2376,7 +2374,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
 
         MPI_Allreduce( &Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-        E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 ) );
+        E_Add[0] = -Ex_avg/( ( params.patch_size_[0]+2 ) );
 #endif
 
     }
@@ -2597,11 +2595,11 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             Ap_AM_.push_back( emAM->Ap_AM_ );
         }
 
-        // unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        // unsigned int nx_p2_global = ( params.global_size_[0]+1 );
         // if( El_rel_[0]->dims_.size()>1 ) {
-        //     nx_p2_global *= ( params.n_space_global[1]+1 );
+        //     nx_p2_global *= ( params.global_size_[1]+1 );
         //     if( El_rel_[0]->dims_.size()>2 ) {
-        //         nx_p2_global *= ( params.n_space_global[2]+1 );
+        //         nx_p2_global *= ( params.global_size_[2]+1 );
         //     }
         // }
 
@@ -4109,7 +4107,7 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
             //     * Calculate first the number of grid points in total
             uint64_t n_grid_points = 1;
             for( unsigned int i=0; i<params.nDim_field; i++ ) {
-                n_grid_points *= ( params.n_space[i] + 2*params.oversize[i]+1 );
+                n_grid_points *= ( params.patch_size_[i] + 2*params.oversize[i]+1 );
             }
             n_grid_points *= params.tot_number_of_patches;
             //     * Now calculate the total number of fields
@@ -4200,8 +4198,6 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     timers.particles.restart();
 
-    bool diag_PartEventTracing {false};
-
 #ifdef _OMPTASKS
     #pragma omp single
     {
@@ -4220,10 +4216,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     } // end ipatch
 #endif
 
-#  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
     if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
-#  endif
+#endif
 
 
     #pragma omp single
@@ -4260,12 +4257,12 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     diag_flag = needsRhoJsNow( itime );
 
     timers.particles.restart();
-    bool diag_PartEventTracing {false};
 
-#  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
     // if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
-#  endif
+#endif
 
 #ifdef _OMPTASKS
     #pragma omp single
@@ -4335,11 +4332,11 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                             double time_dual, Timers &timers, int itime )
 {
-    bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -4397,11 +4394,11 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are not activated
     #pragma omp for schedule(runtime)
@@ -4442,11 +4439,11 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
+    bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are not activated
     #pragma omp for schedule(runtime)
@@ -4498,9 +4495,9 @@ void VectorPatch::dynamicsWithTasks( Params &params,
 
     bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     if (!params.Laser_Envelope_model)
     {
@@ -4727,9 +4724,9 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
 
     bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are activated
     #pragma omp single
@@ -4837,9 +4834,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
     int has_reduced_densities[Npatches];  // dependency array for the density reduction tasks
     bool diag_PartEventTracing {false};
 
-    #  ifdef _PARTEVENTTRACING
+#ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    #endif
+#endif
 
     // if tasks are activated
     #pragma omp single

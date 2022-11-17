@@ -55,7 +55,7 @@ void Patch1D::initStep2( Params &params, DomainDecomposition *domain_decompositi
 {
     std::vector<int> xcall( 1, 0 );
     
-    Pcoordinates[0] = hindex;
+    Pcoordinates = { hindex };
     
     // 1st direction
     xcall[0] = Pcoordinates[0]-1;

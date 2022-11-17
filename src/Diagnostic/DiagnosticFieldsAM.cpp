@@ -44,14 +44,14 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     patch_offset_in_grid = { params.oversize[0]+1, params.oversize[1]+1 };
     
     // Calculate the patch size
-    patch_size = { params.n_space[0], params.n_space[1] };
+    patch_size_ = { params.patch_size_[0], params.patch_size_[1] };
     
     // Get the full size of the array in file
     vector<hsize_t> final_array_size(2);
     // Take subgrid into account
     for( unsigned int i=0; i<2; i++ ) {
         hsize_t start = 0;
-        final_array_size[i] = params.number_of_patches[i] * params.n_space[i] + 1;
+        final_array_size[i] = params.number_of_patches[i] * params.patch_size_[i] + 1;
         findSubgridIntersection1( i, start, final_array_size[i], start );
     }
     if( is_complex_ ) {
@@ -122,8 +122,8 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     while( i < patch_ixy.size() ) {
         
         // For this line of patches at a given X, find the number of points in X
-        offset[0] = patch_ixy[i].x * patch_size[0] + ( ( patch_ixy[i].x==0 )?0:1 );
-        npoints[0] = patch_size[0] + ( ( patch_ixy[i].x==0 )?1:0 );
+        offset[0] = patch_ixy[i].x * patch_size_[0] + ( ( patch_ixy[i].x==0 )?0:1 );
+        npoints[0] = patch_size_[0] + ( ( patch_ixy[i].x==0 )?1:0 );
         findSubgridIntersection1( 0, offset[0], npoints[0], start_in_patch[0] );
         
         // Now iterate on the patches along Y that share the same X
@@ -132,8 +132,8 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
             
             unsigned int ipatch = patch_ixy[i].i;
             // Find the number of points along Y for this patch
-            offset[1] = patch_ixy[i].y * patch_size[1] + ( ( patch_ixy[i].y==0 )?0:1 );
-            npoints[1] = patch_size[1] + ( ( patch_ixy[i].y==0 )?1:0 );
+            offset[1] = patch_ixy[i].y * patch_size_[1] + ( ( patch_ixy[i].y==0 )?0:1 );
+            npoints[1] = patch_size_[1] + ( ( patch_ixy[i].y==0 )?1:0 );
             findSubgridIntersection1( 1, offset[1], npoints[1], start_in_patch[1] );
             
             // Calculate the initial skip when writing this patch to the buffer
@@ -198,8 +198,8 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield, F& out_dat
     // Find the intersection between this patch and the subgrid
     hsize_t patch_begin[2], patch_npoints[2], start_in_patch[2];
     for( unsigned int i=0; i<2; i++ ) {
-        patch_begin  [i] = patch->Pcoordinates[i] * patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?0:1 );
-        patch_npoints[i] = patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?1:0 );
+        patch_begin  [i] = patch->Pcoordinates[i] * patch_size_[i] + ( ( patch->Pcoordinates[i]==0 )?0:1 );
+        patch_npoints[i] = patch_size_[i] + ( ( patch->Pcoordinates[i]==0 )?1:0 );
         findSubgridIntersection1( i, patch_begin[i], patch_npoints[i], start_in_patch[i] );
         start_in_patch[i] += patch_offset_in_grid[i] - ( ( patch->Pcoordinates[i]==0 )?1:0 );
     }

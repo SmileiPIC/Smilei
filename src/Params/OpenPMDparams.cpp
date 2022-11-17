@@ -38,7 +38,7 @@ OpenPMDparams::OpenPMDparams( Params &p ):
         fieldSolver = "other";
         fieldSolverParameters = params->maxwell_sol;
     }
-    patchSize = params->n_space;
+    patchSize = params->patch_size_;
     
     // Units
     unitDimension.resize( SMILEI_NUNITS );
@@ -108,7 +108,7 @@ OpenPMDparams::OpenPMDparams( Params &p ):
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( params->EM_BCs[i][j] );
             } else {
-                //ERROR( " impossible boundary condition " );
+                ERROR( " impossible boundary condition " );
             }
             particleBoundary          .addString( "" );
             particleBoundaryParameters.addString( "" );

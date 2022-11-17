@@ -23,7 +23,7 @@ LaserEnvelope1D::LaserEnvelope1D( Params &params, Patch *patch, ElectroMagn *EMf
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = params.n_space[i]+1;
+        dimPrim[i] = params.patch_size_[i]+1;
         // + Ghost domain
         dimPrim[i] += 2*params.oversize[i];
     }

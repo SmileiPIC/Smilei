@@ -43,9 +43,26 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
 
     hindex = ipatch;
     nDim_fields_ = params.nDim_field;
-
+    
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
+        || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
+        size_ = params.patch_size_;
+        oversize = params.oversize;
+    }
+    else if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
+        size_ = params.region_size_;
+        oversize = params.region_oversize;
+    }
+    else { //NULL (Global domain)
+        size_ = params.global_size_;
+        oversize = params.region_oversize;
+    }
+    size_.resize( nDim_fields_ );
+    oversize.resize( nDim_fields_ );
+    
     initStep1( params );
-
+    
+    
 
 #ifdef  __DETAILED_TIMERS
 
@@ -84,7 +101,10 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition
 
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
-
+    
+    size_ = patch->size_;
+    oversize = patch->oversize;
+    
     initStep1( params );
 
 #ifdef  __DETAILED_TIMERS
@@ -103,10 +123,6 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition
 
 void Patch::initStep1( Params &params )
 {
-    // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !!
-    //Pcoordinates.resize(nDim_fields_);
-    Pcoordinates.resize( 2 );
-
     nbNeighbors_ = 2;
     neighbor_.resize( nDim_fields_ );
     tmp_neighbor_.resize( nDim_fields_ );
@@ -120,12 +136,7 @@ void Patch::initStep1( Params &params )
         MPI_neighbor_[iDim].resize( 2, MPI_PROC_NULL );
         tmp_MPI_neighbor_[iDim].resize( 2, MPI_PROC_NULL );
     }
-
-    oversize.resize( nDim_fields_ );
-    for( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
-        oversize[iDim] = params.oversize[iDim];
-    }
-
+    
     // Initialize the random number generator
     rand_ = new Random( params.random_seed + hindex );
 
@@ -146,9 +157,9 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     cell_starting_global_index.resize( params.nDim_field, 0 );
     radius = 0.;
     for( unsigned int i = 0 ; i<params.nDim_field ; i++ ) {
-        min_local_[i] = ( Pcoordinates[i]   )*( params.n_space[i]*params.cell_length[i] );
-        max_local_[i] = ( Pcoordinates[i]+1 )*( params.n_space[i]*params.cell_length[i] );
-        cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
+        min_local_[i] = ( Pcoordinates[i]   )*( params.patch_size_[i]*params.cell_length[i] );
+        max_local_[i] = ( Pcoordinates[i]+1 )*( params.patch_size_[i]*params.cell_length[i] );
+        cell_starting_global_index[i] += Pcoordinates[i]*params.patch_size_[i];
         cell_starting_global_index[i] -= params.oversize[i];
         center_[i] = ( min_local_[i]+max_local_[i] )*0.5;
         radius += pow( max_local_[i] - center_[i] + params.cell_length[i], 2 );
@@ -334,298 +345,84 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
     // If current patch is a Domain's patch
-    if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
-
-        if (nDim_fields_==1) {
-            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
-
-                        if (params.map_rank[xDom][yDom][zDom] == rk ) {
-                            Pcoordinates[0] = xDom;
-                            Pcoordinates[1] = yDom;
-                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
-
-                            cell_starting_global_index[0] = params.offset_map[0][xDom];
-
-                            if (xDom>0)
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom][zDom];
-                            else if (params.EM_BCs[0][0]=="periodic") {
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
+    if( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
+        
+        unsigned int ijk[3];
+        for( ijk[0] = 0 ; ijk[0] < params.number_of_region[0] ; ijk[0]++ ) {
+            for( ijk[1] = 0 ; ijk[1] < params.number_of_region[1] ; ijk[1]++ ) {
+                for( ijk[2] = 0 ; ijk[2] < params.number_of_region[2] ; ijk[2]++ ) {
+                    if( params.map_rank[ijk[0]][ijk[1]][ijk[2]] ==  rk ) {
+                        for( unsigned int iDim = 0; iDim < params.nDim_field; iDim++ ) {
+                            Pcoordinates[iDim] = ijk[iDim];
+                            min_local_[iDim] =  params.offset_map[iDim][ijk[iDim]]                            * params.cell_length[iDim];
+                            max_local_[iDim] = (params.offset_map[iDim][ijk[iDim]]+params.region_size_[iDim]) * params.cell_length[iDim];
+                            center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
+                            radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
+                            cell_starting_global_index[iDim] = params.offset_map[iDim][ijk[iDim]];
+                            // Neighbor before
+                            if( ijk[iDim] > 0 ) {
+                                unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };
+                                IJK[iDim] -= 1;
+                                MPI_neighbor_[iDim][0] = params.map_rank[IJK[0]][IJK[1]][IJK[2]];
+                            } else if( params.EM_BCs[0][0]=="periodic" ) {
+                                unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };
+                                IJK[iDim] += params.number_of_region[iDim] - 1;
+                                MPI_neighbor_[iDim][0] = params.map_rank[IJK[0]][IJK[1]][IJK[2]];
+                            } else {
+                                MPI_neighbor_[iDim][0] = MPI_PROC_NULL;
                             }
-                            else
-                                MPI_neighbor_[0][0] = MPI_PROC_NULL;
-
-                            if (xDom<params.number_of_region[0]-1)
-                                MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
-                            else if (params.EM_BCs[0][1]=="periodic")
-                                MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else
-                                MPI_neighbor_[0][1] = MPI_PROC_NULL;
+                            // Neighbor after
+                            if( ijk[iDim] < params.number_of_region[iDim]-1 ) {
+                                unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };
+                                IJK[iDim] += 1;
+                                MPI_neighbor_[iDim][1] = params.map_rank[IJK[0]][IJK[1]][IJK[2]];
+                            } else if (params.EM_BCs[0][1]=="periodic") {
+                                unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };
+                                IJK[iDim] = (IJK[iDim]+1) % params.number_of_region[iDim];
+                                MPI_neighbor_[iDim][1] = params.map_rank[IJK[0]][IJK[1]][IJK[2]];
+                            } else {
+                                MPI_neighbor_[iDim][1] = MPI_PROC_NULL;
+                            }
                         }
                     }
                 }
-
+            }
+        }
+    
+        if( nDim_fields_ == 1 ) {
             neighbor_[0][0] = MPI_neighbor_[0][0];
             neighbor_[0][1] = MPI_neighbor_[0][1];
-
             cell_starting_global_index[0] -= oversize[0];
-        } // Fin 1D
-
-        if (nDim_fields_==2) {
-
-            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
-
-                        if (params.map_rank[xDom][yDom][zDom] == rk ) {
-
-
-                            Pcoordinates[0] =xDom ;
-                            Pcoordinates[1] =yDom;
-
-
-                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
-                            min_local_[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
-                            max_local_[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
-
-                            center_[0] = ( min_local_[0]+max_local_[0] )*0.5;
-                            radius += pow( max_local_[0] - center_[0] + params.cell_length[0], 2 );
-                            center_[1] = ( min_local_[1]+max_local_[1] )*0.5;
-                            radius += pow( max_local_[1] - center_[1] + params.cell_length[1], 2 );
-
-                            //Shift point position by dr/2 for the AM spectral geometry
-                            //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-                            //    min_local_[1] += params.cell_length[1]/2.;
-                            //    max_local_[1] += params.cell_length[1]/2.;
-                            //    center_   [1] += params.cell_length[1]/2.;
-                            //}
-
-                            cell_starting_global_index[0] = params.offset_map[0][xDom];
-                            cell_starting_global_index[1] = params.offset_map[1][yDom];
-
-                            // ---------------- X ----------------
-                            if (xDom>0)
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom][zDom];
-                            else if (params.EM_BCs[0][0]=="periodic") {
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
-                            }
-                            else
-                                MPI_neighbor_[0][0] = MPI_PROC_NULL;
-
-                            if (xDom<params.number_of_region[0]-1)
-                                MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
-                            else if (params.EM_BCs[0][1]=="periodic")
-                                MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else
-                                MPI_neighbor_[0][1] = MPI_PROC_NULL;
-
-                            // ---------------- Y ----------------
-                            if (yDom>0)
-                                MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
-                            else if (params.EM_BCs[1][0]=="periodic") {
-                                MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_region[1]][zDom];
-                            }
-                            else
-                                MPI_neighbor_[1][0] = MPI_PROC_NULL;
-
-                            if (yDom<params.number_of_region[1]-1)
-                                MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1][zDom];
-                            else if (params.EM_BCs[1][1]=="periodic")
-                                MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_region[1]][zDom];
-                            else
-                                MPI_neighbor_[1][1] = MPI_PROC_NULL;
-                        }
-                    }
+        } else {
+            for( unsigned int iDim = 0; iDim < params.nDim_field; iDim++ ) {
+                std::vector<int> xcall( params.nDim_field );
+                for( unsigned int i = 0; i<Pcoordinates.size(); i++ ) {
+                    xcall[i] = Pcoordinates[i];
                 }
-
-            std::vector<int> xcall( 2, 0 );
-            // 1st direction
-            xcall[0] = Pcoordinates[0]-1;
-            xcall[1] = Pcoordinates[1];
-            if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
-                xcall[0] += domain_decomposition->ndomain_[0];
-            }
-            neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
-
-            xcall[0] = Pcoordinates[0]+1;
-            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)params.number_of_region[0] ) {
-                xcall[0] -= params.number_of_region[0];
-            }
-            neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
-
-            // 2nd direction
-            xcall[0] = Pcoordinates[0];
-            xcall[1] = Pcoordinates[1]-1;
-            if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
-                xcall[1] += domain_decomposition->ndomain_[1];
-            }
-            neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
-
-            xcall[1] = Pcoordinates[1]+1;
-            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= (int)params.number_of_region[1] ) {
-                xcall[1] -=  params.number_of_region[1];
-            }
-            neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
-
-            cell_starting_global_index[0] -= oversize[0];
-            cell_starting_global_index[1] -= oversize[1];
-        } // Fin 2D
-
-
-        if (nDim_fields_==3) {
-
-            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
-
-                        if (params.map_rank[xDom][yDom][zDom] == rk ) {
-                            Pcoordinates[0] = xDom;
-                            Pcoordinates[1] = yDom;
-                            Pcoordinates[2] = zDom;
-
-                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
-                            min_local_[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
-                            max_local_[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
-                            min_local_[2] =  params.offset_map[2][zDom]                           * params.cell_length[2];
-                            max_local_[2] = (params.offset_map[2][zDom]+params.n_space_region[2]) * params.cell_length[2];
-
-                            center_[0] = ( min_local_[0]+max_local_[0] )*0.5;
-                            radius += pow( max_local_[0] - center_[0] + params.cell_length[0], 2 );
-                            center_[1] = ( min_local_[1]+max_local_[1] )*0.5;
-                            radius += pow( max_local_[1] - center_[1] + params.cell_length[1], 2 );
-                            center_[2] = ( min_local_[2]+max_local_[2] )*0.5;
-                            radius += pow( max_local_[2] - center_[2] + params.cell_length[2], 2 );
-
-
-                            cell_starting_global_index[0] = params.offset_map[0][xDom];
-                            cell_starting_global_index[1] = params.offset_map[1][yDom];
-                            cell_starting_global_index[2] = params.offset_map[2][zDom];
-
-                            // ---------------- X ----------------
-                            if (xDom>0)
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom][zDom];
-                            else if (params.EM_BCs[0][0]=="periodic") {
-                                MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
-                            }
-                            else
-                                MPI_neighbor_[0][0] = MPI_PROC_NULL;
-
-                            if (xDom<params.number_of_region[0]-1)
-                                MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
-                            else if (params.EM_BCs[0][1]=="periodic")
-                                MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else
-                                MPI_neighbor_[0][1] = MPI_PROC_NULL;
-
-
-
-                            // ---------------- Y ----------------
-                            if (yDom>0)
-                                MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
-                            else if (params.EM_BCs[1][0]=="periodic") {
-                                MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_region[1]][zDom];
-                            }
-                            else
-                                MPI_neighbor_[1][0] = MPI_PROC_NULL;
-
-                            if (yDom<params.number_of_region[1]-1)
-                                MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1][zDom];
-                            else if (params.EM_BCs[1][1]=="periodic")
-                                MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_region[1]][zDom];
-                            else
-                                MPI_neighbor_[1][1] = MPI_PROC_NULL;
-
-                            // ---------------- Z ----------------
-                            if (zDom>0)
-                                MPI_neighbor_[2][0] = params.map_rank[xDom][yDom][zDom-1];
-                            else if (params.EM_BCs[2][0]=="periodic") {
-                                MPI_neighbor_[2][0] = params.map_rank[xDom][yDom][zDom-1+params.number_of_region[2]];
-                            }
-                            else
-                                MPI_neighbor_[2][0] = MPI_PROC_NULL;
-
-                            if (zDom<params.number_of_region[2]-1)
-                                MPI_neighbor_[2][1] = params.map_rank[xDom][yDom][zDom+1];
-                            else if (params.EM_BCs[2][1]=="periodic")
-                                MPI_neighbor_[2][1] = params.map_rank[xDom][yDom][(zDom+1)%params.number_of_region[2]];
-                            else
-                                MPI_neighbor_[2][1] = MPI_PROC_NULL;
-
-                        }
-                    }
+                xcall[iDim] -= 1;
+                if( params.EM_BCs[iDim][0]=="periodic" && xcall[iDim] < 0 ) {
+                    xcall[iDim] += domain_decomposition->ndomain_[iDim];
                 }
-
-            //neighbor_[0][0] = MPI_neighbor_[0][0];
-            //neighbor_[0][1] = MPI_neighbor_[0][1];
-            //neighbor_[1][0] = MPI_neighbor_[1][0];
-            //neighbor_[1][1] = MPI_neighbor_[1][1];
-            //neighbor_[2][0] = MPI_neighbor_[2][0];
-            //neighbor_[2][1] = MPI_neighbor_[2][1];
-            std::vector<int> xcall( 3, 0 );
-
-            // 1st direction
-            xcall[0] = Pcoordinates[0]-1;
-            xcall[1] = Pcoordinates[1];
-            xcall[2] = Pcoordinates[2];
-            if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
-                xcall[0] += domain_decomposition->ndomain_[0];
+                neighbor_[iDim][0] = domain_decomposition->getDomainId( xcall );
+                xcall[iDim] = Pcoordinates[iDim]+1;
+                if( params.EM_BCs[iDim][0]=="periodic" && xcall[iDim] >= ( int )domain_decomposition->ndomain_[iDim] ) {
+                    xcall[iDim] -= domain_decomposition->ndomain_[iDim];
+                }
+                neighbor_[iDim][1] = domain_decomposition->getDomainId( xcall );
+                
+                cell_starting_global_index[iDim] -= oversize[iDim];
             }
-            neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
-            xcall[0] = Pcoordinates[0]+1;
-            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= ( int )domain_decomposition->ndomain_[0] ) {
-                xcall[0] -= domain_decomposition->ndomain_[0];
-            }
-            neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
-
-            // 2st direction
-            xcall[0] = Pcoordinates[0];
-            xcall[1] = Pcoordinates[1]-1;
-            xcall[2] = Pcoordinates[2];
-            if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
-                xcall[1] += domain_decomposition->ndomain_[1];
-            }
-            neighbor_[1][0] =  domain_decomposition->getDomainId( xcall );
-            xcall[1] = Pcoordinates[1]+1;
-            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= ( int )domain_decomposition->ndomain_[1] ) {
-                xcall[1] -= domain_decomposition->ndomain_[1];
-            }
-            neighbor_[1][1] =  domain_decomposition->getDomainId( xcall );
-
-            // 3st direction
-            xcall[0] = Pcoordinates[0];
-            xcall[1] = Pcoordinates[1];
-            xcall[2] = Pcoordinates[2]-1;
-            if( params.EM_BCs[2][0]=="periodic" && xcall[2] < 0 ) {
-                xcall[2] += domain_decomposition->ndomain_[2];
-            }
-            neighbor_[2][0] =  domain_decomposition->getDomainId( xcall );
-            xcall[2] = Pcoordinates[2]+1;
-            if( params.EM_BCs[2][0]=="periodic" && xcall[2] >= ( int )domain_decomposition->ndomain_[2] ) {
-                xcall[2] -= domain_decomposition->ndomain_[2];
-            }
-            neighbor_[2][1] =  domain_decomposition->getDomainId( xcall );
-
-
-
-
-            cell_starting_global_index[0] -= oversize[0];
-            cell_starting_global_index[1] -= oversize[1];
-            cell_starting_global_index[2] -= oversize[2];
-        } // Fin 3D
-
-    } // ENd if
-    else if ( domain_decomposition == NULL ) { // If current patch is the global Domain's patch
+        }
+        
+    } else if ( domain_decomposition == NULL ) { // If current patch is the global Domain's patch
+    
         if ( params.geometry != "AMcylindrical" ) {
             WARNING ("Global gathering not tested on non AM configuration" ) ;
         }
         for ( int iDim=0 ; iDim<nDim_fields_ ; iDim++ ) {
             Pcoordinates[iDim] = 0;
             min_local_[iDim] = 0.;
-            max_local_[iDim] = params.n_space_global[iDim]*params.cell_length[iDim];
+            max_local_[iDim] = params.global_size_[iDim]*params.cell_length[iDim];
 
             center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
             radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
@@ -634,22 +431,14 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
             if (params.EM_BCs[iDim][0]=="periodic") {
                 MPI_neighbor_[iDim][0] = rk;
-            }
-            else
+            } else {
                 MPI_neighbor_[iDim][0] = MPI_PROC_NULL;
-            if (params.EM_BCs[iDim][1]=="periodic") {
+            } if (params.EM_BCs[iDim][1]=="periodic") {
                 MPI_neighbor_[iDim][1] = rk;
-            }
-            else
+            } else {
                 MPI_neighbor_[iDim][1] = MPI_PROC_NULL;
-
+            }
         }
-        //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-        //    min_local_[1] += params.cell_length[1]/2.;
-        //    max_local_[1] += params.cell_length[1]/2.;
-        //    center_   [1] += params.cell_length[1]/2.;
-        //}
-
     }
     else {
         ERROR( "Should not pass here" );
@@ -657,24 +446,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
     radius = sqrt(radius);
 
-
-    //cart_updateMPIenv(smpi);
-
     MPI_me_ = vecPatch( 0 )->MPI_me_;
-    /*for( int i = 0 ; i<nDim_fields_ ; i++ ) {
-        if( ( MPI_neighbor_[i][0]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
-            MPI_neighbor_[i][0] = MPI_PROC_NULL;
-        }
-        if( ( MPI_neighbor_[i][1]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
-            MPI_neighbor_[i][1] = MPI_PROC_NULL;
-        }
-        if( ( neighbor_[i][0]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
-            neighbor_[i][0] = MPI_PROC_NULL;
-        }
-        if( ( neighbor_[i][1]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
-            neighbor_[i][1] = MPI_PROC_NULL;
-        }
-    }*/
 
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecPatch( 0 )->vecSpecies, this );
 
@@ -953,7 +725,7 @@ void Patch::prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
 
     int n_part_send;
     int h0 = ( *vecPatch )( 0 )->hindex;
-    double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
+    double x_max = params.cell_length[iDim]*( params.global_size_[iDim] );
 
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
 
@@ -1435,9 +1207,8 @@ void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params,
 {   // in this patch, for the species ispec, for all its bins,
     // copy the current/charge densities in the patch grid
     Species *spec = vecSpecies[ispec];
-    int Nbins = spec->Nbins;
     std::vector<unsigned int> b_dim = spec->b_dim;
-    for( unsigned int ibin = 0 ; ibin < Nbins  ; ibin++ ) {
+    for( unsigned int ibin = 0 ; ibin < spec->Nbins  ; ibin++ ) {
         if (params.geometry != "AMcylindrical"){
             double *b_Jx             = spec->b_Jx[ibin];
             double *b_Jy             = spec->b_Jy[ibin];
@@ -1458,9 +1229,8 @@ void Patch::copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &pa
 {   // in this patch, for the species ispec, for all its bins,
     // copy the current/charge densities in the patch grid
     Species *spec = vecSpecies[ispec];
-    int Nbins = spec->Nbins;
     std::vector<unsigned int> b_dim = spec->b_dim;
-    for( unsigned int ibin = 0 ; ibin < Nbins  ; ibin++ ) {
+    for( unsigned int ibin = 0 ; ibin < spec->Nbins  ; ibin++ ) {
         if (params.geometry != "AMcylindrical"){
             double *b_Chi   = spec->b_Chi[ibin];
             EMfields->copyInLocalSusceptibility(ispec, ibin*clrw, b_Chi, b_dim, diag_flag);

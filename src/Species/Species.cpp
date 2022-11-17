@@ -116,8 +116,8 @@ Species::Species( Params &params, Patch *patch ) :
     inv_nDim_particles = 1./( ( double )nDim_particle );
 
     length_[0]=0;
-    length_[1]=params.n_space[1]+1;
-    length_[2]=params.n_space[2]+1;
+    length_[1]=params.patch_size_[1]+1;
+    length_[2]=params.patch_size_[2]+1;
 
     merge_momentum_cell_size_.resize(3);
 
@@ -139,22 +139,22 @@ Species::Species( Params &params, Patch *patch ) :
 void Species::initCluster( Params &params )
 {
     // Arrays of the min and max indices of the particle bins
-    particles->first_index.resize( params.n_space[0]/cluster_width_ );
-    particles->last_index.resize( params.n_space[0]/cluster_width_ );
-    Nbins = params.n_space[0]/cluster_width_ ;
+    particles->first_index.resize( params.patch_size_[0]/cluster_width_ );
+    particles->last_index.resize( params.patch_size_[0]/cluster_width_ );
+    Nbins = params.patch_size_[0]/cluster_width_ ;
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
     //Primal dimension of fields.
-    f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
-    f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
-    f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
+    f_dim0 =  params.patch_size_[0] + 2 * oversize[0] +1;
+    f_dim1 =  params.patch_size_[1] + 2 * oversize[1] +1;
+    f_dim2 =  params.patch_size_[2] + 2 * oversize[2] +1;
 
     //Dual dimension of fields.
-    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
-    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
-    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+    f_dim0_d =  params.patch_size_[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.patch_size_[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.patch_size_[2] + 2 * oversize[2] +2;
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_particle == 1 ) {
@@ -279,7 +279,7 @@ void Species::resizeCluster( Params &params )
 
     // We keep the current number of particles
     int npart = particles->size();
-    int size = params.n_space[0]/cluster_width_;
+    int size = params.patch_size_[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( size );
@@ -315,9 +315,9 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
     init_space.cell_index_[0] = 0;
     init_space.cell_index_[1] = 0;
     init_space.cell_index_[2] = 0;
-    init_space.box_size_[0]   = params.n_space[0];
-    init_space.box_size_[1]   = params.n_space[1];
-    init_space.box_size_[2]   = params.n_space[2];
+    init_space.box_size_[0]   = params.patch_size_[0];
+    init_space.box_size_[1]   = params.patch_size_[1];
+    init_space.box_size_[2]   = params.patch_size_[2];
 
     // Creation of the particle creator
     ParticleCreator particle_creator;
@@ -1819,7 +1819,7 @@ void Species::countSortParticles( Params &params )
     int ix, iy;
     double x, y;
 
-    nxy = params.n_space[0]*params.n_space[1];
+    nxy = params.patch_size_[0]*params.patch_size_[1];
     token = ( particles == &particles_sorted[0] );
 
     int indices[nxy];
@@ -1839,7 +1839,7 @@ void Species::countSortParticles( Params &params )
         ix = floor( x * dx_inv_[0] ) ;
         iy = floor( y * dx_inv_[1] ) ;
 
-        ixy = iy + ix*params.n_space[1];
+        ixy = iy + ix*params.patch_size_[1];
 
 
         indices[ixy] ++;
@@ -1861,7 +1861,7 @@ void Species::countSortParticles( Params &params )
         ix = floor( x * dx_inv_[1] ) ;
         iy = floor( y * dx_inv_[2] ) ;
 
-        ixy = iy + ix*params.n_space[1];
+        ixy = iy + ix*params.patch_size_[1];
         particles->overwriteParticle( ip, particles_sorted[token], indices[ixy] );
         indices[ixy]++;
     }
@@ -2439,7 +2439,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             if( params.geometry != "AMcylindrical" ) {
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    for( unsigned int iPart= (unsigned int)(particles->first_index[ibin]) ; (unsigned int)(iPart<particles->last_index[ibin]); iPart++ ) {
+                    for( unsigned int iPart = (unsigned int)(particles->first_index[ibin]) ; iPart < (unsigned int)(particles->last_index[ibin]); iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
                 }//End loop on bins
@@ -2753,7 +2753,11 @@ void Species::check( Patch *patch, std::string title )
     }
     std::cerr << "Check sum at " << title
               << " for "<< this->name_
-              << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " in patch (" << patch->Pcoordinates[0];
+    for( unsigned int idim = 1; idim<patch->Pcoordinates.size(); idim++ ) {
+        std::cerr << "," <<  patch->Pcoordinates[idim];
+    }
+    std::cerr << ") "
               << " mpi process " << patch->MPI_me_
               << " - mode: " << this->vectorized_operators
               << " - nb bin: " << particles->first_index.size()
