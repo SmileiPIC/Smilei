@@ -22,6 +22,12 @@
 #include "ElectroMagnBC1D_SM.h"
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "ElectroMagnBC2D_PML.h"
+#include "ElectroMagnBC3D_PML.h"
+#include "ElectroMagnBCAM_PML.h"
+#include "EnvelopeBCAM_PML.h"
+#include "EnvelopeBC2D_PML.h"
+#include "EnvelopeBC3D_PML.h"
 #include "Laser.h"
 #include "Species.h"
 #include "DiagnosticProbes.h"
@@ -238,7 +244,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
 
 #ifdef  __DEBUG
     //MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
-    MESSAGEALL( " Checkpoint #" << dumpName << "at iteration " << itime << " dumped" );
+    MESSAGEALL( " Checkpoint #" << dumpName << " at iteration " << itime << " dumped" );
 #else
     MESSAGE( " Checkpoint #" << num_dump << "at iteration " << itime << " dumped" );
 #endif
@@ -345,6 +351,16 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         dumpFieldsPerProc( g, EMfields->Bx_m );
         dumpFieldsPerProc( g, EMfields->By_m );
         dumpFieldsPerProc( g, EMfields->Bz_m );
+        for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+            if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
+                cout << "dumping patch" << patch->hindex << endl;
+                dump_PML(embc, g);
+            } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
+                dump_PML(embc, g);
+            }          
+        }
     }
     else {
         for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
@@ -711,6 +727,16 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         restartFieldsPerProc( g, EMfields->Bx_m );
         restartFieldsPerProc( g, EMfields->By_m );
         restartFieldsPerProc( g, EMfields->Bz_m );
+        for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+            if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
+                restart_PML(embc, g);
+            } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
+                restart_PML(embc, g);
+            }          
+        }
+
     }
     else {
         for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
@@ -993,3 +1019,35 @@ void Checkpoint::restartMovingWindow( H5Read &f, SimWindow *simWin )
     simWin->setNmoved( n_moved );
 
 }
+template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
+void  Checkpoint::dump_PML(Tpml embc, H5Write &g ){
+    dumpFieldsPerProc( g, embc->Hx_ );
+    dumpFieldsPerProc( g, embc->Hy_ );
+    dumpFieldsPerProc( g, embc->Hz_ );
+    dumpFieldsPerProc( g, embc->Bx_ );
+    dumpFieldsPerProc( g, embc->By_ );
+    dumpFieldsPerProc( g, embc->Bz_ );
+    dumpFieldsPerProc( g, embc->Ex_ );
+    dumpFieldsPerProc( g, embc->Ey_ );
+    dumpFieldsPerProc( g, embc->Ez_ );
+    dumpFieldsPerProc( g, embc->Hx_ );
+    dumpFieldsPerProc( g, embc->Hy_ );
+    dumpFieldsPerProc( g, embc->Hz_ );
+}
+template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
+void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
+    restartFieldsPerProc( g, embc->Hx_ );
+    restartFieldsPerProc( g, embc->Hy_ );
+    restartFieldsPerProc( g, embc->Hz_ );
+    restartFieldsPerProc( g, embc->Bx_ );
+    restartFieldsPerProc( g, embc->By_ );
+    restartFieldsPerProc( g, embc->Bz_ );
+    restartFieldsPerProc( g, embc->Ex_ );
+    restartFieldsPerProc( g, embc->Ey_ );
+    restartFieldsPerProc( g, embc->Ez_ );
+    restartFieldsPerProc( g, embc->Hx_ );
+    restartFieldsPerProc( g, embc->Hy_ );
+    restartFieldsPerProc( g, embc->Hz_ );
+
+}
+

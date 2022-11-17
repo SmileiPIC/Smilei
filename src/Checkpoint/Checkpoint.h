@@ -146,6 +146,11 @@ private:
     //! restart file
     std::string restart_file;
     
+    //! dump PML in the checkpoint file 
+    template <typename Tpml>
+    void  dump_PML(Tpml embc, H5Write &g );
+    template <typename Tpml>
+    void  restart_PML(Tpml embc, H5Read &g );
 };
 
 #endif /* CHECKPOINT_H_ */
