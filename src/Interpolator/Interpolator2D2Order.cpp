@@ -136,26 +136,34 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                             unsigned int scell,
                                             int ipart_ref )
 {
-    double *Epart = &( smpi->dynamics_Epart[ithread][0] );
-    double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );
-    int *iold = &( smpi->dynamics_iold[ithread][0] );
-    double *delta = &( smpi->dynamics_deltaold[ithread][0] );
+    
+    double *const __restrict__ ELoc  = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ BLoc  = smpi->dynamics_Bpart[ithread].data();
 
-    // Static cast of the electromagnetic fields
-    Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
-    Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
-    Field2D *Ez2D = static_cast<Field2D *>( EMfields->Ez_ );
-    Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
-    Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
-    Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
+    int    *const __restrict__ iold  = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();
+
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+
+    const double *const __restrict__ Ex2D = static_cast<Field2D *>( EMfields->Ex_ )->data();
+    const double *const __restrict__ Ey2D = static_cast<Field2D *>( EMfields->Ey_ )->data();
+    const double *const __restrict__ Ez2D = static_cast<Field2D *>( EMfields->Ez_ )->data();
+    const double *const __restrict__ Bx2D = static_cast<Field2D *>( EMfields->Bx_m )->data();
+    const double *const __restrict__ By2D = static_cast<Field2D *>( EMfields->By_m )->data();
+    const double *const __restrict__ Bz2D = static_cast<Field2D *>( EMfields->Bz_m )->data();
 
     //Loop on bin particles
-    int nparts( particles.numberOfParticles() );
+    const int nparts = particles.numberOfParticles();
+    
+    const int ny_p = EMfields->By_m->dims_[1]; // primary_grid_size_in_y
+    const int ny_d = ny_p + 1;                 // dual_grid_size_in_y
+    
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*d_inv_[0];
-        double ypn = particles.position( 1, ipart )*d_inv_[1];
+        const double xpn = position_x[ipart]*d_inv_[0];
+        const double ypn = position_y[ipart]*d_inv_[1];
 
         // Calculate coeffs
 
@@ -167,17 +175,17 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
         // Interpolation of Ex^(d,p)
-        *( Epart+0*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], Ex2D, idx_d[0], idx_p[1] );
+        ELoc[0*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], Ex2D, idx_d[0], idx_p[1], ny_p );
         // Interpolation of Ey^(p,d)
-        *( Epart+1*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], Ey2D, idx_p[0], idx_d[1] );
+        ELoc[1*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], Ey2D, idx_p[0], idx_d[1], ny_d );
         // Interpolation of Ez^(p,p)
-        *( Epart+2*nparts+ipart ) = compute( &coeffxp[1], &coeffyp[1], Ez2D, idx_p[0], idx_p[1] );
+        ELoc[2*nparts+ipart] = compute( &coeffxp[1], &coeffyp[1], Ez2D, idx_p[0], idx_p[1], ny_p );
         // Interpolation of Bx^(p,d)
-        *( Bpart+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], Bx2D, idx_p[0], idx_d[1] );
+        BLoc[0*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], Bx2D, idx_p[0], idx_d[1], ny_d );
         // Interpolation of By^(d,p)
-        *( Bpart+1*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], By2D, idx_d[0], idx_p[1] );
+        BLoc[1*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], By2D, idx_d[0], idx_p[1], ny_p );
         // Interpolation of Bz^(d,d)
-        *( Bpart+2*nparts+ipart ) = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1] );
+        BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1], ny_d );
 
         //Buffering of iol and delta
         *( iold+0*nparts+ipart)  = idx_p[0];
