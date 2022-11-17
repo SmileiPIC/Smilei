@@ -515,7 +515,7 @@ void MergingVranicCartesian::operator() (
         // For each momentum bin, merge packet of particles composed of
         // at least `min_packet_size_` and `max_packet_size_`
 
-        // Loop over the the momentum cells that have enough particules
+        // Loop over the the momentum cells that have enough particles
         for (mz_i=0 ; mz_i< dim[2]; mz_i++ ) {
 
             cell_vec_z = momentum_min[2] + (mz_i+0.5)*momentum_delta[2];

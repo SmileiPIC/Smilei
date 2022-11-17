@@ -44,10 +44,10 @@ NumberOfCell_inY=1024
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
 # 16 | 128
-SizePatch=512
+SizePatch=256
 
 #################################
-NumberOfTimeStep=60000
+NumberOfTimeStep=600
 
 Scalar_save = True
 NumberOfTimeStepForSnapshotSCALAR = 10 #-> 6000 sorties # sortie valeurs scalaire tout les NumberOfTimeStepForSnapshotSCALAR pas de temps
@@ -164,8 +164,7 @@ Main(
     number_of_cells= [NumberOfCell_inX,NumberOfCell_inY],
     number_of_patches = [number_of_patchX,number_of_patchY],
     timestep = dt,
-    #print_every=NumberOfTimeStep/NumberOfPrintOUTInformation,
-    simulation_time = 100*dt,
+    simulation_time = NumberOfTimeStep*dt,
     EM_boundary_conditions = [["periodic"],["periodic"]],
     random_seed = 0,
     gpu_computing=True,
@@ -253,7 +252,7 @@ if (Scalar_save):
     DiagScalar(
         every = NumberOfTimeStepForSnapshotSCALAR ,
         vars = ["Utot","Uelm","Ukin","Uelm_Ex","Uelm_Ey","Uelm_Ez","Uelm_Bx_m","Uelm_By_m","Uelm_Bz_m", "Ukin_electron-beam","Ukin_electron", "Ukin_ion"],
-        precision = 10
+        precision = 15
     )
 
 if (Fields_save):

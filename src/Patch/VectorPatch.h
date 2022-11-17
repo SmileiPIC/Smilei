@@ -112,8 +112,8 @@ public :
     //! Reconfigure all patches for the new time step
     void reconfiguration( Params &params, Timers &timers, int itime );
     
-    //! Particle sorting for all patches
-    void sortAllParticles( Params &params );
+    //! Particle sorting for all patches. This is done at initialization time.
+    void initialParticleSorting( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics( Params &params,
@@ -410,21 +410,21 @@ public :
     }
 
     //! Create and copy the data on device (GPU) from host (CPU)
-    void initializeDataOnDevice( Params &params, SmileiMPI *smpi, 
+    void allocateDataOnDevice( Params &params, SmileiMPI *smpi,
                                  RadiationTables * radiation_tables,
                                  MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
     //! Clean data allocated on device
-    void cleanDataOnDevice( Params &params, SmileiMPI *smpi, 
+    void cleanDataOnDevice( Params &params, SmileiMPI *smpi,
                             RadiationTables * radiation_tables,
                             MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
     //! Field Synchronization from the GPU (Device) to the host (CPU)
     //! This function updates the data on the host from the data located on the device
-    void syncFieldFromHostToDevice();
+    void copyEMFieldsFromHostToDevice();
     
     //! Data synchronization from device (GPU) to host (CPU)
-    void syncDataFromDeviceToHost();
+    void copyDeviceStateToHost();
     
 private :
 

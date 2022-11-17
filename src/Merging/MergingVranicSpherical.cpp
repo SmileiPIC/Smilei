@@ -655,7 +655,7 @@ void MergingVranicSpherical::operator() (
         // For each momentum bin, merge packet of particles composed of
         // at least `min_packet_size_` and `max_packet_size_`
 
-        // Loop over the the momentum cells that have enough particules
+        // Loop over the the momentum cells that have enough particles
         for (phi_i=0 ; phi_i< phi_dim; phi_i++ ) {
             for (theta_i=0 ; theta_i< theta_dim[phi_i]; theta_i++ ) {
 

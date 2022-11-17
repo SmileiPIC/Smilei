@@ -292,8 +292,16 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi, true ); // Jy
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi, true ); // Jz
     }
+
     // iDim = 0, local
-    int nFieldLocalx = vecPatches.densitiesLocalx.size()/3;
+    const int nFieldLocalx = vecPatches.densitiesLocalx.size() / 3;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( _GPU )
+    // At initialization, we may get a CPU buffer than needs to be handled on the host.
+    const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
+                                     smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
+#endif
+
     for( int icomp=0 ; icomp<3 ; icomp++ ) {
         if( nFieldLocalx==0 ) {
             continue;
@@ -326,10 +334,11 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
-                #pragma acc parallel present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
+                #pragma acc parallel if ( is_memory_on_device) \
+                present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
+    #pragma omp target if( is_memory_on_device )
     #pragma omp teams
     #pragma omp distribute parallel for
 #endif
@@ -420,7 +429,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         }
 
         // iDim = 1,
-        int nFieldLocaly = vecPatches.densitiesLocaly.size()/3;
+        const int nFieldLocaly = vecPatches.densitiesLocaly.size() / 3;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        const bool is_memory_on_device = vecPatches.densitiesLocaly.size() > 0 &&
+                                         smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocaly[0]->data() );
+#endif
+
         for( int icomp=0 ; icomp<3 ; icomp++ ) {
             if( nFieldLocaly==0 ) {
                 continue;
@@ -456,10 +471,10 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->globalDims_;
                     int blabla = n_space[1];
-                    #pragma acc parallel present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
+                    #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
+    #pragma omp target if( is_memory_on_device )
     #pragma omp teams
     #pragma omp distribute parallel for collapse(2)
 #endif
@@ -551,7 +566,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             }
 
             // iDim = 2 local
-            int nFieldLocalz = vecPatches.densitiesLocalz.size()/3;
+            const int nFieldLocalz = vecPatches.densitiesLocalz.size() / 3;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            const bool is_memory_on_device = vecPatches.densitiesLocalz.size() > 0 &&
+                                             smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalz[0]->data() );
+#endif
+
             for( int icomp=0 ; icomp<3 ; icomp++ ) {
                 if( nFieldLocalz==0 ) {
                     continue;
@@ -588,11 +609,10 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                         int ptsize = vecPatches.densitiesLocalz[ifield]->globalDims_;
                         int blabla = n_space[2];
-                        #pragma acc parallel present(pt1[0-blabla:ptsize],pt2[0:ptsize])
+                        #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                        const int ptsize = ( nx_ * ny_ * nz_ ) - nz_ + gsp[2];
-    #pragma omp target
+    #pragma omp target if( is_memory_on_device )
     #pragma omp teams
     #pragma omp distribute parallel for collapse( 2 )
 #endif
@@ -1457,10 +1477,10 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    // TODO(Etienne M): Can we somehow get CPU pointer when GPU mode is enabled ? If not, remove the
+    // TODO(Etienne M): Can we somehow get a CPU pointer when GPU mode is enabled ? If not, remove the
     // is_memory_on_device check.
     const bool is_memory_on_device = vecPatches.B_localx.size() > 0 &&
-                                     smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
+                                     smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
     for( int icomp=0 ; icomp<2 ; icomp++ ) {
@@ -1489,16 +1509,16 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 //for filter
 
                 if( is_memory_on_device ) {
-                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
-                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
-                                                                                     oversize * ny_ * nz_ );
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt2 ),
+                                                                                      smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt1 ),
+                                                                                      oversize * ny_ * nz_ );
 
-                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
-                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
-                                                                                     oversize * ny_ * nz_ );
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
+                                                                                      smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
+                                                                                      oversize * ny_ * nz_ );
                 } else {
                     // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
-                    // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
+                    // IsHostPointerMappedOnDevice would prevent us from using the GPU memcpy function.
                     std::memcpy( pt2, pt1, oversize * ny_ * nz_ * sizeof( double ) );
                     std::memcpy( pt1 + gsp * ny_ * nz_, pt2 + gsp * ny_ * nz_, oversize * ny_ * nz_ * sizeof( double ) );
                 }
