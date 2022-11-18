@@ -136,18 +136,20 @@ ElectroMagnBC2D_PML::ElectroMagnBC2D_PML( Params &params, Patch *patch, unsigned
 
         pml_solver_->setDomainSizeAndCoefficients( iDim, min_or_max, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
 
-        Ex_ = new Field2D( dimPrim, 0, false, "Ex_pml" );
-        Ey_ = new Field2D( dimPrim, 1, false, "Ey_pml" );
-        Ez_ = new Field2D( dimPrim, 2, false, "Ez_pml" );
-        Bx_ = new Field2D( dimPrim, 0, true, "Bx_pml" );
-        By_ = new Field2D( dimPrim, 1, true, "By_pml" );
-        Bz_ = new Field2D( dimPrim, 2, true, "Bz_pml" );
-        Dx_ = new Field2D( dimPrim, 0, false, "Dx_pml" );
-        Dy_ = new Field2D( dimPrim, 1, false, "Dy_pml" );
-        Dz_ = new Field2D( dimPrim, 2, false, "Dz_pml" );
-        Hx_ = new Field2D( dimPrim, 0, true, "Hx_pml" );
-        Hy_ = new Field2D( dimPrim, 1, true, "Hy_pml" );
-        Hz_ = new Field2D( dimPrim, 2, true, "Hz_pml" );
+        std::string si_boundary = std::to_string(i_boundary_);
+
+        Ex_ = new Field2D( dimPrim, 0, false, "Ex_pml"+si_boundary );
+        Ey_ = new Field2D( dimPrim, 1, false, "Ey_pml"+si_boundary );
+        Ez_ = new Field2D( dimPrim, 2, false, "Ez_pml"+si_boundary );
+        Bx_ = new Field2D( dimPrim, 0, true, "Bx_pml"+si_boundary );
+        By_ = new Field2D( dimPrim, 1, true, "By_pml"+si_boundary );
+        Bz_ = new Field2D( dimPrim, 2, true, "Bz_pml"+si_boundary );
+        Dx_ = new Field2D( dimPrim, 0, false, "Dx_pml"+si_boundary );
+        Dy_ = new Field2D( dimPrim, 1, false, "Dy_pml"+si_boundary );
+        Dz_ = new Field2D( dimPrim, 2, false, "Dz_pml"+si_boundary );
+        Hx_ = new Field2D( dimPrim, 0, true, "Hx_pml"+si_boundary );
+        Hy_ = new Field2D( dimPrim, 1, true, "Hy_pml"+si_boundary );
+        Hz_ = new Field2D( dimPrim, 2, true, "Hz_pml"+si_boundary );
 
         //Laser parameter
         double pyKx, pyKy; //, pyKz;

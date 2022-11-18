@@ -246,7 +246,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     //MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
     MESSAGEALL( " Checkpoint #" << dumpName << " at iteration " << itime << " dumped" );
 #else
-    MESSAGE( " Checkpoint #" << num_dump << "at iteration " << itime << " dumped" );
+    MESSAGE( " Checkpoint #" << num_dump << " at iteration " << itime << " dumped" );
 #endif
 
 
@@ -340,7 +340,6 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
 void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 {
     ElectroMagn * EMfields = patch->EMfields;
-
     if (  params.geometry != "AMcylindrical" ) {
         dumpFieldsPerProc( g, EMfields->Ex_ );
         dumpFieldsPerProc( g, EMfields->Ey_ );
@@ -354,11 +353,11 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
-                cout << "dumping patch" << patch->hindex << endl;
-                dump_PML(embc, g);
+                cout << "dumping patch" << patch->hindex << " bcId = " << bcId << endl;
+                if (embc->Hx_) dump_PML(embc, g);
             } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
-                dump_PML(embc, g);
+                if (embc->Hx_) dump_PML(embc, g);
             }          
         }
     }
@@ -1030,9 +1029,9 @@ void  Checkpoint::dump_PML(Tpml embc, H5Write &g ){
     dumpFieldsPerProc( g, embc->Ex_ );
     dumpFieldsPerProc( g, embc->Ey_ );
     dumpFieldsPerProc( g, embc->Ez_ );
-    dumpFieldsPerProc( g, embc->Hx_ );
-    dumpFieldsPerProc( g, embc->Hy_ );
-    dumpFieldsPerProc( g, embc->Hz_ );
+    dumpFieldsPerProc( g, embc->Dx_ );
+    dumpFieldsPerProc( g, embc->Dy_ );
+    dumpFieldsPerProc( g, embc->Dz_ );
 }
 template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
 void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
@@ -1045,9 +1044,9 @@ void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
     restartFieldsPerProc( g, embc->Ex_ );
     restartFieldsPerProc( g, embc->Ey_ );
     restartFieldsPerProc( g, embc->Ez_ );
-    restartFieldsPerProc( g, embc->Hx_ );
-    restartFieldsPerProc( g, embc->Hy_ );
-    restartFieldsPerProc( g, embc->Hz_ );
+    restartFieldsPerProc( g, embc->Dx_ );
+    restartFieldsPerProc( g, embc->Dy_ );
+    restartFieldsPerProc( g, embc->Dz_ );
 
 }
 
