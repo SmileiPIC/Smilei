@@ -136,28 +136,29 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
 
         pml_solver_envelope_->setDomainSizeAndCoefficients( iDim, min_or_max, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
 
+        std::string si_boundary = std::to_string(i_boundary_);
         // A-field
-        A_np1_ = new cField2D( dimPrim, "A_np1_pml" );
-        A_n_ = new cField2D( dimPrim, "A_n_pml" );
-        A_nm1_ = new cField2D( dimPrim, "A_nm1_pml" );
+        A_np1_ = new cField2D( dimPrim, "A_np1_pml"+si_boundary );
+        A_n_ = new cField2D( dimPrim, "A_n_pml"+si_boundary );
+        A_nm1_ = new cField2D( dimPrim, "A_nm1_pml"+si_boundary );
         // Auxillary Variable
-        u1_np1_x_ = new cField2D( dimPrim, "u1_np1_x_pml" );
-        u2_np1_x_ = new cField2D( dimPrim, "u2_np1_x_pml" );
-        u3_np1_x_ = new cField2D( dimPrim, "u3_np1_x_pml" );
-        u1_nm1_x_ = new cField2D( dimPrim, "u1_nm1_x_pml" );
-        u2_nm1_x_ = new cField2D( dimPrim, "u2_nm1_x_pml" );
-        u3_nm1_x_ = new cField2D( dimPrim, "u3_nm1_x_pml" );
+        u1_np1_x_ = new cField2D( dimPrim, "u1_np1_x_pml"+si_boundary );
+        u2_np1_x_ = new cField2D( dimPrim, "u2_np1_x_pml"+si_boundary );
+        u3_np1_x_ = new cField2D( dimPrim, "u3_np1_x_pml"+si_boundary );
+        u1_nm1_x_ = new cField2D( dimPrim, "u1_nm1_x_pml"+si_boundary );
+        u2_nm1_x_ = new cField2D( dimPrim, "u2_nm1_x_pml"+si_boundary );
+        u3_nm1_x_ = new cField2D( dimPrim, "u3_nm1_x_pml"+si_boundary );
         // ----
-        u1_np1_y_ = new cField2D( dimPrim, "u1_np1_y_pml" );
-        u2_np1_y_ = new cField2D( dimPrim, "u2_np1_y_pml" );
-        u3_np1_y_ = new cField2D( dimPrim, "u3_np1_y_pml" );
-        u1_nm1_y_ = new cField2D( dimPrim, "u1_nm1_y_pml" );
-        u2_nm1_y_ = new cField2D( dimPrim, "u2_nm1_y_pml" );
-        u3_nm1_y_ = new cField2D( dimPrim, "u3_nm1_y_pml" );
+        u1_np1_y_ = new cField2D( dimPrim, "u1_np1_y_pml"+si_boundary );
+        u2_np1_y_ = new cField2D( dimPrim, "u2_np1_y_pml"+si_boundary );
+        u3_np1_y_ = new cField2D( dimPrim, "u3_np1_y_pml"+si_boundary );
+        u1_nm1_y_ = new cField2D( dimPrim, "u1_nm1_y_pml"+si_boundary );
+        u2_nm1_y_ = new cField2D( dimPrim, "u2_nm1_y_pml"+si_boundary );
+        u3_nm1_y_ = new cField2D( dimPrim, "u3_nm1_y_pml"+si_boundary );
 
         // Ponderomoteur Potential
-        Phi_ = new Field2D( dimPrim, "Phi_pml" );
-        Chi_ = new Field2D( dimPrim, "Chi_pml" );
+        Phi_ = new Field2D( dimPrim, "Phi_pml"+si_boundary );
+        Chi_ = new Field2D( dimPrim, "Chi_pml"+si_boundary );
     }
 }
 

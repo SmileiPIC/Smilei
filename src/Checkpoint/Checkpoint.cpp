@@ -388,6 +388,20 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         dump_cFieldsPerProc( g, EMfields->envelope->A_ );
         dump_cFieldsPerProc( g, EMfields->envelope->A0_ );
         dumpFieldsPerProc( g, EMfields->Env_Chi_ );
+        if (  params.geometry != "AMcylindrical" ) {
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<EnvelopeBC2D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBC2D_PML *envbc = static_cast<EnvelopeBC2D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) dump_PMLenvelope(envbc, g);
+                } else if( dynamic_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBC3D_PML *envbc = static_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) dump_PMLenvelope(envbc, g);
+                }          
+            }
+
+        } else {
+            cout << "toto";
+        }
     }
 
     // filtered Electric fields
@@ -1056,6 +1070,13 @@ void  Checkpoint::dump_PML( ElectroMagnBCAM_PML *embc, H5Write &g, unsigned int 
     dump_cFieldsPerProc( g, embc->Dr_[imode] );
     dump_cFieldsPerProc( g, embc->Dt_[imode] );
 }
+template <typename Tpml> //EnvelopBC2D_PML or EnvelopeBC3D_PML
+void  Checkpoint::dump_PMLenvelope(Tpml envbc, H5Write &g ){
+    dump_cFieldsPerProc( g, envbc->A_n_ );
+    dump_cFieldsPerProc( g, envbc->A_nm1_ );
+    dumpFieldsPerProc( g, envbc->Chi_ );
+    // other fields required ?
+}
 
 template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
 void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
@@ -1086,4 +1107,12 @@ void  Checkpoint::restart_PML(ElectroMagnBCAM_PML *embc, H5Read &g, unsigned int
     restart_cFieldsPerProc( g, embc->Dr_[imode] );
     restart_cFieldsPerProc( g, embc->Dt_[imode] );
 }
+template <typename Tpml> //EnvelopBC2D_PML or EnvelopeBC3D_PML
+void  Checkpoint::restart_PMLenvelope(Tpml envbc, H5Read &g ){
+    restart_cFieldsPerProc( g, envbc->A_n_ );
+    restart_cFieldsPerProc( g, envbc->A_nm1_ );
+    restartFieldsPerProc( g, envbc->Chi_ );
+    // other fields required ?
+}
+
 
