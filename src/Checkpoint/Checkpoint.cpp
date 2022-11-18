@@ -353,7 +353,6 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
-                cout << "dumping patch" << patch->hindex << " bcId = " << bcId << endl;
                 if (embc->Hx_) dump_PML(embc, g);
             } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
@@ -729,10 +728,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
-                restart_PML(embc, g);
+                if (embc->Hx_) restart_PML(embc, g);
             } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
-                restart_PML(embc, g);
+                if (embc->Hx_) restart_PML(embc, g);
             }          
         }
 
