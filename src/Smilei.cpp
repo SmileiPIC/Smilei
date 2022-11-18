@@ -286,7 +286,7 @@ int main( int argc, char *argv[] )
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
         // The initial particle binning is done in initializeDataOnDevice.
 #endif
@@ -439,7 +439,7 @@ int main( int argc, char *argv[] )
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
         // The initial particle binning is done in initializeDataOnDevice.
 #endif
