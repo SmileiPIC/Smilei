@@ -1727,6 +1727,7 @@ void Species::removeTaggedParticles(
         thetaold = smpi->dynamics_eithetaold[ithread].data();
 
     const int nparts = smpi->getBufferSize(ithread);
+    const int nparts_thetaold = nparts * (thetaold ? 1: 0);
 
     // Weight shortcut
     double *const __restrict__ weight =  particles->getPtrWeight();
@@ -1755,8 +1756,8 @@ void Species::removeTaggedParticles(
     Bpart[0:nparts*3], \
     gamma[0:nparts], \
     iold[0:nparts*nDim_particle], \
-    deltaold[0:nparts*nDim_particle]) \
-    thetaold[0:nparts * (thetaold ? 1: 0) ] \
+    deltaold[0:nparts*nDim_particle], \
+    thetaold[0:nparts_thetaold]) \
     deviceptr( \
         position_x,position_y,position_z, \
         momentum_x,momentum_y,momentum_z, \
@@ -1838,12 +1839,12 @@ void Species::removeTaggedParticles(
         // Update the buffers (remove empty space between them)
         for (auto ip = 0 ; ip < nb_deleted ; ip++) {
             for ( int idim=1 ; idim<2 ; idim++ ) {
-                Epart[idim*new_n_parts+i] = Epart[idim*nparts+nparts-1-i];
-                Bpart[idim*new_n_parts+i] = Bpart[idim*nparts+nparts-1-i];
+                Epart[idim*new_n_parts+ip] = Epart[idim*nparts+nparts-1-ip];
+                Bpart[idim*new_n_parts+ip] = Bpart[idim*nparts+nparts-1-ip];
             }
             for ( int idim=1; idim < nDim_particle; idim++ ) {
-                iold[idim*new_n_parts+i] = iold[idim*nparts+nparts-1-i];
-                deltaold[idim*new_n_parts+i] = deltaold[idim*nparts+nparts-1-i];
+                iold[idim*new_n_parts+ip] = iold[idim*nparts+nparts-1-ip];
+                deltaold[idim*new_n_parts+ip] = deltaold[idim*nparts+nparts-1-ip];
             }
         }
 
