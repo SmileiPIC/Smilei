@@ -227,35 +227,25 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
+# NVIDIA GPUs
 ifneq (,$(call parse_config,gpu_nvidia))
-    SMILEICXX.DEPS = g++
-    THRUSTCXX = nvcc
 
-    # Debugging mode
-    ifneq (,$(call parse_config,debug))
-        ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
-        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
-        += $(shell $(PYTHONCONFIG) --includes)
-    # DDT mode
-    else ifneq (,$(call parse_config,ddt))
-        # -g
-        ACCELERATOR_GPU_FLAGS += -w -D_GPU -Minfo=accel
-	# -cudart shared -G
-        ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
-        ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-    # Normal mode
-    else
+    # To toggle between OpenACC/OpenMP support, see the jean_zay_gpu machinefile
+    # By default we provide the OpenACC version on JeanZay
 
-        ACCELERATOR_GPU_FLAGS += -w
-
-        # To enable OpenMP support, comment _GPU and uncomment SMILEI_ACCELERATOR_GPU_OMP.
-
-        ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
-        # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
-
-        ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -G --std c++14 $(DIRS:%=-I%)
-        ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-    endif
+    # # Debugging mode
+    # ifneq (,$(call parse_config,debug))
+    #     ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
+    #     += $(shell $(PYTHONCONFIG) --includes)
+    # # DDT mode
+    # else ifneq (,$(call parse_config,ddt))
+    #     # -g
+    #     ACCELERATOR_GPU_FLAGS += -w -D_GPU -Minfo=accel
+	# # -cudart shared -G
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+    # endif
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
@@ -263,6 +253,7 @@ ifneq (,$(call parse_config,gpu_nvidia))
     OBJS += $(GPU_KERNEL_OBJS)
 endif
 
+# AMD GPUs
 ifneq (,$(call parse_config,gpu_amd))
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
