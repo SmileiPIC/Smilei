@@ -78,8 +78,9 @@ ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADAS
 ################################################################################
 
 # To check for leaks, use this feature
-# ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined 
-ADASTRA_DEBUG_FLAGS           := -g $(ADASTRA_DEBUG_SANITIZER_FLAGS)
+# ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined
+# -g and -ggdb have no know runtime overhead expect for program size
+ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS)
 
 ################################################################################
 # Omp flags
@@ -116,7 +117,10 @@ ifneq (,$(call parse_config,gpu_amd))
     ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
     # When you use hipcc directly
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+
+    # Diagnostics
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += -Rpass-analysis=kernel-resource-usage
 endif
 
 ################################################################################

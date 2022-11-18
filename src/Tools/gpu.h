@@ -123,6 +123,8 @@ namespace smilei {
             /// at the beginning of the program.
             /// - Everything is hidden in gpu.cpp so we dont get conflicts between GPU specific languages (HIP/Cuda)
             /// and OpenMP/OpenACC (the cray compiler can't enable both hip and OpenMP support at the same time).
+            /// - The is_device_ptr() clause has support for device pointers created outside of OpenMP but the behavior 
+            /// is implementation defined. For us, it behaves as expected.
             ///
             struct HostDeviceMemoryManagement
             {

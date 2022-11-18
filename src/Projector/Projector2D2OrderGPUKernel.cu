@@ -67,7 +67,7 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                            \
+        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                        \
                                                      device_particle_position_x /* [0:particle_count] */, \
                                                      device_particle_position_y /* [0:particle_count] */, \
                                                      device_particle_momentum_z /* [0:particle_count] */, \
@@ -204,22 +204,23 @@ namespace naive {
 
 namespace hip {
     namespace detail {
-        void checkErrors( ::hipError_t an_error_code,
-                          const char  *file_name,
-                          int          line )
+        static inline void
+        checkErrors( ::hipError_t an_error_code,
+                     const char  *file_name,
+                     int          line )
         {
             if( an_error_code != ::hipError_t::hipSuccess ) {
                 std::cout << "HIP error at " << file_name << ":" << line
-                          << " -> " << ::hipGetErrorString( an_error_code );
+                          << " -> " << ::hipGetErrorString( an_error_code ) << std::endl;
                 std::exit( EXIT_FAILURE );
             }
         }
     } // namespace detail
 
-        #define checkHIPErrors( an_expression )                           \
-            do {                                                          \
-                detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
-            } while( 0 )
+    #define checkHIPErrors( an_expression )                           \
+        do {                                                          \
+            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
+        } while( 0 )
 
     namespace kernel {
         namespace atomic {
@@ -235,8 +236,8 @@ namespace hip {
                 {
                     ::atomicAdd( a_pointer, a_value );
 
-                    // NOTE: 
-                    // On MI100, LDS (or GDS) double atomicAdd is compiled 
+                    // NOTE:
+                    // On MI100, LDS (or GDS) double atomicAdd is compiled
                     // into a CAS loop such as the one below (which gives the
                     // same performance).
                     // On MI200, there is hardware support for this type of
@@ -280,42 +281,41 @@ namespace hip {
         }     // namespace atomic
 
         template <typename ComputeFloat,
-                  typename ReductionFloat>
+                  typename ReductionFloat,
+                  std::size_t kWorkgroupSize>
         __global__ void
-        // __launch_bounds__(128, 4)
-        depositForAllCurrentDimensions( double *__restrict__ device_Jx,
-                                        double *__restrict__ device_Jy,
-                                        double *__restrict__ device_Jz,
-                                        int Jx_size,
-                                        int Jy_size,
-                                        int Jz_size,
-                                        const double *__restrict__ device_particle_position_x,
-                                        const double *__restrict__ device_particle_position_y,
-                                        const double *__restrict__ device_particle_momentum_z,
-                                        const short *__restrict__ device_particle_charge,
-                                        const double *__restrict__ device_particle_weight,
-                                        const int *__restrict__ device_bin_index,
-                                        const double *__restrict__ device_invgf_,
-                                        const int *__restrict__ device_iold_,
-                                        const double *__restrict__ device_deltaold_,
-                                        ComputeFloat inv_cell_volume,
-                                        ComputeFloat dx_inv,
-                                        ComputeFloat dy_inv,
-                                        ComputeFloat dx_ov_dt,
-                                        ComputeFloat dy_ov_dt,
-                                        int          i_domain_begin,
-                                        int          j_domain_begin,
-                                        int          nprimy,
-                                        int          pxr )
+        // __launch_bounds__(kWorkgroupSize, 1)
+        DepositCurrentDensity_2D_Order2( double *__restrict__ device_Jx,
+                                         double *__restrict__ device_Jy,
+                                         double *__restrict__ device_Jz,
+                                         int Jx_size,
+                                         int Jy_size,
+                                         int Jz_size,
+                                         const double *__restrict__ device_particle_position_x,
+                                         const double *__restrict__ device_particle_position_y,
+                                         const double *__restrict__ device_particle_momentum_z,
+                                         const short *__restrict__ device_particle_charge,
+                                         const double *__restrict__ device_particle_weight,
+                                         const int *__restrict__ device_bin_index,
+                                         const double *__restrict__ device_invgf_,
+                                         const int *__restrict__ device_iold_,
+                                         const double *__restrict__ device_deltaold_,
+                                         ComputeFloat inv_cell_volume,
+                                         ComputeFloat dx_inv,
+                                         ComputeFloat dy_inv,
+                                         ComputeFloat dx_ov_dt,
+                                         ComputeFloat dy_ov_dt,
+                                         int          i_domain_begin,
+                                         int          j_domain_begin,
+                                         int          nprimy,
+                                         int          pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
-            // TODO(Etienne M): prefer unsigned int vs int. At least the reader
-            // knows the value wont be negative.
             // TODO(Etienne M): __ldg could be used to slightly improve GDS load
             // speed. This would only have an effect on Nvidia cards as this
             // operation is a no op on AMD.
-            const unsigned int workgroup_size = blockDim.x;
+            const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
@@ -405,9 +405,9 @@ namespace hip {
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
                 {
-                    const ComputeFloat xpn = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip  = std::round( xpn );
-                    // const int    ip       = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
+                    const int          ip       = std::round( xpn );
                     const int          ipo      = iold[0 * particle_count];
                     const int          ip_m_ipo = ip - ipo - i_domain_begin;
                     const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
@@ -424,9 +424,9 @@ namespace hip {
                     Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
                 {
-                    const ComputeFloat ypn = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp  = std::round( ypn );
-                    // const int    jp       = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
+                    const int          jp       = std::round( ypn );
                     const int          jpo      = iold[1 * particle_count];
                     const int          jp_m_jpo = jp - jpo - j_domain_begin;
                     const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );
@@ -574,20 +574,19 @@ namespace hip {
         // TODO(Etienne M): Find a way to lessen the atomic usage
 
         const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
-        // On an MI100:
-        // 448 for F32 and 4x4 cluster width | past 128, the block size does not matter, we are atomic bound anyway
-        // 128 for F64 and 4x4 cluster width | atomic bound
-        const ::dim3 kBlockDimension /* In threads */ { 128, 1, 1 };
 
-        // On MI100, using float for reduction reduces the amount of bank 
-        // conflict and allows the compiler to generate better instruction.
-        // The relative error is ~10^13 compared to pure double operations but
-        // is x1.3 times faster.
+        static constexpr std::size_t kWorkgroupSize = 128;
+        const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
 
+        // NOTE: On cards lacking hardware backed Binary64 atomic operations,
+        // falling back to Binary32 (supposing hardware support for atomic
+        // operations) can lead to drastic performance improvement.
+        // One just need to assign 'float' to ReductionFloat.
+        //
         using ComputeFloat   = double;
-        using ReductionFloat = double; // TODO(Etienne M): Change to float ?
+        using ReductionFloat = double;
 
-        auto KernelFunction = kernel::depositForAllCurrentDimensions<ComputeFloat, ReductionFloat>;
+        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,

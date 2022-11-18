@@ -334,8 +334,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #if defined( _GPU )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
-                #pragma acc parallel if ( is_memory_on_device) \
-                present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
+                #pragma acc parallel if ( is_memory_on_device) present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_memory_on_device )
