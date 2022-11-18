@@ -1894,6 +1894,8 @@ string Params::speciesField( string field_name )
     return "";
 }
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
 bool Params::isGPUParticleBinningAvailable() const
 {
     return getGPUClusterWidth() != -1 &&
@@ -1952,3 +1954,5 @@ int Params::getGPUBinCount() const
 
     return kGPUBinCount;
 }
+
+#endif

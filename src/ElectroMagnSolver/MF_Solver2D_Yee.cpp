@@ -32,8 +32,7 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
     // Magnetic field Bx^(p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_d - 1; ++x ) {
         for( unsigned int y = 1; y < ny_d - 1; ++y ) {
@@ -44,8 +43,7 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
     // Magnetic field By^(d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 1; x < nx_d - 1; ++x ) {
         for( unsigned int y = 0; y < ny_p; ++y ) {
@@ -56,8 +54,7 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
     // Magnetic field Bz^(d,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 1; x < nx_d - 1; ++x ) {
         for( unsigned int y = 1; y < ny_d - 1; ++y ) {

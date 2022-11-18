@@ -19,8 +19,7 @@ void Field::put_to( double val )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_hostptr_mapped_on_device )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for( unsigned int i = 0; i < globalDims_; i++ ) {
         an_other_data_pointer[i] = val;

@@ -220,8 +220,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int j=isBoundary1min; j<n1p-isBoundary1max ; j++ ) {
 #ifdef _GPU
@@ -243,8 +242,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
 #ifdef _GPU
@@ -266,8 +264,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
 #ifdef _GPU
@@ -310,8 +307,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int j=isBoundary1min; j<n1d-isBoundary1max ; j++ ) {
 #ifdef _GPU
@@ -333,8 +329,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
 #ifdef _GPU
@@ -356,8 +351,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
-            #pragma omp teams
-            #pragma omp distribute parallel for collapse( 2 )
+            #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
 #ifdef _GPU

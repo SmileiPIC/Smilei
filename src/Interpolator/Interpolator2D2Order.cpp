@@ -188,8 +188,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         is_device_ptr /* map */ ( /* to: */                                        \
                                   position_x /* [first_index:npart_range_size] */, \
                                   position_y /* [first_index:npart_range_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for( int ipart = first_index; ipart < last_index; ipart++ ) {
 

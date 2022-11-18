@@ -26,10 +26,14 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
+#else
+    ERROR( "Only usable in GPU mode! " );
+#endif
 }
 
 Projector2D2OrderGPU::~Projector2D2OrderGPU()

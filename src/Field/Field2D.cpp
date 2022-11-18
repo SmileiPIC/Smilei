@@ -339,8 +339,7 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
     #pragma omp target if( should_manipulate_gpu_memory )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
@@ -380,8 +379,7 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( tofrom                                       \
              : field [field_first:field_last - field_first] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
@@ -421,8 +419,7 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( to                                           \
              : field [field_first:field_last - field_first] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
@@ -462,8 +459,7 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( tofrom                                       \
              : field [field_first:field_last - field_first] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {

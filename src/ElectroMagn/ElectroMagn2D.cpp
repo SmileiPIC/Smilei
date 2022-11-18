@@ -1191,8 +1191,7 @@ void ElectroMagn2D::centerMagneticFields()
 // Magnetic field Bx^(p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
         for( unsigned int y = 0; y < ny_d; ++y ) {
@@ -1203,8 +1202,7 @@ void ElectroMagn2D::centerMagneticFields()
     // Magnetic field By^(d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
         for( unsigned int y = 0; y < ny_p; ++y ) {
@@ -1214,8 +1212,7 @@ void ElectroMagn2D::centerMagneticFields()
     // Magnetic field Bz^(d,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
         for( unsigned int y = 0; y < ny_d; ++y ) {

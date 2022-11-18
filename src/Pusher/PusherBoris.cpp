@@ -63,8 +63,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
                        position_x /* [istart:particle_number] */,             \
                        position_y /* [istart:particle_number] */,             \
                        position_z /* [istart:particle_number] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined(_GPU)
     const int istart_offset   = istart - ipart_buffer_offset;
     const int particle_number = iend - istart;
