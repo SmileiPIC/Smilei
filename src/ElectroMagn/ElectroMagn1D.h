@@ -118,12 +118,6 @@ public:
     //! Method used to compute the total susceptibility by summing over all species
     void computeTotalEnvChi() override;
 
-    //! Number of nodes on the primal grid
-    unsigned int nx_p;
-
-    //! Number of nodes on the dual grid
-    unsigned int nx_d;
-
     //! Spatial step dx for 1Dcartesian simulations
     double dx;
 

@@ -107,6 +107,9 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             } else if( params->EM_BCs[i][j].substr(0,4) == "ramp" ) {
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( params->EM_BCs[i][j] );
+            } else if( params->EM_BCs[i][j] == "PML" ) {
+                fieldBoundary          .addString( "open" );
+                fieldBoundaryParameters.addString( "PML" );
             } else {
                 ERROR( " impossible boundary condition " );
             }

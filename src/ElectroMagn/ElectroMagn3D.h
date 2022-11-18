@@ -118,26 +118,6 @@ public:
     void synchronizePatch( unsigned int clrw );
     void finalizePatch( unsigned int clrw );
 
-    //! \todo Create properties the laser time-profile (MG & TV)
-
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nx_p;
-
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nx_d;
-
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int ny_p;
-
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int ny_d;
-
-    //! Number of nodes on the primal grid in the z-direction
-    unsigned int nz_p;
-
-    //! Number of nodes on the dual grid in the z-direction
-    unsigned int nz_d;
-
     //! Spatial step dx for 3D3V cartesian simulations
     double dx;
 

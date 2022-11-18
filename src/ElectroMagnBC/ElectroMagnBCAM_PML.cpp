@@ -147,18 +147,18 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         for ( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             ostringstream mode_id( "" );
             mode_id << "_mode_" << imode;
-            El_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "El_pml_"+mode_id.str() ).c_str(), params );
-            Dl_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "Dl_pml_"+mode_id.str() ).c_str(), params );
-            Hl_[imode] = FieldFactory::createComplex( dimPrim, 0, true,  ( "Hl_pml_"+mode_id.str() ).c_str(), params );
-            Bl_[imode] = FieldFactory::createComplex( dimPrim, 0, true,  ( "Bl_pml_"+mode_id.str() ).c_str(), params );
-            Er_[imode] = FieldFactory::createComplex( dimPrim, 1, false, ( "Er_pml_"+mode_id.str() ).c_str(), params );
-            Dr_[imode] = FieldFactory::createComplex( dimPrim, 1, false, ( "Dr_pml_"+mode_id.str() ).c_str(), params );
-            Hr_[imode] = FieldFactory::createComplex( dimPrim, 1, true,  ( "Hr_pml_"+mode_id.str() ).c_str(), params );
-            Br_[imode] = FieldFactory::createComplex( dimPrim, 1, true,  ( "Br_pml_"+mode_id.str() ).c_str(), params );
-            Et_[imode] = FieldFactory::createComplex( dimPrim, 2, false, ( "Et_pml_"+mode_id.str() ).c_str(), params );
-            Dt_[imode] = FieldFactory::createComplex( dimPrim, 2, false, ( "Dt_pml_"+mode_id.str() ).c_str(), params );
-            Ht_[imode] = FieldFactory::createComplex( dimPrim, 2, true,  ( "Ht_pml_"+mode_id.str() ).c_str(), params );
-            Bt_[imode] = FieldFactory::createComplex( dimPrim, 2, true,  ( "Bt_pml_"+mode_id.str() ).c_str(), params );
+            El_[imode] = FieldFactory::createAM( dimPrim, 0, false, ( "El_pml_"+mode_id.str() ).c_str(), params );
+            Dl_[imode] = FieldFactory::createAM( dimPrim, 0, false, ( "Dl_pml_"+mode_id.str() ).c_str(), params );
+            Hl_[imode] = FieldFactory::createAM( dimPrim, 0, true,  ( "Hl_pml_"+mode_id.str() ).c_str(), params );
+            Bl_[imode] = FieldFactory::createAM( dimPrim, 0, true,  ( "Bl_pml_"+mode_id.str() ).c_str(), params );
+            Er_[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "Er_pml_"+mode_id.str() ).c_str(), params );
+            Dr_[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "Dr_pml_"+mode_id.str() ).c_str(), params );
+            Hr_[imode] = FieldFactory::createAM( dimPrim, 1, true,  ( "Hr_pml_"+mode_id.str() ).c_str(), params );
+            Br_[imode] = FieldFactory::createAM( dimPrim, 1, true,  ( "Br_pml_"+mode_id.str() ).c_str(), params );
+            Et_[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Et_pml_"+mode_id.str() ).c_str(), params );
+            Dt_[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Dt_pml_"+mode_id.str() ).c_str(), params );
+            Ht_[imode] = FieldFactory::createAM( dimPrim, 2, true,  ( "Ht_pml_"+mode_id.str() ).c_str(), params );
+            Bt_[imode] = FieldFactory::createAM( dimPrim, 2, true,  ( "Bt_pml_"+mode_id.str() ).c_str(), params );
         }
 
     //Laser parameter

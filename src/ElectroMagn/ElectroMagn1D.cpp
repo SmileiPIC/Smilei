@@ -8,6 +8,7 @@
 
 #include "Params.h"
 #include "Field1D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 
@@ -29,9 +30,9 @@ ElectroMagn1D::ElectroMagn1D( Params &params, DomainDecomposition *domain_decomp
     
     // Charge and current densities for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = new Field1D( Tools::merge( "Jx_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jy_s[ispec]  = new Field1D( Tools::merge( "Jy_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jz_s[ispec]  = new Field1D( Tools::merge( "Jz_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jx_s [ispec] = new Field1D( Tools::merge( "Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s [ispec] = new Field1D( Tools::merge( "Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s [ispec] = new Field1D( Tools::merge( "Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         rho_s[ispec] = new Field1D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
@@ -49,43 +50,20 @@ ElectroMagn1D::ElectroMagn1D( ElectroMagn1D *emFields, Params &params, Patch *pa
     
     // Charge and current densities for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        if( emFields->Jx_s[ispec] != NULL ) {
-            if( emFields->Jx_s[ispec]->data_ != NULL ) {
-                Jx_s[ispec]  = new Field1D( dimPrim, 0, false, emFields->Jx_s[ispec]->name );
-            } else {
-                Jx_s[ispec]  = new Field1D( emFields->Jx_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jx_s[ispec] ) {
+            Jx_s[ispec] = FieldFactory::create1D( dimPrim, 0, false, emFields->Jx_s[ispec]->name, params, emFields->Jx_s[ispec]->data_ != NULL );
         }
-        if( emFields->Jy_s[ispec] != NULL ) {
-            if( emFields->Jy_s[ispec]->data_ != NULL ) {
-                Jy_s[ispec]  = new Field1D( dimPrim, 1, false, emFields->Jy_s[ispec]->name );
-            } else {
-                Jy_s[ispec]  = new Field1D( emFields->Jy_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jy_s[ispec] ) {
+            Jy_s[ispec] = FieldFactory::create1D( dimPrim, 1, false, emFields->Jy_s[ispec]->name, params, emFields->Jy_s[ispec]->data_ != NULL );
         }
-        if( emFields->Jz_s[ispec] != NULL ) {
-            if( emFields->Jz_s[ispec]->data_ != NULL ) {
-                Jz_s[ispec]  = new Field1D( dimPrim, 2, false, emFields->Jz_s[ispec]->name );
-            } else {
-                Jz_s[ispec]  = new Field1D( emFields->Jz_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jz_s[ispec] ) {
+            Jz_s[ispec] = FieldFactory::create1D( dimPrim, 2, false, emFields->Jz_s[ispec]->name, params, emFields->Jz_s[ispec]->data_ != NULL );
         }
-        if( emFields->rho_s[ispec] != NULL ) {
-            if( emFields->rho_s[ispec]->data_ != NULL ) {
-                rho_s[ispec] = new Field1D( dimPrim, emFields->rho_s[ispec]->name );
-            } else {
-                rho_s[ispec]  = new Field1D( emFields->rho_s[ispec]->name, dimPrim );
-            }
+        if( emFields->rho_s[ispec] ) {
+            rho_s[ispec] = FieldFactory::create1D( dimPrim, emFields->rho_s[ispec]->name, emFields->rho_s[ispec]->data_ != NULL );
         }
-        
-        if( params.Laser_Envelope_model ) {
-            if( emFields->Env_Chi_s[ispec] != NULL ) {
-                if( emFields->Env_Chi_s[ispec]->data_ != NULL ) {
-                    Env_Chi_s[ispec] = new Field1D( dimPrim, emFields->Env_Chi_s[ispec]->name );
-                } else {
-                    Env_Chi_s[ispec]  = new Field1D( emFields->Env_Chi_s[ispec]->name, dimPrim );
-                }
-            }
+        if( params.Laser_Envelope_model && emFields->Env_Chi_s[ispec] ) {
+            Env_Chi_s[ispec] = FieldFactory::create1D( dimPrim, emFields->Env_Chi_s[ispec]->name, emFields->Env_Chi_s[ispec]->data_ != NULL );
         }
         
     }
@@ -105,11 +83,6 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     
     // Electromagnetic fields
     // ----------------------
-    // number of nodes of the primal-grid
-    nx_p = size_[0]+1 + 2*oversize[0];
-    // number of nodes of the dual-grid
-    nx_d = size_[0]+2 + 2*oversize[0];
-    // dimPrim/dimDual = nx_p/nx_d
     
     // Allocation of the EM fields
     Ex_  = new Field1D( dimPrim, 0, false, "Ex" );
@@ -226,12 +199,12 @@ void ElectroMagn1D::initPoisson( Patch *patch )
     index_max_p_.resize( 1, 0 );
     
     index_min_p_[0] = oversize[0];
-    index_max_p_[0] = nx_p - 2 - oversize[0];
+    index_max_p_[0] = dimPrim[0] - 2 - oversize[0];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
     if( patch->isXmax() ) {
-        index_max_p_[0] = nx_p-1;
+        index_max_p_[0] = dimPrim[0] - 1;
     }
     
     phi_ = new Field1D( dimPrim );  // scalar potential
@@ -261,7 +234,7 @@ double ElectroMagn1D::compute_r()
 
 void ElectroMagn1D::compute_Ap( Patch *patch )
 {
-
+    const unsigned int nx_p = dimPrim[0];
     double one_ov_dx_sq       = 1.0/( dx*dx );
     double two_ov_dx2         = 2.0*( 1.0/( dx*dx ) );
     
@@ -282,7 +255,8 @@ void ElectroMagn1D::compute_Ap( Patch *patch )
 
 void ElectroMagn1D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
-
+    const unsigned int nx_p = dimPrim[0];
+    
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -334,6 +308,8 @@ void ElectroMagn1D::update_p( double rnew_dot_rnew, double r_dot_r )
 
 void ElectroMagn1D::initE( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int nx_d = dimDual[0];
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
     Field1D *rho1D = static_cast<Field1D *>( rho_ );
     
@@ -362,6 +338,8 @@ void ElectroMagn1D::initE( Patch *patch )
 
 void ElectroMagn1D::initE_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int nx_d = dimDual[0];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -430,7 +408,7 @@ void ElectroMagn1D::sum_rel_fields_to_em_fields( Patch *patch )
     
     
     // Ex
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) = ( *Ex1D )( i ) + ( *Ex1Drel )( i );
     }
     
@@ -449,7 +427,7 @@ void ElectroMagn1D::sum_rel_fields_to_em_fields( Patch *patch )
 void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 {
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) += E_Add[0];
     }
     
@@ -458,7 +436,7 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 void ElectroMagn1D::centeringErel( std::vector<double> E_Add )
 {
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_rel_ );
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) += E_Add[0];
     }
     
@@ -643,7 +621,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
     if (ipass < passes[0]){
         Field1D *tmp   = new Field1D( dimPrim, 0, false );
         tmp->copyFrom( Jx1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimDual[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jx1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                 ( *Jx1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -653,7 +631,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
         delete tmp;
         tmp   = new Field1D( dimPrim, 1, false );
         tmp->copyFrom( Jy1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimPrim[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jy1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                 ( *Jy1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -663,7 +641,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
         delete tmp;
         tmp   = new Field1D( dimPrim, 2, false );
         tmp->copyFrom( Jz1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimPrim[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jz1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                ( *Jz1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -766,7 +744,7 @@ void ElectroMagn1D::computeTotalEnvChi()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Env_Chi_s[ispec] ) {
             Field1D *Env_Chi1D_s  = static_cast<Field1D *>( Env_Chi_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ ) {
+            for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
                 ( *Env_Chi1D )( i ) += ( *Env_Chi1D_s )( i );
             }
         }

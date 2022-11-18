@@ -58,36 +58,36 @@ public:
 
     double getEx_XminYmax() override
     {
-        return ( *Ex_ )( 0, ny_p-1 );
+        return ( *Ex_ )( 0, dimPrim[1]-1 );
     }
     double getEy_XminYmax() override
     {
-        return ( *Ey_ )( 0, ny_d-1 );
+        return ( *Ey_ )( 0, dimDual[1]-1 );
     }
     double getEx_XmaxYmin() override
     {
-        return ( *Ex_ )( nx_d-1, 0 );
+        return ( *Ex_ )( dimDual[0]-1, 0 );
     }
     double getEy_XmaxYmin() override
     {
-        return ( *Ey_ )( nx_p-1, 0 );
+        return ( *Ey_ )( dimPrim[0]-1, 0 );
     }
 
     double getExrel_XminYmax() override
     {
-        return ( *Ex_rel_ )( 0, ny_p-1 );
+        return ( *Ex_rel_ )( 0, dimPrim[1]-1 );
     }
     double getEyrel_XminYmax() override
     {
-        return ( *Ey_rel_ )( 0, ny_d-1 );
+        return ( *Ey_rel_ )( 0, dimDual[1]-1 );
     }
     double getExrel_XmaxYmin() override
     {
-        return ( *Ex_rel_ )( nx_d-1, 0 );
+        return ( *Ex_rel_ )( dimDual[0]-1, 0 );
     }
     double getEyrel_XmaxYmin() override
     {
-        return ( *Ey_rel_ )( nx_p-1, 0 );
+        return ( *Ey_rel_ )( dimPrim[0]-1, 0 );
     }
 
     // --------------------------------------
@@ -122,20 +122,6 @@ public:
     //! Method used to gather species densities and currents on a single array
     void synchronizePatch( unsigned int clrw );
     void finalizePatch( unsigned int clrw );
-
-    //! \todo Create properties the laser time-profile (MG & TV)
-
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nx_p;
-
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nx_d;
-
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int ny_p;
-
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int ny_d;
 
     //! Spatial step dx for 2D3V cartesian simulations
     double dx;

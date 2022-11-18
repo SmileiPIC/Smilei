@@ -163,20 +163,6 @@ public:
     void synchronizePatch( unsigned int clrw );
     void finalizePatch( unsigned int clrw );
     
-    //! \todo Create properties the laser time-profile (MG & TV)
-    
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nl_p;
-    
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nl_d;
-    
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int nr_p;
-    
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int nr_d;
-    
     //! Spatial step dl for 2D3V cylindrical simulations
     double dl;
     
