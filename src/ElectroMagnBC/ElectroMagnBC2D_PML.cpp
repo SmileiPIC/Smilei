@@ -141,15 +141,15 @@ ElectroMagnBC2D_PML::ElectroMagnBC2D_PML( Params &params, Patch *patch, unsigned
         Ex_ = new Field2D( dimPrim, 0, false, "Ex_pml"+si_boundary );
         Ey_ = new Field2D( dimPrim, 1, false, "Ey_pml"+si_boundary );
         Ez_ = new Field2D( dimPrim, 2, false, "Ez_pml"+si_boundary );
-        Bx_ = new Field2D( dimPrim, 0, true, "Bx_pml"+si_boundary );
-        By_ = new Field2D( dimPrim, 1, true, "By_pml"+si_boundary );
-        Bz_ = new Field2D( dimPrim, 2, true, "Bz_pml"+si_boundary );
+        Bx_ = new Field2D( dimPrim, 0, true , "Bx_pml"+si_boundary );
+        By_ = new Field2D( dimPrim, 1, true , "By_pml"+si_boundary );
+        Bz_ = new Field2D( dimPrim, 2, true , "Bz_pml"+si_boundary );
         Dx_ = new Field2D( dimPrim, 0, false, "Dx_pml"+si_boundary );
         Dy_ = new Field2D( dimPrim, 1, false, "Dy_pml"+si_boundary );
         Dz_ = new Field2D( dimPrim, 2, false, "Dz_pml"+si_boundary );
-        Hx_ = new Field2D( dimPrim, 0, true, "Hx_pml"+si_boundary );
-        Hy_ = new Field2D( dimPrim, 1, true, "Hy_pml"+si_boundary );
-        Hz_ = new Field2D( dimPrim, 2, true, "Hz_pml"+si_boundary );
+        Hx_ = new Field2D( dimPrim, 0, true , "Hx_pml"+si_boundary );
+        Hy_ = new Field2D( dimPrim, 1, true , "Hy_pml"+si_boundary );
+        Hz_ = new Field2D( dimPrim, 2, true , "Hz_pml"+si_boundary );
 
         //Laser parameter
         double pyKx, pyKy; //, pyKz;
