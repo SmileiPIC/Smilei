@@ -421,12 +421,15 @@ public:
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
 
+    //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {
         return (idim < Position.size()) ? Position[idim].data() : nullptr;
     };
+    //! Return the pointer toward the Position_old[idim] vector
     virtual double* getPtrPositionOld( int idim ) {
         return (idim < Position_old.size()) ? Position_old[idim].data() : nullptr;
     };
+    //! Return the pointer toward the Momentum[idim] vector
     virtual double* getPtrMomentum( int idim ) {
         return (idim < Momentum.size()) ? Momentum[idim].data() : nullptr;
     };
@@ -443,7 +446,7 @@ public:
         return &(Id[0]);
     };
     virtual double* getPtrTau() {
-        return (isMonteCarlo ? Chi.data() : nullptr);
+        return (isMonteCarlo ? Tau.data() : nullptr);
     };
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);

@@ -256,7 +256,7 @@ endif
 
 EXEC = smilei
 
-default: header $(EXEC) $(EXEC)_test
+default: $(EXEC) $(EXEC)_test
 
 #-----------------------------------------------------
 # Header
