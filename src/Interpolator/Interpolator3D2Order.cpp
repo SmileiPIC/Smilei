@@ -526,9 +526,9 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double zpn = particles.position( 2, ipart )*d_inv_[2];
 
         // Indexes of the central nodes
-        idx_p[0] = round( xpn );
-        idx_p[1] = round( ypn );
-        idx_p[2] = round( zpn );
+        idx_p[0] = std::round( xpn );
+        idx_p[1] = std::round( ypn );
+        idx_p[2] = std::round( zpn );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;

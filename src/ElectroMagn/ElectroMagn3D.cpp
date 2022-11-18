@@ -1130,7 +1130,7 @@ void ElectroMagn3D::centerMagneticFields()
             const unsigned int l =  i*(ny_d*nz_d) + j*nz_d;
             #pragma omp simd
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                Bx3D_m[ l ] = ( Bx3D[ l + k] + Bx3D_m[ l + k] )*0.5;
+                Bx3D_m[ l + k ] = ( Bx3D[ l + k] + Bx3D_m[ l + k] )*0.5;
             }
         }
     }
