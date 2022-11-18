@@ -15,6 +15,7 @@
 
 #include <H5.h>
 #include "ElectroMagnBCAM_PML.h"
+#include "EnvelopeBCAM_PML.h"
 
 class Params;
 class OpenPMDparams;
@@ -153,11 +154,13 @@ private:
     void  dump_PML( ElectroMagnBCAM_PML *embc, H5Write &g, unsigned int imode );
     template <typename Tpml>
     void  dump_PMLenvelope(Tpml envbc, H5Write &g );
+    void  dump_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Write &g );
     template <typename Tpml>
     void  restart_PML(Tpml embc, H5Read &g );
     void  restart_PML( ElectroMagnBCAM_PML *embc, H5Read &g, unsigned int imode );
     template <typename Tpml>
     void  restart_PMLenvelope(Tpml envbc, H5Read &g );
+    void  restart_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Read &g );
 };
 
 #endif /* CHECKPOINT_H_ */

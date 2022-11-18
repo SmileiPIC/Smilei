@@ -378,7 +378,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
                 if( dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] )){
                     ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] );
-                    if (embc->Hl_[0]) dump_PML(embc, g, imode);
+                    if (embc->Hl_[imode]) dump_PML(embc, g, imode);
                 }
             }
         }
@@ -400,7 +400,12 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             }
 
         } else {
-            cout << "toto";
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<EnvelopeBCAM_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBCAM_PML *envbc = static_cast<EnvelopeBCAM_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) dump_PMLenvelopeAM(envbc, g);
+                }
+            }
         }
     }
 
@@ -786,6 +791,25 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         restart_cFieldsPerProc( g, EMfields->envelope->A_ );
         restart_cFieldsPerProc( g, EMfields->envelope->A0_ );
         restartFieldsPerProc( g, EMfields->Env_Chi_ );
+        if (  params.geometry != "AMcylindrical" ) {
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<EnvelopeBC2D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBC2D_PML *envbc = static_cast<EnvelopeBC2D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) restart_PMLenvelope(envbc, g);
+                } else if( dynamic_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBC3D_PML *envbc = static_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) restart_PMLenvelope(envbc, g);
+                }          
+            }
+        } else {
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<EnvelopeBCAM_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
+                    EnvelopeBCAM_PML *envbc = static_cast<EnvelopeBCAM_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
+                    if (envbc->A_n_) restart_PMLenvelopeAM(envbc, g);
+                }
+            }
+        }
+
     } else {
         DEBUG( "envelope is null" );
     }
@@ -1077,6 +1101,14 @@ void  Checkpoint::dump_PMLenvelope(Tpml envbc, H5Write &g ){
     dumpFieldsPerProc( g, envbc->Chi_ );
     // other fields required ?
 }
+void  Checkpoint::dump_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Write &g ){
+    dump_cFieldsPerProc( g, envbc->A_n_ );
+    dump_cFieldsPerProc( g, envbc->A_nm1_ );
+    dumpFieldsPerProc( g, envbc->Chi_ );
+    dump_cFieldsPerProc( g, envbc->G_n_ );
+    dump_cFieldsPerProc( g, envbc->G_nm1_ );
+    // other fields required ?
+}
 
 template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
 void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
@@ -1112,6 +1144,14 @@ void  Checkpoint::restart_PMLenvelope(Tpml envbc, H5Read &g ){
     restart_cFieldsPerProc( g, envbc->A_n_ );
     restart_cFieldsPerProc( g, envbc->A_nm1_ );
     restartFieldsPerProc( g, envbc->Chi_ );
+    // other fields required ?
+}
+void  Checkpoint::restart_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Read &g){
+    restart_cFieldsPerProc( g, envbc->A_n_ );
+    restart_cFieldsPerProc( g, envbc->A_nm1_ );
+    restartFieldsPerProc( g, envbc->Chi_ );
+    restart_cFieldsPerProc( g, envbc->G_n_ );
+    restart_cFieldsPerProc( g, envbc->G_nm1_ );
     // other fields required ?
 }
 
