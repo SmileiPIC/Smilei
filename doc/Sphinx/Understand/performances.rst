@@ -14,3 +14,4 @@ provide important advantages.
    parallelization
    SDMD
    vectorization
+   task_parallelization

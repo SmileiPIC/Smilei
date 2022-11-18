@@ -433,7 +433,11 @@ int main( int argc, char *argv[] )
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        #ifdef _OMPTASKS
+                    vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+        #else
+                    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        #endif
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
         TITLE( "GPU allocation and copy of the fields and particles" );
@@ -674,7 +678,11 @@ int main( int argc, char *argv[] )
             }
             
             // call the various diagnostics
+#ifdef _OMPTASKS
+            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
+#else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+#endif
 
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );

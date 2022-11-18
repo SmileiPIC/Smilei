@@ -57,6 +57,44 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
         distance[1] = &Species::radial_distance;
     }
 
+#ifdef _OMPTASKS
+
+    first_cell_of_bin.resize(Nbins);
+    last_cell_of_bin.resize(Nbins);
+
+    int bin_ncells_transverse = 1;
+    if ( nDim_field >= 2 ) { bin_ncells_transverse *= ( f_dim1-2*oversize[1] ) ; }
+    if ( nDim_field == 3 ) { bin_ncells_transverse *= ( f_dim2-2*oversize[2] ) ; }
+
+    for (unsigned int ibin = 0; ibin < Nbins; ibin++){
+
+        if (ibin == 0){
+            first_cell_of_bin[ibin]     = 0;
+            last_cell_of_bin[ibin]      = (cluster_width_+1)*bin_ncells_transverse-1;
+        } else {
+            first_cell_of_bin[ibin]     = last_cell_of_bin[ibin-1]+1;
+            last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+cluster_width_*bin_ncells_transverse-1;
+        }
+
+    }
+
+    length_[0]=0;
+    length_[1]=params.n_space[1]+1;
+    length_[2]=params.n_space[2]+1;
+
+    dx_inv_[0] = 1./cell_length[0];
+    dx_inv_[1] = 1./cell_length[1];
+    dx_inv_[2] = 1./cell_length[2];
+
+    Ncells = ( f_dim0-2*oversize[0] );
+    if( nDim_field >= 2 ) {
+        Ncells *= ( f_dim1-2*oversize[1] );
+    }
+    if( nDim_field == 3 ) {
+        Ncells *= ( f_dim2-2*oversize[2] );
+    }
+
+#endif
 
 }//END SpeciesV creator
 
@@ -81,27 +119,109 @@ void SpeciesV::initCluster( Params &params )
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
+    Nbins = (params.n_space[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
+
+    //Size in each dimension of the buffers on which each bin are projected
+    //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
+
     //Primal dimension of fields.
     f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
+
+    //Dual dimension of fields.
+    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_field == 1 ) {
         b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
+        f_dim1_d = 1;
+        f_dim2_d = 1;
     }
     if( nDim_field == 2 ) {
         b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
+        f_dim2_d = 1;
     }
     if( nDim_field == 3 ) {
         b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
+
+#ifdef _OMPTASKS
+    nrj_lost_per_bin        = new double[Nbins];
+    radiated_energy_per_bin = new double[Nbins];
+    // Init tags for the task dependencies of the particle operations
+    bin_has_interpolated      = new int[Nbins];
+    bin_has_pushed            = new int[Nbins];
+    bin_has_done_particles_BC = new int[Nbins];
+    if (params.Laser_Envelope_model){
+        bin_has_projected_chi = new int[Nbins];
+    }
+
+    if (params.geometry != "AMcylindrical" ){
+        //! buffers for currents and charge
+        b_Jx.resize(Nbins);
+        b_Jy.resize(Nbins);
+        b_Jz.resize(Nbins);
+        b_rho.resize(Nbins);
+
+        size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
+        size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
+        size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
+        size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            // allocate current-buffers, then put to zero their content
+            b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+            b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+            b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+            b_rho[ibin] = new double[size_proj_buffer_rho];
+            if (params.Laser_Envelope_model){ // Chi has the same size of rho
+                b_Chi[ibin] = new double[size_proj_buffer_rho];
+            }
+            // Put to zero the grid sub-buffers
+            for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            if (params.Laser_Envelope_model){
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_Chi[ibin][i]   = 0.0;
+            }
+        }
+    } else { // AM geometry, not yet vectorized
+        //! buffers for currents and charge
+        size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
+        size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
+        size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jr
+        size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jt
+
+        //! buffers for currents and charge
+        b_Jl.resize(Nbins);
+        b_Jr.resize(Nbins);
+        b_Jt.resize(Nbins);
+        b_rhoAM.resize(Nbins);
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            // allocate current-buffers, then put to zero their content
+            b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jl   ];
+            b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
+            b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
+            b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+            // Put to zero the grid sub-buffers
+            for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+        }
+    } // end condition on geometry
+#endif
 
     //Initialize specMPI
     MPI_buffer_.allocate( nDim_field );
@@ -124,17 +244,18 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                          vector<Diagnostic *> &localDiags )
 {
-    
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+
+    const int ithread = Tools::getOMPThreadNum();
 
 #ifdef  __DETAILED_TIMERS
     double timer;
 #endif
+
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
 
     if( npack_==0 ) {
         npack_    = 1;
@@ -166,18 +287,18 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
-            
+
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            
+
             mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
             mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
-            
+
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[0] += MPI_Wtime() - timer;
+            patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
-            
+
         }
 
 
@@ -190,32 +311,37 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
-                                       ithread, scell, particles->first_index[ipack*packsize_]);
-            }
+                                       ithread, particles->first_index[ipack*packsize_] );
+            } // end interpolation
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,0);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[0] += MPI_Wtime() - timer;
+            patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
+
 
             // Ionization
             if( Ionize ) {
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                //     ( *Ionize )( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj );
-                // }
-                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
-                    ( *Ionize )( particles, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], Epart, patch, Proj );
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,5);
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                    ( *Ionize )( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj );
                 }
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,5);
+
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
+                patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
-            }
+            } // end ionization
 
             if ( time_dual <= time_frozen_ ) continue;
 
@@ -231,14 +357,16 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                // 
+                //
                 //     ( *Radiate )( *particles,
                 //                   radiated_photons_,
                 //                   smpi,
                 //                   RadiationTables, nrj_radiated_,
                 //                   particles->first_index[scell], particles->last_index[scell], ithread );
-                                  
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,6);
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+
 
                     ( *Radiate )( *particles,
                                   radiated_photons_,
@@ -258,16 +386,19 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //                               last_index[scell],
                     //                               ithread );
                 }
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,6);
+
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[5] += MPI_Wtime() - timer;
+                patch->patch_timers_[5] += MPI_Wtime() - timer;
 #endif
-            }
+            } // end radiation
 
             // Multiphoton Breit-Wheeler
             if( Multiphoton_Breit_Wheeler_process ) {
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
+
                 // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
                     // Pair generation process
                     // We reuse nrj_radiated_ for the pairs
@@ -278,8 +409,10 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //                                         MultiphotonBreitWheelerTables,
                     //                                         nrj_radiated_,
                     //                                         particles->first_index[scell], particles->last_index[scell], ithread );
-                
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,7);
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+
                     // Pair generation process
                     // We reuse nrj_radiated_ for the pairs
                     ( *Multiphoton_Breit_Wheeler_process )( *particles,
@@ -300,6 +433,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //         ithread );
 
                     // Suppression of the decayed photons into pairs
+
                     // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
                     //     *particles, smpi,
                     //     ipack*packsize_+scell,
@@ -307,18 +441,18 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //     &particles->first_index[0],
                     //     &particles->last_index[0],
                     //     ithread );
-                        
-                        
+
+
                     // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     //     *particles, smpi,
-                    //     ipack*packsize_+scell, 
-                    //     particles->first_index.size(), 
-                    //     &particles->first_index[0], 
+                    //     ipack*packsize_+scell,
+                    //     particles->first_index.size(),
+                    //     &particles->first_index[0],
                     //     &particles->last_index[0],
                     //     ithread );
-                    
+
                 } // end for scell
-                
+
                 // Remove Particles while keeping the first index of each bin
                 // Concerns as well the smpi buffers
                 // Warining : can not be here if npack_ > 0
@@ -329,38 +463,44 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 // Warining : can not be here if npack_ > 0
                 //            In this case, it should be at the end of dynamics
                 compress(smpi, ithread, true);
-                
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,7);
+
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[6] += MPI_Wtime() - timer;
+                patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
-            } // End multiphoton Breit-Wheeler 
+            } // End multiphoton Breit-Wheeler
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,1);
+
             // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 // Push the particles and the photons
-                ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
-                           particles->last_index[ipack*packsize_+packsize_-1],
-                           ithread, particles->first_index[ipack*packsize_] );
+            ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
+                       particles->last_index[ipack*packsize_+packsize_-1],
+                       ithread, particles->first_index[ipack*packsize_] );
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,1);
+
             // }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[1] += MPI_Wtime() - timer;
+            patch->patch_timers_[1] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
             // Boundary conditions and energy lost
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,2);
 
-            double energy_lost( 0. );
+            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
 
-            if( mass_>0 ) {
+                double energy_lost = 0;
+                // Apply wall and boundary conditions
+                if( mass_>0 ) {
 
-                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-
-                    energy_lost = 0;
-
-                    // Apply wall and boundary conditions
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                         nrj_lost_per_thd[tid] += mass_ * energy_lost;
@@ -381,13 +521,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //     }
                     // }
 
-                }
-
-            } else if( mass_==0 ) {
-
-                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-
-                    energy_lost = 0;
+                } else if( mass_==0 ) {
 
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
@@ -395,106 +529,68 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+
                     partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += energy_lost;
 
-                    // for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                    //     if ( particles->cell_keys[iPart] != -1 ) {
-                    //         //Compute cell_keys of remaining particles
-                    //         for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                    //             particles->cell_keys[iPart] *= length_[i];
-                    //             particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                    //         }
-                    //         count[particles->cell_keys[iPart]] ++;
-                    //     }
-                    // }
-
                 }
-            } //end if mass == 0
+            } // end scell for BC
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,2);
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,11);
+            //for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+
+            //    if( mass_>0 ) {
+
+            //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //                //Compute cell_keys of remaining particles
+            //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+            //                    particles->cell_keys[iPart] *= this->length_[i];
+            //                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+            //                }
+            //                //First reduction of the count sort algorithm. Lost particles are not included.
+            //                count[particles->cell_keys[iPart]] ++;
+            //            }
+            //        }
+
+            //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //                //Compute cell_keys of remaining particles
+            //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+            //                    particles->cell_keys[iPart] *= this->length_[i];
+            //                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+            //                }
+            //                count[particles->cell_keys[iPart]] ++;
+            //            }
+            //        }
+            //    }
+            //} // end scell
 
             // Cell keys
-            // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                computeParticleCellKeys( params,
-                                         particles,
-                                         &particles->cell_keys[0],
-                                         &count[0],
-                                         particles->first_index[ipack*packsize_],
-                                         particles->last_index[ipack*packsize_ + packsize_ -1] );
-            // }
-
-            // if (params.geometry == "AMcylindrical"){
-            //
-            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-            //         if ( particles->cell_keys[iPart] != -1 ) {
-            //             //Compute cell_keys of remaining particles
-            //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-            //                 particles->cell_keys[iPart] *= length_[i];
-            //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-            //             }
-            //             count[particles->cell_keys[iPart]] ++;
-            //         }
-            //     }
-            //
-            // } else if (nDim_field == 3) {
-            //
-            //     #pragma omp simd
-            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-            //         if ( particles->cell_keys[iPart] != -1 ) {
-            //             //Compute cell_keys of remaining particles
-            //             particles->cell_keys[iPart] *= length_[0];
-            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-            //             particles->cell_keys[iPart] *= length_[1];
-            //             particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
-            //             particles->cell_keys[iPart] *= length_[2];
-            //             particles->cell_keys[iPart] += round( (particles->position(2, iPart) - min_loc_vec[2]) * dx_inv_[2] );
-            //         }
-            //     }
-            //
-            // } else if (nDim_field == 2) {
-            //
-            //     #pragma omp simd
-            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-            //         if ( particles->cell_keys[iPart] != -1 ) {
-            //             //Compute cell_keys of remaining particles
-            //             particles->cell_keys[iPart] *= length_[0];
-            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-            //             particles->cell_keys[iPart] *= length_[1];
-            //             particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
-            //
-            //         }
-            //     }
-            // } else if (nDim_field == 1) {
-            //
-            //     #pragma omp simd
-            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-            //         if ( particles->cell_keys[iPart] != -1 ) {
-            //             //Compute cell_keys of remaining particles
-            //             particles->cell_keys[iPart] *= length_[0];
-            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-            //         }
-            //     }
-            //
-            // }
-            //
-            // for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-            //     if ( particles->cell_keys[iPart] != -1 ) {
-            //         count[particles->cell_keys[iPart]] ++;
-            //     }
-            // }
-
-
+            computeParticleCellKeys( params,
+                                     particles,
+                                     &particles->cell_keys[0],
+                                     &count[0],
+                                     particles->first_index[ipack*packsize_],
+                                     particles->last_index[ipack*packsize_+packsize_-1] );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,11);
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+            patch->patch_timers_[3] += MPI_Wtime() - timer;
 #endif
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
-            if( ( !particles->is_test ) && ( mass_ > 0 ) )
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ){
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
 
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ )
                 Proj->currentsAndDensityWrapper(
                     EMfields, *particles, smpi, particles->first_index[ipack*packsize_+scell],
@@ -503,11 +599,13 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     diag_flag, params.is_spectral,
                     ispec, ipack*packsize_+scell, particles->first_index[ipack*packsize_]
                 );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
+
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[2] += MPI_Wtime() - timer;
+            patch->patch_timers_[2] += MPI_Wtime() - timer;
 #endif
-
+            }
             for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
                 nrj_bc_lost += nrj_lost_per_thd[tid];
             }
@@ -518,15 +616,21 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
         if( params.geometry != "AMcylindrical" ) {
             double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
                 for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on scells
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
 
         } else { // AM case
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             int n_species = patch->vecSpecies.size();
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
             for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
                 int ifield = imode*n_species+ispec;
                 complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
@@ -536,27 +640,664 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     }
                 }
             }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
+
         }
     } // End projection for frozen particles
 
-    // Compression of the bins if necessary 
+    // Compression of the bins if necessary
     // Multiphoton Breit-Wheeler
 //     if( Multiphoton_Breit_Wheeler_process ) {
-// 
+//
 // #ifdef  __DETAILED_TIMERS
 //         timer = MPI_Wtime();
 // #endif
-// 
+//
 //         compress(smpi);
-// 
+//
 // #ifdef  __DETAILED_TIMERS
 //         patch->patch_timers[6] += MPI_Wtime() - timer;
 // #endif
-// 
+//
 //     }
 
 }//END dynamics
 
+#ifdef _OMPTASKS
+void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
+                         ElectroMagn *EMfields, Params &params, bool diag_flag,
+                         PartWalls *partWalls,
+                         Patch *patch, SmileiMPI *smpi,
+                         RadiationTables &RadiationTables,
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                         vector<Diagnostic *> &localDiags, int buffer_id )
+{
+
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
+    int bin_size0 = b_dim[0]; // used for AM
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        radiated_energy_per_bin[ibin] = 0.;
+    }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated                   = new int[Nbins];
+    int *bin_has_pushed                         = new int[Nbins];
+    int *bin_has_done_particles_BC              = new int[Nbins];
+
+    if( npack_==0 ) {
+        npack_    = 1;
+        packsize_ = ( f_dim1-2*oversize[1] );
+
+        //if ( ( (long int)particles->last_index.back() < (long int)60000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+        packsize_ *= ( f_dim0-2*oversize[0] );
+        //else
+        //    npack_ *= (f_dim0-2*oversize[0]);
+
+        if( nDim_field == 3 ) {
+            packsize_ *= ( f_dim2-2*oversize[2] );
+        }
+    }
+
+    //unsigned int iPart;
+
+    std::vector<double> nrj_lost_per_thd( 1, 0. );
+    int ipack = 0;
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+
+
+
+    #pragma omp taskgroup
+    {
+    if( time_dual>time_frozen_ || Ionize ) { // moving particle
+        // why was this used if the array is resized later?
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+
+        //Prepare for sorting
+        for( unsigned int i=0; i<count.size(); i++ ) {
+            count[i] = 0;
+        }
+
+        int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
+        smpi->resizeBuffers( buffer_id, nDim_field, nparts_in_pack );
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+            {
+
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+            }
+
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
+            // Interpolate the fields at the particle position
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[scell] ),
+                                       &( particles->last_index[scell] ),
+                                       buffer_id, particles->first_index[0] );
+            } // end cell loop for Interpolator
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } //end task Interpolator
+
+        } // end ibin loop for Interpolator
+
+        // Ionization
+        if( Ionize ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = Tools::getOMPThreadNum();
+                timer = MPI_Wtime();
+#endif
+
+                double *bJx, *bJy, *bJz;
+                if (params.geometry != "AMcylindrical"){
+                    bJx         = b_Jx[ibin];
+                    bJy         = b_Jy[ibin];
+                    bJz         = b_Jz[ibin];
+                } else {
+                    bJx         = NULL;
+                    bJy         = NULL;
+                    bJz         = NULL;
+                }
+
+                vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
+
+                // Loop over scell is not performed since ionization operator is not vectorized
+                // Instead, it is applied to all particles in the cells pertaining to ibin
+                // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
+                // } // end cell loop for Interpolator
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                } // end task Ionize bin
+            } // end ibin loop for Ionize
+        } // end Ionize
+
+     } // end if moving particle or Ionization
+
+     if( time_dual>time_frozen_ ) {
+
+         // Radiation losses
+         if( Radiate ) {
+             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                 #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+                 #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+                 {
+
+
+#ifdef  __DETAILED_TIMERS
+                 ithread = Tools::getOMPThreadNum();
+                 timer = MPI_Wtime();
+#endif
+
+                 // Loop over scell is not performed since radiation operator is not completely vectorized
+                 // Instead, it is applied to all particles in the cells pertaining to ibin
+                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                 //     // Radiation process
+                 //     ( *Radiate )( *particles, photon_species_, smpi,
+                 //                   RadiationTables,
+                 //                   radiated_energy_per_bin[ibin],
+                 //                   particles->first_index[scell],
+                 //                   particles->last_index[scell], buffer_id, ibin );
+                 // }
+
+
+                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,6);
+                 // Radiation process
+                 ( *Radiate )( *particles, radiated_photons_, smpi,
+                               RadiationTables,
+                               radiated_energy_per_bin[ibin],
+                               particles->first_index[first_cell_of_bin[ibin]],
+                               particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );
+                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,6);
+
+                 // Update scalar variable for diagnostics
+                 // radiated_energy += Radiate->getRadiatedEnergy();
+
+                 // Update the quantum parameter chi
+                 // Radiate->computeParticlesChi( *particles,
+                 //                               smpi,
+                 //                               first_index[ibin],
+                 //                               last_index[ibin],
+                 //                               ithread );
+
+#ifdef  __DETAILED_TIMERS
+                 patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+
+                 } // end task Radiate bin
+             } // end ibin loop for Radiate
+        } // end if Radiate
+
+        if( Multiphoton_Breit_Wheeler_process ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = Tools::getOMPThreadNum();
+                timer = MPI_Wtime();
+#endif
+                // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                // Pair generation process
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,7);
+                double radiated_energy_bin = 0;
+
+                ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                                                        smpi,
+                                                        mBW_pair_particles_,
+                                                        mBW_pair_species_,
+                                                        MultiphotonBreitWheelerTables,
+                                                        radiated_energy_bin,
+                                                        particles->first_index[first_cell_of_bin[ibin]],
+                                                        particles->last_index[last_cell_of_bin[ibin]],
+                                                        buffer_id, ibin );
+
+                radiated_energy_per_bin[ibin] = radiated_energy_bin;
+                // Update the photon quantum parameter chi of all photons
+                Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
+                                                        smpi,
+                                                        particles->first_index[first_cell_of_bin[ibin]],
+                                                        particles->last_index[last_cell_of_bin[ibin]],
+                                                        buffer_id );
+
+                // } // end scell
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,7);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end Multiphoton Breit Wheeler on ibin
+            } // end ibin task for Multiphoton Breit Wheeler
+            #pragma omp taskwait
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) depend(out:bin_has_interpolated[0:(Nbins-1)]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) depend(out:bin_has_interpolated[0:(Nbins-1)])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,7);
+            // clean decayed photons from arrays
+            // this loop must not be parallelized unless race conditions are prevented
+            for( int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
+                // Suppression of the decayed photons into pairs
+                Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
+                    *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
+            } // end scell
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,7);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for photon cleaning for all bins
+        }// end if Multiphoton_Breit_Wheeler_process
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]],
+                        particles->last_index[last_cell_of_bin[ibin]],
+                        buffer_id, particles->first_index[0] );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for Push on ibin
+        } // end ibin loop for Push
+
+        // Particles BC and keys
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
+            {
+            // double ener_iPart( 0. );
+
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+            // Variables to compute cell_keys for the sorting
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,2);
+            double energy_lost( 0. );
+            // Apply wall and boundary conditions
+            if( mass_>0 ) {
+                for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                        nrj_lost_per_bin[ibin] += mass_ * energy_lost;
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+
+                    partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += mass_ * energy_lost;
+
+                } // end scell loop
+            } else if( mass_==0 ) {
+                for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                        nrj_lost_per_bin[ibin] += energy_lost;
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+
+                    partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += energy_lost;
+
+                } // end scell loop
+            } // end if condition on mass
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,2);
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
+            if( mass_>0 ) {
+                for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                    for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= this->length_[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            // count[particles->cell_keys[iPart]] ++;
+                        }
+                    } // end iPart loop
+                } // end scell loop
+            } else if( mass_==0 ) {
+                for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                    for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= length[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            // count[particles->cell_keys[iPart]] ++;
+                        }
+                    } // end iPart loop
+                } // end scell loop
+            } // end if condition on mass
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,11);
+
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for particles BC and cell_keys on ibin
+        } // end ibin loop for particles BC
+
+
+        // Project currents if not a Test species and charges as well if a diag is needed.
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin])
+#endif
+            {
+
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry != "AMcylindrical"){
+                    for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                        Proj->currentsAndDensityWrapperOnBuffers(
+                            b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin],
+                            ibin*cluster_width_, *particles, smpi,
+                            particles->first_index[scell], particles->last_index[scell],
+                            buffer_id, diag_flag, params.is_spectral, ispec, scell );
+                    } // end scell loop
+                } else {
+                    // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                    // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin],
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi,
+                    //                                             particles->first_index[scell], particles->last_index[scell],
+                    //                                             buffer_id, diag_flag);
+                    // } // end scell loop
+                } // end if AM
+            } // end condition on test and mass
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            }//end task for Proj of ibin
+        }// end ibin loop for Proj
+
+//         // reduction of the lost energy in each ibin
+//         // the dependency ensures that it is done after the particles BC
+// #ifdef  __DETAILED_TIMERS
+//         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #else
+//         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #endif
+//         {
+//         // reduce the energy lost with BC per bin
+//         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//            nrj_bc_lost += nrj_lost_per_bin[ibin];
+//         }
+//
+//         // sum the radiated energy / energy converted in pairs
+//         // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+//         if( Radiate || Multiphoton_Breit_Wheeler_process) {
+// #ifdef  __DETAILED_TIMERS
+//             timer = MPI_Wtime();
+//             ithread = Tools::getOMPThreadNum();
+// #endif
+//
+//             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//                radiated_energy += radiated_energy_per_bin[ibin];
+//             }
+// #ifdef  __DETAILED_TIMERS
+//             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//         } // end if Radiate or Multiphoton_Breit_Wheeler_process
+//         } // end task for lost/radiated energy reduction
+
+
+
+    } //End if moving particles
+
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+
+        if (Ionize){ // a task dependency is needed to project after ionization
+
+            if( params.geometry != "AMcylindrical" ) {
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_interpolated[ibin])
+#else
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_interpolated[ibin])
+#endif
+                    {
+                    // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                    // This must be done before Projection
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
+#ifdef  __DETAILED_TIMERS
+                    ithread = Tools::getOMPThreadNum();
+                    timer = MPI_Wtime();
+#endif
+                    // basic projector is not vectorized, no need to make a loop on scell
+                    for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
+                    } //End loop on particles
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
+
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                    } // end task ibin
+                } // end ibin
+
+            } else { // AM case, not yet vectorized
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection
+                // for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+                // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                // int n_species = patch->vecSpecies.size();
+                // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                //     int ifield = imode*n_species+ispec;
+                //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*cluster_width_ );
+                //         }
+                //     }
+                // }
+            } // end if condition on geometry
+
+        } else { // without ionization no dependency is needed to project
+
+            if( params.geometry != "AMcylindrical" ) {
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0)
+#endif
+                    {
+                    // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                    // This must be done before Projection
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+
+#ifdef  __DETAILED_TIMERS
+                    ithread = Tools::getOMPThreadNum();
+                    timer = MPI_Wtime();
+#endif
+
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+                    // basic projector is not vectorized, no need to make a loop on scell
+                    for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
+                    } //End loop on particles
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                    } // end task ibin
+                } // end ibin
+
+            } else { // AM case, not yet vectorized
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection
+                // for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+                // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                // int n_species = patch->vecSpecies.size();
+                // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                //     int ifield = imode*n_species+ispec;
+                //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*cluster_width_ );
+                //         }
+                //     }
+                // }
+            } // end if condition on geometry
+
+        } // end if Ionize
+
+
+    } // End projection for frozen particles
+
+    } // end taskgroup
+
+    if (time_dual>time_frozen_){
+
+        // reduction of the lost energy in each ibin
+        // the dependency ensures that it is done after the particles BC
+// #ifdef  __DETAILED_TIMERS
+//         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #else
+//         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #endif
+#ifdef  __DETAILED_TIMERS
+        #pragma omp task default(shared) private(ithread,timer)
+#else
+        #pragma omp task default(shared)
+#endif
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+           nrj_bc_lost += nrj_lost_per_bin[ibin];
+        }
+
+        // sum the radiated energy / energy converted in pairs
+        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+        if( Radiate || Multiphoton_Breit_Wheeler_process) {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+            ithread = Tools::getOMPThreadNum();
+#endif
+
+            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+               nrj_radiated_ += radiated_energy_per_bin[ibin];
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+        } // end if Radiate or Multiphoton_Breit_Wheeler_process
+        } // end task for lost/radiated energy reduction
+    } // end if moving particle
+
+} // END dynamicsTasks
+
+#endif //endif tasks are used
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
@@ -691,7 +1432,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
             }
         }
     }
-    
+
     //Copy valid particles siting over particles->last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
@@ -798,9 +1539,9 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
                 cell_keys[iPart]  = std::round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
-                cell_keys[iPart] *= length_[1];                                         
+                cell_keys[iPart] *= length_[1];
                 cell_keys[iPart] += std::round(position_y[iPart] * dx_inv_[1] )- min_loc_y ;
-                cell_keys[iPart] *= length_[2];                                         
+                cell_keys[iPart] *= length_[2];
                 cell_keys[iPart] += std::round(position_z[iPart] * dx_inv_[2] )- min_loc_z ;
             }
         }
@@ -968,7 +1709,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 {
 //     int ithread;
 // #ifdef _OPENMP
-//     ithread = omp_get_thread_num();
+//     ithread = Tools::getOMPThreadNum();
 // #else
 //     ithread = 0;
 // #endif
@@ -1104,13 +1845,13 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
         std::vector<Diagnostic *> &localDiags )
 {
 
-////////////////////////////// new vectorized
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+    const int ithread = Tools::getOMPThreadNum();
+
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -1149,12 +1890,16 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,0);
+
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[7] += MPI_Wtime() - timer;
+            patch->patch_timers_[7] += MPI_Wtime() - timer;
 #endif
 
             // Ionization
@@ -1167,12 +1912,16 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,5);
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                     Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread );
                     Ionize->envelopeIonization( particles, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
                 }
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,5);
+
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
+                patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
             }
 
@@ -1182,21 +1931,28 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Proj->susceptibility( EMfields, *particles, mass_, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, particles->first_index[ipack*packsize_] );
             }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[8] += MPI_Wtime() - timer;
+            patch->patch_timers_[8] += MPI_Wtime() - timer;
 #endif
 
             // Push the particles
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,1);
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,1);
+
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
+            patch->patch_timers_[9] += MPI_Wtime() - timer;
 #endif
         }
 
@@ -1205,6 +1961,181 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
     }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdateSusceptibilityAndMomentum
+
+#ifdef _OMPTASKS
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields,
+        Params &params, bool diag_flag,
+        Patch *patch, SmileiMPI *smpi,
+        std::vector<Diagnostic *> &localDiags, int buffer_id )
+{
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
+
+    int bin_size0 = b_dim[0];
+    // for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+    //     nrj_lost_per_bin[ibin] = 0.;
+    //     radiated_energy_per_bin[ibin] = 0.;
+    // }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated                   = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_ionized                        = new int[Nbins];
+    int *bin_has_projected_chi                  = new int[Nbins];
+
+
+    #pragma omp taskgroup
+    {
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if( time_dual>time_frozen_ || Ionize) { // moving particle
+
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+            {
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset susceptibility sub-buffer - this buffer stores a grid susceptibility on the ibin physical space
+                // This must be done before Projection of susceptibility
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_Chi[ibin][i]   = 0.0;
+            } else { // AM geometry is not vectorized with the envelope at the moment
+                // Reset susceptibility sub-buffer - this buffer stores a grid susceptibility on the ibin physical space
+                // This must be done before Projection of susceptibility
+                // for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_ChiAM[ibin][i] = 0.0;
+            }
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                // Interpolate the fields and envelope at the particle position
+                // Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
+                Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
+            }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
+
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[7*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task interp
+        } // end ibin
+
+        // Ionization
+        if( Ionize ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = Tools::getOMPThreadNum();
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[buffer_id] );
+                vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
+                Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
+                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end task ionize
+            } // end ibin
+        }  // end Ionize
+
+        if( time_dual>time_frozen_) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin])
+#endif
+                {
+                // Project susceptibility, the source term of envelope equation
+#ifdef  __DETAILED_TIMERS
+                ithread = Tools::getOMPThreadNum();
+                timer = MPI_Wtime();
+#endif
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+                if (params.geometry != "AMcylindrical"){
+                    for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                        Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin],
+                                                      ibin*cluster_width_, bin_size0,
+                                                      *particles, mass_, smpi,
+                                                      particles->first_index[scell], particles->last_index[scell] ,
+                                                      buffer_id );
+                    }
+                } else { // AM geometry with envelope is not vectorized for the moment
+                    // Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin],
+                    //                               ibin*cluster_width_, bin_size0,
+                    //                               *particles, mass_, smpi,
+                    //                               particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]] ,
+                    //                               buffer_id );
+                } // end if geometry
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[8*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end task susceptibility
+            } // end ibin
+
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin])
+#endif
+                {
+#ifdef  __DETAILED_TIMERS
+                ithread = Tools::getOMPThreadNum();
+                timer = MPI_Wtime();
+#endif
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+                // Push only the particle momenta
+                ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id);
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end task susceptibility
+            } // end ibin
+        } // end if moving particle
+    } else { // immobile particle
+    } //END if time vs. time_frozen_ or Ionize
+
+    } // end taskgroup
+
+
+} // end ponderomotiveUpdateSusceptibilityAndMomentumTasks
+#endif // endif tasks are used
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -1218,13 +2149,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
         std::vector<Diagnostic *> &localDiags )
 {
 
-////////////////////////////// new vectorized
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+    const int ithread = Tools::getOMPThreadNum();
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -1266,7 +2191,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[4] += MPI_Wtime() - timer;
+            patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
 
             // Project susceptibility, the source term of envelope equation
@@ -1278,7 +2203,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[8] += MPI_Wtime() - timer;
+            patch->patch_timers_[8] += MPI_Wtime() - timer;
 #endif
 
         }
@@ -1303,17 +2228,17 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
         std::vector<Diagnostic *> &localDiags )
 {
 
-
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+    const int ithread = Tools::getOMPThreadNum();
 
 #ifdef  __DETAILED_TIMERS
     double timer;
 #endif
+
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
 
     unsigned int iPart;
 
@@ -1339,24 +2264,34 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,0);
             // Interpolate the fields at the particle position
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,0);
+
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[10] += MPI_Wtime() - timer;
+            patch->patch_timers_[10] += MPI_Wtime() - timer;
 #endif
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,1);
             // Push only the particle position
             ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,1);
+
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[11] += MPI_Wtime() - timer;
+            patch->patch_timers_[11] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,2);
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 double energy_lost( 0. );
                 // Apply wall and boundary conditions
@@ -1372,6 +2307,18 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                     partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
+                } else if( mass_==0 ) { // condition mass_=0
+                    ERROR( "Particles with zero mass cannot interact with envelope" );
+                }
+            } // end scell
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,2);
+
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,11);
+            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+                // Apply wall and boundary conditions
+                if( mass_>0 ) { // condition mass_>0
+
                     for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //First reduction of the count sort algorithm. Lost particles are not included.
@@ -1386,10 +2333,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                     ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
                     LINK_NAMELIST + std::string("#laser-envelope-model"));
                 }
-            }
+            } // end scell
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,11);
+
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+            patch->patch_timers_[3] += MPI_Wtime() - timer;
 #endif
 
             // Project currents if not a Test species and charges as well if a diag is needed.
@@ -1397,13 +2346,17 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
             if( ( !particles->is_test ) && ( mass_ > 0 ) )
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                     Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], ithread, diag_flag, params.is_spectral, ispec, ipack*packsize_+scell, particles->first_index[ipack*packsize_] );
                 }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
+
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[12] += MPI_Wtime() - timer;
+            patch->patch_timers_[12] += MPI_Wtime() - timer;
 #endif
         }
 
@@ -1412,6 +2365,8 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
         }
 
     } else { // immobile particle (at the moment only project density)
+
+        smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
         if( diag_flag &&( !particles->is_test ) ) {
             if( params.geometry != "AMcylindrical" ) {
                 double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
@@ -1435,7 +2390,293 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                 }
             }
         }
-
+        smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
     }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdatePositionAndCurrents
+
+#ifdef _OMPTASKS
+void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields,
+        Params &params, bool diag_flag, PartWalls *partWalls,
+        Patch *patch, SmileiMPI *smpi,
+        std::vector<Diagnostic *> &localDiags, int buffer_id )
+{
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+    bool diag_PartEventTracing {false};
+
+# ifdef _PARTEVENTTRACING
+    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+# endif
+
+    //int bin_size0 = b_dim[0];
+
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        // radiated_energy_per_bin[ibin] = 0.;
+    }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated               = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_pushed                     = new int[Nbins];
+    int *bin_has_done_particles_BC          = new int[Nbins];
+
+    #pragma omp taskgroup
+    {
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if( time_dual>time_frozen_ ) {
+        //Prepare for sorting
+        for( unsigned int i=0; i<count.size(); i++ ) {
+            count[i] = 0;
+        }
+
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+            {
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+            }
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
+            }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[10*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task interpolate
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+            // Push only the particle position
+            ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[11*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+            double energy_lost( 0. );
+            // Apply wall and boundary conditions
+            if( mass_>0 ) {
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,2);
+                for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                energy_lost = 0;
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    ( *partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += mass_ * energy_lost;
+                }
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                nrj_lost_per_bin[ibin] += mass_ * energy_lost;
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,2);
+
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
+                for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                    if ( particles->cell_keys[iPart] != -1 ) {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        for( int i = 0 ; i<( int )nDim_field; i++ ) {
+                            particles->cell_keys[iPart] *= length_[i];
+                            particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                        }
+                        // count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
+                    }
+                } // end iPart loop
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,11);
+
+                } // end loop on scell
+            } else if( mass_==0 ) {
+                ERROR( "Particles with zero mass cannot interact with envelope" );
+
+            } // end mass_ = 0? condition
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = Tools::getOMPThreadNum();
+            timer = MPI_Wtime();
+#endif
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry != "AMcylindrical"){
+                    for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                        Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin],
+                                                                  ibin*cluster_width_, *particles, smpi,
+                                                                  particles->first_index[scell], particles->last_index[scell],
+                                                                  buffer_id, diag_flag, params.is_spectral, ispec );
+                    }
+                  } else { // vectorized envelope not implemented in AM
+                    // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin],
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi,
+                    //                                             particles->first_index[ibin], particles->last_index[ibin],
+                    //                                             buffer_id, diag_flag);
+                  } // end if AM
+            } // end condition on test and mass
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+        // // reduction of the lost energy in each ibin
+        // // the dependency ensures that it is done after the particles BC
+        // //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // // using depend out on particles BC a segfault is caused - check why this happens
+        // #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+        // {
+        // // reduce the energy lost with BC per bin
+        // for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+        //     nrj_bc_lost += nrj_lost_per_bin[ibin];
+        // } // end ibin
+        // } // end task for lost/radiated energy reduction
+
+    } else { // immobile particle
+        if( diag_flag &&( !particles->is_test ) ) {
+            if( params.geometry != "AMcylindrical" ) {
+
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin)
+#endif
+                    {
+#ifdef  __DETAILED_TIMERS
+                    ithread = Tools::getOMPThreadNum();
+                    timer = MPI_Wtime();
+#endif
+
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+                    for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
+                    }
+                    smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                    } // end task projection for frozen or test
+                } // end ibin
+            } else { // vectorized AM geometry not implemented with envelope
+
+//                 for( unsigned int ibin = 0 ; ibin < particles->Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
+// #ifdef  __DETAILED_TIMERS
+//                     #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer)
+// #else
+//                     #pragma omp task default(shared) firstprivate(ibin,bin_size0)
+// #endif
+//                     {
+// #ifdef  __DETAILED_TIMERS
+//                     ithread = Tools::getOMPThreadNum();
+//                     timer = MPI_Wtime();
+// #endif
+//                     for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+//                     int imode = 0; // only mode 0 is used with envelope
+//                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+//                         Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
+//                     } // end loop on particles
+// #ifdef  __DETAILED_TIMERS
+//                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//                     } // end task projection for frozen or test
+//                 } //end ibin
+            } // end if on geometry
+        } // end condition on diag and not particle test
+
+    } // end if moving particle
+
+    } // end taskgroup
+
+    if (time_dual>time_frozen_){
+
+        // reduction of the lost energy in each ibin
+        // the dependency ensures that it is done after the particles BC
+        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // using depend out on particles BC a segfault is caused - check why this happens
+        // #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+        #pragma omp task default(shared)
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+            nrj_bc_lost += nrj_lost_per_bin[ibin];
+        } // end ibin
+        } // end task for lost/radiated energy reduction
+
+    } // end if moving particle
+
+} // end ponderomotiveUpdatePositionAndCurrentsTasks
+
+#endif // endif tasks are used

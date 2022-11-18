@@ -89,7 +89,7 @@ public:
         }
         return last_index.back();
     }
-    
+
     //! Get vector size on CPU
     inline unsigned int size() const
     {
@@ -119,7 +119,7 @@ public:
     {
         return first_index.size();
     }
-    
+
     //! Tells if old positions are kept (true) or not
     inline bool keepOldPositions() const
     {
@@ -208,7 +208,7 @@ public:
     //! This method eliminates the space between the bins
     //! (presence of empty particles beteen the bins)
     void compress(bool compute_cell_keys = false);
-    
+
     //! Sum the vectors
     void sum(int ibin_min, int ibin_max);
 
@@ -529,7 +529,7 @@ public:
 
     //! Indices of the first particles of each bin (or cells) in the Particles object
     std::vector<int> first_index;
-    
+
     //! Indexes of the last particles + 1 in each bin (or cells) in the Particles object
     std::vector<int> last_index;
 

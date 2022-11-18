@@ -25,15 +25,15 @@ Changes made in the repository (not released)
 * Performances diagnostic: new parameter ``cumulative``
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
-* Bugfixes: 
+* Bugfixes:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
   * C++11 compilation issue
   * Reading particle weights and momenta from hdf5 file
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
-
-
+* Experimental: :doc:`task_parallelization` of macro-particle operations with OpenMP is now available.
+* Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
 ----

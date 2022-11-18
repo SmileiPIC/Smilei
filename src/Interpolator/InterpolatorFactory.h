@@ -43,6 +43,7 @@ public:
     {
         
         Interpolator *Interp = NULL;
+        
         // ---------------
         // 1Dcartesian simulation
         // ---------------

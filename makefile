@@ -86,7 +86,7 @@ CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -std=c++11 -Wall
+    CXXFLAGS += -std=c++11 -Wall -Wno-unused-command-line-argument
 else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
@@ -186,7 +186,7 @@ ifneq (,$(call parse_config,opt-report))
     endif
 endif
 
-# Manage options in the "config" parameter
+# Detailed timers
 ifneq (,$(call parse_config,detailed_timers))
     CXXFLAGS += -D__DETAILED_TIMERS
 endif
@@ -261,6 +261,20 @@ ifneq (,$(call parse_config,gpu_amd))
 	OBJS += $(GPU_KERNEL_OBJS)
 endif
 
+# Use OpenMP tasks
+ifneq (,$(call parse_config,omptasks))
+    CXXFLAGS += -D_OMPTASKS
+endif
+
+ifneq (,$(call parse_config,part_event_tracing_tasks_on))
+    CXXFLAGS += -D_OMPTASKS
+    CXXFLAGS += -D_PARTEVENTTRACING
+endif
+
+ifneq (,$(call parse_config,part_event_tracing_tasks_off))
+    CXXFLAGS += -D_PARTEVENTTRACING
+endif
+
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
@@ -271,13 +285,10 @@ else
     Q :=
 endif
 
-
 #last: check remaining arguments and raise error
 ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
 endif
-
-
 
 
 #-----------------------------------------------------
@@ -285,7 +296,26 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: header $(EXEC) $(EXEC)_test
+
+#-----------------------------------------------------
+# Header
+header:
+	@echo " _____________________________________"
+	@echo ""
+	@echo " SMILEI compilation"
+	@echo ""
+	@if [ $(call parse_config,debug) ]; then echo "- Debug option requested"; fi;
+	@if [ $(call parse_config,gdb) ]; then echo "- Compilation for GDB requested"; fi;
+	@if [ $(call parse_config,picsar) ]; then echo "- SMILEI linked to PICSAR requested"; fi;
+	@if [ $(call parse_config,opt-report) ]; then echo "- Optimization report requested"; fi;
+	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
+	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
+	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_on) ]; then echo "- Compiled particle events tracing, with tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_off) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
+	@echo " _____________________________________"
+	@echo ""
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -416,12 +446,13 @@ uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
+
 #-----------------------------------------------------
 # Info rules
 print-% :
 	$(info $* : $($*)) @true
 
-env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-COMPILER_INFO
 
 #-----------------------------------------------------
 # Smilei tables
@@ -481,6 +512,9 @@ help:
 	@echo '    inspector            : to compile for Intel Inspector analysis'
 	@echo '    gpu_nidia            : to compile for GPU (uses OpenACC)'
 	@echo '    gpu_amd              : to compile for GPU (uses OpenMP)'
+	@echo '    omptasks                     : to compile with OpenMP tasks'
+	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
+	@echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

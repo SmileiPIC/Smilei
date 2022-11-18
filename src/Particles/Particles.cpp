@@ -150,7 +150,6 @@ void Particles::reserve( unsigned int reserved_particles,
     }
 
     Momentum.resize( 3 );
-
     for( unsigned int i = 0; i < 3; i++ ) {
         Momentum[i].reserve( reserved_particles );
     }
@@ -282,7 +281,7 @@ void Particles::shrinkToFit(const bool compute_cell_keys)
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         std::vector<uint64_t>( *uint64_prop_[iprop] ).swap( *uint64_prop_[iprop] );
     }
-    
+
     if (compute_cell_keys) {
         cell_keys.swap(cell_keys);
     }
@@ -467,7 +466,7 @@ void Particles::eraseParticleTrail( unsigned int ipart, bool compute_cell_keys )
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).end() );
     }
-    
+
     if (compute_cell_keys) {
         cell_keys.erase( cell_keys.begin()+ipart, cell_keys.end() );
     }
@@ -682,7 +681,7 @@ void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] )[dest_particle] = ( *uint64_prop_[iprop] )[src_particle];
     }
-    
+
     if (compute_cell_keys) {
         cell_keys[dest_particle] = cell_keys[src_particle];
     }
@@ -714,7 +713,7 @@ void Particles::overwriteParticle( unsigned int part1,
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         memcpy( & ( *uint64_prop_[iprop] )[part2],  &( *uint64_prop_[iprop] )[part1], sizeid );
     }
-    
+
     if (compute_cell_keys) {
         //std::copy( cell_keys.begin()+part1,  cell_keys.begin() + part1 + N, cell_keys.begin() + part2 );
         memcpy( &cell_keys[part2],  &cell_keys[part1], N*sizeof( cell_keys[0] ) );
@@ -966,17 +965,17 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compress(bool compute_cell_keys) {
-    
+
     unsigned int nbin = numberOfBins();
-    
+
     for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
-    
+
         // Removal of the photons
         const unsigned int nb_deleted_photon = first_index[ibin+1] - last_index[ibin];
 
         if( nb_deleted_photon > 0 ) {
             eraseParticle( last_index[ibin], nb_deleted_photon, compute_cell_keys );
-            
+
             for( int ii=ibin+1; ii<nbin; ii++ ) {
                 first_index[ii] -= nb_deleted_photon;
                 last_index[ii] -= nb_deleted_photon;
@@ -1041,14 +1040,14 @@ void Particles::compress(bool compute_cell_keys) {
 // }
 
 void Particles::sum(int ibin_min, int ibin_max) {
-    
+
     double sum_px = 0;
     double sum_py = 0;
     double sum_mx = 0;
     double sum_my = 0;
     int iterations = 0;
     int nb_particles_total = 0;
-    
+
     for (int ibin = ibin_min ; ibin < ibin_max ; ibin++) {
         for (int ipart = first_index[ibin] ; ipart < last_index[ibin] ; ipart++) {
             if (Weight[ipart] > 0) {

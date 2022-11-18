@@ -159,7 +159,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
 void Projector2D2OrderGPU::basic( double      *rhoj,
                                   Particles   &particles,
                                   unsigned int ipart,
-                                  unsigned int type )
+                                  unsigned int type,
+                                  int bin_shift )
 {
     // Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
