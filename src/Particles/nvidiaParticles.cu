@@ -1031,26 +1031,26 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 // -----------------------------------------------------------------------------
 //! Erase `npart` particles from `ipart`
 // -----------------------------------------------------------------------------
-void nvidiaParticles::eraseParticleOnDevice(int ipart, int npart) {
-
-    const auto first_particle = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
-                                                                               std::begin( nvidia_momentum_[0] ),
-                                                                               std::begin( nvidia_momentum_[1] ),
-                                                                               std::begin( nvidia_momentum_[2] ),
-                                                                               std::begin( nvidia_weight_ ),
-                                                                               std::begin( nvidia_charge_ ) ) );
-
-    // Remove the other position values depending on the simulation's grid
-    // dimensions
-    for( int i = 1; i < position_dimension_count; ++i ) {
-        thrust::remove_if( thrust::device,
-                           std::begin( nvidia_position_[i] ),
-                           std::begin( nvidia_position_[i] ) + nparts,
-                           std::cbegin( nvidia_cell_keys_ ),
-                           count_if_out() );
-    }
-
-}
+//void nvidiaParticles::eraseParticleOnDevice(int ipart, int npart) {
+//
+//    const auto first_particle = thrust::make_zip_iterator( thrust::make_tuple( std::begin( nvidia_position_[0] ),
+//                                                                               std::begin( nvidia_momentum_[0] ),
+//                                                                               std::begin( nvidia_momentum_[1] ),
+//                                                                               std::begin( nvidia_momentum_[2] ),
+//                                                                               std::begin( nvidia_weight_ ),
+//                                                                               std::begin( nvidia_charge_ ) ) );
+//
+//    // Remove the other position values depending on the simulation's grid
+//    // dimensions
+//    for( int i = 1; i < position_dimension_count; ++i ) {
+//        thrust::remove_if( thrust::device,
+//                           std::begin( nvidia_position_[i] ),
+//                           std::begin( nvidia_position_[i] ) + nparts,
+//                           std::cbegin( nvidia_cell_keys_ ),
+//                           count_if_out() );
+//    }
+//
+//}
 
 // -----------------------------------------------------------------------------
 //! Erase particles leaving the patch object on device
