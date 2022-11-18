@@ -14,6 +14,7 @@
 #include <Tools.h>
 
 #include <H5.h>
+#include "ElectroMagnBCAM_PML.h"
 
 class Params;
 class OpenPMDparams;
@@ -149,8 +150,10 @@ private:
     //! dump PML in the checkpoint file 
     template <typename Tpml>
     void  dump_PML(Tpml embc, H5Write &g );
+    void  dump_PML( ElectroMagnBCAM_PML *embc, H5Write &g, unsigned int imode );
     template <typename Tpml>
     void  restart_PML(Tpml embc, H5Read &g );
+    void  restart_PML( ElectroMagnBCAM_PML *embc, H5Read &g, unsigned int imode );
 };
 
 #endif /* CHECKPOINT_H_ */

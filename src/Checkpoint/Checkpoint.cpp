@@ -372,11 +372,15 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             dump_cFieldsPerProc( g, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
-
             if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
-
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] )){
+                    ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] );
+                    if (embc->Hl_[0]) dump_PML(embc, g, imode);
+                }
+            }
         }
     }
 
@@ -752,6 +756,12 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
+            for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
+                if( dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] )){
+                    ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] );
+                    if (embc->Hl_[0]) restart_PML(embc, g, imode);
+                }
+            }
 
         }
     }
@@ -1032,6 +1042,21 @@ void  Checkpoint::dump_PML(Tpml embc, H5Write &g ){
     dumpFieldsPerProc( g, embc->Dy_ );
     dumpFieldsPerProc( g, embc->Dz_ );
 }
+void  Checkpoint::dump_PML( ElectroMagnBCAM_PML *embc, H5Write &g, unsigned int imode ){
+    dump_cFieldsPerProc( g, embc->Hl_[imode] );
+    dump_cFieldsPerProc( g, embc->Hr_[imode] );
+    dump_cFieldsPerProc( g, embc->Ht_[imode] );
+    dump_cFieldsPerProc( g, embc->Bl_[imode] );
+    dump_cFieldsPerProc( g, embc->Br_[imode] );
+    dump_cFieldsPerProc( g, embc->Bt_[imode] );
+    dump_cFieldsPerProc( g, embc->El_[imode] );
+    dump_cFieldsPerProc( g, embc->Er_[imode] );
+    dump_cFieldsPerProc( g, embc->Et_[imode] );
+    dump_cFieldsPerProc( g, embc->Dl_[imode] );
+    dump_cFieldsPerProc( g, embc->Dr_[imode] );
+    dump_cFieldsPerProc( g, embc->Dt_[imode] );
+}
+
 template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
 void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
     restartFieldsPerProc( g, embc->Hx_ );
@@ -1046,6 +1071,19 @@ void  Checkpoint::restart_PML(Tpml embc, H5Read &g ){
     restartFieldsPerProc( g, embc->Dx_ );
     restartFieldsPerProc( g, embc->Dy_ );
     restartFieldsPerProc( g, embc->Dz_ );
-
+}
+void  Checkpoint::restart_PML(ElectroMagnBCAM_PML *embc, H5Read &g, unsigned int imode ){
+    restart_cFieldsPerProc( g, embc->Hl_[imode] );
+    restart_cFieldsPerProc( g, embc->Hr_[imode] );
+    restart_cFieldsPerProc( g, embc->Ht_[imode] );
+    restart_cFieldsPerProc( g, embc->Bl_[imode] );
+    restart_cFieldsPerProc( g, embc->Br_[imode] );
+    restart_cFieldsPerProc( g, embc->Bt_[imode] );
+    restart_cFieldsPerProc( g, embc->El_[imode] );
+    restart_cFieldsPerProc( g, embc->Er_[imode] );
+    restart_cFieldsPerProc( g, embc->Et_[imode] );
+    restart_cFieldsPerProc( g, embc->Dl_[imode] );
+    restart_cFieldsPerProc( g, embc->Dr_[imode] );
+    restart_cFieldsPerProc( g, embc->Dt_[imode] );
 }
 

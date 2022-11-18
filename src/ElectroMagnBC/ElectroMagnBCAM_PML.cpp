@@ -152,7 +152,7 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
 
         for ( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             ostringstream mode_id( "" );
-            mode_id << "_mode_" << imode;
+            mode_id << "_mode_" << imode << "_id_" << i_boundary_;
             El_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "El_pml_"+mode_id.str() ).c_str(), params );
             Dl_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "Dl_pml_"+mode_id.str() ).c_str(), params );
             Hl_[imode] = FieldFactory::createComplex( dimPrim, 0, true,  ( "Hl_pml_"+mode_id.str() ).c_str(), params );
