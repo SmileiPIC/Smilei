@@ -543,7 +543,7 @@ public:
     //! This method removes particles with a negative weight
     //! without changing the bin first index
     //! Bins are therefore potentially seperated by empty particle slots
-    void removeParticlesKeepBinFirstIndex(
+    void removeTaggedParticlesPerBin(
         SmileiMPI *smpi,
         int ithread,
         bool compute_cell_keys = false);

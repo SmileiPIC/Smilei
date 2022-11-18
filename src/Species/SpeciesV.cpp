@@ -457,7 +457,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 // Concerns as well the smpi buffers
                 // Warining : can not be here if npack_ > 0
                 //            In this case, it should be at the end of dynamics
-                removeParticlesKeepBinFirstIndex(smpi, ithread, true);
+                removeTaggedParticlesPerBin(smpi, ithread, true);
 
                 // Delete the gap between the bins due to photon destruction
                 // Warining : can not be here if npack_ > 0

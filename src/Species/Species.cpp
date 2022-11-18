@@ -723,7 +723,7 @@ void Species::dynamics( double time_dual,
 
             // Remove Particles while keeping the first index of each bin
             // Concerns as well the smpi buffers
-            removeParticlesKeepBinFirstIndex(smpi, ithread, false);
+            removeTaggedParticlesPerBin(smpi, ithread, false);
 
             // Delete the gap between the bins
             // Concerns as well the smpi buffers
@@ -2136,7 +2136,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
 //! This method removes particles with a negative weight
 //! without changing the bin first index
 //! Bins are therefore potentially seperated by empty particle slots
-void Species::removeParticlesKeepBinFirstIndex(
+void Species::removeTaggedParticlesPerBin(
     SmileiMPI *smpi,
     int ithread,
     bool compute_cell_keys)

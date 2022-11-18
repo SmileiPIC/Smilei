@@ -188,10 +188,10 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1], ny_d );
 
         //Buffering of iol and delta
-        *( iold+0*nparts+ipart)  = idx_p[0];
-        *( iold+1*nparts+ipart)  = idx_p[1];
-        *( delta+0*nparts+ipart) = delta_p[0];
-        *( delta+1*nparts+ipart) = delta_p[1];
+        iold[0*nparts+ipart]  = idx_p[0];
+        iold[1*nparts+ipart]  = idx_p[1];
+        delta[0*nparts+ipart] = delta_p[0];
+        delta[1*nparts+ipart] = delta_p[1];
 
     }
 

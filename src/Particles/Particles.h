@@ -422,19 +422,19 @@ public:
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
 
     virtual double* getPtrPosition( int idim ) {
-        return Position[idim].data();
+        return (idim < Position.size()) ? Position[idim].data() : nullptr;
     };
     virtual double* getPtrPositionOld( int idim ) {
-        return Position_old[idim].data();
+        return (idim < Position_old.size()) ? Position_old[idim].data() : nullptr;
     };
     virtual double* getPtrMomentum( int idim ) {
-        return &(Momentum[idim][0]);
+        return (idim < Momentum.size()) ? Momentum[idim].data() : nullptr;
     };
     virtual double* getPtrWeight() {
         return &(Weight[0]);
     };
     virtual double* getPtrChi() {
-        return &(Chi[0]);
+        return (isQuantumParameter ? Chi.data() : nullptr);
     };
     virtual short* getPtrCharge() {
         return &(Charge[0]);
@@ -443,7 +443,7 @@ public:
         return &(Id[0]);
     };
     virtual double* getPtrTau() {
-        return &(Tau[0]);
+        return (isMonteCarlo ? Chi.data() : nullptr);
     };
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);
