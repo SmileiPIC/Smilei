@@ -54,7 +54,6 @@ extern double normal( double stddev );
 // ---------------------------------------------------------------------------------------------------------------------
 class Params
 {
-
 public:
     //! Creator for Params
     Params( SmileiMPI *, std::vector<std::string> );
@@ -368,7 +367,114 @@ public:
 
     //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
-    
+
+    //! returns true if the dimension and the interpolation order of the
+    //! simulation is supported for the binning.
+    //!
+    bool isGPUParticleBinningAvailable() const;
+
+    //! Given dimension_id in [0, 3), return for dimension_id == :
+    //! 1: the 1D value (not implemented)
+    //! 2: the 2D value
+    //! 3: the 3D value (not implemented)
+    //!
+    //! returns -1 if not implemented, this'll disable the sorting/binning
+    //!
+    static constexpr int
+    getGPUClusterWidth( int dimension_id )
+    {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        switch( dimension_id ) {
+            case 2:
+                return 4;
+            case 1:
+            case 3:
+            default:
+                return -1;
+        }
+#else
+        return -1;
+#endif
+    }
+
+    //! Computes:
+    //! getGPUClusterWidth( dimension_id ) +
+    //! 2 * getGPUClusterGhostCellBorderWidth( interpolation_order )
+    //!
+    static constexpr int
+    getGPUClusterWithGhostCellWidth( int dimension_id, int interpolation_order )
+    {
+        return getGPUClusterWidth( dimension_id ) +
+               getGPUClusterGhostCellBorderWidth( interpolation_order );
+    }
+
+    //! Call getGPUClusterWidth( nDim_particle )
+    //!
+    int getGPUClusterWidth() const;
+
+    //! Return the ghost cell present at the border of the cluster.
+    //! This border is NOT accounted for by getGPUClusterWidth. That is, the
+    //! particles are sorted in chunk of width getGPUClusterWidth but the
+    //! projection of a given bin will overlap other bins.
+    //!
+    static constexpr int
+    getGPUClusterGhostCellBorderWidth( int interpolation_order )
+    {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        constexpr int kGPUClusterGhostCellCount[3]{ -1,
+                                                    // Order 2 ghost cells on each "sides" of the dimension
+                                                    2 * 2 +
+                                                        // The std::round in the interpolator's coeffs function used to
+                                                        // get the position of the particle requires that we reserve an
+                                                        // other row and column.
+                                                        // NOTE: Is that really necessary ? We could take this
+                                                        // behavior in account during the sorting, but that would mean
+                                                        // one more bin row and column. The clusters on the sides would
+                                                        // be less full than the middle ones.
+                                                        // NOTE: Instead we add a row and column in the cached field
+                                                        // value.
+                                                        1,
+                                                    -1 };
+        return kGPUClusterGhostCellCount[interpolation_order - 1];
+#else
+        return -1;
+#endif
+    }
+
+    //! Calls getGPUClusterGhostCellBorderWidth( interpolation_order )
+    //!
+    int getGPUClusterGhostCellBorderWidth() const;
+
+    //! Compute pow(getGPUClusterWidth(), nDim_particle)
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUClusterCellVolume() const;
+
+    static constexpr int
+    getGPUInterpolationClusterCellVolume( int dimension_id, int interpolation_order )
+    {
+        const int kClusterWidth = getGPUClusterWithGhostCellWidth( dimension_id, interpolation_order );
+
+        const int kClusterCellVolume = kClusterWidth *
+                                       ( dimension_id >= 2 ? kClusterWidth : 1 ) *
+                                       ( dimension_id >= 3 ? kClusterWidth : 1 );
+        return kClusterCellVolume;
+    }
+
+    int getGPUInterpolationClusterCellVolume() const;
+
+    //! Return the cluster count in a given dimension
+    //! precondition: dimension_id in [1, 3].
+    //!
+    int getGPUBinCount( int dimension_id ) const;
+
+    //! Compute the number of cluster/bin/tile per patch
+    //!
+    //! returns -1 if the binning is not supported
+    //!
+    int getGPUBinCount() const;
+
     //! For gpu branch compatibility, not used for the moment
     bool gpu_computing;
 };

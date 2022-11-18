@@ -32,10 +32,10 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
-    
-    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
+
+    double *const __restrict__ momentum_x = particles.getPtrMomentum( 0 );
+    double *const __restrict__ momentum_y = particles.getPtrMomentum( 1 );
+    double *const __restrict__ momentum_z = particles.getPtrMomentum( 2 );
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
@@ -82,7 +82,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
                   position_y,                                           \
                   position_z,                                           \
                   momentum_x,                                           \
-                  momentum_y,                                           \ 
+                  momentum_y,                                           \
                   momentum_z,                                           \
                   charge)
     #pragma acc loop gang worker vector
@@ -142,7 +142,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
     //     }
     // }
-    // 
+    //
     // if (nDim_>2) {
     //     #pragma omp simd
     //     for( int ipart=istart ; ipart<iend; ipart++ ) {

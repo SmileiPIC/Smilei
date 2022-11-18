@@ -452,7 +452,7 @@ public:
     //! Method used to integrate particles which come from another patches
     virtual void injectParticles( Params &params );
 
-    //! Method used to sort particles
+    //! Method used to inject and sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
     virtual void computeParticleCellKeys(   Params    & params,

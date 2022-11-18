@@ -6,7 +6,7 @@
 /// Particle to grid projector (~~dual to the grid to particle the interpolator
 /// does)
 ///
-/// Note: we could have inherited from Projector2D2Order but the interface is final for most of the member functions
+/// NOTE: we could have inherited from Projector2D2Order but the interface is final for most of the member functions
 ///
 class Projector2D2OrderGPU : public Projector2D
 {
@@ -61,6 +61,8 @@ protected:
     double dts2;
     double dts4;
     int    pxr;
+    unsigned int x_dimension_bin_count_;
+    unsigned int y_dimension_bin_count_;
 };
 
 #endif

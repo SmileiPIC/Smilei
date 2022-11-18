@@ -18,6 +18,8 @@
 
 #ifdef _GPU
 #include <openacc.h>
+// This is wrong. Dont include nvidiaParticles, it may cause problem!
+// See particle factory.
 #include "nvidiaParticles.h"
 #endif
 

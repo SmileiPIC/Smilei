@@ -57,27 +57,28 @@ Particles::~Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
 {
-    //if (nParticles > Weight.capacity()) {
-    //    WARNING("You should increase c_part_max in specie namelist");
-    //}
-    if( size()==0 ) {
-        float c_part_max =1.2;
-        //float c_part_max = part.c_part_max;
-        //float c_part_max = params.species_param[0].c_part_max;
-        //reserve( round( c_part_max * nParticles ), nDim );
-    }
+    // if (nParticles > Weight.capacity()) {
+    //     WARNING("You should increase c_part_max in specie namelist");
+    // }
+    // if( Weight.size() == 0 ) {
+    //     static constexpr float kGrowthFactor = 1.2F;
+    //     // float c_part_max = part.c_part_max;
+    //     // float c_part_max = params.species_param[0].c_part_max;
+    //     reserve( static_cast<unsigned int>( std::round( kGrowthFactor * static_cast<float>( nParticles ) ) ),
+    //              nDim,
+    //              keep_position_old );
+    // }
 
     resize( nParticles, nDim, keep_position_old );
-    //cell_keys.resize( nParticles );
 
-    if( double_prop_.empty() ) {  // do this just once
+    if( double_prop_.empty() ) { // do this just once
 
         Position.resize( nDim );
-        for( unsigned int i=0 ; i< nDim ; i++ ) {
+        for( unsigned int i = 0; i < nDim; i++ ) {
             double_prop_.push_back( &( Position[i] ) );
         }
 
-        for( unsigned int i=0 ; i< 3 ; i++ ) {
+        for( unsigned int i = 0; i < 3; i++ ) {
             double_prop_.push_back( &( Momentum[i] ) );
         }
 
@@ -85,7 +86,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
 
         if( keep_position_old ) {
             Position_old.resize( nDim );
-            for( unsigned int i=0 ; i< nDim ; i++ ) {
+            for( unsigned int i = 0; i < nDim; i++ ) {
                 double_prop_.push_back( &( Position_old[i] ) );
             }
         }
@@ -108,9 +109,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         if( isMonteCarlo ) {
             double_prop_.push_back( &Tau );
         }
-
     }
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -129,108 +128,62 @@ void Particles::initialize( unsigned int nParticles, Particles &part )
     initialize( nParticles, part.Position.size(), part.Position_old.size() > 0 );
 }
 
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Set capacity of Particles vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  )
+void Particles::reserve( unsigned int reserved_particles,
+                         unsigned int nDim,
+                         bool         keep_position_old )
 {
-    //return;
-
     Position.resize( nDim );
-    for( unsigned int i=0 ; i< nDim ; i++ ) {
-        Position[i].reserve( n_part_max );
+
+    for( unsigned int i = 0; i < nDim; i++ ) {
+        Position[i].reserve( reserved_particles );
     }
 
     if( keep_position_old ) {
         Position_old.resize( nDim );
-        for( unsigned int i=0 ; i< Position_old.size() ; i++ ) {
-            Position_old[i].reserve( n_part_max );
+
+        for( unsigned int i = 0; i < nDim; i++ ) {
+            Position_old[i].reserve( reserved_particles );
         }
     }
-    
-    //Momentum.resize( 3 );
-    for( unsigned int i=0 ; i< 3 ; i++ ) {
-        Momentum[i].reserve( n_part_max );
+
+    Momentum.resize( 3 );
+
+    for( unsigned int i = 0; i < 3; i++ ) {
+        Momentum[i].reserve( reserved_particles );
     }
-    Weight.reserve( n_part_max );
-    Charge.reserve( n_part_max );
+
+    Weight.reserve( reserved_particles );
+    Charge.reserve( reserved_particles );
 
     if( tracked ) {
-        Id.reserve( n_part_max );
+        Id.reserve( reserved_particles );
     }
 
     if( isQuantumParameter ) {
-        Chi.reserve( n_part_max );
+        Chi.reserve( reserved_particles );
     }
 
     if( isMonteCarlo ) {
-        Tau.reserve( n_part_max );
+        Tau.reserve( reserved_particles );
     }
 
-    cell_keys.reserve( n_part_max );
+    cell_keys.reserve( reserved_particles );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Set capacity of Particles vectors and keep dimensionality
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::reserve( unsigned int reserved_particles)
+void Particles::reserve( unsigned int reserved_particles )
 {
-    //return;
-
-    //Position.resize( nDim );
-    //Position_old.resize( nDim );
-    for( unsigned int i=0 ; i< Position.size() ; i++ ) {
-        Position[i].reserve( reserved_particles );
-    }
-    
-    if (Position_old.size() > 0) {
-        for( unsigned int i=0 ; i< Position_old.size() ; i++ ) {
-            Position_old[i].reserve( reserved_particles );
-        }
-    }
-    
-    //Momentum.resize( 3 );
-    for( unsigned int i=0 ; i< Momentum.size() ; i++ ) {
-        Momentum[i].reserve( reserved_particles );
-    }
-    Weight.reserve( reserved_particles );
-    Charge.reserve( reserved_particles );
-    
-    if( tracked ) {
-        Id.reserve( reserved_particles );
-    }
-    
-    if( isQuantumParameter ) {
-        Chi.reserve( reserved_particles );
-    }
-    
-    if( isMonteCarlo ) {
-        Tau.reserve( reserved_particles );
-    }
-    
-    cell_keys.reserve( reserved_particles );
-    
-    // for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
-    //     ( *double_prop_[iprop] ).reserve( n_part_max);
-    // }
-    // 
-    // for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
-    //     ( *short_prop_[iprop] ).reserve( n_part_max );
-    // }
-    // 
-    // for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
-    //     ( *uint64_prop_[iprop] ).reserve( n_part_max );
-    // }
-    // 
-    // cell_keys.reserve( n_part_max );
-    
+    reserve( reserved_particles, Position.size(), Position_old.size() > 0 );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
-//
+//! Initialize like Particles object part with 0 particles and reserve space for reserved_particles particles
+// ---------------------------------------------------------------------------------------------------------------------
 void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 {
     initialize( 0, part );
@@ -239,23 +192,28 @@ void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Resize Particle vectors and change dimensionality according to nDim
-// 
-void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
+//
+void Particles::resize( unsigned int nParticles,
+                        unsigned int nDim,
+                        bool         keep_position_old )
 {
     Position.resize( nDim );
-    for( unsigned int i=0 ; i<nDim ; i++ ) {
+
+    for( unsigned int i = 0; i < nDim; i++ ) {
         Position[i].resize( nParticles, 0. );
     }
 
     if( keep_position_old ) {
         Position_old.resize( nDim );
-        for( unsigned int i=0 ; i<nDim ; i++ ) {
+
+        for( unsigned int i = 0; i < nDim; i++ ) {
             Position_old[i].resize( nParticles, 0. );
         }
     }
 
     Momentum.resize( 3 );
-    for( unsigned int i=0 ; i< 3 ; i++ ) {
+
+    for( unsigned int i = 0; i < 3; i++ ) {
         Momentum[i].resize( nParticles, 0. );
     }
 
@@ -275,7 +233,6 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
     }
 
     cell_keys.resize( nParticles, 0. );
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -736,9 +693,9 @@ void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_
 //! Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
 //! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwriteParticle( unsigned int part1, 
-                                   unsigned int part2, 
-                                   unsigned int N, 
+void Particles::overwriteParticle( unsigned int part1,
+                                   unsigned int part2,
+                                   unsigned int N,
                                    bool compute_cell_keys)
 {
     unsigned int sizepart = N*sizeof( Position[0][0] );
@@ -1005,7 +962,7 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 // }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method eliminates the space between the bins 
+//! This method eliminates the space between the bins
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compress(bool compute_cell_keys) {
@@ -1030,53 +987,53 @@ void Particles::compress(bool compute_cell_keys) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method eliminates the space between the bins 
+//! This method eliminates the space between the bins
 //! (presence of empty particles between the bins)
 // ---------------------------------------------------------------------------------------------------------------------
 // void Particles::compress() {
 //     for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
-// 
+//
 //         // Compute the number of particles
 //         unsigned int particle_number = last_index[ibin] - first_index[ibin];
-// 
+//
 //         // Compute the space between the bins
 //         unsigned int bin_space = first_index[ibin] - last_index[ibin-1];
-// 
-//         // Determine first index and number of particles to copy. 
+//
+//         // Determine first index and number of particles to copy.
 //         // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
-// 
+//
 //         // Compute the number of particles
 //         unsigned int copy_particle_number = 0;
-// 
+//
 //         if (bin_space > 0) {
-// 
+//
 //             // if last_index[ibin] - bin_space < first_index[ibin], it means that the empty space is larger than the number of particles in ibin
 //             // then we move the full bin
 //             // Else we only move the particles from copy_first_bin to last_index[ibin]
 //             unsigned int copy_first_index = last_index[ibin] - bin_space;
-// 
+//
 //             if (copy_first_index < first_index[ibin]) {
 //                 copy_first_index = first_index[ibin];
 //                 copy_particle_number = particle_number;
 //             } else {
 //                 copy_particle_number = bin_space;
 //             }
-// 
+//
 //             if (copy_particle_number>0) {
 //                 overwriteParticle(copy_first_index, last_index[ibin-1], copy_particle_number, true );
 //             }
-// 
+//
 //             //Update bin indexes
 //             first_index[ibin] = last_index[ibin-1];
 //             last_index[ibin] = first_index[ibin] + copy_particle_number;
-// 
+//
 //         }
 //     } // for bin
-// 
+//
 //     unsigned int particles_to_erase = Weight.size() - last_index[first_index.size()-1];
-// 
+//
 //     if (particles_to_erase > 0) {
-// 
+//
 //         // Particles is rezised to fit the real number of particles
 //         // resize(last_index[first_index.size()]-1);
 //         eraseParticleTrail( last_index[first_index.size()-1], true );
@@ -1107,7 +1064,7 @@ void Particles::sum(int ibin_min, int ibin_max) {
     std::cerr << " Position_x: " << sum_px
               << " Position_y: " << sum_py
               << " Momentum_x: " << sum_mx
-              << " Momentum_y: " << sum_my 
+              << " Momentum_y: " << sum_my
               << " nb real particles: " << iterations
               << " nb particles: " << nb_particles_total
               << std::endl;
@@ -1196,6 +1153,19 @@ void Particles::sortById()
 
 }
 
+void Particles::initializeDataOnDevice()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+void Particles::syncGPU()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+void Particles::syncCPU()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+
 void Particles::extractParticles( Particles* particles_to_move )
 {
     particles_to_move->clear();
@@ -1242,6 +1212,23 @@ void Particles::savePositions() {
     // }
     // -----------------------------------------------------
 
+}
+
+int Particles::eraseLeavingParticles()
+{
+    ERROR( "Device only feature, should not have come here!" );
+    return 0;
+}
+
+int Particles::injectParticles( Particles *particles_to_inject )
+{
+    ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
+    return 0;
+}
+
+void Particles::importAndSortParticles( Particles *particles_to_inject )
+{
+    ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
 }
 
 #ifdef __DEBUG

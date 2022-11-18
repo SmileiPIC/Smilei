@@ -293,8 +293,16 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sortAllParticles( Params &params )
+void VectorPatch::initialParticleSorting( Params &params )
 {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // Initially I wanted to control the GPU particle sorting/bin initialization
+    // here. In the end it was put in initializeDataOnDevice which is more
+    // meaningful.
+    // On that note, maybe the _VECTO/cell sorting
+    // code should probably also be encapsulated in the particle class
+    // (or a vectorized variant).
+#else
     if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -304,6 +312,7 @@ void VectorPatch::sortAllParticles( Params &params )
             }
         }
     }
+#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -841,6 +850,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
+            break;
         }
     }
     if( !some_particles_are_moving  && !diag_flag ) {
@@ -1241,6 +1251,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
+// NOTE: This function will pull the GPU data unless we are at t=0
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
@@ -1256,14 +1267,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1369,14 +1379,13 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers_[globalDiags.size()+idiag]->restart();
 
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        if( params.gpu_computing &&
-            localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                syncDataFromDeviceToHost();
+                copyDeviceStateToHost();
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1998,13 +2007,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     uint64_t nparticles_global( 0 );
     MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
 
     //Timer ptimer("global");
     //ptimer.init(smpi);
     //ptimer.restart();
 
     double gamma_mean = gamma_global/( double )nparticles_global;
+
+    MESSAGE( "GAMMA = " << gamma_mean );
 
     unsigned int iteration_max = params.relativistic_poisson_max_iteration;
     double           error_max = params.relativistic_poisson_max_error;
@@ -4227,13 +4237,16 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi,
-                                        RadiationTables *radiation_tables,
-                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
+void VectorPatch::allocateDataOnDevice(Params &params,
+                                         SmileiMPI *smpi,
+                                         RadiationTables *radiation_tables,
+                                         MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
+                                         
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Maybe we could just alloc the memory here and initialize
-    // it on the GPU instead of CPU initializing then copying to the GPU
+    // TODO(Etienne M): FREE. If we have load balancing or other patch
+    // creation/destruction available (which is not the case on GPU ATM),
+    // we should be taking care of freeing this GPU memory.
 
     const int npatches = this->size();
 
@@ -4249,7 +4262,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi,
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
         // Initialize particles data structures on GPU, and synchronize it
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
@@ -4286,23 +4299,24 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi,
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
-        //smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmz, sizeofBz );
 
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
-    }
+        
+    } // end patch loop
 
     // Tables for radiation processes
     if( params.has_Niel_radiation_ || params.has_MC_radiation_ || params.has_LL_radiation_ ) {
@@ -4459,7 +4473,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
-void VectorPatch::syncFieldFromHostToDevice()
+void VectorPatch::copyEMFieldsFromHostToDevice()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
@@ -4488,28 +4502,37 @@ void VectorPatch::syncFieldFromHostToDevice()
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ez, sizeofEz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ez, sizeofEz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }
 
 //! Sync all data (fields and particles) from device to host
-void VectorPatch::syncDataFromDeviceToHost()
+void VectorPatch::copyDeviceStateToHost()
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Diags may need more data copied back from the GPU.
+    // We need to either have more of these functions, or to copy everything
+    // from the GPU to the CPU.
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
+
+    // const int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
+    // const int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
+    // const int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
 
     const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
     const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
@@ -4525,6 +4548,10 @@ void VectorPatch::syncDataFromDeviceToHost()
             spec->particles->syncCPU();
         }
 
+        // double *const Jx = patches_[ipatch]->EMfields->Jx_->data();
+        // double *const Jy = patches_[ipatch]->EMfields->Jy_->data();
+        // double *const Jz = patches_[ipatch]->EMfields->Jz_->data();
+
         double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
         double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
         double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
@@ -4533,13 +4560,21 @@ void VectorPatch::syncDataFromDeviceToHost()
         double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
         double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ez, sizeofEz );
+        // TODO(Etienne M): Shouldn't Jx be copied too ? Depending on the diags
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Bmz, sizeofBz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofEx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
     }
+#else
+    ERROR( "GPU related code should not be reached in CPU mode!" );
 #endif
 }

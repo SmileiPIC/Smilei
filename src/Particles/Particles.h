@@ -4,17 +4,17 @@
 //
 //! \brief contains the Particles class description
 //
-//! The Particles Class is the main data structure for handling particle list. 
+//! The Particles Class is the main data structure for handling particle list.
 //! It contains the main particles properties:
-//! - positions 
-//! - momentums 
-//! - charge 
+//! - positions
+//! - momentums
+//! - charge
 //! - weight
 //! - quantum parameter (chi) for QED effects
 //! - optical depth for Monte-Carlo processes
 //! - tag id for tracked particles
 //
-//! The class also contains many functions to manage particles. 
+//! The class also contains many functions to manage particles.
 // -----------------------------------------------------------------------------
 
 #ifndef PARTICLES_H
@@ -54,7 +54,7 @@ public:
     void initialize( unsigned int nParticles, Particles &part );
 
     //! Set capacity of Particles vectors and change dimensionality
-    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old = false );
+    void reserve( unsigned int reserved_particles, unsigned int nDim, bool keep_position_old = false);
 
     //! Set capacity of Particles vectors and keep dimensionality
     void reserve( unsigned int reserved_particles );
@@ -62,7 +62,7 @@ public:
     //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
-    //! //! Resize Particle vectors and change dimensionality according to nDim
+    //! Resize Particle vectors and change dimensionality according to nDim
     void resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Resize Particles vectors
@@ -108,7 +108,7 @@ public:
         return Weight.capacity();
     }
 
-    //! Get dimension of particules
+    //! Get dimension of particles
     inline unsigned int dimension() const
     {
         return Position.size();
@@ -205,7 +205,7 @@ public:
     //! between istart and iend
     // void eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased);
 
-    //! This method eliminates the space between the bins 
+    //! This method eliminates the space between the bins
     //! (presence of empty particles beteen the bins)
     void compress(bool compute_cell_keys = false);
     
@@ -417,16 +417,13 @@ public:
         prop = double_prop_[iprop];
     }
 
-    virtual void initializeDataOnDevice() { 
-        ERROR("Impossible to initalize data on Device when the code is compiled for CPU"); 
-    };
-    virtual void syncGPU() { 
-        ERROR("Impossible to synchronize data between host and device when the code is compiled for CPU"); 
-    };
-    virtual void syncCPU() { 
-        ERROR("Impossible to synchronize data between host and device when the code is compiled for CPU"); 
-    };
-    
+    //! Make a copy of the host particles and does some computation like
+    //! bin discovery.
+    //!
+    virtual void initializeDataOnDevice();
+    virtual void syncGPU();
+    virtual void syncCPU();
+
     virtual double* getPtrPosition( int idim ) {
         return Position[idim].data();
     };
@@ -460,23 +457,38 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put 
+    //! Extract particles from the Particles object and put
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( Particles* particles_to_move );
-    
+    virtual void extractParticles( Particles *particles_to_move );
+
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
     // -----------------------------------------------------------------------------
-    virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
-    
+    virtual int eraseLeavingParticles();
+
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put 
+    //! Inject particles from particles_to_move object and put
     //! them in the Particles object
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
-    virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
+    virtual int injectParticles( Particles *particles_to_inject );
 
-    virtual unsigned int deviceSize() const { ERROR( "Should not have come here" ); return 0; };
+    //! Implementation of a somewhat efficient particle injection, sorting
+    //! (including removing leaving particles) and binning for GPU if
+    //! available for the configuration of offloading technology
+    //! (OpenMP/OpenACC) and implemented for the space dimension of the
+    //! simulation. Else, fallback to the old naive, plain memcpy
+    //! implementation.
+    //!
+    //! last_index is modified appropriately.
+    //!
+    virtual void importAndSortParticles( Particles *particles_to_inject );
+
+    //! return Device size
+    virtual unsigned int deviceSize() const {
+        ERROR( "deviceSize is a feature only available for accelerator device" );
+        return 0;
+    };
 
     // ---------------------------------------------------------------------------------------
     // Parameters
@@ -531,7 +543,6 @@ public:
     bool isMonteCarlo;
 
 private:
-
 };
 
 #endif

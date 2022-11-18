@@ -14,8 +14,9 @@
 
 using namespace std;
 
-PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
-    isAM( params.geometry == "AMcylindrical" )
+PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
+    : isAM( params.geometry == "AMcylindrical" )
+    , parameters_{ &params }
 {
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
