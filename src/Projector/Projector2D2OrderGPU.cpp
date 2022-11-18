@@ -26,7 +26,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
-    // When sorting is disabled, these values are invalid (-1) and the HIP 
+    // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
@@ -37,37 +37,37 @@ Projector2D2OrderGPU::~Projector2D2OrderGPU()
     // EMPTY
 }
 
-namespace { // Unnamed namespace == static == internal linkage == no exported symbols
-
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    extern "C" void
-    currentDepositionKernel( double *__restrict__ Jx,
-                             double *__restrict__ Jy,
-                             double *__restrict__ Jz,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             const double *__restrict__ particle_position_x,
-                             const double *__restrict__ particle_position_y,
-                             const double *__restrict__ particle_momentum_z,
-                             const short *__restrict__ particle_charge,
-                             const double *__restrict__ particle_weight,
-                             const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             const double *__restrict__ invgf_,
-                             const int *__restrict__ iold_,
-                             const double *__restrict__ deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    nprimy,
-                             int    pxr );
+extern "C" void
+currentDepositionKernel( double *__restrict__ Jx,
+                         double *__restrict__ Jy,
+                         double *__restrict__ Jz,
+                         int Jx_size,
+                         int Jy_size,
+                         int Jz_size,
+                         const double *__restrict__ particle_position_x,
+                         const double *__restrict__ particle_position_y,
+                         const double *__restrict__ particle_momentum_z,
+                         const short *__restrict__ particle_charge,
+                         const double *__restrict__ particle_weight,
+                         const int *__restrict__ host_bin_index,
+                         unsigned int x_dimension_bin_count,
+                         unsigned int y_dimension_bin_count,
+                         const double *__restrict__ invgf_,
+                         const int *__restrict__ iold_,
+                         const double *__restrict__ deltaold_,
+                         double inv_cell_volume,
+                         double dx_inv,
+                         double dy_inv,
+                         double dx_ov_dt,
+                         double dy_ov_dt,
+                         int    i_domain_begin,
+                         int    j_domain_begin,
+                         int    nprimy,
+                         int    pxr );
 #endif
+
+namespace { // Unnamed namespace == static == internal linkage == no exported symbols
 
     /// Project global current densities (EMfields->Jx_/Jy_/Jz_)
     ///

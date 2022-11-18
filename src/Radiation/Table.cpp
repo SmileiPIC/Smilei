@@ -21,7 +21,7 @@ Table::Table()
 Table::~Table()
 {
     if (data_) {
-        //smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( data_, size_ );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( data_, size_ );
         delete [] data_;
         data_ = nullptr;
         size_ = 0;

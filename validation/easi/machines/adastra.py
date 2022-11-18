@@ -29,6 +29,8 @@ class MachineAdastra(Machine):
 # Dump all executed commands (very, VERY verbose)
 # set +x
 
+# set -e
+
 # TODO(Etienne M): dunno the partition/feature/constraints for adastra yet
 # # --feature=MI200
 # #SBATCH --gpus=mi100:1 or mi200:1
@@ -49,7 +51,7 @@ module load cray-mpich/8.1.13
 module load rocm/4.5.0
 module load craype-accel-amd-gfx908 # MI100
 # module load craype-accel-amd-gfx90a # MI250X
-module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
+module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.7.1
 
 # Info on the node
 rocm-smi
@@ -124,7 +126,7 @@ EOF
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
-LaunchSRunPatProfile() {{
+LaunchSRunPATProfile() {{
     module load perftools-base/21.12.0
     module load perftools
 
@@ -149,10 +151,10 @@ LaunchSRunPatProfile() {{
 }}
 
 # Try to use this profiling on only one GPU
-LaunchRocmProfile() {{
+LaunchROCmProfile() {{
     # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
     # Low overhead
-    # LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    LaunchSRun bash -c "rocprof --stats -o stats_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 
     #  VALUUtilization : The percentage of active vector ALU threads in a wave. A lower number can mean either more thread divergence in a wave or that the work-group size is not a multiple of 64. Value range: 0% (bad), 100% (ideal - no thread divergence).
     #         VALUBusy : The percentage of GPUTime vector ALU instructions are processed. Value range: 0% (bad) to 100% (optimal).
@@ -187,12 +189,12 @@ LaunchRocmProfile() {{
     # ROCm RT (low level) tracing + consolidated kernel stats
     # LaunchSRun bash -c "rocprof --hsa-trace --stats -o hsa_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
     # HIP/HSA tracing + consolidated kernel stats | After the program exits, rocprof takes a long time to process the generated data !
-    LaunchSRun bash -c "rocprof --sys-trace --stats -o sys_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
+    # LaunchSRun bash -c "rocprof --sys-trace --stats -o sys_trace_\${{SLURM_JOBID}}-\${{SLURM_PROCID}}.csv $1 ${{@:2}}"
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
-# LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
-# LaunchRocmProfile {a_task_command} {a_task_command_arguments}
+# LaunchSRunPATProfile {a_task_command} {a_task_command_arguments}
+# LaunchROCmProfile {a_task_command} {a_task_command_arguments}
 
 kRETVAL=$?
 

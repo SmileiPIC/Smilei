@@ -32,23 +32,20 @@ public:
     void ( *bc_zmin )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Zmax particles boundary conditions pointers
     void ( *bc_zmax )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
-    
+
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
     //! Conditions along X are applied first, then Y, then Z.
-    inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_tot )
+    inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random *rand, double &energy_tot )
     {
-        int *const cell_keys = species->particles->getPtrCellKeys();
+        if( parameters_->isGPUParticleBinningAvailable() ) {
+            // EMPTY because we need the keys NOT to be cleared for the gpu particle clustering/binning.
+            // We use the cellkeys to know if which particle left it's bin
+        } else {
+            int *const cell_keys = species->particles->getPtrCellKeys();
 
-        // TODO(Etienne M): Clearing the key should be a member function of the
-        // Particles class.
-        // NOTE: we do not clear the cell keys because this gives us the ability
-        // of easily knowing which particle left it's bin after a pushing step.
-        // These particles need to be re-keyed and sorted.
-        //
-        const auto key_zeroing = [&imin, &imax, &cell_keys]() {
 #if defined( _GPU )
-    #pragma acc parallel deviceptr(cell_keys)
+    #pragma acc parallel deviceptr( cell_keys )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* tofrom */ \
@@ -59,12 +56,6 @@ public:
             for( int ipart = imin; ipart < imax; ipart++ ) {
                 cell_keys[ipart] = 0;
             }
-        };
-       
-        if( parameters_->isGPUParticleBinningAvailable() ) {
-            // EMPTY, we need (!) the keys not to be cleared for the gpu binning
-        } else {
-            key_zeroing();
         }
 
         double energy_change = 0.;
@@ -84,9 +75,8 @@ public:
                 energy_tot += energy_change;
             }
         }
+    }
 
-    };
-    
     ////! Set the condition window if restart (patch position not read)
     //inline void updateMvWinLimits( double x_moved ) {
     //}
