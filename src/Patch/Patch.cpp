@@ -31,6 +31,8 @@
 #include "ElectroMagnBC_Factory.h"
 #include "DiagnosticFactory.h"
 #include "BinaryProcessesFactory.h"
+#include "PatchAM.h"
+
 
 using namespace std;
 
@@ -295,50 +297,15 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     for( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         oversize[iDim] = params.region_oversize[iDim];
     }
-
+    
     Pcoordinates.resize( params.nDim_field );
-
-
+    
     min_local_ = vecPatch( 0 )->min_local_;
     max_local_ = vecPatch( 0 )->max_local_;
     center_   .resize( nDim_fields_, 0. );
     cell_starting_global_index = vecPatch( 0 )->cell_starting_global_index;
     radius = 0.;
-
-    // Constraint to enforce 1 neighboor per side
-    //double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
-    //if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. )
-    //    ERROR( "Bad choice of decomposition" );
-
-// Coupling v0    for (int i = 0 ; i<nDim_fields_ ; i++) {
-// Coupling v0
-// Coupling v0        for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
-// Coupling v0            if ( vecPatch(ipatch)->min_local_[i] <= min_local_[i] ) {
-// Coupling v0                min_local_[i] = vecPatch(ipatch)->min_local_[i];
-// Coupling v0                if (vecPatch(ipatch)->MPI_neighbor_[i][0]!=MPI_PROC_NULL)
-// Coupling v0                    MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
-// Coupling v0                if (vecPatch(ipatch)->neighbor_[i][0]!=MPI_PROC_NULL)
-// Coupling v0                    neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
-// Coupling v0            }
-// Coupling v0            if( vecPatch( ipatch )->max_local_[i] >= max_local_[i] ) {
-// Coupling v0                max_local_[i] = vecPatch( ipatch )->max_local_[i];
-// Coupling v0                if( vecPatch( ipatch )->MPI_neighbor_[i][1]!=MPI_PROC_NULL ) {
-// Coupling v0                    MPI_neighbor_[i][1] = vecPatch( ipatch )->MPI_neighbor_[i][1];
-// Coupling v0                }
-// Coupling v0                if( vecPatch( ipatch )->neighbor_[i][1]!=MPI_PROC_NULL ) {
-// Coupling v0                    neighbor_[i][1] = ( vecPatch( ipatch )->neighbor_[i][1] / vecPatch.size() );
-// Coupling v0                }
-// Coupling v0            }
-// Coupling v0            if( vecPatch( ipatch )->cell_starting_global_index[i] <= cell_starting_global_index[i] ) {
-// Coupling v0                cell_starting_global_index[i] = vecPatch( ipatch )->cell_starting_global_index[i];
-// Coupling v0            }
-// Coupling v0        }
-// Coupling v0
-// Coupling v0        center_[i] = (min_local_[i]+max_local_[i])*0.5;
-// Coupling v0        radius += pow(max_local_[i] - center_[i] + params.cell_length[i], 2);
-// Coupling v0    }
-
-    // New_DD
+    
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     int sz(1);
@@ -447,7 +414,10 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     radius = sqrt(radius);
 
     MPI_me_ = vecPatch( 0 )->MPI_me_;
-
+    
+    if( PatchAM * patchAM = dynamic_cast<PatchAM*>( this ) ) {
+        patchAM->initInvR( params );
+    }
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecPatch( 0 )->vecSpecies, this );
 
     vecSpecies.resize( 0 );

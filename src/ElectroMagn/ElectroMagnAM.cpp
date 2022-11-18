@@ -67,7 +67,7 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
                 Jl_s[ifield] = FieldFactory::createAM( dimPrim, 0, false, emFields->Jl_s[ifield]->name, params, emFields->Jl_s[ifield]->cdata_ != NULL );
             }
             if( emFields->Jr_s[ifield] ) {
-                Jl_s[ifield] = FieldFactory::createAM( dimPrim, 1, false, emFields->Jr_s[ifield]->name, params, emFields->Jr_s[ifield]->cdata_ != NULL );
+                Jr_s[ifield] = FieldFactory::createAM( dimPrim, 1, false, emFields->Jr_s[ifield]->name, params, emFields->Jr_s[ifield]->cdata_ != NULL );
             }
             if( emFields->Jt_s[ifield] ) {
                 Jt_s[ifield] = FieldFactory::createAM( dimPrim, 2, false, emFields->Jt_s[ifield]->name, params, emFields->Jt_s[ifield]->cdata_ != NULL );

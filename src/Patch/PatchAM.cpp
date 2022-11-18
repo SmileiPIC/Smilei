@@ -23,6 +23,7 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
+        initInvR( params );
         initStep3( params, smpi, n_moved );
         finishCreation( params, smpi, domain_decomposition );
     } else { // Cartesian
@@ -46,6 +47,7 @@ PatchAM::PatchAM( PatchAM *patch, Params &params, SmileiMPI *smpi, DomainDecompo
     : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles )
 {
     initStep2( params, domain_decomposition );
+    initInvR( params );
     initStep3( params, smpi, n_moved );
     finishCloning( patch, params, smpi, n_moved, with_particles );
 } // End PatchAM::PatchAM
@@ -95,8 +97,12 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             
         }
     }
-    int j_glob_ = Pcoordinates[1]*params.patch_size_[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-    int nr_p = params.patch_size_[1]+1+2*params.oversize[1];
+    
+}
+
+void PatchAM::initInvR( Params &params ) {
+    int j_glob_ = Pcoordinates[1]*size_[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+    int nr_p = size_[1]+1+2*oversize[1];
     double dr = params.cell_length[1];
     invR.resize( nr_p );
 
@@ -118,9 +124,7 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             invR[j] = 1./( ( (double)j_glob_ +(double)j + 0.5)*dr);
         }
      }
-    
 }
-
 
 PatchAM::~PatchAM()
 {
