@@ -541,7 +541,7 @@ void RadiationMonteCarlo::operator()(
                             
                         }
                         
-                        emission_count_per_particle += 1;
+                        i_photon_emission += 1;
                         
 #endif
 
