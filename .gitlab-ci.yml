@@ -101,7 +101,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    #- develop_gpu_omp_for_nvidia
+    - develop_gpu_omp_for_nvidia
 
   script:
     # Move in test dir
