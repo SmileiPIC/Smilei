@@ -73,8 +73,7 @@ namespace naive {
                                                      device_particle_momentum_z /* [0:particle_count] */, \
                                                      device_particle_charge /* [0:particle_count] */,     \
                                                      device_particle_weight /* [0:particle_count] */ )
-        #pragma omp teams thread_limit( 64 )
-        #pragma omp distribute parallel for
+        #pragma omp teams thread_limit( 64 ) distribute parallel for
         for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];

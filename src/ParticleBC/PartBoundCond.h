@@ -38,7 +38,11 @@ public:
     //! Conditions along X are applied first, then Y, then Z.
     inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random *rand, double &energy_tot )
     {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         if( parameters_->isGPUParticleBinningAvailable() ) {
+#else
+        if( false ) {
+#endif
             // EMPTY because we need the keys NOT to be cleared for the gpu particle clustering/binning.
             // We use the cellkeys to know if which particle left it's bin
         } else {
@@ -50,8 +54,7 @@ public:
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* tofrom */ \
                                       cell_keys /* [imin:imax - imin] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
             for( int ipart = imin; ipart < imax; ipart++ ) {
                 cell_keys[ipart] = 0;

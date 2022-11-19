@@ -30,8 +30,7 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     // Electric field Ex^(d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_d; ++x ) {
         for( unsigned int y = 0; y < ny_p; ++y ) {
@@ -42,8 +41,7 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     // Electric field Ey^(p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
         for( unsigned int y = 0; y < ny_d; ++y ) {
@@ -54,8 +52,7 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     // Electric field Ez^(p,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 2 )
+    #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
         for( unsigned int y = 0; y < ny_p; ++y ) {

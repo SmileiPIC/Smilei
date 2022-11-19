@@ -26,8 +26,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
                                       position /* [imin:imax - imin] */ ) \
         is_device_ptr( /* tofrom: */                                      \
                        cell_keys /* [imin:imax - imin] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
@@ -49,8 +48,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
                                       position /* [imin:imax - imin] */ ) \
         is_device_ptr( /* tofrom: */                                      \
                        cell_keys /* [imin:imax - imin] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
@@ -97,8 +95,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf ) {
@@ -118,8 +115,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {

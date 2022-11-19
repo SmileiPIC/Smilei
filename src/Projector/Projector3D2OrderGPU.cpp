@@ -119,8 +119,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       position_x /* [istart_pack:current_pack_size] */, \
                                       position_y /* [istart_pack:current_pack_size] */, \
                                       position_z /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   deltaold [0:3 * nparts], \
@@ -243,8 +242,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jx^(d,p,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSx [0:kTmpArraySize], sumX [0:kTmpArraySize] )
 
@@ -269,8 +267,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jx [0:sizeofEx],         \
@@ -322,8 +319,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jy^(p,d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSy [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
@@ -349,8 +345,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jy [0:sizeofEy],         \
@@ -402,8 +397,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         // Jz^(p,p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSz [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
@@ -429,8 +423,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp target is_device_ptr( /* to: */                                     \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jz [0:sizeofEz],         \

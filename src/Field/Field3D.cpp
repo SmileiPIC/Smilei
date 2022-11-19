@@ -388,8 +388,7 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     const bool is_the_right_field = name[0] == 'B';
 
     #pragma omp target if( is_the_right_field )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
     int fSize = globalDims_;
@@ -440,8 +439,7 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( is_the_right_field ) \
         map( tofrom                             \
              : field [0:fSize] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
     int fSize = globalDims_;
@@ -493,8 +491,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( is_the_right_field ) \
         map( to                                 \
              : field [0:fSize] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
     int fSize = globalDims_;
@@ -546,8 +543,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( is_the_right_field ) \
         map( tofrom                             \
              : field [0:fSize] )
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( _GPU )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
     int fSize = globalDims_;

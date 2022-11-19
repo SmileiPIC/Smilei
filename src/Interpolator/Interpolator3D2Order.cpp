@@ -185,8 +185,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_x /* [first_index:npart_range_size] */,        \
                        position_y /* [first_index:npart_range_size] */,        \
                        position_z /* [first_index:npart_range_size] */ )
-    #pragma omp teams
-    #pragma omp distribute parallel for
+    #pragma omp teams distribute parallel for
 #elif defined(_GPU)
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 

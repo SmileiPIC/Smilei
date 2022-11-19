@@ -10,30 +10,18 @@ class MachineAdastra(Machine):
     # You may need to escape some.
     the_slurm_script = """#!/bin/bash
 #SBATCH --job-name=smilei_validation
-#SBATCH --nodes={the_node_count}               # Number of nodes
-#SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
-#SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
-# #SBATCH --gpus-per-node=8
-# #SBATCH --gres=gpu:8
-#SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank, Dont use that, it create problems with MPICH_GPU_SUPPORT_ENABLED=1 on intra node GPU to GPU coms
-# #SBATCH --ntasks-per-gpu={the_gpu_count}       # Number of MPI rank per task (may be useful to oversubscribe, if you cant fill the whole gpu)
-#SBATCH --gpu-bind=closest                     # For a given task and its associated numa, bind the closest GPU(s) (maybe more than one) to the numa. As of 2022/06, breaks script GPU visibility of the task, ROCR_VISIBLE_DEVICES must be used to counter the effect
-#SBATCH --threads-per-core=1
-#SBATCH --hint=nomultithread
-#SBATCH --hint=memory_bound                    # Maximize memory bandwidth by spreading the task on the numa and physical cores. Note: https://slurm.schedmd.com/mc_support.html
-#SBATCH --distribution=block:cyclic:cyclic     # Spread linearly (stride 1) across nodes, round robin across numa of a node and cores of the numas of a node (stride of the number of core in a numa) : Node0, Node1, Node2.. then Core0 of Numa0, Core0 of Numa1 etc..
-#SBATCH --output=output
-#SBATCH --error=output                         # stderr and stdout in the same file
+# #SBATCH --partition=accel
+#SBATCH --nodes={the_node_count} --ntasks={the_mpi_process_count}
+#SBATCH --cpus-per-task={the_omp_thread_count} --gpus-per-task={the_gpu_count} # --gpus-per-node=8
+#SBATCH --gpu-bind=closest
+#SBATCH --threads-per-core=1 # --hint=nomultithread
+# #SBATCH --exclusive
+#SBATCH --output=output --error=output
 #SBATCH --time={the_maximum_task_duration}
 
-# Dump all executed commands (very, VERY verbose)
-# set +x
-
-# set -e
-
-# TODO(Etienne M): dunno the partition/feature/constraints for adastra yet
-# # --feature=MI200
-# #SBATCH --gpus=mi100:1 or mi200:1
+################################################################################
+# Time of day
+################################################################################
 
 echo "Date              = $(date -R) | $(date +%s)"
 echo "Hostname          = $(hostname -s)"
@@ -42,6 +30,12 @@ echo ""
 echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
 echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
+
+################################################################################
+# Environment setup
+################################################################################
+
+set -e
 
 # Build  the environment (delegating this to a script would be better)
 module purge
@@ -53,19 +47,20 @@ module load craype-accel-amd-gfx908 # MI100
 # module load craype-accel-amd-gfx90a # MI250X
 module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.7.1
 
-# Info on the node
-rocm-smi
-rocminfo
+# OpenMP
+export OMP_DISPLAY_ENV=VERBOSE
+export OMP_DISPLAY_AFFINITY=TRUE
 
-# Omp tuning
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export OMP_SCHEDULE=dynamic
-export OMP_PLACES=cores
+export OMP_SCHEDULE=DYNAMIC
+export OMP_PLACES=THREADS
+export OMP_PROC_BIND=FALSE
 
-# These variables may trigger a huge flood of information when using multiple 
-# threads per MPI + GPU support
-export OMP_DISPLAY_AFFINITY=TRUE # Unused by the CCE omp runtime
-export CRAY_OMP_CHECK_AFFINITY=TRUE
+# export CRAY_ACC_DEBUG=3
+# export CRAY_ACC_TIME=1 # Not viable. Are the reported times wrong ?
+
+# AMD runtime
+# export AMD_LOG_LEVEL=4
 
 # MPICH info
 export MPICH_VERSION_DISPLAY=1
@@ -73,41 +68,32 @@ export MPICH_ENV_DISPLAY=1
 export MPICH_CPUMASK_DISPLAY=1
 export MPICH_MPIIO_HINTS_DISPLAY=1
 
-# MPICH general
-export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
-
-# MPICH GPU support (support for functionality allowing mpi to understand GPU buffers)
 export MPICH_GPU_SUPPORT_ENABLED=1
 
-# Omp target debug
-# export CRAY_ACC_DEBUG=3
-# export CRAY_ACC_TIME=1 # Not viable, the reported times are wrong ?
+export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
 
-# Amd runtime debug
-# export AMD_LOG_LEVEL=4
+set +x
+
+################################################################################
+# Node information
+################################################################################
+
+ulimit -c unlimited
+# ulimit -a
+
+# NOTE: rocm-smi often fails.. and set -e ends the script. 'true' prevents that.
+rocm-smi || true
+# rocminfo
+lscpu
+numactl -H
+
+################################################################################
+# Helpers
+################################################################################
 
 LaunchSRun() {{
     module list
 
-    # Task/GPU binding. This mapping can be automated using Slurm's 
-    # --gpus-per-task but this lead a GPU memory accessibility/visibility  
-    # during MPI coms (process_vm_readv error). The workaround is:
-    # 1): To allocate GPUs using --gres/--gpus-per-node and not define any 
-    # mapping. Or to allocate GPUs using --gpus-per-task and break the mapping
-    # using --gpu-bind=closest.
-    # 2): Use ROCR_VISIBLE_DEVICES to do the mapping, associating a GPU to a 
-    # given, user specified task/rank. This may make things harder when we wanna
-    # map a task to a given GPU based on hardware/NUMA characteristics.
-    # 
-    # The following script could be useful to bind an mpiproc to a given gpu on 
-    # a given node https://slurm.schedmd.com/sbatch.html
-    # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration
-    # One may check that it works: $ ROCR_VISIBLE_DEVICES=none rocminfo
-    # rocm-smi ignores the env variable
-    #
-    # Note: When not using ROCm, this script should not change the behavior of 
-    # any software component.
-    #
     cat <<EOF > soft_gpu_visibility_restrict.sh
 #!/bin/bash
 # Note: When not using ROCm, this script should not change the behavior of any 
@@ -119,13 +105,15 @@ EOF
 
     chmod +x soft_gpu_visibility_restrict.sh
 
-    srun --cpu-bind=verbose soft_gpu_visibility_restrict.sh "$@" > {the_output_file} 2>&1
+    srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- soft_gpu_visibility_restrict.sh "$@" > {the_output_file} 2>&1
+
     # srun strace "$@" > {the_output_file} 2>&1
     # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
     # srun bash -c "$kCmd" > {the_output_file} 2>&1
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
+#
 LaunchSRunPATProfile() {{
     module load perftools-base/21.12.0
     module load perftools
@@ -150,7 +138,6 @@ LaunchSRunPATProfile() {{
     LaunchSRun ./instrumented_executable ${{@:2}}
 }}
 
-# Try to use this profiling on only one GPU
 LaunchROCmProfile() {{
     # Basic kernel dump ("tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs") + consolidated kernel stats
     # Low overhead
@@ -198,7 +185,7 @@ LaunchSRun {a_task_command} {a_task_command_arguments}
 
 kRETVAL=$?
 
-# Put the result in the slurm output file.
+# Put the result in the SLURM output file.
 cat {the_output_file}
 
 echo "The task ended at = $(date -R) | $(date +%s)"

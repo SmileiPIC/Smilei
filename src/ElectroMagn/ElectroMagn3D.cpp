@@ -1152,8 +1152,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
 #ifdef _GPU
@@ -1180,8 +1179,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
 #ifdef _GPU
@@ -1206,8 +1204,7 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
-    #pragma omp teams
-    #pragma omp distribute parallel for collapse( 3 )
+    #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
 #ifdef _GPU
