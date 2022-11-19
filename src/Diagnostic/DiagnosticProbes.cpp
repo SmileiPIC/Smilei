@@ -661,7 +661,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
                             break;
                         }
                         Particles *particles = &( vecPatches( ipatch )->probes[probe_n]->particles );
-                        for( unsigned int ip=0 ; ip<particles->size() ; ip++ ) {
+                        for( unsigned int ip=0 ; ip<particles->hostVectorSize() ; ip++ ) {
                             for( unsigned int idim=0 ; idim<nDim_particle  ; idim++ ) {
                                 ( *posArray )( ipart, idim ) = particles->position( idim, ip );
                             }
@@ -697,7 +697,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
         Patch * patch = vecPatches( ipatch );
-        unsigned int npart = patch->probes[probe_n]->particles.size();
+        unsigned int npart = patch->probes[probe_n]->particles.hostVectorSize();
         
         LocalFields Jloc_fields;
         double Rloc_fields;
@@ -710,7 +710,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         // Interpolate all usual fields on probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int maxPart_MPI = offset_in_MPI[ipatch] + npart;
-        smpi->dynamics_resize( ithread, nDim_particle, npart, false );
+        smpi->resizeBuffers( ithread, nDim_particle, npart, false );
         for( unsigned int ipart=0; ipart<npart; ipart++ ) {
             int iparticle( ipart ); // Compatibility
             int false_idx( 0 );   // Use in classical interp for now, not for probes

@@ -71,7 +71,7 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xjn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
     *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
@@ -124,13 +124,13 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
 
     //Loop on bin particles
-    int nparts = particles.size();
+    int nparts = particles.numberOfParticles();
 
     for (int ipart=*istart; ipart < *iend; ipart++){
 
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
-       
+
         // Calculate coeffs
         int idx_p[1], idx_d[1];
         double delta_p[1];
@@ -171,7 +171,7 @@ void Interpolator1D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
@@ -182,7 +182,7 @@ void Interpolator1D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // Static cast of the envelope fields
-    
+
     double *Epart       = &( smpi->dynamics_Epart[ithread][0] );
     double *Bpart       = &( smpi->dynamics_Bpart[ithread][0] );
     double *PHIpart     = &( smpi->dynamics_PHIpart[ithread][0] );
@@ -204,13 +204,13 @@ void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
 
     //Loop on bin particles
-    int nparts = particles.size();
+    int nparts( particles.numberOfParticles() );
 
     for (int ipart=*istart; ipart < *iend; ipart++){
 
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
-       
+
         // Calculate coeffs
         int idx_p[1], idx_d[1];
         double delta_p[1];
@@ -255,20 +255,20 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     Field1D *GradPhix_m1D = static_cast<Field1D *>( EMfields->envelope->GradPhix_m );
     Field1D *GradPhiy_m1D = static_cast<Field1D *>( EMfields->envelope->GradPhiy_m );
     Field1D *GradPhiz_m1D = static_cast<Field1D *>( EMfields->envelope->GradPhiz_m );
-    
+
     double *PHI_mpart     = &( smpi->dynamics_PHI_mpart[ithread][0] );
     double *GradPHI_mpart = &( smpi->dynamics_GradPHI_mpart[ithread][0] );
-    
+
     int    *iold  = &( smpi->dynamics_iold[ithread][0] );
     double *delta = &( smpi->dynamics_deltaold[ithread][0] );
-    
+
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-    
+
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
-       
+
         // Calculate coeffs
 
         int idx_p[1], idx_d[1];
@@ -277,7 +277,7 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         double coeffxd[3];
 
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-        
+
         // Interpolation of Phi^(p)
         *( PHI_mpart+0*nparts+ipart ) = compute( coeffxp, Phi_m1D, idx_d[0] );
         // Interpolation of GradPhix^(p)
@@ -286,14 +286,14 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         *( GradPHI_mpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy_m1D, idx_d[0] );
         // Interpolation of GradPhiz^(p)
         *( GradPHI_mpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz_m1D, idx_d[0] );
-        
+
         //Buffering of iol and delta
         *( iold+ipart+0*nparts)  = idx_p[0];
         *( delta+ipart+0*nparts) = delta_p[0];
-        
-        
+
+
     }
-    
+
 } // END Interpolator1D2Order
 
 
@@ -352,9 +352,9 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
 {
     // Static cast of the envelope fields
     Field1D *Env_Eabs = static_cast<Field1D *>( EMfields->Env_E_abs_ );
-    
+
     std::vector<double> *Env_Eabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
-    
+
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
@@ -366,26 +366,26 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double xpn = particles.position( 0, ipart )*dx_inv_;
 
         double delta2;
-        
+
         // Primal
         idx_p[0]    = round( xpn );                 // index of the central point
         delta_p[0]  = xpn -( double )idx_p[0];      // normalized distance to the central node
         delta2      = pow( delta_p[0], 2 );         // square of the normalized distance to the central node
-        
+
         // 2nd order interpolation on 3 nodes
         coeffxp[0]   = 0.5 * ( delta2-delta_p[0]+0.25 );
         coeffxp[1]   = ( 0.75-delta2 );
         coeffxp[2]   = 0.5 * ( delta2+delta_p[0]+0.25 );
-        
+
         idx_p[0]   -= index_domain_begin;
-    
+
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)
         // ---------------------------------
         ( *Env_Eabs_part )[ipart] = compute( coeffxp, Env_Eabs, idx_p[0] );
 
-        // In 1D the Env_Ex_abs field is always zero 
-        
-    }    
-    
+        // In 1D the Env_Ex_abs field is always zero
+
+    }
+
 } // END Interpolator1D2Order

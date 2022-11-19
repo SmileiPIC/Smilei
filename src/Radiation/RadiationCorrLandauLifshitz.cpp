@@ -50,7 +50,7 @@ void RadiationCorrLandauLifshitz::operator()(
     Particles       &particles,
     Particles       *photons,
     SmileiMPI       *smpi,
-    RadiationTables &RadiationTables,
+    RadiationTables &radiation_tables,
     double          &radiated_energy,
     int             istart,
     int             iend,
@@ -65,7 +65,7 @@ void RadiationCorrLandauLifshitz::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -77,7 +77,7 @@ void RadiationCorrLandauLifshitz::operator()(
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
 
     // Minimum value of chi for the radiation
-    const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
+    const double minimum_chi_continuous = radiation_tables.getMinimumChiContinuous();
 
     // Momentum shortcut
     double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
@@ -130,7 +130,7 @@ void RadiationCorrLandauLifshitz::operator()(
 
             // Radiated energy during the time step
             const double temp =
-                RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi, dt_ ) * gamma/( gamma*gamma - 1 );
+                radiation_tables.getRidgersCorrectedRadiatedEnergy( particle_chi, dt_ ) * gamma/( gamma*gamma - 1 );
 
             // Update of the momentum
             momentum_x[ipart] -= temp*momentum_x[ipart];

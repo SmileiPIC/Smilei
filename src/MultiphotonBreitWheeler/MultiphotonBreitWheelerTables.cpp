@@ -42,7 +42,7 @@ MultiphotonBreitWheelerTables::~MultiphotonBreitWheelerTables()
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *smpi )
 {
-    if( params.hasMultiphotonBreitWheeler ) {
+    if( params.has_multiphoton_Breit_Wheeler_ ) {
         TITLE( "Initializing multiphoton Breit-Wheeler" )
 
         // Preliminary checks
@@ -61,7 +61,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
     }
 
     // Computation of some parameters
-    if( params.hasMultiphotonBreitWheeler ) {
+    if( params.has_multiphoton_Breit_Wheeler_ ) {
         // Computation of the normalized Compton wavelength
         normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                                          / ( params.electron_mass*params.c_vacuum_*params.c_vacuum_ );
@@ -70,7 +70,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
     }
 
     // Messages and checks
-    if( params.hasMultiphotonBreitWheeler ) {
+    if( params.has_multiphoton_Breit_Wheeler_ ) {
         if (table_path_.size() > 0) {
             MESSAGE( 1,"Reading of the external database, path: " << table_path_ );
             readTables( params, smpi );
@@ -346,7 +346,7 @@ void MultiphotonBreitWheelerTables::readTables( Params &params, SmileiMPI *smpi 
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     // And if the h values are not computed from a numerical fit
-    if( params.hasMultiphotonBreitWheeler) {
+    if( params.has_multiphoton_Breit_Wheeler_) {
         MultiphotonBreitWheelerTables::readTableT( smpi );
         MultiphotonBreitWheelerTables::readTableXi( smpi );
     }
