@@ -147,7 +147,7 @@ public:
     //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
     static std::string printBytes( uint64_t nbytes );
 
-    //! This function returns true/flase whether the file exists or not
+    //! This function returns true/false whether the file exists or not
     //! \param file file name to test
     static bool fileExists( const std::string &filename ) ;
 
@@ -163,15 +163,7 @@ public:
     }
 
     //! Wrapper to get the thread number
-    static int getOMPThreadNum()
-    {
-#ifdef _OPENMP
-        return omp_get_thread_num();
-#else
-        return 0;
-#endif
-    }
-
+    static int getOMPThreadNum();
 };
 
 #define LINK_NAMELIST "https://smileipic.github.io/Smilei/namelist.html"

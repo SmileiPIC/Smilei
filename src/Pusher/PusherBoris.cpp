@@ -37,8 +37,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.numberOfParticles(); // particles.size()
+    const int nparts = particles.last_index.back(); // particles.size()
 
     const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
     const double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );

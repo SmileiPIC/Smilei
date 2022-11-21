@@ -1158,16 +1158,17 @@ void ElectroMagn3D::centerMagneticFields()
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-
-            const unsigned int l =  i*(ny_d*nz_d) + j*nz_d;
-
 #ifdef _GPU
             #pragma acc loop vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // EMPTY
 #else
             #pragma omp simd
 #endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                Bx3D_m[ l + k ] = ( Bx3D[ l + k] + Bx3D_m[ l + k] )*0.5;
+                // Dont extract the 'i*(ny_d*nz_d) + j*nz_d'. This prevents the
+                // collapse( 3 )
+                Bx3D_m[ i*(ny_d*nz_d) + j*nz_d + k ] = ( Bx3D[ i*(ny_d*nz_d) + j*nz_d + k ] + Bx3D_m[ i*(ny_d*nz_d) + j*nz_d + k ] )*0.5;
             }
         }
     }
@@ -1188,6 +1189,8 @@ void ElectroMagn3D::centerMagneticFields()
 
 #ifdef _GPU
             #pragma acc loop vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // EMPTY
 #else
             #pragma omp simd
 #endif
@@ -1212,6 +1215,8 @@ void ElectroMagn3D::centerMagneticFields()
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
 #ifdef _GPU
             #pragma acc loop vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // EMPTY
 #else
             #pragma omp simd
 #endif

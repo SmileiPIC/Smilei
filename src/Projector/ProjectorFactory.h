@@ -47,7 +47,6 @@ public:
                 #else
                     Proj = new Projector2D2Order( params, patch );
                 #endif
-                }
             }
             else {
                 Proj = new Projector2D2OrderV( params, patch );
