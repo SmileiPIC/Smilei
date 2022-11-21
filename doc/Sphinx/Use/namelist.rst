@@ -220,7 +220,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-    The size of clusters becomes particularly important when :doc:`task_parallelization` is used.
+    The size of clusters becomes particularly important when :doc:`/Understand/task_parallelization` is used.
 
 .. py:data:: maxwell_solver
 
