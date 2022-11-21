@@ -23,9 +23,8 @@ public:
     
 private:
 
-    unsigned int rewrite_npatch, rewrite_xmin, rewrite_ymin, rewrite_zmin, rewrite_npatchx, rewrite_npatchy, rewrite_npatchz;
-    unsigned int rewrite_size[3], rewrite_start_in_file[3];
-    std::vector<std::vector<unsigned int> > rewrite_patch;
+    std::vector<unsigned int> buffer_skip_x, buffer_skip_y, buffer_skip_z;
+
 };
 
 #endif

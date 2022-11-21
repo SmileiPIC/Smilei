@@ -549,6 +549,4 @@ class ParticleBinning(Diagnostic):
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# transform if requested
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A

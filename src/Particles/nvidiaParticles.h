@@ -43,7 +43,7 @@ public:
 
     //! Allocate particle_count particles. Must be called after
     //! allocateDimensions()
-    //! Set the size (gpu_size) of nvidiaParticles to particle_count.
+    //! Set the size (deviceSize) of nvidiaParticles to particle_count.
     //!
     void resize( unsigned int particle_count );
 
@@ -54,11 +54,16 @@ public:
     //!
     void free();
 
-    //! Reset Particles vectors
-    void deviceClear();
+    //! Resize Particle vectors on device
+    void deviceResize(unsigned int new_size);
 
-    //! Initialize the particle properties on the device as a mirror of the host
-    //!  definition
+    //! Remove all particles
+    void deviceClear();
+    
+    //! Reset cell_keys to default value
+    void resetCellKeys();
+    
+    //! Initialize the particle properties on device as a mirror of the host definition
     void initializeDataOnDevice() override;
 
     //! Send the particles from host to device
@@ -66,6 +71,12 @@ public:
     
     //! Update the particles from device to host
     void syncCPU() override;
+
+    //! Get number of particles on device
+    inline unsigned int deviceSize() const override
+    {
+        return gpu_nparts_;
+    }
 
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidia_position_[idim].data() );
@@ -89,14 +100,8 @@ public:
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
     };
 
-    //! Get number of particles
-    unsigned int gpu_size() const override
-    {
-        return gpu_nparts_;
-    }
-
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put 
+    //! Extract particles from the Particles object and put
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
     void extractParticles( Particles* particles_to_move ) override;
@@ -172,7 +177,7 @@ protected:
     int prepareBinIndex();
 
     //! Set last_index.back() and last_index[0] to match the number of GPU
-    //! particle (gpu_size).
+    //! particle (deviceSize()).
     //!
     void setHostBinIndex();
 

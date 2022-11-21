@@ -57,7 +57,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     const Field3D *const __restrict__ By3D = static_cast<Field3D *>( EMfields->By_m );
     const Field3D *const __restrict__ Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
 
-    int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
+    const int nparts = smpi->getBufferSize(ithread);
 
     double * __restrict__ Epart[3];
     double * __restrict__ Bpart[3];
@@ -419,7 +419,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
     // probes are interpolated one by one for now
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
 
     double * __restrict__ Epart[3], * __restrict__ Bpart[3];

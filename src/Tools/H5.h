@@ -53,10 +53,10 @@ public:
     H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset = {}, std::vector<hsize_t> npoints = {}, std::vector<hsize_t> chunk = {} );
     
     ~H5Space() {
-        H5Sclose( sid );
+        H5Sclose( sid_ );
     }
     
-    hid_t sid;
+    hid_t sid_;
     std::vector<hsize_t> dims_;
     std::vector<hsize_t> chunk_;
     hsize_t global_;
@@ -105,9 +105,8 @@ protected:
     //! Constructor when location already opened
     H5( hid_t ID, hid_t dcr, hid_t dxpl );
     
-    std::string filepath;
-    std::string grouppath;
-    hid_t fid_;
+    std::string filepath_; // only defined if the location is at the root of the file
+    hid_t fid_; // only defined if the location is at the root of the file
     hid_t id_;
     hid_t dcr_;
     hid_t dxpl_;
@@ -137,11 +136,11 @@ public:
     H5Write( std::string file, MPI_Comm * comm = NULL, bool _raise = true )
      : H5( file, H5F_ACC_RDWR, comm, _raise ) {};
     
-    //! Create group given H5Write location
+    //! Create group inside the given H5Write location
     H5Write( H5Write *loc, std::string group_name )
      : H5( loc->newGroupId( group_name ), loc->dcr_, loc->dxpl_ ) {};
     
-    //! Create or open (not write) a dataset given H5Write location
+    //! Create or open (not write) a dataset inside the given H5Write location
     H5Write( H5Write *loc, std::string name, hid_t type, H5Space *filespace )
      : H5( -1, loc->dcr_, loc->dxpl_ )
     {
@@ -150,7 +149,7 @@ public:
             H5Pset_chunk( dcr_, filespace->chunk_.size(), &filespace->chunk_[0] );
         }
         if( H5Lexists( loc->id_, name.c_str(), H5P_DEFAULT ) == 0 ) {
-            id_  = H5Dcreate( loc->id_, name.c_str(), type, filespace->sid, H5P_DEFAULT, dcr_, H5P_DEFAULT );
+            id_  = H5Dcreate( loc->id_, name.c_str(), type, filespace->sid_, H5P_DEFAULT, dcr_, H5P_DEFAULT );
         } else {
             hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
             id_ = H5Dopen( loc->id_, name.c_str(), pid );
@@ -168,12 +167,6 @@ public:
     H5Write group( std::string group_name )
     {
         return H5Write( this, group_name );
-    }
-    
-    //! Open an existing dataset
-    H5Write dataset( std::string name )
-    {
-        return H5Write( open( name ), dcr_, dxpl_ );
     }
     
     //! Write a string as an attribute
@@ -361,17 +354,17 @@ public:
                 H5FD_mpio_xfer_t xfer;
                 H5Pget_dxpl_mpio( dxpl_, &xfer );
                 H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_INDEPENDENT );
-                H5Dwrite( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+                H5Dwrite( id_, type, memspace->sid_, filespace->sid_, dxpl_, &v );
                 H5Pset_dxpl_mpio( dxpl_, xfer );
             }
         } else {
             if( filespace->global_ > 0 ) {
-                H5Dwrite( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+                H5Dwrite( id_, type, memspace->sid_, filespace->sid_, dxpl_, &v );
             }
         }
     }
     
-    // read to an open dataset
+    // read from an open dataset
     template<class T>
     void read( T &v, hid_t type, H5Space *filespace, H5Space *memspace, bool independent = false ) {
         if( independent ) {
@@ -379,12 +372,12 @@ public:
                 H5FD_mpio_xfer_t xfer;
                 H5Pget_dxpl_mpio( dxpl_, &xfer );
                 H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_INDEPENDENT );
-                H5Dread( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+                H5Dread( id_, type, memspace->sid_, filespace->sid_, dxpl_, &v );
                 H5Pset_dxpl_mpio( dxpl_, xfer );
             }
         } else {
             if( filespace->global_ > 0 ) {
-                H5Dread( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+                H5Dread( id_, type, memspace->sid_, filespace->sid_, dxpl_, &v );
             }
         }
     }
@@ -392,13 +385,13 @@ public:
     //! Write a multi-dimensional array of uints
     H5Write array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace, bool independent = false )
     {
-        return array( name, v, H5T_NATIVE_UINT, filespace, memspace );
+        return array( name, v, H5T_NATIVE_UINT, filespace, memspace, independent );
     }
     
     //! Write a multi-dimensional array of doubles
     H5Write array( std::string name, double &v, H5Space *filespace, H5Space *memspace, bool independent = false )
     {
-        return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace );
+        return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace, independent );
     }
     
     //! Write a multi-dimensional array
@@ -639,7 +632,7 @@ public:
     {
         hid_t did = open( name );
         if( filespace->global_ > 0 ) {
-            H5Dread( did, type, memspace->sid, filespace->sid, dxpl_, &v );
+            H5Dread( did, type, memspace->sid_, filespace->sid_, dxpl_, &v );
         }
         H5Dclose( did );
     }

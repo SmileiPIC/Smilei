@@ -89,6 +89,13 @@ public:
     void extract_slice_xz( unsigned int iy, Field2D *field );
     void extract_slice_xy( unsigned int iz, Field2D *field );
 
+    Field* clone() override {
+        auto newInstance = new Field3D(dims_);
+        newInstance->name = name;
+        newInstance->copyFrom(this);
+        return newInstance;
+    }
+
 
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;

@@ -45,9 +45,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
 
     const short *const charge = particles.getPtrCharge();
 
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.last_index.back(); // particles.size()
-                               
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );

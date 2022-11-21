@@ -161,9 +161,20 @@ public:
         tot << s1 << s2 << s3 << s4;
         return tot.str();
     }
+
+    //! Wrapper to get the thread number
+    static int getOMPThreadNum()
+    {
+#ifdef _OPENMP
+        return omp_get_thread_num();
+#else
+        return 0;
+#endif
+    }
+
 };
 
-#define LINK_NAMELIST "https://smileipic.github.io/Smilei/namelist.html" 
+#define LINK_NAMELIST "https://smileipic.github.io/Smilei/namelist.html"
 
 #if defined(WIN32) || defined(_WIN32)
 #define PATH_SEPARATOR "\\"

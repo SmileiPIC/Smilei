@@ -62,9 +62,34 @@ public:
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
-            
-            
+            std::vector<Diagnostic *> &localDiags ) override;            
+
+#ifdef _OMPTASKS
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! without vectorized operators but with the cell sorting algorithm
+    void scalarDynamicsTasks( double time, unsigned int ispec,
+                               ElectroMagn *EMfields,
+                               Params &params, bool diag_flag,
+                               PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                               RadiationTables &RadiationTables,
+                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                               std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+
+    void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+
+#endif
+    
 private:
 
     // Metrics for the adaptive vectorization

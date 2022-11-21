@@ -435,7 +435,7 @@ void Interpolator3DWT2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfi
     // probes are interpolated one by one for now
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
 
     double * __restrict__ Epart[3], * __restrict__ Bpart[3];

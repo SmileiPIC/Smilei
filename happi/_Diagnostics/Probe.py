@@ -391,8 +391,6 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
-
-		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 
 	# We override _prepare4
@@ -407,20 +405,7 @@ class Probe(Diagnostic):
 
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _plotOnAxes_2D_(self, ax, A):
-		vmin = self.options.vmin
-		vmax = self.options.vmax
-		if self.options.vsym:
-			if vmin or vmax:
-				print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
-		        
-			if self.options.vsym is True:
-				vmax = self._np.abs(A).max()
-			else:
-				vmax = self._np.abs(self.options.vsym)
-
-			vmin = -vmax
-		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
-			vmin = vmin, vmax = vmax, **self.options.image)
+		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], A, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_array( A.flatten() )

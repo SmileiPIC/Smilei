@@ -236,7 +236,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
             for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
                 patch_selection[ipatch].resize( 0 );
                 Particles *p = vecPatches( ipatch )->vecSpecies[speciesId_]->particles;
-                unsigned int npart = p->size();
+                unsigned int npart = p->numberOfParticles();
                 if( npart > 0 ) {
                     // Expose particle data as numpy arrays
                     particleData.resize( npart );
@@ -523,7 +523,7 @@ void DiagnosticTrack::setIDs( Patch *patch )
     if( has_filter ) {
         return;
     }
-    unsigned int s = patch->vecSpecies[speciesId_]->particles->size();
+    unsigned int s = patch->vecSpecies[speciesId_]->getNbrOfParticles();
     for( unsigned int iPart=0; iPart<s; iPart++ ) {
         patch->vecSpecies[speciesId_]->particles->id( iPart ) = ++latest_Id;
     }
@@ -536,7 +536,7 @@ void DiagnosticTrack::setIDs( Particles &particles )
     if( has_filter ) {
         return;
     }
-    unsigned int s = particles.size();
+    unsigned int s = particles.numberOfParticles();
     #pragma omp critical
     {
         for( unsigned int iPart=0; iPart<s; iPart++ ) {
@@ -568,7 +568,7 @@ void DiagnosticTrack::fill_buffer( VectorPatch &vecPatches, unsigned int iprop, 
     } else {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
-            patch_nParticles = vecPatches( ipatch )->vecSpecies[speciesId_]->particles->size();
+            patch_nParticles = vecPatches( ipatch )->vecSpecies[speciesId_]->getNbrOfParticles();
             vecPatches( ipatch )->vecSpecies[speciesId_]->particles->getProperty( iprop, property );
             i=0;
             j=patch_start[ipatch];

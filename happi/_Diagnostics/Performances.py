@@ -71,7 +71,7 @@ def PartitionMatrix( matrix, listOfValues, oversize=0 ):
 class Performances(Diagnostic):
 	"""Class for loading a Performances diagnostic"""
 
-	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, data_transform=None, species=None, **kwargs):
+	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, data_transform=None, species=None, cumulative=True, **kwargs):
 
 		info = self.simulation.performanceInfo()
 		self._availableQuantities_uint   = info["quantities_uint"]
@@ -161,7 +161,7 @@ class Performances(Diagnostic):
 				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
 				units = "seconds" if q.startswith("timer") else "1"
 				self._operationunits = self._operationunits.replace(q, units)
-				self._quantities_uint.append(index_in_file)
+				self._quantities_uint.append([index_in_file, q])
 				used_quantities.append( q )
 				index_in_output += 1
 		self._quantities_double = []
@@ -170,16 +170,19 @@ class Performances(Diagnostic):
 				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
 				units = "seconds" if q.startswith("timer") else "1"
 				self._operationunits = self._operationunits.replace(q, units)
-				self._quantities_double.append(index_in_file)
+				self._quantities_double.append([index_in_file, q])
 				used_quantities.append( q )
 				index_in_output += 1
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
 		self._data_transform = data_transform
+		self._cumulative = cumulative
 		
 		# In case of "vecto" quantity, get the species
 		if species is not None:
+			if self.operation != "vecto":
+				raise Exception("Argument `species` only valid with quantity 'vecto'")
 			self._species = str(species)
 		
 		# 2 - Manage timesteps
@@ -272,21 +275,24 @@ class Performances(Diagnostic):
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
+		
 		# Get arrays from requested field
 		# get data
 		index = self._data[t]
 		C = []
-		h5item = self._h5items[index]["quantities_uint"]
-		for index_in_file in self._quantities_uint:
-			B = self._np.empty((self._nprocs,), dtype="uint")
-			h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
-			C.append( B )
-		h5item = self._h5items[index]["quantities_double"]
-		for index_in_file in self._quantities_double:
-			B = self._np.empty((self._nprocs,), dtype="double")
-			h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
-			C.append( B )
-
+		for dtype, quantities in (("uint",self._quantities_uint), ("double",self._quantities_double)):
+			h5item = self._h5items[index]["quantities_"+dtype]
+			for index_in_file, quantity in quantities:
+				B = self._np.empty((self._nprocs,), dtype=dtype)
+				h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
+				# If not cumulative, make the difference with the previous time
+				if not self._cumulative and quantity.startswith("timer") and index > 0:
+					prevh5item = self._h5items[index-1]["quantities_"+dtype]
+					prevB = self._np.empty((self._nprocs,), dtype=dtype)
+					prevh5item.read_direct( prevB, source_sel=self._np.s_[index_in_file,:] )
+					B -= prevB
+				C.append( B )
+		
 		# Calculate the operation
 		# First patch performance information
 		if  self.operation in ["vecto", "mpi_rank"]:
@@ -334,15 +340,13 @@ class Performances(Diagnostic):
 		else:
 			A = eval(self._operation)
 		
-		if callable(self._data_transform): A = self._data_transform(A)
-
 		# If raw requested
 		if self._mode == "raw":
 			return A
-
+		
 		# If map requested
 		elif self._mode == "map":
-
+			
 			# Extract the array "hindex"
 			hindices = self._np.empty((self._nprocs,), dtype="uint")
 			h5item = self._h5items[index]["quantities_uint"]
@@ -358,7 +362,7 @@ class Performances(Diagnostic):
 					ranks[previous_h:h] = rank
 					rank += 1
 					previous_h = h
-				ranks[h:] = rank
+				ranks[previous_h:] = rank
 
 				# For each patch, associate the data of corresponding MPI rank
 				return A[ranks]
@@ -417,7 +421,7 @@ class Performances(Diagnostic):
 
 				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, int(step)))
 
-				raw = self._getDataAtTime(self._timesteps[istep])
+				raw = self._dataAtTime(self._timesteps[istep])
 				shape = list(raw.shape)
 				origin = [0,0,0]
 				extent = []
@@ -481,8 +485,7 @@ class Performances(Diagnostic):
 	
 	def _plotOnAxes_2D_(self, ax, A):
 		# Display the data
-		self._plot = ax.imshow( self._np.flipud(A),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
+		self._plot = ax.imshow( self._np.flipud(A), extent=self._extent, **self.options.image)
 		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
 		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
 		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)

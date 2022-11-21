@@ -3,9 +3,12 @@
 
 #include <vector>
 #include <string>
-//#include "PyTools.h"
+// #include "PyTools.h"
 
 #include "Particles.h"
+#ifdef _GPU
+#include "nvidiaParticles.h"
+#endif
 #include "Params.h"
 //#include "PartBoundCond.h"
 
@@ -106,10 +109,7 @@ public:
     //! Iteration for which the species field is initialized in case of relativistic initialization
     int iter_relativistic_initialization_;
 
-    //! electron and positron Species for the multiphoton Breit-Wheeler
-    std::vector<std::string> multiphoton_Breit_Wheeler_;
-
-    //! Boundary conditions for particles
+    //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
@@ -153,11 +153,11 @@ public:
     unsigned int file_momentum_npart_;
 
     //! Pointer toward position array
-    double *position_initialization_array_;
+    void *position_initialization_array_;
     //! Pointer toward regular number of particles array
     std::vector<int> regular_number_array_;
     //! Number of particles in the init array
-    double *momentum_initialization_array_;
+    void *momentum_initialization_array_;
     //! Number of particles in the init array
     unsigned int n_numpy_particles_;
     //! Boolean to know if we initialize particles one specie on another species
@@ -186,17 +186,21 @@ public:
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
-    //! Particle object to store emitted photons by radiation at each time step
-    Particles * radiated_photons_ = NULL;
+    //! Particles object to store emitted photons by radiation at each time step
+    Particles * radiated_photons_ = nullptr;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
-    Species *mBW_pair_species[2];
+    Species * mBW_pair_species_[2] = {nullptr, nullptr};
     //! Index of the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
-    int mBW_pair_species_index[2];
+    int mBW_pair_species_index_[2];
     //! Number of created pairs per event and per photons
-    std::vector<int> mBW_pair_creation_sampling_;
+    int mBW_pair_creation_sampling_[2];
+    //! electron and positron Species for the multiphoton Breit-Wheeler
+    std::vector<std::string> mBW_pair_species_names_;
+    // Particles object to store created electron-positron pairs
+    Particles * mBW_pair_particles_[2] = {nullptr , nullptr};
 
     //! Cluster width in number of cells
     unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.
@@ -237,6 +241,9 @@ public:
 
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
+
+    //! sub dual dimensions of fields
+    unsigned int f_dim0_d, f_dim1_d, f_dim2_d;
 
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
@@ -323,7 +330,7 @@ public:
 
     //! Merging
     Merging *Merge;
-    
+
     //! Particle Computation time evaluation
     PartCompTime *part_comp_time_ = NULL;
 
@@ -345,6 +352,8 @@ public:
     {
         return *particles;
     }
+
+    //! Method returning the Particle list pointer for the considered Species
     inline Particles &getParticlesList()
     {
         return *particles;
@@ -353,16 +362,30 @@ public:
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const
     {
+        return particles->numberOfParticles();
+    }
+
+    //! Method returning the size of Particles
+    inline unsigned int getParticlesSize() const
+    {
         return particles->size();
     }
-    // capacity() = vect ever oversize
-    //! \todo define particles.capacity = min.capacity
+
+    //! Return the capacity of Particles
     inline unsigned int getParticlesCapacity() const
     {
         return particles->capacity();
     }
 
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
+    //! For all particles of the species
+    //!   - interpolate the fields at the particle position
+    //!   - perform ionization
+    //!   - perform the radiation reaction
+    //!   - calculate the new velocity
+    //!   - calculate the new position
+    //!   - apply the boundary conditions
+    //!   - increment the currents (projection)
     virtual void dynamics( double time, unsigned int ispec,
                            ElectroMagn *EMfields,
                            Params &params, bool diag_flag,
@@ -406,6 +429,12 @@ public:
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
+
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
 
     virtual void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
@@ -474,7 +503,7 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-    
+
     inline double computeEnergy()
     {
         double nrj( 0. );
@@ -508,9 +537,32 @@ public:
     //! Method to import particles in this species while conserving the sorting among bins
     //! \param[in] Params the main Smilei parameters
     //! \param[in,out] Patch current patch
-    //! \param[in,out] source_particles Particles object containing the particles to import 
+    //! \param[in,out] source_particles Particles object containing the particles to import
     //! \param[in,out] localDiags vector of diags for tracked particles
     virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
+
+    //! This method eliminates the space gap between the bins
+    //! (presence of empty particles between the bins)
+    void compress(SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
+
+    //! This method removes particles with a negative weight
+    //! without changing the bin first index
+    //! Bins are therefore potentially seperated by empty particle slots
+    void removeTaggedParticlesPerBin(
+        SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
+
+    //! This method removes particles with a negative weight
+    //! when a single bin is used
+    void removeTaggedParticles(
+        SmileiMPI *smpi,
+        int *const first_index,
+        int *const last_index,
+        int ithread,
+        bool compute_cell_keys = false);
 
     //! Moving window boundary conditions managment
     void disableXmax();
@@ -549,6 +601,85 @@ public:
 
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
+
+#ifdef _OMPTASKS
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
+    virtual void dynamicsTasks(     double time, unsigned int ispec,
+                            ElectroMagn *EMfields,
+                            Params &params, bool diag_flag,
+                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                            RadiationTables &RadiationTables,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id );
+
+    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
+    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                                  RadiationTables &RadiationTables,
+                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi,
+            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+
+#endif
+
+    // ---- Variables for tasks
+
+    // Number of bins for the use of tasks
+    unsigned int Nbins;
+
+    // Number of cells used fot tasks + vectorization
+    int Ncells;
+
+    // buffers for bin projection when tasks are used
+    std::vector<double *> b_Jx;
+    std::vector<double *> b_Jy;
+    std::vector<double *> b_Jz;
+    std::vector<double *> b_rho;
+    std::vector<double *> b_Chi;
+
+    // Tags for the task dependencies of the particle operations
+    int *bin_has_interpolated;
+    int *bin_has_pushed;
+    int *bin_has_done_particles_BC;
+    int *bin_has_projected_chi;
+    int *bin_has_projected;
+
+    // buffers for bin projection when tasks are used
+    std::vector< std::complex<double> *> b_Jl;
+    std::vector< std::complex<double> *> b_Jr;
+    std::vector< std::complex<double> *> b_Jt;
+    std::vector< std::complex<double> *> b_rhoAM;
+    std::vector<double *> b_ChiAM;
+
+    //! Size of the projection buffer
+    unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
+    unsigned int size_proj_buffer_Jl,size_proj_buffer_Jr,size_proj_buffer_Jt,size_proj_buffer_rhoAM;
+    std::string geometry;
+    double *nrj_lost_per_bin;
+    double *radiated_energy_per_bin;
 
 protected:
 

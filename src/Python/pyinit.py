@@ -592,7 +592,7 @@ class RadiationReaction(SmileiComponent):
     # Parameters for computing the tables
     Niel_computation_method = "table"
 
-# MutliphotonBreitWheeler pair creation
+# MultiphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
     """
     Photon decay into electron-positron pairs

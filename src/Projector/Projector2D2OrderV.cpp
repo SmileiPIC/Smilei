@@ -60,7 +60,7 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
                                             int    * __restrict__ iold,
                                             double * __restrict__ deltaold,
                                             unsigned int buffer_size,
-                                            int ipart_ref )
+                                            int ipart_ref, int bin_shift )
 {
 
     // -------------------------------------
@@ -166,7 +166,7 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
 
     }
 
-    int iloc0 = ipom2*nprimy+jpom2;
+    int iloc0 = (ipom2-bin_shift)*nprimy+jpom2;
     int iloc = iloc0;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         #pragma omp simd
@@ -188,7 +188,7 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
 
     // -------------------------------------
@@ -249,7 +249,7 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ip -= i_domain_begin_ + 2;
+    ip -= i_domain_begin_ + 2 + bin_shift;
     jp -= j_domain_begin_ + 2;
     
     for( unsigned int i=0 ; i<5 ; i++ ) {
@@ -360,7 +360,7 @@ void Projector2D2OrderV::currents( double * __restrict__ Jx,
                                    int    * __restrict__ iold,
                                    double * __restrict__ deltaold,
                                    unsigned int buffer_size,
-                                   int ipart_ref )
+                                   int ipart_ref, int bin_shift )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -565,7 +565,7 @@ void Projector2D2OrderV::currents( double * __restrict__ Jx,
 
     } // end vectors
 
-    int iloc0 = ipom2*nprimy+jpom2;
+    int iloc0 = (ipom2-bin_shift)*nprimy+jpom2;
     int iloc = iloc0;
     for( unsigned int i=1 ; i<5 ; i++ ) {
         iloc += nprimy;
@@ -657,4 +657,39 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 void Projector2D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry" );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Wrapper for projection for Tasks
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector2D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, 
+        int bin_shift, Particles &particles, SmileiMPI *smpi, 
+        int istart, int iend, int ithread, bool diag_flag, 
+        bool is_spectral, int ispec, int scell, int ipart_ref )
+{
+    if( istart == iend ) {
+        return;    //Don't treat empty cells.
+    }
+    
+    //Independent of cell. Should not be here
+    //{
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    //}
+    int iold[2];
+    iold[0] = scell/nscelly_+oversize[0];
+    iold[1] = ( scell%nscelly_ )+oversize[1];
+    
+    // If no field diagnostics this timestep, then the projection is done directly on the total arrays
+    if( !diag_flag ) {
+        if( !is_spectral ) {
+            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref, bin_shift  );
+        } else {
+            ERROR( "TO DO with rho" );
+        }
+
+        // Otherwise, the projection may apply to the species-specific arrays
+    } else {
+        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref, bin_shift  );
+    }
 }

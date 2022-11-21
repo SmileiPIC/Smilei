@@ -17,6 +17,7 @@ Timer::Timer( string name ) :
     smpi_( NULL )
 {
     register_timers.resize( 0, 0. );
+    name_ = name;
 }
 
 Timer::~Timer()
@@ -45,6 +46,18 @@ void Timer::update( bool store )
     }
 }
 
+//! Accumulate time couting from last init/restart in task
+void Timer::updateInTask( bool store )
+{
+    time_acc_ +=  MPI_Wtime()-last_start_;
+    last_start_ = MPI_Wtime();
+    if( store )
+    {
+        register_timers.push_back( time_acc_ );
+    }
+}
+
+
 #ifdef __DETAILED_TIMERS
 //!Accumulate time couting from last init/restart using patch detailed timers
 void Timer::update( VectorPatch &vecPatches, bool store )
@@ -56,8 +69,8 @@ void Timer::update( VectorPatch &vecPatches, bool store )
         double time_tmp = 0.;
         for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ )
         {
-            time_tmp += vecPatches( ipatch )->patch_timers[this->patch_timer_id];
-            vecPatches( ipatch )->patch_timers[this->patch_timer_id] = 0;
+            time_tmp += vecPatches( ipatch )->patch_timers_[this->patch_timer_id];
+            vecPatches( ipatch )->patch_timers_[this->patch_timer_id] = 0;
         }
         
         // Get the number of threads per MPI in order to evaluate the mean per patch
@@ -68,7 +81,7 @@ void Timer::update( VectorPatch &vecPatches, bool store )
         thread_number = 1;
 #endif
         
-        // Average over all patches
+        // Average over all threads
         this->time_acc_  += time_tmp / ( double )( thread_number );
         
         if( store )
@@ -77,6 +90,44 @@ void Timer::update( VectorPatch &vecPatches, bool store )
         }
     }
 }
+
+//! Accumulate time couting from last init/restart using patch detailed timers spreaded between threads
+void Timer::updateThreaded( VectorPatch &vecPatches, bool store )
+{
+    #pragma omp barrier
+    #pragma omp master
+    {
+        
+        // Get the number of threads per MPI in order to evaluate the mean per patch
+        int thread_number = 0.;
+#ifdef _OPENMP
+        thread_number = omp_get_num_threads();
+#else
+        thread_number = 1;
+#endif
+        
+        // Reduce the time spent in all patches in time_tmp
+        double time_tmp = 0.;
+        for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ )
+        {
+            // Loop over the values stored in each thread
+            for (int ithread = 0 ; ithread < vecPatches( ipatch )->thread_number_ ; ithread++) {
+                time_tmp += vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->thread_number_ + ithread];
+                vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->thread_number_ + ithread] = 0;
+            }
+        }
+        
+        
+        // Average over all threads
+        this->time_acc_  += time_tmp / ( double )( thread_number );
+        
+        if( store )
+        {
+            register_timers.push_back( time_acc_ );
+        }
+    }
+}
+
 #endif
 
 void Timer::restart()
@@ -87,6 +138,13 @@ void Timer::restart()
         last_start_ = MPI_Wtime();
     }
 }
+
+// restart in a task
+void Timer::restartInTask()
+{
+    last_start_ = MPI_Wtime();
+}
+
 
 void Timer::reboot()
 {

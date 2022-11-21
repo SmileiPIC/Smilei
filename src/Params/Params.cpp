@@ -603,11 +603,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         WARNING( "CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL );
     }
 
-
+    // mark if OpenMP tasks are used or not
+    omptasks = false;
+#ifdef _OMPTASKS
+    omptasks = true;
+#endif
 
     // cluster_width_
     PyTools::extract( "cluster_width", cluster_width_, "Main"   );
-
 
 
     // --------------------
@@ -883,7 +886,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     has_MC_radiation_ = false ;// Default value
     has_LL_radiation_ = false ;// Default value
     has_Niel_radiation_ = false ;// Default value
-    hasDiagRadiationSpectrum = false; // Default value
+    has_diag_radiation_spectrum_ = false; // Default value
 
     // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
@@ -906,18 +909,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         else if (radiation_model=="diagradiationspectrum")
         {
-            hasDiagRadiationSpectrum = true;
+            has_diag_radiation_spectrum_ = true;
         }
     }
 
     // -------------------------------------------------------
-    // Parameters for the mutliphoton Breit-Wheeler pair decay
+    // Parameters for the multiphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
-    hasMultiphotonBreitWheeler = false ;// Default value
+    has_multiphoton_Breit_Wheeler_ = false ;// Default value
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
         if( PyTools::extractV( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
-            hasMultiphotonBreitWheeler = true;
+            has_multiphoton_Breit_Wheeler_ = true;
         }
     }
 
@@ -929,6 +932,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // add the read or computed value of cluster_width_ to the content of smilei.py
     namelist += string( "Main.cluster_width= " ) + to_string( cluster_width_ ) + "\n";
+
+    // add the use (or or not) of the OpenMP tasks to the content of smilei.py
+    namelist += string( "Main.omptasks= " ) + to_string( omptasks ) + "\n";
 
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -1272,7 +1278,7 @@ void Params::check_consistency()
         //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
         // }
 
-        if( hasMultiphotonBreitWheeler ) {
+        if( has_multiphoton_Breit_Wheeler_ ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }

@@ -18,143 +18,25 @@ using namespace std;
 DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &openPMD )
     : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
-
+    
     // Calculate the offset in the local grid
-    patch_offset_in_grid.resize( 3 );
-    patch_offset_in_grid[0] = params.oversize[0]+1;
-    patch_offset_in_grid[1] = params.oversize[1]+1;
-    patch_offset_in_grid[2] = params.oversize[2]+1;
-    
+    patch_offset_in_grid = { params.oversize[0]+1, params.oversize[1]+1, params.oversize[2]+1 };
+   
     // Calculate the patch size
-    patch_size.resize( 3 );
-    patch_size[0] = params.n_space[0];
-    patch_size[1] = params.n_space[1];
-    patch_size[2] = params.n_space[2];
+    patch_size = { params.n_space[0], params.n_space[1], params.n_space[2] };
     
-    // define space in file and in memory for the first (1D) write
-    // We assign, for each patch, the maximum buffer size necessary to fit the subgrid
-    unsigned int istart_in_patch[3], istart_in_file[3], nsteps[3];
+    // Get the full size of the array in file
+    vector<hsize_t> final_array_size(3);
+    // Take subgrid into account
     for( unsigned int i=0; i<3; i++ ) {
-        findSubgridIntersection(
-            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
-            subgrid_start_[i], subgrid_start_[i]+patch_size[i]+1,
-            istart_in_patch[i], istart_in_file[i], nsteps[i]
-        );
+        hsize_t start = 0;
+        final_array_size[i] = params.number_of_patches[i] * params.n_space[i] + 1;
+        findSubgridIntersection1( i, start, final_array_size[i], start );
     }
-    one_patch_buffer_size = nsteps[0] * nsteps[1] * nsteps[2];
-    file_size = ( hsize_t )one_patch_buffer_size * ( hsize_t )tot_number_of_patches;
-    
-    if( smpi->test_mode ) {
-        return;
-    }
-    
-    // Define a second portion of the grid, which is unrelated to the current
-    // composition of vecPatches. It is used for a second writing of the file
-    // in order to fold the Hilbert curve. This new portion is necessarily
-    // rectangular for efficient writing.
-    int nproc = smpi->getSize(), iproc = smpi->getRank();
-    int npatch = params.tot_number_of_patches;
-    int npatch_local = 1<<int( log2( ( ( double )npatch )/nproc ) );
-    if( dynamic_cast<LinearizedDomainDecomposition3D *>( vecPatches.domain_decomposition_ ) ) {
-        npatch_local = vecPatches.size();
-    }
-    int first_proc_with_less_patches = ( npatch-npatch_local*nproc )/npatch_local;
-    int first_patch_of_this_proc;
-    if( iproc < first_proc_with_less_patches ) {
-        npatch_local *= 2;
-        first_patch_of_this_proc = npatch_local*iproc;
-    } else {
-        first_patch_of_this_proc = npatch_local*( first_proc_with_less_patches+iproc );
-    }
-    // Define space in file for re-reading
-    hsize_t offset = ( hsize_t )one_patch_buffer_size * ( hsize_t )first_patch_of_this_proc;
-    hsize_t block  = ( hsize_t )one_patch_buffer_size * ( hsize_t )npatch_local;
-    filespace_reread = new H5Space( file_size, offset, block );
-    // Define space in memory for re-reading
-    memspace_reread = new H5Space( block );
-    data_reread.resize( block );
-    
-    
     // Define the chunk size (necessary above 2^28 points)
     const hsize_t max_size = 4294967295/2/sizeof( double );
-    // For the first write
-    if( file_size > max_size ) {
-        hsize_t n_chunks = 1 + ( file_size-1 ) / max_size;
-        chunk_size_firstwrite = file_size / n_chunks;
-        if( n_chunks * chunk_size_firstwrite < file_size ) {
-            chunk_size_firstwrite++;
-        }
-    } else {
-        chunk_size_firstwrite = 0;
-    }
-    
-    // Define the list of patches for re-writing
-    rewrite_npatch = ( unsigned int )npatch_local;
-    rewrite_patch.resize( rewrite_npatch );
-    rewrite_xmin=numeric_limits<int>::max();
-    rewrite_ymin=numeric_limits<int>::max();
-    rewrite_zmin=numeric_limits<int>::max();
-    unsigned int rewrite_xmax=0, rewrite_ymax=0, rewrite_zmax=0;
-    for( unsigned int h=0; h<rewrite_npatch; h++ ) {
-        std::vector<unsigned int> xcall( 3, 0 );
-        xcall = vecPatches.domain_decomposition_->getDomainCoordinates( first_patch_of_this_proc+h );
-        if( xcall[0]<rewrite_xmin ) {
-            rewrite_xmin=xcall[0];
-        }
-        if( xcall[0]>rewrite_xmax ) {
-            rewrite_xmax=xcall[0];
-        }
-        if( xcall[1]<rewrite_ymin ) {
-            rewrite_ymin=xcall[1];
-        }
-        if( xcall[1]>rewrite_ymax ) {
-            rewrite_ymax=xcall[1];
-        }
-        if( xcall[2]<rewrite_zmin ) {
-            rewrite_zmin=xcall[2];
-        }
-        if( xcall[2]>rewrite_zmax ) {
-            rewrite_zmax=xcall[2];
-        }
-        rewrite_patch[h] = xcall;
-    }
-    rewrite_npatchx = rewrite_xmax - rewrite_xmin + 1;
-    rewrite_npatchy = rewrite_ymax - rewrite_ymin + 1;
-    rewrite_npatchz = rewrite_zmax - rewrite_zmin + 1;
-    // Define space in file for re-writing
-    vector<hsize_t> final_array_size(3), offset2(3), block2(3);
-    final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
-    final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
-    final_array_size[2] = params.number_of_patches[2] * params.n_space[2] + 1;
-    offset2[0] = rewrite_xmin * params.n_space[0] + ( ( rewrite_xmin==0 )?0:1 );
-    offset2[1] = rewrite_ymin * params.n_space[1] + ( ( rewrite_ymin==0 )?0:1 );
-    offset2[2] = rewrite_zmin * params.n_space[2] + ( ( rewrite_zmin==0 )?0:1 );
-    block2 [0] = rewrite_npatchx * params.n_space[0] + ( ( rewrite_xmin==0 )?1:0 );
-    block2 [1] = rewrite_npatchy * params.n_space[1] + ( ( rewrite_ymin==0 )?1:0 );
-    block2 [2] = rewrite_npatchz * params.n_space[2] + ( ( rewrite_zmin==0 )?1:0 );
-    // Take subgrid into account
-    unsigned int istart[3];
-    total_dataset_size = 1;
-    for( unsigned int i=0; i<3; i++ ) {
-        findSubgridIntersection(
-            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
-            0, final_array_size[i],
-            istart[i], rewrite_start_in_file[i], rewrite_size[i]
-        );
-        final_array_size[i] = rewrite_size[i];
-        total_dataset_size *= final_array_size[i];
-        findSubgridIntersection(
-            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
-            offset2[i], offset2[i] + block2[i],
-            istart[i], rewrite_start_in_file[i], rewrite_size[i]
-        );
-        offset2[i] = rewrite_start_in_file[i];
-        block2 [i] = rewrite_size[i];
-    }
-    // Chunks for the second write
-    hsize_t final_size = final_array_size[0]
-                         *final_array_size[1]
-                         *final_array_size[2];
+    hsize_t final_size = final_array_size[0] * final_array_size[1] * final_array_size[2];
+    vector<hsize_t> chunk_size;
     if( final_size > max_size ) {
         hsize_t n_chunks = 1 + ( final_size-1 ) / max_size;
         chunk_size.resize( 3 );
@@ -164,15 +46,13 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI *smpi, VectorP
         if( n_chunks * chunk_size[0] < final_array_size[0] ) {
             chunk_size[0]++;
         }
-    } else {
-        chunk_size.resize( 0 );
     }
-    filespace = new H5Space( final_array_size, offset2, block2, chunk_size );
-    // Define space in memory for re-writing
-    memspace = new H5Space( block2 );
-    data_rewrite.resize( rewrite_size[0]*rewrite_size[1]*rewrite_size[2] );
     
-    tmp_dset_ = NULL;
+    filespace = new H5Space( final_array_size, {}, {}, chunk_size );
+    memspace = new H5Space( 1 );
+    
+    // info for log output
+    total_dataset_size = final_size;
 }
 
 DiagnosticFields3D::~DiagnosticFields3D()
@@ -180,19 +60,114 @@ DiagnosticFields3D::~DiagnosticFields3D()
 }
 
 
+struct PatchIXYZ {
+    unsigned int i;
+    unsigned int x;
+    unsigned int y;
+    unsigned int z;
+};
+bool patch_sorting( PatchIXYZ patch1_ixyz, PatchIXYZ patch2_ixyz ) {
+    if( patch1_ixyz.x == patch2_ixyz.x ) {
+        if( patch1_ixyz.y == patch2_ixyz.y ) {
+            return patch1_ixyz.z < patch2_ixyz.z;
+        } else {
+            return patch1_ixyz.y < patch2_ixyz.y;
+        }
+    } else {
+        return patch1_ixyz.x < patch2_ixyz.x;
+    }
+}
+
 void DiagnosticFields3D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches )
 {
-    // Calculate the total size of the array in this proc
-    unsigned int buffer_size = one_patch_buffer_size * vecPatches.size();
+    H5Sselect_none( filespace->sid_ );
     
-    // Resize the data
-    data.resize( buffer_size );
+    // Get all patch coordinates and sort them along Z then Y then X
+    vector<PatchIXYZ> patch_ixyz( vecPatches.size() );
+    for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+        patch_ixyz[ipatch].i = ipatch;
+        patch_ixyz[ipatch].x = vecPatches( ipatch )->Pcoordinates[0];
+        patch_ixyz[ipatch].y = vecPatches( ipatch )->Pcoordinates[1];
+        patch_ixyz[ipatch].z = vecPatches( ipatch )->Pcoordinates[2];
+    }
+    sort( patch_ixyz.begin(), patch_ixyz.end(), patch_sorting );
     
-    filespace_firstwrite = new H5Space( file_size, one_patch_buffer_size * refHindex, buffer_size, chunk_size_firstwrite );
-    memspace_firstwrite  = new H5Space( buffer_size );
+    buffer_skip_x.resize( vecPatches.size() );
+    buffer_skip_y.resize( vecPatches.size() );
+    buffer_skip_z.resize( vecPatches.size() );
+    unsigned int current_z_skip = 0;
+    vector<hsize_t> offset( 3 ), npoints( 3 ), count( 3, 1 ), start_in_patch( 3 );
     
-    // Create/Open temporary dataset
-    tmp_dset_ = new H5Write( file_, "tmp", H5T_NATIVE_DOUBLE, filespace_firstwrite );
+    // Loop coordinates: X first, then Y, then Z
+    // This loop does several things:
+    //   - Add patches to the filespace one by one (this makes a combination of hyperslabs)
+    //   - Calculate the way the data should be stored in the buffer so that it matches the filespace
+    unsigned int i = 0;
+    while( i < patch_ixyz.size() ) {
+        
+        // For this slab of patches at a given X, find the number of points in X
+        offset[0] = patch_ixyz[i].x * patch_size[0] + ( ( patch_ixyz[i].x==0 )?0:1 );
+        npoints[0] = patch_size[0] + ( ( patch_ixyz[i].x==0 )?1:0 );
+        findSubgridIntersection1( 0, offset[0], npoints[0], start_in_patch[0] );
+        
+        // Now iterate on the patches along Y & Z that share the same X
+        unsigned int i0 = i, npoints_yz = 0;
+        while( i < patch_ixyz.size() && patch_ixyz[i].x == patch_ixyz[i0].x ) {
+            
+            // For this line of patches at a given Y, find the number of points in Y
+            offset[1] = patch_ixyz[i].y * patch_size[1] + ( ( patch_ixyz[i].y==0 )?0:1 );
+            npoints[1] = patch_size[1] + ( ( patch_ixyz[i].y==0 )?1:0 );
+            findSubgridIntersection1( 1, offset[1], npoints[1], start_in_patch[1] );
+            
+            // Now iterate on the patches along Z that share the same Y & X
+            unsigned int i1 = i, npoints_z = 0;
+            while( i < patch_ixyz.size() && patch_ixyz[i].y == patch_ixyz[i1].y && patch_ixyz[i].x == patch_ixyz[i0].x ) {
+                
+                unsigned int ipatch = patch_ixyz[i].i;
+                // Find the number of points along Z for this patch
+                offset[2] = patch_ixyz[i].z * patch_size[2] + ( ( patch_ixyz[i].z==0 )?0:1 );
+                npoints[2] = patch_size[2] + ( ( patch_ixyz[i].z==0 )?1:0 );
+                findSubgridIntersection1( 2, offset[2], npoints[2], start_in_patch[2] );
+                
+                // Add this patch to the filespace
+                H5Sselect_hyperslab( filespace->sid_, H5S_SELECT_OR, &offset[0], NULL, &count[0], &npoints[0] );
+                
+                // Calculate the initial skip when writing this patch to the buffer
+                buffer_skip_z[ipatch] = current_z_skip + npoints_yz + npoints_z;
+                
+                // Also store, temporarily, the number of Z points for this patch alone
+                buffer_skip_y[ipatch] = npoints[2];
+                
+                // Sum Z points to get the total Y skip when writing to the buffer
+                npoints_z += npoints[2];
+                
+                i++;
+            }
+            
+            // Now calculate the Y skip for each patch of that line
+            for( unsigned int j=i1; j<i; j++ ) {
+                unsigned int ipatch = patch_ixyz[j].i;
+                buffer_skip_y[ipatch] = npoints_z - buffer_skip_y[ipatch];
+                
+                // Also store, temporarily, the number of Z&Y points for this line of patches alone
+                buffer_skip_x[ipatch] = npoints[1] * npoints_z;
+            }
+            
+             // Sum Z&Y points to get the total X skip when writing to the buffer
+            npoints_yz += npoints[1] * npoints_z;
+            
+        }
+        
+        // Now calculate the X skip for each patch of that slab
+        for( unsigned int j=i0; j<i; j++ ) {
+            unsigned int ipatch = patch_ixyz[j].i;
+            buffer_skip_x[ipatch] = npoints_yz - buffer_skip_x[ipatch];
+        }
+        current_z_skip += npoints[0] * npoints_yz;
+    }
+    delete memspace;
+    memspace = new H5Space( current_z_skip );
+    data.resize( current_z_skip );
 }
 
 
@@ -208,36 +183,30 @@ void DiagnosticFields3D::getField( Patch *patch, unsigned int ifield )
     }
     
     // Find the intersection between this patch and the subgrid
-    unsigned int istart_in_patch[3], istart_in_file[3], nsteps[3], patch_begin[3], patch_end[3];
+    hsize_t patch_begin[3], patch_npoints[3], start_in_patch[3];
     for( unsigned int i=0; i<3; i++ ) {
-        patch_begin[i] = patch->Pcoordinates[i] * patch_size[i];
-        patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
-        if( patch->Pcoordinates[i] != 0 ) {
-            patch_begin[i]++;
-        }
-        findSubgridIntersection(
-            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
-            patch_begin[i], patch_end[i],
-            istart_in_patch[i], istart_in_file[i], nsteps[i]
-        );
-        istart_in_patch[i] += patch_offset_in_grid[i];
-        if( patch->Pcoordinates[i] == 0 ) {
-            istart_in_patch[i]--;
-        }
+        patch_begin  [i] = patch->Pcoordinates[i] * patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?0:1 );
+        patch_npoints[i] = patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?1:0 );
+        findSubgridIntersection1( i, patch_begin[i], patch_npoints[i], start_in_patch[i] );
+        start_in_patch[i] += patch_offset_in_grid[i] - ( ( patch->Pcoordinates[i]==0 )?1:0 );
     }
     
     // Copy field to the "data" buffer
-    unsigned int ix_max = istart_in_patch[0] + subgrid_step_[0]*nsteps[0];
-    unsigned int iy_max = istart_in_patch[1] + subgrid_step_[1]*nsteps[1];
-    unsigned int iz_max = istart_in_patch[2] + subgrid_step_[2]*nsteps[2];
-    unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
-    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subgrid_step_[0] ) {
-        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subgrid_step_[1] ) {
-            for( unsigned int iz = istart_in_patch[2]; iz < iz_max; iz += subgrid_step_[2] ) {
+    unsigned int ix_max = start_in_patch[0] + subgrid_step_[0]*patch_npoints[0];
+    unsigned int iy_max = start_in_patch[1] + subgrid_step_[1]*patch_npoints[1];
+    unsigned int iz_max = start_in_patch[2] + subgrid_step_[2]*patch_npoints[2];
+    unsigned int iout = buffer_skip_z[patch->Hindex()-refHindex];
+    unsigned int stepy_out = buffer_skip_y[patch->Hindex()-refHindex];
+    unsigned int stepx_out = buffer_skip_x[patch->Hindex()-refHindex];
+    for( unsigned int ix = start_in_patch[0]; ix < ix_max; ix += subgrid_step_[0] ) {
+        for( unsigned int iy = start_in_patch[1]; iy < iy_max; iy += subgrid_step_[1] ) {
+            for( unsigned int iz = start_in_patch[2]; iz < iz_max; iz += subgrid_step_[2] ) {
                 data[iout] = ( *field )( ix, iy, iz ) * time_average_inv;
                 iout++;
             }
+            iout += stepy_out;
         }
+        iout += stepx_out;
     }
     
     if( time_average>1 ) {
@@ -249,50 +218,6 @@ void DiagnosticFields3D::getField( Patch *patch, unsigned int ifield )
 // Write current buffer to file
 H5Write DiagnosticFields3D::writeField( H5Write * loc, string name, int itime )
 {
-
-    // Write the buffer in a temporary location
-    tmp_dset_->write( data[0], H5T_NATIVE_DOUBLE, filespace_firstwrite, memspace_firstwrite );
-    
-    // Read the file with the previously defined partition
-    tmp_dset_->read( data_reread[0], H5T_NATIVE_DOUBLE, filespace_reread, memspace_reread );
-    
-    // Fold the data according to the Hilbert curve
-    unsigned int read_position, write_position, write_skip_y, write_skip_z;
-    unsigned int istart_in_patch[3], istart_in_file[3], nsteps[3], patch_begin[3], patch_end[3];
-    
-    for( unsigned int h=0; h<rewrite_npatch; h++ ) {
-        for( unsigned int i=0; i<3; i++ ) {
-            patch_begin[i] = rewrite_patch[h][i] * patch_size[i];
-            patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
-            if( patch_begin[i] != 0 ) {
-                patch_begin[i]++;
-            }
-            findSubgridIntersection(
-                subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
-                patch_begin[i], patch_end[i],
-                istart_in_patch[i], istart_in_file[i], nsteps[i]
-            );
-            istart_in_file[i] -= rewrite_start_in_file[i];
-        }
-        
-        read_position = one_patch_buffer_size * h;
-        write_position = istart_in_file[2] + rewrite_size[2] * ( istart_in_file[1] + rewrite_size[1]*istart_in_file[0] );
-        write_skip_z = rewrite_size[2] - nsteps[2];
-        write_skip_y = rewrite_size[2]* ( rewrite_size[1] - nsteps[1] + 1 ) - nsteps[2] - write_skip_z;
-        for( unsigned int ix=0; ix<nsteps[0]; ix++ ) {
-            for( unsigned int iy=0; iy<nsteps[1]; iy++ ) {
-                for( unsigned int iz=0; iz<nsteps[2]; iz++ ) {
-                    data_rewrite[write_position] = data_reread[read_position];
-                    read_position ++;
-                    write_position++;
-                }
-                write_position += write_skip_z;
-            }
-            write_position += write_skip_y;
-        }
-    }
-    
-    // Rewrite the file with the previously defined partition
-    return loc->array( name, data_rewrite[0], filespace, memspace );
+    return loc->array( name, data[0], filespace, memspace );
 }
 

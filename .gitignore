@@ -8,7 +8,6 @@ build/*
 validation/workdir*
 smilei
 smilei_test
-src/smilei.*
 *.aux
 *.dvi
 *.log

@@ -345,7 +345,7 @@ void Interpolator2DWT2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particle
 {
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     double *Epart[3], *Bpart[3];
 

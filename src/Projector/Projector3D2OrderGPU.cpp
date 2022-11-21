@@ -657,7 +657,7 @@ void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *J
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local densities only (Frozen species)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -735,7 +735,7 @@ void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned i
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
 
@@ -890,6 +890,21 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+        /*double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
+        double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
+        double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
+        double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
+        int sizeofJx = EMfields->Jx_->globalDims_ ;
+        int sizeofJy = EMfields->Jy_->globalDims_ ;
+        int sizeofJz = EMfields->Jz_->globalDims_ ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+        particles.syncCPU();
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            basic( rho, particles,  ipart, 0 );
+        }
+        */
         //for( int ipart=istart ; ipart<iend; ipart++ ) {
         //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
         //}

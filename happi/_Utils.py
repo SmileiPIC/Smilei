@@ -163,6 +163,8 @@ class Options(object):
 		self.vmin        = kwargs.pop("vmin"       , self.vmin )
 		self.vmax        = kwargs.pop("vmax"       , self.vmax )
 		self.vsym        = kwargs.pop("vsym"       , self.vsym )
+		if self.vsym and (self.vmin is not None or self.vmax is not None):
+			print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
 		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
@@ -315,26 +317,15 @@ class Units(object):
 
 	def prepare(self, reference_angular_frequency_SI=None):
 		if self.UnitRegistry:
+			self.ureg = self.UnitRegistry()
 			if reference_angular_frequency_SI:
-				# Load pint's default unit registry
-				self.ureg = self.UnitRegistry()
-				# Define code units
-				self.ureg.define("V_r = speed_of_light"                   ) # velocity
 				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-				self.ureg.define("M_r = electron_mass"                    ) # mass
-				self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			else:
-				# Make blank unit registry
-				self.ureg = self.UnitRegistry(None)
-				self.ureg.define("V_r = [code_velocity]"                  ) # velocity
-				self.ureg.define("W_r = [code_frequency]"                 ) # frequency
-				self.ureg.define("M_r = [code_mass]"                      ) # mass
-				self.ureg.define("Q_r = [code_charge]"                    ) # charge
-				self.ureg.define("epsilon_0 = 1")
-				# Add radians and degrees
-				self.ureg.define("radian    = [] = rad"               )
-				self.ureg.define("degree    = pi/180*radian = deg"    )
-				self.ureg.define("steradian = radian ** 2 = sr"       )
+				self.ureg.define("W_r = [reference_frequency]"                 ) # frequency
+			self.ureg.define("V_r = speed_of_light"                   ) # velocity
+			self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
+			self.ureg.define("M_r = electron_mass"                    ) # mass
+			self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
 			self.ureg.define("L_r = V_r / W_r"                        ) # length
 			self.ureg.define("T_r = 1   / W_r"                        ) # time
 			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
@@ -474,6 +465,7 @@ class _multiPlotUtil(object):
 		# Gather all times
 		self.alltimes = []
 		for Diag in Diags:
+			Diag.set( **kwargs )
 			diagtimes = Diag.getTimesteps()
 			if self.timesteps is not None:
 				diagtimes = Diag._selectTimesteps(self.timesteps, diagtimes)
@@ -503,7 +495,7 @@ class _multiPlotUtil(object):
 		# Make the figure
 		if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
 		self.options = Options()
-		self.options.set(**kwargs)
+		kwargs = self.options.set(**kwargs)
 		self.fig = self.plt.figure(**self.options.figure0)
 		self.fig.set(**self.options.figure1) # Apply figure kwargs
 		self.fig.clf()
@@ -551,31 +543,42 @@ class _multiPlotUtil(object):
 			if len(l) > 0:
 				if Diag.options.xmin is None: self.xmin = min(self.xmin,l[0][0])
 				if Diag.options.xmax is None: self.xmax = max(self.xmax,l[0][1])
-				if len(l) > 1:
-					if Diag.options.ymin is None: self.ymin = min(self.ymin,l[1][0])
-					if Diag.options.ymax is None: self.ymax = max(self.ymax,l[1][1])
+				# if len(l) > 1:
+				# 	if Diag.options.ymin is None: self.ymin = min(self.ymin,l[1][0])
+				# 	if Diag.options.ymax is None: self.ymax = max(self.ymax,l[1][1])
 		# Find min max
 		if self.option_xmin: self.xmin = min([self.xmin]+self.option_xmin)
 		if self.option_xmax: self.xmax = max([self.xmax]+self.option_xmax)
-		if self.option_ymin: self.ymin = min([self.ymin]+self.option_ymin)
-		if self.option_ymax: self.ymax = max([self.ymax]+self.option_ymax)
+		# if self.option_ymin: self.ymin = min([self.ymin]+self.option_ymin)
+		# if self.option_ymax: self.ymax = max([self.ymax]+self.option_ymax)
 		# Find number of legends
 		self.nlegends = 0
 		for Diag in Diags:
 			if "label" in Diag.options.plot:
 				self.nlegends += 1
+		# Check kwargs
+		if kwargs:
+			print("WARNING: unknown arguments `"+"`,`".join(kwargs)+"`")
+	
+	def legend(self):
+		if self.nlegends > 0:
+			if self.sameAxes:
+				self.ax[0].legend(
+					[Diag._plot for Diag in self.Diags if Diag._plot],
+					[Diag.options.plot["label"] for Diag in self.Diags if Diag._plot],
+				)
 	
 	def staticPlot(self):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
-		if self.nlegends > 0:
-			self.plt.legend()
+		self.legend()
 		self.plt.draw()
 		self.plt.pause(0.00001)
 	
 	def twinOptions(self, Diag):
 		if self.sameAxes:
-			Diag._ax.set_xlim(self.xmin,self.xmax)
+			if Diag.dim>0:
+				Diag._ax.set_xlim(self.xmin,self.xmax)
 			if Diag.dim<2 and self.bothsides:
 				color = Diag._plot.get_color()
 				Diag._ax.yaxis.label.set_color(color)
@@ -612,9 +615,9 @@ class _multiPlotUtil(object):
 		mov.finish()
 	
 	def update(self, time):
-		t = self.np.round(time/self.Diags[0].timestep)
 		for Diag in self.Diags:
-			i = self.np.argmin(self.np.abs(self.np.array(Diag._timesteps)-t))
+			it = self.np.round(time/Diag.timestep)
+			i = self.np.argmin(self.np.abs(self.np.array(Diag._timesteps)-it))
 			Diag._animateOnAxes(Diag._ax, Diag._timesteps[i], cax_id = Diag._cax_id)
 			self.twinOptions(Diag)
 		self.plt.draw()

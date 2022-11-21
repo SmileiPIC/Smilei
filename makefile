@@ -40,9 +40,9 @@ VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
-    CXXFLAGS += -Wno-reorder
+    CXXFLAGS += -Wno-reorder -Wno-unused-parameter
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -Wdeprecated-register 
+    CXXFLAGS += -Wdeprecated-register
 endif
 
 #-----------------------------------------------------
@@ -81,12 +81,12 @@ endif
 # Flags
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
+CXXFLAGS += -D__VERSION=\"$(VERSION)\"
 # C++ version
-ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
-else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
-    CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    CXXFLAGS += -std=c++11 -Wall -Wno-unused-command-line-argument
 else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
@@ -128,10 +128,13 @@ ifneq (,$(call parse_config,debug))
 # With gdb
 else ifneq (,$(call parse_config,gdb))
     CXXFLAGS += -g -D__DEBUG -O0
-
+# With gdb
+else ifneq (,$(call parse_config,ddt))
+    # -g
+    CXXFLAGS += -O0 -g
 # With valgrind
 else ifneq (,$(call parse_config,valgrind))
-    CXXFLAGS += -g  -O3
+    CXXFLAGS += -g -O3
 
 # Scalasca
 else ifneq (,$(call parse_config,scalasca))
@@ -183,7 +186,7 @@ ifneq (,$(call parse_config,opt-report))
     endif
 endif
 
-# Manage options in the "config" parameter
+# Detailed timers
 ifneq (,$(call parse_config,detailed_timers))
     CXXFLAGS += -D__DETAILED_TIMERS
 endif
@@ -224,9 +227,25 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
+# NVIDIA GPUs
 ifneq (,$(call parse_config,gpu_nvidia))
+
     # To toggle between OpenACC/OpenMP support, see the jean_zay_gpu machinefile
     # By default we provide the OpenACC version on JeanZay
+
+    # # Debugging mode
+    # ifneq (,$(call parse_config,debug))
+    #     ACCELERATOR_GPU_FLAGS += -w -g -D_GPU -Minfo=accel
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
+    #     += $(shell $(PYTHONCONFIG) --includes)
+    # # DDT mode
+    # else ifneq (,$(call parse_config,ddt))
+    #     # -g
+    #     ACCELERATOR_GPU_FLAGS += -w -D_GPU -Minfo=accel
+	# # -cudart shared -G
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
+    #     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+    # endif
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
@@ -234,11 +253,26 @@ ifneq (,$(call parse_config,gpu_nvidia))
     OBJS += $(GPU_KERNEL_OBJS)
 endif
 
+# AMD GPUs
 ifneq (,$(call parse_config,gpu_amd))
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 
 	OBJS += $(GPU_KERNEL_OBJS)
+endif
+
+# Use OpenMP tasks
+ifneq (,$(call parse_config,omptasks))
+    CXXFLAGS += -D_OMPTASKS
+endif
+
+ifneq (,$(call parse_config,part_event_tracing_tasks_on))
+    CXXFLAGS += -D_OMPTASKS
+    CXXFLAGS += -D_PARTEVENTTRACING
+endif
+
+ifneq (,$(call parse_config,part_event_tracing_tasks_off))
+    CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
@@ -251,13 +285,10 @@ else
     Q :=
 endif
 
-
 #last: check remaining arguments and raise error
 ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
 endif
-
-
 
 
 #-----------------------------------------------------
@@ -265,7 +296,26 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: header $(EXEC) $(EXEC)_test
+
+#-----------------------------------------------------
+# Header
+header:
+	@echo " _____________________________________"
+	@echo ""
+	@echo " SMILEI compilation"
+	@echo ""
+	@if [ $(call parse_config,debug) ]; then echo "- Debug option requested"; fi;
+	@if [ $(call parse_config,gdb) ]; then echo "- Compilation for GDB requested"; fi;
+	@if [ $(call parse_config,picsar) ]; then echo "- SMILEI linked to PICSAR requested"; fi;
+	@if [ $(call parse_config,opt-report) ]; then echo "- Optimization report requested"; fi;
+	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
+	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
+	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_on) ]; then echo "- Compiled particle events tracing, with tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing_tasks_off) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
+	@echo " _____________________________________"
+	@echo ""
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -325,7 +375,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) #-L/gpfslocalsys/cuda/11.2/lib64/stubs
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode
@@ -396,12 +446,13 @@ uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
+
 #-----------------------------------------------------
 # Info rules
 print-% :
 	$(info $* : $($*)) @true
 
-env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-COMPILER_INFO
 
 #-----------------------------------------------------
 # Smilei tables
@@ -449,18 +500,21 @@ help:
 	@echo
 	@echo 'Config options:'
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
-	@echo '    verbose              : to print compile command lines'
-	@echo '    debug                : to compile in debug mode (code runs really slow)'
-	@echo '    detailed_timers      : to compile the code with more refined timers (refined time report)'
-	@echo '    noopenmp             : to compile without openmp'
-	@echo '    no_mpi_tm            : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
-	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
-	@echo '    scalasca             : to compile using scalasca'
-	@echo '    advisor              : to compile for Intel Advisor analysis'
-	@echo '    vtune                : to compile for Intel Vtune analysis'
-	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    gpu_nidia            : to compile for GPU (uses OpenACC)'
-	@echo '    gpu_amd              : to compile for GPU (uses OpenMP)'
+	@echo '    verbose                      : to print compile command lines'
+	@echo '    debug                        : to compile in debug mode (code runs really slow)'
+	@echo '    detailed_timers              : to compile the code with more refined timers (refined time report)'
+	@echo '    noopenmp                     : to compile without openmp'
+	@echo '    no_mpi_tm                    : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
+	@echo '    opt-report                   : to generate a report about optimization, vectorization and inlining (Intel compiler)'
+	@echo '    scalasca                     : to compile using scalasca'
+	@echo '    advisor                      : to compile for Intel Advisor analysis'
+	@echo '    vtune                        : to compile for Intel Vtune analysis'
+	@echo '    inspector                    : to compile for Intel Inspector analysis'
+	@echo '    gpu_nvidia                   : to compile for GPU (uses OpenACC)'
+	@echo '    gpu_amd                      : to compile for GPU (uses OpenMP)'
+	@echo '    omptasks                     : to compile with OpenMP tasks'
+	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
+	@echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
@@ -497,7 +551,7 @@ help:
 	@echo 'Intel Inspector environment:'
 	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
 	@echo
-	@echo 'http://www.maisondelasimulation.fr/smilei'
+	@echo 'https://smileipic.github.io/Smilei/'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
 	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi
