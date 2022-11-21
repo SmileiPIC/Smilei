@@ -134,6 +134,11 @@ def _keep_python_running():
     profiles += [ant.space_time_profile for ant in Antenna]
     profiles += [e.profile for e in PrescribedField]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
+        # Verify if PML are used
+        for bcs in Main.EM_boundary_conditions:
+            for bc in bcs:
+                if (bc == "PML"):
+                    return True
         for s in Species:
             profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
     if len(MovingWindow)>0:
