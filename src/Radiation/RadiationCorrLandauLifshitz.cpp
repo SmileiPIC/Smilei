@@ -96,7 +96,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // cumulative Radiated energy from istart to iend
     double radiated_energy_loc = 0;
 
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
     // double * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
@@ -112,7 +112,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // Computation
 
     // NVIDIA GPUs
-    #if defined (_GPU)
+    #if defined (ACCELERATOR_GPU_ACC)
         const int istart_offset   = istart - ipart_ref;
         const int np = iend-istart;
         #pragma acc parallel \
@@ -149,7 +149,7 @@ void RadiationCorrLandauLifshitz::operator()(
         #pragma omp            teams
         #pragma omp distribute parallel for
     // CPU
-    #else 
+    #else
         #pragma omp simd
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
@@ -185,7 +185,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
@@ -210,7 +210,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Update of the quantum parameter
     
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 #endif
@@ -229,7 +229,7 @@ void RadiationCorrLandauLifshitz::operator()(
                        Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                        Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
     } // end loop ipart
     #else
             } // end if
@@ -241,7 +241,7 @@ void RadiationCorrLandauLifshitz::operator()(
     radiated_energy += radiated_energy_loc;
 
 
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     // _______________________________________________________________
     // Cleaning
 

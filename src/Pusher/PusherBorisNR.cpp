@@ -43,7 +43,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;

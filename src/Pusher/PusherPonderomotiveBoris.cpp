@@ -55,7 +55,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     const double *const __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
     //double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;

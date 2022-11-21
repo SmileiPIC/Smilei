@@ -18,7 +18,7 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE     _Pragma( "omp declare target" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END _Pragma( "omp end declare target" )
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
 #else

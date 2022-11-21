@@ -54,7 +54,7 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
 
     short *const __restrict__ charge = particles.getPtrCharge();
     
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;

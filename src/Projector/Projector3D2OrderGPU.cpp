@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #include <accelmath.h>
     #include <openacc.h>
 #endif
@@ -72,7 +72,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
     const int nparts = particles.last_index.back();
 
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
     const int sizeofEx = EMfields->Jx_->globalDims_;
     const int sizeofEy = EMfields->Jy_->globalDims_;
     const int sizeofEz = EMfields->Jz_->globalDims_;
@@ -120,7 +120,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       position_y /* [istart_pack:current_pack_size] */, \
                                       position_z /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   deltaold [0:3 * nparts], \
                                   Sx0 [0:kTmpArraySize],   \
@@ -243,7 +243,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( DSx [0:kTmpArraySize], sumX [0:kTmpArraySize] )
 
     // #pragma acc parallel deviceptr( DSx, sumX )
@@ -268,7 +268,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jx [0:sizeofEx],         \
                                   Sy0 [0:kTmpArraySize],   \
@@ -291,7 +291,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crx_p = dx_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex0 = iold[ipart+0*packsize]*yz_size0+iold[ipart+1*packsize]*z_size0+iold[ipart+2*packsize];
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -307,7 +307,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc atomic
 #endif
                         Jx [ jdx ] += val;
@@ -320,7 +320,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( DSy [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
 
@@ -346,7 +346,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jy [0:sizeofEy],         \
                                   Sx0 [0:kTmpArraySize],   \
@@ -369,7 +369,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double cry_p = dy_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex1 = iold[ipart+0*packsize]*yz_size1+iold[ipart+1*packsize]*z_size1+iold[ipart+2*packsize];
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -385,7 +385,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc atomic
 #endif
                         Jy [ jdx ] += val;
@@ -398,7 +398,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( DSz [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
 
@@ -424,7 +424,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   Jz [0:sizeofEz],         \
                                   Sx0 [0:kTmpArraySize],   \
@@ -447,7 +447,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crz_p = dz_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #endif
             for( int k=1 ; k<5 ; k++ ) {
@@ -463,7 +463,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( _GPU )
+#elif defined( ACCELERATOR_GPU_ACC )
     #pragma acc atomic
 #endif
                         Jz[ jdx ] += val;

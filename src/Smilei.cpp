@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 #include <omp.h>
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 #endif
 
@@ -44,7 +44,7 @@ using namespace std;
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #ifdef _OPENACC
     void initialization_openacc()
     {
@@ -80,7 +80,7 @@ int main( int argc, char *argv[] )
     // -------------------------
 
     // Create the OpenACC environment
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     initialization_openacc();
 #endif
 
@@ -258,7 +258,7 @@ int main( int argc, char *argv[] )
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
 
-#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ) )
+#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC ) )
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -280,7 +280,7 @@ int main( int argc, char *argv[] )
         vecPatches.initAllDiags( params, &smpi );
 
         // TODO(Etienne M): GPU restart handling
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         ERROR( "Restart not tested on GPU !" );
 
         TITLE( "GPU allocation and copy of the fields and particles" );
@@ -295,7 +295,7 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
 
-#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
+#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC ))
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -439,7 +439,7 @@ int main( int argc, char *argv[] )
                     vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
         #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
@@ -704,7 +704,7 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
         
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
             ERROR( "Load balancing not tested on GPU !" );
 #endif
             count_dlb++;

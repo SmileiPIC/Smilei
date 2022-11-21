@@ -510,7 +510,7 @@ help:
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    gpu_nidia            : to compile for GPU (uses OpenACC)'
+	@echo '    gpu_nvidia            : to compile for GPU (uses OpenACC)'
 	@echo '    gpu_amd              : to compile for GPU (uses OpenMP)'
 	@echo '    omptasks                     : to compile with OpenMP tasks'
 	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
