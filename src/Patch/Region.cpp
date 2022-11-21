@@ -154,9 +154,7 @@ int Region::hrank_global_region( int hindex, Params& params, VectorPatch& vecPat
 
     if (decomposition_!=NULL) { // real double decomposition
         std::vector<unsigned int> patch_coordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
-        std::vector<int> rank_coordinates;
-        //rank_coordinates.resize( params.nDim_field );
-        rank_coordinates.resize( 3, 0 );
+        std::vector<int> rank_coordinates( 3, 0 );
 
         for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
             int min =  patch_coordinates[iDim]    * params.patch_size_[iDim];
@@ -470,13 +468,10 @@ void Region::define_regions_map(int* target_map, SmileiMPI* smpi, Params& params
 
     int mpi_map[smpi->getSize()];
     for (int i=0 ; i< smpi->getSize() ;i++) {
-
         for (int j=0 ; j< smpi->getSize() ;j++) {
             if ( target_map[j] == i )
                 mpi_map[i] = j;
         }
-
-
     }
 
     //cout << "TARGET MAP " << endl;
