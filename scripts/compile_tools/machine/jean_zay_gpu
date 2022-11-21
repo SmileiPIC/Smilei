@@ -20,7 +20,8 @@ ACCELERATOR_GPU_FLAGS        += -Minfo=accel # what is offloaded/copied
 # ACCELERATOR_GPU_FLAGS        += -Minfo=all   # very verbose output
 
 # OpenACC support
-ACCELERATOR_GPU_FLAGS += -D_GPU
+ACCELERATOR_GPU_KERNEL_FLAGS += -D_GPU
+ACCELERATOR_GPU_FLAGS        += -D_GPU
 
 # To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining '_GPU'
 # ACCELERATOR_GPU_FLAGS        += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
