@@ -1894,13 +1894,24 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
     return getGPUClusterWidth() != -1 &&
            getGPUClusterGhostCellBorderWidth() != -1;
 }
+
+#else
+
+bool Params::isGPUParticleBinningAvailable() const
+{
+    return false;
+}
+
+#endif
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
 
 int Params::getGPUClusterWidth() const
 {

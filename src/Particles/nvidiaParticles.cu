@@ -1051,7 +1051,7 @@ int nvidiaParticles::eraseLeavingParticles()
         resize( gpu_nparts_ );
     }
 
-    return /* NOTE: the minus matters! */ -nparts_to_remove;
+    return nparts_to_remove;
 }
 
 int nvidiaParticles::injectParticles( Particles* particles_to_inject )

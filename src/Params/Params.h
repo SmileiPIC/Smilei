@@ -368,12 +368,12 @@ public:
     //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-
     //! returns true if the dimension and the interpolation order of the
     //! simulation is supported for the binning.
     //!
     bool isGPUParticleBinningAvailable() const;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
 
     //! Given dimension_id in [0, 3), return for dimension_id == :
     //! 1: the 1D value (not implemented)
@@ -385,6 +385,7 @@ public:
     static constexpr int
     getGPUClusterWidth( int dimension_id )
     {
+    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
             case 2:
                 return 4;
@@ -393,7 +394,9 @@ public:
             default:
                 return -1;
         }
+    #else
         return -1;
+    #endif
     }
 
     //! Computes:
@@ -419,6 +422,7 @@ public:
     static constexpr int
     getGPUClusterGhostCellBorderWidth( int interpolation_order )
     {
+    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         constexpr int kGPUClusterGhostCellCount[3]{ -1,
                                                     // Order 2 ghost cells on each "sides" of the dimension
                                                     2 * 2 +
@@ -434,6 +438,9 @@ public:
                                                         1,
                                                     -1 };
         return kGPUClusterGhostCellCount[interpolation_order - 1];
+    #else
+        return -1;
+    #endif
     }
 
     //! Calls getGPUClusterGhostCellBorderWidth( interpolation_order )
