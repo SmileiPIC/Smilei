@@ -16,24 +16,22 @@ jobs:
         docs-folder: "doc/Sphinx"        
     - name: Commit documentation changes
       run: |
-        git rev-parse --short HEAD > scripts/compile_tools/version
-        mkdir -p doc/Sphinx/_build/html/_downloads
-        git archive --format tar -o doc/Sphinx/_build/html/_downloads/Smilei.tar HEAD
-        tar rf doc/Sphinx/_build/html/_downloads/Smilei.tar scripts/compile_tools/version
-        gzip -f doc/Sphinx/_build/html/_downloads/Smilei.tar
-        for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o doc/Sphinx/_build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/compile_tools/version; tar rf doc/Sphinx/_build/html/_downloads/smilei-${v}.tar scripts/compile_tools/version; gzip -f doc/Sphinx/_build/html/_downloads/smilei-${v}.tar; done
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
-        cp -r doc/Sphinx/_build/html/* gh-pages/
+        cp -r doc/Sphinx/_build/html/* gh-pages/        
+
+        git rev-parse --short HEAD > scripts/compile_tools/version
+        mkdir -p gh-pages/_downloads
+        git archive --format tar -o gh-pages/_downloads/Smilei.tar HEAD
+        tar rf gh-pages/_downloads/Smilei.tar scripts/compile_tools/version
+        gzip -f gh-pages/_downloads/Smilei.tar
+        for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o gh-pages/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/compile_tools/version; tar rf gh-pages/_downloads/smilei-${v}.tar scripts/compile_tools/version; gzip -f gh-pages/_downloads/smilei-${v}.tar; done
+
         cd gh-pages
         touch .nojekyll
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add .
         git commit -m "Update documentation" -a || true
-        find .
-        echo "test1"
-        git tag
-        echo "test2"
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
