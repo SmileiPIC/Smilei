@@ -64,7 +64,11 @@ author = u''
 # The short X.Y version.
 
 from subprocess import check_output
-version = check_output('git describe --tags --abbrev=0', shell=True).decode().strip('v\n')
+try:
+	version = check_output('git describe --tags --abbrev=0', shell=True).decode().strip('v\n')
+except :
+	version = "unknown" 
+    
 
 # The full version, including alpha/beta/rc tags.
 release = version
