@@ -67,7 +67,7 @@ from subprocess import check_output
 try:
 	version = check_output('git describe --tags --abbrev=0', shell=True).decode().strip('v\n')
 except :
-	version = "unknown" 
+	version = " unknown" 
     
 
 # The full version, including alpha/beta/rc tags.
