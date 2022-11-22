@@ -18,7 +18,6 @@ jobs:
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
-        git stash --all
         cp -r doc/Sphinx/_build/html/* gh-pages/
         cd gh-pages
         touch .nojekyll
