@@ -16,6 +16,12 @@ jobs:
         docs-folder: "doc/Sphinx"        
     - name: Commit documentation changes
       run: |
+        git rev-parse --short HEAD > scripts/compile_tools/version
+        mkdir -p build/html/_downloads
+        git archive --format tar -o build/html/_downloads/Smilei.tar HEAD
+        tar rf build/html/_downloads/Smilei.tar scripts/compile_tools/version
+        gzip -f build/html/_downloads/Smilei.tar
+        for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/compile_tools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/compile_tools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
         cp -r doc/Sphinx/_build/html/* gh-pages/
         cd gh-pages
