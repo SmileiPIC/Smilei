@@ -2,7 +2,7 @@
 #include "SyncVectorPatch.h"
 
 #include <vector>
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #include <openacc.h>
 #endif
 #include "Params.h"
@@ -274,7 +274,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches.densitiesMPIx[ifield             ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->extract_fields_sum( 0, iNeighbor, oversize[0] );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.densitiesMPIx[ifield      ];
                 double* Jx   = field->sendFields_[iNeighbor]->data_;
                 int sizeofJx = field->sendFields_[iNeighbor]->globalDims_;
@@ -296,7 +296,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
     // iDim = 0, local
     const int nFieldLocalx = vecPatches.densitiesLocalx.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( ACCELERATOR_GPU_ACC )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
     const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
@@ -331,10 +331,10 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 
                 const int last = gsp[0] * ny_ * nz_;
 
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
-                #pragma acc parallel if ( is_memory_on_device) present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
+                #pragma acc parallel if ( is_memory_on_device) present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize])
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_memory_on_device )
@@ -363,7 +363,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.densitiesMPIx[ifield      ];
                 double* Jx   = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofJx = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
@@ -407,7 +407,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     vecPatches.densitiesMPIy[ifield             ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->extract_fields_sum( 1, iNeighbor, oversize[1] );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                     Field* field = vecPatches.densitiesMPIy[ifield      ];
                     double* Jx   = field->sendFields_[iNeighbor+2]->data_;
                     int sizeofJx = field->sendFields_[iNeighbor+2]->globalDims_;
@@ -466,7 +466,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     const int outer_stride = ny_ * nz_;
                     const int inner_last   = gsp[1] * nz_;
 
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->globalDims_;
                     int blabla = n_space[1];
                     #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
@@ -501,7 +501,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                     Field* field = vecPatches.densitiesMPIy[ifield      ];
                     double* Jx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                     int sizeofJx = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
@@ -543,7 +543,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         vecPatches.densitiesMPIz[ifield             ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->extract_fields_sum( 2, iNeighbor, oversize[2] );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                         Field* field = vecPatches.densitiesMPIz[ifield      ];
                         double* Jx   = field->sendFields_[iNeighbor+4]->data_;
                         int sizeofJx = field->sendFields_[iNeighbor+4]->globalDims_;
@@ -603,7 +603,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         const int outer_stride = nz_;
                         const int inner_last   = gsp[2];
 
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                         int ptsize = vecPatches.densitiesLocalz[ifield]->globalDims_;
                         int blabla = n_space[2];
                         #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
@@ -635,7 +635,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2 ); // Jz
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                         Field* field = vecPatches.densitiesMPIz[ifield      ];
                         double* Jx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                         int sizeofJx = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
@@ -840,7 +840,7 @@ void SyncVectorPatch::exchangeA( Params &params, VectorPatch &vecPatches, Smilei
         // current envelope value
         SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listA_, vecPatches, smpi );
         // value of envelope at previous timestep
-        SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listA0_, vecPatches, smpi );  
+        SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listA0_, vecPatches, smpi );
     }
 }
 
@@ -861,10 +861,10 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 //     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvA_, vecPatches, smpi );
 //     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvA_, vecPatches );
 // }
-// 
+//
 // void SyncVectorPatch::finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches )
 // {
-// 
+//
 // }
 
 void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
@@ -881,7 +881,7 @@ void SyncVectorPatch::finalizeexchangeEnvEx( Params &params, VectorPatch &vecPat
 
 // void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 // {
-// 
+//
 //     if( !params.full_Envelope_exchange ) {
 //         // current ponderomotive potential
 //         SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
@@ -893,14 +893,14 @@ void SyncVectorPatch::finalizeexchangeEnvEx( Params &params, VectorPatch &vecPat
 //         // current ponderomotive potential
 //         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
 //         // value of ponderomotive potential at previous timestep
-//         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );  
+//         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
 //     }
-// 
+//
 // }
-// 
+//
 // void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatches )
 // {
-// 
+//
 // }
 
 
@@ -1449,7 +1449,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 vecPatches.B_MPIx[ifield      ]->extract_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->create_sub_fields  ( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->extract_fields_exch( 0, iNeighbor, oversize );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B_MPIx[ifield      ];
                 double* By   = field->sendFields_[iNeighbor]->data_;
                 int sizeofBy = field->sendFields_[iNeighbor]->globalDims_;
@@ -1542,7 +1542,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B_MPIx[ifield+nMPIx], 0 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B_MPIx[ifield      ];
                 double* By   = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofBy = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
@@ -1585,7 +1585,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 vecPatches.B1_MPIy[ifield      ]->extract_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->create_sub_fields  ( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->extract_fields_exch( 1, iNeighbor, oversize );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B1_MPIy[ifield      ];
                 double* Bx   = field->sendFields_[iNeighbor+2]->data_;
                 int sizeofBx = field->sendFields_[iNeighbor+2]->globalDims_;
@@ -1633,7 +1633,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
                 pt1 = &( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space*nz_] );
                 pt2 = &( vecPatches.B1_localy[ifield]->data_[0] );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 int ptsize = vecPatches.B1_localy[ifield]->globalDims_;
                 #pragma acc parallel present(pt1[0-n_space*nz_:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
@@ -1673,7 +1673,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B1_MPIy[ifield      ];
                 double* Bx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                 int sizeofBx = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
@@ -1716,7 +1716,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 vecPatches.B2_MPIz[ifield      ]->extract_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->create_sub_fields  ( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->extract_fields_exch( 2, iNeighbor, oversize );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B2_MPIz[ifield      ];
                 double* Bx   = field->sendFields_[iNeighbor+4]->data_;
                 int sizeofBx = field->sendFields_[iNeighbor+4]->globalDims_;
@@ -1761,7 +1761,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
                 pt1 = &( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches]->data_[n_space] );
                 pt2 = &( vecPatches.B2_localz[ifield]->data_[0] );
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 int ptsize = vecPatches.B2_localz[ifield]->globalDims_;
                 #pragma acc parallel present(pt1[0-n_space:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
@@ -1801,7 +1801,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2 ); // By
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
                 Field* field = vecPatches.B2_MPIz[ifield      ];
                 double* Bx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                 int sizeofBx = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
@@ -2217,7 +2217,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
 
                 SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
-            } 
+            }
             if (params.nDim_field>2) {
                 // In 3D, distributed PML on Ymin and Ymax require synchronization along Z
                 for ( int min_max=0 ; min_max<2 ; min_max++ ) {

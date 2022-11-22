@@ -6,7 +6,7 @@
 // #include "PyTools.h"
 
 #include "Particles.h"
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include "nvidiaParticles.h"
 #endif
 #include "Params.h"

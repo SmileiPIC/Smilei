@@ -53,7 +53,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;
@@ -148,7 +148,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
     //     }
     // }
-    // 
+    //
     // if (nDim_>2) {
     //     #pragma omp simd
     //     for( int ipart=istart ; ipart<iend; ipart++ ) {

@@ -16,7 +16,7 @@
 #include "Radiation.h"
 #include "userFunctions.h"
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 // This is wrong. Dont include nvidiaParticles, it may cause problem!
 // See particle factory.

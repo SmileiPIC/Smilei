@@ -22,7 +22,7 @@
 #include "RadiationTools.h"
 #include "userFunctions.h"
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 #endif
 

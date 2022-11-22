@@ -298,9 +298,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         LINK_NAMELIST + std::string("#main-variables"));
     }
 
-    if( ( interpolator_  == "wt") && 
-        (geometry != "1Dcartesian")                &&  
-        (geometry != "2Dcartesian")                && 
+    if( ( interpolator_  == "wt") &&
+        (geometry != "1Dcartesian")                &&
+        (geometry != "2Dcartesian")                &&
         (geometry != "3Dcartesian")               ) {
         ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
         LINK_NAMELIST + std::string("#main-variables") );
@@ -617,7 +617,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of patches
     // --------------------
     if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
-        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  
+        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",
         LINK_NAMELIST + std::string("#main-variables")  );
     }
 
@@ -755,7 +755,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             // cell sorting explicitely set off
             } else {
                 if (!( vectorization_mode == "off")) {
-                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",  
+                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",
                         LINK_NAMELIST + std::string("#vectorization"))
                 }
             }
@@ -783,7 +783,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
     if( gpu_computing ) {
-#if( defined( _GPU ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if( defined( ACCELERATOR_GPU_ACC ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // If compiled for GPU and asking for GPU
         MESSAGE( 1, "Smilei will run on GPU devices" );
 #else
@@ -1188,9 +1188,9 @@ void Params::compute()
 
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         cluster_width_ = n_space[0];
-        // On GPU, dont do the CPU automatic cluster_width computation, only one 
+        // On GPU, dont do the CPU automatic cluster_width computation, only one
         // bin is expected.
         // NOTE: In OMP GPU offloading and 2D, the true number of cluster is
         // redefined in nvidiaParticles::prepareBinIndex.
@@ -1841,9 +1841,9 @@ void Params::multiple_decompose_3D()
         }
     }
     if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != (unsigned int)sz ) && (!rk) )
-        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2] 
-                << ") is not equal to the number of MPI processes (" 
-                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2] 
+        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2]
+                << ") is not equal to the number of MPI processes ("
+                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2]
                 << " != " << sz << ")" );
 
 
@@ -1900,7 +1900,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
@@ -1917,7 +1917,7 @@ bool Params::isGPUParticleBinningAvailable() const
 
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
 
 int Params::getGPUClusterWidth() const
 {

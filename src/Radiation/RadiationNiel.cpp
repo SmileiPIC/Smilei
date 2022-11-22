@@ -127,7 +127,7 @@ void RadiationNiel::operator()(
     double radiated_energy_loc = 0;
     
     // Parameters for linear alleatory number generator
-    #ifdef _GPU
+    #ifdef ACCELERATOR_GPU_ACC
 
         // Initialize initial seed for linear generator
         double initial_seed = rand_->uniform();
@@ -144,7 +144,7 @@ void RadiationNiel::operator()(
     //double t0 = MPI_Wtime();
 
     // 1) Vectorized computation of gamma and the particle quantum parameter
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
             #pragma omp simd
 #else
         
@@ -190,12 +190,12 @@ void RadiationNiel::operator()(
                                   Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                                   Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
     
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
         } //finish cycle
 #endif
     //double t1 = MPI_Wtime();
 
-        #ifdef _GPU
+        #ifdef ACCELERATOR_GPU_ACC
             if( particle_chi[ipart] > minimum_chi_continuous ) {
 
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
@@ -297,7 +297,7 @@ void RadiationNiel::operator()(
 
     if( niel_computation_method == 0 ) {
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
         for( ipart=istart ; ipart<iend; ipart++ ) {
                 // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous ) {
@@ -310,15 +310,15 @@ void RadiationNiel::operator()(
 
                     diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
             }
-        } 
+        }
         #endif
     }
     // Using the fit at order 5 (vectorized)
     else if( niel_computation_method == 1 ) {
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd private(temp)
 	    for( ipart=istart ; ipart<iend; ipart++ ) {
                 // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
@@ -329,16 +329,16 @@ void RadiationNiel::operator()(
 
                     diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
             }
-        } 
+        }
         #endif
 
     }
     // Using the fit at order 10 (vectorized)
     else if( niel_computation_method == 2 ) {
         
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd private(temp)
 	    for( ipart=istart ; ipart<iend; ipart++ ) {
                	// Below particle_chi = minimum_chi_continuous, radiation losses are negligible
@@ -348,16 +348,16 @@ void RadiationNiel::operator()(
 
                     	diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
             }
-        } 
+        }
         #endif
 
     }
     // Using Ridgers
     else if( niel_computation_method == 3) {
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
 	    #pragma omp simd private(temp)
         for( ipart=istart ; ipart<iend; ipart++ ) {
                 // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
@@ -368,9 +368,9 @@ void RadiationNiel::operator()(
 
                     diffusion[ipart-istart] = std::sqrt( factor_classical_radiated_power*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
-        #ifndef _GPU
+        #ifndef ACCELERATOR_GPU_ACC
             }
-        } 
+        }
         #endif
 
     }
@@ -378,7 +378,7 @@ void RadiationNiel::operator()(
 
     // 4) Vectorized update of the momentum
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd private(temp,rad_energy)
         for( ipart=istart ; ipart<iend; ipart++ ) {
             // Below particle_chi = minimum_chi_continuous, radiation losses are negligible
@@ -398,11 +398,11 @@ void RadiationNiel::operator()(
                 momentum_y[ipart] -= temp*momentum_y[ipart];
                 momentum_z[ipart] -= temp*momentum_z[ipart];
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         }
     }
     #else
-    } //finish if 
+    } //finish if
     #endif
 
     //double t4 = MPI_Wtime();
@@ -411,7 +411,7 @@ void RadiationNiel::operator()(
     // Vectorized computation of the thread radiated energy
     // and update of the quantum parameter
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd reduction(+:radiated_energy_loc)
         for( int ipart=istart ; ipart<iend; ipart++ ) {
 
@@ -431,8 +431,8 @@ void RadiationNiel::operator()(
                          Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                          Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-#ifndef _GPU
-    } 
+#ifndef ACCELERATOR_GPU_ACC
+    }
 #else
         } // end acc parallel loop
     } // end acc parallel region

@@ -58,10 +58,10 @@ public:
     //! param[in] particle_chi particle quantum parameter
     //! param[in] particle_gamma particle Lorentz factor
     //! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
-    double computePhotonProductionYield( const double particle_chi, 
+    double computePhotonProductionYield( const double particle_chi,
                                          const double particle_gamma);
 
     //! Determine randomly a photon quantum parameter photon_chi
@@ -77,10 +77,10 @@ public:
     //! \param[in] xi
     //! \param[in] table_min_photon_chi
     //! \param[in] table_xi
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
-    double computeRandomPhotonChiWithInterpolation( double particle_chi, 
+    double computeRandomPhotonChiWithInterpolation( double particle_chi,
                                                     double xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
@@ -95,7 +95,7 @@ public:
     //! from the computed table niel_.table
     //! \param particle_chi particle quantum parameter
     
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
     double getHNielFromTable( double particle_chi, double * tableNiel);
@@ -116,7 +116,7 @@ public:
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
     //#pragma omp declare simd
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
     inline double __attribute__((always_inline)) getRidgersCorrectedRadiatedEnergy( const double particle_chi,
@@ -138,7 +138,7 @@ public:
     //! Get of the classical continuous radiated energy during dt
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
     inline double __attribute__((always_inline)) getClassicalRadiatedEnergy( double particle_chi, double dt )
@@ -148,7 +148,7 @@ public:
 
     //! Return the minimum_chi_discontinuous_ value
     //! Under this value, no discontinuous radiation reaction
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
     inline double __attribute__((always_inline)) getMinimumChiDiscontinuous()
@@ -158,7 +158,7 @@ public:
 
     //! Return the minimum_chi_continuous_ value
     //! Under this value, no continuous radiation reaction
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #pragma acc routine seq
 #endif
     inline double __attribute__((always_inline)) getMinimumChiContinuous()

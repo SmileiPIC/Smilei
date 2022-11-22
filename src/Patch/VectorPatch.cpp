@@ -1258,7 +1258,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     bool data_on_cpu_updated = false;
 #endif
     // Global diags: scalars + particles
@@ -1269,7 +1269,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
 
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
@@ -1381,7 +1381,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers_[globalDiags.size()+idiag]->restart();
 
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
@@ -4395,7 +4395,7 @@ void VectorPatch::allocateDataOnDevice(Params &params,
                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
                                          
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
@@ -4533,7 +4533,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
                                     RadiationTables *radiation_tables,
                                     MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
 
     const int npatches = this->size();
 
@@ -4635,7 +4635,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 //! This function updates the data on the host from the data located on the device
 void VectorPatch::copyEMFieldsFromHostToDevice()
 {
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
@@ -4682,7 +4682,7 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 //! Sync all data (fields and particles) from device to host
 void VectorPatch::copyDeviceStateToHost()
 {
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): DIAGS may need more or less data copied from the GPU. We
     // need to either have more versatile copy functions, or to copy everything
     // from the GPU to the CPU (which is what we do ATM).

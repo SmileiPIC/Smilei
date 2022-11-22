@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #include <openacc.h>
 #endif
 
@@ -1142,7 +1142,7 @@ void ElectroMagn3D::centerMagneticFields()
     double *const __restrict__ Bz3D_m     = Bz_m->data();
 
     // Magnetic field Bx^(p,d,d)
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
     const int sizeofBx = Bx_->globalDims_;
     const int sizeofBy = By_->globalDims_;
     const int sizeofBz = Bz_->globalDims_;
@@ -1154,11 +1154,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1174,7 +1174,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1182,12 +1182,12 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1201,7 +1201,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field Bz^(d,d,p)
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1209,11 +1209,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY

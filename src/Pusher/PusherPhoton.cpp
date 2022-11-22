@@ -41,7 +41,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     const double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
     const double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         // int nparts = particles.last_index.back();
