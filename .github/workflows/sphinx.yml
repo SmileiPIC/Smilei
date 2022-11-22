@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v1
     - uses: ammaraskar/sphinx-action@master
       with:
-        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y make git"
+        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git"
         docs-folder: "doc/Sphinx"
         
     - name: Commit documentation changes
