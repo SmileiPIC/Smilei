@@ -5,6 +5,9 @@
 # https://help.semmle.com/lgtm-enterprise/user/help/lgtm.yml-configuration-file.html#configure
 
 extraction:
+  python:
+    python_setup:
+      version: 3
   cpp:
     prepare:
       packages: 
