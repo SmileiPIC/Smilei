@@ -91,7 +91,7 @@ runAM:
   only:
     - develop
     - cleanup
-=======
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -103,7 +103,7 @@ runCollisions:
   only:
     - develop
     - cleanup
-=======
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -115,7 +115,7 @@ compile_picsar:
   only:
     - develop
     - cleanup
-=======
+
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -136,7 +136,7 @@ compile_debug:
   only:
     - develop
     - cleanup
-=======
+
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
