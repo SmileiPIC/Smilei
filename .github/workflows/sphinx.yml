@@ -20,7 +20,7 @@ jobs:
         cp -r doc/Sphinx/_build/html/* gh-pages/        
 
         git rev-parse --short HEAD > scripts/compile_tools/version
-        mkdir -p gh-pages/_downloads
+        mkdir -p gh-pages/_downloads/Overview
         git archive --format tar -o gh-pages/_downloads/Overview/Smilei.tar HEAD
         tar rf gh-pages/_downloads/Overview/Smilei.tar scripts/compile_tools/version
         gzip -f gh-pages/_downloads/Overview/Smilei.tar
