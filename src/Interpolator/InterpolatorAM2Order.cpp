@@ -436,12 +436,12 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
             exp_mm_theta_local *= exp_m_theta_local ;
 
-            ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+            ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+            ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
         }
 
         // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
