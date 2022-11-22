@@ -13,13 +13,7 @@ jobs:
     - uses: ammaraskar/sphinx-action@master
       with:
         pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git"
-        docs-folder: "doc/Sphinx"
-        
-    - uses: actions/upload-artifact@v1
-      with:
-        name: DocumentationHTML
-        path: doc/Sphinx/_build/html/
-        
+        docs-folder: "doc/Sphinx"        
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
