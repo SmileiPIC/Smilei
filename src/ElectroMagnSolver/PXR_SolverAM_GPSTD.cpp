@@ -57,19 +57,8 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     // ovr=( int ) EMfields->oversize[1];
     ovr=0;
 
-    std::vector<unsigned int> dimPrim( 3 );
-    // Dimension of the primal and dual grids
-    for( size_t i=0 ; i<params.nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i+1] = size[i]+1;
-        if (params.multiple_decomposition)
-            dimPrim[i+1] += 2*params.region_oversize[i];
-        else
-            dimPrim[i+1] += 2*params.oversize[i];
-    }
-    dimPrim[0] = params.nmodes;
-    dimPrim[2] = size[1]+1;
-
+    std::vector<unsigned int> dimPrim = { params.nmodes, EMfields->dimPrim[0], EMfields->size_[1]+1 };
+    
     El_pxr = new cField3D( dimPrim );
     Er_pxr = new cField3D( dimPrim );
     Et_pxr = new cField3D( dimPrim );
@@ -108,8 +97,6 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
 #else
     ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
-                                
-                                
 }
 
 void PXR_SolverAM_GPSTD::uncoupling()
