@@ -1,6 +1,8 @@
 name: "Build doc"
-on: 
-- pull_request
+on:
+  push:
+    branches:    
+      - master
 
 jobs:
   docs:
