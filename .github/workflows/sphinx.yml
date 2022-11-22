@@ -1,14 +1,15 @@
-name: "Build doc"
+name: doc
+
 on:
   push:
     branches:    
       - master
 
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v1
     - uses: ammaraskar/sphinx-action@master
       with:
-        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y make git"
         docs-folder: "doc/Sphinx"
