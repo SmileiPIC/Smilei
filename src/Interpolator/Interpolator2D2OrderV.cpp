@@ -337,7 +337,7 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
 // -----------------------------------------------------------------------------
-void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
 
     int ipart = *istart;
@@ -500,7 +500,7 @@ void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     ERROR( "Single field 2D2O interpolator not available in vectorized mode" );
 }

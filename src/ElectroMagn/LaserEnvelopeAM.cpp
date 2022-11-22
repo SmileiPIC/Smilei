@@ -16,8 +16,8 @@
 
 using namespace std;
 
-LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMfields )
-    : LaserEnvelope( params, patch, EMfields )
+LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch )
+    : LaserEnvelope( params, patch )
 {
 
     one_ov_dl_sq    = 1./cell_length[0]/cell_length[0];
@@ -54,8 +54,8 @@ LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMf
 }
 
 
-LaserEnvelopeAM::LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved )
-    : LaserEnvelope( envelope, patch, EMfields, params, n_moved )
+LaserEnvelopeAM::LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved )
+    : LaserEnvelope( envelope, patch, params, n_moved )
 {
     A_           = new cField2D( envelope->A_->dims_, "A_mode_0" );
     A0_          = new cField2D( envelope->A0_->dims_, "Aold_mode_0" );

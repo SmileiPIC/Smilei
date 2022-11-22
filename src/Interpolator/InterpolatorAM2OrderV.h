@@ -18,15 +18,15 @@ public:
     InterpolatorAM2OrderV( Params &, Patch * );
     ~InterpolatorAM2OrderV() override final {};
     
-    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final {};
+    void fieldsAndCurrents( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, LocalFields *, double * ) override final {};
     void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref = 0 ) override final ;
-    void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final {};
-    void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override final {};
+    void fieldsSelection( ElectroMagn *, Particles &, double *, int, std::vector<unsigned int> * ) override final {};
+    void oneField( Field **, Particles &, int *, int *, double *, double * = NULL, double * = NULL, double * = NULL ) override final {};
     
-    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final {};
-    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final {};
-    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override final {};
-    void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final {};    
+    void fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int = 0 ) override final {};
+    void timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int = 0 ) override final {};
+    void envelopeAndSusceptibility( ElectroMagn *, Particles &, int , double *, double *, double *, double * ) override final {};
+    void envelopeFieldForIonization( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int , int = 0 ) override final {};    
 
 
 private:

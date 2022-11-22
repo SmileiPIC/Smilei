@@ -72,7 +72,7 @@ bool patch_sorting( PatchIXY patch1_ixy, PatchIXY patch2_ixy ) {
     }
 }
 
-void DiagnosticFields2D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticFields2D::setFileSplitting( SmileiMPI *, VectorPatch &vecPatches )
 {
     H5Sselect_none( filespace->sid_ );
     
@@ -182,7 +182,7 @@ void DiagnosticFields2D::getField( Patch *patch, unsigned int ifield )
 
 
 // Write current buffer to file
-H5Write DiagnosticFields2D::writeField( H5Write * loc, std::string name, int itime )
+H5Write DiagnosticFields2D::writeField( H5Write * loc, std::string name )
 {
     return loc->array( name, data[0], filespace, memspace );
 }

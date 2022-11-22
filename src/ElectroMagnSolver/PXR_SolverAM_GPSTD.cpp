@@ -42,10 +42,9 @@ PXR_SolverAM_GPSTD::~PXR_SolverAM_GPSTD()
     if (rhoold_pxr) delete rhoold_pxr;
 }
 
+#ifdef _PICSAR
 void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
-#ifdef _PICSAR    
-
     int nl, nr;
     int ovl, ovr;
     // unable to convert unsigned int to an iso_c_binding supported type
@@ -94,10 +93,13 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
                                 &( Jl_pxr->cdata_[0] ),
                                 &( rho_pxr->cdata_[0] ),
                                 &( rhoold_pxr->cdata_[0] ) );
-#else
-    ERROR( "Smilei not linked with picsar, use make config=picsar" );
-#endif
 }
+#else
+void PXR_SolverAM_GPSTD::coupling( Params &, ElectroMagn *, bool )
+{
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
+}
+#endif
 
 void PXR_SolverAM_GPSTD::uncoupling()
 {

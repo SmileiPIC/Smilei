@@ -21,13 +21,13 @@ template void SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField
 template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
-void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &, int itime )
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
         Species *spec = vecPatches.species( ipatch, ispec );
         spec->extractParticles();
-        vecPatches( ipatch )->initExchParticles( smpi, ispec, params );
+        vecPatches( ipatch )->initExchParticles( ispec, params );
     }
 
     // Init comm in direction 0
@@ -67,7 +67,7 @@ void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int isp
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->importAndSortParticles( smpi, ispec, params, &vecPatches );
+        vecPatches( ipatch )->importAndSortParticles( ispec, params );
     }
 
 
@@ -104,7 +104,7 @@ void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int isp
 }
 
 
-void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi, Timers &, int itime )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(runtime)
@@ -112,7 +112,7 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->endNbrOfParticles( smpi, ispec, params, iDim, &vecPatches );
+        vecPatches( ipatch )->endNbrOfParticles( ispec, iDim );
     }
 
     #pragma omp for schedule(runtime)
@@ -135,12 +135,12 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->finalizeExchParticles( smpi, ispec, params, iDim, &vecPatches );
+        vecPatches( ipatch )->finalizeExchParticles( ispec, iDim );
     }
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->cornersParticles( smpi, ispec, params, iDim, &vecPatches );
+        vecPatches( ipatch )->cornersParticles( ispec, params, iDim );
     }
 }
 
@@ -233,7 +233,7 @@ void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int imo
 //         - ... for Y and Z
 //     - These fields are identified with lists of index MPIxIdx and LocalxIdx (... for Y and Z)
 // timers and itime were here introduced for debugging
-void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &, int )
 {
     unsigned int h0, oversize[3], size[3];
     double *pt1, *pt2;

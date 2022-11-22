@@ -11,7 +11,7 @@ class SolverAM : public Solver
 
 public:
     //! Creator for Solver
-    SolverAM( Params &params ) : Solver( params )
+    SolverAM( Params &params ) : Solver()
     {
         Nmode= params.nmodes;
         dt = params.timestep;

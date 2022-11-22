@@ -95,7 +95,7 @@ void InterpolatorAM1Order::fields( ElectroMagn *EMfields, Particles &particles, 
 } // END InterpolatorAM1Order
 
 //Interpolator for probes
-void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
     

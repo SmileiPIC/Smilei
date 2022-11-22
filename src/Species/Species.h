@@ -388,8 +388,7 @@ public:
                            Params &params, bool diag_flag,
                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                            RadiationTables &RadiationTables,
-                           MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                           std::vector<Diagnostic *> &localDiags );
+                           MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
@@ -418,26 +417,25 @@ public:
                                   Params &params, bool diag_flag,
                                   PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                                   RadiationTables &RadiationTables,
-                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                                  std::vector<Diagnostic *> &localDiags );
+                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
 
-    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) {};
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double, unsigned int,
+            ElectroMagn *,
+            Params &, bool ,
+            Patch *, SmileiMPI *,
+            std::vector<Diagnostic *> & ) {};
 
-    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double, unsigned int,
+            ElectroMagn *,
+            Params &, bool,
+            Patch *, SmileiMPI *,
+            std::vector<Diagnostic *> &, int ) {};
 
-    virtual void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) {};
+    virtual void scalarPonderomotiveUpdatePositionAndCurrents( double, unsigned int,
+            ElectroMagn *,
+            Params &, bool, PartWalls *,
+            Patch *, SmileiMPI *,
+            std::vector<Diagnostic *> & ) {};
 
     //! Projection method used specifically for the diagnotics
     virtual void projectionForDiags( double time, unsigned int ispec,
@@ -469,14 +467,14 @@ public:
     //! Method used to sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
-    virtual void computeParticleCellKeys(   Params    & params,
-                                            Particles * particles,
-                                            int       * __restrict__ cell_keys,
-                                            int       * __restrict__ count,
-                                            unsigned int istart,
-                                            unsigned int iend ) {};
+    virtual void computeParticleCellKeys(   Params    &,
+                                            Particles *,
+                                            int       * __restrict__,
+                                            int       * __restrict__,
+                                            unsigned int,
+                                            unsigned int ) {};
 
-    virtual void computeParticleCellKeys( Params &params ) {};
+    virtual void computeParticleCellKeys( Params & ) {};
 
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
@@ -613,19 +611,18 @@ public:
             std::vector<Diagnostic *> &localDiags, int buffer_id );
 
     //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
-    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
-                                  ElectroMagn *EMfields,
-                                  Params &params, bool diag_flag,
-                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                                  RadiationTables &RadiationTables,
-                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+    virtual void scalarDynamicsTasks( double, unsigned int,
+                                  ElectroMagn *,
+                                  Params &, bool,
+                                  PartWalls *, Patch *, SmileiMPI *,
+                                  RadiationTables &,
+                                  MultiphotonBreitWheelerTables &, int ) {};
 
-    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
+    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double, unsigned int,
+            ElectroMagn *,
+            Params &, bool, PartWalls *,
+            Patch *, SmileiMPI *,
+            std::vector<Diagnostic *> &, int ) {};
 
 #endif
 
@@ -671,16 +668,6 @@ protected:
     unsigned int length_[3];
 
 private:
-    //! Number of steps for Maxwell-Juettner cumulative function integration
-    //! \todo{Put in a code constant class}
-
-//    unsigned int nE;
-
-    //! Parameter used when defining the Maxwell-Juettner function (corresponds to a Maximum energy)
-//    double muEmax;
-
-    //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
-//    double dE;
 
 };
 

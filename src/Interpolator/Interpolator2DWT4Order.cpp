@@ -137,7 +137,7 @@ void Interpolator2DWT4Order::fieldsAndCurrents( ElectroMagn *EMfields,
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2DWT4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2DWT4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxpt_[2];

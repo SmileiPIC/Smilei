@@ -70,7 +70,7 @@ void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
 
 } // END Interpolator3D4Order
 
-void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -123,7 +123,7 @@ void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator3D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field3D *F = static_cast<Field3D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];

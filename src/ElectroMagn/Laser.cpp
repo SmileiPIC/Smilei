@@ -238,7 +238,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
 
 
 // Cloning constructor
-Laser::Laser( Laser *laser, Params &params )
+Laser::Laser( Laser *laser, Params & )
 {
     i_boundary_  = laser->i_boundary_;
     spacetime = laser->spacetime;
@@ -339,7 +339,7 @@ LaserProfileSeparable::~LaserProfileSeparable()
 }
 
 
-void LaserProfileSeparable::createFields( Params &params, Patch *patch, ElectroMagn *EMfields )
+void LaserProfileSeparable::createFields( Params &params, Patch *, ElectroMagn *EMfields )
 {
     std::vector<unsigned int> size( EMfields->size_ );
     std::vector<unsigned int> oversize( EMfields->oversize );
@@ -450,7 +450,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch, ElectroMag
 }
 
 // Amplitude of a separable laser profile
-double LaserProfileSeparable::getAmplitude( std::vector<double> pos, double t, int j, int k )
+double LaserProfileSeparable::getAmplitude( std::vector<double>, double t, int j, int k )
 {
     double amp;
     #pragma omp critical
@@ -471,7 +471,7 @@ LaserProfileNonSeparable::~LaserProfileNonSeparable()
 }
 
 
-void LaserProfileFile::createFields( Params &params, Patch *patch, ElectroMagn *EMfields )
+void LaserProfileFile::createFields( Params &params, Patch *, ElectroMagn * )
 {
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" ) {
         ERROR_NAMELIST( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)",

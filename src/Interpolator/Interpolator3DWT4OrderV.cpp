@@ -598,7 +598,7 @@ void Interpolator3DWT4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &p
 } // END Interpolator3DWT4OrderV
 
 
-void Interpolator3DWT4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3DWT4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     // iend not used for now
     // probes are interpolated one by one for now
@@ -852,7 +852,7 @@ void Interpolator3DWT4OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, 
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3DWT4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator3DWT4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     ERROR( "Single field 3D4O interpolator not available in vectorized mode" );
 }

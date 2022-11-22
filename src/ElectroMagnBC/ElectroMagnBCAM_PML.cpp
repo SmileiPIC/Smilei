@@ -213,7 +213,7 @@ ElectroMagnBCAM_PML::~ElectroMagnBCAM_PML()
 }
 
 
-void ElectroMagnBCAM_PML::save_fields( Field *my_field, Patch *patch )
+void ElectroMagnBCAM_PML::save_fields( Field *, Patch * )
 {
 }
 

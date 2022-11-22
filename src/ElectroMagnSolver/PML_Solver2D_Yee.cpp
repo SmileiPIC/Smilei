@@ -23,7 +23,7 @@ PML_Solver2D_Yee::~PML_Solver2D_Yee()
 {
 }
 
-void PML_Solver2D_Yee::operator()( ElectroMagn *fields )
+void PML_Solver2D_Yee::operator()( ElectroMagn * )
 {
     ERROR( "This is not a solver for the main domain" );
 
@@ -36,7 +36,7 @@ void PML_Solver2D_Yee::operator()( ElectroMagn *fields )
 
 }
 
-void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
+void PML_Solver2D_Yee::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* )
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int nx_d = dimPrim[0] + 1;

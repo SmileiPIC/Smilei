@@ -96,7 +96,7 @@ bool patch_sorting_AM( PatchIXY patch1_ixy, PatchIXY patch2_ixy ) {
     }
 }
 
-void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *, VectorPatch &vecPatches )
 {
     H5Sselect_none( filespace->sid_ );
     
@@ -223,18 +223,18 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield, F& out_dat
 }
 
 // Write current buffer to file
-H5Write DiagnosticFieldsAM::writeField( H5Write * loc, string name, int itime )
+H5Write DiagnosticFieldsAM::writeField( H5Write * loc, string name )
 {
     if( is_complex_ ) {
-        return writeField< std::vector< std::complex<double> > >( loc, name, itime, idata );
+        return writeField< std::vector< std::complex<double> > >( loc, name, idata );
     } else {
-        return writeField< std::vector< double > >( loc, name, itime, data );
+        return writeField< std::vector< double > >( loc, name, data );
     }
 }
 
 // Write current buffer to file
 template<typename F>
-H5Write DiagnosticFieldsAM::writeField( H5Write *loc, string name, int itime, F& linearized_data )
+H5Write DiagnosticFieldsAM::writeField( H5Write *loc, string name, F& linearized_data )
 {
     // Rewrite the file with the previously defined partition
     return loc->array( name, linearized_data[0], H5T_NATIVE_DOUBLE, filespace, memspace );

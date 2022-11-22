@@ -113,7 +113,7 @@ void DiagnosticFields1D::getField( Patch *patch, unsigned int ifield )
 
 
 // Write current buffer to file
-H5Write DiagnosticFields1D::writeField( H5Write * loc, std::string name, int itime )
+H5Write DiagnosticFields1D::writeField( H5Write * loc, std::string name )
 {
     return loc->array( name, data[0], filespace, memspace );
 }

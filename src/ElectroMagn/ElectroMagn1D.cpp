@@ -23,8 +23,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch )
-    : ElectroMagn( params, domain_decomposition, vecSpecies, patch )
+ElectroMagn1D::ElectroMagn1D( Params &params, vector<Species *> &vecSpecies, Patch *patch )
+    : ElectroMagn( params, vecSpecies, patch )
 {
     initElectroMagn1DQuantities( params, patch );
     
@@ -372,7 +372,7 @@ void ElectroMagn1D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initE_relativistic_Poisson
 
-void ElectroMagn1D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn1D::initB_relativistic_Poisson( double )
 {
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
@@ -381,14 +381,14 @@ void ElectroMagn1D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initB_relativistic_Poisson
 
-void ElectroMagn1D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn1D::center_fields_from_relativistic_Poisson()
 {
 
     // In 1D no centering is necessary, as E is already centered and there is no field B in relativistic initialization
     
 }
 
-void ElectroMagn1D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn1D::initRelativisticPoissonFields()
 {
     // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
     
@@ -401,7 +401,7 @@ void ElectroMagn1D::initRelativisticPoissonFields( Patch *patch )
     
 } // initRelativisticPoissonFields
 
-void ElectroMagn1D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn1D::sum_rel_fields_to_em_fields()
 {
     Field1D *Ex1Drel  = static_cast<Field1D *>( Ex_rel_ );
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
@@ -655,7 +655,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 
 
 // Create a new field
-Field *ElectroMagn1D::createField( string fieldname, Params& params )
+Field *ElectroMagn1D::createField( string fieldname, Params& )
 {
     if( fieldname.substr( 0, 2 )=="Ex" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
@@ -824,7 +824,7 @@ void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 
 
 
-void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
+void ElectroMagn1D::initAntennas( Patch *patch, Params& )
 {
 
     // Filling the space profiles of antennas

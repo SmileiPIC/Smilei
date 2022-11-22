@@ -106,7 +106,7 @@ public:
 class HistogramAxis_x : public HistogramAxis
 {
     ~HistogramAxis_x() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -133,7 +133,7 @@ class HistogramAxis_moving_x : public HistogramAxis
 class HistogramAxis_y : public HistogramAxis
 {
     ~HistogramAxis_y() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -146,7 +146,7 @@ class HistogramAxis_y : public HistogramAxis
 class HistogramAxis_z : public HistogramAxis
 {
     ~HistogramAxis_z() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -159,7 +159,7 @@ class HistogramAxis_z : public HistogramAxis
 class HistogramAxis_vector : public HistogramAxis
 {
     ~HistogramAxis_vector() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         unsigned int idim, ndim = coefficients.size()/2;
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -176,7 +176,7 @@ class HistogramAxis_vector : public HistogramAxis
 class HistogramAxis_theta2D : public HistogramAxis
 {
     ~HistogramAxis_theta2D() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         double X, Y;
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -192,7 +192,7 @@ class HistogramAxis_theta2D : public HistogramAxis
 class HistogramAxis_theta3D : public HistogramAxis
 {
     ~HistogramAxis_theta3D() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -214,7 +214,7 @@ class HistogramAxis_theta3D : public HistogramAxis
 class HistogramAxis_phi : public HistogramAxis
 {
     ~HistogramAxis_phi() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         unsigned int idim;
         double a, b;
@@ -235,7 +235,7 @@ class HistogramAxis_phi : public HistogramAxis
 class HistogramAxis_px : public HistogramAxis
 {
     ~HistogramAxis_px() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -260,7 +260,7 @@ class HistogramAxis_px : public HistogramAxis
 class HistogramAxis_py : public HistogramAxis
 {
     ~HistogramAxis_py() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -285,7 +285,7 @@ class HistogramAxis_py : public HistogramAxis
 class HistogramAxis_pz : public HistogramAxis
 {
     ~HistogramAxis_pz() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -310,7 +310,7 @@ class HistogramAxis_pz : public HistogramAxis
 class HistogramAxis_p : public HistogramAxis
 {
     ~HistogramAxis_p() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -339,7 +339,7 @@ class HistogramAxis_p : public HistogramAxis
 class HistogramAxis_gamma : public HistogramAxis
 {
     ~HistogramAxis_gamma() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -368,7 +368,7 @@ class HistogramAxis_gamma : public HistogramAxis
 class HistogramAxis_ekin : public HistogramAxis
 {
     ~HistogramAxis_ekin() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -397,7 +397,7 @@ class HistogramAxis_ekin : public HistogramAxis
 class HistogramAxis_vx : public HistogramAxis
 {
     ~HistogramAxis_vx() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -428,7 +428,7 @@ class HistogramAxis_vx : public HistogramAxis
 class HistogramAxis_vy : public HistogramAxis
 {
     ~HistogramAxis_vy() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -459,7 +459,7 @@ class HistogramAxis_vy : public HistogramAxis
 class HistogramAxis_vz : public HistogramAxis
 {
     ~HistogramAxis_vz() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -490,7 +490,7 @@ class HistogramAxis_vz : public HistogramAxis
 class HistogramAxis_v : public HistogramAxis
 {
     ~HistogramAxis_v() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -505,7 +505,7 @@ class HistogramAxis_v : public HistogramAxis
 class HistogramAxis_vperp2 : public HistogramAxis
 {
     ~HistogramAxis_vperp2() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -538,7 +538,7 @@ class HistogramAxis_vperp2 : public HistogramAxis
 class HistogramAxis_charge : public HistogramAxis
 {
     ~HistogramAxis_charge() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -551,7 +551,7 @@ class HistogramAxis_charge : public HistogramAxis
 class HistogramAxis_chi : public HistogramAxis
 {
     ~HistogramAxis_chi() {};
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -576,7 +576,7 @@ public:
         Py_DECREF( function );
     };
 private:
-    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
         #pragma omp critical
         {

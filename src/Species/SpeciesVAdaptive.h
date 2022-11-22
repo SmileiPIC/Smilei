@@ -33,8 +33,7 @@ public:
                           Params &params, bool diag_flag,
                           PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                           RadiationTables &RadiationTables,
-                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                          std::vector<Diagnostic *> &localDiags ) override;
+                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables ) override;
                           
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell

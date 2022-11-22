@@ -24,8 +24,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for ElectromagnAM
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch ),
+ElectroMagnAM::ElectroMagnAM( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() )
 {
@@ -262,7 +262,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
 }
 
 
-void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
+void ElectroMagnAM::finishInitialization( int nspecies, Patch * )
 {
     // Fill allfields
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
@@ -293,17 +293,17 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
     // For species-related fields
     // The order is necessary in DiagnosticProbes - DO NOT CHANGE -
     species_starts.resize( 0 );
-    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+    for( int ispec=0; ispec<nspecies; ispec++ ) {
         species_starts.push_back( allFields.size() );
         for( unsigned int imode=0; imode<nmodes; imode++ ) {
-            int ifield = imode*n_species+ispec;
+            int ifield = imode*nspecies+ispec;
             allFields.push_back( Jl_s[ifield] );
             allFields.push_back( Jr_s[ifield] );
             allFields.push_back( Jt_s[ifield] );
             allFields.push_back( rho_AM_s[ifield] );
         }
         if( Env_A_abs_ != NULL ){
-            int ifield = 0*n_species+ispec; // only mode 0
+            int ifield = 0*nspecies+ispec; // only mode 0
             allFields.push_back( Env_Chi_s[ifield] );
         }
     }
@@ -448,7 +448,7 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     
 } // initPoisson
 
-void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode ){
+void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( unsigned int imode ){
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
     
@@ -478,7 +478,7 @@ double ElectroMagnAM::compute_r()
     return rnew_dot_rnew_localAM_;
 } // compute_r
 
-void ElectroMagnAM::compute_Ap( Patch *patch )
+void ElectroMagnAM::compute_Ap( Patch * )
 {
 #ifdef _TODO_AM
 #endif
@@ -646,7 +646,7 @@ void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 
 
 
-void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
+void ElectroMagnAM::initRelativisticPoissonFields(){
     // ------ Init temporary fields for relativistic field initialization
     
     // E fields centered as in FDTD, to be added to the already present electric fields
@@ -675,7 +675,7 @@ void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
 
 }
 
-void ElectroMagnAM::initPoissonFields( Patch *patch ){
+void ElectroMagnAM::initPoissonFields(){
     // ------ Init temporary fields for field initialization
     
     // E fields centered as in FDTD, to be added to the already present electric fields
@@ -685,7 +685,7 @@ void ElectroMagnAM::initPoissonFields( Patch *patch ){
 
 }
 
-void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
+void ElectroMagnAM::initE_relativistic_Poisson_AM( double gamma_mean, unsigned int imode )
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -769,7 +769,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initE_relativistic_Poisson_AM
 
-void ElectroMagnAM::initE_Poisson_AM( Patch *patch, unsigned int imode )
+void ElectroMagnAM::initE_Poisson_AM( unsigned int imode )
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -851,7 +851,7 @@ void ElectroMagnAM::initE_Poisson_AM( Patch *patch, unsigned int imode )
 } // initE_Poisson_AM
 
 
-void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean )
+void ElectroMagnAM::initB_relativistic_Poisson_AM( double gamma_mean )
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -908,7 +908,7 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initB_relativistic_Poisson_AM
 
-void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
+void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM()
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -962,7 +962,7 @@ void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
     
 }
 
-void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Params &params, unsigned int imode )
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -1147,7 +1147,7 @@ void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params
     
 } // sum_rel_fields_to_em_fields
 
-void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( unsigned int imode )
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
@@ -1185,7 +1185,7 @@ void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &pa
     
 } // sum_Poisson_fields_to_em_fields
 
-void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
+void ElectroMagnAM::delete_phi_r_p_Ap(){
     // delete temporary fields used for relativistic initialization
     delete phi_AM_;
     delete r_AM_;
@@ -1193,7 +1193,7 @@ void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
     delete Ap_AM_;
 }
 
-void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
+void ElectroMagnAM::delete_relativistic_fields(){
     // delete temporary fields used for relativistic initialization
     delete El_rel_;
     delete Er_rel_;
@@ -1210,7 +1210,7 @@ void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
     delete Bt_rel_t_minus_halfdt_;
 }
 
-void ElectroMagnAM::delete_Poisson_fields(Patch *patch){
+void ElectroMagnAM::delete_Poisson_fields(){
     // delete temporary fields used for relativistic initialization
     delete El_Poisson_;
     delete Er_Poisson_;
@@ -1218,7 +1218,7 @@ void ElectroMagnAM::delete_Poisson_fields(Patch *patch){
     
 }
 
-void ElectroMagnAM::initE( Patch *patch )
+void ElectroMagnAM::initE( Patch * )
 {
 #ifdef _TODO_AM
 #endif

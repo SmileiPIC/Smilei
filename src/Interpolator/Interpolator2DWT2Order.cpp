@@ -68,7 +68,7 @@ void Interpolator2DWT2Order::fields( ElectroMagn *EMfields, Particles &particles
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
 // -----------------------------------------------------------------------------
-void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -120,7 +120,7 @@ void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxpt_[1];

@@ -16,8 +16,8 @@
 
 using namespace std;
 
-LaserEnvelope1D::LaserEnvelope1D( Params &params, Patch *patch, ElectroMagn *EMfields )
-    : LaserEnvelope( params, patch, EMfields )
+LaserEnvelope1D::LaserEnvelope1D( Params &params, Patch *patch )
+    : LaserEnvelope( params, patch )
 {
     std::vector<unsigned int>  dimPrim( params.nDim_field );
     // Dimension of the primal and dual grids
@@ -47,8 +47,8 @@ LaserEnvelope1D::LaserEnvelope1D( Params &params, Patch *patch, ElectroMagn *EMf
 }
 
 
-LaserEnvelope1D::LaserEnvelope1D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved )
-    : LaserEnvelope( envelope, patch, EMfields, params, n_moved )
+LaserEnvelope1D::LaserEnvelope1D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved )
+    : LaserEnvelope( envelope, patch, params, n_moved )
 {
     A_           = new cField1D( envelope->A_->dims_, "A" );
     A0_          = new cField1D( envelope->A0_->dims_, "Aold" );
@@ -264,7 +264,7 @@ void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 } // end LaserEnvelope1D::computePhiEnvAEnvE
 
 
-void LaserEnvelope1D::computeGradientPhi( ElectroMagn *EMfields )
+void LaserEnvelope1D::computeGradientPhi( ElectroMagn * )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update

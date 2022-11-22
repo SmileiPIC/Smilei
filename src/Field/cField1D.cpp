@@ -191,7 +191,7 @@ double cField1D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 }
 
 
-void cField1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void cField1D::put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     cField1D *out1D = static_cast<cField1D *>( outField );
     
@@ -205,7 +205,7 @@ void cField1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
 }
 
-void cField1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void cField1D::add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     cField1D *out1D = static_cast<cField1D *>( outField );
     
@@ -220,7 +220,7 @@ void cField1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
 }
 
 
-void cField1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
+void cField1D::get( Field *inField, Params &params, Patch *inPatch, Patch *thisPatch )
 {
     cField1D *in1D  = static_cast<cField1D *>( inField );
     

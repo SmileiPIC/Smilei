@@ -15,7 +15,7 @@ PML_SolverAM::~PML_SolverAM()
 {
 }
 
-void PML_SolverAM::operator()( ElectroMagn *fields )
+void PML_SolverAM::operator()( ElectroMagn * )
 {
     ERROR( "This is not a solver for the main domain" );
 

@@ -190,7 +190,7 @@ double Field1D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 }
 
 
-void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field1D::put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field1D *out1D = static_cast<Field1D *>( outField );
     
@@ -204,7 +204,7 @@ void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
-void Field1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field1D::add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field1D *out1D = static_cast<Field1D *>( outField );
     
@@ -218,7 +218,7 @@ void Field1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
-void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
+void Field1D::get( Field *inField, Params &params, Patch *inPatch, Patch *thisPatch )
 {
     Field1D *in1D  = static_cast<Field1D *>( inField );
     

@@ -11,7 +11,7 @@ class Solver1D : public Solver
 
 public:
     //! Creator for Solver
-    Solver1D( Params &params ) : Solver( params )
+    Solver1D( Params &params ) : Solver()
     {
         dt = params.timestep;
         dt_ov_dx = params.timestep / params.cell_length[0];

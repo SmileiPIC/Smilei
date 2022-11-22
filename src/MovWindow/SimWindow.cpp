@@ -269,7 +269,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
             }
             
-            mypatch->updateTagenv( smpi );
             if( mypatch->isXmin() ) {
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                     mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
@@ -586,7 +585,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 
 }
 
-void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual)
+void SimWindow::operate(Region& region,  VectorPatch&, SmileiMPI*, Params& params, double time_dual)
 {
     region.patch_->exchangeField_movewin( region.patch_->EMfields->Ex_, params.patch_size_[0] );
     region.patch_->exchangeField_movewin( region.patch_->EMfields->Ey_, params.patch_size_[0] );
@@ -628,7 +627,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 }
 
 
-void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int nmodes)
+void SimWindow::operate(Region& region,  VectorPatch&, SmileiMPI*, Params& params, double time_dual, unsigned int nmodes)
 {
     ElectroMagnAM * region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
    

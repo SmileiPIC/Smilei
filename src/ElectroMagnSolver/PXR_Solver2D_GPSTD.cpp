@@ -14,9 +14,9 @@ PXR_Solver2D_GPSTD::~PXR_Solver2D_GPSTD()
 {
 }
 
+#ifdef _PICSAR
 void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
-#ifdef _PICSAR
     int cdim=2;
     int n0, n1, n2;
     int ov0, ov1, ov2;
@@ -70,13 +70,15 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
                                 &( Jy2D_pxr->data_[0] ),
                                 &( rho2D_pxr->data_[0] ),
                                 &( rhoold2D_pxr->data_[0] ), &cdim );
-#else
-    ERROR( "Smilei not linked with picsar, use make config=picsar" );
-#endif
-                                
 }
+#else
+void PXR_Solver2D_GPSTD::coupling( Params &, ElectroMagn *, bool )
+{
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
+}
+#endif
 
-void PXR_Solver2D_GPSTD::operator()( ElectroMagn *fields )
+void PXR_Solver2D_GPSTD::operator()( ElectroMagn * )
 {
     //duplicate_field_into_pxr( fields );
     

@@ -13,7 +13,6 @@
 #include <mpi.h>
 
 #include "Params.h"
-#include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
 #include "Region.h"
@@ -585,7 +584,7 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 }
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD )
+void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, Params &params )
 {
     MESSAGE( 1, "READING fields and particles for restart" );
 

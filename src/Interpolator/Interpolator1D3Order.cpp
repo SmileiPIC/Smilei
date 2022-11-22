@@ -51,7 +51,7 @@ void Interpolator1D3Order::fields( ElectroMagn *EMfields, Particles &particles, 
 }//END Interpolator1D3Order
 
 
-void Interpolator1D3Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator1D3Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
 
     int ipart = *istart;
@@ -100,7 +100,7 @@ void Interpolator1D3Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
 
 // Interpolator on another field than the basic ones
-void Interpolator1D3Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator1D3Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
     double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;
@@ -113,7 +113,7 @@ void Interpolator1D3Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator1D3Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator1D3Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     double *Epart = &( smpi->dynamics_Epart[ithread][0] );
     double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );

@@ -210,7 +210,7 @@ double Field2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 }
 
 
-void Field2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field2D::put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field2D *out2D = static_cast<Field2D *>( outField );
     
@@ -230,7 +230,7 @@ void Field2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
 }
 
 
-void Field2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field2D::add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field2D *out2D = static_cast<Field2D *>( outField );
     
@@ -249,7 +249,7 @@ void Field2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
-void Field2D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
+void Field2D::get( Field *inField, Params &params, Patch *inPatch, Patch *thisPatch )
 {
     Field2D *in2D  = static_cast<Field2D *>( inField );
     

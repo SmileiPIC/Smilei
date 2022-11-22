@@ -163,7 +163,7 @@ DiagnosticTrack::~DiagnosticTrack()
 }
 
 
-void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticTrack::openFile( Params &, SmileiMPI *smpi )
 {
     // Create HDF5 file
     file_ = new H5Write( filename, &smpi->world() );
@@ -214,7 +214,7 @@ bool DiagnosticTrack::prepare( int itime )
 }
 
 
-void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
+void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers & )
 {
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
@@ -600,7 +600,7 @@ void DiagnosticTrack::write_component( H5Write * location, string name, T &buffe
 
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticTrack::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticTrack::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
     

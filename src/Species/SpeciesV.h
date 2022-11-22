@@ -27,20 +27,14 @@ public:
     virtual ~SpeciesV();
 
     void initCluster( Params &params ) override;
-
-//virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
-//                      Projector* proj, Params &params, bool diag_flag,
-//                      PartWalls* partWalls, Patch* patch, SmileiMPI* smpi) override;
-//
-
+    
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     void dynamics( double time, unsigned int ispec,
                    ElectroMagn *EMfields,
                    Params &params, bool diag_flag,
                    PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                    RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                   std::vector<Diagnostic *> &localDiags ) override;
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables ) override;
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,

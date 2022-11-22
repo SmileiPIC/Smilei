@@ -16,7 +16,7 @@ using namespace std;
 // Patch3D constructor
 // ---------------------------------------------------------------------------------------------------------------------
 Patch3D::Patch3D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved )
-    : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
+    : Patch( params, smpi, domain_decomposition, ipatch )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
     if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
@@ -44,7 +44,7 @@ Patch3D::Patch3D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
 // Patch3D cloning constructor
 // ---------------------------------------------------------------------------------------------------------------------
 Patch3D::Patch3D( Patch3D *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true )
-    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles )
+    : Patch( patch, params, smpi, ipatch )
 {
     initStep2( params, domain_decomposition );
     initStep3( params, smpi, n_moved );

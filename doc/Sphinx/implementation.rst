@@ -638,8 +638,7 @@ in the following pieces of code.
                                      params, diag_flag, partwalls( ipatch ),
                                      ( *this )( ipatch ), smpi,
                                      RadiationTables,
-                                     MultiphotonBreitWheelerTables,
-                                     localDiags );
+                                     MultiphotonBreitWheelerTables );
 
             // ...
 

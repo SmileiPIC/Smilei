@@ -12,7 +12,7 @@
 using namespace std;
 
 // Constructor for EnvelopeBC
-EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int i_boundary ) :
+EnvelopeBC::EnvelopeBC( Params &params, Patch *, unsigned int i_boundary ) :
     i_boundary_( i_boundary )
 {
 

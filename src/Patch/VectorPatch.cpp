@@ -411,7 +411,7 @@ void VectorPatch::dynamics( Params &params,
 void VectorPatch::projectionForDiags( Params &params,
                                         SmileiMPI *smpi,
                                         SimWindow *simWindow,
-                                        double time_dual, Timers &timers, int itime )
+                                        double time_dual, Timers &, int itime )
 {
 
     #pragma omp single
@@ -1068,7 +1068,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
-            ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+            ( *this )( ipatch )->EMfields->boundaryConditions( time_dual, ( *this )( ipatch ), simWindow );
         }
         if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
             SyncVectorPatch::exchangeForPML( params, (*this), smpi );
@@ -1087,7 +1087,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 
 } // END solveMaxwell
 
-void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
+void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
 
     if( ( *this )( 0 )->EMfields->envelope!=NULL ) {
@@ -1112,7 +1112,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             }
 
             // Apply boundary conditions for envelope and |A|, |E|
-            ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow, ( *this )( ipatch )->EMfields );
+            ( *this )( ipatch )->EMfields->envelope->boundaryConditions( time_dual, ( *this )( ipatch ), simWindow, ( *this )( ipatch )->EMfields );
 
         }
 
@@ -1156,7 +1156,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
             if ( (!params.is_spectral) || (params.geometry!= "AMcylindrical") )
-                ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+                ( *this )( ipatch )->EMfields->boundaryConditions( time_dual, ( *this )( ipatch ), simWindow );
 
         }
         if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
@@ -1381,7 +1381,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
+void VectorPatch::runAllDiagsTasks( Params &, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
 
     int preprocess_done[globalDiags.size()];
@@ -1506,7 +1506,7 @@ void VectorPatch::runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned in
 // ---------------------------------------------------------------------------------------------------------------------
 // Check if rho is null (MPI & patch sync)
 // ---------------------------------------------------------------------------------------------------------------------
-bool VectorPatch::isRhoNull( SmileiMPI *smpi )
+bool VectorPatch::isRhoNull( SmileiMPI * )
 {
     double norm2( 0. );
     double locnorm2( 0. );
@@ -1798,7 +1798,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-        emAM->initPoissonFields( ( *this )( ipatch ) );
+        emAM->initPoissonFields();
     }
 
     std::vector<Field *> El_;
@@ -1818,7 +1818,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
+            emAM->initPoisson_init_phi_r_p_Ap( imode );
             rnew_dot_rnew_localAM_ += emAM->compute_r();
         }
 
@@ -1943,7 +1943,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             // begin loop on patches
-            emAM->initE_Poisson_AM( ( *this )( ipatch ), imode );
+            emAM->initE_Poisson_AM( imode );
         } // end loop on patches
 
         SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( El_Poisson_, *this, smpi );
@@ -1962,7 +1962,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // begin loop on patches
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->sum_Poisson_fields_to_em_fields_AM( ( *this )( ipatch ), params, imode );
+            emAM->sum_Poisson_fields_to_em_fields_AM( imode );
         } // end loop on patches
 
 
@@ -1981,8 +1981,8 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-        emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
-        emAM->delete_Poisson_fields( ( *this )( ipatch ) );
+        emAM->delete_phi_r_p_Ap();
+        emAM->delete_Poisson_fields();
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
@@ -1996,7 +1996,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
 }  // solvePoissonAM
 
 
-void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers &timers )
+void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers & )
 {
     // at this point the charge should be projected on the grid
 
@@ -2105,7 +2105,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
         rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
-        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
+        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields();
     }
     MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
@@ -2394,7 +2394,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     // compute B and sync
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // begin loop on patches
-        ( *this )( ipatch )->EMfields->initB_relativistic_Poisson( ( *this )( ipatch ), gamma_mean );
+        ( *this )( ipatch )->EMfields->initB_relativistic_Poisson( gamma_mean );
     } // end loop on patches
 
     SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_, *this, smpi );
@@ -2409,7 +2409,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // begin loop on patches
-        ( *this )( ipatch )->EMfields->center_fields_from_relativistic_Poisson( ( *this )( ipatch ) );
+        ( *this )( ipatch )->EMfields->center_fields_from_relativistic_Poisson();
     } // end loop on patches
 
     // Re-exchange the properly spatially centered B field
@@ -2437,7 +2437,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // begin loop on patches
-        ( *this )( ipatch )->EMfields->sum_rel_fields_to_em_fields( ( *this )( ipatch ) );
+        ( *this )( ipatch )->EMfields->sum_rel_fields_to_em_fields();
     } // end loop on patches
 
     // Exchange the fields after the addition of the relativistic species fields
@@ -2533,7 +2533,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
-        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
+        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields();
     }
 
     std::vector<Field *> El_;
@@ -2569,7 +2569,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
+            emAM->initPoisson_init_phi_r_p_Ap( imode );
             rnew_dot_rnew_localAM_ += emAM->compute_r();
         }
 
@@ -2711,7 +2711,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             // begin loop on patches
-            emAM->initE_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
+            emAM->initE_relativistic_Poisson_AM( gamma_mean, imode );
         } // end loop on patches
 
         SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( El_rel_, *this, smpi );
@@ -2725,7 +2725,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // begin loop on patches
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->initB_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean );
+            emAM->initB_relativistic_Poisson_AM( gamma_mean );
         } // end loop on patches
 
         SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_, *this, smpi );
@@ -2741,7 +2741,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // begin loop on patches
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->center_fields_from_relativistic_Poisson_AM( ( *this )( ipatch ) );
+            emAM->center_fields_from_relativistic_Poisson_AM();
         } // end loop on patches
 
         // Re-exchange the properly spatially centered B field
@@ -2769,7 +2769,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // begin loop on patches
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->sum_rel_fields_to_em_fields_AM( ( *this )( ipatch ), params, imode );
+            emAM->sum_rel_fields_to_em_fields_AM( params, imode );
         } // end loop on patches
 
 
@@ -2806,8 +2806,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-        emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
-        emAM->delete_relativistic_fields( ( *this )( ipatch ) );
+        emAM->delete_phi_r_p_Ap();
+        emAM->delete_relativistic_fields();
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
@@ -4205,8 +4205,6 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     timers.particles.restart();
 
-    bool diag_PartEventTracing {false};
-
 #ifdef _OMPTASKS
     #pragma omp single
     {
@@ -4226,7 +4224,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 #endif
 
 #  ifdef _PARTEVENTTRACING
-    diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
+    bool diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
     if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
@@ -4323,7 +4321,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 } // END ponderomotiveUpdatePositionAndCurrents
 
 
-void VectorPatch::initNewEnvelope( Params &params )
+void VectorPatch::initNewEnvelope( Params & )
 {
     if( ( *this )( 0 )->EMfields->envelope!=NULL ) {
         // for all patches, init new envelope from input namelist parameters
@@ -4338,7 +4336,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                             SimWindow *simWindow,
                             RadiationTables &RadiationTables,
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                            double time_dual, Timers &timers, int itime )
+                            double time_dual, Timers &, int itime )
 {
 
 #ifdef _PARTEVENTTRACING
@@ -4368,8 +4366,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                                         params, diag_flag, partwalls( ipatch ),
                                         ( *this )( ipatch ), smpi,
                                         RadiationTables,
-                                        MultiphotonBreitWheelerTables,
-                                        localDiags );
+                                        MultiphotonBreitWheelerTables );
                     }
                     // Dynamics with scalar operators
                     else {
@@ -4379,16 +4376,14 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                                                    params, diag_flag, partwalls( ipatch ),
                                                    ( *this )( ipatch ), smpi,
                                                    RadiationTables,
-                                                   MultiphotonBreitWheelerTables,
-                                                   localDiags );
+                                                   MultiphotonBreitWheelerTables );
                         } else {
                             spec->Species::dynamics( time_dual, ispec,
                                                      emfields( ipatch ),
                                                      params, diag_flag, partwalls( ipatch ),
                                                      ( *this )( ipatch ), smpi,
                                                      RadiationTables,
-                                                     MultiphotonBreitWheelerTables,
-                                                     localDiags );
+                                                     MultiphotonBreitWheelerTables );
                         }
                     } // end if condition on vectorization
                 } // end if condition on species
@@ -4400,7 +4395,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
 void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,
-        double time_dual, Timers &timers, int itime )
+        double time_dual, Timers &, int itime )
 {
 
 #ifdef _PARTEVENTTRACING
@@ -4445,7 +4440,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
 void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,
-        double time_dual, Timers &timers, int itime )
+        double time_dual, Timers &, int itime )
 {
     
 #ifdef _PARTEVENTTRACING
@@ -4547,8 +4542,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
                                                         params, diag_flag, partwalls( ipatch ),
                                                         ( *this )( ipatch ), smpi,
                                                         RadiationTables,
-                                                        MultiphotonBreitWheelerTables,
-                                                        localDiags, buffer_id );
+                                                        MultiphotonBreitWheelerTables, buffer_id );
                         } // end task
                     } else {
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])

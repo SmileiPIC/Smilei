@@ -24,13 +24,13 @@ public:
     {
         ElectroMagn *EMfields = NULL;
         if( params.geometry == "1Dcartesian" ) {
-            EMfields = new ElectroMagn1D( params, domain_decomposition, vecSpecies, patch );
+            EMfields = new ElectroMagn1D( params, vecSpecies, patch );
         } else if( params.geometry == "2Dcartesian" ) {
-            EMfields = new ElectroMagn2D( params, domain_decomposition, vecSpecies, patch );
+            EMfields = new ElectroMagn2D( params, vecSpecies, patch );
         } else if( params.geometry == "3Dcartesian" ) {
-            EMfields = new ElectroMagn3D( params, domain_decomposition, vecSpecies, patch );
+            EMfields = new ElectroMagn3D( params, vecSpecies, patch );
         } else if( params.geometry == "AMcylindrical" ) {
-            EMfields = new ElectroMagnAM( params, domain_decomposition, vecSpecies, patch );
+            EMfields = new ElectroMagnAM( params, vecSpecies, patch );
         } else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
@@ -39,7 +39,7 @@ public:
         
         // initialize the envelope if used
         if( params.Laser_Envelope_model ) { // for the moment it works only with one envelope
-            EMfields->envelope = EnvelopeFactory::create( params, patch, EMfields );
+            EMfields->envelope = EnvelopeFactory::create( params, patch );
         }
         
         bool first_creation = patch->isMaster() && ! dynamic_cast<RegionDomainDecomposition*>( domain_decomposition );
@@ -238,7 +238,7 @@ public:
         
         // initialize the envelope if used
         if( EMfields->envelope != NULL ) {
-            newEMfields->envelope = EnvelopeFactory::clone( EMfields->envelope, patch, EMfields, params, n_moved );
+            newEMfields->envelope = EnvelopeFactory::clone( EMfields->envelope, patch, params, n_moved );
         }
         
         // -----------------

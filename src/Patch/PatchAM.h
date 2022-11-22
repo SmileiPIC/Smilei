@@ -24,7 +24,7 @@ public:
     
     //! Return the volume (or surface or length depending on simulation dimension)
     //! of one cell at the position of a given particle
-    double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
+    double getPrimalCellVolume( Particles *, unsigned int, Params & ) override final
     {
         ERROR( "getPrimalCellVolume not implemented in geometry AM" );
         return cell_volume;

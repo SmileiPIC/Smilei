@@ -21,8 +21,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch ),
+ElectroMagn3D::ElectroMagn3D( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() ),
     isZmin( patch->isZmin() ),
@@ -706,7 +706,7 @@ void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
 
 } // initE_relativistic_Poisson
 
-void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn3D::initB_relativistic_Poisson( double gamma_mean )
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int ny_p = dimPrim[1];
@@ -767,7 +767,7 @@ void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
 
 } // initB_relativistic_Poisson
 
-void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn3D::initRelativisticPoissonFields()
 {
     // ------ Init temporary fields for relativistic field initialization
 
@@ -797,7 +797,7 @@ void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
 
 } // initRelativisticPoissonFields
 
-void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn3D::sum_rel_fields_to_em_fields()
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int ny_p = dimPrim[1];
@@ -1503,7 +1503,7 @@ void ElectroMagn3D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 
 }//END customFIRCurrentFilter
 
-void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn3D::center_fields_from_relativistic_Poisson()
 {
 
     const unsigned int nx_p = dimPrim[0];

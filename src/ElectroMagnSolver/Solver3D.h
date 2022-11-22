@@ -11,7 +11,7 @@ class Solver3D : public Solver
 
 public:
     //! Creator for Solver
-    Solver3D( Params &params ) : Solver( params )
+    Solver3D( Params &params ) : Solver()
     {
         dt = params.timestep;
         dx = params.cell_length[0];

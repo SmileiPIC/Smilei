@@ -47,7 +47,7 @@ void Interpolator1D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
 
 }//END Interpolator1D2Order
 
-void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -94,7 +94,7 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
     double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;
@@ -107,7 +107,7 @@ void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     double *Epart = &( smpi->dynamics_Epart[ithread][0] );
     double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );
@@ -179,7 +179,7 @@ void Interpolator1D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
     }
 }
 
-void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
 
@@ -248,7 +248,7 @@ void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
 } // END Interpolator1D2Order
 
-void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field1D *Phi_m1D = static_cast<Field1D *>( EMfields->envelope->Phi_m );
@@ -348,7 +348,7 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 
 } // END Interpolator1D2Order
 
-void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field1D *Env_Eabs = static_cast<Field1D *>( EMfields->Env_E_abs_ );

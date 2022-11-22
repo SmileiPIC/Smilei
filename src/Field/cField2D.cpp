@@ -255,7 +255,7 @@ double cField2D::norm2_cylindrical( unsigned int istart[3][2], unsigned int bufs
     return nrj;
 }
 
-void cField2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void cField2D::put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     cField2D *out2D = static_cast<cField2D *>( outField );
     
@@ -274,7 +274,7 @@ void cField2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
 }
 
-void cField2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void cField2D::add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     cField2D *out2D = static_cast<cField2D *>( outField );
     
@@ -294,7 +294,7 @@ void cField2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
 }
 
 
-void cField2D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
+void cField2D::get( Field *inField, Params &params, Patch *inPatch, Patch *thisPatch )
 {
     cField2D *in2D  = static_cast<cField2D *>( inField );
     

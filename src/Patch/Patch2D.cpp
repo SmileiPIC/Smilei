@@ -16,7 +16,7 @@ using namespace std;
 // Patch2D constructor
 // ---------------------------------------------------------------------------------------------------------------------
 Patch2D::Patch2D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved )
-    : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
+    : Patch( params, smpi, domain_decomposition, ipatch )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
     if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
@@ -42,7 +42,7 @@ Patch2D::Patch2D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
 // Patch2D cloning constructor
 // ---------------------------------------------------------------------------------------------------------------------
 Patch2D::Patch2D( Patch2D *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true )
-    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles )
+    : Patch( patch, params, smpi, ipatch )
 {
     initStep2( params, domain_decomposition );
     initStep3( params, smpi, n_moved );

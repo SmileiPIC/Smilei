@@ -412,7 +412,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2D4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2D4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     ERROR( "Single field 2D2O interpolator not available in vectorized mode" );
 }

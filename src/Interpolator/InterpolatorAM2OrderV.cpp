@@ -29,7 +29,7 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 }
 
 //Function used in Probes
-//void InterpolatorAM2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+//void InterpolatorAM2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 //{
 //    int ipart = *istart;
 //    

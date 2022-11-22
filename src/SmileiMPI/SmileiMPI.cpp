@@ -1688,13 +1688,13 @@ void SmileiMPI::recv( ProbeParticles *probe, int from, int tag, unsigned int nDi
 } // End recv ( probes )
 
 //! Wrapper for integer MPI communication
-void SmileiMPI::isend( int *integer, int to, int tag, unsigned int nDim_particles, MPI_Request &request )
+void SmileiMPI::isend( int *integer, int to, int tag, MPI_Request &request )
 {
     MPI_Isend( &integer, 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 } // End isend ( integer )
 
 //! Wrapper for integer MPI communication
-void SmileiMPI::recv( int *integer, int from, int tag, unsigned int nDim_particles )
+void SmileiMPI::recv( int *integer, int from, int tag )
 {
     MPI_Status status;
     MPI_Recv( &integer, 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );

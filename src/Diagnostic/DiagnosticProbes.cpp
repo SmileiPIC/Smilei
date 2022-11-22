@@ -400,7 +400,7 @@ DiagnosticProbes::~DiagnosticProbes()
 }
 
 
-void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticProbes::openFile( Params &, SmileiMPI *smpi )
 {
     file_ = new H5Write( filename, &smpi->world() );
     
@@ -447,7 +447,7 @@ bool DiagnosticProbes::prepare( int itime )
 } 
 
 
-void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch & )
 {
     // create the file
     openFile( params, smpi );
@@ -620,7 +620,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
 
 
 
-void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
+void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers & )
 {
     ostringstream name_t;
     
@@ -862,7 +862,7 @@ bool DiagnosticProbes::needsRhoJs( int itime )
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
 

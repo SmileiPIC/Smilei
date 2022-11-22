@@ -283,7 +283,7 @@ ElectroMagnBC3D_PML::~ElectroMagnBC3D_PML()
 }
 
 
-void ElectroMagnBC3D_PML::save_fields( Field *my_field, Patch *patch )
+void ElectroMagnBC3D_PML::save_fields( Field *, Patch * )
 {
 }
 

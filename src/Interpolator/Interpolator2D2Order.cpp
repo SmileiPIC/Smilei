@@ -56,7 +56,7 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], Bz2D, id_, jd_ );
 } // END Interpolator2D2Order
 
-void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -108,7 +108,7 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];

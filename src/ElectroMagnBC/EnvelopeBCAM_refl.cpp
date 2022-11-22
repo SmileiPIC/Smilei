@@ -36,7 +36,7 @@ EnvelopeBCAM_refl::EnvelopeBCAM_refl( Params &params, Patch *patch, unsigned int
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void EnvelopeBCAM_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch )
+void EnvelopeBCAM_refl::apply( LaserEnvelope *envelope, ElectroMagn *, double, Patch *patch )
 {
 
     // Static cast of the field

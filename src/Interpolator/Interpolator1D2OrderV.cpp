@@ -46,7 +46,7 @@ void Interpolator1D2OrderV::fields( ElectroMagn *EMfields, Particles &particles,
 
 }//END Interpolator1D2OrderV
 
-void Interpolator1D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator1D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -93,7 +93,7 @@ void Interpolator1D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator1D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator1D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
     double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;

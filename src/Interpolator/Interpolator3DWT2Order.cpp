@@ -63,7 +63,7 @@ void Interpolator3DWT2Order::fields( ElectroMagn *EMfields, Particles &particles
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], &coeffzpt_[1], Bz3D, id_, jd_, kp_ );
 } // END Interpolator3DWT2Order
 
-void Interpolator3DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -117,7 +117,7 @@ void Interpolator3DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator3DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field3D *F = static_cast<Field3D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxpt_[1];

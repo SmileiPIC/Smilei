@@ -10,10 +10,9 @@
 using namespace std;
 
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patch = NULL ):
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *, Patch * = NULL ):
     latest_timestep( -1 )
 {
-    // patch  == NULL else error
     
     if( PyTools::nComponents( "DiagScalar" ) > 1 ) {
         ERROR( "Only one DiagScalar can be specified" );
@@ -56,7 +55,7 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticScalar::openFile( Params &, SmileiMPI *smpi )
 {
     if( !smpi->isMaster() || fout.is_open() ) {
         return;
@@ -121,7 +120,7 @@ Scalar_value_location *DiagnosticScalar::newScalar_MAXLOC( string name )
 }
 
 
-void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticScalar::init( Params &params, SmileiMPI *, VectorPatch &vecPatches )
 {
 
     // Make the list of fields
@@ -329,7 +328,7 @@ bool DiagnosticScalar::prepare( int itime )
 } // END prepare
 
 
-void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
+void DiagnosticScalar::run( Patch *patch, int itime, SimWindow * )
 {
 
     // Must keep track of Poynting flux even without diag
@@ -403,7 +402,7 @@ void DiagnosticScalar::write( int itime, SmileiMPI *smpi )
 
 
 //! Compute the various scalars when requested
-void DiagnosticScalar::compute( Patch *patch, int itime )
+void DiagnosticScalar::compute( Patch *patch, int )
 {
     ElectroMagn *EMfields = patch->EMfields;
     std::vector<Species *> &vecSpecies = patch->vecSpecies;

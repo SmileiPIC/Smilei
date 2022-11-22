@@ -65,8 +65,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
         RadiationTables &RadiationTables,
-        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-        vector<Diagnostic *> &localDiags )
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -359,8 +358,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
         PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
         RadiationTables &RadiationTables,
-        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS

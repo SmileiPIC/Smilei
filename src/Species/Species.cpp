@@ -556,8 +556,7 @@ void Species::dynamics( double time_dual,
                         PartWalls *partWalls,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                        vector<Diagnostic *> &localDiags )
+                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
 {
     int tid( 0 );
 
@@ -1429,14 +1428,13 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::scalarDynamics( double time_dual, unsigned int ispec,
-                               ElectroMagn *EMfields,
-                               Params &params, bool diag_flag,
-                               PartWalls *partWalls,
-                               Patch *patch, SmileiMPI *smpi,
-                               RadiationTables &RadiationTables,
-                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                               vector<Diagnostic *> &localDiags )
+void Species::scalarDynamics( double, unsigned int ,
+                               ElectroMagn *,
+                               Params &, bool ,
+                               PartWalls *,
+                               Patch *, SmileiMPI *,
+                               RadiationTables &,
+                               MultiphotonBreitWheelerTables & )
 {
 
 }
@@ -1505,7 +1503,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
         electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-                 }
+    }
 
     // if moving particle
     if( time_dual>time_frozen_ ) { // moving particle

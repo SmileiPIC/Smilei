@@ -123,7 +123,7 @@ void DiagnosticPerformances::closeFile()
 
 
 
-void DiagnosticPerformances::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticPerformances::init( Params &params, SmileiMPI *smpi, VectorPatch & )
 {
     // create the file
     openFile( params, smpi );
@@ -140,7 +140,7 @@ bool DiagnosticPerformances::prepare( int itime )
 } // END prepare
 
 
-void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
+void DiagnosticPerformances::run( SmileiMPI *, VectorPatch &vecPatches, int itime, SimWindow *, Timers &timers )
 {
     
     #pragma omp master
@@ -306,7 +306,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
 
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticPerformances::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticPerformances::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
     

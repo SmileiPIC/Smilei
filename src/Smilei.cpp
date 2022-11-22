@@ -177,7 +177,7 @@ int main( int argc, char *argv[] )
         //     region.identify_missing_patches( &smpi, vecPatches, params );
         // }
 
-        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
+        checkpoint.restartAll( vecPatches, region, &smpi, params );
         vecPatches.sortAllParticles( params );
 
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
@@ -720,7 +720,7 @@ int executeTestMode( VectorPatch &vecPatches,
             checkpoint.readRegionDistribution( region );
             region.build( params, smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
         }
-        checkpoint.restartAll( vecPatches, region, smpi, simWindow, params, openPMD );
+        checkpoint.restartAll( vecPatches, region, smpi, params );
     }
 
     if( params.print_expected_disk_usage ) {

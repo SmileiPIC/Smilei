@@ -24,7 +24,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
+ElectroMagn::ElectroMagn( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
     timestep( params.timestep ),
     cell_length( params.cell_length ),
     n_species( vecSpecies.size() ),
@@ -140,7 +140,7 @@ void ElectroMagn::initElectroMagnQuantities()
 }
 
 
-void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
+void ElectroMagn::finishInitialization( int nspecies, Patch * )
 {
 
     // Fill allfields
@@ -363,7 +363,7 @@ void ElectroMagn::updateGridSize( Params &params, Patch *patch )
 
 
 
-void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
+void ElectroMagn::boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow )
 {
     // Compute EM Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) { //Boundary conditions are applied after moving the window.

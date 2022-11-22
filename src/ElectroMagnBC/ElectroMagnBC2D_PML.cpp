@@ -207,7 +207,7 @@ ElectroMagnBC2D_PML::~ElectroMagnBC2D_PML()
 }
 
 
-void ElectroMagnBC2D_PML::save_fields( Field *my_field, Patch *patch )
+void ElectroMagnBC2D_PML::save_fields( Field *, Patch * )
 {
 }
 

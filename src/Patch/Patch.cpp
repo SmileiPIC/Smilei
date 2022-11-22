@@ -40,7 +40,7 @@ using namespace std;
 // Patch constructor :
 //   Called by PatchXD constructor which will finalize initialization
 // ---------------------------------------------------------------------------------------------------------------------
-Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved )
+Patch::Patch( Params &params, SmileiMPI *, DomainDecomposition *domain_decomposition, unsigned int ipatch )
 {
 
     hindex = ipatch;
@@ -98,7 +98,7 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
 
 
 // Cloning patch constructor
-Patch::Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true )
+Patch::Patch( Patch *patch, Params &params, SmileiMPI *, unsigned int ipatch )
 {
 
     hindex = ipatch;
@@ -182,7 +182,7 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
 
 }
 
-void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition )
+void Patch::finishCreation( Params &params, SmileiMPI *, DomainDecomposition *domain_decomposition )
 {
     // initialize vector of Species (virtual) in place
     SpeciesFactory::createVector( params, this );
@@ -207,7 +207,7 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
 }
 
 
-void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsigned int n_moved, bool with_particles = true )
+void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *, unsigned int n_moved, bool with_particles = true )
 {
     // clone vector of Species (virtual) in place
     SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
@@ -473,9 +473,6 @@ Patch::~Patch()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute MPI rank of patch neigbors and current patch
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::updateTagenv( SmileiMPI *smpi )
-{
-}
 void Patch::updateMPIenv( SmileiMPI *smpi )
 {
     // HARDCODED VALUE - to test cartesian decomposition
@@ -530,7 +527,7 @@ void Patch::cleanMPIBuffers( int ispec, Params &params )
 // Split particles Id to send in per direction and per patch neighbor dedicated buffers
 // Apply periodicity if necessary
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
+void Patch::initExchParticles( int ispec, Params &params )
 {
     Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
     int ndim = params.nDim_field;
@@ -621,7 +618,7 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::copyParticles)
 //   - smpi     : inhereted from previous SmileiMPI::exchangeParticles()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
+void Patch::exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &, int iDim, VectorPatch *vecPatch )
 {
     int h0 = ( *vecPatch )( 0 )->hindex;
     /********************************************************************************/
@@ -655,7 +652,7 @@ void Patch::exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int 
 } // exchNbrOfParticles(... iDim)
 
 
-void Patch::endNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
+void Patch::endNbrOfParticles( int ispec, int iDim )
 {
     Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
 
@@ -731,7 +728,7 @@ void Patch::prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
 } // END prepareParticles(... iDim)
 
 
-void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
+void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &, int iDim, VectorPatch *vecPatch )
 {
     int n_part_send, n_part_recv;
 
@@ -774,7 +771,7 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim,
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::copyParticles)
 //   - smpi     : used smpi->periods_
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::finalizeExchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
+void Patch::finalizeExchParticles( int ispec, int iDim )
 {
 
     int n_part_send, n_part_recv;
@@ -804,7 +801,7 @@ void Patch::finalizeExchParticles( SmileiMPI *smpi, int ispec, Params &params, i
     }
 }
 
-void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
+void Patch::cornersParticles( int ispec, Params &params, int iDim )
 {
 
     int ndim = params.nDim_field;
@@ -901,7 +898,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
 }
 
 //! Import particles exchanged with surrounding patches/mpi and sort at the same time
-void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch )
+void Patch::importAndSortParticles( int ispec, Params &params )
 {
 
 #ifdef  __DETAILED_TIMERS

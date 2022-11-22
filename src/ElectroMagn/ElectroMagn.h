@@ -81,7 +81,7 @@ class ElectroMagn
     
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
+    ElectroMagn( Params &params, std::vector<Species *> &vecSpecies, Patch *patch );
     ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
@@ -93,10 +93,10 @@ public:
                                       std::vector<unsigned int> b_dim, bool diag_flag) = 0;
 
     // copy currents projected on sub-buffers to global currents
-    virtual void copyInLocalAMDensities(int ispec, int ibin, 
-                                        std::complex<double> *b_Jl, std::complex<double> *b_Jr, 
-                                        std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, 
-                                        std::vector<unsigned int> b_dim, bool diag_flag){}; 
+    virtual void copyInLocalAMDensities(int, int, 
+                                        std::complex<double> *, std::complex<double> *, 
+                                        std::complex<double> *, std::complex<double> *, 
+                                        std::vector<unsigned int>, bool ){}; 
 
     // copy susceptibility projected on sub-buffers to global susceptibility
     virtual void copyInLocalSusceptibility(int ispec, int ibin, 
@@ -304,10 +304,10 @@ public:
     virtual void update_p( double rnew_dot_rnew, double r_dot_r ) = 0;
     virtual void initE( Patch *patch ) = 0;
     virtual void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) = 0;
-    virtual void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) = 0;
-    virtual void center_fields_from_relativistic_Poisson( Patch *patch ) = 0; // centers in Yee cells the fields
-    virtual void sum_rel_fields_to_em_fields( Patch *patch ) = 0;
-    virtual void initRelativisticPoissonFields( Patch *patch ) = 0;
+    virtual void initB_relativistic_Poisson( double gamma_mean ) = 0;
+    virtual void center_fields_from_relativistic_Poisson() = 0; // centers in Yee cells the fields
+    virtual void sum_rel_fields_to_em_fields() = 0;
+    virtual void initRelativisticPoissonFields() = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     virtual void centeringErel( std::vector<double> E_Add ) = 0;
     
@@ -351,7 +351,7 @@ public:
     virtual void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes ) = 0;
     virtual void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff) = 0;
     
-    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
+    void boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow );
     
     void laserDisabled();
     
@@ -437,7 +437,7 @@ public:
     void applyAntenna( unsigned int iAntenna, double intensity );
     
     //! Method that fills the initial spatial profile of the antenna
-    virtual void initAntennas( Patch *patch, Params& params ) {};
+    virtual void initAntennas( Patch *, Params& ) {};
     
     virtual double computeEnergy();
     

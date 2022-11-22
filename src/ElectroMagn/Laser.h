@@ -25,7 +25,7 @@ public:
     LaserProfile() {};
     virtual ~LaserProfile() {};
     virtual double getAmplitude( std::vector<double> pos, double t, int j, int k ) = 0;
-    virtual std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
+    virtual std::complex<double> getAmplitudecomplex( std::vector<double>, double, int, int )
     {
         return 0.;
     };
@@ -34,8 +34,8 @@ public:
     {
         return "?";
     };
-    virtual void createFields( Params &params, Patch *patch, ElectroMagn *EMfields ) {};
-    virtual void initFields( Params &params, Patch *patch, ElectroMagn *EMfields ) {};
+    virtual void createFields( Params &, Patch *, ElectroMagn * ) {};
+    virtual void initFields( Params &, Patch *, ElectroMagn * ) {};
 };
 
 
@@ -136,7 +136,7 @@ public:
     LaserProfileNonSeparable( LaserProfileNonSeparable *lp )
         : spaceAndTimeProfile_( new Profile( lp->spaceAndTimeProfile_ ) ) {};
     ~LaserProfileNonSeparable();
-    inline double getAmplitude( std::vector<double> pos, double t, int j, int k ) override
+    inline double getAmplitude( std::vector<double> pos, double t, int, int ) override
     {
         double amp;
         #pragma omp critical
@@ -144,7 +144,7 @@ public:
         return amp;
     }
 
-    inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k ) override
+    inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int, int ) override
     {
         std::complex<double> amp;
         #pragma omp critical
@@ -187,7 +187,7 @@ public:
     LaserProfileNULL() {};
     ~LaserProfileNULL() {};
     
-    inline double getAmplitude( std::vector<double> pos, double t, int j, int k ) override
+    inline double getAmplitude( std::vector<double>, double, int, int ) override
     {
         return 0.;
     }

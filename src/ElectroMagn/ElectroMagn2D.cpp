@@ -21,8 +21,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch )
+ElectroMagn2D::ElectroMagn2D( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch )
 {
 
     initElectroMagn2DQuantities( params, patch );
@@ -560,7 +560,7 @@ void ElectroMagn2D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initE_relativistic_Poisson
 
-void ElectroMagn2D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn2D::initB_relativistic_Poisson( double gamma_mean )
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int ny_d = dimDual[1];
@@ -600,7 +600,7 @@ void ElectroMagn2D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initB_relativistic_Poisson
 
-void ElectroMagn2D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn2D::center_fields_from_relativistic_Poisson()
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int ny_p = dimPrim[1];
@@ -654,7 +654,7 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson( Patch *patch )
     
 }
 
-void ElectroMagn2D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn2D::initRelativisticPoissonFields()
 {
     // init temporary fields for relativistic field initialization,
     // to be added to the already present electromagnetic fields
@@ -681,7 +681,7 @@ void ElectroMagn2D::initRelativisticPoissonFields( Patch *patch )
     
 } // initRelativisticPoissonFields
 
-void ElectroMagn2D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn2D::sum_rel_fields_to_em_fields()
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int ny_p = dimPrim[1];
