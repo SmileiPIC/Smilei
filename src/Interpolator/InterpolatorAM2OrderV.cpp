@@ -57,7 +57,7 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 //    // Calculate coeffs
 //    coeffs( xpn, rpn );
 //    
-//    int nparts( particles.size() );
+//    int nparts( particles.numberOfParticles() );
 //    
 //    // Interpolation of El^(d,p)
 //    *( ELoc+0*nparts ) = std::real( compute( &coeffld_[1], &coeffrp_[1], El, id_, jp_ ) );
@@ -482,7 +482,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //    
 //    // auxiliary quantities    
 //    double delta2, xpn, r, rpn;
-//    int nparts = particles.size() ;
+//    int nparts = particles.numberOfParticles() ;
 //
 //    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 //
@@ -564,7 +564,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //    
 //    double r, delta2, xpn, rpn;
 //    //Loop on bin particles
-//    int nparts =  particles.size() ;
+//    int nparts =  particles.numberOfParticles() ;
 //    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 //    
 //        // Normalized particle position

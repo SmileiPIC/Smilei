@@ -970,13 +970,13 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
                 iPart = ( *indexes_of_particles_to_exchange )[ii];
             }
             while( iPart >= ( *cufirst_index )[ibin] && ii > 0 ) {
-                cuParticles.overwriteParticle( ( *culast_index )[ibin]-1, iPart );
+                cuParticles.overwriteParticle( ( *culast_index )[ibin]-1, iPart, false );
                 ( *culast_index )[ibin]--;
                 ii--;
                 iPart = ( *indexes_of_particles_to_exchange )[ii];
             }
             if( iPart >= ( *cufirst_index )[ibin] && iPart < ( *culast_index )[ibin] ) { //On traite la dernière particule (qui peut aussi etre la premiere)
-                cuParticles.overwriteParticle( ( *culast_index )[ibin]-1, iPart );
+                cuParticles.overwriteParticle( ( *culast_index )[ibin]-1, iPart, false );
                 ( *culast_index )[ibin]--;
             }
         }
@@ -989,7 +989,7 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
         ii = ( *cufirst_index )[ibin]-( *culast_index )[ibin-1]; // Shift the bin in memory by ii slots.
         iPart = min( ii, ( *culast_index )[ibin]-( *cufirst_index )[ibin] ); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
         if( iPart > 0 ) {
-            cuParticles.overwriteParticle( ( *culast_index )[ibin]-iPart, ( *culast_index )[ibin-1], iPart );
+            cuParticles.overwriteParticle( ( *culast_index )[ibin]-iPart, ( *culast_index )[ibin-1], iPart, false );
         }
         ( *culast_index )[ibin] -= ii;
         ( *cufirst_index )[ibin] = ( *culast_index )[ibin-1];

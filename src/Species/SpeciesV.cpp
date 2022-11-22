@@ -285,11 +285,27 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
+        // Prepare particles buffers for multiphoton Breit-Wheeler
+        if( Multiphoton_Breit_Wheeler_process ) {
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
+            mBW_pair_particles_[0]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->size() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[0] += MPI_Wtime() - timer;
+#endif
+
+        }
+
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+            smpi->resizeBuffers( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -340,17 +356,25 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
 
+                // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                //
+                //     ( *Radiate )( *particles,
+                //                   radiated_photons_,
+                //                   smpi,
+                //                   RadiationTables, nrj_radiated_,
+                //                   particles->first_index[scell], particles->last_index[scell], ithread );
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,6);
-                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+
 
                     ( *Radiate )( *particles,
                                   radiated_photons_,
                                   smpi,
-                                  RadiationTables,
-                                  nrj_radiated_,
-                                  particles->first_index[scell],
-                                  particles->last_index[scell], ithread );
+                                  RadiationTables, nrj_radiated_,
+                                  particles->first_index[ipack*packsize_+scell],
+                                  particles->last_index[ipack*packsize_+scell],
+                                  ithread );
 
                     // // Update scalar variable for diagnostics
                     // nrj_radiated_ += Radiate->getRadiatedEnergy();
@@ -375,9 +399,19 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
 
+                // for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                    // Pair generation process
+                    // We reuse nrj_radiated_ for the pairs
+                    // ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                    //                                         smpi,
+                    //                                         mBW_pair_particles_,
+                    //                                         mBW_pair_species_,
+                    //                                         MultiphotonBreitWheelerTables,
+                    //                                         nrj_radiated_,
+                    //                                         particles->first_index[scell], particles->last_index[scell], ithread );
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,7);
-                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
 
                     // Pair generation process
                     // We reuse nrj_radiated_ for the pairs
@@ -387,38 +421,71 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                                                             mBW_pair_species_,
                                                             MultiphotonBreitWheelerTables,
                                                             nrj_radiated_,
-                                                            particles->first_index[scell], particles->last_index[scell], ithread );
+                                                            particles->first_index[ipack*packsize_+scell],
+                                                            particles->last_index[ipack*packsize_+scell],
+                                                            ithread );
 
                     // Update the photon quantum parameter chi of all photons
-                    Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
-                            smpi,
-                            particles->first_index[scell],
-                            particles->last_index[scell],
-                            ithread );
+                    // Multiphoton_Breit_Wheeler_process->computeThreadPhotonChi( *particles,
+                    //         smpi,
+                    //         particles->first_index[scell],
+                    //         particles->last_index[scell],
+                    //         ithread );
 
                     // Suppression of the decayed photons into pairs
-                    Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
-                        *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
 
-                }
+                    // Multiphoton_Breit_Wheeler_process->removeDecayedPhotons(
+                    //     *particles, smpi,
+                    //     ipack*packsize_+scell,
+                    //     particles->first_index.size(),
+                    //     &particles->first_index[0],
+                    //     &particles->last_index[0],
+                    //     ithread );
+
+
+                    // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
+                    //     *particles, smpi,
+                    //     ipack*packsize_+scell,
+                    //     particles->first_index.size(),
+                    //     &particles->first_index[0],
+                    //     &particles->last_index[0],
+                    //     ithread );
+
+                } // end for scell
+
+                // Remove Particles while keeping the first index of each bin
+                // Concerns as well the smpi buffers
+                // Warining : can not be here if npack_ > 0
+                //            In this case, it should be at the end of dynamics
+                removeTaggedParticlesPerBin(smpi, ithread, true);
+
+                // Delete the gap between the bins due to photon destruction
+                // Warining : can not be here if npack_ > 0
+                //            In this case, it should be at the end of dynamics
+                compress(smpi, ithread, true);
+
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,7);
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
-            } // end Multiphoton Breit Wheeler
+            } // End multiphoton Breit-Wheeler
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
 
-
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,1);
-            // Push the particles and the photons
+
+            // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+                // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
                        particles->last_index[ipack*packsize_+packsize_-1],
                        ithread, particles->first_index[ipack*packsize_] );
+
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,1);
+
+            // }
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1] += MPI_Wtime() - timer;
@@ -577,6 +644,23 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
         }
     } // End projection for frozen particles
+
+    // Compression of the bins if necessary
+    // Multiphoton Breit-Wheeler
+//     if( Multiphoton_Breit_Wheeler_process ) {
+//
+// #ifdef  __DETAILED_TIMERS
+//         timer = MPI_Wtime();
+// #endif
+//
+//         compress(smpi);
+//
+// #ifdef  __DETAILED_TIMERS
+//         patch->patch_timers[6] += MPI_Wtime() - timer;
+// #endif
+//
+//     }
+
 }//END dynamics
 
 #ifdef _OMPTASKS
@@ -637,7 +721,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     {
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
         // why was this used if the array is resized later?
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Prepare for sorting
         for( unsigned int i=0; i<count.size(); i++ ) {
@@ -645,7 +729,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         }
 
         int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-        smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );
+        smpi->resizeBuffers( buffer_id, nDim_field, nparts_in_pack );
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){
 #ifdef  __DETAILED_TIMERS
@@ -1431,16 +1515,16 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
         const double *const __restrict__ position_y = particles->getPtrPosition(1);
         const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
-        double min_loc_l = round(min_loc_vec[0]*dx_inv_[0]);
-        double min_loc_r = round(min_loc_vec[1]*dx_inv_[1]);
+        double min_loc_l = std::round(min_loc_vec[0]*dx_inv_[0]);
+        double min_loc_r = std::round(min_loc_vec[1]*dx_inv_[1]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++ ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys particles
-                cell_keys[iPart]  = round( position_x[iPart] * dx_inv_[0]) - min_loc_l ;
+                cell_keys[iPart]  = std::round( position_x[iPart] * dx_inv_[0]) - min_loc_l ;
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round( sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
+                cell_keys[iPart] += std::round( std::sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
             }
        }
 
@@ -1450,19 +1534,19 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
         const double *const __restrict__ position_y = particles->getPtrPosition(1);
         const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
-        double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
-        double min_loc_y = round (min_loc_vec[1] * dx_inv_[1]);
-        double min_loc_z = round (min_loc_vec[2] * dx_inv_[2]);
+        double min_loc_x = std::round (min_loc_vec[0] * dx_inv_[0]);
+        double min_loc_y = std::round (min_loc_vec[1] * dx_inv_[1]);
+        double min_loc_z = std::round (min_loc_vec[2] * dx_inv_[2]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart]  = round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
+                cell_keys[iPart]  = std::round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round(position_y[iPart] * dx_inv_[1] )- min_loc_y ;
+                cell_keys[iPart] += std::round(position_y[iPart] * dx_inv_[1] )- min_loc_y ;
                 cell_keys[iPart] *= length_[2];
-                cell_keys[iPart] += round(position_z[iPart] * dx_inv_[2] )- min_loc_z ;
+                cell_keys[iPart] += std::round(position_z[iPart] * dx_inv_[2] )- min_loc_z ;
             }
         }
 
@@ -1471,16 +1555,16 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
         const double *const __restrict__ position_x = particles->getPtrPosition(0);
         const double *const __restrict__ position_y = particles->getPtrPosition(1);
 
-        double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
-        double min_loc_y = round (min_loc_vec[1] * dx_inv_[1]);
+        double min_loc_x = std::round (min_loc_vec[0] * dx_inv_[0]);
+        double min_loc_y = std::round (min_loc_vec[1] * dx_inv_[1]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart]  = round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
+                cell_keys[iPart]  = std::round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round(position_y[iPart] * dx_inv_[1] )- min_loc_y ;
+                cell_keys[iPart] += std::round(position_y[iPart] * dx_inv_[1] )- min_loc_y ;
 
             }
         }
@@ -1622,7 +1706,6 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
         addSpaceForOneParticle();
 
     source_particles.clear();
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1803,13 +1886,15 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize ) { // advance particle momentum
 
+        // For the moment, npack_ is always equal to 1
+        // Notion of pack_ il let for futur optimization
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             // ipack start @ particles->first_index [ ipack * packsize_ ]
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+            smpi->resizeBuffers( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1923,7 +2008,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
@@ -2105,7 +2190,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+            smpi->resizeBuffers( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -2183,7 +2268,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+            smpi->resizeBuffers( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -2337,7 +2422,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
 # endif
 
-    int bin_size0 = b_dim[0];
+    //int bin_size0 = b_dim[0];
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
@@ -2360,7 +2445,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             count[i] = 0;
         }
 
-        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        smpi->resizeBuffers( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS

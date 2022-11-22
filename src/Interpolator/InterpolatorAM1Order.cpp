@@ -123,7 +123,7 @@ void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xpn, rpn );
  
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     
     // Interpolation of El^(p,p)
     *( ELoc+0*nparts ) = std::real( compute( &coeffxp_[0], &coeffyp_[0], El, ip_, jp_ ) );
@@ -241,7 +241,7 @@ void InterpolatorAM1Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );

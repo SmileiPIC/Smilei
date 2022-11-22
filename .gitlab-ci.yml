@@ -15,7 +15,6 @@ install:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     # Force workdir cleaning in case of retried
@@ -35,7 +34,6 @@ compile_default:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     # Move in test dir
@@ -48,7 +46,6 @@ run1D:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     # Move in test dir
@@ -62,7 +59,6 @@ run2D:
   only:
     - develop
     - cleanup
-    - task_tracing
 
 
   script:
@@ -79,7 +75,6 @@ run3D:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     # Move in test dir
@@ -96,8 +91,7 @@ runAM:
   only:
     - develop
     - cleanup
-    - task_tracing
-
+=======
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -109,8 +103,7 @@ runCollisions:
   only:
     - develop
     - cleanup
-    - task_tracing
-
+=======
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -122,8 +115,7 @@ compile_picsar:
   only:
     - develop
     - cleanup
-    - task_tracing
-
+=======
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -134,7 +126,6 @@ run_picsar:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -145,8 +136,7 @@ compile_debug:
   only:
     - develop
     - cleanup
-    - task_tracing
-
+=======
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -157,7 +147,6 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -169,7 +158,6 @@ compile_no_openmp:
   only:
     - develop
     - cleanup
-    - task_tracing
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -179,7 +167,6 @@ compile_no_openmp:
 compile_omptasks:
   stage: compile_omptasks
   only:
-    - task_tracing
     - develop
     - cleanup
 
@@ -191,7 +178,6 @@ compile_omptasks:
 run_omptasks:
   stage: run_omptasks
   only:
-    - task_tracing
     - develop
     - cleanup
 

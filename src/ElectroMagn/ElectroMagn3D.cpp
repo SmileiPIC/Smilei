@@ -1027,21 +1027,22 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
     const unsigned int nz_d = dimDual[2];
     // Static cast of the fields
     if( !is_spectral ) {
-        Field3D *Bx3D   = static_cast<Field3D *>( Bx_ );
-        Field3D *By3D   = static_cast<Field3D *>( By_ );
-        Field3D *Bz3D   = static_cast<Field3D *>( Bz_ );
-        Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
-        Field3D *By3D_m = static_cast<Field3D *>( By_m );
-        Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
+        /* const */ double *const Bx3D   = Bx_->data();
+        /* const */ double *const By3D   = By_->data();
+        /* const */ double *const Bz3D   = Bz_->data();
+        double *const             Bx3D_m = Bx_m->data();
+        double *const             By3D_m = By_m->data();
+        double *const             Bz3D_m = Bz_m->data();
 
         // Magnetic field Bx^(p,d,d)
-        memcpy( &( ( *Bx3D_m )( 0, 0, 0 ) ), &( ( *Bx3D )( 0, 0, 0 ) ), nx_p*ny_d*nz_d*sizeof( double ) );
+        memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );
 
         // Magnetic field By^(d,p,d)
-        memcpy( &( ( *By3D_m )( 0, 0, 0 ) ), &( ( *By3D )( 0, 0, 0 ) ), nx_d*ny_p*nz_d*sizeof( double ) );
+        memcpy( By3D_m, By3D, nx_d*ny_p*nz_d*sizeof( double ) );
 
         // Magnetic field Bz^(d,d,p)
-        memcpy( &( ( *Bz3D_m )( 0, 0, 0 ) ), &( ( *Bz3D )( 0, 0, 0 ) ), nx_d*ny_d*nz_p*sizeof( double ) );
+        memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
+        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -1130,18 +1131,20 @@ void ElectroMagn3D::centerMagneticFields()
     const unsigned int ny_d = dimDual[1];
     const unsigned int nz_d = dimDual[2];
     // Static cast of the fields
-    Field3D *Bx3D   = static_cast<Field3D *>( Bx_ );
-    Field3D *By3D   = static_cast<Field3D *>( By_ );
-    Field3D *Bz3D   = static_cast<Field3D *>( Bz_ );
-    Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
-    Field3D *By3D_m = static_cast<Field3D *>( By_m );
-    Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
+    const double *const __restrict__ Bx3D = Bx_->data();
+    const double *const __restrict__ By3D = By_->data();
+    const double *const __restrict__ Bz3D = Bz_->data();
+    double *const __restrict__ Bx3D_m     = Bx_m->data();
+    double *const __restrict__ By3D_m     = By_m->data();
+    double *const __restrict__ Bz3D_m     = Bz_m->data();
 
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
+            const unsigned int l =  i*(ny_d*nz_d) + j*nz_d;
+            #pragma omp simd
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                ( *Bx3D_m )( i, j, k ) = ( ( *Bx3D )( i, j, k ) + ( *Bx3D_m )( i, j, k ) )*0.5;
+                Bx3D_m[ l + k ] = ( Bx3D[ l + k] + Bx3D_m[ l + k] )*0.5;
             }
         }
     }
@@ -1149,8 +1152,9 @@ void ElectroMagn3D::centerMagneticFields()
     // Magnetic field By^(d,p,d)
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            #pragma omp simd
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                ( *By3D_m )( i, j, k ) = ( ( *By3D )( i, j, k ) + ( *By3D_m )( i, j, k ) )*0.5;
+                By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ] = ( By3D[ i*(ny_p*nz_d) + j*nz_d + k ] + By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ] )*0.5;
             }
         }
     }
@@ -1158,9 +1162,10 @@ void ElectroMagn3D::centerMagneticFields()
     // Magnetic field Bz^(d,d,p)
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
+            #pragma omp simd
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                ( *Bz3D_m )( i, j, k ) = ( ( *Bz3D )( i, j, k ) + ( *Bz3D_m )( i, j, k ) )*0.5;
-            }
+                Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ] = ( Bz3D[ i*(ny_d*nz_p) + j*nz_p + k ] + Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ] )*0.5;
+            } // end for k
         } // end for j
     } // end for i
 
@@ -1998,7 +2003,7 @@ void ElectroMagn3D::copyInLocalSusceptibility(int ispec, int ibin,
 	      iloc = ibin + i ;
         for (int j = 0; j < b_dim1 ; j++) {
             for (int k = 0; k < b_dim2 ; k++) {
-	              (*Chi3D)(iloc,j,k) +=  b_Chi[(i*b_dim1+j)*b_dim2+k];   
+	              (*Chi3D)(iloc,j,k) +=  b_Chi[(i*b_dim1+j)*b_dim2+k];
             }
         }
     }
