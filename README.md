@@ -4,8 +4,6 @@
 
 Open-source, user-friendly and designed for high performances on super-computers, it is applied to a wide range of physics studies: from relativistic laser-plasma interaction to astrophysics.
 
-## Documentation [![Build Status](https://travis-ci.com/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.com/SmileiPIC/Smilei)
-
 * [General documentation](https://smileipic.github.io/Smilei) 
 * [Tutorials](https://smileipic.github.io/tutorials)
 
