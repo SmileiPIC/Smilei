@@ -1036,7 +1036,7 @@ void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &ire
     }
     // Envelope communication
     if (EM->envelope!=NULL) {
-        if (static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
+        if (dynamic_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
             EnvelopeBC2D_PML *embcenv = static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] );
 
             if (embcenv->A_n_ ) {
@@ -1078,7 +1078,7 @@ void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &ire
                     }
                 }
             }
-        } else if (static_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] )){ 
+        } else if (dynamic_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] )){ 
             EnvelopeBC3D_PML *embcenv = static_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] );
             if (embcenv->A_n_ ) {
                 if(!send_xmax_bc && bcId>1 && EM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
