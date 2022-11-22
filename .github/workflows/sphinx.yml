@@ -11,5 +11,4 @@ jobs:
     - uses: ammaraskar/sphinx-action@master
       with:
         pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y make git"
-        build-command: "make -C doc/Sphinx BUILDDIR=../../build html"
-        docs-folder: "build/html"
+        docs-folder: "doc/Sphinx"
