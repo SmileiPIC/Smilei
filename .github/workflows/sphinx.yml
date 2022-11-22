@@ -31,6 +31,9 @@ jobs:
         git add .
         git commit -m "Update documentation" -a || true
         find .
+        echo "test1"
+        git tag
+        echo "test2"
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
