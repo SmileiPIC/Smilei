@@ -386,17 +386,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( EM_BCs[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic" ) ) {
-            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side",
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side.",
+                            LINK_NAMELIST + std::string("#main-variables") );
+        } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "PML" || EM_BCs[iDim][1] == "PML" ) ) {
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be PML only on one side for the moment.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
         if( is_spectral && geometry != "AMcylindrical" && ( EM_BCs[iDim][0] != "periodic" || EM_BCs[iDim][1] != "periodic" ) ) {
             ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
-        //if ( ( (EM_BCs[0][0] == "PML") || (EM_BCs[0][1] == "PML") )
-        //     && ( (EM_BCs[iDim][0] != "PML") || (EM_BCs[iDim][1] != "PML") ) ) {
-        //    ERROR( "Either all PML, either none" );
-        //}
     }
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
