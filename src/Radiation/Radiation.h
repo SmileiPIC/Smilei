@@ -51,6 +51,7 @@ public:
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin = 0,
         int             ipart_ref = 0) = 0;
 
     //! Computation of the Lorentz invariant quantum parameter
@@ -74,11 +75,11 @@ public:
                                       double Bx, double By, double Bz )
     {
 
-        return fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
-               * sqrt( fabs( pow( Ex*px + Ey*py + Ez*pz, 2 )
-                             - pow( gamma*Ex - By*pz + Bz*py, 2 )
-                             - pow( gamma*Ey - Bz*px + Bx*pz, 2 )
-                             - pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
+        return std::fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
+               * std::sqrt( std::fabs( std::pow( Ex*px + Ey*py + Ez*pz, 2 )
+                             - std::pow( gamma*Ex - By*pz + Bz*py, 2 )
+                             - std::pow( gamma*Ey - Bz*px + Bx*pz, 2 )
+                             - std::pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
     };
 
     //! Computation of the quantum parameter for the given
@@ -96,9 +97,16 @@ public:
                               int ithread,
                               int ipart_ref = 0 );
 
+    // join the lists of photons created through Monte Carlo when tasks are used
+    void joinNewPhotons(Particles * photons,unsigned int Nbins);
+                              
     // Local array of new photons
+    Particles *new_photons_per_bin_;
+
     // Particles new_photons_;
 
+
+    
 protected:
 
     // ________________________________________

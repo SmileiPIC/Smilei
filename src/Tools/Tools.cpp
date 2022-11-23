@@ -104,6 +104,14 @@ std::string Tools::printBytes( uint64_t nbytes )
     return t.str();
 }
 
+int Tools::getOMPThreadNum()
+{
+#ifdef _OPENMP
+    return ::omp_get_thread_num();
+#else
+    return 0;
+#endif
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This function returns true/flase whether the file exists or not

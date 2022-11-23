@@ -255,6 +255,22 @@ public:
     
     //!Pointers toward R inverse values stored in patch
     double *invR, *invRd;
+
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalDensities(int ispec, int ibin, 
+                              double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final {};
+
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalAMDensities(int ispec, int ibin, 
+                              std::complex<double> *b_Jl, std::complex<double> *b_Jr, 
+                              std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final;  
+
+    // copy susceptibility projected on sub-buffers to global susceptibility
+    void copyInLocalSusceptibility(int ispec, int ibin, 
+                                   double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) override final;
+
 };
 
 #endif

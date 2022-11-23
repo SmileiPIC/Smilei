@@ -221,6 +221,55 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
                    "This is a trough estimation, which depends of the plasma load imbalance." );
         }
     }
+
+#ifdef _PARTEVENTTRACING
+    iter_frequency_particle_event_tracing_ = 100;
+    int nthreads = omp_get_max_threads();
+    particle_event_tracing_event_time_.resize(nthreads);
+    particle_event_tracing_start_or_end_.resize(nthreads);
+    particle_event_tracing_event_name_.resize(nthreads);
+
+    unsigned int tot_species_number = PyTools::nComponents( "Species" );
+    unsigned int Npatches           = params.tot_number_of_patches;
+    unsigned int Nbins              = params.n_space[0]/params.cluster_width_;
+    // estimate of the number of tasks
+    unsigned int Ntasks             = Npatches*Nbins*tot_species_number;
+    if (!params.Laser_Envelope_model){
+        Ntasks *= 8 ; // 7 operators (Interp+Push+BC+Proj+Ioniz+Rad+MBW+Vecto)
+        Ntasks += Npatches; // Density reductions  
+        Ntasks += Npatches*tot_species_number*4; // Reductions for Ioniz, Rad, MBW, Vecto  
+    } else {
+        Ntasks *= 9  ; // 7 operators (Interp1+Push1+Interp2+Push2+BC+Proj1+Proj2+Ioniz+Vecto)
+        Ntasks += Npatches * 2; // Density + susceptibility reductions 
+        Ntasks += Npatches*tot_species_number*2; // Reductions for Ioniz, Vecto 
+    }
+    Ntasks = int(Ntasks/nthreads); // suppose tasks are evenly distributed among threads
+
+    for (unsigned int ithread = 0; ithread<nthreads; ithread++){
+        // use reserve to prevent frequent memory reallocation which increases tracing overhead
+        particle_event_tracing_event_time_[ithread].reserve(Ntasks);
+        particle_event_tracing_start_or_end_[ithread].reserve(Ntasks);
+        particle_event_tracing_event_name_[ithread].reserve(Ntasks);
+        // initialize vectors to zero size
+        particle_event_tracing_event_time_[ithread].resize(0);          // stores time
+        particle_event_tracing_start_or_end_[ithread].resize(0);        // stores start (0) or end (1)
+        particle_event_tracing_event_name_[ithread].resize(0);          // stores task type
+        // task types:
+        // -  0: Interp 
+        // -  1: Push
+        // -  2: Particle BC
+        // -  3: Proj
+        // -  4: Density Reduction (tasks subgrids)
+        // -  5: Ionization
+        // -  6: Radiation
+        // -  7: Multiphoton Breit Wheeler
+        // -  8: Ionization Reduction of new electrons
+        // -  9: Radiation Reduction of new photons
+        // - 10: Multiphoton Breit Wheeler Reduction of new electron-positron couples
+        // - 11: Computation of keys and count for vectorization
+    }
+#endif
+
 } // END init
 
 
@@ -825,7 +874,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->numberOfParticles();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle, params.keep_position_old );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
@@ -1809,3 +1858,60 @@ void SmileiMPI::computeGlobalDiags(DiagnosticRadiationSpectrum* diagRad, int iti
         }
     }
 } // END computeGlobalDiags(DiagnosticRadiationSpectrum*  ...)
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Buffer management
+// ---------------------------------------------------------------------------------------------------------------------
+
+//! Erase Particles from istart ot the end in the buffers of thread ithread
+void SmileiMPI::eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM )
+{
+    
+    unsigned int np = dynamics_invgf[ithread].size();
+    
+    for ( int idim=2 ; idim>=0 ; idim-- ) {
+        dynamics_Epart[ithread].erase(dynamics_Epart[ithread].begin()+idim*np + istart,
+                                      dynamics_Epart[ithread].begin()+idim*np + np);
+        dynamics_Bpart[ithread].erase(dynamics_Bpart[ithread].begin()+idim*np + istart,
+                                      dynamics_Bpart[ithread].begin()+idim*np + np);
+    }
+    dynamics_invgf[ithread].erase(dynamics_invgf[ithread].begin() + istart,
+                                  dynamics_invgf[ithread].begin() + np);
+    
+    for ( int idim=ndim-1 ; idim>=0 ; idim-- ) {
+        dynamics_iold[ithread].erase(dynamics_iold[ithread].begin()+idim*np + istart,
+                                      dynamics_iold[ithread].begin()+idim*np + np);
+        dynamics_deltaold[ithread].erase(dynamics_deltaold[ithread].begin()+idim*np + istart,
+                                      dynamics_deltaold[ithread].begin()+idim*np + np);
+    }
+                                  
+    if( isAM ) {
+        dynamics_eithetaold[ithread].erase(dynamics_eithetaold[ithread].begin() + istart,
+                                           dynamics_eithetaold[ithread].begin() + np);
+    }
+    
+    if( dynamics_GradPHIpart.size() > 0 ) {
+        
+        for ( int idim=2 ; idim>=0 ; idim-- ) {
+            dynamics_GradPHIpart[ithread].erase(dynamics_GradPHIpart[ithread].begin()+idim*np + istart,
+                                          dynamics_GradPHIpart[ithread].begin()+idim*np + np);
+            dynamics_GradPHI_mpart[ithread].erase(dynamics_GradPHI_mpart[ithread].begin()+idim*np + istart,
+                                          dynamics_GradPHI_mpart[ithread].begin()+idim*np + np);
+        }
+        
+        dynamics_PHIpart[ithread].erase(dynamics_PHIpart[ithread].begin() + istart,
+                                    dynamics_PHIpart[ithread].begin() + np);
+        dynamics_PHI_mpart[ithread].erase(dynamics_PHI_mpart[ithread].begin() + istart,
+                                    dynamics_PHI_mpart[ithread].begin() + np);
+        dynamics_inv_gamma_ponderomotive[ithread].erase(dynamics_inv_gamma_ponderomotive[ithread].begin() + istart,
+                                    dynamics_inv_gamma_ponderomotive[ithread].begin() + np);
+                                    
+        if ( dynamics_EnvEabs_part.size() > 0 ) {
+            dynamics_EnvEabs_part[ithread].erase(dynamics_EnvEabs_part[ithread].begin() + istart,
+                                        dynamics_EnvEabs_part[ithread].begin() + np);
+            dynamics_EnvExabs_part[ithread].erase(dynamics_EnvExabs_part[ithread].begin() + istart,
+                                        dynamics_EnvExabs_part[ithread].begin() + np);
+        }
+    }
+}

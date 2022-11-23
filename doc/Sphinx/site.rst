@@ -7,7 +7,6 @@ Index
    overview
    understand
    use
-   more
 
 ----
 
@@ -19,15 +18,16 @@ Unreferenced pages
 .. toctree::
   :maxdepth: 1
 
-  ids
-  install_PICSAR
-  install_linux
-  install_macos
-  install_supercomputer
-  laser_offset
-  maxwell-juttner
-  particle_initialization
-  profiles
+  /Use/ids
+  /Use/install_PICSAR
+  /Use/install_linux
+  /Use/install_macos
+  /Use/install_supercomputer
+  /Use/laser_offset
+  /Use/maxwell-juttner
+  /Use/particle_initialization
+  /Use/profiles
+  /Use/tables
+  /Use/optimization_flags
   syntax_changes
-  tables
   implementation

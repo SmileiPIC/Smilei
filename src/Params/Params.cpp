@@ -298,9 +298,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         LINK_NAMELIST + std::string("#main-variables"));
     }
 
-    if( ( interpolator_  == "wt") && 
-        (geometry != "1Dcartesian")                &&  
-        (geometry != "2Dcartesian")                && 
+    if( ( interpolator_  == "wt") &&
+        (geometry != "1Dcartesian")                &&
+        (geometry != "2Dcartesian")                &&
         (geometry != "3Dcartesian")               ) {
         ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
         LINK_NAMELIST + std::string("#main-variables") );
@@ -603,18 +603,21 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         WARNING( "CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL );
     }
 
-
+    // mark if OpenMP tasks are used or not
+    omptasks = false;
+#ifdef _OMPTASKS
+    omptasks = true;
+#endif
 
     // cluster_width_
     PyTools::extract( "cluster_width", cluster_width_, "Main"   );
-
 
 
     // --------------------
     // Number of patches
     // --------------------
     if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
-        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  
+        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",
         LINK_NAMELIST + std::string("#main-variables")  );
     }
 
@@ -752,7 +755,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             // cell sorting explicitely set off
             } else {
                 if (!( vectorization_mode == "off")) {
-                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",  
+                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",
                         LINK_NAMELIST + std::string("#vectorization"))
                 }
             }
@@ -780,7 +783,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
     if( gpu_computing ) {
-#if( defined( _GPU ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if( defined( ACCELERATOR_GPU_ACC ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // If compiled for GPU and asking for GPU
         MESSAGE( 1, "Smilei will run on GPU devices" );
 #else
@@ -883,7 +886,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     has_MC_radiation_ = false ;// Default value
     has_LL_radiation_ = false ;// Default value
     has_Niel_radiation_ = false ;// Default value
-    hasDiagRadiationSpectrum = false; // Default value
+    has_diag_radiation_spectrum_ = false; // Default value
 
     // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
@@ -906,18 +909,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         else if (radiation_model=="diagradiationspectrum")
         {
-            hasDiagRadiationSpectrum = true;
+            has_diag_radiation_spectrum_ = true;
         }
     }
 
     // -------------------------------------------------------
-    // Parameters for the mutliphoton Breit-Wheeler pair decay
+    // Parameters for the multiphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
-    hasMultiphotonBreitWheeler = false ;// Default value
+    has_multiphoton_Breit_Wheeler_ = false ;// Default value
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
         if( PyTools::extractV( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
-            hasMultiphotonBreitWheeler = true;
+            has_multiphoton_Breit_Wheeler_ = true;
         }
     }
 
@@ -929,6 +932,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // add the read or computed value of cluster_width_ to the content of smilei.py
     namelist += string( "Main.cluster_width= " ) + to_string( cluster_width_ ) + "\n";
+
+    // add the use (or or not) of the OpenMP tasks to the content of smilei.py
+    namelist += string( "Main.omptasks= " ) + to_string( omptasks ) + "\n";
 
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -1182,9 +1188,9 @@ void Params::compute()
 
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         cluster_width_ = n_space[0];
-        // On GPU, dont do the CPU automatic cluster_width computation, only one 
+        // On GPU, dont do the CPU automatic cluster_width computation, only one
         // bin is expected.
         // NOTE: In OMP GPU offloading and 2D, the true number of cluster is
         // redefined in nvidiaParticles::prepareBinIndex.
@@ -1272,7 +1278,7 @@ void Params::check_consistency()
         //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
         // }
 
-        if( hasMultiphotonBreitWheeler ) {
+        if( has_multiphoton_Breit_Wheeler_ ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }
@@ -1835,9 +1841,9 @@ void Params::multiple_decompose_3D()
         }
     }
     if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != (unsigned int)sz ) && (!rk) )
-        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2] 
-                << ") is not equal to the number of MPI processes (" 
-                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2] 
+        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2]
+                << ") is not equal to the number of MPI processes ("
+                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2]
                 << " != " << sz << ")" );
 
 
@@ -1894,7 +1900,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
@@ -1911,7 +1917,7 @@ bool Params::isGPUParticleBinningAvailable() const
 
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
 
 int Params::getGPUClusterWidth() const
 {

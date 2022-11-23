@@ -22,7 +22,7 @@
 #include "RadiationTools.h"
 #include "userFunctions.h"
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 #endif
 
@@ -63,11 +63,12 @@ public:
         Particles &particles,
         Particles *photons,
         SmileiMPI       *smpi,
-        RadiationTables &RadiationTables,
+        RadiationTables &radiation_tables,
         double          &radiated_energy,
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin,
         int             ipart_ref = 0
         );
         

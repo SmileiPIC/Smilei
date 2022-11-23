@@ -1,7 +1,7 @@
 #ifndef GPU_RANDOM
 #define GPU_RANDOM
 
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
     #include <openacc_curand.h>
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     // #define __HIP_PLATFORM_HCC__
@@ -28,7 +28,7 @@ namespace smilei {
             {
             protected:
                 using State =
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                     ::curandState_t;
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     // TODO
@@ -41,7 +41,7 @@ namespace smilei {
 
             public:
                 Random()
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     : a_state_{ 0xDEADBEEFU }
 #else
@@ -56,7 +56,7 @@ namespace smilei {
                            unsigned long long seq,
                            unsigned long long offset )
                 {
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                     // Cuda generator initialization
                     ::curand_init( seed, seq, offset, &a_state_ );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -71,7 +71,7 @@ namespace smilei {
                 // Initialization
                 double uniform()
                 {
-#if defined( _GPU )
+#if defined( ACCELERATOR_GPU_ACC )
                     return ::curand_uniform( &a_state_ );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     // TODO

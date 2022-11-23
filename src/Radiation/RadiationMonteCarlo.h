@@ -16,7 +16,7 @@
 #include "Radiation.h"
 #include "userFunctions.h"
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 // This is wrong. Dont include nvidiaParticles, it may cause problem!
 // See particle factory.
@@ -45,7 +45,7 @@ public:
     //! \param photon_species species that will receive emitted photons
     //!                    properties of the current species
     //! \param smpi        MPI properties
-    //! \param RadiationTables Cross-section data tables and useful functions
+    //! \param radiation_tables Cross-section data tables and useful functions
     //                     for nonlinear inverse Compton scattering
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
@@ -56,11 +56,12 @@ public:
         Particles &particles,
         Particles *photons,
         SmileiMPI *smpi,
-        RadiationTables &RadiationTables,
+        RadiationTables &radiation_tables,
         double          &radiated_energy,
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin,
         int             ipart_ref = 0
        );
 

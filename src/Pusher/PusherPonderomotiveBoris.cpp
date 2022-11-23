@@ -41,10 +41,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     
     short *const charge = particles.getPtrCharge();
     
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.last_index.back(); // particles.size()
-
-    
+    // const int nparts = vecto ? Epart->size() / 3 :
+    //                            particles.size(); // particles.size()
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -56,7 +55,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     const double *const __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
     //double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;

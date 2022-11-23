@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 #include <omp.h>
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
 #include <openacc.h>
 #endif
 
@@ -44,7 +44,7 @@ using namespace std;
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
 
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #ifdef _OPENACC
     void initialization_openacc()
     {
@@ -80,7 +80,7 @@ int main( int argc, char *argv[] )
     // -------------------------
 
     // Create the OpenACC environment
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     initialization_openacc();
 #endif
 
@@ -106,46 +106,44 @@ int main( int argc, char *argv[] )
     PyTools::setIteration( 0 );
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    if( params.gpu_computing ) {
-        if( ::omp_get_max_threads() != 1 ) {
-            // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei 
-            // GPU to use only one thread.
-            WARNING( "Running Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
-        }
+    SMILEI_ASSERT( params.gpu_computing );
 
-        const int gpu_count = ::omp_get_num_devices();
+    if( ::omp_get_max_threads() != 1 ) {
+        // TODO(Etienne M): I believe there is a race condition inside the CCE OpenMP runtime so I constrain Smilei
+        // GPU to use only one thread.
+        WARNING( "Running Smilei on GPU using more than one OpenMP thread is not fully supported when offloading using OpenMP." );
+    }
 
-        if( gpu_count < 1 ) {
-            ERROR( "Simlei needs one accelerator, none detected." );
-        } else if( gpu_count > 1 ) {
-            // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
-            // (nor in OpenACC). This makes management of the device completely
-            // oblivious to the program (only one, the one by default).
-            // This could be a missed but very advanced optimization for some
-            // kernels/exchange.
-            ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
-            // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
+    const int gpu_count = ::omp_get_num_devices();
 
-            // // This assumes the MPI rank on a node are sequential
-            // const int this_process_gpu = smpi.getRank() % gpu_count;
+    if( gpu_count < 1 ) {
+        ERROR( "Simlei needs one accelerator, none detected." );
+    } else if( gpu_count > 1 ) {
+        // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
+        // (nor in OpenACC). This makes management of the device completely
+        // oblivious to the program (only one, the one by default).
+        // This could be a missed but very advanced optimization for some
+        // kernels/exchange.
+        ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
+        // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
-            // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
+        // // This assumes the MPI rank on a node are sequential
+        // const int this_process_gpu = smpi.getRank() % gpu_count;
 
-            // ::omp_set_default_device( this_process_gpu );
-        } else {
-            // ::omp_set_default_device(0);
-        }
+        // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
 
-        ::omp_sched_t a_scheduling_strategy{};
-        int           a_chunk_size = 0;
-        ::omp_get_schedule( &a_scheduling_strategy, &a_chunk_size );
-
-        if( a_scheduling_strategy != ::omp_sched_t::omp_sched_dynamic ) {
-            // As of CCE 13, 2022/04/22
-            WARNING( "Smilei can break if dynamic is not used." );
-        }
+        // ::omp_set_default_device( this_process_gpu );
     } else {
-        ERROR( "Smilei was compiled to offload computation to a GPU. Please enable the GPU mode in the Python input file." );
+        // ::omp_set_default_device(0);
+    }
+
+    ::omp_sched_t a_scheduling_strategy{};
+    int           a_chunk_size = 0;
+    ::omp_get_schedule( &a_scheduling_strategy, &a_chunk_size );
+
+    if( a_scheduling_strategy != ::omp_sched_t::omp_sched_dynamic ) {
+        // As of CCE 13, 2022/04/22
+        WARNING( "Smilei can break if dynamic is not used." );
     }
 #endif
 
@@ -188,10 +186,10 @@ int main( int argc, char *argv[] )
     RadiationTables radiation_tables_;
 
     // ------------------------------------------------------------------------
-    // Create MultiphotonBreitWheelerTables object for multiphoton
+    // Create multiphoton_Breit_Wheeler_tables_ object for multiphoton
     // Breit-Wheeler pair creation
     // ------------------------------------------------------------------------
-    MultiphotonBreitWheelerTables MultiphotonBreitWheelerTables;
+    MultiphotonBreitWheelerTables multiphoton_Breit_Wheeler_tables_;
 
     // ---------------------------------------------------
     // Special test mode
@@ -210,7 +208,7 @@ int main( int argc, char *argv[] )
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
     // ---------------------------------------------------------------------
-    MultiphotonBreitWheelerTables.initialization( params, &smpi );
+    multiphoton_Breit_Wheeler_tables_.initialization( params, &smpi );
 
     // reading from dumped file the restart values
     if( params.restart ) {
@@ -258,7 +256,7 @@ int main( int argc, char *argv[] )
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
 
-#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ) )
+#if !( defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC ) )
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -280,13 +278,13 @@ int main( int argc, char *argv[] )
         vecPatches.initAllDiags( params, &smpi );
 
         // TODO(Etienne M): GPU restart handling
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         ERROR( "Restart not tested on GPU !" );
 
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
         // The initial particle binning is done in initializeDataOnDevice.
 #endif
@@ -295,7 +293,7 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
 
-#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU ))
+#if !(defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC ))
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -433,13 +431,17 @@ int main( int argc, char *argv[] )
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        #ifdef _OMPTASKS
+                    vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+        #else
+                    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
         TITLE( "GPU allocation and copy of the fields and particles" );
         // Because most of the initialization "needs" (for now) to be done on
         // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_ );
+        vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
         vecPatches.copyEMFieldsFromHostToDevice();
         // The initial particle binning is done in initializeDataOnDevice.
 #endif
@@ -531,7 +533,7 @@ int main( int argc, char *argv[] )
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
             vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
-                                 MultiphotonBreitWheelerTables,
+                                 multiphoton_Breit_Wheeler_tables_,
                                  time_dual, timers, itime );
 
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
@@ -674,7 +676,11 @@ int main( int argc, char *argv[] )
             }
             
             // call the various diagnostics
+#ifdef _OMPTASKS
+            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
+#else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+#endif
 
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
@@ -696,7 +702,7 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
         
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
             ERROR( "Load balancing not tested on GPU !" );
 #endif
             count_dlb++;
@@ -787,6 +793,11 @@ int main( int argc, char *argv[] )
     if (params.multiple_decomposition) {
         region.clean();
     }
+    
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    vecPatches.cleanDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
+#endif
+    
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
     delete simWindow;

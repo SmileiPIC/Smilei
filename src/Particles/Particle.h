@@ -28,7 +28,7 @@ private:
     double Weight;
     //! containing the particle quantum parameter
     double Chi;
-    //! containing the particle optical depth
+    //! containing the particle optical depth for Monte-Carlo processes
     double Tau;
     //! charge state of the particle (multiples of e>0)
     short Charge;

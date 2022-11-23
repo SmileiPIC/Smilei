@@ -52,6 +52,10 @@ public:
                 Patch *patch,
                 unsigned int itime );
     
+    //! Creation of the charge profile and initialization of `max_charge_`
+    void createChargeProfile( struct SubSpace n_space_to_create,
+                Patch *patch);
+    
     //! Creation of the particle positions
     static void createPosition( std::string position_initialization,
                               std::vector<int> regular_number_array,

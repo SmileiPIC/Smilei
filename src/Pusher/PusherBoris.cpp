@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef _GPU
+#ifdef ACCELERATOR_GPU_ACC
     #include <accelmath.h>
 #endif
 
@@ -25,11 +25,6 @@ PusherBoris::~PusherBoris()
 
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
-
-    const std::vector<double> *const Epart = &( smpi->dynamics_Epart[ithread] );
-    const std::vector<double> *const Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double *const __restrict__ invgf       = &( smpi->dynamics_invgf[ithread][0] );
-
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
@@ -40,15 +35,16 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    const int nparts = vecto ? Epart->size() / 3 :
-                               particles.last_index.back(); // particles.size()
+    double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
-    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
-    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const int nparts = particles.last_index.back(); // particles.size()
+
+    const double *const __restrict__ Ex = &( ( smpi->dynamics_Epart[ithread] )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( smpi->dynamics_Epart[ithread] )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( smpi->dynamics_Epart[ithread] )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( smpi->dynamics_Bpart[ithread] )[0*nparts] );
+    const double *const __restrict__ By = &( ( smpi->dynamics_Bpart[ithread] )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( smpi->dynamics_Bpart[ithread] )[2*nparts] );
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const int istart_offset   = istart - ipart_buffer_offset;
@@ -64,22 +60,22 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
                        position_y /* [istart:particle_number] */,             \
                        position_z /* [istart:particle_number] */ )
     #pragma omp teams distribute parallel for
-#elif defined(_GPU)
+#elif defined(ACCELERATOR_GPU_ACC)
     const int istart_offset   = istart - ipart_buffer_offset;
     const int particle_number = iend - istart;
 
-    #pragma acc parallel present(Ex [istart_offset:particle_number],    \
-                                 Ey [istart_offset:particle_number],    \
-                                 Ez [istart_offset:particle_number],    \
-                                 Bx [istart_offset:particle_number],    \
-                                 By [istart_offset:particle_number],    \
-                                 Bz [istart_offset:particle_number],    \
-                                 invgf [istart_offset:particle_number]) \
+    #pragma acc parallel present(Ex [0:nparts],    \
+                                 Ey [0:nparts],    \
+                                 Ez [0:nparts],    \
+                                 Bx [0:nparts],    \
+                                 By [0:nparts],    \
+                                 Bz [0:nparts],    \
+                                 invgf [0:nparts]) \
         deviceptr(position_x,                                           \
                   position_y,                                           \
                   position_z,                                           \
                   momentum_x,                                           \
-                  momentum_y,                                           \ 
+                  momentum_y,                                           \
                   momentum_z,                                           \
                   charge)
     #pragma acc loop gang worker vector
@@ -139,7 +135,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
     //     }
     // }
-    // 
+    //
     // if (nDim_>2) {
     //     #pragma omp simd
     //     for( int ipart=istart ; ipart<iend; ipart++ ) {

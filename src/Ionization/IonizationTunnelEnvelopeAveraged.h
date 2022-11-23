@@ -22,7 +22,7 @@ public:
     //! apply the Tunnel Ionization model to the species (with ionization current)
     void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
     //! method for envelope ionization
-    void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
+    void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ibin = 0, int ipart_ref = 0 ) override;
 
     double ellipticity,cos_phi,sin_phi;
 

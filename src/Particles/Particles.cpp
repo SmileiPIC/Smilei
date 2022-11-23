@@ -17,6 +17,12 @@
 
 #include "Particle.h"
 
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <numeric>
+
 using namespace std;
 
 
@@ -144,7 +150,6 @@ void Particles::reserve( unsigned int reserved_particles,
     }
 
     Momentum.resize( 3 );
-
     for( unsigned int i = 0; i < 3; i++ ) {
         Momentum[i].reserve( reserved_particles );
     }
@@ -177,10 +182,11 @@ void Particles::reserve( unsigned int reserved_particles )
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Initialize like Particles object part with 0 particles and reserve space for reserved_particles particles
-//
+// ---------------------------------------------------------------------------------------------------------------------
 void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 {
     initialize( 0, part );
+    reserve( npart_max, part.dimension() );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -251,7 +257,7 @@ void Particles::resize( unsigned int nParticles)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Resize the cell_keys vector
+//! Resize the cell_keys vector only
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::resizeCellKeys(unsigned int nParticles)
 {
@@ -259,12 +265,11 @@ void Particles::resizeCellKeys(unsigned int nParticles)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Remove extra capacity of Particles vectors
-// Cell keys not affected
+//! Remove extra capacity of Particles vectors
+//! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::shrinkToFit()
+void Particles::shrinkToFit(const bool compute_cell_keys)
 {
-
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         std::vector<double>( *double_prop_[iprop] ).swap( *double_prop_[iprop] );
     }
@@ -277,16 +282,17 @@ void Particles::shrinkToFit()
         std::vector<uint64_t>( *uint64_prop_[iprop] ).swap( *uint64_prop_[iprop] );
     }
 
-    //cell_keys.swap(cell_keys);
-
+    if (compute_cell_keys) {
+        cell_keys.swap(cell_keys);
+    }
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reset of Particles vectors
-// Cell keys not affected
+//! Reset of Particles vectors
+//! params [in] compute_cell_keys: if true, cell_keys is affected (default is false)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::clear()
+void Particles::clear(const bool compute_cell_keys)
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         double_prop_[iprop]->clear();
@@ -300,7 +306,9 @@ void Particles::clear()
         uint64_prop_[iprop]->clear();
     }
 
-    //cell_keys.clear();
+    if (compute_cell_keys) {
+        cell_keys.clear();
+    }
 
 }
 
@@ -421,7 +429,7 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
 //! Suppress particle iPart
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::eraseParticle( unsigned int ipart )
+void Particles::eraseParticle( unsigned int ipart, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart );
@@ -435,7 +443,9 @@ void Particles::eraseParticle( unsigned int ipart )
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart );
     }
 
-    //cell_keys.erase(cell_keys.begin() + ipart);
+    if (compute_cell_keys) {
+        cell_keys.erase(cell_keys.begin() + ipart);
+    }
 
 }
 
@@ -443,7 +453,7 @@ void Particles::eraseParticle( unsigned int ipart )
 //! Suppress all particles from iPart to the end of particle array
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::eraseParticleTrail( unsigned int ipart )
+void Particles::eraseParticleTrail( unsigned int ipart, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart, ( *double_prop_[iprop] ).end() );
@@ -457,12 +467,16 @@ void Particles::eraseParticleTrail( unsigned int ipart )
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).end() );
     }
 
+    if (compute_cell_keys) {
+        cell_keys.erase( cell_keys.begin()+ipart, cell_keys.end() );
+    }
+
 }
 // ---------------------------------------------------------------------------------------------------------------------
 //! Suppress npart particles from ipart
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
+void Particles::eraseParticle( unsigned int ipart, unsigned int npart, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart, ( *double_prop_[iprop] ).begin()+ipart+npart );
@@ -474,6 +488,10 @@ void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
 
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).begin()+ipart+npart );
+    }
+
+    if (compute_cell_keys) {
+        cell_keys.erase( cell_keys.begin()+ipart, cell_keys.begin()+ipart+npart );
     }
 
 }
@@ -647,9 +665,10 @@ void Particles::translateParticles( std::vector<unsigned int> parts )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle src_particle into dest_particle memory location, erasing dest_particle.
+//! Move particle src_particle into dest_particle memory location, erasing dest_particle.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle )
+void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle, bool compute_cell_keys )
 {
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         ( *double_prop_[iprop] )[dest_particle] = ( *double_prop_[iprop] )[src_particle];
@@ -662,13 +681,21 @@ void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         ( *uint64_prop_[iprop] )[dest_particle] = ( *uint64_prop_[iprop] )[src_particle];
     }
+
+    if (compute_cell_keys) {
+        cell_keys[dest_particle] = cell_keys[src_particle];
+    }
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
+//! Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N )
+void Particles::overwriteParticle( unsigned int part1,
+                                   unsigned int part2,
+                                   unsigned int N,
+                                   bool compute_cell_keys)
 {
     unsigned int sizepart = N*sizeof( Position[0][0] );
     unsigned int sizecharge = N*sizeof( Charge[0] );
@@ -676,6 +703,7 @@ void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsig
 
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         memcpy( & ( *double_prop_[iprop] )[part2],  &( *double_prop_[iprop] )[part1], sizepart );
+        // std::copy( *double_prop_[iprop]->begin()+part1,  *double_prop_[iprop]->begin() + part1 + N, *double_prop_[iprop]->begin() + part2 );
     }
 
     for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
@@ -685,10 +713,16 @@ void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsig
     for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
         memcpy( & ( *uint64_prop_[iprop] )[part2],  &( *uint64_prop_[iprop] )[part1], sizeid );
     }
+
+    if (compute_cell_keys) {
+        //std::copy( cell_keys.begin()+part1,  cell_keys.begin() + part1 + N, cell_keys.begin() + part2 );
+        memcpy( &cell_keys[part2],  &cell_keys[part1], N*sizeof( cell_keys[0] ) );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle part1 into part2 memory location of dest vector, erasing part2.
+//! Move particle part1 into part2 memory location of dest vector, erasing part2.
+//! Warning: do not update first_index and last_index
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 )
 {
@@ -927,6 +961,115 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 // }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This method eliminates the space between the bins
+//! (presence of empty particles between the bins)
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::compress(bool compute_cell_keys) {
+
+    unsigned int nbin = numberOfBins();
+
+    for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
+
+        // Removal of the photons
+        const unsigned int nb_deleted_photon = first_index[ibin+1] - last_index[ibin];
+
+        if( nb_deleted_photon > 0 ) {
+            eraseParticle( last_index[ibin], nb_deleted_photon, compute_cell_keys );
+
+            for( int ii=ibin+1; ii<nbin; ii++ ) {
+                first_index[ii] -= nb_deleted_photon;
+                last_index[ii] -= nb_deleted_photon;
+            }
+        }
+    }
+    eraseParticleTrail( last_index[nbin-1], true );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method eliminates the space between the bins
+//! (presence of empty particles between the bins)
+// ---------------------------------------------------------------------------------------------------------------------
+// void Particles::compress() {
+//     for (auto ibin = 1 ; ibin < first_index.size() ; ibin++) {
+//
+//         // Compute the number of particles
+//         unsigned int particle_number = last_index[ibin] - first_index[ibin];
+//
+//         // Compute the space between the bins
+//         unsigned int bin_space = first_index[ibin] - last_index[ibin-1];
+//
+//         // Determine first index and number of particles to copy.
+//         // We copy from first index to the end to limit the number of copy (more efficient than copying the full bin to keep the same order)
+//
+//         // Compute the number of particles
+//         unsigned int copy_particle_number = 0;
+//
+//         if (bin_space > 0) {
+//
+//             // if last_index[ibin] - bin_space < first_index[ibin], it means that the empty space is larger than the number of particles in ibin
+//             // then we move the full bin
+//             // Else we only move the particles from copy_first_bin to last_index[ibin]
+//             unsigned int copy_first_index = last_index[ibin] - bin_space;
+//
+//             if (copy_first_index < first_index[ibin]) {
+//                 copy_first_index = first_index[ibin];
+//                 copy_particle_number = particle_number;
+//             } else {
+//                 copy_particle_number = bin_space;
+//             }
+//
+//             if (copy_particle_number>0) {
+//                 overwriteParticle(copy_first_index, last_index[ibin-1], copy_particle_number, true );
+//             }
+//
+//             //Update bin indexes
+//             first_index[ibin] = last_index[ibin-1];
+//             last_index[ibin] = first_index[ibin] + copy_particle_number;
+//
+//         }
+//     } // for bin
+//
+//     unsigned int particles_to_erase = Weight.size() - last_index[first_index.size()-1];
+//
+//     if (particles_to_erase > 0) {
+//
+//         // Particles is rezised to fit the real number of particles
+//         // resize(last_index[first_index.size()]-1);
+//         eraseParticleTrail( last_index[first_index.size()-1], true );
+//     }
+// }
+
+void Particles::sum(int ibin_min, int ibin_max) {
+
+    double sum_px = 0;
+    double sum_py = 0;
+    double sum_mx = 0;
+    double sum_my = 0;
+    int iterations = 0;
+    int nb_particles_total = 0;
+
+    for (int ibin = ibin_min ; ibin < ibin_max ; ibin++) {
+        for (int ipart = first_index[ibin] ; ipart < last_index[ibin] ; ipart++) {
+            if (Weight[ipart] > 0) {
+                sum_px += Position[0][ipart];
+                sum_py += Position[1][ipart];
+                sum_mx += Momentum[0][ipart];
+                sum_my += Momentum[1][ipart];
+                iterations += 1;
+            }
+            nb_particles_total ++;
+        }
+    }
+    std::cerr << " Position_x: " << sum_px
+              << " Position_y: " << sum_py
+              << " Momentum_x: " << sum_mx
+              << " Momentum_y: " << sum_my
+              << " nb real particles: " << iterations
+              << " nb particles: " << nb_particles_total
+              << std::endl;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! Move ipart at new_pos in the particles data structure
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::moveParticles( int iPart, int new_pos )
@@ -1085,12 +1228,6 @@ int Particles::injectParticles( Particles *particles_to_inject )
 void Particles::importAndSortParticles( Particles *particles_to_inject )
 {
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
-}
-
-unsigned int Particles::gpu_size() const
-{
-    ERROR( "Should not have come here" );
-    return 0;
 }
 
 #ifdef __DEBUG

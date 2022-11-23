@@ -2,7 +2,7 @@
 //! \file MultiphotonBreitWheeler.h
 //
 //! \brief This file contains the class functions for the generic class
-//!  MultiphotonBreitWheeler for the photon decay into pairs via the mutliphoton
+//!  MultiphotonBreitWheeler for the photon decay into pairs via the multiphoton
 //!  Breit-Wheeler process.
 //
 // ----------------------------------------------------------------------------
@@ -41,13 +41,14 @@ public:
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
     void operator()( Particles &particles,
-                     SmileiMPI *smpi,
-                     MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                     SmileiMPI* smpi,
+                     Particles** new_pair,
+                     Species ** new_pair_species,
+                     MultiphotonBreitWheelerTables &mBW_tables,
                      double & pair_energy,
                      int istart,
                      int iend,
-                     int ithread, int ipart_ref = 0 );
-
+                     int ithread, int ibin = 0, int ipart_ref = 0 );
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
     //! \param kx photon x momentum
@@ -61,17 +62,18 @@ public:
     //! \param By y component of the particle magnetic field
     //! \param Bz z component of the particle magnetic field
     //#pragma omp declare simd
-    double inline compute_chiph( double &kx, double &ky, double &kz,
-                                 double &gamma,
-                                 double &Ex, double &Ey, double &Ez,
-                                 double &Bx, double &By, double &Bz )
+    inline double __attribute__((always_inline)) computePhotonChi(
+                                 double kx, double ky, double kz,
+                                 double gamma,
+                                 double Ex, double Ey, double Ez,
+                                 double Bx, double By, double Bz )
     {
 
         return inv_norm_E_Schwinger_
-               * sqrt( fabs( pow( Ex*kx + Ey*ky + Ez*kz, 2 )
-                             - pow( gamma*Ex - By*kz + Bz*ky, 2 )
-                             - pow( gamma*Ey - Bz*kx + Bx*kz, 2 )
-                             - pow( gamma*Ez - Bx*ky + By*kx, 2 ) ) );
+               * std::sqrt( std::fabs( std::pow( Ex*kx + Ey*ky + Ez*kz, 2 )
+                             - std::pow( gamma*Ex - By*kz + Bz*ky, 2 )
+                             - std::pow( gamma*Ey - Bz*kx + Bx*kz, 2 )
+                             - std::pow( gamma*Ez - Bx*ky + By*kx, 2 ) ) );
     };
 
     //! Computation of the quantum parameter for the given
@@ -81,38 +83,52 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
-    void compute_thread_chiph( Particles &particles,
+    void computeThreadPhotonChi( Particles &particles,
                                SmileiMPI *smpi,
                                int istart,
                                int iend,
                                int ithread, int ipart_ref = 0 );
 
-    //! Second version of pair_emission:
-    //! Perform the creation of pairs from a photon with particles as an argument
-    //! \param ipart              photon index
-    //! \param particles          object particles containing the photons and their properties
-    //! \param gammaph            photon normalized energy
-    //! \param remaining_dt       remaining time before the end of the iteration
-    //! \param MultiphotonBreitWheelerTables    Cross-section data tables
-    //!                       and useful functions
-    //!                       for the multiphoton Breit-Wheeler process
-    double pair_emission( int ipart,
-                        Particles &particles,
-                        double &gammaph,
-                        double remaining_dt,
-                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
-
     //! Clean photons that decayed into pairs (weight <= 0)
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
-    //! \param istart      Index of the first particle
-    //! \param iend        Index of the last particle
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
-    void decayed_photon_cleaning(
+    void removeDecayedPhotons(
         Particles &particles,
         SmileiMPI *smpi,
         int ibin, int nbin,
         int *bmin, int *bmax, int ithread );
+
+
+    //! Clean photons that decayed into pairs (weight <= 0) and resize each bin
+    //! But keeping the space between bins (so called no compression)
+    //! Developers have to be aware that the space exists using the Particles bin indexes
+    //! \param particles   particle object containing the particle
+    //!                    properties of the current species
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
+    //! \param ithread     Thread index
+//#ifdef ACCELERATOR_GPU_ACC
+//    #pragma acc routine seq
+//#endif
+    void removeDecayedPhotonsWithoutBinCompression(
+        Particles &particles,
+        SmileiMPI *smpi,
+        int ibin, int nbin,
+        int *bmin, int *bmax, int ithread );
+
+    //! Return the sampling for each pair
+    int getPairCreationSampling(int i) {
+        return mBW_pair_creation_sampling_[i];
+    }
 
     //! Return the pair converted energy
     // double inline getPairEnergy( void )
@@ -121,7 +137,13 @@ public:
     // }
 
     // Local array of new pairs of electron-positron
-    Particles new_pair[2];
+    // Particles new_pair[2];
+
+    // Local array of new pairs of electron-positron per bin
+    std::vector<Particles *> new_pair_per_bin;
+
+    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
+    void joinNewElectronPositronPairs(Particles **new_pair,unsigned int Nbins);
 
 private:
 
@@ -134,7 +156,7 @@ private:
     //! Time step
     double dt_;
 
-    // Number of pairs created per even
+    // Number of pairs created per event
     int mBW_pair_creation_sampling_[2];
 
     // Inverse of the number of pairs created per even

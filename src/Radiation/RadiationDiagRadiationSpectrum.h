@@ -43,11 +43,11 @@ class RadiationDiagRadiationSpectrum : public Radiation {
             Particles &particles,
             Particles *photons,
             SmileiMPI *smpi,
-            RadiationTables &RadiationTables,
+            RadiationTables &radiation_tables,
             double          &radiated_energy,
             int istart,
             int iend,
-            int ithread, int ipart_ref = 0 );
+            int ithread, int ibin, int ipart_ref = 0 );
 
     protected:
 

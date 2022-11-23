@@ -36,7 +36,7 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param RadiationTables Cross-section data tables and useful functions
+//! \param radiation_tables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -47,11 +47,12 @@ void RadiationLandauLifshitz::operator()(
     Particles       &particles,
     Particles       *photons,
     SmileiMPI       *smpi,
-    RadiationTables &RadiationTables,
+    RadiationTables &radiation_tables,
     double          &radiated_energy,
     int istart,
     int iend,
     int ithread,
+    int ibin,
     int ipart_ref )
 {
 
@@ -61,7 +62,7 @@ void RadiationLandauLifshitz::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -73,7 +74,7 @@ void RadiationLandauLifshitz::operator()(
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
 
     // Minimum value of chi for the radiation
-    const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
+    const double minimum_chi_continuous = radiation_tables.getMinimumChiContinuous();
 
     // Momentum shortcut
     double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
@@ -92,11 +93,11 @@ void RadiationLandauLifshitz::operator()(
     // cumulative Radiated energy from istart to iend
     double radiated_energy_loc = 0;
 
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     // Local vector to store the radiated energy
-
-    // double * rad_norm_energy = new double [iend-istart];
-    double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
+    double * rad_norm_energy = new double [iend-istart];
+    //double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
+    
     #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
         rad_norm_energy[ipart] = 0;
@@ -108,7 +109,7 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd aligned(rad_norm_energy:64)
     #else
         int np = iend-istart;
@@ -142,7 +143,7 @@ void RadiationLandauLifshitz::operator()(
 
             // Radiated energy during the time step
             const double temp =
-                RadiationTables.getClassicalRadiatedEnergy( particle_chi, dt_ ) * gamma / ( gamma*gamma-1. );
+                radiation_tables.getClassicalRadiatedEnergy( particle_chi, dt_ ) * gamma / ( gamma*gamma-1. );
 
             // Update of the momentum
             momentum_x[ipart] -= temp*momentum_x[ipart];
@@ -152,7 +153,7 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation of the thread radiated energy
                                               
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
@@ -177,7 +178,7 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Update of the quantum parameter
 
-#ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 #endif
@@ -197,20 +198,26 @@ void RadiationLandauLifshitz::operator()(
                      Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                      Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    #ifndef _GPU
+#ifndef ACCELERATOR_GPU_ACC
     } // end loop ipart
-    #else
+#else
             } // end if
         } // end loop ipart
     } // end acc parallel
-    #endif
+#endif
 
     radiated_energy += radiated_energy_loc;
 
-    #ifndef _GPU
-        // _______________________________________________________________
-        // Cleaning
-    free(rad_norm_energy);
-    #endif
+
+#ifndef ACCELERATOR_GPU_ACC
+
+    // _______________________________________________________________
+    // Cleaning
+
+    //free(rad_norm_energy);
+    delete [] rad_norm_energy;
+
+#endif
+
 }
             

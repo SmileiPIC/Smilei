@@ -24,7 +24,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
     const int nparts = vecto ? Epart->size() / 3 :
-                               particles.last_index.back(); // particles.size()
+                               particles.numberOfParticles(); // particles.size()
 
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
@@ -43,7 +43,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    #ifndef _GPU
+    #ifndef ACCELERATOR_GPU_ACC
         #pragma omp simd
     #else
         int np = iend-istart;

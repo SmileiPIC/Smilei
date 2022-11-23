@@ -13,13 +13,11 @@
 #include "ProjectorAM1Order.h"
 #include "ProjectorAM2Order.h"
 
-#ifdef _VECTO
-    #include "Projector2D2OrderV.h"
-    #include "Projector2D4OrderV.h"
-    #include "Projector3D2OrderV.h"
-    #include "Projector3D4OrderV.h"
-    #include "ProjectorAM2OrderV.h"
-#endif
+#include "Projector2D2OrderV.h"
+#include "Projector2D4OrderV.h"
+#include "Projector3D2OrderV.h"
+#include "Projector3D4OrderV.h"
+#include "ProjectorAM2OrderV.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -44,53 +42,44 @@ public:
         // ---------------
         else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                if( !params.gpu_computing ) {
-                    Proj = new Projector2D2Order( params, patch );
-                } else {
+                #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
                     Proj = new Projector2D2OrderGPU( params, patch );
-                }
+                #else
+                    Proj = new Projector2D2Order( params, patch );
+                #endif
             }
-#ifdef _VECTO
             else {
                 Proj = new Projector2D2OrderV( params, patch );
             }
-#endif
         } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
             if( !vectorization ) {
                 Proj = new Projector2D4Order( params, patch );
             }
-#ifdef _VECTO
             else {
                 Proj = new Projector2D4OrderV( params, patch );
             }
-#endif
         }
         // ---------------
         // 3Dcartesian simulation
         // ---------------
         else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                if (!params.gpu_computing) {
-                    Proj = new Projector3D2Order( params, patch );
-                }
-                else {
+                #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
                     Proj = new Projector3D2OrderGPU( params, patch );
-                }
+                #else
+                    Proj = new Projector3D2Order( params, patch );
+                #endif
             }
-#ifdef _VECTO
             else {
                 Proj = new Projector3D2OrderV( params, patch );
             }
-#endif
         } else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
             if( !vectorization ) {
                 Proj = new Projector3D4Order( params, patch );
             }
-#ifdef _VECTO
             else {
                 Proj = new Projector3D4OrderV( params, patch );
             }
-#endif
 
         // ---------------
         // AM simulation
@@ -102,11 +91,9 @@ public:
                 if( !vectorization ) {
                     Proj = new ProjectorAM2Order( params, patch );
                 }
-#ifdef _VECTO
                 else {
                     Proj = new ProjectorAM2OrderV( params, patch );
                 }
-#endif
             }
         } else {
             ERROR_NAMELIST( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order,

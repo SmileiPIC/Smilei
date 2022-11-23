@@ -182,6 +182,8 @@ public:
     //! Fridman filtering parameter [real between 0 and 1]
     double Friedman_theta;
 
+    // mark if OpenMP tasks are used or not
+    bool omptasks;
     //! Clusters width
     //unsigned int cluster_width_;
     int cluster_width_;
@@ -295,10 +297,10 @@ public:
     //! of Niel et al.
     bool has_Niel_radiation_;
     //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
-    bool hasDiagRadiationSpectrum;
+    bool has_diag_radiation_spectrum_;
 
     //! Tells whether there is a species with multiphoton Breit-Wheeler
-    bool hasMultiphotonBreitWheeler;
+    bool has_multiphoton_Breit_Wheeler_;
     
     //! Tells whether position_old is used
     bool keep_position_old;
@@ -373,7 +375,7 @@ public:
     //!
     bool isGPUParticleBinningAvailable() const;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( _GPU )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
 
     //! Given dimension_id in [0, 3), return for dimension_id == :
     //! 1: the 1D value (not implemented)
