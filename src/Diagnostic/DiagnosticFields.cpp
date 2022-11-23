@@ -395,7 +395,7 @@ void DiagnosticFields::findSubgridIntersection(
         if( zone_end <= subgrid_start ) {
             nsteps = 0;
         } else {
-            stop = min( zone_end, subgrid_stop );
+            stop = std::min( zone_end, subgrid_stop );
             if( stop <= subgrid_start ) {
                 stop = subgrid_start + 1;
             }
@@ -410,7 +410,7 @@ void DiagnosticFields::findSubgridIntersection(
             istart_in_file = ( zone_begin - subgrid_start - 1 ) / subgrid_step + 1;
             start = subgrid_start + istart_in_file * subgrid_step;
             istart_in_zone = start - zone_begin;
-            stop = min( zone_end, subgrid_stop );
+            stop = std::min( zone_end, subgrid_stop );
             if( stop <= start ) {
                 nsteps = 0;
             } else {
