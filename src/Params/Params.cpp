@@ -1144,7 +1144,7 @@ void Params::compute()
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         if( ! multiple_decomposition ) {
-            oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
+            oversize[i]  = std::max( interpolation_order, std::max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
             if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {
                 ERROR_NAMELIST( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2", LINK_NAMELIST + std::string("#current-filtering")  );
             }
@@ -1166,7 +1166,7 @@ void Params::compute()
     if( multiple_decomposition ) {
         if( is_spectral ) {
             for( unsigned int i=0; i<nDim_field; i++ ){
-                region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
+                region_oversize[i]  = std::max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
             }
         } else {
             for( unsigned int i=0; i<nDim_field; i++ ){

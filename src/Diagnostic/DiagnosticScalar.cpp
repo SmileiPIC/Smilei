@@ -82,7 +82,7 @@ void DiagnosticScalar::closeFile()
 
 unsigned int DiagnosticScalar::calculateWidth( string key )
 {
-    return 2 + max( ( ( unsigned int )key.length() ), precision+8 );
+    return 2 + std::max( ( ( unsigned int )key.length() ), precision+8 );
     // The +8 accounts for the dot and exponent in decimal representation)
 }
 
