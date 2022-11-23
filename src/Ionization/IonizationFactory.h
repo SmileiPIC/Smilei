@@ -19,7 +19,7 @@ public:
     static Ionization *create( Params &params, Species *species )
     {
         Ionization *Ionize = NULL;
-        std::string model=species->ionization_model;
+        std::string model=species->ionization_model_;
         
         if( model == "tunnel" ) {
             

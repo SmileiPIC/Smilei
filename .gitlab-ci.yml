@@ -13,7 +13,7 @@ stages:
 install:
   stage: install
   only:
-    - develop
+    - cleaning
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ install:
 compile_default:
   stage: compile_default
   only:
-    - develop
+    - cleaning
 
   script:
     # Move in test dir
@@ -42,7 +42,7 @@ compile_default:
 run1D:
   stage: run_default
   only:
-    - develop
+    - cleaning
 
   script:
     # Move in test dir
@@ -54,7 +54,7 @@ run1D:
 run2D:
   stage: run_default
   only:
-    - develop
+    - cleaning
 
 
   script:
@@ -69,7 +69,7 @@ run2D:
 run3D:
   stage: run_default
   only:
-    - develop
+    - cleaning
 
   script:
     # Move in test dir
@@ -84,7 +84,7 @@ run3D:
 runAM:
   stage: run_default
   only:
-    - develop
+    - cleaning
 
   script:
     # Move in test dir
@@ -95,7 +95,7 @@ runAM:
 runCollisions:
   stage: run_default
   only:
-    - develop
+    - cleaning
 
   script:
     # Move in test dir
@@ -106,7 +106,7 @@ runCollisions:
 compile_picsar:
   stage: compile_picsar
   only:
-    - develop
+    - cleaning
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -116,7 +116,7 @@ compile_picsar:
 run_picsar:
   stage: run_picsar
   only:
-    - develop
+    - cleaning
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -125,7 +125,7 @@ run_picsar:
 compile_debug:
   stage: compile_debug
   only:
-    - develop
+    - cleaning
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -135,7 +135,7 @@ compile_debug:
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
-    - develop
+    - cleaning
     - adaptation_for_gpu
 
   script:
@@ -146,7 +146,7 @@ compile_no_mpi_threadmultiple:
 compile_no_openmp:
   stage: compile_no_openmp
   only:
-    - develop
+    - cleaning
 
 
   script:
@@ -157,7 +157,7 @@ compile_no_openmp:
 compile_omptasks:
   stage: compile_omptasks
   only:
-    - develop
+    - cleaning
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -167,7 +167,7 @@ compile_omptasks:
 run_omptasks:
   stage: run_omptasks
   only:
-    - develop
+    - cleaning
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

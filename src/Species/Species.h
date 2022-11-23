@@ -110,7 +110,7 @@ public:
     std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
-    std::string ionization_model;
+    std::string ionization_model_;
 
     //! Type of density profile ("nb" or "charge")
     std::string density_profile_type_;
@@ -160,7 +160,7 @@ public:
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
-    int position_initialization_on_species_index;
+    int position_initialization_on_species_index_;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
