@@ -508,8 +508,8 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         string groupName=Tools::merge( "species-", name.str(), "-", spec->name_ );
         H5Write s = g.group( groupName );
 
-        s.attr( "partCapacity", spec->particles->capacity() );
-        s.attr( "partSize", spec->particles->size() );
+        s.attr( "partCapacity", spec->getParticlesCapacity() );
+        s.attr( "partSize", spec->getNbrOfParticles() );
         
         s.attr( "nrj_bc_lost", spec->nrj_bc_lost );
         s.attr( "nrj_mw_inj", spec->nrj_mw_inj );
@@ -517,7 +517,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         s.attr( "nrj_new_part", spec->nrj_new_part_ );
         s.attr( "radiatedEnergy", spec->nrj_radiated_ );
 
-        if( spec->particles->size()>0 ) {
+        if( spec->getNbrOfParticles()>0 ) {
 
             for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream my_name( "" );

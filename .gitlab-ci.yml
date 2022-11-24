@@ -167,7 +167,6 @@ compile_no_openmp:
 compile_omptasks:
   stage: compile_omptasks
   only:
-    - task_tracing
     - develop
 
   script:
@@ -178,7 +177,6 @@ compile_omptasks:
 run_omptasks:
   stage: run_omptasks
   only:
-    - task_tracing
     - develop
 
   script:

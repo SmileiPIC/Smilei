@@ -37,8 +37,11 @@ Changes made in the repository (not released)
   * Reading particle weights and momenta from hdf5 file
   * ``PML`` are now compatible with dynamic load balancing.
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
-* Experimental: :doc:`task_parallelization` of macro-particle operations with OpenMP is now available.
+  * Collisional ionization incorrect for :math:`Z^\star = Z-1`
+
+* Experimental: :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP is now available.
 * Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.
+
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
 ----

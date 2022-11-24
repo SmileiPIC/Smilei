@@ -39,7 +39,7 @@ RadiationNiel::~RadiationNiel()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param RadiationTables Cross-section data tables and useful functions
+//! \param radiation_tables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -50,7 +50,7 @@ void RadiationNiel::operator()(
     Particles       &particles,
     Particles       *photons,
     SmileiMPI       *smpi,
-    RadiationTables &RadiationTables,
+    RadiationTables &radiation_tables,
     double          &radiated_energy,
     int istart,
     int iend,
@@ -64,7 +64,7 @@ void RadiationNiel::operator()(
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
-    int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -113,9 +113,9 @@ void RadiationNiel::operator()(
     // Quantum parameter
     double*const __restrict__ particle_chi = particles.getPtrChi();
 
-    const double minimum_chi_continuous           = RadiationTables.getMinimumChiContinuous();
-    const double factor_classical_radiated_power  = RadiationTables.getFactorClassicalRadiatedPower();
-    const int niel_computation_method             = RadiationTables.getNielHComputationMethodIndex();
+    const double minimum_chi_continuous           = radiation_tables.getMinimumChiContinuous();
+    const double factor_classical_radiated_power  = radiation_tables.getFactorClassicalRadiatedPower();
+    const int niel_computation_method             = radiation_tables.getNielHComputationMethodIndex();
 
     // _______________________________________________________________
     // Computation
@@ -224,10 +224,10 @@ void RadiationNiel::operator()(
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart+istart] > minimum_chi_continuous ) {
 
-                //h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
-                //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
-                //temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart] );
-                temp = RadiationTables.niel_.get( particle_chi[ipart+istart] );
+                //h = radiation_tables.getHNielFitOrder10(particle_chi[ipart]);
+                //h = radiation_tables.getHNielFitOrder5(particle_chi[ipart]);
+                //temp = radiation_tables.getHNielFromTable( particle_chi[ipart+istart] );
+                temp = radiation_tables.niel_.get( particle_chi[ipart+istart] );
 
                 diffusion[ipart] = std::sqrt( factor_classical_radiated_power*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
             }
@@ -292,7 +292,7 @@ void RadiationNiel::operator()(
 
             // Radiated energy during the time step
             rad_energy =
-                RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
+                radiation_tables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
 
             // Effect on the momentum
             // Temporary factor

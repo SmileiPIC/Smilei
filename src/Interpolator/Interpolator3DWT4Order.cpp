@@ -102,7 +102,7 @@ void Interpolator3DWT4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles
     // Calculate coeffs
     coeffs( xpn, ypn, zpn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,pt,pt)
     *( ELoc+0*nparts ) = compute( &coeffxd_[2], &coeffypt_[2], &coeffzpt_[2], Ex3D, id_, jp_, kp_ );
@@ -156,7 +156,7 @@ void Interpolator3DWT4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &pa
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -184,7 +184,7 @@ void Interpolator3DWT4Order::fieldsSelection( ElectroMagn *EMfields, Particles &
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }

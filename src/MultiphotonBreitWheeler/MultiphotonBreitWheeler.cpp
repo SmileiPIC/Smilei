@@ -9,7 +9,7 @@
 
 #include "MultiphotonBreitWheeler.h"
 #include "Species.h"
- 
+
 // -----------------------------------------------------------------------------
 //! Constructor for Radiation
 // input: simulation parameters & Species index
@@ -48,10 +48,10 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     // Local random generator
     rand_ = rand;
 
-  
+
 #ifdef _OMPTASKS
     unsigned int Nbins = species->Nbins;
-      
+
     //! vector of electron-positron pairs per bin
     new_pair_per_bin.resize(Nbins);
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -89,7 +89,7 @@ void MultiphotonBreitWheeler::computeThreadPhotonChi( Particles &particles,
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
-    int nparts = Epart->size()/3;
+    int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -160,8 +160,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // We use dynamics_invgf to store gamma
     double * const __restrict__ photon_gamma = &( smpi->dynamics_invgf[ithread][0] );
 
-    int nparts = Epart->size()/3;
-
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -204,16 +203,16 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // uint64_t * id = &( particles.id(0));
 
     // Reserve pair particles (else, pointer could become obsolete)
-    double np = new_pair[0]->size();
-    new_pair[0]->reserve( np + mBW_pair_creation_sampling_[0] * (iend - istart) );
-    new_pair[1]->reserve( np + mBW_pair_creation_sampling_[1] * (iend - istart) );
+    // double np = new_pair[0]->size();
+    // new_pair[0]->reserve( np + mBW_pair_creation_sampling_[0] * (iend - istart) );
+    // new_pair[1]->reserve( np + mBW_pair_creation_sampling_[1] * (iend - istart) );
 
     // Pair shortcut
     double *const __restrict__ pair0_position_x = new_pair[0]->getPtrPosition( 0 );
     double *const __restrict__ pair0_position_y = (n_dimensions_ > 1 ? new_pair[0]->getPtrPosition( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_z = (n_dimensions_ > 2 ? new_pair[0]->getPtrPosition( 2 ) : nullptr) ;
 
-    double *const __restrict__ pair0_position_old_x = particles.Position_old.size() > 0 ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair0_position_old_x = particles.keepOldPositions() ? new_pair[0]->getPtrPositionOld( 0 ) : nullptr;
     double *const __restrict__ pair0_position_old_y = (particles.Position_old.size() > 1 ? new_pair[0]->getPtrPositionOld( 1 ) : nullptr) ;
     double *const __restrict__ pair0_position_old_z = (particles.Position_old.size() > 2 ? new_pair[0]->getPtrPositionOld( 2 ) : nullptr) ;
 
@@ -231,7 +230,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair1_position_y = (n_dimensions_ > 1 ? new_pair[1]->getPtrPosition( 1 ) : nullptr);
     double *const __restrict__ pair1_position_z = (n_dimensions_ > 2 ? new_pair[1]->getPtrPosition( 2 ) : nullptr);
 
-    double *const __restrict__ pair1_position_old_x = particles.Position_old.size() > 0 ? new_pair[1]->getPtrPositionOld( 0 ) : nullptr;
+    double *const __restrict__ pair1_position_old_x = particles.keepOldPositions() ? new_pair[1]->getPtrPositionOld( 0 ) : nullptr;
     double *const __restrict__ pair1_position_old_y = (particles.Position_old.size() > 1 ? new_pair[1]->getPtrPositionOld( 1 ) : nullptr) ;
     double *const __restrict__ pair1_position_old_z = (particles.Position_old.size() > 2 ? new_pair[1]->getPtrPositionOld( 2 ) : nullptr) ;
 
@@ -347,8 +346,12 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Final size
                     int nparticles = new_pair[0]->size();
 
+                    // Start index in the pair buffer
+                    int i_pair_start = nparticles - mBW_pair_creation_sampling_[0];
+
                     // For all new paticles
-                    for( int ipair=nparticles-mBW_pair_creation_sampling_[0]; ipair<nparticles; ipair++ ) {
+                    #pragma omp simd
+                    for( int ipair=i_pair_start; ipair < i_pair_start+mBW_pair_creation_sampling_[0]; ipair++ ) {
 
                         // Momentum
                         const double p = std::sqrt( std::pow( 1.+pair_chi[0]*inv_chiph_gammaph, 2 )-1 );
@@ -372,7 +375,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
 
                         // Old positions
-                        if( particles.Position_old.size() > 0 ) {
+                        if( particles.keepOldPositions() ) {
                             pair0_position_old_x[ipair]=position_x[ipart] ;
                             if (n_dimensions_>1) {
                                 pair0_position_old_y[ipair]=position_y[ipart] ;
@@ -400,8 +403,12 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Final size
                     nparticles = new_pair[1]->size();
 
+                    // Start index in the pair buffer
+                    i_pair_start = nparticles - mBW_pair_creation_sampling_[1];
+
                     // For all new paticles
-                    for( int ipair=nparticles-mBW_pair_creation_sampling_[1]; ipair<nparticles; ipair++ ) {
+                    #pragma omp simd
+                    for( auto ipair=i_pair_start; ipair < i_pair_start + mBW_pair_creation_sampling_[1]; ipair++ ) {
 
                         // Momentum
                         const double p = std::sqrt( std::pow( 1.+pair_chi[1]*inv_chiph_gammaph, 2 )-1 );
@@ -424,7 +431,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
                         // Old positions
-                        if( particles.Position_old.size() > 0 ) {
+                        if( particles.keepOldPositions() ) {
                             pair1_position_old_x[ipair]=position_x[ipart] ;
                             if (n_dimensions_>1) {
                                 pair1_position_old_y[ipair]=position_y[ipart] ;
@@ -449,10 +456,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 #else
                     // With tasks
                     for( int k=0 ; k < 2 ; k++ ) {
-                        
+
                         // Creation of new electrons in the temporary array new_pair[0]
                         new_pair_per_bin[ibin][k].createParticles( mBW_pair_creation_sampling_[k] );
-        
+
                         // Final size
                         int nparticles = new_pair_per_bin[ibin][k].size();
 
@@ -461,7 +468,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 
                             // Momentum
                             double p = std::sqrt( std::pow( 1.+pair_chi[k]*inv_chiph_gammaph, 2 )-1 );
-                            double u[3];
+                            
                             new_pair_per_bin[ibin][k].momentum( 0, idNew ) = p*ux ;
                             new_pair_per_bin[ibin][k].momentum( 1, idNew ) = p*uy ;
                             new_pair_per_bin[ibin][k].momentum( 2, idNew ) = p*uz ;
@@ -545,22 +552,15 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     if ( smpi->dynamics_eithetaold.size() )
         thetaold = &( smpi->dynamics_eithetaold[ithread] );
 
-    int nparts = Epart->size()/3;
-
+    const int nparts = smpi->getBufferSize(ithread);
 
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
 
-        // Index of the last existing photon (weight > 0)
-        int last_photon_index;
-        int first_photon_index;
-        int ii;
-        int nb_deleted_photon;
-
         // Backward loop over the photons to fing the first existing photon
-        last_photon_index = bmax[ibin]-1;
-        first_photon_index = bmin[ibin];
+        int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
+        int first_photon_index = bmin[ibin];
         while( ( last_photon_index >= bmin[ibin] )
                 && ( weight[last_photon_index] <= 0 ) ) {
             last_photon_index--;
@@ -596,16 +596,13 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
                     if (thetaold) {
                         (*thetaold)[0*nparts+ipart] = (*thetaold)[0*nparts+last_photon_index];
                     }
-
                     last_photon_index --;
-
-
                 }
             }
         }
 
         // Removal of the photons
-        nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+        const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
 
         if( nb_deleted_photon > 0 ) {
             particles.eraseParticle( last_photon_index+1, nb_deleted_photon );
@@ -628,12 +625,106 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
             }
 
             bmax[ibin] = last_photon_index+1;
-            for( ii=ibin+1; ii<nbin; ii++ ) {
+            for( int ii=ibin+1; ii<nbin; ii++ ) {
                 bmin[ii] -= nb_deleted_photon;
                 bmax[ii] -= nb_deleted_photon;
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+    //! Clean photons that decayed into pairs (weight <= 0) and resize each bin
+    //! But keeping the space between bins (so called no compression)
+    //! \param particles   particle object containing the particle
+    //!                    properties of the current species
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
+    //! \param ithread     Thread index
+// -----------------------------------------------------------------------------
+void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
+    Particles &particles,
+    SmileiMPI *smpi,
+    int ibin, int nbin,
+    int *bmin, int *bmax, int ithread )
+{
+
+    double *const Epart     = smpi->dynamics_Epart[ithread].data();
+    double *const Bpart     = smpi->dynamics_Bpart[ithread].data();
+    double *const gamma     = smpi->dynamics_invgf[ithread].data();
+    int *const iold         = smpi->dynamics_iold[ithread].data();
+    double *const deltaold  = smpi->dynamics_deltaold[ithread].data();
+
+    const int nparts = smpi->getBufferSize(ithread);
+
+    std::complex<double> * thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = smpi->dynamics_eithetaold[ithread].data();
+
+    if( bmax[ibin] > bmin[ibin] ) {
+        // Weight shortcut
+        double *weight = particles.getPtrWeight();
+        //int nb_deleted_photon;
+
+        // Backward loop over the photons to find the first existing photon
+        int last_photon_index = bmax[ibin]-1; // Index of the last existing photon (weight > 0)
+        int first_photon_index = bmin[ibin]; // Index of the first photon
+        while( ( last_photon_index >= bmin[ibin] )
+                && ( weight[last_photon_index] <= 0 ) ) {
+            last_photon_index--;
+        }
+        while( ( first_photon_index < bmax[ibin] )
+                && ( weight[first_photon_index] > 0 ) ) {
+            first_photon_index++;
+        }
+        // At this level, last_photon_index is the position of the last still-existing photon (weight > 0)
+        // that will not be erased
+
+        // Backward loop over the photons to fill holes in the photon particle array (at the bin level only)
+        for( int ipart=last_photon_index-1 ; ipart>=bmin[ibin]; ipart-- ) {
+            if( weight[ipart] <= 0 ) {
+                if( ipart < last_photon_index ) {
+                    // The last existing photon comes to the position of
+                    // the deleted photon
+                    particles.overwriteParticle( last_photon_index, ipart );
+                    // Overwrite bufferised data
+                    for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                        Epart[iDim*nparts+ipart] = Epart[iDim*nparts+last_photon_index];
+                        Bpart[iDim*nparts+ipart] = Bpart[iDim*nparts+last_photon_index];
+                    }
+                    for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+                        iold[iDim*nparts+ipart] = iold[iDim*nparts+last_photon_index];
+                        deltaold[iDim*nparts+ipart] = deltaold[iDim*nparts+last_photon_index];
+                    }
+                    gamma[ipart] = gamma[0*nparts+last_photon_index];
+
+                    if (thetaold) {
+                        thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
+                    }
+                    last_photon_index --;
+                }
+            }
+        } // end for ipart
+
+        // Update of the bin boundaries
+        // const unsigned int nb_deleted_photon = bmax[ibin]-last_photon_index-1;
+
+        // We photons deleted
+        if( last_photon_index + 1 < bmax[ibin] ) {
+            bmax[ibin] = last_photon_index+1;
+
+            // std::cerr
+            //         << " ibin: " << ibin
+            //         << " - bmin: " << bmin[ibin]
+            //         << " - bmax: " << bmax[ibin]
+            //         << " - nb_deleted_photon: " << nb_deleted_photon
+            //         << std::endl;
+        }
+
+    } // if bmax[ibin] > bmin[ibin]
 }
 
 void MultiphotonBreitWheeler::joinNewElectronPositronPairs(Particles **new_pair, unsigned int Nbins)
@@ -644,44 +735,44 @@ void MultiphotonBreitWheeler::joinNewElectronPositronPairs(Particles **new_pair,
            // number of particles to add from the bin
            unsigned int nparticles_to_add = new_pair_per_bin[ibin][k].size();
            new_pair[k]->createParticles(nparticles_to_add);
-           
+
            for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
-              
+
               int idNew = (new_pair[k]->size() - nparticles_to_add) + ipart;
-           
+
               // momenta
               for( int i=0; i<3; i++ ) {
                   new_pair[k]->momentum( i, idNew ) = new_pair_per_bin[ibin][k].momentum( i, ipart );
               }
-           
+
               // positions
               for( int i=0; i<n_dimensions_; i++ ) {
                   new_pair[k]->position( i, idNew ) = new_pair_per_bin[ibin][k].position( i, ipart );
               }
-           
+
               // old positions
               if( new_pair[k]->Position_old.size() > 0 ) {
                   for( int i=0; i<n_dimensions_; i++ ) {
                       new_pair[k]->position_old( i, idNew ) = new_pair_per_bin[ibin][k].position_old( i, ipart );
                   }
               }
-           
-              // weight 
+
+              // weight
               new_pair[k]->weight( idNew ) = new_pair_per_bin[ibin][k].weight( ipart );
-           
+
               // charge
               new_pair[k]->charge( idNew ) = new_pair_per_bin[ibin][k].charge( ipart );
-           
+
               // chi
               if( new_pair[k]->isQuantumParameter ) {
                   new_pair[k]->chi( idNew ) = new_pair_per_bin[ibin][k].chi( ipart );
               }
-           
+
               //tau
               if( new_pair[k]->isMonteCarlo ) {
                   new_pair[k]->tau( idNew ) = new_pair_per_bin[ibin][k].tau( ipart );
               }
-           } // end ipart 
+           } // end ipart
            new_pair_per_bin[ibin][k].clear();
        } // end ibin loop
     } // end k loop (different species loop)

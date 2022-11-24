@@ -32,7 +32,7 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-    
+
 }
 
 
@@ -97,7 +97,7 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Calculate coeffs
     coeffs( xpn, ypn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
@@ -154,8 +154,7 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
 
     //Loop on bin particles
-    int nparts( particles.size() );
-
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
@@ -191,7 +190,7 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
     }
 
-    
+
 }
 
 // -----------------------------------------------------------------------------
@@ -208,7 +207,7 @@ void Interpolator2D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }

@@ -116,7 +116,7 @@ public:
 
     void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
     void recv( int *integer, int from, int tag, unsigned int );
-    
+
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
     void irecv( Field* field, int from, int tag, MPI_Request& request );
@@ -170,19 +170,19 @@ public:
     {
         return smilei_omp_max_threads;
     }
-    
+
     //! Return local number of cores
     inline int getNumCores()
     {
         return number_of_cores;
     }
-    
+
     //! Return global number of cores
     inline int getGlobalNumCores()
     {
         return global_number_of_cores;
     }
-    
+
     //! Return tag upper bound of this MPI implementation
     inline int getTagUB()
     {
@@ -220,9 +220,18 @@ public:
     std::vector<std::vector<double>> dynamics_EnvEabs_part;
     //! value of the EnvEabs used for envelope ionization
     std::vector<std::vector<double>> dynamics_EnvExabs_part;
-    
-    // Resize buffers for a given number of particles
-    inline void dynamics_resize( int ithread, int ndim_field, int npart, bool isAM = false )
+
+    //! Return buffer size in thread ithread
+    inline int __attribute__((always_inline)) getBufferSize(const int ithread)
+    {
+        return dynamics_invgf[ithread].size();
+    }
+
+    //! Erase Particles from istart ot the end in the buffers of thread ithread
+    void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
+
+    // Resize buffers for a given number of particles (threaded version)
+    inline void resizeBuffers( int ithread, int ndim_field, int npart, bool isAM = false )
     {
         dynamics_Epart[ithread].resize( 3*npart );
         dynamics_Bpart[ithread].resize( 3*npart );
@@ -245,9 +254,10 @@ public:
             }
         }
     }
-    
+
+
         // Resize buffers vector for a given number of buffers
-    inline void resize_buffers( int n_buffers, bool isAM = false)
+    inline void resizeBuffers( int n_buffers, bool isAM = false)
     {
         dynamics_Epart.resize( n_buffers );
         dynamics_Bpart.resize( n_buffers );
@@ -272,7 +282,7 @@ public:
     }
 
     // Resize buffers to avoid memory leak with tasks
-    inline void reduce_dynamics_buffer_size( int buffer_id, bool isAM = false )
+    inline void reduceDynamicsBufferSize( int buffer_id, bool isAM = false )
     {
         dynamics_Epart[buffer_id].resize( 1 );
         dynamics_Bpart[buffer_id].resize( 1 );
@@ -305,7 +315,7 @@ public:
             dynamics_eithetaold[ithread].resize( npart );
         }
     }
-    
+
     // Compute global number of particles
     //     - deprecated with patch introduction
     //! \todo{Patch managmen}
@@ -342,11 +352,11 @@ public:
     };
 
     // If particle event tracing diagnostic is activated, trace event
-    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread, 
+    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread,
                                  unsigned int event_start_or_end, int event_name)
     {
         // If particle event tracing diagnostic is activated, trace event
-        // otherwise, this becomes an empty method 
+        // otherwise, this becomes an empty method
         #  ifdef _PARTEVENTTRACING
         if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
         #  endif

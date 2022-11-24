@@ -105,12 +105,12 @@ public:
 
     //! Iteration for which the species field is initialized in case of relativistic initialization
     int iter_relativistic_initialization_;
-    
+
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
-    std::string ionization_model;
+    std::string ionization_model_;
 
     //! Type of density profile ("nb" or "charge")
     std::string density_profile_type_;
@@ -160,7 +160,7 @@ public:
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
-    int position_initialization_on_species_index;
+    int position_initialization_on_species_index_;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -327,7 +327,7 @@ public:
 
     //! Merging
     Merging *Merge;
-    
+
     //! Particle Computation time evaluation
     PartCompTime *part_comp_time_ = NULL;
 
@@ -349,6 +349,8 @@ public:
     {
         return *particles;
     }
+
+    //! Method returning the Particle list pointer for the considered Species
     inline Particles &getParticlesList()
     {
         return *particles;
@@ -357,16 +359,30 @@ public:
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const
     {
+        return particles->numberOfParticles();
+    }
+
+    //! Method returning the size of Particles
+    inline unsigned int getParticlesSize() const
+    {
         return particles->size();
     }
-    // capacity() = vect ever oversize
-    //! \todo define particles.capacity = min.capacity
+
+    //! Return the capacity of Particles
     inline unsigned int getParticlesCapacity() const
     {
         return particles->capacity();
     }
 
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
+    //! For all particles of the species
+    //!   - interpolate the fields at the particle position
+    //!   - perform ionization
+    //!   - perform the radiation reaction
+    //!   - calculate the new velocity
+    //!   - calculate the new position
+    //!   - apply the boundary conditions
+    //!   - increment the currents (projection)
     virtual void dynamics( double time, unsigned int ispec,
                            ElectroMagn *EMfields,
                            Params &params, bool diag_flag,
@@ -484,7 +500,7 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-    
+
     inline double computeEnergy()
     {
         double nrj( 0. );
@@ -517,6 +533,20 @@ public:
 
     //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
+
+    //! This method eliminates the space gap between the bins
+    //! (presence of empty particles between the bins)
+    void compress(SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
+
+    //! This method removes particles with a negative weight
+    //! without changing the bin first index
+    //! Bins are therefore potentially seperated by empty particle slots
+    void removeTaggedParticlesPerBin(
+        SmileiMPI *smpi,
+        int ithread,
+        bool compute_cell_keys = false);
 
     //! Moving window boundary conditions managment
     void disableXmax();
