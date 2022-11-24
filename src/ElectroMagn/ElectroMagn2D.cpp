@@ -112,18 +112,19 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     }
     // Allocation of filtered fields when Friedman filtering is required
     if( params.Friedman_filter ) {
-        Exfilter.resize( 3 );
-        Exfilter[0] = new Field2D( dimPrim, 0, false, "Ex_f" );
-        Exfilter[1] = new Field2D( dimPrim, 0, false, "Ex_m1" );
-        Exfilter[2] = new Field2D( dimPrim, 0, false, "Ex_m2" );
-        Eyfilter.resize( 3 );
-        Eyfilter[0] = new Field2D( dimPrim, 1, false, "Ey_f" );
-        Eyfilter[1] = new Field2D( dimPrim, 1, false, "Ey_m1" );
-        Eyfilter[2] = new Field2D( dimPrim, 1, false, "Ey_m2" );
-        Ezfilter.resize( 3 );
-        Ezfilter[0] = new Field2D( dimPrim, 2, false, "Ez_f" );
-        Ezfilter[1] = new Field2D( dimPrim, 2, false, "Ez_m1" );
-        Ezfilter[2] = new Field2D( dimPrim, 2, false, "Ez_m2" );
+        filter_ = new FriedmanFields();
+        filter_->Ex_.resize( 3 );
+        filter_->Ex_[0] = new Field2D( dimPrim, 0, false, "Ex_f" );
+        filter_->Ex_[1] = new Field2D( dimPrim, 0, false, "Ex_m1" );
+        filter_->Ex_[2] = new Field2D( dimPrim, 0, false, "Ex_m2" );
+        filter_->Ey_.resize( 3 );
+        filter_->Ey_[0] = new Field2D( dimPrim, 1, false, "Ey_f" );
+        filter_->Ey_[1] = new Field2D( dimPrim, 1, false, "Ey_m1" );
+        filter_->Ey_[2] = new Field2D( dimPrim, 1, false, "Ey_m2" );
+        filter_->Ez_.resize( 3 );
+        filter_->Ez_[0] = new Field2D( dimPrim, 2, false, "Ez_f" );
+        filter_->Ez_[1] = new Field2D( dimPrim, 2, false, "Ez_m1" );
+        filter_->Ez_[2] = new Field2D( dimPrim, 2, false, "Ez_m2" );
     }
     
     // Total charge currents and densities

@@ -17,7 +17,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for InterpolatorAM2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : InterpolatorAM( params, patch )
+InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : InterpolatorAM( patch )
 {
 
     nmodes_ = params.nmodes;

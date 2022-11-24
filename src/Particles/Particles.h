@@ -178,9 +178,6 @@ public:
     //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
-    //! Move iPart at the end of vectors
-    void pushToEnd( unsigned int iPart );
-
     //! Create new particle
     void createParticle();
 

@@ -14,7 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3DWT2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3DWT2Order::Interpolator3DWT2Order( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3DWT2Order::Interpolator3DWT2Order( Params &params, Patch *patch ) : Interpolator3D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -136,7 +136,7 @@ void Interpolator3DWT2Order::oneField( Field **field, Particles &particles, int 
     }
 }
 
-void Interpolator3DWT2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator3DWT2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );
@@ -228,7 +228,7 @@ void Interpolator3DWT2Order::fieldsSelection( ElectroMagn *EMfields, Particles &
 }
 
 
-void Interpolator3DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field3D *Phi3D = static_cast<Field3D *>( EMfields->envelope->Phi_ );
@@ -286,7 +286,7 @@ void Interpolator3DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles
 } // END Interpolator3DWT2Order
 
 
-void Interpolator3DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field3D *Phi_m3D = static_cast<Field3D *>( EMfields->envelope->Phi_m );
@@ -418,7 +418,7 @@ void Interpolator3DWT2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, P
 
 } // END Interpolator3DWT2Order
 
-void Interpolator3DWT2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field3D *EnvEabs = static_cast<Field3D *>( EMfields->Env_E_abs_ );

@@ -10,7 +10,7 @@ double Function_Python1D::valueAt( double time )
 {
     return PyTools::runPyFunction( py_profile, time );
 }
-double Function_Python1D::valueAt( vector<double> x_cell, double time )
+double Function_Python1D::valueAt( vector<double>, double time )
 {
     return PyTools::runPyFunction( py_profile, time );
 }
@@ -88,7 +88,7 @@ PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x
 
 // Time dependent
 
-PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *> x, double time )
+PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *>, double time )
 {
     PyObject *t = PyFloat_FromDouble( time );
     PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, t, NULL );
@@ -193,15 +193,15 @@ double Function_Constant3D::valueAt( vector<double> x_cell )
 }
 
 // Constant profiles + time
-double Function_Constant1D::valueAt( vector<double> x_cell, double time )
+double Function_Constant1D::valueAt( vector<double> x_cell, double )
 {
     return ( x_cell[0]>=xvacuum ) ? value : 0.;
 }
-double Function_Constant2D::valueAt( vector<double> x_cell, double time )
+double Function_Constant2D::valueAt( vector<double> x_cell, double )
 {
     return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) ) ? value : 0.;
 }
-double Function_Constant3D::valueAt( vector<double> x_cell, double time )
+double Function_Constant3D::valueAt( vector<double> x_cell, double )
 {
     return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) && ( x_cell[2]>=zvacuum ) ) ? value : 0.;
 }

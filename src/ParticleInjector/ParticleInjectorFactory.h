@@ -81,7 +81,7 @@ public:
         }
             
         // Creation of the injector object
-        this_particle_injector = new ParticleInjector(params, patch);
+        this_particle_injector = new ParticleInjector();
         
         this_particle_injector->name_ = injector_name;
         this_particle_injector->species_name_ = species_name;
@@ -344,9 +344,9 @@ public:
     
     //! Method to clone a particle injector from an existing one
     //! Note that this must be only called from cloneVector, because additional init is needed
-    static ParticleInjector *clone( ParticleInjector * particle_injector, Params &params, Patch *patch)
+    static ParticleInjector *clone( ParticleInjector * particle_injector )
     {
-        ParticleInjector * new_particle_injector = new ParticleInjector(params, patch);
+        ParticleInjector * new_particle_injector = new ParticleInjector();
         
         new_particle_injector->name_            = particle_injector->name_;
         new_particle_injector->injector_number_ = particle_injector->injector_number_;
@@ -388,14 +388,14 @@ public:
     }
 
     //! Method to clone the whole vector
-    static std::vector<ParticleInjector *> cloneVector(std::vector<ParticleInjector *> particle_injector_vector, Params &params, Patch *patch )
+    static std::vector<ParticleInjector *> cloneVector(std::vector<ParticleInjector *> particle_injector_vector )
     {
         
         std::vector<ParticleInjector *> new_vector_particle_injector;
         new_vector_particle_injector.resize( 0 );
         
         for( unsigned int i_inj = 0; i_inj < particle_injector_vector.size(); i_inj++ ) {
-            ParticleInjector *new_particle_injector = ParticleInjectorFactory::clone( particle_injector_vector[i_inj], params, patch );
+            ParticleInjector *new_particle_injector = ParticleInjectorFactory::clone( particle_injector_vector[i_inj] );
             new_vector_particle_injector.push_back( new_particle_injector );
         }
         

@@ -24,7 +24,7 @@ public:
     //  1. Constructor/destructor
 
     //! ParticleInjector constructor
-    ParticleInjector( Params &, Patch * );
+    ParticleInjector();
 
     //! ParticleInjector destructor
     virtual ~ParticleInjector();

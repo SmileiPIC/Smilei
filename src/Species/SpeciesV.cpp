@@ -445,7 +445,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     //     *particles, smpi,
                     //     ipack*packsize_+scell,
-                    //     particles->first_index.size(),
                     //     &particles->first_index[0],
                     //     &particles->last_index[0],
                     //     ithread );
@@ -668,8 +667,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                          PartWalls *partWalls,
                          Patch *patch, SmileiMPI *smpi,
                          RadiationTables &RadiationTables,
-                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                         vector<Diagnostic *> &localDiags, int buffer_id )
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 
@@ -1712,8 +1710,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
                                Params &params,
-                               Patch *patch, SmileiMPI *smpi,
-                               std::vector<Diagnostic *> &localDiags )
+                               Patch *patch, SmileiMPI *smpi )
 {
 //     int ithread;
 // #ifdef _OPENMP
@@ -1748,7 +1745,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
-            ( *Merge )( mass_, *particles, mask, smpi, particles->first_index[scell],
+            ( *Merge )( mass_, *particles, mask, particles->first_index[scell],
                         particles->last_index[scell], count[scell]);
 
         }
@@ -1849,8 +1846,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -1974,8 +1970,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -2065,7 +2060,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -2153,8 +2148,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -2232,8 +2226,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
 void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -2407,8 +2400,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS

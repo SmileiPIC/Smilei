@@ -16,7 +16,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for InterpolatorAM1Order
 // ---------------------------------------------------------------------------------------------------------------------
-InterpolatorAM1Order::InterpolatorAM1Order( Params &params, Patch *patch ) : InterpolatorAM( params, patch )
+InterpolatorAM1Order::InterpolatorAM1Order( Params &params, Patch *patch ) : InterpolatorAM( patch )
 {
 
     D_inv_[0] = 1.0/params.cell_length[0];
@@ -232,7 +232,7 @@ void InterpolatorAM1Order::oneField( Field **field, Particles &particles, int *i
 
 }
 
-void InterpolatorAM1Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void InterpolatorAM1Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -258,7 +258,7 @@ void InterpolatorAM1Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void InterpolatorAM1Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
+void InterpolatorAM1Order::fieldsSelection( ElectroMagn *, Particles &, double *, int , vector<unsigned int> * )
 {
     ERROR( "To Do" );
 }

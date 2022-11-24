@@ -48,7 +48,7 @@ public:
                      double & pair_energy,
                      int istart,
                      int iend,
-                     int ithread, int ibin = 0, int ipart_ref = 0 );
+                     int ithread, int ipart_ref = 0 );
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
     //! \param kx photon x momentum
@@ -112,14 +112,13 @@ public:
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param ibin        Index of the current bin
-    //! \param nbin        Number of bins
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
     void removeDecayedPhotonsWithoutBinCompression(
         Particles &particles,
         SmileiMPI *smpi,
-        int ibin, int nbin,
+        int ibin,
         int *bmin, int *bmax, int ithread );
 
     //! Return the sampling for each pair

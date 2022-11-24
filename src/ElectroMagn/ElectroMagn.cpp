@@ -34,7 +34,8 @@ ElectroMagn::ElectroMagn( Params &params, vector<Species *> &vecSpecies, Patch *
     isXmax( patch->isXmax() ),
     is_pxr( params.is_pxr ),
     nrj_mw_out( 0. ),
-    nrj_mw_inj( 0. )
+    nrj_mw_inj( 0. ),
+    filter_( NULL )
 {
     size_ = patch->size_;
     oversize = patch->oversize;
@@ -71,7 +72,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     isXmax( patch->isXmax() ),
     is_pxr( emFields->is_pxr ),
     nrj_mw_out( 0. ),
-    nrj_mw_inj( 0. )
+    nrj_mw_inj( 0. ),
+    filter_( NULL )
 {
     dimPrim = emFields->dimPrim;
     dimDual = emFields->dimDual;
@@ -265,23 +267,8 @@ ElectroMagn::~ElectroMagn()
         }
     }
     
-    for( unsigned int i=0; i<Exfilter.size(); i++ ) {
-        delete Exfilter[i];
-    }
-    for( unsigned int i=0; i<Eyfilter.size(); i++ ) {
-        delete Eyfilter[i];
-    }
-    for( unsigned int i=0; i<Ezfilter.size(); i++ ) {
-        delete Ezfilter[i];
-    }
-    for( unsigned int i=0; i<Bxfilter.size(); i++ ) {
-        delete Bxfilter[i];
-    }
-    for( unsigned int i=0; i<Byfilter.size(); i++ ) {
-        delete Byfilter[i];
-    }
-    for( unsigned int i=0; i<Bzfilter.size(); i++ ) {
-        delete Bzfilter[i];
+    if( filter_ ) {
+        delete filter_;
     }
     
     int nBC = emBoundCond.size();

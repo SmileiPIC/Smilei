@@ -45,9 +45,7 @@ MF_Solver2D_Bouchard::MF_Solver2D_Bouchard(Params &params)
     Dx    = delta_x*dt/dy;
     Dy    = delta_y*dt/dy;
 
-    isEFilterApplied = false;
-    if (params.Friedman_filter)
-        isEFilterApplied = true;
+    isEFilterApplied = params.Friedman_filter;
 }
 
 MF_Solver2D_Bouchard::~MF_Solver2D_Bouchard()
@@ -73,9 +71,9 @@ void MF_Solver2D_Bouchard::operator() ( ElectroMagn* fields )
     Field2D* Ey2D;
     Field2D* Ez2D;
     if (isEFilterApplied) {
-        Ex2D = static_cast<Field2D*>(fields->Exfilter[0]);
-        Ey2D = static_cast<Field2D*>(fields->Eyfilter[0]);
-        Ez2D = static_cast<Field2D*>(fields->Ezfilter[0]);
+        Ex2D = static_cast<Field2D*>(fields->filter_->Ex_[0]);
+        Ey2D = static_cast<Field2D*>(fields->filter_->Ey_[0]);
+        Ez2D = static_cast<Field2D*>(fields->filter_->Ez_[0]);
     } else {
         Ex2D = static_cast<Field2D*>(fields->Ex_);
         Ey2D = static_cast<Field2D*>(fields->Ey_);

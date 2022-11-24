@@ -639,7 +639,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 // Project susceptibility
-void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM2OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for AM geometry" );
 }

@@ -25,7 +25,7 @@ Region::Region( Params &params ) :
 {
 }
 
-void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD, bool global_region, unsigned int n_moved )
+void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, bool global_region, unsigned int n_moved )
 {
     // New_DD
     int rk(0);
@@ -103,7 +103,7 @@ void Region::solveMaxwell( Params &params, SimWindow *simWindow, int itime, doub
 
 }
 
-void Region::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
+void Region::identify_additional_patches(SmileiMPI* /*smpi*/, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
 {
     double delta_moving_win( simWindow->getNmoved()*params.cell_length[0] );
 

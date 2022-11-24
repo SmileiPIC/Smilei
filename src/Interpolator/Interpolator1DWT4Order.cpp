@@ -9,7 +9,7 @@
 
 using namespace std;
 
-Interpolator1DWT4Order::Interpolator1DWT4Order( Params &params, Patch *patch ) : Interpolator1D( params, patch )
+Interpolator1DWT4Order::Interpolator1DWT4Order( Params &params, Patch *patch ) : Interpolator1D( patch )
 {
     dx_inv_ = 1.0/params.cell_length[0];
     dt_ov_dx = params.timestep/params.cell_length[0]; 
@@ -117,7 +117,7 @@ void Interpolator1DWT4Order::oneField( Field **field, Particles &particles, int 
     }
 }
 
-void Interpolator1DWT4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator1DWT4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -157,19 +157,19 @@ void Interpolator1DWT4Order::fieldsSelection( ElectroMagn *EMfields, Particles &
     }
 }
 
-void Interpolator1DWT4Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1DWT4Order::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 
-void Interpolator1DWT4Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1DWT4Order::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 // probes like diagnostic !
-void Interpolator1DWT4Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator1DWT4Order::envelopeAndSusceptibility( ElectroMagn *, Particles &, int , double *, double *, double *, double * )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

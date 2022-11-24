@@ -1119,8 +1119,7 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
 void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -1209,8 +1208,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
 void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -1297,7 +1295,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -1378,8 +1376,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -1538,8 +1535,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 

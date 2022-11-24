@@ -46,7 +46,7 @@ Projector3D4Order::~Projector3D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double /*invgf*/, int *iold, double *deltaold, int bin_shift )
 {
     int nparts = particles.size();
     
@@ -236,7 +236,7 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double /*invgf*/, int *iold, double *deltaold, int bin_shift )
 {
     int nparts = particles.size();
     
@@ -831,7 +831,7 @@ void Projector3D4Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
 } // END Project global current densities (ionize) for tasks
 
 //Wrapper for projection
-void Projector3D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector3D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -868,13 +868,13 @@ void Projector3D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector3D4Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector3D4Order::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 //Wrapper for projection
-void Projector3D4Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector3D4Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int /*ispec*/, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );

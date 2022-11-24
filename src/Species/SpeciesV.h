@@ -40,21 +40,13 @@ public:
     void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
-
-    // void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
-    //         ElectroMagn *EMfields,
-    //         Params &params, bool diag_flag,
-    //         Patch *patch, SmileiMPI *smpi,
-    //         std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+            Patch *patch, SmileiMPI *smpi ) override;
 
     //! Method projecting susceptibility, only particles interacting with envelope
     void ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
+            Patch *patch, SmileiMPI *smpi ) override;
 
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
@@ -62,8 +54,7 @@ public:
     void ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
+            Patch *patch, SmileiMPI *smpi ) override;
 
     //! Method calculating the Particle charge on the grid (projection)
     void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false ) override;
@@ -96,8 +87,7 @@ public:
     virtual void mergeParticles( double time_dual, unsigned int ispec,
                                  Params &params,
                                  Patch *patch,
-                                 SmileiMPI *smpi,
-                                 std::vector<Diagnostic *> &localDiags )override;
+                                 SmileiMPI *smpi )override;
 
 #ifdef _OMPTASKS
 
@@ -107,23 +97,20 @@ public:
                    Params &params, bool diag_flag,
                    PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                    RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                   std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id ) override;
 
     //! Method with tasks to project susceptibility and calculate the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
     void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
 
 #endif
 

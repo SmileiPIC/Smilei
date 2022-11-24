@@ -16,7 +16,7 @@ class Particles;
 class Interpolator
 {
 public:
-    Interpolator( Params &params, Patch *patch );
+    Interpolator() {};
     virtual ~Interpolator() {};
     
     virtual void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) = 0;

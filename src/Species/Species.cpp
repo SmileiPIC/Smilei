@@ -375,7 +375,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
-    Merge = MergingFactory::create( params, this, patch->rand_ );
+    Merge = MergingFactory::create( this, patch->rand_ );
 
     // Evaluation of the particle computation time
     if (params.has_adaptive_vectorization ) {
@@ -699,7 +699,6 @@ void Species::dynamics( double time_dual,
                 //     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
                 Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     *particles, smpi, ibin,
-                    particles->first_index.size(),
                     &particles->first_index[0],
                     &particles->last_index[0],
                     ithread );
@@ -859,8 +858,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         PartWalls *partWalls,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                        vector<Diagnostic *> &localDiags, int buffer_id )
+                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -2275,8 +2273,7 @@ void Species::setXminBoundaryCondition()
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::mergeParticles( double time_dual, unsigned int ispec,
                               Params &params,
-                              Patch *patch, SmileiMPI *smpi,
-                              std::vector<Diagnostic *> &localDiags ) {}
+                              Patch *patch, SmileiMPI *smpi ) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -2287,8 +2284,7 @@ void Species::mergeParticles( double time_dual, unsigned int ispec,
 void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -2388,8 +2384,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -2471,7 +2466,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -2557,8 +2552,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -2615,8 +2609,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -2757,8 +2750,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;

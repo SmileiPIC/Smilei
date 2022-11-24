@@ -237,7 +237,7 @@ void Projector3D4OrderV::currentsAndDensity( double * __restrict__ Jx,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
+void Projector3D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int /*bin_shift*/ )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -642,11 +642,11 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
                                    double     * __restrict__ Jz,
                                    Particles  &particles,
                                    unsigned int istart, unsigned int iend,
-                                   double     * __restrict__ invgf,
+                                   double     * __restrict__ /*invgf*/,
                                    int        * __restrict__ iold,
                                    double     * __restrict__ deltaold,
                                    unsigned int buffer_size,
-                                   int ipart_ref, int bin_shift )
+                                   int ipart_ref, int /*bin_shift*/ )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -1363,7 +1363,7 @@ void Projector3D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 
-void Projector3D4OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int scell, int ipart_ref )
+void Projector3D4OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

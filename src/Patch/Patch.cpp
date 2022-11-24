@@ -219,7 +219,7 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *, unsigned i
     vecBPs = BinaryProcessesFactory::cloneVector( patch->vecBPs );
 
     // Clone the particle injector
-    particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
+    particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_ );
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );

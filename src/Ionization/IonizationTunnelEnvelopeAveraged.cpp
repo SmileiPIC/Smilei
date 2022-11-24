@@ -53,13 +53,7 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     
 }
 
-
-
-void IonizationTunnelEnvelopeAveraged::operator()( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, Patch *patch, Projector *Proj, int ipart_ref )
-{}
-
-
-void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, std::vector<double> *Epart, std::vector<double> *EnvEabs_part, std::vector<double> *EnvExabs_part, std::vector<double> *Phipart, Patch *patch, Projector *Proj, int ibin, int ipart_ref )
+void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, std::vector<double> *Epart, std::vector<double> *EnvEabs_part, std::vector<double> *EnvExabs_part, std::vector<double> *Phipart, Patch *patch, Projector *, int ipart_ref )
 {
     unsigned int Z, Zp1, newZ, k_times;
     double E, E_sq, EnvE_sq, Aabs, invE, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;

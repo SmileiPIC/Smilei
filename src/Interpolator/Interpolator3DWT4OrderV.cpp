@@ -43,7 +43,7 @@ Interpolator3DWT4OrderV::Interpolator3DWT4OrderV( Params &params, Patch *patch )
 // {
 // }
 
-void Interpolator3DWT4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator3DWT4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
@@ -832,19 +832,19 @@ void Interpolator3DWT4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particle
 
 
 
-void Interpolator3DWT4OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT4OrderV::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 
-void Interpolator3DWT4OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT4OrderV::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 // probes like diagnostic !
-void Interpolator3DWT4OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator3DWT4OrderV::envelopeAndSusceptibility( ElectroMagn *, Particles &, int, double *, double *, double *, double * )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
@@ -852,7 +852,7 @@ void Interpolator3DWT4OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, 
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3DWT4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
+void Interpolator3DWT4OrderV::oneField( Field **, Particles &, int *, int *, double *, double *, double *, double * )
 {
     ERROR( "Single field 3D4O interpolator not available in vectorized mode" );
 }

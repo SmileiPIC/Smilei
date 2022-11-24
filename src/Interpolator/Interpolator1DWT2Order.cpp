@@ -11,7 +11,7 @@
 
 using namespace std;
 
-Interpolator1DWT2Order::Interpolator1DWT2Order( Params &params, Patch *patch ) : Interpolator1D( params, patch )
+Interpolator1DWT2Order::Interpolator1DWT2Order( Params &params, Patch *patch ) : Interpolator1D( patch )
 {
     dx_inv_ = 1.0/params.cell_length[0];
     dt_ov_dx = params.timestep/params.cell_length[0];

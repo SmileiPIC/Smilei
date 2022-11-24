@@ -334,7 +334,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params, patch->rand_ );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0], patch->rand_ );
-                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params, renormalize );
+                        ParticleCreator::createWeight( particles_, nPart, iPart, density( i, j, k ), params, renormalize );
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
 
                         iPart += nPart;
@@ -928,8 +928,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void ParticleCreator::createWeight( std::string position_initialization,
-                                    Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
+void ParticleCreator::createWeight( Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
                                     Params &params, bool renormalize )
 {
     double w = n_real_particles / nPart;

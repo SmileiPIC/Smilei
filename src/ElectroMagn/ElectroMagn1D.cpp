@@ -543,7 +543,7 @@ void ElectroMagn1D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
+void ElectroMagn1D::binomialCurrentFilter(unsigned int, std::vector<unsigned int>)
 {
 
     Field1D *Jx1D     = static_cast<Field1D *>( Jx_ );

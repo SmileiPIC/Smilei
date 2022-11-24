@@ -33,7 +33,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                                            int * __restrict__ istart,
                                            int * __restrict__ iend,
                                            int ithread,
-                                           unsigned int scell,
+                                           unsigned int,
                                            int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
@@ -410,7 +410,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
                                                Particles &particles,
                                                SmileiMPI * __restrict__ smpi,
                                                int * __restrict__ istart,
-                                               int * __restrict__ iend,
+                                               int * __restrict__ ,
                                                int ithread,
                                                LocalFields * __restrict__ JLoc,
                                                double * __restrict__ RhoLoc )
@@ -1084,7 +1084,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
+void Interpolator3D2OrderV::oneField( Field **, Particles &, int *, int *, double *, double *, double *, double * )
 {
     ERROR( "Single field 3D2O interpolator not available in vectorized mode" );
 }

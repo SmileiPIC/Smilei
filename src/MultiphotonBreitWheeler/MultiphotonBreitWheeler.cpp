@@ -150,7 +150,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         double &                      pair_energy,
         int                           istart,
         int                           iend,
-        int ithread, int ibin, int ipart_ref )
+        int ithread, int ipart_ref )
 {
     // _______________________________________________________________
     // Parameters
@@ -627,7 +627,6 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param ibin        Index of the current bin
-    //! \param nbin        Number of bins
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
@@ -635,7 +634,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
 void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
     Particles &particles,
     SmileiMPI *smpi,
-    int ibin, int nbin,
+    int ibin,
     int *bmin, int *bmax, int ithread )
 {
 

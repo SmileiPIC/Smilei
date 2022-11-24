@@ -391,7 +391,7 @@ void Projector1D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector1D4Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref )
+void Projector1D4Order::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

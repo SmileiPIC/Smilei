@@ -71,6 +71,26 @@ struct Antenna {
     bool spacetime;
 };
 
+
+//! Structure for the Friedman field filters
+struct FriedmanFields {
+    ~FriedmanFields() {
+        for( unsigned int i=0; i<Ex_.size(); i++ ) {
+            delete Ex_[i];
+        }
+        for( unsigned int i=0; i<Ey_.size(); i++ ) {
+            delete Ey_[i];
+        }
+        for( unsigned int i=0; i<Ez_.size(); i++ ) {
+            delete Ez_[i];
+        }
+    }
+    std::vector<Field *> Ex_;
+    std::vector<Field *> Ey_;
+    std::vector<Field *> Ez_;
+};
+
+
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
 {
@@ -220,16 +240,7 @@ public:
     //! Envelope of laser electric field along the longitudinal direction, absolute value
     Field *Env_Ex_abs_;
     
-    //! Vector of electric fields used when a filter is applied
-    std::vector<Field *> Exfilter;
-    std::vector<Field *> Eyfilter;
-    std::vector<Field *> Ezfilter;
-    
-    //! Vector of magnetic fields used when a filter is applied
-    std::vector<Field *> Bxfilter;
-    std::vector<Field *> Byfilter;
-    std::vector<Field *> Bzfilter;
-    
+    FriedmanFields * filter_;
     
     //! all Fields in electromagn
     std::vector<Field *> allFields;

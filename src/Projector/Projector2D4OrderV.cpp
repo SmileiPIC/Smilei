@@ -835,7 +835,7 @@ void Projector2D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 
-void Projector2D4OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int scell, int ipart_ref )
+void Projector2D4OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

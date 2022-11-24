@@ -14,7 +14,7 @@ using namespace std;
 // ------------------------------------------------------------
 // Gather Currents on Region to apply Maxwell solvers on Region
 // ------------------------------------------------------------
-void DoubleGridsAM::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &region, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void DoubleGridsAM::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &region, Params &params, SmileiMPI *smpi, Timers &timers, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -41,8 +41,7 @@ void DoubleGridsAM::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &regio
     for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
-        DoubleGridsAM::currentsOnRegionSendFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields)
-                                                     , region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), params, imode );
+        DoubleGridsAM::currentsOnRegionSendFinalize( vecPatches(ipatch), params );
 
     }
 
@@ -82,7 +81,7 @@ void DoubleGridsAM::currentsOnRegionSend( ElectroMagnAM* localfields, unsigned i
 
 }
 
-void DoubleGridsAM::currentsOnRegionSendFinalize( ElectroMagnAM* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+void DoubleGridsAM::currentsOnRegionSendFinalize( Patch* patch, Params& params )
 {
     MPI_Status status;
     // Wait for currentsOnRegionSend (isend)
@@ -129,7 +128,7 @@ void DoubleGridsAM::currentsOnRegionRecv( ElectroMagnAM* globalfields, unsigned 
 // ---------------------------------------------------------------------------
 // Scatter Fields on Patches for particles interpolation or divergece cleaning
 // ---------------------------------------------------------------------------
-void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -139,7 +138,7 @@ void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::fieldsOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
+                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), imode );
 
     }
 
@@ -156,8 +155,7 @@ void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches
     for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
-        DoubleGridsAM::fieldsOnPatchesRecvFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                                    region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), imode );
+        DoubleGridsAM::fieldsOnPatchesRecvFinalize( vecPatches(ipatch) );
 
     }
 
@@ -186,7 +184,7 @@ void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches
 }
 
 
-void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
 {
     // irecvComplex( cFields, sender_mpi_rank, tag, requests );
     //               tag = *9 ? 9 communications could be are required per patch
@@ -201,7 +199,7 @@ void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned in
 
 }
 
-void DoubleGridsAM::fieldsOnPatchesRecvFinalize( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+void DoubleGridsAM::fieldsOnPatchesRecvFinalize( Patch* patch )
 {
     MPI_Status status;
     // Wait for fieldsOnPatchesRecv (irecv)
@@ -277,8 +275,7 @@ void DoubleGridsAM::syncFieldsOnRegion( VectorPatch& vecPatches, Region& region,
     for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
-        DoubleGridsAM::fieldsOnRegionSendFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                                   region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), params, imode );
+        DoubleGridsAM::fieldsOnRegionSendFinalize( vecPatches(ipatch) );
     }
 
     ElectroMagnAM * region_fields = NULL;
@@ -327,7 +324,7 @@ void DoubleGridsAM::fieldsOnRegionSend( ElectroMagnAM* localfields, unsigned int
     
 }
 
-void DoubleGridsAM::fieldsOnRegionSendFinalize( ElectroMagnAM* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+void DoubleGridsAM::fieldsOnRegionSendFinalize( Patch* patch )
 {
     MPI_Status status;
     // Wait for fieldsOnRegionSend (isend)
@@ -392,7 +389,7 @@ void DoubleGridsAM::fieldsOnRegionRecv( ElectroMagnAM* globalfields, unsigned in
 // ---------------------------------------------------------------------------
 // Scatter Fields on Patches for particles interpolation or divergece cleaning
 // ---------------------------------------------------------------------------
-void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -402,7 +399,7 @@ void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Par
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::bOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
+                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), imode );
 
     }
 
@@ -419,8 +416,7 @@ void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Par
     for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
-        DoubleGridsAM::bOnPatchesRecvFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                                    region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), imode );
+        DoubleGridsAM::bOnPatchesRecvFinalize( vecPatches(ipatch) );
 
     }
 
@@ -444,7 +440,7 @@ void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Par
 }
 
 
-void DoubleGridsAM::bOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+void DoubleGridsAM::bOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
 {
     // irecvComplex( cFields, sender_mpi_rank, tag, requests );
     //               tag = *9 ? 9 communications could be are required per patch
@@ -455,7 +451,7 @@ void DoubleGridsAM::bOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hin
 
 }
 
-void DoubleGridsAM::bOnPatchesRecvFinalize( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+void DoubleGridsAM::bOnPatchesRecvFinalize( Patch* patch )
 {
     MPI_Status status;
     // Wait for fieldsOnPatchesRecv (irecv)
@@ -491,7 +487,7 @@ void DoubleGridsAM::bOnPatchesSend( ElectroMagnAM* globalfields, unsigned int hi
 // ---------------------------------------------------------------------------
 // Scatter Currents on Patches for diags after filtering
 // ---------------------------------------------------------------------------
-void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -501,7 +497,7 @@ void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatch
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::currentsOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
+                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), imode );
 
     }
 
@@ -518,8 +514,7 @@ void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatch
     for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
 
         unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
-        DoubleGridsAM::currentsOnPatchesRecvFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                                    region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), imode );
+        DoubleGridsAM::currentsOnPatchesRecvFinalize( vecPatches(ipatch) );
 
     }
 
@@ -544,7 +539,7 @@ void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatch
 }
 
 
-void DoubleGridsAM::currentsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+void DoubleGridsAM::currentsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
 {
     // irecvComplex( cFields, sender_mpi_rank, tag, requests );
     //               tag = *9 ? 9 communications could be are required per patch
@@ -557,7 +552,7 @@ void DoubleGridsAM::currentsOnPatchesRecv( ElectroMagnAM* localfields, unsigned 
 
 }
 
-void DoubleGridsAM::currentsOnPatchesRecvFinalize( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+void DoubleGridsAM::currentsOnPatchesRecvFinalize( Patch* patch )
 {
     MPI_Status status;
     // Wait for fieldsOnPatchesRecv (irecv)

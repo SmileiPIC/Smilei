@@ -14,7 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];

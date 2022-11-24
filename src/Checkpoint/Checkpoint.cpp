@@ -372,24 +372,14 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     }
 
     // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Exfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+        dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
     }
-    for( unsigned int i=0; i<EMfields->Eyfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Eyfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+        dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
     }
-    for( unsigned int i=0; i<EMfields->Ezfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Ezfilter[i] );
-    }
-    // filtered Magnetic fields
-    for( unsigned int i=0; i<EMfields->Bxfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Bxfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Byfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Byfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Bzfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+        dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
     }
 
     // Fields required for DiagFields
@@ -743,24 +733,14 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
 
     // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Exfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+        restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
     }
-    for( unsigned int i=0; i<EMfields->Eyfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Eyfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+        restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
     }
-    for( unsigned int i=0; i<EMfields->Ezfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Ezfilter[i] );
-    }
-    // filtered Magnetic fields
-    for( unsigned int i=0; i<EMfields->Bxfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Bxfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Byfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Byfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Bzfilter[i] );
+    for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+        restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
     }
 
     // Fields required for DiagFields

@@ -37,15 +37,15 @@ void MA_Solver2D_Friedman::operator()( ElectroMagn *fields )
     Field2D *Jy2D   = static_cast<Field2D *>( fields->Jy_ );
     Field2D *Jz2D   = static_cast<Field2D *>( fields->Jz_ );
     
-    Field2D *Ex_f = static_cast<Field2D *>( fields->Exfilter[0] );
-    Field2D *Ey_f = static_cast<Field2D *>( fields->Eyfilter[0] );
-    Field2D *Ez_f = static_cast<Field2D *>( fields->Ezfilter[0] );
-    Field2D *Ex_m1 = static_cast<Field2D *>( fields->Exfilter[1] );
-    Field2D *Ey_m1 = static_cast<Field2D *>( fields->Eyfilter[1] );
-    Field2D *Ez_m1 = static_cast<Field2D *>( fields->Ezfilter[1] );
-    Field2D *Ex_m2 = static_cast<Field2D *>( fields->Exfilter[2] );
-    Field2D *Ey_m2 = static_cast<Field2D *>( fields->Eyfilter[2] );
-    Field2D *Ez_m2 = static_cast<Field2D *>( fields->Ezfilter[2] );
+    Field2D *Ex_f = static_cast<Field2D *>( fields->filter_->Ex_[0] );
+    Field2D *Ey_f = static_cast<Field2D *>( fields->filter_->Ey_[0] );
+    Field2D *Ez_f = static_cast<Field2D *>( fields->filter_->Ez_[0] );
+    Field2D *Ex_m1 = static_cast<Field2D *>( fields->filter_->Ex_[1] );
+    Field2D *Ey_m1 = static_cast<Field2D *>( fields->filter_->Ey_[1] );
+    Field2D *Ez_m1 = static_cast<Field2D *>( fields->filter_->Ez_[1] );
+    Field2D *Ex_m2 = static_cast<Field2D *>( fields->filter_->Ex_[2] );
+    Field2D *Ey_m2 = static_cast<Field2D *>( fields->filter_->Ey_[2] );
+    Field2D *Ez_m2 = static_cast<Field2D *>( fields->filter_->Ez_[2] );
     
     double adv = 0.;
     

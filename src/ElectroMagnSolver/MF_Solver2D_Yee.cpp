@@ -7,10 +7,7 @@
 MF_Solver2D_Yee::MF_Solver2D_Yee( Params &params )
     : Solver2D( params )
 {
-    isEFilterApplied = false;
-    if( params.Friedman_filter ) {
-        isEFilterApplied = true;
-    }
+    isEFilterApplied = params.Friedman_filter;
 }
 
 MF_Solver2D_Yee::~MF_Solver2D_Yee()
@@ -30,8 +27,8 @@ void MF_Solver2D_Yee::operator()( ElectroMagn *fields )
         Ex2D = static_cast<Field2D *>( fields->Ex_ );
         Ey2D = static_cast<Field2D *>( fields->Ey_ );
     } else {
-        Ex2D = static_cast<Field2D *>( fields->Exfilter[0] );
-        Ey2D = static_cast<Field2D *>( fields->Eyfilter[0] );
+        Ex2D = static_cast<Field2D *>( fields->filter_->Ex_[0] );
+        Ey2D = static_cast<Field2D *>( fields->filter_->Ey_[0] );
     }
     Field2D *Ez2D = static_cast<Field2D *>( fields->Ez_ );
     Field2D *Bx2D = static_cast<Field2D *>( fields->Bx_ );

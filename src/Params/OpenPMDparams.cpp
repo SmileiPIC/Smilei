@@ -152,7 +152,7 @@ void OpenPMDparams::writeBasePathAttributes( H5Write &location, unsigned int iti
     location.attr( "timeUnitSI", unitSI[SMILEI_UNIT_TIME] );
 }
 
-void OpenPMDparams::writeParticlesAttributes( H5Write &location )
+void OpenPMDparams::writeParticlesAttributes( H5Write & )
 {
 }
 
@@ -196,7 +196,7 @@ void OpenPMDparams::writeFieldAttributes( H5Write &location, vector<unsigned int
     location.attr( "gridUnitSI", unitSI[SMILEI_UNIT_POSITION] );
 }
 
-void OpenPMDparams::writeSpeciesAttributes( H5Write &location )
+void OpenPMDparams::writeSpeciesAttributes( H5Write & )
 {
 }
 
