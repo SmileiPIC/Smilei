@@ -1,0 +1,31 @@
+# 
+# Compile the Smilei code
+# _________________________________________
+
+name: make
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: hdf5 packet
+        run: |
+          sudo apt-get install libhdf5-dev
+          h5c++ -show
+      - name: mpi packet
+        run: |
+          sudo apt-get install mpich
+          mpic++ -show
+      - name: compile Smilei
+        run: |
+          python validation.py -c  -v 
