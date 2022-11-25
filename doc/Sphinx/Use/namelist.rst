@@ -2631,7 +2631,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
       corners  = [
           [1.,10.],
           [10.,1.],
-      ]
+      ],
       number   = [100, 100],
       fields   = ["Ex", "Ey", "Ez"]
   )

@@ -1,0 +1,49 @@
+# 
+# Generate the documentation
+# _________________________________________
+
+name: doc
+
+on:
+  push:
+    branches:    
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git"
+        docs-folder: "doc/Sphinx"        
+    - name: Commit documentation changes
+      run: |
+        git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
+        cp -r doc/Sphinx/_build/html/* gh-pages/        
+
+        git rev-parse --short HEAD > scripts/compile_tools/version
+        mkdir -p gh-pages/Overview/_downloads
+        git archive --format tar -o gh-pages/Overview/_downloads/Smilei.tar HEAD
+        tar rf gh-pages/Overview/_downloads/Smilei.tar scripts/compile_tools/version
+        gzip -f gh-pages/Overview/_downloads/Smilei.tar
+        for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o gh-pages/Overview/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/compile_tools/version; tar rf gh-pages/Overview/_downloads/smilei-${v}.tar scripts/compile_tools/version; gzip -f gh-pages/Overview/_downloads/smilei-${v}.tar; done
+
+        cd gh-pages
+        touch .nojekyll
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update documentation" -a || true
+        echo "end"
+        find . 
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        branch: gh-pages
+        directory: gh-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        keep_history: false
+        force: true
+        tags: true
