@@ -512,19 +512,19 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
-    if( number_of_pml_cells.size() == 1 ) {
-        while( number_of_pml_cells.size() < nDim_field ) {
-            number_of_pml_cells.push_back( number_of_pml_cells[0] );
-        }
-    } else if( number_of_pml_cells.size() != nDim_field ) {
-        ERROR_NAMELIST( "number_of_pml_cells must be the same size as the number of dimensions",
-                        LINK_NAMELIST + std::string("#main-variables") );
-    }
-    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-        if( number_of_pml_cells[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
-            number_of_pml_cells[iDim].push_back( number_of_pml_cells[iDim][0] );
-        }
-    }
+    //if( number_of_pml_cells.size() == 1 ) {
+    //    while( number_of_pml_cells.size() < nDim_field ) {
+    //        number_of_pml_cells.push_back( number_of_pml_cells[0] );
+    //    }
+    //} else if( number_of_pml_cells.size() != nDim_field ) {
+    //    ERROR_NAMELIST( "number_of_pml_cells must be the same size as the number of dimensions",
+    //                    LINK_NAMELIST + std::string("#main-variables") );
+    //}
+    //for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+    //    if( number_of_pml_cells[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
+    //        number_of_pml_cells[iDim].push_back( number_of_pml_cells[iDim][0] );
+    //    }
+    //}
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
