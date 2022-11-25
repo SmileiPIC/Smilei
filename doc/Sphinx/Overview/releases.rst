@@ -13,6 +13,9 @@ Get Smilei
 
 *Learn about Git* `here <https://git-scm.com/doc>`_.
 
+
+You can find older, unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>
+
 ----
 
 .. _latestVersion:
@@ -33,8 +36,6 @@ Changes made in the repository (not released)
   * Reading particle weights and momenta from hdf5 file
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
 
-
-**Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
 ----
 
@@ -59,8 +60,6 @@ Projects
 
 Release 4.7
 ^^^^^^^^^^^^^^^^^^^^^
-
-**Download**: `Smilei v4.7 <_downloads/smilei-v4.7.tar.gz>`_
 
 * **Perfectly Matched Layers** boundary conditions for EM fields (+2D Cartesian benchmark).
 * Improved performance for ARM-based processors including the Fujitsu A64FX
@@ -105,8 +104,6 @@ Release 4.7
 Release 4.6
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.6 <_downloads/smilei-v4.6.tar.gz>`_
-
 * :doc:`/Understand/SDMD`
 * New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
 * New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
@@ -144,8 +141,6 @@ Release 4.6
 Release 4.5
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.5 <_downloads/smilei-v4.5.tar.gz>`_
-
 * Changes:
 
   * Current filtering with adjustable number of passes per dimension
@@ -167,8 +162,6 @@ Release 4.5
 
 Release 4.4
 ^^^^^^^^^^^^^^^^^^^^^
-
-**Download**: `Smilei v4.4 <_downloads/smilei-v4.4.tar.gz>`_
 
 * Changed radiation tables: see :doc:`the doc </Understand/radiation_loss>`.
 
@@ -203,8 +196,6 @@ Release 4.4
 Release 4.3
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.3 <_downloads/smilei-v4.3.tar.gz>`_
-
 
 * ``AMcylindrical`` : envelope, ionization, additional diagnotics,
   number of ppc per direction, binomial current filter, poisson solver,
@@ -227,8 +218,6 @@ Release 4.3
 Release 4.2
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
-
 * ``AMcylindrical`` geometry with azimuthal Fourier decomposition (beta version)
 * Different convention for circular polarization amplitude
 * 1D and 2D laser envelope model
@@ -249,8 +238,6 @@ Release 4.2
 
 Release 4.1
 ^^^^^^^^^^^^^^^^^^^^^
-
-**Download**: `Smilei v4.1 <_downloads/smilei-v4.1.tar.gz>`_
 
 * Probe diagnostics of currents and density per species
 * Field diagnostics with more than 2^32 points
@@ -280,8 +267,6 @@ Release 4.1
 Release 4.0
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.0 <_downloads/smilei-v4.0.tar.gz>`_
-
 * :ref:`vectorization`
 * :ref:`laser_envelope`
 * MPI option ``MPI_THREAD_MULTIPLE`` is now optional (but recommended)
@@ -293,8 +278,6 @@ Release 4.0
 Release 3.5
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
-
 * :doc:`Laser defined in tilted plane</Use/laser_offset>`
 * Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst,
   MPI tags for large number of patches
@@ -304,16 +287,12 @@ Release 3.5
 Release 3.4.1
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
-
 * Ionization considering a user-defined rate
 
 ----
 
 Release 3.4
 ^^^^^^^^^^^
-
-**Download**: `Smilei v3.4 <_downloads/smilei-v3.4.tar.gz>`_
 
 * Compatibility with Python 3
 * New 'Performances' diagnostic
@@ -332,8 +311,6 @@ Release 3.4
 Release 3.3
 ^^^^^^^^^^^
 
-**Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
-
 * **Major** :doc:`syntax changes</syntax_changes>` in the namelist
 * QED radiation reaction
 * Monte-Carlo QED photon emission
@@ -346,8 +323,6 @@ Release 3.3
 
 Release 3.2
 ^^^^^^^^^^^
-
-**Download**: `Smilei v3.2 <_downloads/smilei-v3.2.tar.gz>`_
 
 * New pushers (Vay's and Higuera-Cary's)
 * *Numpy* used for filtering track particles
@@ -362,8 +337,6 @@ Release 3.2
 
 Release 3.1
 ^^^^^^^^^^^
-
-**Download**: `Smilei v3.1 <_downloads/smilei-v3.1.tar.gz>`_
 
 * *Screen* diagnostics
 * Exporting 3D diagnostics to VTK for reading in ParaView or VisIt
@@ -381,8 +354,6 @@ Notes:
 Release 3.0
 ^^^^^^^^^^^
 
-**Download**: `Smilei v3.0 <_downloads/smilei-v3.0.tar.gz>`_
-
 * **3D geometry**
 * Field and scalar diagnostics improved for more flexibility and memory saving
 * Faster initialization (including Maxwell-Jüttner sampling)
@@ -394,8 +365,6 @@ Release 3.0
 Release 2.3
 ^^^^^^^^^^^
 
-**Download**: `Smilei v2.3 <_downloads/smilei-v2.3.tar.gz>`_
-
 * Post-processing scripts have been turned into a *python* module
 * Many bugfixes, such as addressing diagnostics efficiency
 
@@ -404,8 +373,6 @@ Release 2.3
 
 Release 2.2
 ^^^^^^^^^^^
-
-**Download**: `Smilei v2.2 <_downloads/smilei-v2.2.tar.gz>`_
 
 * **state-of-the-art dynamic load balancing**
 * full *python* namelist, allowing for complex, user-friendly input
@@ -418,8 +385,6 @@ Release 2.2
 
 Release 1.0
 ^^^^^^^^^^^
-
-**Download**: `Smilei v1.0 <_downloads/smilei-v1.0.tar.gz>`_
 
 * 1D & 2D cartesian geometries
 * Moving window
