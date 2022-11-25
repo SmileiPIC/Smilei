@@ -3,7 +3,7 @@ Perfectly Matched Layers
 
 Perfectly Matched Layers (PML) are open boundary conditions for electromagnetic and laser envelope fields.
 This means that a wave propagating through the boundary will be absorbed and not reintroduced into the simulation.
-In that regard, it plays the same role as the "Silver-Muller" boundary conditions which is supported for electromagnetic fields only.
+In that regard, it plays the same role as the "Silver-Muller" boundary conditions which is supported for electromagnetic fields only (not envelope).
 
 At the cost of having a slightly higher computing cost than Silver-Muller, PML have several very interesting advantages:
 
@@ -68,26 +68,25 @@ Therefore it is important that :program:`Smilei` knows not only the profiles of 
 
 It is up to the user to provide such primitives in the namelist using the following syntax (here is an example for `sigma`):
 
-  | **Syntax 1:** ``[sigma, integrate_sigma]``, identical for all dimension.
+  | **Syntax 1:** ``[sigma, integrate_sigma]``, identical for all dimensions.
   | **Syntax 2:** ``[sigma_x, sigma_r, integrate_sigma_r]``,  different on each dimension.
 
-The default profiles are given by:
+The default profiles identical for all dimensions and are given by:
 
 .. code-block:: python
 
-    def sigma(x):
-        return 20. * x**2  
-    def integrate_sigma(x):
-        return 20./3. * x**3  
-    def kappa(x):
-        return 1 + 79. * x**4  
-    def integrate_kappa(x):
-        return x + 79./5. * x**5  
+    def sigma(u):
+        return 20. * u**2  
+    def integrate_sigma(u):
+        return 20./3. * u**3  
+    def kappa(u):
+        return 1 + 79. * u**4  
+    def integrate_kappa(u):
+        return u + 79./5. * u**5  
 
 .. rubric:: PML for the envelope model
 
 For stability purposes, the PML boundaries for the envelope use frequency shifting which prevents from using arbitrary profiles for the susceptibility.
 Therefore it is not possible to tune its profile.
 
-Details of the method are found here:
-`in this paper <https://link_to_guillaume's paper>`_.
+Details of the method will be published soon.
