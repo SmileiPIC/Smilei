@@ -199,6 +199,18 @@ class Main(SmileiSingleton):
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
     number_of_pml_cells = [[10,10],[10,10],[10,10]]
+
+    def default_sigma(x):
+        return 20. * x**2  
+    def default_integrate_sigma(x):
+        return 20./3. * x**3  
+    def default_kappa(x):
+        return 1 + 79. * x**4  
+    def default_integrate_kappa(x):
+        return x + 79./5. * x**5  
+
+    pml_sigma = [default_sigma, default_sigma, default_sigma, default_integrate_sigma]
+    pml_kappa = [default_kappa, default_kappa, default_kappa, default_integrate_kappa]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
@@ -450,6 +462,9 @@ class LaserEnvelope(SmileiSingleton):
     envelope_solver = "explicit"
     envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
+    Env_pml_sigma_parameters = [[0.90,2],[10.0,2],[10.0,2]]
+    Env_pml_kappa_parameters = [[1.00,1.00,2],[1.00,1.00,2],[1.00,1.00,2]]
+    Env_pml_alpha_parameters = [[0.90,0.90,1],[0.75,0.75,1],[0.75,0.75,1]]
     polarization_phi = 0.
     ellipticity = 0.
 

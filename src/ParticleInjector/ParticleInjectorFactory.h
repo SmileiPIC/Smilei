@@ -170,7 +170,7 @@ public:
         // Mean velocity
         // std::vector<double> mean_velocity_input;
         std::vector<PyObject *> prof;
-        if( PyTools::extract_1or3Profiles( "mean_velocity", "ParticleInjector" , injector_index, prof ) ) {
+        if( PyTools::extract_1orNProfiles( 3, "mean_velocity", "ParticleInjector" , injector_index, prof ) ) {
             this_particle_injector->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), params, true );
@@ -190,7 +190,7 @@ public:
         
         // Temperature
         // std::vector<double> temperature_input;
-        if( PyTools::extract_1or3Profiles( "temperature", "ParticleInjector", injector_index, prof ) ) {
+        if( PyTools::extract_1orNProfiles( 3, "temperature", "ParticleInjector", injector_index, prof ) ) {
             this_particle_injector->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_ ), params, true );
