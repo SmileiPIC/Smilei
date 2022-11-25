@@ -1099,20 +1099,20 @@ public:
         if( this_species->momentum_initialization_array_ == NULL
          && this_species->file_momentum_npart_ == 0 ) {
             // Mean velocity
-            if( PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ) {
+            if( PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof ) ) {
                 this_species->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), params, true, true );
                 this_species->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), params, true, true );
                 this_species->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), params, true, true );
             }
             // Temperature
-            if( PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ) {
+            if( PyTools::extract_1orNProfiles( 3, "temperature", "Species", ispec, prof ) ) {
                 this_species->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", species_name ), params, true, true );
                 this_species->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", species_name ), params, true, true );
                 this_species->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", species_name ), params, true, true );
             }
         } else {
-            ok1 = PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ;
-            ok2 = PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ;
+            ok1 = PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof ) ;
+            ok2 = PyTools::extract_1orNProfiles( 3, "temperature", "Species", ispec, prof ) ;
             if( ok1 ) {
                 ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array.",
                 LINK_NAMELIST + std::string("#species") );

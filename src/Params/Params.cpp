@@ -386,17 +386,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( EM_BCs[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic" ) ) {
-            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side",
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side.",
+                            LINK_NAMELIST + std::string("#main-variables") );
+        } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "PML" || EM_BCs[iDim][1] == "PML" ) ) {
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be PML only on one side for the moment.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
         if( is_spectral && geometry != "AMcylindrical" && ( EM_BCs[iDim][0] != "periodic" || EM_BCs[iDim][1] != "periodic" ) ) {
             ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
-        //if ( ( (EM_BCs[0][0] == "PML") || (EM_BCs[0][1] == "PML") )
-        //     && ( (EM_BCs[iDim][0] != "PML") || (EM_BCs[iDim][1] != "PML") ) ) {
-        //    ERROR( "Either all PML, either none" );
-        //}
     }
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
@@ -450,7 +449,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             full_Envelope_exchange = true;
         }
 
-
+        PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_kappa_parameters", envelope_pml_kappa_parameters, "LaserEnvelope" );
+        PyTools::extractVV( "Env_pml_alpha_parameters", envelope_pml_alpha_parameters, "LaserEnvelope" );
     }
 
     open_boundaries.resize( nDim_field );
@@ -511,6 +512,19 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
+    if( number_of_pml_cells.size() == 1 ) {
+        while( number_of_pml_cells.size() < nDim_field ) {
+            number_of_pml_cells.push_back( number_of_pml_cells[0] );
+        }
+    } else if( number_of_pml_cells.size() != nDim_field ) {
+        ERROR_NAMELIST( "number_of_pml_cells must be the same size as the number of dimensions",
+                        LINK_NAMELIST + std::string("#main-variables") );
+    }
+    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+        if( number_of_pml_cells[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
+            number_of_pml_cells[iDim].push_back( number_of_pml_cells[iDim][0] );
+        }
+    }
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
@@ -1121,6 +1135,9 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
+        if (maxwell_sol == "Bouchard" && custom_oversize < 4 ) {
+             ERROR_NAMELIST( "With `Bouchard` solver the oversize have to be greater than 4", LINK_NAMELIST + std::string("#main-variables") );
+        }
         if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
             if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {
@@ -1317,6 +1334,9 @@ void Params::print_init()
                     bc << ", " << EM_BCs_k[2*i+j][ii] ;
                 }
                 bc << "]";
+            }
+            if (EM_BCs[i][j] == "PML"){
+               bc << "  " << number_of_pml_cells[i][j] << " cells.";
             }
             MESSAGE( 1, bc.str() );
         }
