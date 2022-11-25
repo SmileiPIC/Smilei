@@ -19,16 +19,12 @@ public:
 
     void setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_lmin, int* ncells_pml_lmax, Patch* patch );
 
-    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax );
-    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, int solvermin, int solvermax );
+    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax );
+    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax );
 
 protected:
-    double sigma_r_max;
-    double kappa_r_max;
-    double power_pml_r;
-    double sigma_l_max;
-    double kappa_l_max;
-    double power_pml_l;
+    std::vector< Profile *> pml_sigma_;
+    std::vector< Profile *> pml_kappa_;
 
     std::vector<double> kappa_r_p;
     std::vector<double> sigma_r_p;
@@ -83,8 +79,6 @@ protected:
     // double lmax;
     // double l0;
     int j_glob_pml;
-    double rmax;
-    double r0;
     double length_r_pml;
     double length_l_pml;
     double length_l_pml_lmin;

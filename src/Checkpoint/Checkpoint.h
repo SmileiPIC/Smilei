@@ -14,6 +14,8 @@
 #include <Tools.h>
 
 #include <H5.h>
+#include "ElectroMagnBCAM_PML.h"
+#include "EnvelopeBCAM_PML.h"
 
 class Params;
 class OpenPMDparams;
@@ -146,6 +148,19 @@ private:
     //! restart file
     std::string restart_file;
     
+    //! dump PML in the checkpoint file 
+    template <typename Tpml>
+    void  dump_PML(Tpml embc, H5Write &g );
+    void  dump_PML( ElectroMagnBCAM_PML *embc, H5Write &g, unsigned int imode );
+    template <typename Tpml>
+    void  dump_PMLenvelope(Tpml envbc, H5Write &g, unsigned int bcId );
+    void  dump_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Write &g, unsigned int bcId );
+    template <typename Tpml>
+    void  restart_PML(Tpml embc, H5Read &g );
+    void  restart_PML( ElectroMagnBCAM_PML *embc, H5Read &g, unsigned int imode );
+    template <typename Tpml>
+    void  restart_PMLenvelope(Tpml envbc, H5Read &g, unsigned int bcId );
+    void  restart_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Read &g, unsigned int bcId );
 };
 
 #endif /* CHECKPOINT_H_ */
