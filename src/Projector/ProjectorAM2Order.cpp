@@ -621,7 +621,7 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization for tasks NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
+void ProjectorAM2Order::ionizationCurrentsForTasks( double */*b_Jx*/, double */*b_Jy*/, double */*b_Jz*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/, int /*bin_shift*/ )
 {
     // cField2D *JlAM  = static_cast<cField2D *>( Jl );
     // cField2D *JrAM  = static_cast<cField2D *>( Jr );
@@ -709,7 +709,7 @@ void ProjectorAM2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool /*is_spectral*/, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
 
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
@@ -726,7 +726,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection on buffers
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int ipart_ref )
+void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -751,7 +751,7 @@ void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfie
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes on bin sub-grid
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int bin_shift, int bdim0, bool diag_flag )
+void ProjectorAM2Order::currentsForTasks( ElectroMagnAM */*emAM*/, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int bin_shift, int bdim0, bool diag_flag )
 {
 
     // -------------------------------------
@@ -945,7 +945,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
 } // END Project local current densities (Jl, Jr, Jt, sort) on bin subgrid
 
 // Projector for susceptibility used as source term in envelope equation
-void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 
 {
     // -------------------------------------
@@ -1052,7 +1052,7 @@ void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void ProjectorAM2Order::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, double *b_ChiAM, int bin_shift, int /*bdim0*/, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM2Order::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, double *b_ChiAM, int bin_shift, int /*bdim0*/, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 {
     // -------------------------------------
     // Variable declaration & initialization

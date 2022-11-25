@@ -665,7 +665,7 @@ void Projector2D2OrderV::susceptibility( ElectroMagn *, Particles &, double , Sm
 void Projector2D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, 
         int bin_shift, Particles &particles, SmileiMPI *smpi, 
         int istart, int iend, int ithread, bool diag_flag, 
-        bool is_spectral, int ispec, int scell, int ipart_ref )
+        bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.

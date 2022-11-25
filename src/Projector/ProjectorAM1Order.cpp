@@ -330,7 +330,7 @@ void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imo
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool /*is_spectral*/, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
         
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
@@ -348,13 +348,13 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM1Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
+void ProjectorAM1Order::ionizationCurrents( Field */*Jl*/, Field */*Jr*/, Field */*Jt*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
 {
 }
 
 
 // Projector for susceptibility used as source term in envelope equation
-void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 
 {
     // -------------------------------------
