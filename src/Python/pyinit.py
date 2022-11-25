@@ -198,7 +198,7 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
-    number_of_pml_cells = [[10,10],[10,10],[10,10]]
+    number_of_pml_cells = [[10]]
 
     def default_sigma(x):
         return 20. * x**2  
