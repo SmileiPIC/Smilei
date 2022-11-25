@@ -183,7 +183,7 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field3D* f3D =  static_cast<Field3D*>(field);
-    int istart, ix, iy, iz, iDim, iNeighbor,bufsize;
+    int istart, ix, iy, iz, iDim, bufsize;
     void* b;
 
     bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
@@ -191,12 +191,11 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
     iDim = 0; // We exchange only in the X direction for movewin.
-    iNeighbor = 0; // We send only towards the West and receive from the East.
 
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-    if (MPI_neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[0][0]!=MPI_PROC_NULL) {
         ix = 2*oversize[0] + 1 + isDual[0];
         iy = 0;
         iz = 0;
@@ -207,7 +206,7 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
-    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][1]!=MPI_PROC_NULL) {
         ix = n_elem[0] - clrw;
         iy = 0;
         iz = 0;

@@ -213,7 +213,7 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     cField2D* f2D =  static_cast<cField2D*>(field);
-    int istart, ix, iy, iDim, iNeighbor,bufsize;
+    int istart, ix, iy, iDim, bufsize;
     void* b;
 
     bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.

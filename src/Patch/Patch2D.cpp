@@ -159,7 +159,7 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field2D* f2D =  static_cast<Field2D*>(field);
-    int ix, iy, iDim, iNeighbor,bufsize;
+    int ix, iy, iDim, bufsize;
     void* b;
 
     bufsize = clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
@@ -169,7 +169,7 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-    if (MPI_neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[0][0]!=MPI_PROC_NULL) {
         ix = 2*oversize[0] + 1 + isDual[0];
         iy =  0 ;
         MPI_Bsend( &(f2D->data_2D[ix][iy]), clrw*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][0], 0, MPI_COMM_WORLD);
