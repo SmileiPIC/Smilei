@@ -100,10 +100,10 @@ public:
             if (( this_particle_injector->position_initialization_!="regular" )
                        &&( this_particle_injector->position_initialization_!="random" )
                        &&( this_particle_injector->position_initialization_!="centered" )) {
-                ERROR_NAMELIST("For particle injector `" << injector_name 
+                ERROR_NAMELIST("For particle injector `" << injector_name
                 << "`, position initialization from species `" << species->name_
                 << "` is not correct."
-                << "\n Note that position initilization with user-defined external postitions in species is not compatible with injectors.",
+                << "\n Note that position initialization with user-defined external postitions in species is not compatible with injectors.",
                 LINK_NAMELIST + std::string("#particle-injector"));
             }
         } else if( ( this_particle_injector->position_initialization_!="regular" )
@@ -111,7 +111,17 @@ public:
                    &&( this_particle_injector->position_initialization_!="centered" ) ) {
             this_particle_injector->position_initialization_on_injector_=true;
             //ERROR("For particle injector " << injector_name << ", position initialization not or badly specified.");
-        } 
+        }
+
+        // Warning message for regular and centered
+        if ( ( this_particle_injector->position_initialization_ == "regular" ) ||
+             ( this_particle_injector->position_initialization_ == "centered" ) ) {
+            CAREFUL(2,"For particle injector `" << injector_name
+                    << "`, position initialization of type "
+                    << this_particle_injector->position_initialization_
+                    << " is not recommended and can lead to wrong particle initialization."
+                    << " We recommend to use the `random` position initialization.")
+        }
 
         if( patch->isMaster() ) {
             MESSAGE( 2, "> Position initialization: " << this_particle_injector->position_initialization_);
@@ -160,7 +170,7 @@ public:
         // Mean velocity
         // std::vector<double> mean_velocity_input;
         std::vector<PyObject *> prof;
-        if( PyTools::extract_1or3Profiles( "mean_velocity", "ParticleInjector" , injector_index, prof ) ) {
+        if( PyTools::extract_1orNProfiles( 3, "mean_velocity", "ParticleInjector" , injector_index, prof ) ) {
             this_particle_injector->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), params, true );
@@ -180,7 +190,7 @@ public:
         
         // Temperature
         // std::vector<double> temperature_input;
-        if( PyTools::extract_1or3Profiles( "temperature", "ParticleInjector", injector_index, prof ) ) {
+        if( PyTools::extract_1orNProfiles( 3, "temperature", "ParticleInjector", injector_index, prof ) ) {
             this_particle_injector->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_ ), params, true );
             this_particle_injector->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_ ), params, true );
@@ -207,7 +217,7 @@ public:
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
             if (ok1 && ok2) {
-                ERROR_NAMELIST( "For injector '" << this_particle_injector->name_ 
+                ERROR_NAMELIST( "For injector '" << this_particle_injector->name_
                 << "', cannot define both `number_density ` and `charge_density`.",
             "https://smileipic.github.io/Smilei/namelist.html#particle-injector" );
             } else if( !ok1 && !ok2 ) {
@@ -266,7 +276,7 @@ public:
 
         if( PyTools::extractV( "regular_number", this_particle_injector->regular_number_array_, "ParticleInjector", injector_index )){
              if (this_particle_injector->position_initialization_ != "regular") {
-                 ERROR_NAMELIST("regular_number may not be provided if species position_initialization is not set to 'regular'.", 
+                 ERROR_NAMELIST("regular_number may not be provided if species position_initialization is not set to 'regular'.",
                  "https://smileipic.github.io/Smilei/namelist.html#particle-injector");
              }
              if (this_particle_injector->regular_number_array_.size() != species->nDim_particle) {

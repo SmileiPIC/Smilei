@@ -135,7 +135,7 @@ LaserEnvelope1D::~LaserEnvelope1D()
 {
 }
 
-void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
+void LaserEnvelope1D::updateEnvelope( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -150,7 +150,7 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
-    Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    Field1D *Env_Chi1D     = static_cast<Field1D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
     
     
     // temporary variable for updated envelope
@@ -184,7 +184,7 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     delete A1Dnew;
 } // end LaserEnvelope1D::updateEnvelope
 
-void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
+void LaserEnvelope1D::updateEnvelopeReducedDispersion( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -207,7 +207,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
-    Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    Field1D *Env_Chi1D     = static_cast<Field1D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
     
     
     // temporary variable for updated envelope

@@ -13,26 +13,6 @@
 
 using namespace std;
 
-
-/*
-
- MG to NICO:
- THIS IS UNCLEAR FOR ME, WE WANT THE ALL GHOST CELL TO BEHAVE AS A PERFECT CONDUCTOR
- SO THAT WE HAVE REFLECTION AT THE EXACT SIMULATION BORDER - NOT INSIDE THE GHOST CELL
-
- Perfect Conducting Boundary Conditions for electromagnetic fields
- dBt/dn = 0 (tangential magnetic components have zero derivative)
- Bn = 0 (normal flux is zero)
-
- we only need to fix the magnetic field. The electric field is
- calculated in Maxwell-Ampere on the whole grid already
- (knowing B and J on the whole grid).
-
- */
-
-
-
-
 ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch *patch, unsigned int i_boundary )
     : ElectroMagnBC2D( params, patch, i_boundary )
 {
@@ -367,4 +347,3 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
         
     }
 }
-

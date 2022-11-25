@@ -283,7 +283,7 @@ public:
     {
         return min_local_[i];
     }
-    //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
+    //! Return real (excluding oversize) max coordinates for direction i
     //! @see min_local_
     inline double getDomainLocalMax( int i ) const
     {

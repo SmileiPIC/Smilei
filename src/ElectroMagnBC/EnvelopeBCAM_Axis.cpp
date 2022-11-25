@@ -36,7 +36,7 @@ EnvelopeBCAM_Axis::EnvelopeBCAM_Axis( Params &params, Patch *patch, unsigned int
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *, double, Patch *patch )
+void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *, Patch *patch )
 {
 
     // Static cast of the field

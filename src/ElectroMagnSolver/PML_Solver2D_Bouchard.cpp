@@ -6,8 +6,10 @@
 
 #include <algorithm>
 
-PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params)
-    : Solver2D(params)
+PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params):
+    Solver2D(params),
+    pml_sigma_( 2, NULL ),
+    pml_kappa_( 2, NULL )
 {
     //ERROR("Under development, not yet working");
     double dt = params.timestep;
@@ -39,30 +41,38 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params)
     alpha_y =  alpha;
     alpha_x =  alpha;
 
-    // Ax    = alpha_x*dt/dx;
-    // Ay    = alpha_y*dt/dy;
-    // Bx    = beta_xy*dt/dx;
-    // By    = beta_yx*dt/dy;
-    // Dx    = delta_x*dt/dy;
-    // Dy    = delta_y*dt/dy;
-
+    // Use in order to test extended stencil with PML coefficient
     Ax    = alpha_x/dx;
     Ay    = alpha_y/dy;
     Bx    = beta_xy/dx;
     By    = beta_yx/dy;
-    Dx    = delta_x/dy;
+    Dx    = delta_x/dx;
     Dy    = delta_y/dy;
 
-    //Define here the value of coefficient kappa_x_max, power_kappa_x, sigma_x_max, power_sigma_x
-    sigma_x_max = 20.;
-    kappa_x_max = 80.;
-    sigma_power_pml_x = 2.;
-    kappa_power_pml_x = 4.;
-    //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
-    sigma_y_max = 20.;
-    kappa_y_max = 80.;
-    sigma_power_pml_y = 2.;
-    kappa_power_pml_y = 4.;
+    std::vector<PyObject *> prof;
+    if( PyTools::extract_pyProfiles( "pml_sigma", "Main", 0, prof )){
+        if( prof.size() == 0 ){
+            ERROR(" in pml_sigma, expecting a list of at least 1 profile.");
+        }
+    // extracted profile // number of variables of the function // name of the profile extracted // params // try numpy ?? // try file ?? // time variable ??
+        pml_sigma_[0] = new Profile( prof[0], 1, "pml_sigma_x_profile", params, true, false, false );
+        if( prof.size() == 1){ 
+            pml_sigma_[1] = new Profile( prof[0], 1, "pml_sigma_y_profile", params, true, false, false );
+        } else {
+            pml_sigma_[1] = new Profile( prof[1], 1, "pml_sigma_y_profile", params, true, false, false );
+        }
+    }
+    if( PyTools::extract_pyProfiles( "pml_kappa", "Main", 0, prof )){
+        if(prof.size() == 0){
+            ERROR(" in pml_kappa, expecting a list of at least 1 profile.");
+        }
+        pml_kappa_[0] = new Profile( prof[0], 1, "pml_kappa_x_profile", params, true, false, false );
+        if( prof.size() == 1){ 
+            pml_kappa_[1] = new Profile( prof[0], 1, "pml_kappa_y_profile", params, true, false, false );
+        } else {
+            pml_kappa_[1] = new Profile( prof[1], 1, "pml_kappa_y_profile", params, true, false, false );
+        }
+    }
 }
 
 PML_Solver2D_Bouchard::~PML_Solver2D_Bouchard()
@@ -166,8 +176,10 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         // Params for other cells (PML Media) when i>=3
         for( unsigned int i = startpml; i<nx_p ; i++ ) {
-            kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
-            sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
+            //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
+            //sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
+            kappa_x_p[i] = pml_kappa_[0]->valueAt((i-startpml)*dx/length_x_pml);
+            sigma_x_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dx/length_x_pml);
         }
         // Y-direction
         for( unsigned int j = 0 ; j<ny_p ; j++ ) {
@@ -189,8 +201,10 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         // Params for other cells (PML Media) when j>=4
         for( unsigned int i = startpml+1 ; i<nx_d ; i++ ) {
-            kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml-0.5)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
-            sigma_x_d[i] = sigma_x_max * pow( (i-startpml-0.5)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
+            //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i-startpml-0.5)*dx , kappa_power_pml_x ) / pow( length_x_pml , kappa_power_pml_x ) ;
+            //sigma_x_d[i] = sigma_x_max * pow( (i-startpml-0.5)*dx , sigma_power_pml_x ) / pow( length_x_pml , sigma_power_pml_x ) ;
+            kappa_x_d[i] = pml_kappa_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
+            sigma_x_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dx/length_x_pml);
         }
         // Y-direction
         for( unsigned int j = 0 ; j<ny_d ; j++ ) {
@@ -218,14 +232,18 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
-                sigma_x_p[i] = sigma_x_max * pow( ( ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
+                //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
+                //sigma_x_p[i] = sigma_x_max * pow( ( ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
+                kappa_x_p[i] = pml_kappa_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
+                sigma_x_p[i] = pml_sigma_[0]->valueAt((ncells_pml_min[0] - 1 - i)*dx/length_x_pml_xmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for( unsigned int i = (nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) {
-                kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
-                sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
+                //kappa_x_p[i] = 1. + (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
+                //sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
+                kappa_x_p[i] = pml_kappa_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
+                sigma_x_p[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0])*dx/length_x_pml_xmax);
             }
         }
         // Y-direction
@@ -237,8 +255,10 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         // Params for other cells (PML Media) when j>=3
         for( unsigned int j = startpml ; j<ny_p ; j++ ) {
-            kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
-            sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
+            //kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
+            //sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
+            kappa_y_p[j] = pml_kappa_[1]->valueAt((j-startpml)*dy/length_y_pml);
+            sigma_y_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dy/length_y_pml);
         }
         // Z-direction
         for ( int k=0 ;k<1 ; k++ ) {
@@ -253,14 +273,18 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
-                kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
-                sigma_x_d[i] = sigma_x_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
+                //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmin , kappa_power_pml_x ) ;
+                //sigma_x_d[i] = sigma_x_max * pow( ( 0.5 + ncells_pml_min[0] - 1 - i )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmin , sigma_power_pml_x ) ;
+                kappa_x_d[i] = pml_kappa_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
+                sigma_x_d[i] = pml_sigma_[0]->valueAt(( ncells_pml_min[0] - 0.5 - i )*dx/length_x_pml_xmin);
             }
         }
         if (ncells_pml_max[0] != 0 ){
             for( unsigned int i = (nx_p-1)-(ncells_pml_max[0]-1)+1 ; i<nx_d ; i++ ) {
-                kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
-                sigma_x_d[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
+                //kappa_x_d[i] = 1. + (kappa_x_max - 1.) * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , kappa_power_pml_x ) / pow( length_x_pml_xmax , kappa_power_pml_x ) ;
+                //sigma_x_d[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) - 0.5 )*dx , sigma_power_pml_x ) / pow( length_x_pml_xmax , sigma_power_pml_x ) ;
+                kappa_x_d[i] = pml_kappa_[0]->valueAt((i - nx_p + ncells_pml_max[0] - 0.5 )*dx/length_x_pml_xmax);
+                sigma_x_d[i] = pml_sigma_[0]->valueAt((i - nx_p  + ncells_pml_max[0] - 0.5)*dx/length_x_pml_xmax);
             }
         }
         // Y-direction
@@ -272,8 +296,10 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         // Params for other cells (PML Media) when j>=4
         for( unsigned int j = startpml+1 ; j<ny_d ; j++ ) {
-            kappa_y_d[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml-0.5)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
-            sigma_y_d[j] = sigma_y_max * pow( (j-startpml-0.5)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
+            //kappa_y_d[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml-0.5)*dy , kappa_power_pml_y ) / pow( length_y_pml , kappa_power_pml_y ) ;
+            //sigma_y_d[j] = sigma_y_max * pow( (j-startpml-0.5)*dy , sigma_power_pml_y ) / pow( length_y_pml , sigma_power_pml_y ) ;
+            kappa_y_d[j] = pml_kappa_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
+            sigma_y_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dy/length_y_pml);
         }
         // Z-direction
         for ( int k=0 ; k<1 ; k++ ) {
@@ -400,7 +426,7 @@ void PML_Solver2D_Bouchard::setDomainSizeAndCoefficients( int iDim, int min_or_m
     } // End Z
 }
 
-void PML_Solver2D_Bouchard::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solvermin, int solvermax )
+void PML_Solver2D_Bouchard::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int nx_d = dimPrim[0] + 1;
@@ -545,7 +571,7 @@ void PML_Solver2D_Bouchard::compute_E_from_D( ElectroMagn *fields, int iDim, int
     }
 }
 
-void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solvermin, int solvermax )
+void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
     const unsigned int nx_p = dimPrim[0];
     const unsigned int nx_d = dimPrim[0] + 1;
@@ -590,8 +616,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *Bx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j )
                     //                       - dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i, j-1 ) )/dy;
+                    // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
                     // NS FDTD
-                    // (*Bx2D)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
+                    // (*Bx_pml)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
                     //       + By * (( *Ez_pml )(i+1,j-1)-( *Ez_pml )(i+1,j) + ( *Ez_pml )(i-1,j-1)-( *Ez_pml )(i-1,j))
                     //       + Dy * (( *Ez_pml )(i,j-2)-( *Ez_pml )(i,j+1));
                     // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
@@ -615,8 +642,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *By_pml )( i, j ) = + 1 * ( *By_pml )( i, j )
                     //                       + dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i-1, j ) )/dx;
+                    // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
                     // NS FDTD
-                    // (*By2D)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
+                    // (*By_pml)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
                     //       + Bx * (( *Ez_pml )(i,j+1)-( *Ez_pml )(i-1,j+1) + ( *Ez_pml )(i,j-1)-( *Ez_pml )(i-1,j-1))
                     //       + Dx * (( *Ez_pml )(i+1,j) - ( *Ez_pml )(i-2,j));
                     // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
@@ -640,8 +668,9 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // Standard FDTD
                     // ( *Bz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j )
                     //                       + dt * ( ( ( *Ex_pml )( i, j ) - ( *Ex_pml )( i, j-1 ) )/dy - ( ( *Ey_pml )( i, j ) - ( *Ey_pml )( i-1, j ) )/dx );
+                    // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
                     // NS FDTD
-                    // (*Bz2D)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
+                    // (*Bz_pml)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
                     //             + By * (( *Ex_pml )(i+1,j)-( *Ex_pml )(i+1,j-1) + ( *Ex_pml )(i-1,j)-( *Ex_pml )(i-1,j-1))
                     //             + Dy * (( *Ex_pml )(i,j+1)-( *Ex_pml )(i,j-2))
                     //             + Ax * (( *Ey_pml )(i-1,j)-( *Ey_pml )(i,j))
@@ -674,6 +703,11 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *Bx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j )
                     //                       - dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i, j-1 ) )/dy;
                     // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
+                    // NS FDTD
+                    // (*Bx_pml)(i,j) += Ay * (( *Ez_pml )(i,j-1)-( *Ez_pml )(i,j))
+                    //       + By * (( *Ez_pml )(i+1,j-1)-( *Ez_pml )(i+1,j) + ( *Ez_pml )(i-1,j-1)-( *Ez_pml )(i-1,j))
+                    //       + Dy * (( *Ez_pml )(i,j-2)-( *Ez_pml )(i,j+1));
+                    // ( *Hx_pml )( i, j ) = + 1 * ( *Bx_pml )( i, j );
                     // PML FDTD
                     Bx_pml_old = 1*( *Bx_pml )( i, j ) ;
                     ( *Bx_pml )( i, j ) = + c1_d_xfield[j] * ( *Bx_pml )( i, j )
@@ -695,7 +729,12 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *By_pml )( i, j ) = + 1 * ( *By_pml )( i, j )
                     //                       + dt * ( ( *Ez_pml )( i, j ) - ( *Ez_pml )( i-1, j ) )/dx;
                     // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
-                    // PML FDTD
+                    // NS FDTD
+                    // (*By_pml)(i,j) += Ax * (( *Ez_pml )(i,j) - ( *Ez_pml )(i-1,j))
+                    //       + Bx * (( *Ez_pml )(i,j+1)-( *Ez_pml )(i-1,j+1) + ( *Ez_pml )(i,j-1)-( *Ez_pml )(i-1,j-1))
+                    //       + Dx * (( *Ez_pml )(i+1,j) - ( *Ez_pml )(i-2,j));
+                    // ( *Hy_pml )( i, j ) = + 1 * ( *By_pml )( i, j );
+                    // // PML FDTD
                     By_pml_old = 1*( *By_pml )( i, j ) ;
                     ( *By_pml )( i, j ) = + c1_d_yfield[k] * ( *By_pml )( i, j )
                                           + c2_d_yfield[k] * (
@@ -716,7 +755,15 @@ void PML_Solver2D_Bouchard::compute_H_from_B( ElectroMagn *fields, int iDim, int
                     // ( *Bz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j )
                     //                       + dt * ( ( ( *Ex_pml )( i, j ) - ( *Ex_pml )( i, j-1 ) )/dy - ( ( *Ey_pml )( i, j ) - ( *Ey_pml )( i-1, j ) )/dx );
                     // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
-                    // PML FDTD
+                    // NS FDTD
+                    // (*Bz_pml)(i,j) += Ay * (( *Ex_pml )(i,j)-( *Ex_pml )(i,j-1))
+                    //             + By * (( *Ex_pml )(i+1,j)-( *Ex_pml )(i+1,j-1) + ( *Ex_pml )(i-1,j)-( *Ex_pml )(i-1,j-1))
+                    //             + Dy * (( *Ex_pml )(i,j+1)-( *Ex_pml )(i,j-2))
+                    //             + Ax * (( *Ey_pml )(i-1,j)-( *Ey_pml )(i,j))
+                    //             + Bx * (( *Ey_pml )(i-1,j+1)-( *Ey_pml )(i,j+1) + ( *Ey_pml )(i-1,j-1)-( *Ey_pml )(i,j-1))
+                    //             + Dx * (( *Ey_pml )(i-2,j)-( *Ey_pml )(i+1,j));
+                    // ( *Hz_pml )( i, j ) = + 1 * ( *Bz_pml )( i, j );
+                    // // PML FDTD
                     Bz_pml_old = 1*( *Bz_pml )( i, j ) ;
                     ( *Bz_pml )( i, j ) = + c1_d_zfield[i] * ( *Bz_pml )( i, j )
                                           + c2_d_zfield[i] * (

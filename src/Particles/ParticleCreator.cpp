@@ -282,7 +282,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
 
         // If requested, copy positions from other species
         if( position_initialization_on_species_ ) {
-            unsigned int ispec = species_->position_initialization_on_species_index;
+            unsigned int ispec = species_->position_initialization_on_species_index_;
 
             if( species_->getParticlesSize() != patch->vecSpecies[ispec]->getParticlesSize() ) {
                 ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
@@ -295,7 +295,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         if( position_initialization_ == "regular" ) {
             renormalize = false;
         } else if( position_initialization_on_species_ ) {
-            unsigned int ispec = species_->position_initialization_on_species_index;
+            unsigned int ispec = species_->position_initialization_on_species_index_;
             if( patch->vecSpecies[ispec]->position_initialization_ == "regular" ) {
                 renormalize = false;
             }

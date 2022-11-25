@@ -39,7 +39,7 @@ EnvelopeBC3D_refl::EnvelopeBC3D_refl( Params &params, Patch *patch, unsigned int
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void EnvelopeBC3D_refl::apply( LaserEnvelope *envelope, ElectroMagn *, double, Patch *patch )
+void EnvelopeBC3D_refl::apply( LaserEnvelope *envelope, ElectroMagn *, Patch *patch )
 {
 
     // Static cast of the fields immediately after the envelope equation sover

@@ -132,8 +132,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    You can alternatively use ``"PML"`` for all boundaries.
-    Vectorization, collisions and
+    You can alternatively use ``"PML"`` for any EM boundary.
+    Collisions and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -300,12 +300,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Over the second half, all fields are progressively reduced down to zero.
 
   * ``"PML"`` stands for Perfectly Matched Layer. It is an open boundary condition.
-    The number of cells in the layer is defined by ``"number_of_pml_cells"``.
+    The number of cells in the layer must be defined by ``"number_of_pml_cells"``.
     It supports laser injection as in ``"silver-muller"``.
-
-  .. warning::
-
-    In the current release, in order to use PML all ``"EM_boundary_conditions"`` of the simulation must be ``"PML"``.
+    If not all boundary conditions are ``PML``, make sure to set ``number_of_pml_cells=0`` on boundaries not using PML.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -326,10 +323,44 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: number_of_pml_cells
 
-  :type: list of lists of integer
+  :type: List of lists of integers
   :default: ``[[6,6],[6,6],[6,6]]``
 
   Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
+
+.. rst-class:: experimental
+
+.. py:data:: pml_sigma
+
+  :type: List of profiles
+  :default: [lambda x : 20 * x**2]
+
+  Defines the sigma profiles across the transverse dimension of the PML for each dimension of the simulation.
+  It must be expressed as a list of profiles (1 per dimension).
+
+  If a single profile is given, it will be used for all dimensions.
+
+  For a given dimension, the same profile is applied to both sides of the domain.
+
+  The profile is given as a single variable function defined on the interval [0,1] where 0 is the inner bound of the PML and 1 is the outer bound of the PML. 
+  Please refer to :doc:`/Understand/PML` if needed in AM geometry.
+
+.. rst-class:: experimental
+
+.. py:data:: pml_kappa
+
+  :type: List of profiles
+  :default: [lambda x : 1 + 79 * x**4]
+
+  Defines the kappa profiles across the transverse dimension of the PML for each dimension of the simulation.
+  It must be expressed as a list of profiles (1 per dimension).
+
+  If a single profile is given, it will be used for all dimensions.
+
+  For a given dimension, the same profile is applied to both sides of the domain.
+
+  The profile is given as a single variable function defined on the interval [0,1] where 0 is the inner bound of the PML and 1 is the outer bound of the PML. 
+  Please refer to :doc:`/Understand/PML` if needed in AM geometry.
 
 .. py:data:: time_fields_frozen
 
@@ -1772,8 +1803,8 @@ Following is the generic laser envelope creator ::
   :type: list of lists of strings
   :default: ``[["reflective"]]``
 
-  For the moment, only reflective boundary conditions are implemented in the
-  resolution of the envelope equation.
+  Defines the boundary conditions used for the envelope. Either ``"reflective"`` or ``"PML"``.
+  In the case of ``"PML"``, make sure to define ``"number_of_pml_cells"`` in the ``Main`` block.
 
 .. py:data:: polarization_phi
 

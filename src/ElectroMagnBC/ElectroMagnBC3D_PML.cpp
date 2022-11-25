@@ -34,12 +34,7 @@ ElectroMagnBC3D_PML::ElectroMagnBC3D_PML( Params &params, Patch *patch, unsigned
         nsolver=2;
     }
 
-    if ( ( i_boundary_ == 0 && patch->isXmin() )
-         || ( i_boundary_ == 1 && patch->isXmax() )
-         || ( i_boundary_ == 2 && patch->isYmin() )
-         || ( i_boundary_ == 3 && patch->isYmax() )
-         || ( i_boundary_ == 4 && patch->isZmin() )
-         || ( i_boundary_ == 5 && patch->isZmax() ) ) {
+    if( patch->isBoundary( i_boundary_ ) ) {
 
         int iDim = i_boundary_ / 2;
         int min_or_max = (i_boundary_)%2;
@@ -130,29 +125,16 @@ ElectroMagnBC3D_PML::ElectroMagnBC3D_PML( Params &params, Patch *patch, unsigned
         if (ncells_pml==0){
             ERROR("PML domain have to be >0 cells in thickness");
         }
-
-        std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( unsigned int i = 0 ; i<params.nDim_field ; i++ ) {
-            dimPrim[i] = patch->size_[i]+1+2*patch->oversize[i];
-        }
-        dimPrim[iDim] = ncells_pml_domain;
-        // Redefine the size of the PMLx in x, PMLy in y and PMLz in z (thickness)
-        // -----------------------------------------------------------
-        // ncells_pml_domain = ncells_pml+1*oversize[iDim] + nsolver/2;
-        // -----------------------------------------------------------
-        //  size    ->  ncells_pml
-        // +1          -> +nsolver/2
-        // +2*oversize -> +1*oversize
-        if ( iDim==1 ){
-            // If the PML domain in Y is in Xmin or Xmax too, add cell orthogonally
-            dimPrim[iDim-1] += ncells_pml_xmin + ncells_pml_xmax ;
-            ypml_size_in_x = dimPrim[iDim-1] ;
-        }
-        if ( iDim==2 ){
-            dimPrim[0] += ncells_pml_xmin + ncells_pml_xmax ;
-            dimPrim[1] += ncells_pml_ymin + ncells_pml_ymax ;
-            zpml_size_in_x = dimPrim[0] ;
-            zpml_size_in_y = dimPrim[1] ;
+        
+        if( iDim == 0 ) {
+            dimPrim = { (unsigned int)ncells_pml_domain, patch->size_[1]+1+2*patch->oversize[1], patch->size_[2]+1+2*patch->oversize[2] };
+        } else if( iDim == 1 ) {
+            ypml_size_in_x = patch->size_[0]+1+2*patch->oversize[0] + ncells_pml_xmin + ncells_pml_xmax;
+            dimPrim = { (unsigned int)ypml_size_in_x, (unsigned int)ncells_pml_domain, patch->size_[2]+1+2*patch->oversize[2] };
+        } else {
+            zpml_size_in_x = patch->size_[0]+1+2*patch->oversize[0] + ncells_pml_xmin + ncells_pml_xmax;
+            zpml_size_in_y = patch->size_[1]+1+2*patch->oversize[1] + ncells_pml_ymin + ncells_pml_ymax;
+            dimPrim = { (unsigned int)ypml_size_in_x, (unsigned int)zpml_size_in_y, (unsigned int)ncells_pml_domain };
         }
 
         startpml = patch->oversize[iDim]+nsolver/2;
@@ -166,18 +148,20 @@ ElectroMagnBC3D_PML::ElectroMagnBC3D_PML( Params &params, Patch *patch, unsigned
 
         pml_solver_->setDomainSizeAndCoefficients( iDim, min_or_max, dimPrim, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
 
-        Ex_ = new Field3D( dimPrim, 0, false, "Ex_pml" );
-        Ey_ = new Field3D( dimPrim, 1, false, "Ey_pml" );
-        Ez_ = new Field3D( dimPrim, 2, false, "Ez_pml" );
-        Bx_ = new Field3D( dimPrim, 0, true, "Bx_pml" );
-        By_ = new Field3D( dimPrim, 1, true, "By_pml" );
-        Bz_ = new Field3D( dimPrim, 2, true, "Bz_pml" );
-        Dx_ = new Field3D( dimPrim, 0, false, "Dx_pml" );
-        Dy_ = new Field3D( dimPrim, 1, false, "Dy_pml" );
-        Dz_ = new Field3D( dimPrim, 2, false, "Dz_pml" );
-        Hx_ = new Field3D( dimPrim, 0, true, "Hx_pml" );
-        Hy_ = new Field3D( dimPrim, 1, true, "Hy_pml" );
-        Hz_ = new Field3D( dimPrim, 2, true, "Hz_pml" );
+        std::string si_boundary = std::to_string(i_boundary_);
+
+        Ex_ = new Field3D( dimPrim, 0, false, "Ex_pml"+si_boundary );
+        Ey_ = new Field3D( dimPrim, 1, false, "Ey_pml"+si_boundary );
+        Ez_ = new Field3D( dimPrim, 2, false, "Ez_pml"+si_boundary );
+        Bx_ = new Field3D( dimPrim, 0, true , "Bx_pml"+si_boundary );
+        By_ = new Field3D( dimPrim, 1, true , "By_pml"+si_boundary );
+        Bz_ = new Field3D( dimPrim, 2, true , "Bz_pml"+si_boundary );
+        Dx_ = new Field3D( dimPrim, 0, false, "Dx_pml"+si_boundary );
+        Dy_ = new Field3D( dimPrim, 1, false, "Dy_pml"+si_boundary );
+        Dz_ = new Field3D( dimPrim, 2, false, "Dz_pml"+si_boundary );
+        Hx_ = new Field3D( dimPrim, 0, true , "Hx_pml"+si_boundary );
+        Hy_ = new Field3D( dimPrim, 1, true , "Hy_pml"+si_boundary );
+        Hz_ = new Field3D( dimPrim, 2, true , "Hz_pml"+si_boundary );
 
         //Laser parameter
         double pyKx, pyKy, pyKz;
@@ -298,7 +282,6 @@ void ElectroMagnBC3D_PML::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-
     int iDim = i_boundary_ / 2;
     int min_or_max = (i_boundary_)%2;
 
@@ -311,7 +294,9 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
 
     vector<double> pos( 2 );
 
-    if( i_boundary_ == 0 && patch->isXmin() ) {
+    if( ! patch->isBoundary( i_boundary_ ) ) return;
+
+    if( i_boundary_ == 0 ) {
 
         // 1. Solve Maxwell_PML for E-field :
         // As if B-field isn't updated
@@ -416,7 +401,7 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
     }
 
-    else if( i_boundary_ == 1 && patch->isXmax() ) {
+    else if( i_boundary_ == 1 ) {
 
         // 1. Solve Maxwell_PML for E-field :
         // As if B-field isn't updated
@@ -518,7 +503,7 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             }
         }
     }
-    else if( i_boundary_ == 2 && patch->isYmin() ) {
+    else if( i_boundary_ == 2 ) {
 
         ElectroMagnBC3D_PML* pml_fields_xmin = NULL ;
         ElectroMagnBC3D_PML* pml_fields_xmax = NULL ;
@@ -848,7 +833,7 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             }
         }
     }
-    else if( i_boundary_ == 3 && patch->isYmax() ) {
+    else if( i_boundary_ == 3 ) {
 
         ElectroMagnBC3D_PML* pml_fields_xmin = NULL ;
         ElectroMagnBC3D_PML* pml_fields_xmax = NULL ;
@@ -1185,7 +1170,7 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
     }
 
-    else if( i_boundary_ == 4 && patch->isZmin() ) {
+    else if( i_boundary_ == 4 ) {
 
         ElectroMagnBC3D_PML* pml_fields_xmin = NULL ;
         ElectroMagnBC3D_PML* pml_fields_xmax = NULL ;
@@ -1784,7 +1769,7 @@ void ElectroMagnBC3D_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
     }
 
-    else if( i_boundary_ == 5 && patch->isZmax() ) {
+    else if( i_boundary_ == 5 ) {
 
         ElectroMagnBC3D_PML* pml_fields_xmin = NULL ;
         ElectroMagnBC3D_PML* pml_fields_xmax = NULL ;

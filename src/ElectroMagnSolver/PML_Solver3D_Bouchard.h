@@ -19,10 +19,13 @@ public:
 
     void setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch );
 
-    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solvermin, int solvermax );
-    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int solvermin, int solvermax );
+    void compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax );
+    void compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax );
 
 protected:
+
+    std::vector< Profile *> pml_sigma_;
+    std::vector< Profile *> pml_kappa_;
 
     double delta_x ;
     double delta_y ;
@@ -50,18 +53,18 @@ protected:
     double Dy  ;
     double Dz  ;
 
-    double sigma_x_max;
-    double kappa_x_max;
-    double sigma_power_pml_x;
-    double kappa_power_pml_x;
-    double sigma_y_max;
-    double kappa_y_max;
-    double sigma_power_pml_y;
-    double kappa_power_pml_y;
-    double sigma_z_max;
-    double kappa_z_max;
-    double sigma_power_pml_z;
-    double kappa_power_pml_z;
+    //double sigma_x_max;
+    //double kappa_x_max;
+    //double sigma_power_pml_x;
+    //double kappa_power_pml_x;
+    //double sigma_y_max;
+    //double kappa_y_max;
+    //double sigma_power_pml_y;
+    //double kappa_power_pml_y;
+    //double sigma_z_max;
+    //double kappa_z_max;
+    //double sigma_power_pml_z;
+    //double kappa_power_pml_z;
 
     std::vector<double> kappa_x_p;
     std::vector<double> sigma_x_p;

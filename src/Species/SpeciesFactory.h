@@ -564,11 +564,11 @@ public:
                 for( unsigned int ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
                     if( patch->vecSpecies[ispec2]->name_ == this_species->position_initialization_ ) {
                         ok = true;
-                        this_species->position_initialization_on_species_index = ispec2;
+                        this_species->position_initialization_on_species_index_ = ispec2;
                         break;
                     }
                 }
-                // std::cerr << this_species->position_initialization_on_species_index
+                // std::cerr << this_species->position_initialization_on_species_index_
                 //           << std::endl;
                 // The link species must already exist
                 if( ok == false ) {
@@ -949,7 +949,7 @@ public:
             PyTools::extract( "ionization_model", model, "Species", ispec );
             if( model!="none" ) {
 
-                this_species->ionization_model = model;
+                this_species->ionization_model_ = model;
 
                 if( this_species->particles->is_test ) {
                     ERROR_NAMELIST(
@@ -1099,20 +1099,20 @@ public:
         if( this_species->momentum_initialization_array_ == NULL
          && this_species->file_momentum_npart_ == 0 ) {
             // Mean velocity
-            if( PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ) {
+            if( PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof ) ) {
                 this_species->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), params, true, true );
                 this_species->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), params, true, true );
                 this_species->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), params, true, true );
             }
             // Temperature
-            if( PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ) {
+            if( PyTools::extract_1orNProfiles( 3, "temperature", "Species", ispec, prof ) ) {
                 this_species->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", species_name ), params, true, true );
                 this_species->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", species_name ), params, true, true );
                 this_species->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", species_name ), params, true, true );
             }
         } else {
-            ok1 = PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ;
-            ok2 = PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ;
+            ok1 = PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof ) ;
+            ok2 = PyTools::extract_1orNProfiles( 3, "temperature", "Species", ispec, prof ) ;
             if( ok1 ) {
                 ERROR_NAMELIST( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array.",
                 LINK_NAMELIST + std::string("#species") );
@@ -1143,7 +1143,7 @@ public:
         PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec );
 
         // Verify they don't ionize
-        if( this_species->ionization_model!="none" && this_species->particles->is_test ) {
+        if( this_species->ionization_model_!="none" && this_species->particles->is_test ) {
             ERROR_NAMELIST( "For species '" << species_name << "' test & ionized is currently impossible",
             LINK_NAMELIST + std::string("#species") );
         }
@@ -1184,7 +1184,7 @@ public:
         new_species->photon_species_                           = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
-        new_species->position_initialization_on_species_index  = species->position_initialization_on_species_index;
+        new_species->position_initialization_on_species_index_ = species->position_initialization_on_species_index_;
         new_species->position_initialization_                  = species->position_initialization_;
         new_species->position_initialization_array_            = species->position_initialization_array_;
         new_species->file_position_npart_                      = species->file_position_npart_;
@@ -1210,7 +1210,7 @@ public:
         if( new_species->ionization_rate_!=Py_None ) {
             Py_INCREF( new_species->ionization_rate_ );
         }
-        new_species->ionization_model                         = species->ionization_model;
+        new_species->ionization_model_                         = species->ionization_model_;
         new_species->geometry                                 = species->geometry;
         new_species->Nbins                                    = species->Nbins;
         new_species->size_proj_buffer_Jx                      = species->size_proj_buffer_Jx;

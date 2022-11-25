@@ -20,6 +20,10 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
+* ``PML`` can now be used as a bounday condition for the envelope model too.
+* It is no longer necessary to use ``PML`` on all boundaries anymore.
+* For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Much faster ``DiagFields`` (speedup ~ x3)
 * Collisions: new parameter ``time_frozen``
 * Performances diagnostic: new parameter ``cumulative``
@@ -31,6 +35,7 @@ Changes made in the repository (not released)
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
   * C++11 compilation issue
   * Reading particle weights and momenta from hdf5 file
+  * ``PML`` are now compatible with dynamic load balancing.
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
 
