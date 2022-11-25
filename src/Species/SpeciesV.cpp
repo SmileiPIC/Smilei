@@ -1301,7 +1301,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
+void SpeciesV::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
@@ -1330,7 +1330,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool ol
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sortParticles( Params &params, Patch *patch )
+void SpeciesV::sortParticles( Params &params )
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -1624,7 +1624,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 
 }
 
-void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
+void SpeciesV::importParticles( Params &params, Patch *, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
     unsigned int npart = source_particles.size(), ncells=particles->first_index.size();
@@ -1708,9 +1708,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 // ---------------------------------------------------------------------------------------------------------------------
 //! Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
-                               Params &params,
-                               Patch *patch, SmileiMPI *smpi )
+void SpeciesV::mergeParticles( double time_dual )
 {
 //     int ithread;
 // #ifdef _OPENMP
@@ -1843,9 +1841,9 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params, 
         Patch *patch, SmileiMPI *smpi )
 {
 
@@ -1967,9 +1965,9 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 } // end ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params,
         Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
@@ -2145,9 +2143,9 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params,
         Patch *patch, SmileiMPI *smpi )
 {
 
@@ -2210,10 +2208,9 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
 
         }
 
-    } else { // immobile particle (at the moment only project density)
-
-    }//END if time vs. time_frozen_
-
+    } //END if time vs. time_frozen_
+    
+    SMILEI_UNUSED( patch );
 } // end ponderomotiveProjectSusceptibility
 
 // ---------------------------------------------------------------------------------------------------------------------

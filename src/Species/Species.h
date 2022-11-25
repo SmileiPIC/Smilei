@@ -391,14 +391,14 @@ public:
                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
+            Params &params,
             Patch *patch, SmileiMPI *smpi );
     //! Method projecting susceptibility, only particles interacting with envelope
-    virtual void ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveProjectSusceptibility( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
+            Params &params,
             Patch *patch, SmileiMPI *smpi );
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
@@ -416,14 +416,14 @@ public:
                                   RadiationTables &RadiationTables,
                                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
 
-    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double, unsigned int,
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double, 
             ElectroMagn *,
-            Params &, bool ,
+            Params &, 
             Patch *, SmileiMPI * ) {};
 
-    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double, unsigned int,
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double, 
             ElectroMagn *,
-            Params &, bool,
+            Params &, 
             Patch *, SmileiMPI *, int ) {};
 
     virtual void scalarPonderomotiveUpdatePositionAndCurrents( double, unsigned int,
@@ -432,33 +432,29 @@ public:
             Patch *, SmileiMPI * ) {};
 
     //! Projection method used specifically for the diagnotics
-    virtual void projectionForDiags( double time, unsigned int ispec,
+    virtual void projectionForDiags(  unsigned int ispec,
                                        ElectroMagn *EMfields,
                                        Params &params, bool diag_flag,
-                                       Patch *patch, SmileiMPI *smpi );
+                                       Patch *patch );
 
     //! Method performing the importation of new particles
-    virtual void dynamicsImportParticles( double time, unsigned int ispec,
+    virtual void dynamicsImportParticles( double time, 
                                             Params &params,
-                                            Patch *patch, SmileiMPI *smpi,
+                                            Patch *patch,
                                             std::vector<Diagnostic *> &localDiags );
 
     //! Method performing the merging of particles
-    virtual void mergeParticles( double time_dual, unsigned int ispec,
-                                 Params &params,
-                                 Patch *patch, SmileiMPI *smpi );
+    virtual void mergeParticles( double time_dual );
 
 
     //! Method calculating the Particle charge on the grid (projection)
-    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false );
+    virtual void computeCharge( ElectroMagn *EMfields, bool old=false );
 
     //! Method used to select particles which will change of patches
     virtual void extractParticles();
-    //! Method used to integrate particles which come from another patches
-    virtual void injectParticles( Params &params );
 
     //! Method used to sort particles
-    virtual void sortParticles( Params &param, Patch * patch );
+    virtual void sortParticles( Params &param );
 
     virtual void computeParticleCellKeys(   Params    &,
                                             Particles *,
@@ -588,9 +584,9 @@ public:
                             MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
+            Params &params,
             Patch *patch, SmileiMPI *smpi, int buffer_id );
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)

@@ -634,8 +634,6 @@ void SmileiMPI::recompute_patch_count( Params &params, VectorPatch &vecpatches, 
         fout.close();
     }
 
-    return;
-
 } // END recompute_patch_count
 
 

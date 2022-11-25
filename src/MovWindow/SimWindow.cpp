@@ -368,7 +368,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
-                            mypatch->vecSpecies[ispec]->sortParticles( params , mypatch);
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                         }
                 } // end j loop
             } // End ithread loop
@@ -425,7 +425,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->configuration( params, mypatch );
-                            mypatch->vecSpecies[ispec]->sortParticles( params, mypatch );
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                             
                         }
                     }

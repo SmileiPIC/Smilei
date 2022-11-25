@@ -524,7 +524,6 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            }
        }
    }
-   return;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -624,9 +623,6 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
 {
-
-    return;
-
     // cField2D *JlAM  = static_cast<cField2D *>( Jl );
     // cField2D *JrAM  = static_cast<cField2D *>( Jr );
     // cField2D *JtAM  = static_cast<cField2D *>( Jt );

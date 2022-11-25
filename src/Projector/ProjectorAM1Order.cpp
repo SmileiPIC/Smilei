@@ -326,8 +326,6 @@ void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imo
             rho[i] = rho[i+1] * slope;
         }//i
     }
-
-    return;
 }
 
 //------------------------------------//
@@ -470,7 +468,5 @@ void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
           
         EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
     }//i
-    
-return;
 }
 

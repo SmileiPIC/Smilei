@@ -554,7 +554,7 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
 
 .. code-block:: c++
 
-    vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+    vecPatches.mergeParticles(params, time_dual,timers, itime );
 
 * **Particle injection**: injection of particles from the boundaries
 

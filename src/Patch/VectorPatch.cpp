@@ -303,7 +303,7 @@ void VectorPatch::sortAllParticles( Params &params )
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
                 patches_[ipatch]->vecSpecies[ispec]->computeParticleCellKeys( params );
-                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params, patches_[ipatch] );
+                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params );
             }
         }
     }
@@ -422,10 +422,10 @@ void VectorPatch::projectionForDiags( Params &params,
         ( *this )( ipatch )->EMfields->restartRhoJ();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                species( ipatch, ispec )->projectionForDiags( time_dual, ispec,
+                species( ipatch, ispec )->projectionForDiags( ispec,
                         emfields( ipatch ),
                         params, diag_flag,
-                        ( *this )( ipatch ), smpi );
+                        ( *this )( ipatch ) );
             }
         }
 
@@ -438,9 +438,9 @@ void VectorPatch::projectionForDiags( Params &params,
             ( *this )( ipatch )->EMfields->restartEnvChi();
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                    species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
+                    species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual,
                              emfields( ipatch ),
-                             params, diag_flag,
+                             params,
                              ( *this )( ipatch ), smpi );
                 } // end diagnostic or projection if condition on species
             } // end loop on species
@@ -476,10 +476,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
         // Particle importation for all species
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                species( ipatch, ispec )->dynamicsImportParticles( time_dual, ispec,
-                        params,
-                        ( *this )( ipatch ), smpi,
-                        localDiags );
+                species( ipatch, ispec )->dynamicsImportParticles( time_dual, params, ( *this )( ipatch ), localDiags );
             }
         }
     }
@@ -490,7 +487,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
 
 
 //! Perform the particles merging on all patches
-void VectorPatch::mergeParticles(Params &params, SmileiMPI *smpi, double time_dual,Timers &timers, int itime )
+void VectorPatch::mergeParticles(Params &params, double time_dual,Timers &timers, int itime )
 {
     timers.particleMerging.restart();
 
@@ -503,9 +500,7 @@ void VectorPatch::mergeParticles(Params &params, SmileiMPI *smpi, double time_du
 
                 // Check the time selection
                 if( species( ipatch, ispec )->merging_time_selection_->theTimeIsNow( itime ) ) {
-                    species( ipatch, ispec )->mergeParticles( time_dual, ispec,
-                            params,
-                            ( *this )( ipatch ), smpi );
+                    species( ipatch, ispec )->mergeParticles( time_dual );
                 }
             }
         }
@@ -798,9 +793,9 @@ void VectorPatch::computeCharge(bool old /*=false*/)
         }
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ), old );
+                species( ipatch, ispec )->computeCharge( emfields( ipatch ), old );
             } else {
-                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ), old );
+                species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ), old );
             }
         }
     }
@@ -817,9 +812,9 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
                     ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                    species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
+                    species( ipatch, ispec )->computeCharge( emfields( ipatch ) );
                 } else {
-                    species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ) );
+                    species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ) );
                 }
             }
         }
@@ -3068,7 +3063,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
                     dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
-                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->sortParticles( params, recv_patches_[ipatch] );
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->sortParticles( params );
             }
         }
     } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
@@ -4392,7 +4387,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
 void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,
-        double time_dual, Timers &, int itime )
+        double time_dual, Timers &/*timers*/, int /*itime*/ )
 {
 
 #ifdef _PARTEVENTTRACING
@@ -4407,20 +4402,20 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
-                    species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                    species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, 
                                 emfields( ipatch ),
-                                params, diag_flag,
+                                params, 
                                 ( *this )( ipatch ), smpi );
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
-                        species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                        species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, 
                                  emfields( ipatch ),
-                                 params, diag_flag,
+                                 params, 
                                  ( *this )( ipatch ), smpi );
                     } else {
-                        species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                        species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual,
                                  emfields( ipatch ),
-                                 params, diag_flag,
+                                 params, 
                                  ( *this )( ipatch ), smpi );
                         }
                 }

@@ -1437,10 +1437,10 @@ void Species::scalarDynamics( double, unsigned int ,
 
 }
 
-void Species::projectionForDiags( double time_dual, unsigned int ispec,
-                                    ElectroMagn *EMfields,
-                                    Params &params, bool diag_flag,
-                                    Patch *patch, SmileiMPI *smpi )
+void Species::projectionForDiags( unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  Patch *patch )
 {
     if( diag_flag &&( !particles->is_test ) ) {
 
@@ -1493,10 +1493,7 @@ void Species::projectionForDiags( double time_dual, unsigned int ispec,
 //! - radiation reaction
 //! - multiphoton Breit-Wheeler
 // -----------------------------------------------------------------------------
-void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
-        Params &params,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+void Species::dynamicsImportParticles( double time_dual, Params &params, Patch *patch, vector<Diagnostic *> &localDiags )
 {
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
@@ -1538,7 +1535,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
+void Species::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
@@ -1556,7 +1553,6 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             unsigned int Nmode = emAM->rho_AM_.size();
             for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                //unsigned int ifield = imode*(*EMfields).n_species+ispec;
                 complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
@@ -1590,24 +1586,12 @@ void Species::extractParticles()
 
 }
 
-void Species::injectParticles( Params &params )
-{
-    // through particles_to_move ... not in scalar but :
-
-    //thrust::remove_if( ... remove_if_out() ); cell_keys < 0
-    // resize particles (include in sortParticles)
-    //thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts); (include in sortParticles)
-
-}
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sortParticles( Params &params, Patch * patch )
+void Species::sortParticles( Params &params )
 {
-    injectParticles( params );
-
     int ndim = params.nDim_field;
     int idim;
 
@@ -1840,14 +1824,14 @@ void Species::sortParticles( Params &params, Patch * patch )
 //! This function configures the type of species according to the default mode
 //! regardless the number of particles per cell
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::defaultConfigure( Params &param, Patch *patch )
+void Species::defaultConfigure( Params &, Patch * )
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This function configures the species according to the vectorization mode
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::configuration( Params &param, Patch *patch )
+void Species::configuration( Params &, Patch * )
 {
 }
 
@@ -1855,7 +1839,7 @@ void Species::configuration( Params &param, Patch *patch )
 //! This function reconfigures the species operators after evaluating
 //! the best mode from the particle distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::reconfiguration( Params &param, Patch *patch )
+void Species::reconfiguration( Params &, Patch * )
 {
 }
 
@@ -2271,9 +2255,9 @@ void Species::setXminBoundaryCondition()
 // ---------------------------------------------------------------------------------------------------------------------
 // Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::mergeParticles( double time_dual, unsigned int ispec,
-                              Params &params,
-                              Patch *patch, SmileiMPI *smpi ) {}
+void Species::mergeParticles( double /*time_dual*/ )
+{
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -2281,9 +2265,9 @@ void Species::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params,
         Patch *patch, SmileiMPI *smpi )
 {
 
@@ -2381,9 +2365,9 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params,
         Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
@@ -2549,12 +2533,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
+void Species::ponderomotiveProjectSusceptibility( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params, 
         Patch *patch, SmileiMPI *smpi )
 {
-
     int ithread;
 #ifdef _OPENMP
     ithread = Tools::getOMPThreadNum();
@@ -2594,8 +2577,9 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
 
         } // end loop on ibin
-    } else { // immobile particle
     } //END if time vs. time_frozen_
+    
+    SMILEI_UNUSED( patch );
 } // ponderomotiveProjectSusceptibility
 
 

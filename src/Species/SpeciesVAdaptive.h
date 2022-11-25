@@ -51,9 +51,9 @@ public:
     //void countSortParticles(Params& param);
     //void computeParticleCellKeys(Params &params);
     
-    void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
+            Params &params,
             Patch *patch, SmileiMPI *smpi ) override;
             
     void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
@@ -72,9 +72,9 @@ public:
                                RadiationTables &RadiationTables,
                                MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id ) override;
 
-    void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
+            Params &params, 
             Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
 
     void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,

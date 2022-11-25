@@ -906,7 +906,7 @@ void Patch::importAndSortParticles( int ispec, Params &params )
     timer = MPI_Wtime();
 #endif
 
-    vecSpecies[ispec]->sortParticles( params , this);
+    vecSpecies[ispec]->sortParticles( params );
 
 #ifdef  __DETAILED_TIMERS
     this->patch_timers_[13] += MPI_Wtime() - timer;

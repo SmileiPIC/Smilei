@@ -543,7 +543,7 @@ int main( int argc, char *argv[] )
                                                  time_dual, timers, itime );
 
             // Particle merging
-            vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+            vecPatches.mergeParticles(params, time_dual,timers, itime );
 
             // Particle injection from the boundaries
             vecPatches.injectParticlesFromBoundaries(params, timers, itime );

@@ -1116,9 +1116,9 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
 }
 
 
-void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params, 
         Patch *patch, SmileiMPI *smpi )
 {
 
@@ -1205,9 +1205,9 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
+        Params &params, 
         Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 

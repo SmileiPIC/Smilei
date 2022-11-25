@@ -132,7 +132,7 @@ void SmileiMPI_test::init( Params &params, DomainDecomposition *domain_decomposi
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_test::init_patch_count( Params &params, DomainDecomposition *domain_decomposition )
+void SmileiMPI_test::init_patch_count( Params &params, DomainDecomposition */*domain_decomposition*/ )
 {
 
     unsigned int Npatches;

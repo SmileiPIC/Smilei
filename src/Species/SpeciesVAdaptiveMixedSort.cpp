@@ -145,12 +145,12 @@ void SpeciesVAdaptiveMixedSort::importParticles( Params &params, Patch *patch, P
     }
 }
 
-void SpeciesVAdaptiveMixedSort::sortParticles( Params &params, Patch * patch )
+void SpeciesVAdaptiveMixedSort::sortParticles( Params &params )
 {
     if( vectorized_operators ) {
-        SpeciesV::sortParticles( params , patch);
+        SpeciesV::sortParticles( params );
     } else {
-        Species::sortParticles( params, patch );
+        Species::sortParticles( params );
     }
 }
 
@@ -176,7 +176,7 @@ void SpeciesVAdaptiveMixedSort::defaultConfigure( Params &params, Patch *patch )
     resizeCluster( params );
 
     // We perform the sorting
-    this->sortParticles( params , patch);
+    this->sortParticles( params );
 
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
@@ -244,7 +244,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     resizeCluster( params );
 
     // We perform the sorting
-    this->sortParticles( params , patch);
+    this->sortParticles( params );
 
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
@@ -330,7 +330,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
         resizeCluster( params );
 
         // We perform the sorting
-        this->sortParticles( params, patch );
+        this->sortParticles( params );
 
         // Reconfigure species to be imported
         this->reconfigure_particle_importation();

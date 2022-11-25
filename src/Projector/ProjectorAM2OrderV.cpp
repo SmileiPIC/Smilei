@@ -332,7 +332,6 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
            }
        }
    }
-   return;
 }
 
 void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
@@ -356,8 +355,6 @@ void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
 
         }
     }
-
-return;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -365,7 +362,6 @@ return;
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
 {
-    return;
 /*    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
     Field2D *Jy2D  = static_cast<Field2D *>( Jy );
     Field2D *Jz2D  = static_cast<Field2D *>( Jz );
