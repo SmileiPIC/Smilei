@@ -141,8 +141,6 @@ Release 4.6
 Release 4.5
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v4.5 <https://github.com/SmileiPIC/Smilei/archive/refs/tags/v4.5.tar.gz>`_
-
 * Changes:
 
   * Current filtering with adjustable number of passes per dimension
