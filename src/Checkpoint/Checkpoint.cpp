@@ -409,16 +409,18 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     }
 
     // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+    if( EMfields->filter_ ) {
+        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+        }
     }
-    for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
-    }
-    for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
-    }
-
+    
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
@@ -803,18 +805,19 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         DEBUG( "envelope is null" );
     }
 
-
-    // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+    if( EMfields->filter_ ) {
+        // filtered Electric fields
+        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+        }
     }
-    for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
-    }
-    for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
-    }
-
+    
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );

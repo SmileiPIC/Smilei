@@ -156,7 +156,7 @@ void Species::initCluster( Params &params )
     f_dim1_d =  params.patch_size_[1] + 2 * oversize[1] +2;
     f_dim2_d =  params.patch_size_[2] + 2 * oversize[2] +2;
 
-    b_dim.resize( params.nDim_field, 1 );
+    b_dim.resize( 3, 1 );
     if( nDim_particle == 1 ) {
         b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         b_dim[1] =  1;

@@ -4195,7 +4195,10 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
             }
             n_grid_points *= params.tot_number_of_patches;
             //     * Now calculate the total number of fields
-            unsigned int n_fields = 9 + EM->filter_->Ex_.size() + EM->filter_->Ey_.size() + EM->filter_->Ez_.size();
+            unsigned int n_fields = 9;
+            if( EM->filter_ ) {
+                n_fields += EM->filter_->Ex_.size() + EM->filter_->Ey_.size() + EM->filter_->Ez_.size();
+            }
             for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
                 n_fields += EM->allFields_avg[idiag].size();
             }
