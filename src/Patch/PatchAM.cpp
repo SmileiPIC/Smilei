@@ -216,20 +216,17 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     cField2D* f2D =  static_cast<cField2D*>(field);
-    int ix, iy, bufsize;
-    void* b;
 
-    bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
-    b=(void *)malloc(bufsize);
+    int bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    void* b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
 
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-
-    if (MPI_neighbor_[0][0]!=MPI_PROC_NULL) {
-        ix = 2*oversize[0] + 1 + isDual[0];
-        iy =   0;
+    if( MPI_neighbor_[0][0]!=MPI_PROC_NULL ) {
+        int ix = 2*oversize[0] + 1 + isDual[0];
+        int iy =   0;
         MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][0], 0, MPI_COMM_WORLD);
     } // END of Send
 
@@ -237,19 +234,14 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     field->shift_x(nshift);
     // and then receive the complementary field from the East.
 
-    if (MPI_neighbor_[0][1]!=MPI_PROC_NULL) {
-        ix = n_elem[0] - nshift;
-        iy =   0 ;
+    if( MPI_neighbor_[0][1]!=MPI_PROC_NULL ) {
+        int ix = n_elem[0] - nshift;
+        int iy =   0 ;
         MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][1], 0, MPI_COMM_WORLD, &rrequest);
-    } // END of Recv
-
-
-    if (neighbor_[0][1]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);
     free(b);
-
 
 } // END exchangeField_movewin
 

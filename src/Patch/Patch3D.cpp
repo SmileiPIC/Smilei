@@ -182,23 +182,19 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     Field3D* f3D =  static_cast<Field3D*>(field);
-    int ix, iy, iz, iDim, iNeighbor,bufsize;
-    void* b;
+    
+    int bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
 
-    bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
-
-    b=(void *)malloc(bufsize);
+    void *b = (void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
-    iDim = 0; // We exchange only in the X direction for movewin.
-    iNeighbor = 0; // We send only towards the West and receive from the East.
 
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-    if (MPI_neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
-        ix = 2*oversize[0] + 1 + isDual[0];
-        iy = 0;
-        iz = 0;
+    if( MPI_neighbor_[0][0]!=MPI_PROC_NULL ) {
+        int ix = 2*oversize[0] + 1 + isDual[0];
+        int iy = 0;
+        int iz = 0;
         MPI_Bsend( &(f3D->data_3D[ix][iy][iz]), clrw*n_elem[1]*n_elem[2], MPI_DOUBLE, MPI_neighbor_[0][0], 0, MPI_COMM_WORLD);
     } // END of Send
 
@@ -206,19 +202,14 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
-    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-        ix = n_elem[0] - clrw;
-        iy = 0;
-        iz = 0;
+    if( MPI_neighbor_[0][1]!=MPI_PROC_NULL ) {
+        int ix = n_elem[0] - clrw;
+        int iy = 0;
+        int iz = 0;
         MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), clrw*n_elem[1]*n_elem[2], MPI_DOUBLE, MPI_neighbor_[0][1], 0, MPI_COMM_WORLD, &rrequest);
-    } // END of Recv
-
-
-    if (MPI_neighbor_[0][1]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);
-    free(b);
-
+    free( b );
 
 } // END exchangeField_movewin
