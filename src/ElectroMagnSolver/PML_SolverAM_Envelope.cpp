@@ -133,7 +133,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( unsigned int i=startpml; i<nl_p ; i++ ) {
+        for ( int i=startpml; i< (int) nl_p ; i++ ) {
             // Parameters
             kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
@@ -228,7 +228,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( unsigned int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
+            for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i< (int) nl_p ; i++ ) {
                 // Parameters
                 kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
@@ -260,7 +260,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             integrate_alpha_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( unsigned int j=startpml; j<nr_p ; j++ ) {
+        for ( int j=startpml; j< (int) nr_p ; j++ ) {
             // Parameters
             kappa_r_p[j] = kappa_cr + (kappa_r_max - kappa_cr) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;

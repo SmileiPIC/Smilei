@@ -119,7 +119,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_x_p[i] = 0. ;
             alpha_prime_x_p[i] = 0. ;
         }
-        for( unsigned int i=startpml; i<nx_p ; i++ ) {
+        for( int i=startpml; i< (int) nx_p ; i++ ) {
             // Parameters
             kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( (i-startpml)*dx , power_pml_kappa_x ) / pow( length_x_pml , power_pml_kappa_x ) ;
             sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , power_pml_sigma_x ) / pow( length_x_pml , power_pml_sigma_x ) ;
@@ -212,7 +212,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
+            for( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i< (int) nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
                 // Parameters
                 kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_kappa_x ) / pow( length_x_pml_xmax , power_pml_kappa_x ) ;
                 sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_sigma_x ) / pow( length_x_pml_xmax, power_pml_sigma_x ) ;
@@ -241,7 +241,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_y_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for( unsigned int j=startpml; j<ny_p ; j++ ) {
+        for( int j=startpml; j< (int) ny_p ; j++ ) {
             // Parameters
             kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , power_pml_kappa_y ) / pow( length_y_pml , power_pml_kappa_y ) ;
             sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , power_pml_sigma_y ) / pow( length_y_pml , power_pml_sigma_y ) ;
@@ -329,7 +329,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for( unsigned int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
+            for( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i< (int) nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
                 // Parameters
                 kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_kappa_x ) / pow( length_x_pml_xmax , power_pml_kappa_x ) ;
                 sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_sigma_x ) / pow( length_x_pml_xmax, power_pml_sigma_x ) ;
@@ -381,7 +381,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[1] != 0 ){
-            for( unsigned int j=(ny_p-1)-(ncells_pml_max[1]-1) ; j<ny_p ; j++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
+            for( int j=(ny_p-1)-(ncells_pml_max[1]-1) ; j< (int) ny_p ; j++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
                 // Parameters
                 kappa_y_p[j] = 1. - (kappa_y_max - 1.) * pow( ( j - ( (ny_p-1)-(ncells_pml_max[1]-1) ) )*dy , power_pml_kappa_y ) / pow( length_y_pml_ymax , power_pml_kappa_y ) ;
                 sigma_y_p[j] = sigma_y_max * pow( (j - ( (ny_p-1)-(ncells_pml_max[1]-1) ) )*dy , power_pml_sigma_y ) / pow( length_y_pml_ymax, power_pml_sigma_y ) ;
@@ -410,7 +410,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_z_p[k] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for( unsigned int k=startpml; k<nz_p ; k++ ) {
+        for( int k=startpml; k< (int) nz_p ; k++ ) {
             // Parameters
             kappa_z_p[k] = 1. + (kappa_z_max - 1.) * pow( (k-startpml)*dz , power_pml_kappa_z ) / pow( length_z_pml , power_pml_kappa_z ) ;
             sigma_z_p[k] = sigma_z_max * pow( (k-startpml)*dz , power_pml_sigma_z ) / pow( length_z_pml , power_pml_sigma_z ) ;
