@@ -352,7 +352,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Based on a count sort to comply with initial sorting.
 
         // Get pointers to position arrays and find which particles are in the patch
-        double *momentum[3], *position[species_->nDim_particle], *weight;
+        double *momentum[3], *position[species_->nDim_particle], *weight = nullptr;
         std::vector< std::vector<double> > arrays( 4+species_->nDim_particle );
         std::vector<unsigned int> my_particles_indices(0);
         bool init_momentum = species_->momentum_initialization_array_ || ( species_->file_momentum_npart_ > 0 );

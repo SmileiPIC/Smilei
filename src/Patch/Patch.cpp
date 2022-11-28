@@ -60,8 +60,6 @@ Patch::Patch( Params &params, SmileiMPI *, DomainDecomposition *domain_decomposi
         size_ = params.global_size_;
         oversize = params.region_oversize;
     }
-    size_.resize( nDim_fields_ );
-    oversize.resize( nDim_fields_ );
     
     initStep1( params );
     
