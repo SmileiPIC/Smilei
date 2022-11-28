@@ -18,9 +18,9 @@ public:
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) ;
 
-    void setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch );
+    void setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch ) override;
 
-    void compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solver_min, unsigned int solver_max );
+    void compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solver_min, unsigned int solver_max ) override;
 
 protected:
     double delta;

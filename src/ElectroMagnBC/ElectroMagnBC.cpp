@@ -21,16 +21,13 @@ ElectroMagnBC::ElectroMagnBC( Params &params, Patch *patch, unsigned int i_bound
     // time step
     dt = params.timestep;
     
-    std::vector<unsigned int> size( patch->size_ );
-    std::vector<unsigned int> oversize( patch->oversize );
-    
     n_p.resize( params.nDim_field );
     n_d.resize( params.nDim_field );
     d.resize( params.nDim_field );
     dt_ov_d.resize( params.nDim_field );
     for( unsigned int i=0; i<params.nDim_field; i++ ) {
         // number of nodes of the primal and dual grid
-        n_p[i] = size[i] + 1 + 2*oversize[i];
+        n_p[i] = patch->size_[i] + 1 + 2*patch->oversize[i];
         n_d[i] = n_p[i] + 1 - params.is_pxr;
         
         // spatial-step and ratios time-step by spatial-step

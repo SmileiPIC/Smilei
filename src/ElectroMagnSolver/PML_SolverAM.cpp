@@ -62,7 +62,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::
     const unsigned int nl_d = dimPrim[0] + 1;
     const unsigned int nr_p = dimPrim[1];
     const unsigned int nr_d = dimPrim[1] + 1;
-
+    
     // Set global radial index where the PML domain begins j_glob_pml
     //  and set PML sizes nl_p, nr_p ... which are first initialized as patches size.
     if ( iDim == 0 ) {
@@ -71,10 +71,10 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::
     }
     else if ( iDim == 1 ) {
         if (min_or_max==0) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain+oversize[iDim]+1;
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain + patch->oversize[iDim]+1;
         }
         else if (min_or_max==1) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1;
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+patch->size_[1] + patch->oversize[1];
         }
     }
 
@@ -140,7 +140,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::
     c5_d_tfield.resize( nr_d, 1. ); // j-dependent
     c6_d_tfield.resize( nr_d, 0. ); // j-dependent
 
-    double r0 = patch->getDomainLocalMax( 1 ) + oversize[1]*dr  ; // Radius at which pmls start absorbing.
+    double r0 = patch->getDomainLocalMax( 1 ) + patch->oversize[1]*dr  ; // Radius at which pmls start absorbing.
     double rmin = r0 -startpml*dr; // radius of the pml at j=0.
 
     if ( iDim == 0 ) {

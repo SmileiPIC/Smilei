@@ -79,7 +79,13 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nr_p = dimPrim[1];
-
+    
+    if( iDim == 0 ) {
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
+    } else if( iDim == 1 ) {
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+patch->size_[1] + patch->oversize[1] - 1; // For norder=4
+    }
+    
     isYmin = (patch->isYmin());
 
     //PML Coeffs Kappa,Sigma ...
@@ -107,7 +113,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     rmax = patch->getDomainLocalMax( 1 ) ;
     // std::cout << rmax << std::endl;
     //std::cout << '('<< iDim << ',' <<j_glob_pml*dr << ')' << std::endl;
-    r0 = rmax + (oversize[1] + 1. )*dr ;
+    r0 = rmax + (patch->oversize[1] + 1. )*dr ;
 
     if ( iDim == 0 ) {
         // 3 cells (oversize) are vaccum so the PML media begin at r0 which is :

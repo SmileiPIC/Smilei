@@ -155,29 +155,29 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
             Bt_[imode] = FieldFactory::createAM( dimPrim, 2, true,  ( "Bt_pml_"+mode_id.str() ).c_str(), params );
         }
 
-    //Laser parameter
-    double pyKx, pyKy;
-    double kl;
-    double Knorm;
-    double omega = 1. ;
+        //Laser parameter
+        double pyKx, pyKy;
+        double kl;
+        double Knorm;
+        double omega = 1. ;
 
-    factor_laser_space_time = 2.*dt_ov_d[0] ;
+        factor_laser_space_time = 2.*dt_ov_d[0] ;
 
-    // Xmin boundary
-    pyKx = +1.;
-    pyKy = 0.;
-    Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
-    kl = omega*pyKx/Knorm;
+        // Xmin boundary
+        pyKx = +1.;
+        pyKy = 0.;
+        Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
+        kl = omega*pyKx/Knorm;
 
-    factor_laser_angle_W = kl/Knorm;
+        factor_laser_angle_W = kl/Knorm;
 
-    // Xmax boundary
-    pyKx = -1.;
-    pyKy = 0.;
-    Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
-    kl = omega*pyKx/Knorm;
+        // Xmax boundary
+        pyKx = -1.;
+        pyKy = 0.;
+        Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
+        kl = omega*pyKx/Knorm;
 
-    factor_laser_angle_E = kl/Knorm;
+        factor_laser_angle_E = kl/Knorm;
 
     }
 }

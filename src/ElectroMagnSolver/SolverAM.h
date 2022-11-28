@@ -33,7 +33,6 @@ protected:
     double dr;
     double dt_ov_dl;
     double dt_ov_dr;
-    std::vector<unsigned int> oversize;
     
 };//END class
 

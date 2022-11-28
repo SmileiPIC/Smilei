@@ -27,7 +27,7 @@ public:
     virtual void setDomainSizeAndCoefficients( int, int, std::vector<unsigned int>, int, int, int*, int*, Patch* ) {ERROR("Not using PML");};
     virtual void compute_E_from_D( ElectroMagn *, int, int, std::vector<unsigned int>, unsigned int, unsigned int ) {ERROR("Not using PML");};
     virtual void compute_H_from_B( ElectroMagn *, int, int, std::vector<unsigned int>, unsigned int, unsigned int ) {ERROR("Not using PML");};
-    virtual void compute_A_from_G( LaserEnvelope *, int, int, unsigned int, unsigned int ) {ERROR("Not using PML");};
+    virtual void compute_A_from_G( LaserEnvelope *, int, int, std::vector<unsigned int>, unsigned int, unsigned int ) {ERROR("Not using PML");};
 
 protected:
 
