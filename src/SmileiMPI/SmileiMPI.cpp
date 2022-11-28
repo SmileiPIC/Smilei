@@ -1541,7 +1541,7 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
     }
     // Receive envelope communication
     if (EM->envelope!=NULL){
-        if (static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
+        if (dynamic_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
             EnvelopeBC2D_PML *embcenv = static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] );
             if (embcenv->A_n_) {
                 if(!recv_xmin_bc && bcId>1 && EM->isXmin){ //When not receiving xmin_bc (MovingWindow), the position of the pml received must be tailored on xmin for non longitudinal PML corner array.
@@ -1583,7 +1583,7 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
                     }
                 }
             }
-        } else if (static_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
+        } else if (dynamic_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] )){
             EnvelopeBC3D_PML *embcenv = static_cast<EnvelopeBC3D_PML *>( EM->envelope->EnvBoundCond[bcId] );
             if (embcenv->A_n_) {
                 if(!recv_xmin_bc && bcId>1 && EM->isXmin){ //When not receiving xmin_bc (MovingWindow), the position of the pml received must be tailored on xmin for non longitudinal PML corner array.
