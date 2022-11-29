@@ -150,7 +150,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         double &                      pair_energy,
         int                           istart,
         int                           iend,
-        int ithread, int ipart_ref )
+        int ithread, int ibin, int ipart_ref )
 {
     // _______________________________________________________________
     // Parameters
@@ -326,7 +326,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
 #ifndef _OMPTASKS
                     // Without tasks
-
+                    SMILEI_UNUSED( ibin );
                     // Creation of new electrons in the temporary array new_pair[0]
                     new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
 

@@ -48,7 +48,7 @@ public:
                      double & pair_energy,
                      int istart,
                      int iend,
-                     int ithread, int ipart_ref = 0 );
+                     int ithread, int ibin = 0, int ipart_ref = 0 );
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
     //! \param kx photon x momentum

@@ -4599,7 +4599,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
                                               ( *this )( ipatch ), smpi,
                                               RadiationTables,
                                               MultiphotonBreitWheelerTables,
-                                              localDiags, buffer_id );
+                                              buffer_id );
                     } // end task
                 }
                 // Dynamics with scalar operators
@@ -4627,7 +4627,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
                                                            ( *this )( ipatch ), smpi,
                                                            RadiationTables,
                                                            MultiphotonBreitWheelerTables,
-                                                           localDiags, buffer_id );
+                                                           buffer_id );
                         } // end task
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
@@ -4813,10 +4813,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
                         { // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                        spec_task->ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
-                                   emfields( ipatch ),
-                                   params, diag_flag,
-                                   ( *this )( ipatch ), smpi, buffer_id );
+                        spec_task->ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, emfields( ipatch ), params, ( *this )( ipatch ), smpi, buffer_id );
                         }
                     } else {
                         if( params.vectorization_mode == "adaptive" ) {
@@ -4824,20 +4821,14 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
                             { // every call of dynamics for a couple ipatch-ispec is an independent task
                             Species *spec_task = species( ipatch, ispec );
                             int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                            spec_task->scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag,
-                                    ( *this )( ipatch ), smpi, buffer_id );
+                            spec_task->scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, emfields( ipatch ), params, ( *this )( ipatch ), smpi, buffer_id );
                             } // end task
                         } else {
                             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
                             { // every call of dynamics for a couple ipatch-ispec is an independent task
                             Species *spec_task = species( ipatch, ispec );
                             int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                            spec_task->Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
-                                                                                              emfields( ipatch ),
-                                                                                              params, diag_flag,
-                                                                                              ( *this )( ipatch ), smpi, buffer_id );
+                            spec_task->Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, emfields( ipatch ), params, ( *this )( ipatch ), smpi, buffer_id );
                             } // end task
                         } // end condition on adaptive vectorization
                    } // end condition on vectorization
@@ -4924,7 +4915,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                                                                                 emfields( ipatch ),
                                                                                 params, diag_flag, partwalls( ipatch ),
                                                                                 ( *this )( ipatch ), smpi,
-                                                                                localDiags, buffer_id );
+                                                                                buffer_id );
                         } // end task
                     } else {
                         if( params.vectorization_mode == "adaptive" ) {
@@ -4936,7 +4927,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                                                                                          emfields( ipatch ),
                                                                                          params, diag_flag, partwalls( ipatch ),
                                                                                          ( *this )( ipatch ), smpi,
-                                                                                         localDiags, buffer_id );
+                                                                                         buffer_id );
                             } // end task
                         } else {
                             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
@@ -4947,7 +4938,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                                                                                              emfields( ipatch ),
                                                                                              params, diag_flag, partwalls( ipatch ),
                                                                                              ( *this )( ipatch ), smpi,
-                                                                                             localDiags, buffer_id );
+                                                                                             buffer_id );
                             } // end task
                         }
                     } // condition on vectorized operators
