@@ -1968,7 +1968,10 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     //particles->cell_keys.resize( particles->size() );
     particles->resizeCellKeys( particles->size() );
 
+    // Clear all particles
     source_particles.clear();
+    // Put capacity to 0 to save memory
+    source_particles.shrinkToFit(true);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
