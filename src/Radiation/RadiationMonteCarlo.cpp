@@ -385,9 +385,12 @@ void RadiationMonteCarlo::operator()(
             else { // if (particle_chi < radiation_tables.getMinimumChiContinuous())
                 local_it_time = dt_;
             }
+        } // end while emission
+    } // end for particles
 
-        }
-
+    // Remove extra space to save memory
+    if (photons) {
+        photons->shrinkToFit( true );
     }
 
     // ____________________________________________________
