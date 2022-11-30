@@ -188,7 +188,8 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             for( unsigned int ionized_level = 0; ionized_level < k_times ; ionized_level++){
 #ifndef _OMPTASKS
                 // Creation of electrons without tasks
-
+                SMILEI_UNUSED( ibin );
+                
                 new_electrons.createParticle();
                 //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
                 int idNew = new_electrons.size() - 1;
