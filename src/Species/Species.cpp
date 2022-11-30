@@ -543,7 +543,8 @@ Species::~Species()
 void Species::dynamics( double time_dual,
                         unsigned int ispec,
                         ElectroMagn *EMfields,
-                        Params &params, bool diag_flag,
+                        Params &params,
+                        bool diag_flag,
                         PartWalls *partWalls,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
@@ -574,6 +575,32 @@ void Species::dynamics( double time_dual,
         // Prepare temporary buffers for this iteration
         smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
 
+        // Prepare species current and charge grids on device 
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        if (diag_flag) {
+            if (EMfields->Jx_s[ispec]) {
+
+                const int Jx_size                = EMfields->Jx_s[ispec]->globalDims_;
+                double *const __restrict__ Jx_s  = EMfields->Jx_s[ispec]->data() ;
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( b_Jx, Jx_size );
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                #pragma omp target
+                #pragma omp teams distribute parallel for
+#elif defined( ACCELERATOR_GPU_ACC )
+                #pragma acc parallel present( Jx_s [0:Jx_size],     \
+                                              Jy_s[0:3 * nparts], \
+                                              Jz_s[0:kTmpArraySize],   \
+                                              rho_s[0:kTmpArraySize] )  \
+
+                #pragma acc loop gang worker vector
+                for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                    b_Jx[i] = 0;
+                }
+#endif
+        }
+#endif
+
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
 
@@ -581,20 +608,19 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
 
-#ifndef ACCELERATOR_GPU_ACC
-            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
-            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
-#else
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->resetCellKeys();
+#else
+            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 #endif
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
-
         }
 
         //Point to local thread dedicated buffers
@@ -920,6 +946,17 @@ void Species::dynamics( double time_dual,
 
         }
     } // End projection for frozen particles
+
+// Copy back to the host the current and charge grid for diags
+#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    if (diag_flag) {
+        if (EMfields->Jx_s[ispec]) {
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( b_Jx, Jx_size );
+        } else {
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
+        }
+    }
+#endif
 
 } //END dynamics
 

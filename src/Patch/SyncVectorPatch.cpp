@@ -183,6 +183,7 @@ void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, int imod
     }
 }
 
+//! Densities synchronization per species
 void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int ispec, SmileiMPI *smpi, Timers &timers, int itime )
 {
     // Sum Jx_s(ispec), Jy_s(ispec) and Jz_s(ispec)

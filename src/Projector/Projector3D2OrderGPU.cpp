@@ -969,32 +969,13 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
 
-        double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data() ;
-        const int Jx_size               = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->globalDims_   : EMfields->Jx_->globalDims_ ;
+        double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
+        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->globalDims_ : EMfields->Jx_->globalDims_;
 
         int Jy_size = EMfields->Jy_->globalDims_ ;
         int Jz_size = EMfields->Jz_->globalDims_ ;
         int rho_size = EMfields->rho_->globalDims_ ;
 
-        if (EMfields->Jx_s[ispec]) {
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( b_Jx, Jx_size );
-
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
-    #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
-    #pragma acc parallel present( Jx [0:Jx_size],     \
-                                  deltaold [0:3 * nparts], \
-                                  Sx0 [0:kTmpArraySize],   \
-                                  DSz [0:kTmpArraySize] )  \
-
-    #pragma acc loop gang worker vector
-            for( unsigned int i=0 ; i<Jx_size; i++ ) {
-                b_Jx[i] = 0;
-            }
-#endif
-
-        }
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho, sizeofRho );
@@ -1017,14 +998,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, Jy_size );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jz, Jz_size );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_rho, rho_size );
-
-        if (EMfields->Jx_s[ispec]) {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( b_Jx, Jx_size );
-        } else {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
-        }
     }
-
 }
 
 // Projector for susceptibility used as source term in envelope equation
