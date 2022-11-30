@@ -978,14 +978,34 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
 
         if (EMfields->Jx_s[ispec]) {
             smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( b_Jx, Jx_size );
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for
+#elif defined( ACCELERATOR_GPU_ACC )
+    #pragma acc parallel present( Jx [0:Jx_size],     \
+                                  deltaold [0:3 * nparts], \
+                                  Sx0 [0:kTmpArraySize],   \
+                                  DSz [0:kTmpArraySize] )  \
+
+    #pragma acc loop gang worker vector
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                b_Jx[i] = 0;
+            }
+#endif
+
         }
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho, sizeofRho );
 
-        double * b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        double * b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        double * b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        double *const __restrict__ b_Jy  = &( *EMfields->Jy_ )( 0 ) ;
+        double *const __restrict__ b_Jz  = &( *EMfields->Jz_ )( 0 ) ;
+        double *const __restrict__ b_rho = &( *EMfields->rho_ )( 0 ) ;
+
+        // double * b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double * b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double * b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
 
         currentsAndDensityGPU( b_Jx, b_Jy, b_Jz, b_rho, 
                                 Jx_size, Jy_size, Jz_size, rho_size, 
