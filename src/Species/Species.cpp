@@ -580,24 +580,25 @@ void Species::dynamics( double time_dual,
         if (diag_flag) {
             if (EMfields->Jx_s[ispec]) {
 
-                const int Jx_size                = EMfields->Jx_s[ispec]->globalDims_;
+                unsigned int Jx_size             = EMfields->Jx_s[ispec]->globalDims_;
                 double *const __restrict__ Jx_s  = EMfields->Jx_s[ispec]->data() ;
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( b_Jx, Jx_size );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 #pragma omp target
                 #pragma omp teams distribute parallel for
 #elif defined( ACCELERATOR_GPU_ACC )
-                #pragma acc parallel present( Jx_s [0:Jx_size],     \
-                                              Jy_s[0:3 * nparts], \
-                                              Jz_s[0:kTmpArraySize],   \
-                                              rho_s[0:kTmpArraySize] )  \
+                #pragma acc parallel present( Jx_s [0:Jx_size]) //,     \
+                                              //Jy_s[0:Jy_size], \
+                                              //Jz_s[0:Jz_size],   \
+                                              //rho_s[0:rho_size] )  \
 
                 #pragma acc loop gang worker vector
                 for( unsigned int i=0 ; i<Jx_size; i++ ) {
-                    b_Jx[i] = 0;
+                    Jx_s[i] = 0;
                 }
 #endif
+            }
         }
 #endif
 
@@ -908,6 +909,19 @@ void Species::dynamics( double time_dual,
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
+
+    // Copy back to the host the current and charge grid for diags
+    if (diag_flag) {
+        if (EMfields->Jx_s[ispec]) {
+            double *const __restrict__ Jx_s  = EMfields->Jx_s[ispec]->data() ;
+            const int Jx_size                = EMfields->Jx_s[ispec]->globalDims_;
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( Jx_s, Jx_size );
+        } else {
+            double *const __restrict__ Jx_s  = EMfields->Jx_->data() ;
+            const int Jx_size                = EMfields->Jx_->globalDims_;
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx_s, Jx_size );
+        }
+    }
 #endif
     } //End if moving or ionized particles
 
@@ -946,18 +960,6 @@ void Species::dynamics( double time_dual,
 
         }
     } // End projection for frozen particles
-
-// Copy back to the host the current and charge grid for diags
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    if (diag_flag) {
-        if (EMfields->Jx_s[ispec]) {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( b_Jx, Jx_size );
-        } else {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
-        }
-    }
-#endif
-
 } //END dynamics
 
 #ifdef _OMPTASKS
