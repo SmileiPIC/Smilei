@@ -43,7 +43,6 @@ ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomp
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
-
     }
 
 }//END constructor Electromagn3D
@@ -59,7 +58,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
 
     initElectroMagn3DQuantities( params, patch );
 
-    // Charge currents currents and density for each species
+    // Charge currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) { // end loop on ispec
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
@@ -83,7 +82,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
             if( emFields->rho_s[ispec]->data_ != NULL ) {
                 rho_s[ispec] = new Field3D( dimPrim, emFields->rho_s[ispec]->name );
             } else {
-                rho_s[ispec]  = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
+                rho_s[ispec] = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
             }
         }
 
@@ -96,12 +95,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
                 }
             }
         }
-
-
-
     } // loop on ispec
-
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

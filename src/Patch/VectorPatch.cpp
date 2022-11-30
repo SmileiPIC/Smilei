@@ -4443,30 +4443,30 @@ void VectorPatch::allocateDataOnDevice(Params &params,
         const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
         const double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
-        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
-
-        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
-
-        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        const double *const By = patches_[ipatch]->EMfields->By_->data();
-        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
-
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx, sizeofJx );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Rho, sizeofRho );
 
+        const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofEy );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofEz );
 
+        const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmz, sizeofBz );
+
+        const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        const double *const By = patches_[ipatch]->EMfields->By_->data();
+        const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );

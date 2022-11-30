@@ -11,7 +11,19 @@ public:
     ~Projector3D2OrderGPU();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currentsAndDensityGPU( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold, bool diag_flag = false );
+    inline void currentsAndDensityGPU(
+        double *const __restrict__ Jx, 
+        double *const __restrict__ Jy, 
+        double *const __restrict__ Jz, 
+        double *const __restrict__ rho, 
+        Particles &particles,
+        int istart,
+        int iend, 
+        double *invgf, 
+        int *iold, 
+        double *deltaold, 
+        bool diag_flag = false );
+
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
 

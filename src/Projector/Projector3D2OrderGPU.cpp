@@ -50,21 +50,28 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort)
+//! Project local currents and local density (sort)
+//! param[in] Jx,Jy,Jz pointers to the current grids
+//! param[in] rho pointers to the charge grids
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currentsAndDensityGPU( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf,
-                                               int *iold, double *deltaold, bool diag_flag )
+void 
+Projector3D2OrderGPU::currentsAndDensityGPU( 
+    double *const __restrict__ Jx, 
+    double *const __restrict__ Jy, 
+    double *const __restrict__ Jz, 
+    double *const __restrict__ rho,
+    Particles &particles, 
+    int istart, int iend, 
+    double *invgf,                                     
+    int *iold, 
+    double *deltaold, 
+    bool diag_flag )
 {
     if( iend == istart ) {
         return;
     }
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
-
-    double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
-    double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
-    double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
-    double *const __restrict__ rho = &( *EMfields->rho_ )( 0 );
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -925,39 +932,54 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    Jx_  =  &( *EMfields->Jx_ )( 0 );
-    Jy_  =  &( *EMfields->Jy_ )( 0 );
-    Jz_  =  &( *EMfields->Jz_ )( 0 );
-    rho_ =  &( *EMfields->rho_ )( 0 );
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
-        if( !is_spectral ) {
-            currentsAndDensityGPU( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
-        } else {
-            for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currentsAndDensity( Jx_, Jy_, Jz_, rho_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-            }
-        }
-        // Otherwise, the projection may apply to the species-specific arrays
-    } else {
-        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensityGPU( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0], true );
+
         double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
         double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
         double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
-        int sizeofJx = EMfields->Jx_->globalDims_ ;
+
+        if( !is_spectral ) {
+            currentsAndDensityGPU( Jx, Jy, Jz, rho, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+        } else {
+            for( int ipart=istart ; ipart<iend; ipart++ ) {
+                currentsAndDensity( Jx, Jy, Jz, rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+            }
+        }
+        // Otherwise, the projection may apply to the species-specific arrays
+    } else {
+
+        double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data() ;
+        const int sizeofJx               = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->globalDims_   : EMfields->Jx_->globalDims_ ;
+
+        if (EMfields->Jx_s[ispec]) {
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( b_Jx, sizeofJx );
+        }
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho, sizeofRho );
+
+        double * b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        double * b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        double * b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+
+        currentsAndDensityGPU( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0], true );
+
         int sizeofJy = EMfields->Jy_->globalDims_ ;
         int sizeofJz = EMfields->Jz_->globalDims_ ;
         int sizeofRho = EMfields->rho_->globalDims_ ;
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( rho, sizeofRho );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_rho, sizeofRho );
+
+        if (EMfields->Jx_s[ispec]) {
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHostAndDeviceFree( b_Jx, sizeofJx );
+        } else {
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, sizeofJx );
+        }
     }
 
 }
