@@ -1611,12 +1611,12 @@ void ElectroMagn3D::computeTotalRhoJ()
     double *const __restrict__ Jzp = Jz_->data();
     double *const __restrict__ rhop = rho_->data();
 
-    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+    unsigned int Jx_size = Jx_->globalDims_;
+    unsigned int Jy_size = Jx_->globalDims_;
+    unsigned int Jz_size = Jz_->globalDims_;
+    unsigned int rho_size = rho_->globalDims_;
 
-        unsigned int Jx_size;
-        unsigned int Jy_size;
-        unsigned int Jz_size;
-        unsigned int rho_size;
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
 
         double * __restrict__ Jxsp = nullptr;
         double * __restrict__ Jysp = nullptr;
@@ -1624,31 +1624,27 @@ void ElectroMagn3D::computeTotalRhoJ()
         double * __restrict__ rhosp = nullptr;
 
         if (Jx_s[ispec]) {
-            Jx_size = Jxp[ispec]->globalDims_;
             Jxsp  = Jx_s[ispec]->data() ;
         }
         if (Jy_s[ispec]) {
-            Jy_size = Jy_s[ispec]->globalDims_;
             Jysp  = Jy_s[ispec]->data() ;
         }
         if (Jz_s[ispec]) {
-            Jz_size = Jz_s[ispec]->globalDims_;
             Jzsp  = Jz_s[ispec]->data() ;
         }
         if (rho_s[ispec]) {
-            rho_size = rho_s[ispec]->globalDims_;
             rhosp  = rho_s[ispec]->data() ;
         }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
 #elif defined( SMILEI_OPENACC_MODE )
-            #pragma acc parallel present( 
-                                          Jxp[0:Jx_size]) ,     \
-                                          Jxp[0:Jy_size],       \
+            #pragma acc parallel present( \
+                                          Jxp[0:Jx_size],     \
+                                          Jyp[0:Jy_size],       \
                                           Jzp[0:Jz_size],       \
-                                          rhop[0:rho_size]      \
-                                          Jxsp[0:Jx_size]) ,     \
+                                          rhop[0:rho_size],      \
+                                          Jxsp[0:Jx_size],     \
                                           Jxsp[0:Jy_size],       \
                                           Jzsp[0:Jz_size],       \
                                           rhosp[0:rho_size]      \
@@ -1662,7 +1658,7 @@ void ElectroMagn3D::computeTotalRhoJ()
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jx_size; i++ ) {
-                Jxp[i] = Jxsp[i];
+                Jxp[i] += Jxsp[i];
             }
         }
         if (Jy_s[ispec]) {
@@ -1672,7 +1668,7 @@ void ElectroMagn3D::computeTotalRhoJ()
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jx_size; i++ ) {
-                Jyp[i] = Jysp[i];
+                Jyp[i] += Jysp[i];
             }
         }
         if (Jz_s[ispec]) {
@@ -1682,7 +1678,7 @@ void ElectroMagn3D::computeTotalRhoJ()
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jz_size; i++ ) {
-                Jzp[i] = Jzsp[i];
+                Jzp[i] += Jzsp[i];
             }
         }
         if (rho_s[ispec]) {
@@ -1692,7 +1688,7 @@ void ElectroMagn3D::computeTotalRhoJ()
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<rho_size; i++ ) {
-                rhop[i] = rhosp[i];
+                rhop[i] += rhosp[i];
             }
         }
     } // end loop species

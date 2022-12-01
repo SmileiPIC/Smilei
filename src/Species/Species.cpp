@@ -613,7 +613,7 @@ void Species::dynamics( double time_dual,
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
 #elif defined( SMILEI_OPENACC_MODE )
-            #pragma acc parallel present( Jx_s[0:Jx_size]) ,     \
+            #pragma acc parallel present( Jx_s[0:Jx_size],     \
                                           Jy_s[0:Jy_size], \
                                           Jz_s[0:Jz_size],   \
                                           rho_s[0:rho_size] )  
