@@ -1258,7 +1258,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
     bool data_on_cpu_updated = false;
 #endif
     // Global diags: scalars + particles
@@ -1269,14 +1269,14 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
 
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE)
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                copyDeviceStateToHost();
+                copyDeviceStateToHost(true);
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1381,14 +1381,14 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers_[globalDiags.size()+idiag]->restart();
 
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
         if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             !data_on_cpu_updated &&
             ( itime > 0 ) ) {
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                copyDeviceStateToHost();
+                copyDeviceStateToHost(true);
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1410,10 +1410,36 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         #pragma omp barrier
         #pragma omp single
         diag_flag = false;
+        // ML: not sure it is useful since we do it at the beginning of vectorPatch::dynamics
         #pragma omp for
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->restartRhoJs();
+
+            // Delete species current and rho grids from device 
+            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
+                if (( *this )( ipatch )->EMfields->Jx_s[ispec]) {
+                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jx_s[ispec]->data() ;
+                    const int size                      = ( *this )( ipatch )->EMfields->Jx_s[ispec]->globalDims_;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+                }
+                if (( *this )( ipatch )->EMfields->Jy_s[ispec]) {
+                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jy_s[ispec]->data() ;
+                    const int size                      = ( *this )( ipatch )->EMfields->Jy_s[ispec]->globalDims_;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+                }
+                if (( *this )( ipatch )->EMfields->Jz_s[ispec]) {
+                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jz_s[ispec]->data() ;
+                    const int size                      = ( *this )( ipatch )->EMfields->Jz_s[ispec]->globalDims_;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+                }
+                if (( *this )( ipatch )->EMfields->rho_s[ispec]) {
+                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->rho_s[ispec]->data() ;
+                    const int size                      = ( *this )( ipatch )->EMfields->rho_s[ispec]->globalDims_;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+                }
+            } // end loop for species
         }
+
     }
     timers.diags.update();
 
@@ -4395,7 +4421,7 @@ void VectorPatch::allocateDataOnDevice(Params &params,
                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
                                          
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
@@ -4533,7 +4559,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
                                     RadiationTables *radiation_tables,
                                     MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
 
     const int npatches = this->size();
 
@@ -4635,7 +4661,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 //! This function updates the data on the host from the data located on the device
 void VectorPatch::copyEMFieldsFromHostToDevice()
 {
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
@@ -4680,9 +4706,11 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 }
 
 //! Sync all data (fields and particles) from device to host
-void VectorPatch::copyDeviceStateToHost()
+void
+VectorPatch::copyDeviceStateToHost(
+    bool species_J_and_rho)
 {
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE)
     // TODO(Etienne M): DIAGS may need more or less data copied from the GPU. We
     // need to either have more versatile copy functions, or to copy everything
     // from the GPU to the CPU (which is what we do ATM).
@@ -4713,6 +4741,37 @@ void VectorPatch::copyDeviceStateToHost()
         double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
         // double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
+
+        // Current and Charge for each species
+        if (species_J_and_rho) {
+            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
+                if (patches_[ipatch]->EMfields->Jx_s[ispec]) {
+                    unsigned int size = patches_[ipatch]->EMfields->Jx_s[ispec]->globalDims_;
+                    double *const __restrict__ pointer  = patches_[ipatch]->EMfields->Jx_s[ispec]->data() ;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
+                }
+                if (patches_[ipatch]->EMfields->Jy_s[ispec]) {
+                    unsigned int size = patches_[ipatch]->EMfields->Jy_s[ispec]->globalDims_;
+                    double *const __restrict__ pointer  = patches_[ipatch]->EMfields->Jy_s[ispec]->data() ;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
+                }
+                if (patches_[ipatch]->EMfields->Jz_s[ispec]) {
+                    unsigned int size = patches_[ipatch]->EMfields->Jz_s[ispec]->globalDims_;
+                    double *const __restrict__ pointer  = patches_[ipatch]->EMfields->Jz_s[ispec]->data() ;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
+                }
+                if (patches_[ipatch]->EMfields->rho_s[ispec]) {
+                    unsigned int size = patches_[ipatch]->EMfields->rho_s[ispec]->globalDims_;
+                    double *const __restrict__ pointer  = patches_[ipatch]->EMfields->rho_s[ispec]->data() ;
+                    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
+                }
+            }
+        }
+
         double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
         double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
         double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
@@ -4724,11 +4783,6 @@ void VectorPatch::copyDeviceStateToHost()
         double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
         double *const By = patches_[ipatch]->EMfields->By_->data();
         double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofJx );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofJy );

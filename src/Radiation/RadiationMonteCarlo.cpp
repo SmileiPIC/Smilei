@@ -14,7 +14,7 @@
 #include <cstring>
 #include <fstream>
 
-#if defined(ACCELERATOR_GPU_ACC)
+#if defined(SMILEI_OPENACC_MODE)
     #define __HIP_PLATFORM_NVCC__
     #define __HIP_PLATFORM_NVIDIA__
     #include "gpuRandom.h"
@@ -101,7 +101,7 @@ void RadiationMonteCarlo::operator()(
     // Temporary double parameter
     double temp;
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     unsigned long long seed; // Parameters for CUDA generator
     unsigned long long seq;
     unsigned long long offset;
@@ -150,7 +150,7 @@ void RadiationMonteCarlo::operator()(
 
     // Number of photons
     int nphotons;
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     int nphotons_start;
 #endif
     
@@ -158,7 +158,7 @@ void RadiationMonteCarlo::operator()(
     const double photon_buffer_size_per_particle = radiation_photon_sampling_ * max_photon_emissions_;
     
     if (photons) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             // We reserve a large number of potential photons on device since we can't reallocate
             nphotons_start = photons->deviceSize();
             //static_cast<nvidiaParticles*>(photons)->deviceReserve( nphotons + (iend - istart) * photon_buffer_size_per_particle );
@@ -197,13 +197,13 @@ void RadiationMonteCarlo::operator()(
 
     double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     // Cell keys as a mask
     int *const __restrict__ photon_cell_keys = photons ? photons->getPtrCellKeys() : nullptr;
 #endif
 
     // Table properties ----------------------------------------------------------------
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     // Size of tables
     // int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
     // int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
@@ -219,7 +219,7 @@ void RadiationMonteCarlo::operator()(
 
     // _______________________________________________________________
     // Computation
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     // Management of the data on GPU though this data region
     int np = iend-istart;
     
@@ -340,7 +340,7 @@ void RadiationMonteCarlo::operator()(
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
                     //tau[ipart] = -log( 1.-Rand::uniform() );
-                    #ifndef ACCELERATOR_GPU_ACC
+                    #ifndef SMILEI_OPENACC_MODE
                         tau[ipart] = -std::log( 1.-rand_->uniform() );
                     #else
                         seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
@@ -383,7 +383,7 @@ void RadiationMonteCarlo::operator()(
 
 
                     // Draw random number in [0,1[
-                    #ifndef ACCELERATOR_GPU_ACC
+                    #ifndef SMILEI_OPENACC_MODE
                         random_number = rand_->uniform();
                     #else
                         seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
@@ -431,7 +431,7 @@ void RadiationMonteCarlo::operator()(
                             && ( i_photon_emission < max_photon_emissions_)) {
                                 
 // CPU implementation (non-threaded implementation)
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
 
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );
@@ -608,7 +608,7 @@ void RadiationMonteCarlo::operator()(
         } // end while
     } // end for
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     } // end acc parallel
 #endif
 
@@ -621,7 +621,7 @@ void RadiationMonteCarlo::operator()(
     // ____________________________________________________
     // Update of the quantum parameter chi
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
         #pragma omp simd
 #else
     int np = iend-istart;
@@ -650,11 +650,11 @@ void RadiationMonteCarlo::operator()(
 
         }
 
-    #ifdef ACCELERATOR_GPU_ACC
+    #ifdef SMILEI_OPENACC_MODE
     } // end acc parallel
     #endif
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     }   // end acc data
 #endif
 

@@ -335,7 +335,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
     if( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
             const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
             const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
@@ -353,7 +353,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 #endif
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         ERROR( "To Do GPU : envelope" );
 #endif
         delete sendFields_[iDim*2+iNeighbor];
@@ -389,7 +389,7 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     #pragma omp target if( is_the_right_field )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( (name.substr(0,1) == "B") );
@@ -397,11 +397,11 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -440,7 +440,7 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( name.substr(0,1) == "B" );
@@ -448,11 +448,11 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -492,7 +492,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
         map( to                                 \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( (name.substr(0,1) == "J") );
@@ -501,11 +501,11 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -544,7 +544,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( name.substr(0,1) == "J" );
@@ -553,11 +553,11 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {

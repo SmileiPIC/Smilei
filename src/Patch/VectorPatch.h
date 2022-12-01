@@ -486,7 +486,9 @@ public :
     void copyEMFieldsFromHostToDevice();
     
     //! Data synchronization from device (GPU) to host (CPU)
-    void copyDeviceStateToHost();
+    void copyDeviceStateToHost(
+            bool species_J_and_rho = false
+        );
     
 private :
 

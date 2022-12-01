@@ -18,7 +18,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -40,7 +40,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -90,7 +90,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -110,7 +110,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )

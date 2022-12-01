@@ -6,7 +6,7 @@
 // #include "PyTools.h"
 
 #include "Particles.h"
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 #include "nvidiaParticles.h"
 #endif
 #include "Params.h"

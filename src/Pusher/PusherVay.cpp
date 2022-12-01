@@ -53,7 +53,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    #ifndef ACCELERATOR_GPU_ACC
+    #ifndef SMILEI_OPENACC_MODE
         #pragma omp simd
     #else
         int np = iend-istart;

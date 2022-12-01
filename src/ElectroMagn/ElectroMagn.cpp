@@ -476,7 +476,6 @@ void ElectroMagn::restartEnvChi()
     Env_Chi_->put_to( 0. );
 }
 
-
 void ElectroMagn::restartRhoJs()
 {
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
@@ -493,7 +492,6 @@ void ElectroMagn::restartRhoJs()
             rho_s[ispec]->put_to( 0. );
         }
     }
-    
     restartRhoJ();
 }
 

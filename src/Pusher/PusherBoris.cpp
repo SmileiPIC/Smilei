@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <accelmath.h>
 #endif
 
@@ -60,7 +60,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
                        position_y /* [istart:particle_number] */,             \
                        position_z /* [istart:particle_number] */ )
     #pragma omp teams distribute parallel for
-#elif defined(ACCELERATOR_GPU_ACC)
+#elif defined(SMILEI_OPENACC_MODE)
     const int istart_offset   = istart - ipart_buffer_offset;
     const int particle_number = iend - istart;
 

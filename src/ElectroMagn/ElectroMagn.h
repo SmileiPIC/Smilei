@@ -281,7 +281,7 @@ public:
     virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
     virtual void restartRhoJs();
-    
+
     //! Method used to initialize the total susceptibility
     virtual void restartEnvChi();
     //! Method used to initialize the total susceptibility of species

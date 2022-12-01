@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <openacc.h>
 #endif
 
@@ -1136,7 +1136,7 @@ void ElectroMagn3D::centerMagneticFields()
     double *const __restrict__ Bz3D_m     = Bz_m->data();
 
     // Magnetic field Bx^(p,d,d)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     const int sizeofBx = Bx_->globalDims_;
     const int sizeofBy = By_->globalDims_;
     const int sizeofBz = Bz_->globalDims_;
@@ -1148,11 +1148,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1168,7 +1168,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1176,12 +1176,12 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1195,7 +1195,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field Bz^(d,d,p)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1203,11 +1203,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1602,12 +1602,109 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computeTotalRhoJ()
 {
+
+// Accelerator mode : Reduction of the species J and Rho in the global arrays
+#if defined( SMILEI_ACCELERATOR_MODE )
+
+    double *const __restrict__ Jxp = Jx_->data();
+    double *const __restrict__ Jyp = Jy_->data();
+    double *const __restrict__ Jzp = Jz_->data();
+    double *const __restrict__ rhop = rho_->data();
+
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+
+        unsigned int Jx_size;
+        unsigned int Jy_size;
+        unsigned int Jz_size;
+        unsigned int rho_size;
+
+        double * __restrict__ Jxsp = nullptr;
+        double * __restrict__ Jysp = nullptr;
+        double * __restrict__ Jzsp = nullptr;
+        double * __restrict__ rhosp = nullptr;
+
+        if (Jx_s[ispec]) {
+            Jx_size = Jxp[ispec]->globalDims_;
+            Jxsp  = Jx_s[ispec]->data() ;
+        }
+        if (Jy_s[ispec]) {
+            Jy_size = Jy_s[ispec]->globalDims_;
+            Jysp  = Jy_s[ispec]->data() ;
+        }
+        if (Jz_s[ispec]) {
+            Jz_size = Jz_s[ispec]->globalDims_;
+            Jzsp  = Jz_s[ispec]->data() ;
+        }
+        if (rho_s[ispec]) {
+            rho_size = rho_s[ispec]->globalDims_;
+            rhosp  = rho_s[ispec]->data() ;
+        }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc parallel present( 
+                                          Jxp[0:Jx_size]) ,     \
+                                          Jxp[0:Jy_size],       \
+                                          Jzp[0:Jz_size],       \
+                                          rhop[0:rho_size]      \
+                                          Jxsp[0:Jx_size]) ,     \
+                                          Jxsp[0:Jy_size],       \
+                                          Jzsp[0:Jz_size],       \
+                                          rhosp[0:rho_size]      \
+                                          )  
+#endif
+
+        if (Jx_s[ispec]) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jxp[i] = Jxsp[i];
+            }
+        }
+        if (Jy_s[ispec]) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jyp[i] = Jysp[i];
+            }
+        }
+        if (Jz_s[ispec]) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jz_size; i++ ) {
+                Jzp[i] = Jzsp[i];
+            }
+        }
+        if (rho_s[ispec]) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<rho_size; i++ ) {
+                rhop[i] = rhosp[i];
+            }
+        }
+    } // end loop species
+
+// CPU mode : Reduction of the species J and Rho in the global arrays
+#else
+
     // static cast of the total currents and densities
     Field3D *Jx3D    = static_cast<Field3D *>( Jx_ );
     Field3D *Jy3D    = static_cast<Field3D *>( Jy_ );
     Field3D *Jz3D    = static_cast<Field3D *>( Jz_ );
     Field3D *rho3D   = static_cast<Field3D *>( rho_ );
-
 
     // -----------------------------------
     // Species currents and charge density
@@ -1647,8 +1744,8 @@ void ElectroMagn3D::computeTotalRhoJ()
         }
 
     }//END loop on species ispec
-//END computeTotalRhoJ
-}
+#endif
+} //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total susceptibility from species susceptibility
