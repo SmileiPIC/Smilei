@@ -865,7 +865,13 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Per species in global, Attention if output -> Sync / per species fields
-            ( *this )( ipatch )->EMfields->computeTotalRhoJ();
+            if (itime == 0) {
+                ( *this )( ipatch )->EMfields->computeTotalRhoJ();
+            }
+            else
+            {
+                ( *this )( ipatch )->EMfields->computeTotalRhoJOnDevice();
+            }
         }
     }
     timers.densities.update();
