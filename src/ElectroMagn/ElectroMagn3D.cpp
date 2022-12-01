@@ -1681,7 +1681,7 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                                           Jzp[0:Jz_size],       \
                                           rhop[0:rho_size],      \
                                           Jxsp[0:Jx_size],     \
-                                          Jxsp[0:Jy_size],       \
+                                          Jysp[0:Jy_size],       \
                                           Jzsp[0:Jz_size],       \
                                           rhosp[0:rho_size]      \
                                           )  
@@ -1703,7 +1703,7 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
 #endif
-            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+            for( unsigned int i=0 ; i<Jy_size; i++ ) {
                 Jyp[i] += Jysp[i];
             }
         }

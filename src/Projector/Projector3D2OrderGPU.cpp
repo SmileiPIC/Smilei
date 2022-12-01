@@ -972,17 +972,26 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
         unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->globalDims_ : EMfields->Jx_->globalDims_;
 
-        int Jy_size = EMfields->Jy_->globalDims_ ;
-        int Jz_size = EMfields->Jz_->globalDims_ ;
-        int rho_size = EMfields->rho_->globalDims_ ;
+        double *const __restrict__ b_Jy  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
+        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->globalDims_ : EMfields->Jy_->globalDims_;
+
+        double *const __restrict__ b_Jz  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
+        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->globalDims_ : EMfields->Jz_->globalDims_;
+
+        double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
+        unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->globalDims_ : EMfields->rho_->globalDims_;
+
+        //int Jy_size = EMfields->Jy_->globalDims_ ;
+        //int Jz_size = EMfields->Jz_->globalDims_ ;
+        //int rho_size = EMfields->rho_->globalDims_ ;
 
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho, sizeofRho );
 
-        double *const __restrict__ b_Jy  = &( *EMfields->Jy_ )( 0 ) ;
-        double *const __restrict__ b_Jz  = &( *EMfields->Jz_ )( 0 ) ;
-        double *const __restrict__ b_rho = &( *EMfields->rho_ )( 0 ) ;
+        //double *const __restrict__ b_Jy  = &( *EMfields->Jy_ )( 0 ) ;
+        //double *const __restrict__ b_Jz  = &( *EMfields->Jz_ )( 0 ) ;
+        //double *const __restrict__ b_rho = &( *EMfields->rho_ )( 0 ) ;
 
         // double * b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         // double * b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
