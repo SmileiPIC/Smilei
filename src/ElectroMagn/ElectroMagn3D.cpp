@@ -1598,13 +1598,62 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Compute the total density and currents from species density and currents
+// Compute the total density and currents from species density and currents on GPU
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computeTotalRhoJ()
 {
+    // static cast of the total currents and densities
+    Field3D *Jx3D    = static_cast<Field3D *>( Jx_ );
+    Field3D *Jy3D    = static_cast<Field3D *>( Jy_ );
+    Field3D *Jz3D    = static_cast<Field3D *>( Jz_ );
+    Field3D *rho3D   = static_cast<Field3D *>( rho_ );
 
-// Accelerator mode : Reduction of the species J and Rho in the global arrays
+    // -----------------------------------
+    // Species currents and charge density
+    // -----------------------------------
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        if( Jx_s[ispec] ) {
+            Field3D *Jx3D_s  = static_cast<Field3D *>( Jx_s[ispec] );
+            for( unsigned int i=0 ; i<Jx3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jx3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jx3D->dims_[2] ; k++ ) {
+                        ( *Jx3D )( i, j, k ) += ( *Jx3D_s )( i, j, k );
+                    }
+        }
+        if( Jy_s[ispec] ) {
+            Field3D *Jy3D_s  = static_cast<Field3D *>( Jy_s[ispec] );
+            for( unsigned int i=0 ; i<Jy3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jy3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jy3D->dims_[2] ; k++ ) {
+                        ( *Jy3D )( i, j, k ) += ( *Jy3D_s )( i, j, k );
+                    }
+        }
+        if( Jz_s[ispec] ) {
+            Field3D *Jz3D_s  = static_cast<Field3D *>( Jz_s[ispec] );
+            for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jz3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jz3D->dims_[2] ; k++ ) {
+                        ( *Jz3D )( i, j, k ) += ( *Jz3D_s )( i, j, k );
+                    }
+        }
+        if( rho_s[ispec] ) {
+            Field3D *rho3D_s  = static_cast<Field3D *>( rho_s[ispec] );
+            for( unsigned int i=0 ; i<rho3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<rho3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<rho3D->dims_[2] ; k++ ) {
+                        ( *rho3D )( i, j, k ) += ( *rho3D_s )( i, j, k );
+                    }
+        }
+
+    }//END loop on species ispec
+} //END computeTotalRhoJ
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total density and currents from species density and currents on Device
+// ---------------------------------------------------------------------------------------------------------------------
 #if defined( SMILEI_ACCELERATOR_MODE )
+void ElectroMagn3D::computeTotalRhoJOnDevice()
+{
 
     double *const __restrict__ Jxp = Jx_->data();
     double *const __restrict__ Jyp = Jy_->data();
@@ -1612,29 +1661,16 @@ void ElectroMagn3D::computeTotalRhoJ()
     double *const __restrict__ rhop = rho_->data();
 
     unsigned int Jx_size = Jx_->globalDims_;
-    unsigned int Jy_size = Jx_->globalDims_;
+    unsigned int Jy_size = Jy_->globalDims_;
     unsigned int Jz_size = Jz_->globalDims_;
     unsigned int rho_size = rho_->globalDims_;
 
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
 
-        double * __restrict__ Jxsp = nullptr;
-        double * __restrict__ Jysp = nullptr;
-        double * __restrict__ Jzsp = nullptr;
-        double * __restrict__ rhosp = nullptr;
-
-        if (Jx_s[ispec]) {
-            Jxsp  = Jx_s[ispec]->data() ;
-        }
-        if (Jy_s[ispec]) {
-            Jysp  = Jy_s[ispec]->data() ;
-        }
-        if (Jz_s[ispec]) {
-            Jzsp  = Jz_s[ispec]->data() ;
-        }
-        if (rho_s[ispec]) {
-            rhosp  = rho_s[ispec]->data() ;
-        }
+        double *const __restrict__ Jxsp = Jx_s[ispec] ? Jx_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jysp = Jy_s[ispec] ? Jy_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jzsp = Jz_s[ispec] ? Jz_s[ispec]->data() : nullptr;
+        double *const __restrict__ rhosp = rho_s[ispec] ? rho_s[ispec]->data() : nullptr;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
@@ -1692,56 +1728,8 @@ void ElectroMagn3D::computeTotalRhoJ()
             }
         }
     } // end loop species
-
-// CPU mode : Reduction of the species J and Rho in the global arrays
-#else
-
-    // static cast of the total currents and densities
-    Field3D *Jx3D    = static_cast<Field3D *>( Jx_ );
-    Field3D *Jy3D    = static_cast<Field3D *>( Jy_ );
-    Field3D *Jz3D    = static_cast<Field3D *>( Jz_ );
-    Field3D *rho3D   = static_cast<Field3D *>( rho_ );
-
-    // -----------------------------------
-    // Species currents and charge density
-    // -----------------------------------
-    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        if( Jx_s[ispec] ) {
-            Field3D *Jx3D_s  = static_cast<Field3D *>( Jx_s[ispec] );
-            for( unsigned int i=0 ; i<Jx3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jx3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<Jx3D->dims_[2] ; k++ ) {
-                        ( *Jx3D )( i, j, k ) += ( *Jx3D_s )( i, j, k );
-                    }
-        }
-        if( Jy_s[ispec] ) {
-            Field3D *Jy3D_s  = static_cast<Field3D *>( Jy_s[ispec] );
-            for( unsigned int i=0 ; i<Jy3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jy3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<Jy3D->dims_[2] ; k++ ) {
-                        ( *Jy3D )( i, j, k ) += ( *Jy3D_s )( i, j, k );
-                    }
-        }
-        if( Jz_s[ispec] ) {
-            Field3D *Jz3D_s  = static_cast<Field3D *>( Jz_s[ispec] );
-            for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jz3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<Jz3D->dims_[2] ; k++ ) {
-                        ( *Jz3D )( i, j, k ) += ( *Jz3D_s )( i, j, k );
-                    }
-        }
-        if( rho_s[ispec] ) {
-            Field3D *rho3D_s  = static_cast<Field3D *>( rho_s[ispec] );
-            for( unsigned int i=0 ; i<rho3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<rho3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<rho3D->dims_[2] ; k++ ) {
-                        ( *rho3D )( i, j, k ) += ( *rho3D_s )( i, j, k );
-                    }
-        }
-
-    }//END loop on species ispec
+} //END computeTotalRhoJOnDevice
 #endif
-} //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total susceptibility from species susceptibility

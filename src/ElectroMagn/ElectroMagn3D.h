@@ -105,8 +105,15 @@ public:
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname, Params& params ) override;
 
-    //! Method used to compute the total charge density and currents by summing over all species
+    //! Method used to compute the total charge density and currents by summing over all species on CPU (Host)
     void computeTotalRhoJ() override;
+
+#if defined( SMILEI_ACCELERATOR_MODE )
+    //! Method used to compute the total charge density and currents by summing over all species on Device
+    void computeTotalRhoJOnDevice() override;
+#endif
+
+
     void addToGlobalRho( int ispec, unsigned int clrw );
 
     //! Method used to compute the total susceptibility by summing over all species

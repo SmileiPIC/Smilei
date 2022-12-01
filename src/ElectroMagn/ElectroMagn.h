@@ -290,6 +290,11 @@ public:
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+
+#if defined( SMILEI_ACCELERATOR_MODE )
+    //! Method used to sum all species densities and currents to compute the total charge density and currents
+    virtual void computeTotalRhoJOnDevice() = 0;
+#endif
     
     //! Method used to sum all species susceptibility to compute the total susceptibility
     virtual void computeTotalEnvChi() = 0;
