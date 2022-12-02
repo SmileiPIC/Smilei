@@ -193,6 +193,12 @@ void remove_particle_inf( Species *species, int imin, int imax, int direction, d
     short* charge    = species->particles->getPtrCharge();
     double* weight   = species->particles->getPtrWeight();
     int* cell_keys   = species->particles->getPtrCellKeys();
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma omp teams distribute parallel for
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
             double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
@@ -213,6 +219,12 @@ void remove_particle_sup( Species *species, int imin, int imax, int direction, d
     short* charge    = species->particles->getPtrCharge();
     double* weight   = species->particles->getPtrWeight();
     int* cell_keys   = species->particles->getPtrCellKeys();
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma omp teams distribute parallel for
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
