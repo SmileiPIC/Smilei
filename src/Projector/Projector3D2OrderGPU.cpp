@@ -1002,11 +1002,19 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
                                 particles, istart, iend, 
                                 &( *invgf )[0], 
                                 &( *iold )[0], 
-                                &( *delta )[0] );
+                                &( *delta )[0],
+                                true);
 
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, Jy_size );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, Jy_size );
         // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jz, Jz_size );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_rho, rho_size );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_rho, rho_size );
+        //double sum = 0;
+        //std::cerr << EMfields->rho_s[ispec] << std::endl;
+        //for (int i = 0 ; i < rho_size ; i++) {
+        //    sum += b_rho[i];
+        //}
+        //std::cerr << "sum Rho in proj: " << sum << std::endl;
     }
 }
 

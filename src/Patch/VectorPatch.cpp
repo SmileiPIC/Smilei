@@ -865,13 +865,19 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Per species in global, Attention if output -> Sync / per species fields
+#if defined( SMILEI_ACCELERATOR_MODE )
+            // At itime == 0, data is still located on the Host
             if (itime == 0) {
                 ( *this )( ipatch )->EMfields->computeTotalRhoJ();
             }
+            // Else, data is loaded permanently on Device
             else
             {
                 ( *this )( ipatch )->EMfields->computeTotalRhoJOnDevice();
             }
+#else
+            ( *this )( ipatch )->EMfields->computeTotalRhoJ();
+#endif
         }
     }
     timers.densities.update();
@@ -1282,7 +1288,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                copyDeviceStateToHost(true);
+                copyDeviceStateToHost(diag_flag);
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1394,7 +1400,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     #pragma omp single
             {
                 // Must be done by one and only one thread
-                copyDeviceStateToHost(true);
+                copyDeviceStateToHost(diag_flag);
             }
     #pragma omp barrier
             data_on_cpu_updated = true;
@@ -1421,6 +1427,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->restartRhoJs();
 
+#if defined (SMILEI_ACCELERATOR_MODE)
             // Delete species current and rho grids from device 
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 if (( *this )( ipatch )->EMfields->Jx_s[ispec]) {
@@ -1444,7 +1451,8 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
                     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
                 }
             } // end loop for species
-        }
+#endif
+        } // end loop patches
 
     }
     timers.diags.update();
@@ -4726,7 +4734,7 @@ VectorPatch::copyDeviceStateToHost(
     const int sizeofJx  = patches_[0]->EMfields->Jx_->globalDims_;
     const int sizeofJy  = patches_[0]->EMfields->Jy_->globalDims_;
     const int sizeofJz  = patches_[0]->EMfields->Jz_->globalDims_;
-    // const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
+    const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
 
     const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
     const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
@@ -4745,12 +4753,12 @@ VectorPatch::copyDeviceStateToHost(
         double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
         double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
         double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-        // double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+        double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
         // Current and Charge for each species
         if (species_J_and_rho) {

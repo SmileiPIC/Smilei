@@ -1655,6 +1655,8 @@ void ElectroMagn3D::computeTotalRhoJ()
 void ElectroMagn3D::computeTotalRhoJOnDevice()
 {
 
+    cerr << "in:computeTotalRho" << std::endl;
+
     double *const __restrict__ Jxp = Jx_->data();
     double *const __restrict__ Jyp = Jy_->data();
     double *const __restrict__ Jzp = Jz_->data();
@@ -1686,8 +1688,8 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                                           rhosp[0:rho_size]      \
                                           )  
 #endif
-
-        if (Jx_s[ispec]) {
+        {
+        if (Jxsp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -1697,7 +1699,7 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                 Jxp[i] += Jxsp[i];
             }
         }
-        if (Jy_s[ispec]) {
+        if (Jysp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -1707,7 +1709,7 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                 Jyp[i] += Jysp[i];
             }
         }
-        if (Jz_s[ispec]) {
+        if (Jzsp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -1717,7 +1719,7 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                 Jzp[i] += Jzsp[i];
             }
         }
-        if (rho_s[ispec]) {
+        if (rhosp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -1727,7 +1729,28 @@ void ElectroMagn3D::computeTotalRhoJOnDevice()
                 rhop[i] += rhosp[i];
             }
         }
+        } // end parallel region
+
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( rhosp, rho_size );
+
+        //double sum = 0;
+        //for (int i = 0 ; i < rho_size ; i++) {
+        //    sum += rhosp[i];
+        //}
+        //std::cerr << "sum rhos"<<ispec<<" in total: " << sum << std::endl;
+
+        //cerr << Jxsp << " " << Jysp << " " << " " << Jzsp << " " << rhosp << std::endl;
     } // end loop species
+
+    //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jyp, Jy_size );
+
+    //double sum = 0;
+    //for (int i = 0 ; i < rho_size ; i++) {
+    //   sum += rhop[i];
+    //}
+    //std::cerr << "sum rho in total: " << sum << std::endl;
+
+    //cerr << "end:computeTotalRho" << std::endl;
 } //END computeTotalRhoJOnDevice
 #endif
 

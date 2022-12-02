@@ -618,7 +618,8 @@ void Species::dynamics( double time_dual,
                                           Jz_s[0:Jz_size],   \
                                           rho_s[0:rho_size] )  
 #endif
-            if (EMfields->Jx_s[ispec]) {
+            {
+            if (Jx_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -628,17 +629,17 @@ void Species::dynamics( double time_dual,
                     Jx_s[i] = 0;
                 }
             }
-            if (EMfields->Jy_s[ispec]) {
+            if (Jy_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
                 #pragma acc loop gang worker vector
 #endif
-                for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                for( unsigned int i=0 ; i<Jy_size; i++ ) {
                     Jy_s[i] = 0;
                 }
             }
-            if (EMfields->Jz_s[ispec]) {
+            if (Jz_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -648,7 +649,7 @@ void Species::dynamics( double time_dual,
                     Jz_s[i] = 0;
                 }
             }
-            if (EMfields->rho_s[ispec]) {
+            if (rho_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
                 #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
@@ -658,7 +659,8 @@ void Species::dynamics( double time_dual,
                     rho_s[i] = 0;
                 }
             }
-        }
+            } // end parallel region
+        } // end species loop
 #endif // end if SMILEI_ACCELERATOR_MODE
 
         // Prepare particles buffers for multiphoton Breit-Wheeler
