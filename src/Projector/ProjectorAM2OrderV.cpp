@@ -30,11 +30,11 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nscellr_ = params.n_space[1] + 1;
+    nscellr_ = params.patch_size_[1] + 1;
     oversize_[0] = params.oversize[0];
     oversize_[1] = params.oversize[1];
     nprimr_ = nscellr_ + 2*oversize_[1];
-    npriml_ = params.n_space[0] + 1 + 2*oversize_[0];
+    npriml_ = params.patch_size_[0] + 1 + 2*oversize_[0];
 
     Nmode_=params.nmodes;
     dq_inv_[0] = dl_inv_;
@@ -332,7 +332,6 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
            }
        }
    }
-   return;
 }
 
 void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
@@ -356,16 +355,13 @@ void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
 
         }
     }
-
-return;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization (WARNING: Not Vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
+void ProjectorAM2OrderV::ionizationCurrents( Field */*Jx*/, Field */*Jy*/, Field */*Jz*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
 {
-    return;
 /*    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
     Field2D *Jy2D  = static_cast<Field2D *>( Jy );
     Field2D *Jz2D  = static_cast<Field2D *>( Jz );
@@ -600,7 +596,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -639,7 +635,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 // Project susceptibility
-void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM2OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for AM geometry" );
 }

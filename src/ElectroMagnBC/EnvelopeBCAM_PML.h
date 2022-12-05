@@ -24,7 +24,7 @@ public:
     EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i_boundary );
     ~EnvelopeBCAM_PML();
 
-    virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
+    virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, Patch *patch ) override;
 
     //void save_fields( Field *, Patch *patch ) override;
     //void disableExternalFields() override;
@@ -78,6 +78,8 @@ public:
 
     Field* getPhiPML() override { return Phi_; };
     Field* getChiPML() override { return Chi_; };
+
+    std::vector<unsigned int> dimPrim;
 
     int domain_oversize_l;
     int domain_oversize_r;

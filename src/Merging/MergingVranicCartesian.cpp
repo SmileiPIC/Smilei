@@ -19,9 +19,8 @@
 //! Constructor for RadiationNLandauLifshitz
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
-MergingVranicCartesian::MergingVranicCartesian(Params& params,
-                             Species * species, Random * rand)
-      : Merging(params, species, rand)
+MergingVranicCartesian::MergingVranicCartesian( Species * species, Random * rand )
+      : Merging( species, rand )
 {
     // Momentum cell discretization
     dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
@@ -60,7 +59,6 @@ MergingVranicCartesian::~MergingVranicCartesian()
 //! Overloading of () operator: perform the Vranic particle merging
 //! \param particles   particle object containing the particle
 //!                    properties
-//! \param smpi        MPI properties
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param count       Final number of particles
@@ -69,7 +67,6 @@ void MergingVranicCartesian::operator() (
         double mass,
         Particles &particles,
         std::vector <int> &mask,
-        SmileiMPI* smpi,
         int istart,
         int iend,
         int & count)

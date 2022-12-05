@@ -360,7 +360,7 @@ public:
     static bool extract_pyProfiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
 
     // extract a vector of 1 or N profiles
-    static bool extract_1orNProfiles( int numberOfProfiles, std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
+    static bool extract_1orNProfiles( unsigned int numberOfProfiles, std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
 
     // extract 2 profiles from namelist (used for laser profile)
     static bool extract2Profiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles );

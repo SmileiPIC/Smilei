@@ -33,7 +33,7 @@ PML_Solver2D_Envelope::~PML_Solver2D_Envelope()
 {
 }
 
-void PML_Solver2D_Envelope::operator()( ElectroMagn *fields )
+void PML_Solver2D_Envelope::operator()( ElectroMagn * )
 {
     ERROR( "This is not a solver for the main domain" );
 
@@ -41,15 +41,10 @@ void PML_Solver2D_Envelope::operator()( ElectroMagn *fields )
     //cField2D *A_nm1      = static_cast<cField2D *>( envelope->A0_ );  // the envelope at timestep n-1
 }
 
-void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
+void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* )
 {
-    if ( iDim == 0 ) {
-        nx_p = ncells_pml_domain;
-    }
-    else if ( iDim == 1 ) {
-        ny_p = ncells_pml_domain;
-        nx_p += ncells_pml_min[0] + ncells_pml_max[0];
-    }
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
 
     //PML Coeffs Kappa,Sigma ...
     //Primal
@@ -106,7 +101,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_x_p[i] = 0. ;
             alpha_prime_x_p[i] = 0. ;
         }
-        for ( int i=startpml; i<nx_p ; i++ ) {
+        for( int i=startpml; i< (int) nx_p ; i++ ) {
             // Parameters
             kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( (i-startpml)*dx , power_pml_kappa_x ) / pow( length_x_pml , power_pml_kappa_x ) ;
             sigma_x_p[i] = sigma_x_max * pow( (i-startpml)*dx , power_pml_sigma_x ) / pow( length_x_pml , power_pml_sigma_x ) ;
@@ -123,7 +118,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             std::reverse(kappa_prime_x_p.begin(), kappa_prime_x_p.end());
             std::reverse(sigma_prime_x_p.begin(), sigma_prime_x_p.end());
             std::reverse(alpha_prime_x_p.begin(), alpha_prime_x_p.end());
-            for (int i=0 ; i<nx_p ; i++){
+            for( unsigned int i=0 ; i<nx_p ; i++){
                 // Due to SMILEI convention for propagating wave
                 kappa_x_p[i] *= +1;
                 sigma_x_p[i] *= -1;
@@ -140,7 +135,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (min_or_max==1) {
-            for (int i=0 ; i<nx_p ; i++){
+            for( unsigned int i=0 ; i<nx_p ; i++){
                 // Due to SMILEI convention for propagating wave
                 kappa_x_p[i] *= +1;
                 sigma_x_p[i] *= -1;
@@ -229,7 +224,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
+            for( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i< (int) nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
                 // Parameters
                 kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_kappa_x ) / pow( length_x_pml_xmax , power_pml_kappa_x ) ;
                 sigma_x_p[i] = sigma_x_max * pow( (i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_sigma_x ) / pow( length_x_pml_xmax, power_pml_sigma_x ) ;
@@ -293,7 +288,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_y_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( int j=startpml; j<ny_p ; j++ ) {
+        for( int j=startpml; j< (int) ny_p ; j++ ) {
             // Parameters
             kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , power_pml_kappa_y ) / pow( length_y_pml , power_pml_kappa_y ) ;
             sigma_y_p[j] = sigma_y_max * pow( (j-startpml)*dy , power_pml_sigma_y ) / pow( length_y_pml , power_pml_sigma_y ) ;
@@ -310,7 +305,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             std::reverse(kappa_prime_y_p.begin(), kappa_prime_y_p.end());
             std::reverse(sigma_prime_y_p.begin(), sigma_prime_y_p.end());
             std::reverse(alpha_prime_y_p.begin(), alpha_prime_y_p.end());
-            for (int j=0 ; j<ny_p ; j++){
+            for( unsigned int j=0 ; j<ny_p ; j++){
                 // Due to SMILEI convention for propagating wave
                 kappa_y_p[j] *= +1;
                 sigma_y_p[j] *= -1;
@@ -325,7 +320,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (min_or_max==1) {
-            for (int j=0 ; j<ny_p ; j++){
+            for( unsigned int j=0 ; j<ny_p ; j++){
                 // Due to SMILEI convention for propagating wave
                 kappa_y_p[j] *= +1;
                 sigma_y_p[j] *= -1;
@@ -374,8 +369,10 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     }
 }
 
-void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
+void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
     EnvelopeBC2D_PML* pml_fields = static_cast<EnvelopeBC2D_PML*>( envelope->EnvBoundCond[iDim*2+min_or_max] );
 
     cField2D* A_nm1_pml = NULL;
@@ -423,9 +420,9 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     std::complex<double> source_term_y ;
 
     if (iDim == 0) {
-        double c_yx_kappa = 1.00 ;
-        double c_yx_sigma = 0.00 ;
-        double c_yx_alpha = 0.00 ;
+        // double c_yx_kappa = 1.00 ;
+        // double c_yx_sigma = 0.00 ;
+        // double c_yx_alpha = 0.00 ;
         // A (p,p,p) Remind that in PML, there no current
         for( unsigned int k=0 ; k<1 ; k++ ) {
             //// explicit solver

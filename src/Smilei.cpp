@@ -154,7 +154,7 @@ int main( int argc, char *argv[] )
             region.define_regions_map(target_map, &smpi, params);
 
             // params.map_rank used to defined regions neighborood
-            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
+            region.build( params, &smpi, vecPatches, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
         }
@@ -163,7 +163,7 @@ int main( int argc, char *argv[] )
 
         // if (params.multiple_decomposition) {
         //     region.vecPatch_.refHindex_ = smpi.getRank();
-        //     region.build( params, &smpi, vecPatches, openPMD, false );
+        //     region.build( params, &smpi, vecPatches, false );
         //     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         //     region.identify_missing_patches( &smpi, vecPatches, params );
 
@@ -172,12 +172,12 @@ int main( int argc, char *argv[] )
         //     region.clean();
         //     region.reset_mapping();
 
-        //     region.build( params, &smpi, vecPatches, openPMD, false );
+        //     region.build( params, &smpi, vecPatches, false );
         //     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         //     region.identify_missing_patches( &smpi, vecPatches, params );
         // }
 
-        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
+        checkpoint.restartAll( vecPatches, region, &smpi, params );
         vecPatches.sortAllParticles( params );
 
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
@@ -205,7 +205,7 @@ int main( int argc, char *argv[] )
         if( params.multiple_decomposition ) {
             TITLE( "Create SDMD grids" );
             region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
+            region.build( params, &smpi, vecPatches, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
@@ -216,7 +216,7 @@ int main( int argc, char *argv[] )
             region.clean();
             region.reset_mapping();
 
-            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
+            region.build( params, &smpi, vecPatches, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
@@ -300,7 +300,7 @@ int main( int argc, char *argv[] )
         if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
-            region_global.build( params, &smpi, vecPatches, openPMD, true, simWindow->getNmoved() );
+            region_global.build( params, &smpi, vecPatches, true, simWindow->getNmoved() );
             region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region_global.identify_missing_patches( &smpi, vecPatches, params );
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
@@ -310,7 +310,7 @@ int main( int argc, char *argv[] )
                 region_global.coupling( params, true );
             }
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
-                DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
+                DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, imode );
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
@@ -457,10 +457,10 @@ int main( int argc, char *argv[] )
         else { //if ( params.multiple_decomposition ) {
             if( time_dual > params.time_fields_frozen ) {
                 if ( params.geometry != "AMcylindrical" )
-                    DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime );
+                    DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers );
                 else {
                     for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                        DoubleGridsAM::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime, imode );
+                        DoubleGridsAM::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, imode );
                 }
                 region.vecPatch_.diag_flag = false;
 
@@ -474,10 +474,10 @@ int main( int argc, char *argv[] )
 
                 timers.syncDens.restart();
                 if( params.geometry != "AMcylindrical" )
-                    SyncVectorPatch::sumRhoJ( params, region.vecPatch_, &smpi, timers, itime ); // MPI
+                    SyncVectorPatch::sumRhoJ( params, region.vecPatch_, &smpi ); // MPI
                 else
                     for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
-                        SyncVectorPatch::sumRhoJ( params, region.vecPatch_, imode, &smpi, timers, itime );
+                        SyncVectorPatch::sumRhoJ( params, region.vecPatch_, imode, &smpi );
                     }
                 timers.syncDens.update( params.printNow( itime ) );
 
@@ -489,31 +489,31 @@ int main( int argc, char *argv[] )
 
                 region.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 if ( params.geometry != "AMcylindrical" )
-                    DoubleGrids::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                    DoubleGrids::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers );
                 else {
                     for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                        DoubleGridsAM::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                        DoubleGridsAM::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, imode );
                 }
             }
             if( vecPatches.diag_flag ) {
 
                 if (!params.is_spectral) {
                     if ( params.geometry != "AMcylindrical" )
-                        DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                        DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers );
                     else {
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                            DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, imode );
                     }
 
                     // Currents and densities not corrected on regions
                     #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
                     {
                         if( params.geometry != "AMcylindrical" ) {
-                            SyncVectorPatch::sumRhoJ( params, vecPatches, &smpi, timers, itime ); // MPI
+                            SyncVectorPatch::sumRhoJ( params, vecPatches, &smpi ); // MPI
                         }
                         else {
                             for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
-                                SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, itime );
+                                SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi );
                             }
                         }
                     }
@@ -524,11 +524,11 @@ int main( int argc, char *argv[] )
 
                     // Currents and densities could have been corrected on regions
                     if ( params.geometry != "AMcylindrical" ) {
-                        DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                        DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers );
                     }
                     else {
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                            DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, imode );
                     }
                 }
             }
@@ -543,7 +543,7 @@ int main( int argc, char *argv[] )
                                                  time_dual, timers, itime );
 
             // Particle merging
-            vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+            vecPatches.mergeParticles(params, time_dual,timers, itime );
 
             // Particle injection from the boundaries
             vecPatches.injectParticlesFromBoundaries(params, timers, itime );
@@ -595,10 +595,10 @@ int main( int argc, char *argv[] )
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {
-                    DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                    DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers );
                 } else {
                     for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
-                        DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                        DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, imode );
                     }
                 }
             }
@@ -614,7 +614,7 @@ int main( int argc, char *argv[] )
                     region.reset_fitting( &smpi, params );
                     region.clean();
                     region.reset_mapping();
-                    region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
+                    region.build( params, &smpi, vecPatches, false, simWindow->getNmoved() );
                     if( params.is_pxr ) {
                         region.coupling( params, false );
                     }
@@ -718,9 +718,9 @@ int executeTestMode( VectorPatch &vecPatches,
     if( params.restart ) {
         if (params.multiple_decomposition) {
             checkpoint.readRegionDistribution( region );
-            region.build( params, smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
+            region.build( params, smpi, vecPatches, false, simWindow->getNmoved() );
         }
-        checkpoint.restartAll( vecPatches, region, smpi, simWindow, params, openPMD );
+        checkpoint.restartAll( vecPatches, region, smpi, params );
     }
 
     if( params.print_expected_disk_usage ) {

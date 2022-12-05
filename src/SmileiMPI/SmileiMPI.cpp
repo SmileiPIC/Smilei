@@ -234,7 +234,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
 
     unsigned int tot_species_number = PyTools::nComponents( "Species" );
     unsigned int Npatches           = params.tot_number_of_patches;
-    unsigned int Nbins              = params.n_space[0]/params.cluster_width_;
+    unsigned int Nbins              = params.patch_size_[0]/params.cluster_width_;
     // estimate of the number of tasks
     unsigned int Ntasks             = Npatches*Nbins*tot_species_number;
     if (!params.Laser_Envelope_model){
@@ -314,7 +314,7 @@ void SmileiMPI::init_patch_count( Params &params, DomainDecomposition *domain_de
     tot_ncells_perpatch = 1;
     vector<double> x_cell( 3, 0. );
     for( unsigned int i = 0; i < params.nDim_field; i++ ) {
-        tot_ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
+        tot_ncells_perpatch *= params.patch_size_[i]+2*params.oversize[i];
     }
 
     // First, distribute all patches evenly
@@ -492,9 +492,9 @@ void SmileiMPI::recompute_patch_count( Params &params, VectorPatch &vecpatches, 
     MPI_Status status, status0, status1;
     MPI_Request request0, request1;
 
-    ncells_perpatch = params.n_space[0]+2*params.oversize[0]; //Initialization
+    ncells_perpatch = params.patch_size_[0]+2*params.oversize[0]; //Initialization
     for( unsigned int idim = 1; idim < params.nDim_field; idim++ ) {
-        ncells_perpatch *= params.n_space[idim]+2*params.oversize[idim];
+        ncells_perpatch *= params.patch_size_[idim]+2*params.oversize[idim];
     }
 
     unsigned int tot_species_number = vecpatches( 0 )->vecSpecies.size();
@@ -636,8 +636,6 @@ void SmileiMPI::recompute_patch_count( Params &params, VectorPatch &vecpatches, 
         }
         fout.close();
     }
-
-    return;
 
 } // END recompute_patch_count
 
@@ -2127,13 +2125,13 @@ void SmileiMPI::recv( ProbeParticles *probe, int from, int tag, unsigned int nDi
 } // End recv ( probes )
 
 //! Wrapper for integer MPI communication
-void SmileiMPI::isend( int *integer, int to, int tag, unsigned int nDim_particles, MPI_Request &request )
+void SmileiMPI::isend( int *integer, int to, int tag, MPI_Request &request )
 {
     MPI_Isend( &integer, 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 } // End isend ( integer )
 
 //! Wrapper for integer MPI communication
-void SmileiMPI::recv( int *integer, int from, int tag, unsigned int nDim_particles )
+void SmileiMPI::recv( int *integer, int from, int tag )
 {
     MPI_Status status;
     MPI_Recv( &integer, 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );

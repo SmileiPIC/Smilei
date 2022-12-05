@@ -13,7 +13,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2DWT4Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2DWT4Order::Interpolator2DWT4Order( Params &params, Patch *patch ) : Interpolator2D( params, patch )
+Interpolator2DWT4Order::Interpolator2DWT4Order( Params &params, Patch *patch ) : Interpolator2D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -81,7 +81,7 @@ void Interpolator2DWT4Order::fieldsAndCurrents( ElectroMagn *EMfields,
                                                 Particles &particles,
                                                 SmileiMPI *smpi,
                                                 int *istart,
-                                                int *iend,
+                                                int *,
                                                 int ithread,
                                                 LocalFields *JLoc,
                                                 double *RhoLoc )
@@ -137,7 +137,7 @@ void Interpolator2DWT4Order::fieldsAndCurrents( ElectroMagn *EMfields,
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2DWT4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2DWT4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxpt_[2];
@@ -153,7 +153,7 @@ void Interpolator2DWT4Order::oneField( Field **field, Particles &particles, int 
     }
 }
 
-void Interpolator2DWT4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator2DWT4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -212,19 +212,19 @@ void Interpolator2DWT4Order::fieldsSelection( ElectroMagn *EMfields, Particles &
 }
 
 
-void Interpolator2DWT4Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT4Order::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 
-void Interpolator2DWT4Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT4Order::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 // probes like diagnostic !
-void Interpolator2DWT4Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator2DWT4Order::envelopeAndSusceptibility( ElectroMagn *, Particles &, int, double *, double *, double *, double * )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

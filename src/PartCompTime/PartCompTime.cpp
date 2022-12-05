@@ -11,7 +11,7 @@ PartCompTime::PartCompTime( )
 //! @aram vecto_time time in vector mode
 //! @aram scalar_time time in scalar mode
 // -----------------------------------------------------------------------------
-void PartCompTime::operator()(  const std::vector<int> &count,
-                                float &vecto_time,
-                                float &scalar_time  )
+void PartCompTime::operator()(  const std::vector<int> &,
+                                float &,
+                                float &  )
 {};

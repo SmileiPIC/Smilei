@@ -18,15 +18,15 @@ class SimWindow;
 class LaserEnvelope
 {
 public:
-    LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfields ); // Main constructor
-    LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ); // Cloning constructor
+    LaserEnvelope( Params &params, Patch *patch ); // Main constructor
+    LaserEnvelope( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved ); // Cloning constructor
     virtual void initEnvelope( Patch *patch, ElectroMagn *EMfields ) = 0;
     virtual ~LaserEnvelope();
     virtual void updateEnvelope( Patch *patch ) = 0;
     virtual void updateEnvelopeReducedDispersion( Patch *patch ) = 0;
     virtual void computePhiEnvAEnvE( ElectroMagn *EMfields ) = 0;
     virtual void computeGradientPhi( ElectroMagn *EMfields ) = 0;
-    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields );
+    void boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow, ElectroMagn *EMfields );
     virtual void savePhiAndGradPhi() = 0;
     virtual void centerPhiAndGradPhi() = 0;
     
@@ -88,8 +88,8 @@ public:
 class LaserEnvelope1D : public LaserEnvelope
 {
 public:
-    LaserEnvelope1D( Params &params, Patch *patch, ElectroMagn *EMfields );
-    LaserEnvelope1D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
+    LaserEnvelope1D( Params &params, Patch *patchs );
+    LaserEnvelope1D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope1D();
     void updateEnvelope( Patch *patch ) override final;
@@ -104,8 +104,8 @@ public:
 class LaserEnvelope2D : public LaserEnvelope
 {
 public:
-    LaserEnvelope2D( Params &params, Patch *patch, ElectroMagn *EMfields );
-    LaserEnvelope2D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
+    LaserEnvelope2D( Params &params, Patch *patch );
+    LaserEnvelope2D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope2D();
     void updateEnvelope( Patch *patch ) override final;
@@ -120,8 +120,8 @@ public:
 class LaserEnvelope3D : public LaserEnvelope
 {
 public:
-    LaserEnvelope3D( Params &params, Patch *patch, ElectroMagn *EMfields );
-    LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
+    LaserEnvelope3D( Params &params, Patch *patch );
+    LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope3D();
     void updateEnvelope( Patch *patch ) override final;
@@ -136,8 +136,8 @@ public:
 class LaserEnvelopeAM : public LaserEnvelope
 {
 public:
-    LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMfields );
-    LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
+    LaserEnvelopeAM( Params &params, Patch *patch );
+    LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelopeAM();
     void updateEnvelope( Patch *patch ) override final;

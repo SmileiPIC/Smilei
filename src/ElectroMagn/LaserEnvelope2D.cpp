@@ -16,8 +16,8 @@
 
 using namespace std;
 
-LaserEnvelope2D::LaserEnvelope2D( Params &params, Patch *patch, ElectroMagn *EMfields )
-    : LaserEnvelope( params, patch, EMfields )
+LaserEnvelope2D::LaserEnvelope2D( Params &params, Patch *patch )
+    : LaserEnvelope( params, patch )
 {
 
     one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
@@ -27,7 +27,7 @@ LaserEnvelope2D::LaserEnvelope2D( Params &params, Patch *patch, ElectroMagn *EMf
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = params.n_space[i]+1;
+        dimPrim[i] = params.patch_size_[i]+1;
         // + Ghost domain
         dimPrim[i] += 2*params.oversize[i];
     }
@@ -51,8 +51,8 @@ LaserEnvelope2D::LaserEnvelope2D( Params &params, Patch *patch, ElectroMagn *EMf
 }
 
 
-LaserEnvelope2D::LaserEnvelope2D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved )
-    : LaserEnvelope( envelope, patch, EMfields, params, n_moved )
+LaserEnvelope2D::LaserEnvelope2D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved )
+    : LaserEnvelope( envelope, patch, params, n_moved )
 {
     A_           = new cField2D( envelope->A_->dims_, "A" );
     A0_          = new cField2D( envelope->A0_->dims_, "Aold" );
@@ -334,7 +334,7 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 } // end LaserEnvelope2D::computePhiEnvAEnvE
 
 
-void LaserEnvelope2D::computeGradientPhi( ElectroMagn *EMfields )
+void LaserEnvelope2D::computeGradientPhi( ElectroMagn * )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update

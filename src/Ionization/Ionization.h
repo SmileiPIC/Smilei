@@ -21,12 +21,12 @@ public:
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) {};
+    virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int = 0 ) {};
     //! method for envelope ionization
-    virtual void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ibin = 0, int ipart_ref = 0 ){};
+    virtual void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int = 0, int = 0 ){};
     
     // method for tunnel ionization using tasks
-    virtual void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0 ){};
+    virtual void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, double *, double *, double *, int = 0 ){};
     // join the lists of electrons created through ionization when tasks are used
     void joinNewElectrons(unsigned int Nbins);
 

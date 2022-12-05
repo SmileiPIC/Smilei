@@ -15,6 +15,8 @@ MF_Solver1D_Yee::~MF_Solver1D_Yee()
 
 void MF_Solver1D_Yee::operator()( ElectroMagn *fields )
 {
+    // const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
     Field1D *Ey1D   = static_cast<Field1D *>( fields->Ey_ );
     Field1D *Ez1D   = static_cast<Field1D *>( fields->Ez_ );
     Field1D *By1D   = static_cast<Field1D *>( fields->By_ );

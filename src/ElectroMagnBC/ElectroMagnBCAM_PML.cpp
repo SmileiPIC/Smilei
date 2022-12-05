@@ -22,12 +22,6 @@ using namespace std;
 ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned int i_boundary )
     : ElectroMagnBCAM( params, patch, i_boundary )
 {
-    std::vector<unsigned int> n_space(params.n_space);
-    std::vector<unsigned int> oversize(params.oversize);
-    if( params.multiple_decomposition ) {
-        n_space = params.n_space_region;
-        oversize = params.region_oversize;
-    }
 
     //Number of modes
     Nmode = params.nmodes;
@@ -55,21 +49,18 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
     Ht_.resize( Nmode );
     Bt_.resize( Nmode );
 
-    if ( ( i_boundary_ == 0 && patch->isXmin() )
-         || ( i_boundary_ == 1 && patch->isXmax() )
-         || ( i_boundary_ == 2 && patch->isYmin() )
-         || ( i_boundary_ == 3 && patch->isYmax() ) ) {
+    if( patch->isBoundary( i_boundary_ ) ) {
 
-        int iDim = 0*((i_boundary_==0)||(i_boundary_==1))+1*((i_boundary_==2)||(i_boundary_==3));
-        int min_or_max = (i_boundary_)%2;
+        int iDim = i_boundary / 2;
+        int min_or_max = i_boundary_ % 2;
 
-        domain_oversize_l =  oversize[0] ;
-        domain_oversize_r =  oversize[1] ;
+        domain_oversize_l =  patch->oversize[0] ;
+        domain_oversize_r =  patch->oversize[1] ;
 
         if (patch->isXmin() ) {//&& i_boundary_ == 0 ) {
             ncells_pml_lmin = params.number_of_pml_cells[0][0];
-            ncells_pml_domain_lmin = ncells_pml_lmin + 1*oversize[0] + nsolver/2;
-            domain_oversize_l = oversize[0] ;
+            ncells_pml_domain_lmin = ncells_pml_lmin + 1*patch->oversize[0] + nsolver/2;
+            domain_oversize_l = patch->oversize[0] ;
         }
         else {
             ncells_pml_lmin = 0;
@@ -77,8 +68,8 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
         if (patch->isXmax() ) {//&& i_boundary_ == 1 ) {
             ncells_pml_lmax = params.number_of_pml_cells[0][1];
-            ncells_pml_domain_lmax = ncells_pml_lmax + 1*oversize[0] + nsolver/2;
-            domain_oversize_l = oversize[0] ;
+            ncells_pml_domain_lmax = ncells_pml_lmax + 1*patch->oversize[0] + nsolver/2;
+            domain_oversize_l = patch->oversize[0] ;
         }
         else {
             ncells_pml_lmax = 0;
@@ -86,8 +77,8 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
         if (patch->isYmin() ) {//&& i_boundary_ == 2 ) {
             ncells_pml_rmin = params.number_of_pml_cells[1][0];
-            ncells_pml_domain_rmin = ncells_pml_rmin + 1*oversize[1] + nsolver/2;
-            domain_oversize_r = oversize[1] ;
+            ncells_pml_domain_rmin = ncells_pml_rmin + 1*patch->oversize[1] + nsolver/2;
+            domain_oversize_r = patch->oversize[1] ;
         }
         else {
             ncells_pml_rmin = 0;
@@ -95,8 +86,8 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
         if (patch->isYmax() ) {//&& i_boundary_ == 3 ) {
             ncells_pml_rmax = params.number_of_pml_cells[1][1];
-            ncells_pml_domain_rmax = ncells_pml_rmax + 1*oversize[1] + nsolver/2;
-            domain_oversize_r = oversize[1] ;
+            ncells_pml_domain_rmax = ncells_pml_rmax + 1*patch->oversize[1] + nsolver/2;
+            domain_oversize_r = patch->oversize[1] ;
         }
         else {
             ncells_pml_rmax = 0;
@@ -104,7 +95,7 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
         }
 
         ncells_pml = params.number_of_pml_cells[iDim][min_or_max];
-        ncells_pml_domain = ncells_pml+1*oversize[iDim]+ nsolver/2;
+        ncells_pml_domain = ncells_pml+1*patch->oversize[iDim]+ nsolver/2;
 
         // Define min and max idx to exchange
         // the good data f(solver,oversize)
@@ -115,7 +106,7 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
             max2exchange = 2*nsolver/2 ;
             // Solver
             solvermin = nsolver/2 ;
-            solvermax = ncells_pml_domain - oversize[iDim] ;
+            solvermax = ncells_pml_domain - patch->oversize[iDim] ;
         }
         else if (min_or_max==1){
             // if max border : Exchange of data (for domain to pml-domain)
@@ -123,73 +114,70 @@ ElectroMagnBCAM_PML::ElectroMagnBCAM_PML( Params &params, Patch *patch, unsigned
             min2exchange = 1*nsolver/2 ;
             max2exchange = 2*nsolver/2 ;
             // Solver
-            solvermin = oversize[iDim] + nsolver/2 - nsolver/2 + 1 ;
+            solvermin = patch->oversize[iDim] + nsolver/2 - nsolver/2 + 1 ;
             solvermax = ncells_pml_domain-nsolver/2 ;
         }
 
         if (ncells_pml==0){
             ERROR("PML domain have to be >0 cells in thickness");
         }
-
-        std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
-            dimPrim[i] = n_space[i]+1+2*oversize[i];
-        }
-        dimPrim[iDim] = ncells_pml_domain;
-        if ( iDim==1 ){
-            dimPrim[iDim-1] += ncells_pml_lmin + ncells_pml_lmax ;
-            rpml_size_in_l = dimPrim[iDim-1] ;
+        
+        if( iDim == 0 ) {
+            dimPrim = { (unsigned int)ncells_pml_domain, patch->size_[1]+1+2*patch->oversize[1] };
+        } else {
+            dimPrim = { patch->size_[0]+1+2*patch->oversize[0] + ncells_pml_lmin + ncells_pml_lmax, (unsigned int)ncells_pml_domain };
+            rpml_size_in_l = dimPrim[0];
         }
 
-        int startpml = oversize[iDim]+nsolver/2;
+        int startpml = patch->oversize[iDim]+nsolver/2;
 
         int ncells_pml_min[1];
         ncells_pml_min[0] = ncells_pml_lmin;
         int ncells_pml_max[1];
         ncells_pml_max[0] = ncells_pml_lmax;
 
-        pml_solver_->setDomainSizeAndCoefficients( iDim, min_or_max, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
+        pml_solver_->setDomainSizeAndCoefficients( iDim, min_or_max, dimPrim, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
 
         for ( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             ostringstream mode_id( "" );
             mode_id << "_mode_" << imode << "_id_" << i_boundary_;
-            El_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "El_pml_"+mode_id.str() ).c_str(), params );
-            Dl_[imode] = FieldFactory::createComplex( dimPrim, 0, false, ( "Dl_pml_"+mode_id.str() ).c_str(), params );
-            Hl_[imode] = FieldFactory::createComplex( dimPrim, 0, true,  ( "Hl_pml_"+mode_id.str() ).c_str(), params );
-            Bl_[imode] = FieldFactory::createComplex( dimPrim, 0, true,  ( "Bl_pml_"+mode_id.str() ).c_str(), params );
-            Er_[imode] = FieldFactory::createComplex( dimPrim, 1, false, ( "Er_pml_"+mode_id.str() ).c_str(), params );
-            Dr_[imode] = FieldFactory::createComplex( dimPrim, 1, false, ( "Dr_pml_"+mode_id.str() ).c_str(), params );
-            Hr_[imode] = FieldFactory::createComplex( dimPrim, 1, true,  ( "Hr_pml_"+mode_id.str() ).c_str(), params );
-            Br_[imode] = FieldFactory::createComplex( dimPrim, 1, true,  ( "Br_pml_"+mode_id.str() ).c_str(), params );
-            Et_[imode] = FieldFactory::createComplex( dimPrim, 2, false, ( "Et_pml_"+mode_id.str() ).c_str(), params );
-            Dt_[imode] = FieldFactory::createComplex( dimPrim, 2, false, ( "Dt_pml_"+mode_id.str() ).c_str(), params );
-            Ht_[imode] = FieldFactory::createComplex( dimPrim, 2, true,  ( "Ht_pml_"+mode_id.str() ).c_str(), params );
-            Bt_[imode] = FieldFactory::createComplex( dimPrim, 2, true,  ( "Bt_pml_"+mode_id.str() ).c_str(), params );
+            El_[imode] = FieldFactory::createAM( dimPrim, 0, false, ( "El_pml_"+mode_id.str() ).c_str(), params );
+            Dl_[imode] = FieldFactory::createAM( dimPrim, 0, false, ( "Dl_pml_"+mode_id.str() ).c_str(), params );
+            Hl_[imode] = FieldFactory::createAM( dimPrim, 0, true,  ( "Hl_pml_"+mode_id.str() ).c_str(), params );
+            Bl_[imode] = FieldFactory::createAM( dimPrim, 0, true,  ( "Bl_pml_"+mode_id.str() ).c_str(), params );
+            Er_[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "Er_pml_"+mode_id.str() ).c_str(), params );
+            Dr_[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "Dr_pml_"+mode_id.str() ).c_str(), params );
+            Hr_[imode] = FieldFactory::createAM( dimPrim, 1, true,  ( "Hr_pml_"+mode_id.str() ).c_str(), params );
+            Br_[imode] = FieldFactory::createAM( dimPrim, 1, true,  ( "Br_pml_"+mode_id.str() ).c_str(), params );
+            Et_[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Et_pml_"+mode_id.str() ).c_str(), params );
+            Dt_[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Dt_pml_"+mode_id.str() ).c_str(), params );
+            Ht_[imode] = FieldFactory::createAM( dimPrim, 2, true,  ( "Ht_pml_"+mode_id.str() ).c_str(), params );
+            Bt_[imode] = FieldFactory::createAM( dimPrim, 2, true,  ( "Bt_pml_"+mode_id.str() ).c_str(), params );
         }
 
-    //Laser parameter
-    double pyKx, pyKy;
-    double kl;
-    double Knorm;
-    double omega = 1. ;
+        //Laser parameter
+        double pyKx, pyKy;
+        double kl;
+        double Knorm;
+        double omega = 1. ;
 
-    factor_laser_space_time = 2.*dt_ov_d[0] ;
+        factor_laser_space_time = 2.*dt_ov_d[0] ;
 
-    // Xmin boundary
-    pyKx = +1.;
-    pyKy = 0.;
-    Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
-    kl = omega*pyKx/Knorm;
+        // Xmin boundary
+        pyKx = +1.;
+        pyKy = 0.;
+        Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
+        kl = omega*pyKx/Knorm;
 
-    factor_laser_angle_W = kl/Knorm;
+        factor_laser_angle_W = kl/Knorm;
 
-    // Xmax boundary
-    pyKx = -1.;
-    pyKy = 0.;
-    Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
-    kl = omega*pyKx/Knorm;
+        // Xmax boundary
+        pyKx = -1.;
+        pyKy = 0.;
+        Knorm = std::sqrt( pyKx*pyKx + pyKy*pyKy ) ;
+        kl = omega*pyKx/Knorm;
 
-    factor_laser_angle_E = kl/Knorm;
+        factor_laser_angle_E = kl/Knorm;
 
     }
 }
@@ -217,7 +205,7 @@ ElectroMagnBCAM_PML::~ElectroMagnBCAM_PML()
 }
 
 
-void ElectroMagnBCAM_PML::save_fields( Field *my_field, Patch *patch )
+void ElectroMagnBCAM_PML::save_fields( Field *, Patch * )
 {
 }
 
@@ -231,15 +219,17 @@ void ElectroMagnBCAM_PML::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    int iDim = 0*((i_boundary_==0)||(i_boundary_==1))+1*((i_boundary_==2)||(i_boundary_==3));
+    int iDim = i_boundary_ / 2;
     int min_or_max = (i_boundary_)%2;
 
-    if( i_boundary_ == 0 && patch->isXmin() ) {
+    if( ! patch->isBoundary( i_boundary_ ) ) return;
+
+    if( i_boundary_ == 0 ) {
 
         // 1. Solve Maxwell_PML for E-field :
         // As if B-field isn't updated
-        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -251,7 +241,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
 
             // 2. Exchange field PML <- Domain
             for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Er_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Er_domain)(i,j);
                     (*Dr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Er_domain)(i,j);
                     (*Hl_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bl_domain)(i,j);
@@ -259,7 +249,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bt_domain)(i,j);
                     (*Bt_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Bt_domain)(i,j);
                 }
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*Br_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Br_domain)(i,j);
                     (*Hr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*Br_domain)(i,j);
                     (*El_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j) = (*El_domain)(i,j);
@@ -271,8 +261,8 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
 
         // 3. Solve Maxwell_PML for B-field :
-        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             //cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -352,32 +342,32 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // Primals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*Et_domain)(i,j) = (*Et_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Er_domain)(i,j) = (*Er_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                     (*Bl_domain)(i,j) = (*Hl_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
             }
             // Duals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*El_domain)(i,j) = (*El_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                     (*Br_domain)(i,j) = (*Hr_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Bt_domain)(i,j) = (*Ht_[imode])(ncells_pml_domain-domain_oversize_l-nsolver/2+i,j);
                 }
             }
         }
     }
-    else if( i_boundary_ == 1 && patch->isXmax() ) {
+    else if( i_boundary_ == 1 ) {
 
         // 1. Solve Maxwell_PML for E-field :
         // As if B-field isn't updated
-        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -388,7 +378,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
 
             for ( int i=min2exchange ; i<max2exchange ; i++ ) {
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Er_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Er_domain)(n_p[0]-i,j);
                     (*Dr_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Er_domain)(n_p[0]-i,j);
                     (*Hl_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bl_domain)(n_p[0]-i,j);
@@ -396,7 +386,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bt_domain)(n_p[0]-i,j);
                     (*Bt_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Bt_domain)(n_p[0]-i,j);
                 }
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*Br_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Br_domain)(n_p[0]-i,j);
                     (*Hr_[imode])(domain_oversize_l+nsolver/2-i,j) = (*Br_domain)(n_p[0]-i,j);
                     (*El_[imode])(domain_oversize_l+nsolver/2-i,j) = (*El_domain)(n_p[0]-i,j);
@@ -408,8 +398,8 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
 
         // 3. Solve Maxwell_PML for B-field :
-        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         //Injecting a laser
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
@@ -490,27 +480,27 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // Primals in x-direction
             for (int i=0 ; i < nsolver/2-1 ; i++){
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*Et_domain)(n_p[0]-1-i,j) = (*Et_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                 }
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Er_domain)(n_p[0]-1-i,j) = (*Er_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                     (*Bl_domain)(n_p[0]-1-i,j) = (*Hl_[imode])(domain_oversize_l+nsolver/2-1-i,j);
                 }
             }
             // Duals in x-direction
             for (int i=0 ; i < nsolver/2 ; i++){
-                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_p[1] ; j++ ) {
                     (*El_domain)(n_d[0]-1-i,j) = (*El_[imode])(domain_oversize_l+nsolver/2-i,j);
                     (*Br_domain)(n_d[0]-1-i,j) = (*Hr_[imode])(domain_oversize_l+nsolver/2-i,j);
                 }
-                for ( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int j = 0 ; j<n_d[1] ; j++ ) {
                     (*Bt_domain)(n_d[0]-1-i,j) = (*Ht_[imode])(domain_oversize_l+nsolver/2-i,j);
                 }
             }
         }
     }
-    else if( i_boundary_ == 2 && patch->isYmin() ) {
+    else if( i_boundary_ == 2 ) {
         // // ERROR("PML not allow on the symetric axis")
 
         // ElectroMagnBCAM_PML* pml_fields_lmin = NULL ;
@@ -549,10 +539,10 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         // cField2D* Br_pml_lmax = NULL;
         // cField2D* Bt_pml_lmax = NULL;
 
-        // // 1. Solve Maxwell_PML for E-field :
-        // // As if B-field isn't updated
-        // pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        // //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // 1. Solve Maxwell_PML for E-field :
+        // As if B-field isn't updated
+        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         //     cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -615,7 +605,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //                 }
         //             }
         //         }
-        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
+        //         for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
         //             (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
@@ -624,7 +614,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //             (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
         //             (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
         //         }
-        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+        //         for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
         //             int idl_start = ncells_pml_lmin;
         //             (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
         //             (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
@@ -657,9 +647,9 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //     }
         // }
 
-        // // 3. Solve Maxwell_PML for B-field :
-        // //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        // pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // 3. Solve Maxwell_PML for B-field :
+        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        // pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         //     cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -703,31 +693,31 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //         }
         //     }
 
-        //     // 4. Exchange PML -> Domain
-        //     // Primals in y-direction
-        //     for (int j=0 ; j < nsolver/2 ; j++){
-        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
-        //             int idl_start = ncells_pml_lmin;
-        //             (*Et_domain)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //         }
-        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
-        //             int idl_start = ncells_pml_lmin;
-        //             (*El_domain)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //             (*Br_domain)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //         }
-        //     }
-        //     // Duals in y-direction
-        //     for (int j=0 ; j < nsolver/2 ; j++){
-        //         for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
-        //             int idl_start = ncells_pml_lmin;
-        //             (*Er_domain)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //             (*Bl_domain)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //         }
-        //         for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
-        //             int idl_start = ncells_pml_lmin;
-        //             (*Bt_domain)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-        //         }
-        //     }
+            // // 4. Exchange PML -> Domain
+            // // Primals in y-direction
+            // for (int j=0 ; j < nsolver/2 ; j++){
+            //     for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
+            //         int idl_start = ncells_pml_lmin;
+            //         (*Et_domain)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //     }
+            //     for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
+            //         int idl_start = ncells_pml_lmin;
+            //         (*El_domain)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //         (*Br_domain)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //     }
+            // }
+            // // Duals in y-direction
+            // for (int j=0 ; j < nsolver/2 ; j++){
+            //     for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
+            //         int idl_start = ncells_pml_lmin;
+            //         (*Er_domain)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //         (*Bl_domain)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //     }
+            //     for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
+            //         int idl_start = ncells_pml_lmin;
+            //         (*Bt_domain)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+            //     }
+            // }
 
         //     // 5. Exchange PML y -> PML x MIN
         //     // Primal in y-direction
@@ -806,7 +796,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         //     }
         // }
     }
-    else if( i_boundary_ == 3 && patch->isYmax() ) {
+    else if( i_boundary_ == 3 ) {
 
         ElectroMagnBCAM_PML* pml_fields_lmin = NULL ;
         ElectroMagnBCAM_PML* pml_fields_lmax = NULL ;
@@ -846,8 +836,8 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
 
         // 1. Solve Maxwell_PML for E-field :
         // As if B-field isn't updated
-        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -909,7 +899,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                         }
                     }
                 }
-                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*El_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*El_domain)(i,n_p[1]-j);
                     (*Dl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*El_domain)(i,n_p[1]-j);
@@ -918,7 +908,7 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
                     (*Ht_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bt_domain)(i,n_p[1]-j);
                     (*Bt_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bt_domain)(i,n_p[1]-j);
                 }
-                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Hl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bl_domain)(i,n_p[1]-j);
                     (*Bl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j) = (*Bl_domain)(i,n_p[1]-j);
@@ -952,8 +942,8 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
 
         // 3. Solve Maxwell_PML for B-field :
-        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
+        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
             cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -1000,11 +990,11 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             // 4. Exchange PML -> Domain
             // Primals in y-direction
             for (int j=0 ; j < nsolver/2-1 ; j++){
-                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Et_domain)(i,n_p[1]-1-j) = (*Et_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
                 }
-                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*El_domain)(i,n_p[1]-1-j) = (*El_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
                     (*Br_domain)(i,n_p[1]-1-j) = (*Hr_[imode])(idl_start+i,domain_oversize_r+nsolver/2-1-j);
@@ -1012,12 +1002,12 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
             }
             // Duals in y-direction
             for (int j=0 ; j < nsolver/2 ; j++){
-                for ( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_p[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Er_domain)(i,n_d[1]-1-j) = (*Er_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                     (*Bl_domain)(i,n_d[1]-1-j) = (*Hl_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                 }
-                for ( unsigned int i=0 ; i<n_d[0] ; i++ ) {
+                for( unsigned int i = 0 ; i<n_d[0] ; i++ ) {
                     int idl_start = ncells_pml_lmin;
                     (*Bt_domain)(i,n_d[1]-1-j) = (*Ht_[imode])(idl_start+i,domain_oversize_r+nsolver/2-j);
                 }

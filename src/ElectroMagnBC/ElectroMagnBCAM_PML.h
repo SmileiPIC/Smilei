@@ -42,7 +42,9 @@ public:
 
     int domain_oversize_l;
     int domain_oversize_r;
-
+    
+    std::vector<unsigned int> dimPrim;
+    
     int ncells_pml_lmin ;
     int ncells_pml_lmax ;
     int ncells_pml_rmin ;

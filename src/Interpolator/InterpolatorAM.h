@@ -10,7 +10,7 @@
 class InterpolatorAM : public Interpolator
 {
 public:
-    InterpolatorAM( Params &params, Patch *patch );
+    InterpolatorAM( Patch *patch );
     
     virtual ~InterpolatorAM() override {} ;
     

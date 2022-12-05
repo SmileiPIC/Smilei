@@ -16,9 +16,8 @@
 //! Constructor for RadiationNLandauLifshitz
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
-MergingVranicSpherical::MergingVranicSpherical(Params& params,
-                             Species * species, Random * rand)
-      : Merging(params, species, rand)
+MergingVranicSpherical::MergingVranicSpherical( Species * species, Random * rand )
+      : Merging( species, rand )
 {
     // Momentum cell discretization
     dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
@@ -57,7 +56,6 @@ MergingVranicSpherical::~MergingVranicSpherical()
 //! Overloading of () operator: perform the Vranic particle merging
 //! \param particles   particle object containing the particle
 //!                    properties
-//! \param smpi        MPI properties
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param count       Final number of particles
@@ -66,7 +64,6 @@ void MergingVranicSpherical::operator() (
         double mass,
         Particles &particles,
         std::vector <int> &mask,
-        SmileiMPI* smpi,
         int istart,
         int iend,
         int & count)
@@ -163,11 +160,6 @@ void MergingVranicSpherical::operator() (
         double e2_x,e2_y,e2_z;
         double e3_x,e3_y,e3_z;
         double e2_norm;
-
-        // Momentum shortcut
-        double* momentum[3];
-        for ( int i = 0 ; i<3 ; i++ )
-            momentum[i] =  &( particles.momentum(i,0) );
 
         // Momentum shortcut
         double * __restrict__ momentum_x = particles.getPtrMomentum(0);

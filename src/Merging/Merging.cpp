@@ -17,7 +17,7 @@
 //! \param species Species index
 //! \param rand local random generator
 // -----------------------------------------------------------------------------
-Merging::Merging( Params &params, Species *species, Random * rand )
+Merging::Merging( Species *species, Random * rand )
 {
     // minimum particles per cell to process the merging
     min_particles_per_cell_ = species->merge_min_particles_per_cell_;

@@ -21,8 +21,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn3D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch ),
+ElectroMagn3D::ElectroMagn3D( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() ),
     isZmin( patch->isZmin() ),
@@ -33,15 +33,14 @@ ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomp
 
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = FieldFactory::create( Tools::merge("Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
-        Jy_s[ispec]  = FieldFactory::create( Tools::merge("Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
-        Jz_s[ispec]  = FieldFactory::create( Tools::merge("Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim, params );
+        Jx_s[ispec]  = new Field3D( Tools::merge( "Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s[ispec]  = new Field3D( Tools::merge( "Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s[ispec]  = new Field3D( Tools::merge( "Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         rho_s[ispec] = new Field3D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-
+        
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
-
     }
 
 }//END constructor Electromagn3D
@@ -59,44 +58,21 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
 
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) { // end loop on ispec
-        if ( emFields->Jx_s[ispec] != NULL ) {
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
-                Jx_s[ispec]  = FieldFactory::create(dimPrim, 0, false, emFields->Jx_s[ispec]->name, params);
-            else
-                Jx_s[ispec]  = FieldFactory::create(emFields->Jx_s[ispec]->name, dimPrim, params);
+        if( emFields->Jx_s[ispec] ) {
+            Jx_s[ispec] = FieldFactory::create3D( dimPrim, 0, false, emFields->Jx_s[ispec]->name, params, emFields->Jx_s[ispec]->data_ != NULL );
         }
-        if ( emFields->Jy_s[ispec] != NULL ) {
-            if ( emFields->Jy_s[ispec]->data_ != NULL )
-                Jy_s[ispec]  = FieldFactory::create(dimPrim, 1, false, emFields->Jy_s[ispec]->name, params);
-            else
-                Jy_s[ispec]  = FieldFactory::create(emFields->Jy_s[ispec]->name, dimPrim, params);
+        if( emFields->Jy_s[ispec] ) {
+            Jy_s[ispec] = FieldFactory::create3D( dimPrim, 1, false, emFields->Jy_s[ispec]->name, params, emFields->Jy_s[ispec]->data_ != NULL );
         }
-        if ( emFields->Jz_s[ispec] != NULL ) {
-            if ( emFields->Jz_s[ispec]->data_ != NULL )
-                Jz_s[ispec]  = FieldFactory::create(dimPrim, 2, false, emFields->Jz_s[ispec]->name, params);
-            else
-                Jz_s[ispec]  = FieldFactory::create(emFields->Jz_s[ispec]->name, dimPrim, params);
+        if( emFields->Jz_s[ispec] ) {
+            Jz_s[ispec] = FieldFactory::create3D( dimPrim, 2, false, emFields->Jz_s[ispec]->name, params, emFields->Jz_s[ispec]->data_ != NULL );
         }
-        if( emFields->rho_s[ispec] != NULL ) {
-            if( emFields->rho_s[ispec]->data_ != NULL ) {
-                rho_s[ispec] = new Field3D( dimPrim, emFields->rho_s[ispec]->name );
-            } else {
-                rho_s[ispec]  = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
-            }
+        if( emFields->rho_s[ispec] ) {
+            rho_s[ispec] = FieldFactory::create3D( dimPrim, emFields->rho_s[ispec]->name, emFields->rho_s[ispec]->data_ != NULL );
         }
-
-        if( params.Laser_Envelope_model ) {
-            if( emFields->Env_Chi_s[ispec] != NULL ) {
-                if( emFields->Env_Chi_s[ispec]->data_ != NULL ) {
-                    Env_Chi_s[ispec] = new Field3D( dimPrim, emFields->Env_Chi_s[ispec]->name );
-                } else {
-                    Env_Chi_s[ispec]  = new Field3D( emFields->Env_Chi_s[ispec]->name, dimPrim );
-                }
-            }
+        if( params.Laser_Envelope_model && emFields->Env_Chi_s[ispec] ) {
+            Env_Chi_s[ispec] = FieldFactory::create3D( dimPrim, emFields->Env_Chi_s[ispec]->name, emFields->Env_Chi_s[ispec]->data_ != NULL );
         }
-
-
-
     } // loop on ispec
 
 
@@ -130,50 +106,28 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-
-    // Dimension of the primal and dual grids
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2-(params.is_pxr);
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = n_space[2]+1+2*oversize[2];
-    nz_d = n_space[2]+2+2*oversize[2]-(params.is_pxr);
-
+    
     // Allocation of the EM fields
-    Ex_  = FieldFactory::create( dimPrim, 0, false, "Ex", params );
-    Ey_  = FieldFactory::create( dimPrim, 1, false, "Ey", params );
-    Ez_  = FieldFactory::create( dimPrim, 2, false, "Ez", params );
-    Bx_  = FieldFactory::create( dimPrim, 0, true,  "Bx", params );
-    By_  = FieldFactory::create( dimPrim, 1, true,  "By", params );
-    Bz_  = FieldFactory::create( dimPrim, 2, true,  "Bz", params );
-    Bx_m = FieldFactory::create( dimPrim, 0, true,  "Bx_m", params );
-    By_m = FieldFactory::create( dimPrim, 1, true,  "By_m", params );
-    Bz_m = FieldFactory::create( dimPrim, 2, true,  "Bz_m", params );
+    Ex_  = FieldFactory::create3D( dimPrim, 0, false, "Ex", params );
+    Ey_  = FieldFactory::create3D( dimPrim, 1, false, "Ey", params );
+    Ez_  = FieldFactory::create3D( dimPrim, 2, false, "Ez", params );
+    Bx_  = FieldFactory::create3D( dimPrim, 0, true,  "Bx", params );
+    By_  = FieldFactory::create3D( dimPrim, 1, true,  "By", params );
+    Bz_  = FieldFactory::create3D( dimPrim, 2, true,  "Bz", params );
+    Bx_m = FieldFactory::create3D( dimPrim, 0, true,  "Bx_m", params );
+    By_m = FieldFactory::create3D( dimPrim, 1, true,  "By_m", params );
+    Bz_m = FieldFactory::create3D( dimPrim, 2, true,  "Bz_m", params );
     if( params.Laser_Envelope_model ) {
         Env_A_abs_ = new Field3D( dimPrim, "Env_A_abs" );
         Env_Chi_   = new Field3D( dimPrim, "Env_Chi" );
         Env_E_abs_ = new Field3D( dimPrim, "Env_E_abs" );
-	Env_Ex_abs_= new Field3D( dimPrim, "Env_Ex_abs" );
+        Env_Ex_abs_= new Field3D( dimPrim, "Env_Ex_abs" );
     }
 
     // Total charge currents and densities
-    Jx_   = FieldFactory::create( dimPrim, 0, false, "Jx", params );
-    Jy_   = FieldFactory::create( dimPrim, 1, false, "Jy", params );
-    Jz_   = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+    Jx_   = FieldFactory::create3D( dimPrim, 0, false, "Jx", params );
+    Jy_   = FieldFactory::create3D( dimPrim, 1, false, "Jy", params );
+    Jz_   = FieldFactory::create3D( dimPrim, 2, false, "Jz", params );
     rho_  = new Field3D(dimPrim, "Rho" );
 
     //Edge coeffs are organized as follow and do not account for corner points
@@ -183,7 +137,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     beta_edge.resize( 24 );
     S_edge.resize( 24 );
 
-        if(params.is_pxr == true) {
+    if( params.is_pxr ) {
         rhoold_ = new Field3D( dimPrim, "RhoOld" );
     }
 
@@ -226,7 +180,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
 
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
 
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
@@ -286,14 +240,14 @@ void ElectroMagn3D::initPoisson( Patch *patch )
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
     index_min_p_[2] = oversize[2];
-    index_max_p_[0] = nx_p - 2 - oversize[0];
-    index_max_p_[1] = ny_p - 2 - oversize[1];
-    index_max_p_[2] = nz_p - 2 - oversize[2];
+    index_max_p_[0] = dimPrim[0] - 2 - oversize[0];
+    index_max_p_[1] = dimPrim[1] - 2 - oversize[1];
+    index_max_p_[2] = dimPrim[2] - 2 - oversize[2];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
     if( patch->isXmax() ) {
-        index_max_p_[0] = nx_p-1;
+        index_max_p_[0] = dimPrim[0]-1;
     }
 
     phi_ = new Field3D( dimPrim );  // scalar potential
@@ -302,9 +256,9 @@ void ElectroMagn3D::initPoisson( Patch *patch )
     Ap_  = new Field3D( dimPrim );  // A*p vector
 
 
-    for( unsigned int i=0; i<nx_p; i++ ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
+    for( unsigned int i=0; i<dimPrim[0]; i++ ) {
+        for( unsigned int j=0; j<dimPrim[1]; j++ ) {
+            for( unsigned int k=0; k<dimPrim[2]; k++ ) {
                 ( *phi_ )( i, j, k )   = 0.0;
                 ( *r_ )( i, j, k )     = -( *rho3D )( i, j, k );
                 ( *p_ )( i, j, k )     = ( *r_ )( i, j, k );
@@ -329,6 +283,9 @@ double ElectroMagn3D::compute_r()
 
 void ElectroMagn3D::compute_Ap( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
     double one_ov_dx_sq       = 1.0/( dx*dx );
     double one_ov_dy_sq       = 1.0/( dy*dy );
     double one_ov_dz_sq       = 1.0/( dz*dz );
@@ -410,6 +367,9 @@ void ElectroMagn3D::compute_Ap( Patch *patch )
 
 void ElectroMagn3D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
 
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
@@ -508,6 +468,9 @@ double ElectroMagn3D::compute_pAp()
 
 void ElectroMagn3D::update_pand_r( double r_dot_r, double p_dot_Ap )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
     double alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -522,6 +485,9 @@ void ElectroMagn3D::update_pand_r( double r_dot_r, double p_dot_Ap )
 
 void ElectroMagn3D::update_p( double rnew_dot_rnew, double r_dot_r )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
     double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -534,6 +500,12 @@ void ElectroMagn3D::update_p( double rnew_dot_rnew, double r_dot_r )
 
 void ElectroMagn3D::initE( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_ );
@@ -603,6 +575,12 @@ void ElectroMagn3D::initE( Patch *patch )
 
 void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
 
@@ -728,8 +706,14 @@ void ElectroMagn3D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
 
 } // initE_relativistic_Poisson
 
-void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn3D::initB_relativistic_Poisson( double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    // const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
 
@@ -783,7 +767,7 @@ void ElectroMagn3D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
 
 } // initB_relativistic_Poisson
 
-void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn3D::initRelativisticPoissonFields()
 {
     // ------ Init temporary fields for relativistic field initialization
 
@@ -813,8 +797,14 @@ void ElectroMagn3D::initRelativisticPoissonFields( Patch *patch )
 
 } // initRelativisticPoissonFields
 
-void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn3D::sum_rel_fields_to_em_fields()
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     Field3D *Ex3Drel  = static_cast<Field3D *>( Ex_rel_ );
     Field3D *Ey3Drel  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3Drel  = static_cast<Field3D *>( Ez_rel_ );
@@ -947,6 +937,12 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields( Patch *patch )
 
 void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_ );
@@ -978,6 +974,12 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
 
 void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     Field3D *Ex3D  = static_cast<Field3D *>( Ex_rel_ );
     Field3D *Ey3D  = static_cast<Field3D *>( Ey_rel_ );
     Field3D *Ez3D  = static_cast<Field3D *>( Ez_rel_ );
@@ -1017,6 +1019,12 @@ void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // Static cast of the fields
     if( !is_spectral ) {
         /* const */ double *const Bx3D   = Bx_->data();
@@ -1092,15 +1100,15 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 // Create a new field
 Field *ElectroMagn3D::createField( string fieldname, Params& params )
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create(dimPrim, 0, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create(dimPrim, 1, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create(dimPrim, 2, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create3D(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create3D(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create3D(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create3D(dimPrim, 0, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create3D(dimPrim, 1, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create3D(dimPrim, 2, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create3D(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create3D(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create3D(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field3D(dimPrim, 0, false, fieldname);
@@ -1116,6 +1124,12 @@ Field *ElectroMagn3D::createField( string fieldname, Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::centerMagneticFields()
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // Static cast of the fields
     const double *const __restrict__ Bx3D = Bx_->data();
     const double *const __restrict__ By3D = By_->data();
@@ -1164,6 +1178,12 @@ void ElectroMagn3D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // Static-cast of the currents
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
     Field3D *Jy3D = static_cast<Field3D *>( Jy_ );
@@ -1321,6 +1341,12 @@ void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
     // Static-cast of the currents
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
     Field3D *Jy3D = static_cast<Field3D *>( Jy_ );
@@ -1477,9 +1503,15 @@ void ElectroMagn3D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 
 }//END customFIRCurrentFilter
 
-void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn3D::center_fields_from_relativistic_Poisson()
 {
 
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+    const unsigned int nz_d = dimDual[2];
 
     // B field centered in time as E field, at time t
     Field3D *Bx3Drel  = static_cast<Field3D *>( Bx_rel_ );
@@ -1592,6 +1624,9 @@ void ElectroMagn3D::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computeTotalEnvChi()
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nz_p = dimPrim[2];
     // static cast of the total susceptibility
     Field3D *Env_Chi3D   = static_cast<Field3D *>( Env_Chi_ );
 
@@ -1848,11 +1883,11 @@ void ElectroMagn3D::initAntennas( Patch *patch, Params& params )
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
         if( antennas[i].fieldName == "Jx" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 0, false, "Jx", params );
+            antennas[i].field = FieldFactory::create3D( dimPrim, 0, false, "Jx", params );
         } else if( antennas[i].fieldName == "Jy" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 1, false, "Jy", params );
+            antennas[i].field = FieldFactory::create3D( dimPrim, 1, false, "Jy", params );
         } else if( antennas[i].fieldName == "Jz" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+            antennas[i].field = FieldFactory::create3D( dimPrim, 2, false, "Jz", params );
         } else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }

@@ -13,7 +13,6 @@
 #include <mpi.h>
 
 #include "Params.h"
-#include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
 #include "Region.h"
@@ -410,26 +409,18 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     }
 
     // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Exfilter[i] );
+    if( EMfields->filter_ ) {
+        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+            dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+        }
     }
-    for( unsigned int i=0; i<EMfields->Eyfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Eyfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Ezfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Ezfilter[i] );
-    }
-    // filtered Magnetic fields
-    for( unsigned int i=0; i<EMfields->Bxfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Bxfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Byfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Byfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
-        dumpFieldsPerProc( g, EMfields->Bzfilter[i] );
-    }
-
+    
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
@@ -622,7 +613,7 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 }
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD )
+void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, Params &params )
 {
     MESSAGE( 1, "READING fields and particles for restart" );
 
@@ -814,28 +805,19 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         DEBUG( "envelope is null" );
     }
 
-
-    // filtered Electric fields
-    for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Exfilter[i] );
+    if( EMfields->filter_ ) {
+        // filtered Electric fields
+        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+        }
+        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+            restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+        }
     }
-    for( unsigned int i=0; i<EMfields->Eyfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Eyfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Ezfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Ezfilter[i] );
-    }
-    // filtered Magnetic fields
-    for( unsigned int i=0; i<EMfields->Bxfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Bxfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Byfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Byfilter[i] );
-    }
-    for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
-        restartFieldsPerProc( g, EMfields->Bzfilter[i] );
-    }
-
+    
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );

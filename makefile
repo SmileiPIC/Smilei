@@ -47,7 +47,7 @@ VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
-    CXXFLAGS += -Wno-reorder -Wno-unused-parameter
+    CXXFLAGS += -Wno-reorder
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -Wdeprecated-register
 endif
@@ -76,6 +76,8 @@ TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\"
+# Remove OpenMPI warnings
+CXXFLAGS += -DOMPI_SKIP_MPICXX
 # C++ version
 ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall

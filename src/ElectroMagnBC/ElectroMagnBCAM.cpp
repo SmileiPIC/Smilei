@@ -15,8 +15,3 @@ ElectroMagnBCAM::ElectroMagnBCAM( Params &params, Patch *patch, unsigned int i_b
 ElectroMagnBCAM::~ElectroMagnBCAM()
 {
 }
-
-
-void ElectroMagnBCAM::applyBConEdges( ElectroMagn *EMfields, Patch *patch )
-{
-}

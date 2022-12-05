@@ -13,7 +13,7 @@
 #include "userFunctions.h"
 
 
-void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position = species->particles->getPtrPosition(direction);
@@ -25,7 +25,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     }
 }
 
-void internal_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position = species->particles->getPtrPosition(direction);
@@ -37,7 +37,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     }
 }
 
-void internal_inf_AM( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_inf_AM( Species *species, int imin, int imax, int /*direction*/, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position_y = species->particles->getPtrPosition(1);
@@ -51,7 +51,7 @@ void internal_inf_AM( Species *species, int imin, int imax, int direction, doubl
     }
 }
 
-void internal_sup_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_sup_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position_y = species->particles->getPtrPosition(1);
@@ -65,7 +65,7 @@ void internal_sup_AM( Species *species, int imin, int imax, int direction, doubl
     }
 }
 
-void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
@@ -78,7 +78,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
@@ -91,7 +91,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void reflect_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
@@ -107,7 +107,7 @@ void reflect_particle_wall( Species *species, int imin, int imax, int direction,
 }
 
 // direction not used below, direction is "r"
-void refl_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     
@@ -149,7 +149,7 @@ void refl_particle_AM( Species *species, int imin, int imax, int direction, doub
     }    
 }
 
-void remove_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -169,7 +169,7 @@ void remove_particle_inf( Species *species, int imin, int imax, int direction, d
     }
 }
 
-void remove_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -189,7 +189,7 @@ void remove_particle_sup( Species *species, int imin, int imax, int direction, d
     }
 }
 
-void remove_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -212,7 +212,7 @@ void remove_particle_wall( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void remove_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position_y = species->particles->getPtrPosition(1);
@@ -235,7 +235,7 @@ void remove_particle_AM( Species *species, int imin, int imax, int direction, do
 }
 
 //! Delete photon (mass_==0) at the boundary and keep the energy for diagnostics
-void remove_photon_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_photon_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -255,7 +255,7 @@ void remove_photon_inf( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void remove_photon_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_photon_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -275,7 +275,7 @@ void remove_photon_sup( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -295,7 +295,7 @@ void stop_particle_inf( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -315,7 +315,7 @@ void stop_particle_sup( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -338,7 +338,7 @@ void stop_particle_wall( Species *species, int imin, int imax, int direction, do
     }
 }
 
-void stop_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
@@ -372,7 +372,7 @@ void stop_particle_AM( Species *species, int imin, int imax, int direction, doub
     
 }
 
-void thermalize_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void thermalize_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
 {
     int nDim = species->nDim_particle;
     double* position = species->particles->getPtrPosition(direction);
@@ -474,7 +474,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
     }
 }
 
-void thermalize_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void thermalize_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
 {
     int nDim = species->nDim_particle;
     double* position = species->particles->getPtrPosition(direction);

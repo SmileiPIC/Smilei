@@ -19,7 +19,7 @@ public:
     virtual ~EnvelopeBC();
     void clean();
 
-    virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) = 0;
+    virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, Patch *patch ) = 0;
 
     virtual cField* getAnp1PML() { ERROR("Not using PML");return NULL;}
     virtual cField* getAnPML() { ERROR("Not using PML");return NULL;}

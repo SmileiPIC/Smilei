@@ -7,8 +7,8 @@
 
 using namespace std;
 
-Interpolator3D::Interpolator3D( Params &params, Patch *patch )
-    : Interpolator( params, patch )
+Interpolator3D::Interpolator3D( Patch *patch )
+    : Interpolator()
 {
 
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );

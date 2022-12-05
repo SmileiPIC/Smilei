@@ -48,7 +48,7 @@ public:
     //! restart everything to file per processor
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
     void readRegionDistribution( Region &region );
-    void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
+    void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, Params &params );
     void restartPatch( Patch *patch, Params &params, H5Read &g );
     
     //! restart field per proc

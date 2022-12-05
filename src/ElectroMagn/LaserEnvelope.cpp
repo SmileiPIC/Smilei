@@ -16,7 +16,7 @@
 
 using namespace std;
 
-LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfields ) :
+LaserEnvelope::LaserEnvelope( Params &params, Patch *patch ) :
     profile_( NULL ),
     cell_length( params.cell_length ),
     timestep( params.timestep )
@@ -94,7 +94,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 }
 
 // Cloning constructor
-LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ),
     timestep( envelope->timestep ),
     omega(envelope->omega),
@@ -205,25 +205,25 @@ LaserEnvelope::~LaserEnvelope()
 
 
 
-void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields )
+void LaserEnvelope::boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow, ElectroMagn *EMfields )
 {
     // Compute Envelope Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
         if( EnvBoundCond[0]!=NULL ) {
-            EnvBoundCond[0]->apply( this, EMfields, time_dual, patch );
-            EnvBoundCond[1]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[0]->apply( this, EMfields, patch );
+            EnvBoundCond[1]->apply( this, EMfields, patch );
         }
     }
     if( EnvBoundCond.size()>2 ) {
         if( EnvBoundCond[2]!=NULL ) {
-            EnvBoundCond[2]->apply( this, EMfields, time_dual, patch );
-            EnvBoundCond[3]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[2]->apply( this, EMfields, patch );
+            EnvBoundCond[3]->apply( this, EMfields, patch );
         }
     }
     if( EnvBoundCond.size()>4 ) {
         if( EnvBoundCond[4]!=NULL ) {
-            EnvBoundCond[4]->apply( this, EMfields, time_dual, patch );
-            EnvBoundCond[5]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[4]->apply( this, EMfields, patch );
+            EnvBoundCond[5]->apply( this, EMfields, patch );
         }
     }
     

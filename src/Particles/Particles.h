@@ -178,9 +178,6 @@ public:
     //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
-    //! Move iPart at the end of vectors
-    void pushToEnd( unsigned int iPart );
-
     //! Create new particle
     void createParticle();
 
@@ -423,15 +420,15 @@ public:
 
     //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {
-        return (idim < Position.size()) ? Position[idim].data() : nullptr;
+        return ((std::size_t)idim < Position.size()) ? Position[idim].data() : nullptr;
     };
     //! Return the pointer toward the Position_old[idim] vector
     virtual double* getPtrPositionOld( int idim ) {
-        return (idim < Position_old.size()) ? Position_old[idim].data() : nullptr;
+        return ((std::size_t)idim < Position_old.size()) ? Position_old[idim].data() : nullptr;
     };
     //! Return the pointer toward the Momentum[idim] vector
     virtual double* getPtrMomentum( int idim ) {
-        return (idim < Momentum.size()) ? Momentum[idim].data() : nullptr;
+        return ((std::size_t)idim < Momentum.size()) ? Momentum[idim].data() : nullptr;
     };
     virtual double* getPtrWeight() {
         return &(Weight[0]);
