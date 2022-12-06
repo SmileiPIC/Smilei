@@ -1408,13 +1408,6 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 
         smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
-        //Prepare for sorting
-        for( unsigned int i=0; i<count.size(); i++ ) {
-            count[i] = 0;
-        }
-
-
-
         // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
@@ -1463,27 +1456,12 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 
 
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
-        for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-            // Apply wall and boundary conditions
-            if( mass_>0 ) {
-                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                            particles->cell_keys[iPart] *= this->length_[i];
-                            particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                        }
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-
-                }
-
-            } else if( mass_==0 ) {
-                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
-                LINK_NAMELIST + std::string("#laser-envelope-model"));
-            } // end mass_ = 0? condition
-        }
+        if( mass_>0 ) {
+            computeParticleCellKeys( params );
+        } else if( mass_==0 ) {
+            ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+            LINK_NAMELIST + std::string("#laser-envelope-model"));
+        } // end mass_ = 0? condition
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,11);
 
 #ifdef  __DETAILED_TIMERS

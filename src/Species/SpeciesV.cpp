@@ -1523,7 +1523,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
                 cell_keys[iPart] *= length_[1];
                 cell_keys[iPart] += std::round( std::sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
             }
-       }
+        }
 
     } else if (nDim_field == 3) {
 
@@ -2248,11 +2248,6 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        //Prepare for sorting
-        for( unsigned int i=0; i<count.size(); i++ ) {
-            count[i] = 0;
-        }
-
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
@@ -2313,25 +2308,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,11);
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                // Apply wall and boundary conditions
-                if( mass_>0 ) { // condition mass_>0
-
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            for( int i = 0 ; i<( int )nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
-                        }
-                    }
-                } else if( mass_==0 ) { // condition mass_=0
-                    ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
-                    LINK_NAMELIST + std::string("#laser-envelope-model"));
-                }
-            } // end scell
+            if( mass_>0 ) { // condition mass_>0
+                computeParticleCellKeys( params );
+            } else if( mass_==0 ) { // condition mass_=0
+                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+                LINK_NAMELIST + std::string("#laser-envelope-model"));
+            }
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,11);
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
