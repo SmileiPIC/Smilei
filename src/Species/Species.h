@@ -379,7 +379,7 @@ public:
 
 #if defined( SMILEI_ACCELERATOR_MODE )
     //! Prepare the species Current and Rho grids on Device
-    void
+    virtual void
     prepareSpeciesCurrentAndRhoOnDevice( 
         unsigned int ispec,
         ElectroMagn * EMfields,
