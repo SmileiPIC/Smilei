@@ -530,6 +530,101 @@ Species::~Species()
 
 }
 
+#if defined( SMILEI_ACCELERATOR_MODE )
+//! Prepare the species Current and Rho grids on Device
+virtual void
+prepareSpeciesCurrentAndRhoOnDevice( 
+    unsigned int ispec,
+    ElectroMagn * EMfields,
+    bool diag_flag )
+{
+    if (diag_flag) {
+
+        unsigned int Jx_size;
+        unsigned int Jy_size;
+        unsigned int Jz_size;
+        unsigned int rho_size;
+
+        double * __restrict__ Jx_s = nullptr;
+        double * __restrict__ Jy_s = nullptr;
+        double * __restrict__ Jz_s = nullptr;
+        double * __restrict__ rho_s = nullptr;
+
+        if (EMfields->Jx_s[ispec]) {
+            Jx_size             = EMfields->Jx_s[ispec]->globalDims_;
+            Jx_s  = EMfields->Jx_s[ispec]->data() ;
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
+        }
+        if (EMfields->Jy_s[ispec]) {
+            Jy_size             = EMfields->Jy_s[ispec]->globalDims_;
+            Jy_s  = EMfields->Jy_s[ispec]->data() ;
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy_s, Jy_size );
+        }
+        if (EMfields->Jz_s[ispec]) {
+            Jz_size             = EMfields->Jz_s[ispec]->globalDims_;
+            Jz_s  = EMfields->Jz_s[ispec]->data() ;
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz_s, Jz_size );
+        }
+        if (EMfields->rho_s[ispec]) {
+            rho_size             = EMfields->rho_s[ispec]->globalDims_;
+            rho_s  = EMfields->rho_s[ispec]->data() ;
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
+        }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+#elif defined( SMILEI_OPENACC_MODE )
+        #pragma acc parallel present( Jx_s[0:Jx_size],     \
+                                        Jy_s[0:Jy_size], \
+                                        Jz_s[0:Jz_size],   \
+                                        rho_s[0:rho_size] )  
+#endif
+        {
+        if (Jx_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jx_s[i] = 0;
+            }
+        }
+        if (Jy_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jy_size; i++ ) {
+                Jy_s[i] = 0;
+            }
+        }
+        if (Jz_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jz_size; i++ ) {
+                Jz_s[i] = 0;
+            }
+        }
+        if (rho_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<rho_size; i++ ) {
+                rho_s[i] = 0;
+            }
+        }
+        } // end parallel region
+    } // end species loop
+}
+#endif // end if SMILEI_ACCELERATOR_MODE
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
 //! For all particles of the species
@@ -574,94 +669,6 @@ void Species::dynamics( double time_dual,
 
         // Prepare temporary buffers for this iteration
         smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
-
-        // Prepare species current and charge grids on device 
-#if defined( SMILEI_ACCELERATOR_MODE )
-        if (diag_flag) {
-
-            unsigned int Jx_size;
-            unsigned int Jy_size;
-            unsigned int Jz_size;
-            unsigned int rho_size;
-
-            double * __restrict__ Jx_s = nullptr;
-            double * __restrict__ Jy_s = nullptr;
-            double * __restrict__ Jz_s = nullptr;
-            double * __restrict__ rho_s = nullptr;
-
-            if (EMfields->Jx_s[ispec]) {
-                Jx_size             = EMfields->Jx_s[ispec]->globalDims_;
-                Jx_s  = EMfields->Jx_s[ispec]->data() ;
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
-            }
-            if (EMfields->Jy_s[ispec]) {
-                Jy_size             = EMfields->Jy_s[ispec]->globalDims_;
-                Jy_s  = EMfields->Jy_s[ispec]->data() ;
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy_s, Jy_size );
-            }
-            if (EMfields->Jz_s[ispec]) {
-                Jz_size             = EMfields->Jz_s[ispec]->globalDims_;
-                Jz_s  = EMfields->Jz_s[ispec]->data() ;
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz_s, Jz_size );
-            }
-            if (EMfields->rho_s[ispec]) {
-                rho_size             = EMfields->rho_s[ispec]->globalDims_;
-                rho_s  = EMfields->rho_s[ispec]->data() ;
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
-            }
-
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-#elif defined( SMILEI_OPENACC_MODE )
-            #pragma acc parallel present( Jx_s[0:Jx_size],     \
-                                          Jy_s[0:Jy_size], \
-                                          Jz_s[0:Jz_size],   \
-                                          rho_s[0:rho_size] )  
-#endif
-            {
-            if (Jx_s) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-                #pragma acc loop gang worker vector
-#endif
-                for( unsigned int i=0 ; i<Jx_size; i++ ) {
-                    Jx_s[i] = 0;
-                }
-            }
-            if (Jy_s) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-                #pragma acc loop gang worker vector
-#endif
-                for( unsigned int i=0 ; i<Jy_size; i++ ) {
-                    Jy_s[i] = 0;
-                }
-            }
-            if (Jz_s) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-                #pragma acc loop gang worker vector
-#endif
-                for( unsigned int i=0 ; i<Jz_size; i++ ) {
-                    Jz_s[i] = 0;
-                }
-            }
-            if (rho_s) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-                #pragma acc loop gang worker vector
-#endif
-                for( unsigned int i=0 ; i<rho_size; i++ ) {
-                    rho_s[i] = 0;
-                }
-            }
-            } // end parallel region
-        } // end species loop
-#endif // end if SMILEI_ACCELERATOR_MODE
 
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {

@@ -114,6 +114,12 @@ public:
     //! pointer to the linearized array
     double *data_;
 
+    //! Return the size of the linearized array
+    inline unsigned int size() {
+        return globalDims_;
+    }
+
+    //! Return the pointer to the raw data
     inline double * __attribute__((always_inline)) data()
     {
         return data_;

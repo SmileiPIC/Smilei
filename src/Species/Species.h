@@ -377,6 +377,15 @@ public:
         return particles->capacity();
     }
 
+#if defined( SMILEI_ACCELERATOR_MODE )
+    //! Prepare the species Current and Rho grids on Device
+    virtual void
+    prepareSpeciesCurrentAndRhoOnDevice( 
+        unsigned int ispec,
+        ElectroMagn * EMfields,
+        bool diag_flag );
+#endif
+
     //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
     //! For all particles of the species
     //!   - interpolate the fields at the particle position

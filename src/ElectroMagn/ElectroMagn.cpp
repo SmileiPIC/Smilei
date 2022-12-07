@@ -604,3 +604,107 @@ void ElectroMagn::applyAntenna( unsigned int iAntenna, double intensity )
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Compute the total density and currents from species density and currents on Device
+//! This function is valid wathever the geometry
+// ---------------------------------------------------------------------------------------------------------------------
+#if defined( SMILEI_ACCELERATOR_MODE )
+void ElectroMagn3D::computeTotalRhoJOnDevice()
+{
+
+    double *const __restrict__ Jxp = Jx_->data();
+    double *const __restrict__ Jyp = Jy_->data();
+    double *const __restrict__ Jzp = Jz_->data();
+    double *const __restrict__ rhop = rho_->data();
+
+    unsigned int Jx_size = Jx_->globalDims_;
+    unsigned int Jy_size = Jy_->globalDims_;
+    unsigned int Jz_size = Jz_->globalDims_;
+    unsigned int rho_size = rho_->globalDims_;
+
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+
+        double *const __restrict__ Jxsp = Jx_s[ispec] ? Jx_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jysp = Jy_s[ispec] ? Jy_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jzsp = Jz_s[ispec] ? Jz_s[ispec]->data() : nullptr;
+        double *const __restrict__ rhosp = rho_s[ispec] ? rho_s[ispec]->data() : nullptr;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc parallel present( \
+                                          Jxp[0:Jx_size],     \
+                                          Jyp[0:Jy_size],     \
+                                          Jzp[0:Jz_size],     \
+                                          rhop[0:rho_size],   \
+                                          Jxsp[0:Jx_size],    \
+                                          Jysp[0:Jy_size],    \
+                                          Jzsp[0:Jz_size],    \
+                                          rhosp[0:rho_size]   \
+                                          )  
+#endif
+        {
+        if (Jxsp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jxp[i] += Jxsp[i];
+            }
+        }
+        if (Jysp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jy_size; i++ ) {
+                Jyp[i] += Jysp[i];
+            }
+        }
+        if (Jzsp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jz_size; i++ ) {
+                Jzp[i] += Jzsp[i];
+            }
+        }
+        if (rhosp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<rho_size; i++ ) {
+                rhop[i] += rhosp[i];
+            }
+        }
+        } // end parallel region
+
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( rhosp, rho_size );
+
+        //double sum = 0;
+        //for (int i = 0 ; i < rho_size ; i++) {
+        //    sum += rhosp[i];
+        //}
+        //std::cerr << "sum rhos"<<ispec<<" in total: " << sum << std::endl;
+
+        //cerr << Jxsp << " " << Jysp << " " << " " << Jzsp << " " << rhosp << std::endl;
+    } // end loop species
+
+    //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jyp, Jy_size );
+
+    //double sum = 0;
+    //for (int i = 0 ; i < rho_size ; i++) {
+    //   sum += rhop[i];
+    //}
+    //std::cerr << "sum rho in total: " << sum << std::endl;
+
+    //cerr << "end:computeTotalRho" << std::endl;
+} //END computeTotalRhoJOnDevice
+#endif

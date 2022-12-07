@@ -4846,6 +4846,15 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                 }
 
                 if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
+
+#if defined( SMILEI_ACCELERATOR_MODE )
+                    spec->prepareSpeciesCurrentAndRhoOnDevice(
+                        ispec,
+                        emfields( ipatch ),
+                        diag_flag,
+                    );
+#endif
+
                     // Dynamics with vectorized operators
                     if( spec->vectorized_operators ) {
                         spec->dynamics( time_dual, ispec,
