@@ -4848,10 +4848,10 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                 if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-                    spec->prepareSpeciesCurrentAndRhoOnDevice(
+                    spec->Species::prepareSpeciesCurrentAndRhoOnDevice(
                         ispec,
                         emfields( ipatch ),
-                        diag_flag,
+                        diag_flag
                     );
 #endif
 
@@ -5016,6 +5016,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             }
 
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
+
                 // Dynamics with vectorized operators
                 if( spec->vectorized_operators ) {
                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])

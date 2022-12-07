@@ -532,8 +532,8 @@ Species::~Species()
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 //! Prepare the species Current and Rho grids on Device
-virtual void
-prepareSpeciesCurrentAndRhoOnDevice( 
+void
+Species::prepareSpeciesCurrentAndRhoOnDevice( 
     unsigned int ispec,
     ElectroMagn * EMfields,
     bool diag_flag )
