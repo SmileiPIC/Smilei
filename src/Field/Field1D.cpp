@@ -58,7 +58,7 @@ Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
     dims_ = dims;
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     sendFields_.resize(2,NULL);
     recvFields_.resize(2,NULL);
 }
@@ -101,7 +101,7 @@ void Field1D::allocateDims()
         data_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 
@@ -153,7 +153,7 @@ void Field1D::allocateDims( unsigned int mainDim, bool isPrimal )
         data_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 

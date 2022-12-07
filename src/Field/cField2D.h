@@ -86,7 +86,7 @@ public:
     
     inline std::complex<double> &operator()( unsigned int i )
     {
-        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
+        DEBUGEXEC( if( i>=number_of_points_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
         DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
@@ -95,7 +95,7 @@ public:
     void put_to( double val ) override
     {
         if( cdata_ )
-            for( unsigned int i=0; i<globalDims_; i++ ) {
+            for( unsigned int i=0; i<number_of_points_; i++ ) {
                 cdata_[i] = val;
             }
     }

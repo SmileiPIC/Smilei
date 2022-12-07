@@ -1986,7 +1986,7 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
 void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 {
     //This version of isend(Field) sends the whole array
-    MPI_Isend( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &( ( *field )( 0 ) ), field->number_of_points_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend ( Field )
 
@@ -2005,7 +2005,7 @@ void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &reques
 {
     cField *cf = static_cast<cField *>( field );
     //This version of isendComplex(Field) sends the whole array
-    MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &( ( *cf )( 0 ) ), 2*field->number_of_points_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 }
 void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first )
@@ -2023,14 +2023,14 @@ void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &reques
 void SmileiMPI::sendComplex( Field *field, int to, int tag )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
+    MPI_Send( &( ( *cf )( 0 ) ), 2*field->number_of_points_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
 
 } // End isendComplex ( Field )
 
 
 void SmileiMPI::send(Field* field, int to, int tag)
 {
-    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
+    MPI_Send( &((*field)(0)),field->number_of_points_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
 
 } // End isend ( Field )
 
@@ -2039,7 +2039,7 @@ void SmileiMPI::recv( Field *field, int from, int tag)
 {
     MPI_Status status;
     //origin shifts the reception position in the array and reduces the received buffer size.
-    MPI_Recv( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *field )( 0 ) ), field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
@@ -2051,7 +2051,7 @@ void SmileiMPI::recvShifted( Field *field, int from, int tag, int xshift )
         data_shift *= field->dims_[idim];
     }
     //Shifts the reception position in the array along the x dimension and reduces the received buffer size.
-    MPI_Recv( &( ( *field )( data_shift ) ), field->globalDims_ - data_shift, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *field )( data_shift ) ), field->number_of_points_ - data_shift, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
@@ -2059,7 +2059,7 @@ void SmileiMPI::recvComplex( Field *field, int from, int tag )
 {
     MPI_Status status;
     cField *cf = static_cast<cField *>( field );
-    MPI_Recv( &( ( *cf )( 0 ) ), 2*(field->globalDims_ ), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *cf )( 0 ) ), 2*(field->number_of_points_ ), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
@@ -2072,19 +2072,19 @@ void SmileiMPI::recvComplexShifted( Field *field, int from, int tag, int xshift 
         data_shift *= field->dims_[idim];
     }
     //Shifts the reception position in the array along the x dimension and reduces the received buffer size.
-    MPI_Recv( &( ( *cf )( data_shift ) ), 2*(field->globalDims_ - data_shift), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *cf )( data_shift ) ), 2*(field->number_of_points_ - data_shift), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 void SmileiMPI::irecvComplex( Field *field, int from, int tag, MPI_Request &request )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
+    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 
 void SmileiMPI::irecv(Field* field, int from, int tag, MPI_Request& request)
 {
-    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
+    MPI_Irecv( &((*field)(0)),2*field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 

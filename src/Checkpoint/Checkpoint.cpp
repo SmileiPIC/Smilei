@@ -1010,13 +1010,13 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
 void Checkpoint::dumpFieldsPerProc( H5Write &g, Field *field )
 {
-    g.vect( field->name, *field->data_, field->globalDims_, H5T_NATIVE_DOUBLE );
+    g.vect( field->name, *field->data_, field->number_of_points_, H5T_NATIVE_DOUBLE );
 }
 
 void Checkpoint::dump_cFieldsPerProc( H5Write &g, Field *field )
 {
     cField *cfield = static_cast<cField *>( field );
-    g.vect( field->name, *cfield->cdata_, 2*field->globalDims_, H5T_NATIVE_DOUBLE );
+    g.vect( field->name, *cfield->cdata_, 2*field->number_of_points_, H5T_NATIVE_DOUBLE );
 }
 
 void Checkpoint::restartFieldsPerProc( H5Read &g, Field *field )

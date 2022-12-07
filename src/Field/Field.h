@@ -40,7 +40,7 @@ public:
     Field()
     {
         data_ = NULL;
-        globalDims_ = 0;
+        number_of_points_ = 0;
     };
 
     //! Constructor for Field: with the Field dimensions as input argument
@@ -109,25 +109,32 @@ public:
     }
     //! All arrays may be viewed as a 1D array
     //! Linearized diags
-    unsigned int globalDims_;
+    unsigned int number_of_points_;
     //! pointer to the linearized array
     double *data_;
 
+    //! Return the size of the linearized array
+    inline unsigned int size() {
+        return number_of_points_;
+    }
+
+    //! Return the pointer to the raw data
     inline double * __attribute__((always_inline)) data()
     {
         return data_;
     }
+
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double & __attribute__((always_inline)) operator()( unsigned int i )
     {
-        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " << globalDims_ ) );
+        DEBUGEXEC( if( i>=number_of_points_ ) ERROR( name << " Out of limits "<< i << " < " << number_of_points_ ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << " Not finite "<< i << " = " << data_[i] ) );
         return data_[i];
     };
     //! access to the linearized array (with check in DEBUG mode)
     inline double __attribute__((always_inline)) operator()( unsigned int i ) const
     {
-        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i ) );
+        DEBUGEXEC( if( i>=number_of_points_ ) ERROR( name << " Out of limits "<< i ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << " Not finite "<< i << " = " << data_[i] ) );
         return data_[i];
     };
@@ -135,7 +142,7 @@ public:
     virtual void put_to( double val )
     {
         if( data_ )
-            for( unsigned int i=0; i<globalDims_; i++ ) {
+            for( unsigned int i=0; i<number_of_points_; i++ ) {
                 data_[i] = val;
             }
     }
@@ -144,7 +151,7 @@ public:
     inline void __attribute__((always_inline)) multiply( double val )
     {
         if( data_ )
-            for( unsigned int i=0; i<globalDims_; i++ ) {
+            for( unsigned int i=0; i<number_of_points_; i++ ) {
                 data_[i] *= val;
             }
     }
@@ -154,7 +161,7 @@ public:
     inline double & __attribute__((always_inline)) operator()( unsigned int i, unsigned int j )
     {
         int unsigned idx = i*dims_[1]+j;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits & "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( data_[idx] ) ) ERROR( "Not finite "<< i << " " << j << " = " << data_[idx] ) );
         return data_[idx];
     };
@@ -162,7 +169,7 @@ public:
     inline double __attribute__((always_inline)) operator()( unsigned int i, unsigned int j ) const
     {
         unsigned int idx = i*dims_[1]+j;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( data_[idx] ) ) ERROR( "Not finite "<< i << " " << j << " = " << data_[idx] ) );
         return data_[idx];
     };
@@ -171,7 +178,7 @@ public:
     inline double __attribute__((always_inline)) &operator()( unsigned int i, unsigned int j, unsigned k )
     {
         unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits & "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( data_[idx] ) ) ERROR( "Not finite "<< i << " " << j << " = " << data_[idx] ) );
         return data_[idx];
     };
@@ -179,7 +186,7 @@ public:
     inline double __attribute__((always_inline)) operator()( unsigned int i, unsigned int j, unsigned k ) const
     {
         unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( data_[idx] ) ) ERROR( "Not finite "<< i << " " << j << " = " << data_[idx] ) );
         return data_[idx];
     };
@@ -220,7 +227,7 @@ public:
     inline long double __attribute__((always_inline)) norm()
     {
         long double sum( 0. );
-        for( unsigned int i=0; i<globalDims_; i++ ) {
+        for( unsigned int i=0; i<number_of_points_; i++ ) {
             sum+= data_[i]*data_[i];
         }
         return sum;
@@ -228,8 +235,8 @@ public:
 
     virtual void copyFrom( Field *from_field )
     {
-        DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
-        for( unsigned int i=0; i< globalDims_; i++ ) {
+        DEBUGEXEC( if( number_of_points_!=from_field->number_of_points_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
+        for( unsigned int i=0; i< number_of_points_; i++ ) {
             ( *this )( i )=( *from_field )( i );
         }
     }

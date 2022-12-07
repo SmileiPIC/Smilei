@@ -61,7 +61,7 @@ Field3D::Field3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 Field3D::Field3D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
     dims_ = dims;
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     sendFields_.resize(6,NULL);
     recvFields_.resize(6,NULL);
     
@@ -118,7 +118,7 @@ void Field3D::allocateDims()
         }
     }//i
     
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     
 }
 
@@ -187,7 +187,7 @@ void Field3D::allocateDims( unsigned int mainDim, bool isPrimal )
         }
     }//i
     
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     
     //isDual_ = isPrimal;
 }
