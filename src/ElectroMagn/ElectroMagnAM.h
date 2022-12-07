@@ -155,10 +155,10 @@ public:
     void computeTotalRhoJ() override;
 
 
-#if defined( SMILEI_ACCELERATOR_MODE )
-    //! Method used to compute the total charge density and currents by summing over all species on Device
-    void computeTotalRhoJOnDevice() override ;
-#endif
+//#if defined( SMILEI_ACCELERATOR_MODE )
+//    //! Method used to compute the total charge density and currents by summing over all species on Device
+//    void computeTotalRhoJOnDevice() override ;
+//#endif
 
     void computeTotalRhoold();
     void addToGlobalRho( int ispec, unsigned int clrw );

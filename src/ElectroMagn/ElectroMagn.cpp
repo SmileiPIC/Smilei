@@ -609,7 +609,7 @@ void ElectroMagn::applyAntenna( unsigned int iAntenna, double intensity )
 //! This function is valid wathever the geometry
 // ---------------------------------------------------------------------------------------------------------------------
 #if defined( SMILEI_ACCELERATOR_MODE )
-void ElectroMagn3D::computeTotalRhoJOnDevice()
+void ElectroMagn::computeTotalRhoJOnDevice()
 {
 
     double *const __restrict__ Jxp = Jx_->data();
