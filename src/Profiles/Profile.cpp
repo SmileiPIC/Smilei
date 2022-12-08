@@ -416,7 +416,7 @@ Profile::~Profile()
 void Profile::valuesAt( std::vector<Field *> &coordinates, std::vector<double> global_origin, Field &ret, int mode, double time )
 {
     unsigned int nvar = coordinates.size();
-    unsigned int size = coordinates[0]->globalDims_;
+    unsigned int size = coordinates[0]->number_of_points_;
 #ifdef SMILEI_USE_NUMPY
     // If numpy profile, then expose coordinates as numpy before evaluating profile
     if( uses_numpy_ ) {
@@ -519,7 +519,7 @@ void Profile::valuesAt( std::vector<Field *> &coordinates, std::vector<double> g
 void Profile::complexValuesAt( std::vector<Field *> &coordinates, cField &ret, int mode, double time )
 {
     unsigned int nvar = coordinates.size();
-    unsigned int size = coordinates[0]->globalDims_;
+    unsigned int size = coordinates[0]->number_of_points_;
 #ifdef SMILEI_USE_NUMPY
     // If numpy profile, then expose coordinates as numpy before evaluating profile
     if( uses_numpy_ ) {
@@ -601,7 +601,7 @@ void Profile::complexValuesAt( std::vector<Field *> &coordinates, cField &ret, i
 void Profile::complexValuesAtTimes( std::vector<Field *> &coordinates, Field *time, cField &ret )
 {
     unsigned int nvar = coordinates.size();
-    unsigned int size = coordinates[0]->globalDims_;
+    unsigned int size = coordinates[0]->number_of_points_;
 #ifdef SMILEI_USE_NUMPY
     // If numpy profile, then expose coordinates as numpy before evaluating profile
     if( uses_numpy_ ) {

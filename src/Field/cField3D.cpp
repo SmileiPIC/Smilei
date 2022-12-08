@@ -55,7 +55,7 @@ cField3D::cField3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrim
 cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, name_in )
 {
     dims_ = dims;
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     sendFields_.resize(6,NULL);
     recvFields_.resize(6,NULL);
 }
@@ -113,7 +113,7 @@ void cField3D::allocateDims()
             }
         }
     }
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     
 }
 
@@ -180,7 +180,7 @@ void cField3D::allocateDims( unsigned int mainDim, bool isPrimal )
         
     }
     
-    globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    number_of_points_ = dims_[0]*dims_[1]*dims_[2];
     
 }
 

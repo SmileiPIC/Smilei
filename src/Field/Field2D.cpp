@@ -58,7 +58,7 @@ Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 Field2D::Field2D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
     dims_ = dims;
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
 }
@@ -111,7 +111,7 @@ void Field2D::allocateDims()
         }
     }
     
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     
 }
 
@@ -173,7 +173,7 @@ void Field2D::allocateDims( unsigned int mainDim, bool isPrimal )
         }
     }
     
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     
 }
 

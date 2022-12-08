@@ -433,7 +433,7 @@ void ElectroMagn::restartEnvChis()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::incrementAvgField( Field *field, Field *field_avg )
 {
-    for( unsigned int i=0; i<field->globalDims_; i++ ) {
+    for( unsigned int i=0; i<field->number_of_points_; i++ ) {
         ( *field_avg )( i ) += ( *field )( i );
     }
 }//END incrementAvgField
@@ -520,7 +520,7 @@ void ElectroMagn::applyAntenna( unsigned int iAntenna, double intensity )
     
         field = allFields[antennas[iAntenna].index];
         
-        for( unsigned int i=0; i< field->globalDims_ ; i++ ) {
+        for( unsigned int i=0; i< field->number_of_points_ ; i++ ) {
             ( *field )( i ) += intensity * ( *antennaField )( i );
         }
         

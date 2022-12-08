@@ -65,7 +65,7 @@ cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 {
     cleaned_ = false;
     dims_ = dims;
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
 }
@@ -120,7 +120,7 @@ void cField2D::allocateDims()
         }
     }
     
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     
 }
 
@@ -183,7 +183,7 @@ void cField2D::allocateDims( unsigned int mainDim, bool isPrimal )
         }
     }
     
-    globalDims_ = dims_[0]*dims_[1];
+    number_of_points_ = dims_[0]*dims_[1];
     
 }
 

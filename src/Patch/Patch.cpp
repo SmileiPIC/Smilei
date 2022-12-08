@@ -1028,7 +1028,7 @@ void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi )
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
 
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
 
@@ -1037,7 +1037,7 @@ void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi )
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
 
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
 
@@ -1070,14 +1070,14 @@ void Patch::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
 
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
         } // END of Send
 
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
         } // END of Recv
@@ -1140,14 +1140,14 @@ void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi )
 
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
         } // END of Send
 
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->number_of_points_,
                        MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
         } // END of Recv

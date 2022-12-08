@@ -58,7 +58,7 @@ cField1D::cField1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrim
 cField1D::cField1D( string name, vector<unsigned int> dims ) : cField( dims, name )
 {
     dims_ = dims;
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     sendFields_.resize(2,NULL);
     recvFields_.resize(2,NULL);
 }
@@ -101,7 +101,7 @@ void cField1D::allocateDims()
         cdata_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 
@@ -154,7 +154,7 @@ void cField1D::allocateDims( unsigned int mainDim, bool isPrimal )
         cdata_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 
