@@ -17,7 +17,7 @@ print(" ------------------------------")
 
 species_list = ["eon1", "pon1", "eon2", "pon2"]
 
-relative_error = 0.01
+relative_error = 0.05
 scalar_list = ["Ukin", "Utot", "Uelm"]
 
 for species in species_list:
@@ -48,7 +48,7 @@ for i in range(4):
     
     particle_binning = S.ParticleBinning(diagNumber=i,timesteps=10)
     data = np.array(particle_binning.getData()[0])
-    sum = np.sum(data)
+    sum = np.sum(np.abs(data))
 
     print(" Valide sum of binning {}: {}".format(i,sum))
 
@@ -76,7 +76,7 @@ for field_name in fields:
 
     field = np.array(S.Field(0,field_name,timesteps=10).getData()[0])
 
-    sum = np.sum(field)
+    sum = np.sum(np.abs(field))
 
     print(" Valide sum of {}: {}".format(field_name,sum))
 
@@ -104,7 +104,7 @@ for probe_name in probe_list:
 
     probe = np.array(S.Probe(0, probe_name,timesteps=10).getData()[0])
 
-    sum = np.sum(probe)
+    sum = np.sum(np.abs(probe))
 
     print(" Valide sum of {}: {}".format(probe_name,sum))
 
