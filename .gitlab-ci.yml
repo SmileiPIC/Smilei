@@ -14,7 +14,6 @@ install:
   stage: install
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Force workdir cleaning in case of retried
@@ -33,7 +32,6 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Move in test dir
@@ -41,11 +39,21 @@ compile_default:
     # Run validation script
     - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
+runQuick:
+  stage: run_default
+  only:
+    - develop
+
+  script:
+    # Move in test dir
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
+
 run1D:
   stage: run_default
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Move in test dir
@@ -58,7 +66,6 @@ run2D:
   stage: run_default
   only:
     - develop
-    - envelope_Nmodes
 
 
   script:
@@ -74,7 +81,6 @@ run3D:
   stage: run_default
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Move in test dir
@@ -90,7 +96,6 @@ runAM:
   stage: run_default
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Move in test dir
@@ -102,7 +107,6 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     # Move in test dir
@@ -114,7 +118,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -125,7 +128,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -135,7 +137,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -146,7 +147,6 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -157,7 +157,6 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - envelope_Nmodes
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
