@@ -113,6 +113,8 @@ public :
                     pt2 = &( *field2 )( 0 );
                     //Sum 2 ==> 1
 
+                    const unsigned int last = gsp[0] * ny_ * nz_;
+
 #if defined( SMILEI_OPENACC_MODE )
                     int ptsize = fields[ifield]->globalDims_;
                     int nspace0 = n_space[0];
@@ -123,11 +125,12 @@ public :
                     #pragma omp teams distribute parallel for
 #endif
 
-                    for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
+                    for( unsigned int i = 0; i < last ; i++ ) {
                         pt1[i] += pt2[i];
+                        pt2[i]  = pt1[i];
                     }
                     //Copy back the results to 2
-                    memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof( T ) );
+                    // memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof( T ) );
                 }
             }
         }
@@ -209,6 +212,10 @@ public :
                         pt1 = &( *field1 )( n_space[1]*nz_ );
                         pt2 = &( *field2 )( 0 );
 
+                        const int outer_last   = nx_ * ny_ * nz_;
+                        const int outer_stride = ny_ * nz_;
+                        const int inner_last   = gsp[1] * nz_;
+
 #if defined( SMILEI_OPENACC_MODE )
                         int ptsize = fields[ifield]->globalDims_;
                         int blabla = n_space[1];
@@ -219,13 +226,15 @@ public :
                         #pragma omp teams distribute parallel for collapse(2)
 #endif
 
-                        for( unsigned int j = 0; j < nx_ ; j++ ) {
-                            for( unsigned int i = 0; i < gsp[1]*nz_ ; i++ ) {
-                                pt1[i] += pt2[i];
+                        for( unsigned int j = 0; j < outer_last ; j += outer_stride ) {
+                            for( unsigned int i = 0; i < inner_last ; i++ ) {
+                                pt1[i+j] += pt2[i+j];
+                                pt2[i+j]  = pt1[i+j];
+
                             }
-                            memcpy( pt2, pt1, gsp[1]*nz_*sizeof( T ) );
-                            pt1 += ny_*nz_;
-                            pt2 += ny_*nz_;
+                            // memcpy( pt2, pt1, gsp[1]*nz_*sizeof( T ) );
+                            // pt1 += ny_*nz_;
+                            // pt2 += ny_*nz_;
                         }
                     }
                 }
@@ -304,6 +313,10 @@ public :
                             pt1 = &( *field1 )( n_space[2] );
                             pt2 = &( *field2 )( 0 );
 
+                            const int outer_last   = nx_ * ny_ * nz_;
+                            const int outer_stride = nz_;
+                            const int inner_last = gsp[2];
+
 #if defined( SMILEI_OPENACC_MODE )
                             int ptsize = fields[ifield]->globalDims_;
                             int blabla = n_space[2];
@@ -314,13 +327,13 @@ public :
                             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
 
-                            for( unsigned int j = 0; j < nx_*ny_ ; j++ ) {
-                                for( unsigned int i = 0; i < gsp[2] ; i++ ) {
-                                    pt1[i] += pt2[i];
-                                    pt2[i] =  pt1[i];
+                            for( unsigned int j = 0; j < outer_last; j += outer_stride ) {
+                                for( unsigned int i = 0; i < inner_last ; i++ ) {
+                                    pt1[i+j] += pt2[i+j];
+                                    pt2[i+j] =  pt1[i+j];
                                 }
-                                pt1 += nz_;
-                                pt2 += nz_;
+                                // pt1 += nz_;
+                                // pt2 += nz_;
                             }
                         }
                     }

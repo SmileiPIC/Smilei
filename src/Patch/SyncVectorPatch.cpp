@@ -473,8 +473,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target if( is_memory_on_device )
-    #pragma omp teams distribute parallel for collapse(2)
+                    #pragma omp target if( is_memory_on_device )
+                    #pragma omp teams distribute parallel for collapse(2)
 #endif
                     for( unsigned int j = 0; j < outer_last; j += outer_stride ) {
                         for( unsigned int i = 0; i < inner_last; i++ ) {
