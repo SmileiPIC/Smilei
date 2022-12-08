@@ -533,43 +533,41 @@ Species::~Species()
 #if defined( SMILEI_ACCELERATOR_MODE )
 //! Prepare the species Current and Rho grids on Device
 void
-Species::prepareSpeciesCurrentAndRhoOnDevice( 
+Species::prepareSpeciesCurrentAndChargeOnDevice( 
     unsigned int ispec,
-    ElectroMagn * EMfields,
-    bool diag_flag )
+    ElectroMagn * EMfields)
 {
-    if (diag_flag) {
 
-        unsigned int Jx_size;
-        unsigned int Jy_size;
-        unsigned int Jz_size;
-        unsigned int rho_size;
+    unsigned int Jx_size;
+    unsigned int Jy_size;
+    unsigned int Jz_size;
+    unsigned int rho_size;
 
-        double * __restrict__ Jx_s = nullptr;
-        double * __restrict__ Jy_s = nullptr;
-        double * __restrict__ Jz_s = nullptr;
-        double * __restrict__ rho_s = nullptr;
+    double * __restrict__ Jx_s = nullptr;
+    double * __restrict__ Jy_s = nullptr;
+    double * __restrict__ Jz_s = nullptr;
+    double * __restrict__ rho_s = nullptr;
 
-        if (EMfields->Jx_s[ispec]) {
-            Jx_size             = EMfields->Jx_s[ispec]->globalDims_;
-            Jx_s  = EMfields->Jx_s[ispec]->data() ;
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
-        }
-        if (EMfields->Jy_s[ispec]) {
-            Jy_size             = EMfields->Jy_s[ispec]->globalDims_;
-            Jy_s  = EMfields->Jy_s[ispec]->data() ;
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy_s, Jy_size );
-        }
-        if (EMfields->Jz_s[ispec]) {
-            Jz_size             = EMfields->Jz_s[ispec]->globalDims_;
-            Jz_s  = EMfields->Jz_s[ispec]->data() ;
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz_s, Jz_size );
-        }
-        if (EMfields->rho_s[ispec]) {
-            rho_size             = EMfields->rho_s[ispec]->globalDims_;
-            rho_s  = EMfields->rho_s[ispec]->data() ;
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
-        }
+    if (EMfields->Jx_s[ispec]) {
+        Jx_size             = EMfields->Jx_s[ispec]->globalDims_;
+        Jx_s  = EMfields->Jx_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
+    }
+    if (EMfields->Jy_s[ispec]) {
+        Jy_size             = EMfields->Jy_s[ispec]->globalDims_;
+        Jy_s  = EMfields->Jy_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy_s, Jy_size );
+    }
+    if (EMfields->Jz_s[ispec]) {
+        Jz_size             = EMfields->Jz_s[ispec]->globalDims_;
+        Jz_s  = EMfields->Jz_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz_s, Jz_size );
+    }
+    if (EMfields->rho_s[ispec]) {
+        rho_size             = EMfields->rho_s[ispec]->globalDims_;
+        rho_s  = EMfields->rho_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
+    }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp target
@@ -621,8 +619,36 @@ Species::prepareSpeciesCurrentAndRhoOnDevice(
             }
         }
         } // end parallel region
-    } // end species loop
 }
+
+//! Deallocate species Current (J) and Charge (Rho) arrays on Device
+void
+Species::deleteSpeciesCurrentAndChargeOnDevice(
+    unsigned int ispec,
+    ElectroMagn * EMfields)
+{
+    if (EMfields->Jx_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jx_s[ispec]->data() ;
+        const int size                      = EMfields->Jx_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->Jy_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jy_s[ispec]->data() ;
+        const int size                      = EMfields->Jy_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->Jz_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jz_s[ispec]->data() ;
+        const int size                      = EMfields->Jz_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->rho_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->rho_s[ispec]->data();
+        const int size                      = EMfields->rho_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+}
+
 #endif // end if SMILEI_ACCELERATOR_MODE
 
 // ---------------------------------------------------------------------------------------------------------------------

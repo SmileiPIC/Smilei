@@ -380,10 +380,18 @@ public:
 #if defined( SMILEI_ACCELERATOR_MODE )
     //! Prepare the species Current and Rho grids on Device
     void
-    prepareSpeciesCurrentAndRhoOnDevice( 
+    prepareSpeciesCurrentAndChargeOnDevice( 
         unsigned int ispec,
-        ElectroMagn * EMfields,
-        bool diag_flag );
+        ElectroMagn * EMfields
+    );
+
+    //! Deallocate species Current (J) and Charge (Rho) arrays on Device
+    void
+    deleteSpeciesCurrentAndChargeOnDevice(
+        unsigned int ispec,
+        ElectroMagn * EMfields
+    );
+
 #endif
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)

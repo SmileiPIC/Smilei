@@ -1430,26 +1430,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 #if defined (SMILEI_ACCELERATOR_MODE)
             // Delete species current and rho grids from device 
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
-                if (( *this )( ipatch )->EMfields->Jx_s[ispec]) {
-                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jx_s[ispec]->data() ;
-                    const int size                      = ( *this )( ipatch )->EMfields->Jx_s[ispec]->globalDims_;
-                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
-                }
-                if (( *this )( ipatch )->EMfields->Jy_s[ispec]) {
-                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jy_s[ispec]->data() ;
-                    const int size                      = ( *this )( ipatch )->EMfields->Jy_s[ispec]->globalDims_;
-                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
-                }
-                if (( *this )( ipatch )->EMfields->Jz_s[ispec]) {
-                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->Jz_s[ispec]->data() ;
-                    const int size                      = ( *this )( ipatch )->EMfields->Jz_s[ispec]->globalDims_;
-                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
-                }
-                if (( *this )( ipatch )->EMfields->rho_s[ispec]) {
-                    double *const __restrict__ pointer  = ( *this )( ipatch )->EMfields->rho_s[ispec]->data() ;
-                    const int size                      = ( *this )( ipatch )->EMfields->rho_s[ispec]->globalDims_;
-                    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
-                }
+                ( *this )( ipatch )->vecSpecies[ispec]->Species::deleteSpeciesCurrentAndChargeOnDevice(ispec, ( *this )( ipatch )->EMfields);
             } // end loop for species
 #endif
         } // end loop patches
@@ -4848,11 +4829,12 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                 if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-                    spec->Species::prepareSpeciesCurrentAndRhoOnDevice(
-                        ispec,
-                        emfields( ipatch ),
-                        diag_flag
-                    );
+                    if (diag_flag)
+                        spec->Species::prepareSpeciesCurrentAndChargeOnDevice(
+                            ispec,
+                            emfields( ipatch )
+                        );
+                    }
 #endif
 
                     // Dynamics with vectorized operators
