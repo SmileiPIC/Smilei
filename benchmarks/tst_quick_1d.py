@@ -65,6 +65,7 @@ Species(
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = particles_per_cell,
+	pusher = "boris",
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
@@ -88,6 +89,7 @@ Species(
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = particles_per_cell,
+	pusher = "vay",
 	c_part_max = 1.0,
 	mass = 1.0,
 	charge = -1.0,
@@ -110,6 +112,7 @@ Species(
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = particles_per_cell,
+	pusher = "higueracary",
 	c_part_max = 1.0,
 	mass = 1836.0,
 	charge = 1.0,
@@ -148,57 +151,65 @@ ParticleInjector(
     box_side = 'xmax',
 )
 
-DiagScalar(every=1)
-
-DiagParticleBinning(
-    deposited_quantity = "weight",
-    every = 10,
-    time_average = 1,
-    species = ["eon1"],
-    axes = [
-        ["gamma", 15., 30., 128],
-    ]
+DiagScalar(
+	every=1,
 )
 
-DiagParticleBinning(
-    deposited_quantity = "weight",
+for species_name in ["eon1","eon2"]:
+
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = 10,
+		time_average = 1,
+		species = [species_name],
+		axes = [
+			["gamma", 15., 30., 128],
+		]
+	)
+
+for species_name in ["pon1","pon2"]:
+
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = 10,
+		time_average = 1,
+		species = [species_name],
+		axes = [
+			["gamma", 22.2, 22.8, 128],
+		]
+	)
+
+species_list = ["eon1","eon2","pon1","pon2"]
+
+fields = ['Ex','Ey','Ez',
+			'Bx','By','Bz',
+			'Rho','Jx','Jy','Jz']
+
+for species in species_list:
+    fields.append("Jx_{}".format(species))	
+    fields.append("Jy_{}".format(species))	
+    fields.append("Jz_{}".format(species))	
+    fields.append("Rho_{}".format(species))	
+
+DiagFields(
     every = 10,
-    time_average = 1,
-    species = ["pon1"],
-    axes = [
-        ["gamma", 22.2, 22.8, 128],
-    ]
+    fields = fields,
 )
 
-DiagParticleBinning(
-    deposited_quantity = "weight",
+fields = ['Ex','Ey','Ez',
+			'Bx','By','Bz',
+			'Rho','Jx','Jy','Jz']
+
+for species in species_list:
+    fields.append("Jx_{}".format(species))	
+    fields.append("Jy_{}".format(species))	
+    fields.append("Jz_{}".format(species))	
+    fields.append("Rho_{}".format(species))	
+
+DiagProbe(
     every = 10,
-    time_average = 1,
-    species = ["eon2"],
-    axes = [
-        ["gamma", 15., 30., 128],
-    ]
+    origin = [0.],
+    corners = [[Main.grid_length[0]]],
+    number = [256],
+    fields = fields,
 )
-
-DiagParticleBinning(
-    deposited_quantity = "weight",
-    every = 10,
-    time_average = 1,
-    species = ["pon2"],
-    axes = [
-        ["gamma", 22.2, 22.8, 128],
-    ]
-)
-
-# DiagFields(
-#     every = globalEvery,
-#     fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_pon1','Rho_eon1','Rho_pon2','Rho_eon2',"Jx","Jy","Jz"]
-# )
-
-# DiagProbe(
-#     every = globalEvery,
-#     origin = [0., Main.grid_length[1]/2.],
-#     corners = [[Main.grid_length[0],Main.grid_length[1]/2.]],
-#     number = [256],
-#     fields = ['Ex','Ey','Ez','Rho_pon1','Jx_pon1','Jy_pon1','Jz_pon1']
-# )

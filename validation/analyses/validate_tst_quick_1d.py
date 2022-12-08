@@ -7,48 +7,108 @@ S = happi.Open(["./restart*"], verbose=False)
 timestep = S.namelist.Main.timestep
 simulation_time = S.namelist.Main.simulation_time
 
-diag_every = int(simulation_time / timestep)
+# ------------------------------------------------------
+# Scalar diags
+# ------------------------------------------------------
+
+print(" ------------------------------")
+print(" Scalars")
+print(" ------------------------------")
 
 species_list = ["eon1", "pon1", "eon2", "pon2"]
 
-Scalar = {}
-
-relative_error = 0.05
+relative_error = 0.01
+scalar_list = ["Ukin", "Utot", "Uelm"]
 
 for species in species_list:
-    name = "Ntot_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
-    
-    name = "Ukin_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
+    scalar_list.append("Ntot_{}".format(species))
+    scalar_list.append("Ukin_{}".format(species))
+    scalar_list.append("Dens_{}".format(species))
 
-    name = "Dens_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
 
-# Energy _________________________________________________________________
+Scalar = {}
+
+for scalar_name in scalar_list:
+    Scalar[scalar_name] = np.array(S.Scalar(scalar_name).getData())
+    print(" Validate {}".format(scalar_name))
+    for index,value in enumerate(Scalar[scalar_name]):
+        Validate("Scalar {}[{}]".format(scalar_name, index) , value, value*relative_error)
+
+print("")
+
+# ------------------------------------------------------
+# Binning diags
+# ------------------------------------------------------
+
+print(" ------------------------------")
+print(" Diags Binning")
+print(" ------------------------------")
 
 for i in range(4):
-    particle_binning_initial = S.ParticleBinning(diagNumber=i,timesteps=0)
-    data_initial = np.array(particle_binning_initial.getData()[0])
     
-    particle_binning = S.ParticleBinning(diagNumber=i,timesteps=diag_every)
-    data_final = np.array(particle_binning.getData()[0])
-    
-    sum_energy = np.sum(data_final)
+    particle_binning = S.ParticleBinning(diagNumber=i,timesteps=10)
+    data = np.array(particle_binning.getData()[0])
+    sum = np.sum(data)
 
-    Validate("Sum of the gamma spectrum for {}".format(species_list[i]) , sum_energy, sum_energy*relative_error)
-    
-    sum_initial = np.sum(data_initial)
-    sum_final = np.sum(data_final)
-    
-    error = (np.abs(np.subtract(data_initial / sum_initial, data_final / sum_final)))
-    
-    print(' Gamma spectrum max error for {}: {}'.format(species_list[i], np.max(error)))
-    
-    Validate("Gamma spectrum max error for {}".format(species_list[i]) , np.max(error), relative_error)
+    print(" Valide sum of binning {}: {}".format(i,sum))
+
+    Validate("Sum of diag {}".format(i) , sum, sum*relative_error)
+
+print("")
+
+# ------------------------------------------------------
+# Field diags
+# ------------------------------------------------------
+
+print(" ------------------------------")
+print(" Diags Field")
+print(" ------------------------------")
+
+fields = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Rho", "Jx", "Jy", "Jz"]
+
+for species in species_list:
+    fields.append("Jx_{}".format(species))	
+    fields.append("Jy_{}".format(species))	
+    fields.append("Jz_{}".format(species))	
+    fields.append("Rho_{}".format(species))	
+
+for field_name in fields:
+
+    field = np.array(S.Field(0,field_name,timesteps=10).getData()[0])
+
+    sum = np.sum(field)
+
+    print(" Valide sum of {}: {}".format(field_name,sum))
+
+    Validate("Sum for field {}".format(field_name) , sum, sum*relative_error)
+
+print("")
+
+# ------------------------------------------------------
+# Probe diags
+# ------------------------------------------------------
+
+print(" ------------------------------")
+print(" Diags Probe")
+print(" ------------------------------")
+
+probe_list = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Rho", "Jx", "Jy", "Jz"]
+
+for species in species_list:
+    probe_list.append("Jx_{}".format(species))	
+    probe_list.append("Jy_{}".format(species))	
+    probe_list.append("Jz_{}".format(species))	
+    probe_list.append("Rho_{}".format(species))	
+
+for probe_name in probe_list:
+
+    probe = np.array(S.Probe(0, probe_name,timesteps=10).getData()[0])
+
+    sum = np.sum(probe)
+
+    print(" Valide sum of {}: {}".format(probe_name,sum))
+
+    Validate("Sum for probe {}".format(probe_name) , sum, sum*relative_error)
+
+
+print("")
