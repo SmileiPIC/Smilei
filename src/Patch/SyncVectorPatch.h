@@ -78,7 +78,7 @@ public :
                 }
             }
             if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
+                vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi, true );
             else
                 vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 0, smpi );
         }
@@ -174,7 +174,7 @@ public :
                     }
                 }
                 if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                    vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
+                    vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi, true );
                 else
                     vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 1, smpi );
             }
@@ -271,7 +271,7 @@ public :
 #endif                       
                         }
                     }
-                    vecPatches( ipatch )->initSumField( fields[ifield], 2, smpi );
+                    vecPatches( ipatch )->initSumField( fields[ifield], 2, smpi, true );
                 }
 
                 // iDim = 2 local
