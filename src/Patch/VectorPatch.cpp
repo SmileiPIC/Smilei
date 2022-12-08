@@ -1430,7 +1430,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 #if defined (SMILEI_ACCELERATOR_MODE)
             // Delete species current and rho grids from device 
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
-                ( *this )( ipatch )->vecSpecies[ispec]->Species::deleteSpeciesCurrentAndChargeOnDevice(ispec, ( *this )( ipatch )->EMfields);
+                ( *this )( patch )->vecSpecies[ispec]->Species::deleteSpeciesCurrentAndChargeOnDevice(ispec, ( *this )( ipatch )->EMfields);
             } // end loop for species
 #endif
         } // end loop patches
@@ -4829,7 +4829,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                 if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-                    if (diag_flag)
+                    if (diag_flag) {
                         spec->Species::prepareSpeciesCurrentAndChargeOnDevice(
                             ispec,
                             emfields( ipatch )
