@@ -76,8 +76,7 @@ public:
                             );
     
     //! Creation of the particle weight
-    static void createWeight( std::string position_initialization,
-                            Particles * particles,
+    static void createWeight( Particles * particles,
                             unsigned int nPart,
                             unsigned int iPart,
                             double n_real_particles,

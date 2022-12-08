@@ -130,7 +130,7 @@ public:
             } else if( params.maxwell_sol == "M4" ) {
                 solver = new MF_Solver2D_M4( params );
             } else if( params.is_spectral ) {
-                solver = new NullSolver( params );
+                solver = new NullSolver();
             }
             
         } else if( params.geometry == "3Dcartesian" ) {
@@ -144,7 +144,7 @@ public:
             } else if( params.maxwell_sol == "M4" ) {
                 solver = new MF_Solver3D_M4( params );
             } else if( params.is_pxr ) {
-                solver = new NullSolver( params );
+                solver = new NullSolver();
             }
             
         } else if( params.geometry == "AMcylindrical" ) {
@@ -152,7 +152,7 @@ public:
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_SolverAM_Yee( params );
             } else if( params.is_pxr ) {
-                solver = new NullSolver( params );
+                solver = new NullSolver();
             }
             
         }

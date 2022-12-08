@@ -14,22 +14,16 @@ PXR_Solver2D_GPSTD::~PXR_Solver2D_GPSTD()
 {
 }
 
+#ifdef _PICSAR
 void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
-#ifdef _PICSAR
     int cdim=2;
     int n0, n1, n2;
     int ov0, ov1, ov2;
     // unable to convert unsigned int to an iso_c_binding supported type
     
-    std::vector<unsigned int> n_space(params.n_space);
-    if (full_domain)
-        n_space = params.n_space_global;
-    else if (params.multiple_decomposition)
-        n_space = params.n_space_region;
-    
-    n0=(int) (0 +  n_space[0]);
-    n1=(int) (0 +  n_space[1]);
+    n0=(int) (0 + EMfields->size_[0]);
+    n1=(int) (0 + EMfields->size_[1]);
     
     n2=0;
     if (params.multiple_decomposition) {
@@ -37,8 +31,8 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
         ov1=( int ) params.region_oversize[1];
     }
     else {
-        ov0=( int ) params.oversize[0];
-        ov1=( int ) params.oversize[1];
+        ov0=( int ) EMfields->oversize[0];
+        ov1=( int ) EMfields->oversize[1];
     }
     ov2=0;
     double dzz = std::numeric_limits<double>::infinity() ;
@@ -76,13 +70,15 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
                                 &( Jy2D_pxr->data_[0] ),
                                 &( rho2D_pxr->data_[0] ),
                                 &( rhoold2D_pxr->data_[0] ), &cdim );
-#else
-    ERROR( "Smilei not linked with picsar, use make config=picsar" );
-#endif
-                                
 }
+#else
+void PXR_Solver2D_GPSTD::coupling( Params &, ElectroMagn *, bool )
+{
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
+}
+#endif
 
-void PXR_Solver2D_GPSTD::operator()( ElectroMagn *fields )
+void PXR_Solver2D_GPSTD::operator()( ElectroMagn * )
 {
     //duplicate_field_into_pxr( fields );
     

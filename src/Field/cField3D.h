@@ -89,11 +89,10 @@ public:
         DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
-    void dump( std::vector<unsigned int> dims ) {};
     
-    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override;
+    void put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override;
     
     void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
     void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;

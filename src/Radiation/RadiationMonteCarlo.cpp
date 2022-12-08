@@ -64,6 +64,8 @@ void RadiationMonteCarlo::operator()(
 {
 #ifdef _OMPTASKS
     photons = &(new_photons_per_bin_[ibin]);
+#else
+    SMILEI_UNUSED( ibin );
 #endif
     // _______________________________________________________________
     // Parameters

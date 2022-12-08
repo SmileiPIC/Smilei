@@ -16,6 +16,12 @@ MA_Solver3D_norm::~MA_Solver3D_norm()
 void MA_Solver3D_norm::operator()( ElectroMagn *fields )
 {
 
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+    const unsigned int nz_p = fields->dimPrim[2];
+    const unsigned int nz_d = fields->dimDual[2];
     // Static-cast of the fields
     double *Ex3D = &(fields->Ex_->data_[0]);
     double *Ey3D = &(fields->Ey_->data_[0]);

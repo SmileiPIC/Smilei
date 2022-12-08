@@ -14,7 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Interpolator2D( params, patch )
+Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Interpolator2D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -56,7 +56,7 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], Bz2D, id_, jd_ );
 } // END Interpolator2D2Order
 
-void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -108,7 +108,7 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
@@ -133,8 +133,8 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                             int *istart,
                                             int *iend,
                                             int ithread,
-                                            unsigned int scell,
-                                            int ipart_ref )
+                                            unsigned int,
+                                            int )
 {
     
     double *const __restrict__ ELoc  = smpi->dynamics_Epart[ithread].data();
@@ -225,7 +225,7 @@ void Interpolator2D2Order::fieldsSelection( ElectroMagn *EMfields,
     }
 }
 
-void Interpolator2D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the electromagnetic fields
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
@@ -319,7 +319,7 @@ void Interpolator2D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 } // END Interpolator2D2OrderForTasks
 
 
-void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field2D *Phi_m2D = static_cast<Field2D *>( EMfields->envelope->Phi_m );
@@ -471,7 +471,7 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 
 } // END Interpolator2D2Order
 
-void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field2D *EnvEabs = static_cast<Field2D *>( EMfields->Env_E_abs_ );

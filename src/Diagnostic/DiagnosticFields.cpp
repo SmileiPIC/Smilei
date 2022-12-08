@@ -116,7 +116,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
         unsigned int n;
         if( subgrids[isubgrid] == Py_None ) {
             subgrid_start_.push_back( 0 );
-            subgrid_stop_ .push_back( params.n_space_global[isubgrid]+2 );
+            subgrid_stop_ .push_back( params.global_size_[isubgrid]+2 );
             subgrid_step_ .push_back( 1 );
         } else if( PyTools::py2scalar( subgrids[isubgrid], n ) ) {
             subgrid_start_.push_back( n );
@@ -125,9 +125,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
         } else if( PySlice_Check( subgrids[isubgrid] ) ) {
             Py_ssize_t start, stop, step, slicelength;
 #if PY_MAJOR_VERSION == 2
-            if( PySlice_GetIndicesEx( ( PySliceObject * )subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
+            if( PySlice_GetIndicesEx( ( PySliceObject * )subgrids[isubgrid], params.global_size_[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
 #else
-            if( PySlice_GetIndicesEx( subgrids[isubgrid], params.n_space_global[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
+            if( PySlice_GetIndicesEx( subgrids[isubgrid], params.global_size_[isubgrid]+1, &start, &stop, &step, &slicelength ) < 0 ) {
 #endif
                 PyTools::checkPyError();
                 ERROR( "Diagnostic Fields #"<<ndiag<<" `subgrid` axis #"<<isubgrid<<" not understood" );
@@ -156,7 +156,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             if( time_average > 1 ) {
                 for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ )
                     vecPatches( ipatch )->EMfields->allFields_avg[diag_n].push_back(
-                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield],params )
+                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield], params )
                     );
             }
         }
@@ -208,7 +208,7 @@ DiagnosticFields::~DiagnosticFields()
     delete flush_timeSelection;
 }
 
-void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticFields::openFile( Params &, SmileiMPI *smpi )
 {
     if( file_ ) {
         return;
@@ -242,7 +242,7 @@ void DiagnosticFields::closeFile()
 
 
 
-void DiagnosticFields::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticFields::init( Params &params, SmileiMPI *smpi, VectorPatch & )
 {
     // create the file
     openFile( params, smpi );
@@ -260,7 +260,7 @@ bool DiagnosticFields::prepare( int itime )
 }
 
 
-void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
+void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers & )
 {
     // If time-averaging, increment the average
     if( time_average>1 ) {
@@ -320,7 +320,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         #pragma omp master
         {
             // Write
-            H5Write dset = writeField( iteration_group_, fields_names[ifield], itime );
+            H5Write dset = writeField( iteration_group_, fields_names[ifield] );
             // Attributes for openPMD
             openPMD_->writeFieldAttributes( dset, subgrid_start_, subgrid_step_ );
             openPMD_->writeRecordAttributes( dset, field_type[ifield] );
@@ -351,7 +351,7 @@ bool DiagnosticFields::needsRhoJs( int itime )
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
     uint64_t nfields = fields_indexes.size();

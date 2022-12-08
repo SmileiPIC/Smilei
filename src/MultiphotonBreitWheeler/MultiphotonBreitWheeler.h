@@ -112,14 +112,13 @@ public:
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param ibin        Index of the current bin
-    //! \param nbin        Number of bins
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
     void removeDecayedPhotonsWithoutBinCompression(
         Particles &particles,
         SmileiMPI *smpi,
-        int ibin, int nbin,
+        int ibin,
         int *bmin, int *bmax, int ithread );
 
     //! Return the sampling for each pair

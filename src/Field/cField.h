@@ -86,9 +86,9 @@ public:
         return cdata_[idx];
     };
     
-    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override = 0;
-    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override = 0;
-    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override = 0;
+    void put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override = 0;
+    void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override = 0;
+    void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override = 0;
     
     std::complex<double> *cdata_;
 

@@ -32,22 +32,22 @@ public :
     virtual void closeFile() = 0;
     
     //! Misc init.
-    virtual void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) {};
+    virtual void init( Params &, SmileiMPI *, VectorPatch & ) {};
     
     //! Prepares the diag and check whether it is time to run. Only by MPI master for global diags. Only by patch master for local diags.
     virtual bool prepare( int itime ) = 0;
     
     //! Runs the diag for a given patch for global diags.
-    virtual void run( Patch *patch, int itime, SimWindow *simWindow ) {};
+    virtual void run( Patch *, int , SimWindow * ) {};
     
     //! Runs the diag for all patches for local diags.
-    virtual void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) {};
+    virtual void run( SmileiMPI *, VectorPatch &, int , SimWindow *, Timers & ) {};
     
     //! Writes out a global diag diag.
-    virtual void write( int itime, SmileiMPI *smpi ) {};
+    virtual void write( int, SmileiMPI * ) {};
     
     //! Tells whether this diagnostic requires the pre-calculation of the particle J & Rho
-    virtual bool needsRhoJs( int itime )
+    virtual bool needsRhoJs( int )
     {
         return false;
     };
@@ -62,7 +62,7 @@ public :
     virtual int getMemFootPrint() = 0;
     
     //! Get disk footprint of current diagnostic
-    virtual uint64_t getDiskFootPrint( int istart, int istop, Patch *patch )
+    virtual uint64_t getDiskFootPrint( int, int, Patch * )
     {
         return 0.;
     };

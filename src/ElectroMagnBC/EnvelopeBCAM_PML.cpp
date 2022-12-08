@@ -23,13 +23,6 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
     : EnvelopeBC( params, patch, i_boundary )
 {
 
-    std::vector<unsigned int> n_space(params.n_space);
-    std::vector<unsigned int> oversize(params.oversize);
-    if (params.multiple_decomposition) {
-        n_space = params.n_space_region;
-        oversize = params.region_oversize;
-    }
-
     pml_solver_envelope_ = SolverFactory::createPMLenvelope( params );
     if (params.envelope_solver == "explicit"){
         nsolver=4;
@@ -42,48 +35,45 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
         nsolver=2;
     }
 
-    if ( ( i_boundary_ == 0 && patch->isXmin() )
-         || ( i_boundary_ == 1 && patch->isXmax() )
-         || ( i_boundary_ == 2 && patch->isYmin() )
-         || ( i_boundary_ == 3 && patch->isYmax() ) ) {
+    if( patch->isBoundary( i_boundary_ ) ) {
 
-        int iDim = 0*((i_boundary_==0)||(i_boundary_==1))+1*((i_boundary_==2)||(i_boundary_==3));
-        int min_or_max = (i_boundary_)%2;
+        int iDim = i_boundary / 2;
+        int min_or_max = i_boundary_ % 2;
 
-        domain_oversize_l =  oversize[0] ;
-        domain_oversize_r =  oversize[1] ;
+        domain_oversize_l =  patch->oversize[0] ;
+        domain_oversize_r =  patch->oversize[1] ;
 
-        if (patch->isXmin() ) {//&& min_max == 0 ) {
+        if (patch->isXmin() ) {//&& i_boundary_ == 0 ) {
             ncells_pml_lmin = params.number_of_pml_cells[0][0];
-            ncells_pml_domain_lmin = ncells_pml_lmin + 1*oversize[0] + nsolver/2;
-            domain_oversize_l = oversize[0] ;
+            ncells_pml_domain_lmin = ncells_pml_lmin + 1*patch->oversize[0] + nsolver/2;
+            domain_oversize_l = patch->oversize[0] ;
         }
         else {
             ncells_pml_lmin = 0;
             ncells_pml_domain_lmin = 0;
         }
-        if (patch->isXmax() ) {//&& min_max == 1 ) {
+        if (patch->isXmax() ) {//&& i_boundary_ == 1 ) {
             ncells_pml_lmax = params.number_of_pml_cells[0][1];
-            ncells_pml_domain_lmax = ncells_pml_lmax + 1*oversize[0] + nsolver/2;
-            domain_oversize_l = oversize[0] ;
+            ncells_pml_domain_lmax = ncells_pml_lmax + 1*patch->oversize[0] + nsolver/2;
+            domain_oversize_l = patch->oversize[0] ;
         }
         else {
             ncells_pml_lmax = 0;
             ncells_pml_domain_lmax = 0;
         }
-        if (patch->isYmin() ) {//&& min_max == 2 ) {
+        if (patch->isYmin() ) {//&& i_boundary_ == 2 ) {
             ncells_pml_rmin = params.number_of_pml_cells[1][0];
-            ncells_pml_domain_rmin = ncells_pml_rmin + 1*oversize[1] + nsolver/2;
-            domain_oversize_r = oversize[1] ;
+            ncells_pml_domain_rmin = ncells_pml_rmin + 1*patch->oversize[1] + nsolver/2;
+            domain_oversize_r = patch->oversize[1] ;
         }
         else {
             ncells_pml_rmin = 0;
             ncells_pml_domain_rmin = 0;
         }
-        if (patch->isYmax() ) {//&& min_max == 3 ) {
+        if (patch->isYmax() ) {//&& i_boundary_ == 3 ) {
             ncells_pml_rmax = params.number_of_pml_cells[1][1];
-            ncells_pml_domain_rmax = ncells_pml_rmax + 1*oversize[1] + nsolver/2;
-            domain_oversize_r = oversize[1] ;
+            ncells_pml_domain_rmax = ncells_pml_rmax + 1*patch->oversize[1] + nsolver/2;
+            domain_oversize_r = patch->oversize[1] ;
         }
         else {
             ncells_pml_rmax = 0;
@@ -91,10 +81,10 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
         }
 
         ncells_pml = params.number_of_pml_cells[iDim][min_or_max];
-        ncells_pml_domain = ncells_pml+1*oversize[iDim] + nsolver/2;
+        ncells_pml_domain = ncells_pml+1*patch->oversize[iDim] + nsolver/2;
 
         // Define min and max idx to exchange
-        // the good data f(solver,oversize)
+        // the good data f(solver,patch->oversize)
         if (min_or_max==0){
             // if min border : Exchange of data (for domain to pml-domain)
             // min2exchange <= i < max2exchange
@@ -102,8 +92,8 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
             max2exchange = 2*nsolver/2 ;
             // Solver
             solvermin = nsolver/2 ;
-            // solvermax = ncells_pml_domain - 1 - oversize[iDim] ;
-            solvermax = ncells_pml_domain-oversize[iDim] ;
+            // solvermax = ncells_pml_domain - 1 - patch->oversize[iDim] ;
+            solvermax = ncells_pml_domain-patch->oversize[iDim] ;
         }
         else if (min_or_max==1){
             // if max border : Exchange of data (for domain to pml-domain)
@@ -113,35 +103,30 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
             min2exchange = 1*nsolver/2+1 ;
             max2exchange = 2*nsolver/2+1 ;
             // Solver
-            //solvermin = oversize[iDim] + nsolver/2 - nsolver/2 + 1 ;
-            solvermin = oversize[iDim];
+            //solvermin = patch->oversize[iDim] + nsolver/2 - nsolver/2 + 1 ;
+            solvermin = patch->oversize[iDim];
             solvermax = ncells_pml_domain-nsolver/2 ;
         }
 
         if (ncells_pml==0){
             ERROR("PML domain have to be >0 cells in thickness");
         }
-
-        std::vector<unsigned int> dimPrim( params.nDim_field );
-        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
-            dimPrim[i] = n_space[i]+1+2*oversize[i];
-        }
-        dimPrim[iDim] = ncells_pml_domain;
-        if ( iDim==1 ){
-            // dimPrim[iDim-1] += (ncells_pml_lmin-1*(patch->isXmin())) + (ncells_pml_lmax-1*(patch->isXmax())) ;
-            dimPrim[iDim-1] += ncells_pml_lmin + ncells_pml_lmax ;
-            rpml_size_in_l = dimPrim[iDim-1] ;
-            //std::cout << "size : " << rpml_size_in_l << ".";
+        
+        if( iDim == 0 ) {
+            dimPrim = { (unsigned int)ncells_pml_domain, patch->size_[1]+1+2*patch->oversize[1] };
+        } else {
+            dimPrim = { patch->size_[0]+1+2*patch->oversize[0] + ncells_pml_lmin + ncells_pml_lmax, (unsigned int)ncells_pml_domain };
+            rpml_size_in_l = dimPrim[0];
         }
 
-        startpml = oversize[iDim]+nsolver/2;
+        startpml = patch->oversize[iDim]+nsolver/2;
 
         int ncells_pml_min[1];
         ncells_pml_min[0] = ncells_pml_lmin;
         int ncells_pml_max[1];
         ncells_pml_max[0] = ncells_pml_lmax;
 
-        pml_solver_envelope_->setDomainSizeAndCoefficients( iDim, min_or_max, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
+        pml_solver_envelope_->setDomainSizeAndCoefficients( iDim, min_or_max, dimPrim, ncells_pml_domain, startpml, ncells_pml_min, ncells_pml_max, patch );
 
         std::string si_boundary = std::to_string(i_boundary_);
         // A-field
@@ -174,7 +159,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
 
     j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
     // To do for Ymax in order to be coherent with the solver
-    // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-3;
+    // j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-patch->oversize[iDim]-3;
     // std::cout << j_glob_pml << std::endl;
 
 }
@@ -227,9 +212,9 @@ void EnvelopeBCAM_PML::disableExternalFields()
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
 
-void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch )
+void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, Patch *patch )
 {
-    int iDim = 0*((i_boundary_==0)||(i_boundary_==1))+1*((i_boundary_==2)||(i_boundary_==3));
+    int iDim = i_boundary_ / 2;
     int min_or_max = (i_boundary_)%2;
 
     cField2D *A_np1_domain  = static_cast<cField2D *>( envelope->A_ );  // A_ is the envelope at timestep n BUT at this point A_ is already update so in fact its correspond to A_np1_domain
@@ -239,7 +224,9 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
     double ellipticity_factor = envelope->ellipticity_factor;
 
-    if( i_boundary_ == 0 && patch->isXmin() ) {
+    if( ! patch->isBoundary( i_boundary_ ) ) return;
+
+    if( i_boundary_ == 0 ) {
 
         // 2. Exchange field PML <- Domain
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
@@ -260,7 +247,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Primals in x-direction
@@ -275,7 +262,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
     }
 
-    else if( i_boundary_ == 1 && patch->isXmax() ) {
+    else if( i_boundary_ == 1 ) {
 
         // 2. Exchange field Domain -> PML
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
@@ -299,7 +286,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         // 4. Exchange Domain -> PML
         // Primals in x-direction
@@ -315,13 +302,13 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
     }
 
-    else if( i_boundary_ == 2 && patch->isYmin() ) {
+    else if( i_boundary_ == 2 ) {
 
         // NO BC on axis here
 
     }
 
-    else if( i_boundary_ == 3 && patch->isYmax() ) {
+    else if( i_boundary_ == 3 ) {
 
         EnvelopeBCAM_PML* pml_fields_lmin = NULL;
         EnvelopeBCAM_PML* pml_fields_lmax = NULL;
@@ -428,7 +415,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope,iDim, min_or_max, dimPrim, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Duals in y-direction

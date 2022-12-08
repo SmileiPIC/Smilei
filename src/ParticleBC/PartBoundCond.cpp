@@ -23,11 +23,11 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     nDim_field = params.nDim_field;
     // Absolute global values
     double x_min_global = 0;
-    double x_max_global = params.cell_length[0]*( params.n_space_global[0] );
+    double x_max_global = params.cell_length[0]*( params.global_size_[0] );
     double y_min_global = 0;
-    double y_max_global = params.cell_length[1]*( params.n_space_global[1] );
+    double y_max_global = params.cell_length[1]*( params.global_size_[1] );
     double z_min_global = 0;
-    double z_max_global = params.cell_length[2]*( params.n_space_global[2] );
+    double z_max_global = params.cell_length[2]*( params.global_size_[2] );
     
     bc_xmin  = NULL;
     bc_xmax  = NULL;

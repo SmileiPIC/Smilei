@@ -48,14 +48,14 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Particles       *photons,
+    Particles       */*photons*/,
     SmileiMPI       *smpi,
     RadiationTables &radiation_tables,
     double          &radiated_energy,
     int istart,
     int iend,
     int ithread,
-    int ibin,
+    int /*ibin*/,
     int ipart_ref )
 {
 

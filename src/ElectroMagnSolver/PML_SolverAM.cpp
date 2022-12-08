@@ -51,33 +51,31 @@ PML_SolverAM::~PML_SolverAM()
     }
 }
 
-void PML_SolverAM::operator()( ElectroMagn *fields )
+void PML_SolverAM::operator()( ElectroMagn * )
 {
     ERROR( "This is not a solver for the main domain" );
 }
 
-void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
+void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nl_d = dimPrim[0] + 1;
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nr_d = dimPrim[1] + 1;
+    
     // Set global radial index where the PML domain begins j_glob_pml
     //  and set PML sizes nl_p, nr_p ... which are first initialized as patches size.
     if ( iDim == 0 ) {
         j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
-        nl_p = ncells_pml_domain;
-        nl_d = ncells_pml_domain+1;
         // Size in R is the same as a normal patch => no need to adjust.
     }
     else if ( iDim == 1 ) {
         if (min_or_max==0) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain+oversize[iDim]+1;
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain + patch->oversize[iDim]+1;
         }
         else if (min_or_max==1) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1;
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+patch->size_[1] + patch->oversize[1];
         }
-        nr_p = ncells_pml_domain;
-        nr_d = ncells_pml_domain+1;
-        // Adjust size in l too in case there are overlapping pmls
-        nl_p += ncells_pml_min[0] + ncells_pml_max[0];
-        nl_d += ncells_pml_min[0] + ncells_pml_max[0];
     }
 
     //PML Coeffs Kappa,Sigma ...
@@ -142,7 +140,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     c5_d_tfield.resize( nr_d, 1. ); // j-dependent
     c6_d_tfield.resize( nr_d, 0. ); // j-dependent
 
-    double r0 = patch->getDomainLocalMax( 1 ) + oversize[1]*dr  ; // Radius at which pmls start absorbing.
+    double r0 = patch->getDomainLocalMax( 1 ) + patch->oversize[1]*dr  ; // Radius at which pmls start absorbing.
     double rmin = r0 -startpml*dr; // radius of the pml at j=0.
 
     if ( iDim == 0 ) {
@@ -158,12 +156,12 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( int i=startpml ; i<nl_p ; i++ ) {
-                kappa_l_p[i] = pml_kappa_[0]->valueAt((i-startpml)*dl/length_l_pml);
-                sigma_l_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dl/length_l_pml);
+        for( int i = startpml; i < (int) nl_p ; i++ ) {
+            kappa_l_p[i] = pml_kappa_[0]->valueAt((i-startpml)*dl/length_l_pml);
+            sigma_l_p[i] = pml_sigma_[0]->valueAt((i-startpml)*dl/length_l_pml);
         }
         // Radial
-        for ( int j=0 ; j<nr_p ; j++ ) {
+        for( int j = 0; j < (int) nr_p ; j++ ) {
             kappa_r_p[j] = 1. ;
             sigma_r_p[j] = 0. ;
             integrate_kappa_r_p[j] = (j-startpml)*dr;
@@ -178,12 +176,12 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             sigma_l_d[i] = 0 ;
         }
         // Params for other cells (PML Media) when j>=4
-        for ( int i=startpml+1 ; i<nl_d ; i++ ) {
+        for( int i = startpml+1 ; i< (int) nl_d ; i++ ) {
             kappa_l_d[i] = pml_kappa_[0]->valueAt((i-startpml-0.5)*dl/length_l_pml);
             sigma_l_d[i] = pml_sigma_[0]->valueAt((i-startpml-0.5)*dl/length_l_pml);
         }
         // Radial
-        for ( int j=0 ; j<nr_d ; j++ ) {
+        for( int j = 0; j < (int) nr_d ; j++ ) {
             kappa_r_d[j] = 1. ;
             sigma_r_d[j] = 0. ;
             integrate_kappa_r_d[j] = (j-startpml-0.5)*dr;
@@ -199,7 +197,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         length_l_pml_lmin = (ncells_pml_min[0]+0.5)*dl;
         // Primal grid
         // Longitudinal
-        for ( int i=0 ; i<nl_p ; i++ ) {
+        for( unsigned int i = 0 ; i<nl_p ; i++ ) {
             kappa_l_p[i] = 1. ;
             sigma_l_p[i] = 0. ;
         }
@@ -210,7 +208,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
+            for( int i = (nl_p-1)-(ncells_pml_max[0]-1) ; i< (int) nl_p ; i++ ) {
                 kappa_l_p[i] = pml_kappa_[0]->valueAt((i - nl_p + ncells_pml_max[0])*dl/length_l_pml_lmax);
                 sigma_l_p[i] = pml_sigma_[0]->valueAt((i - nl_p + ncells_pml_max[0])*dl/length_l_pml_lmax);
             }
@@ -225,7 +223,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             integrate_sigma_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when j>=3
-        for ( int j=startpml ; j<nr_p ; j++) {
+        for( int j = startpml; j < (int) nr_p ; j++) {
             kappa_r_p[j] = pml_kappa_[1]->valueAt((j-startpml)*dr/length_r_pml);
             sigma_r_p[j] = pml_sigma_[1]->valueAt((j-startpml)*dr/length_r_pml);
             integrate_kappa_r_p[j] = length_r_pml * pml_kappa_[2]->valueAt((j-startpml)*dr/length_r_pml);
@@ -233,7 +231,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
         // Dual grid
         // Longitudinal
-        for ( int i=0 ; i<nl_d ; i++ ) {
+        for( unsigned int i = 0 ; i<nl_d ; i++ ) {
             kappa_l_d[i] = 1. ;
             sigma_l_d[i] = 0. ;
         }
@@ -244,7 +242,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( int i=(nl_p-1)-(ncells_pml_max[0]-1)+1 ; i<nl_d ; i++ ) {
+            for( int i = (nl_p-1)-(ncells_pml_max[0]-1)+1 ; i< (int) nl_d ; i++ ) {
                 kappa_l_d[i] = pml_kappa_[0]->valueAt((i -  nl_p + ncells_pml_max[0] - 0.5 )*dl/length_l_pml_lmax);
                 sigma_l_d[i] = pml_sigma_[0]->valueAt((i -  nl_p + ncells_pml_max[0] - 0.5 )*dl/length_l_pml_lmax);
             }
@@ -259,7 +257,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             integrate_sigma_r_d[j] = 0 ;
         }
         // Params for other cells (PML Media) when j>=4
-        for ( int j=startpml+1 ; j<nr_d ; j++) {
+        for( int j = startpml+1 ; j< (int) nr_d ; j++) {
             kappa_r_d[j] = pml_kappa_[1]->valueAt((j-startpml-0.5)*dr/length_r_pml);
             sigma_r_d[j] = pml_sigma_[1]->valueAt((j-startpml-0.5)*dr/length_r_pml);
             integrate_kappa_r_d[j] = length_r_pml * pml_sigma_[2]->valueAt((j-startpml-0.5)*dr/length_r_pml);
@@ -268,7 +266,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     }
 
     if ((min_or_max==0)&&(iDim==0)){
-        for ( int i=0 ; i<nl_p ; i++ ) {
+        for( int i = 0; i < (int) nl_p ; i++ ) {
             //longitudinal-field-coeff
             c5_p_lfield[i] = 2.*kappa_l_p[(nl_p-1)-i] + dt*sigma_l_p[(nl_p-1)-i] ;
             c6_p_lfield[i] = 2.*kappa_l_p[(nl_p-1)-i] - dt*sigma_l_p[(nl_p-1)-i] ;
@@ -280,7 +278,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             c4_p_tfield[i] = (1.) / ( 2.*kappa_l_p[(nl_p-1)-i] + dt*sigma_l_p[(nl_p-1)-i] ) ;
         }
 
-        for ( int i=0 ; i<nl_d ; i++ ) {
+        for( int i = 0; i < (int) nl_d ; i++ ) {
             //longitudinal-field-coeff
             c5_d_lfield[i] = 2.*kappa_l_d[(nl_d-1)-i] + dt*sigma_l_d[(nl_d-1)-i] ;
             c6_d_lfield[i] = 2.*kappa_l_d[(nl_d-1)-i] - dt*sigma_l_d[(nl_d-1)-i] ;
@@ -293,7 +291,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
     }
     else {
-        for ( int i=0 ; i<nl_p ; i++ ) {
+        for( int i = 0; i < (int) nl_p ; i++ ) {
             //longitudinal-field-coeff
             c5_p_lfield[i] = 2.*kappa_l_p[i] + dt*sigma_l_p[i] ;
             c6_p_lfield[i] = 2.*kappa_l_p[i] - dt*sigma_l_p[i] ;
@@ -305,7 +303,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             c4_p_tfield[i] = (1.) / ( 2.*kappa_l_p[i] + dt*sigma_l_p[i] ) ;
         }
 
-        for ( int i=0 ; i<nl_d ; i++ ) {
+        for( int i = 0; i < (int) nl_d ; i++ ) {
             //longitudinal-field-coeff
             c5_d_lfield[i] = 2.*kappa_l_d[i] + dt*sigma_l_d[i] ;
             c6_d_lfield[i] = 2.*kappa_l_d[i] - dt*sigma_l_d[i] ;
@@ -319,7 +317,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     } // End X
 
     if ((min_or_max==0)&&(iDim==0)){
-        for ( int j=0 ; j<nr_p ; j++ ) {
+        for( int j = 0; j < (int) nr_p ; j++ ) {
             //longitudinal-field-coeff
             c1_p_lfield[j] = ( 2.*kappa_r_p[(nr_p-1)-j] - dt*sigma_r_p[(nr_p-1)-j] ) / ( 2.*kappa_r_p[(nr_p-1)-j] + dt*sigma_r_p[(nr_p-1)-j] ) ;
             c2_p_lfield[j] = ( 2*dt ) / ( 2.*kappa_r_p[(nr_p-1)-j] + dt*sigma_r_p[(nr_p-1)-j] ) ;
@@ -337,7 +335,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             c6_p_tfield[j] = ( 2.*( r0 + integrate_kappa_r_p[(nr_p-1)-j] ) - dt*integrate_sigma_r_p[(nr_p-1)-j] ) / ( rmin + ((nr_p-1)-j)*dr ) ;
         }
 
-        for ( int j=0 ; j<nr_d ; j++ ) {
+        for( int j = 0; j < (int) nr_d ; j++ ) {
             //longitudinal-field-coeff
             c1_d_lfield[j] = ( 2.*kappa_r_d[(nr_d-1)-j] - dt*sigma_r_d[(nr_d-1)-j] ) / ( 2.*kappa_r_d[(nr_d-1)-j] + dt*sigma_r_d[(nr_d-1)-j] ) ;
             c2_d_lfield[j] = ( 2*dt ) / ( 2.*kappa_r_d[(nr_d-1)-j] + dt*sigma_r_d[(nr_d-1)-j] ) ;
@@ -356,7 +354,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
         }
     }
     else {
-        for ( int j=0 ; j<nr_p ; j++ ) {
+        for( int j = 0; j < (int) nr_p ; j++ ) {
             //longitudinal-field-coeff
             c1_p_lfield[j] = ( 2.*kappa_r_p[j] - dt*sigma_r_p[j] ) / ( 2.*kappa_r_p[j] + dt*sigma_r_p[j] ) ;
             c2_p_lfield[j] = ( 2*dt ) / ( 2.*kappa_r_p[j] + dt*sigma_r_p[j] ) ;
@@ -374,7 +372,7 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
             c6_p_tfield[j] = ( 2.*( r0 + integrate_kappa_r_p[j] ) - dt*integrate_sigma_r_p[j] ) / ( rmin + j*dr ) ;
         }
 
-        for ( int j=0 ; j<nr_d ; j++ ) {
+        for( int j = 0; j < (int) nr_d ; j++ ) {
             //longitudinal-field-coeff
             c1_d_lfield[j] = ( 2.*kappa_r_d[j] - dt*sigma_r_d[j] ) / ( 2.*kappa_r_d[j] + dt*sigma_r_d[j] ) ;
             c2_d_lfield[j] = ( 2*dt ) / ( 2.*kappa_r_d[j] + dt*sigma_r_d[j] ) ;
@@ -394,8 +392,13 @@ void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int n
     } //  End Y
 }
 
-void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
+void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nl_d = dimPrim[0] + 1;
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nr_d = dimPrim[1] + 1;
+    
     ElectroMagnBCAM_PML* pml_fields = static_cast<ElectroMagnBCAM_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     cField2D* El_pml = NULL;
     cField2D* Er_pml = NULL;
@@ -430,7 +433,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
             Dr_pml = pml_fields->Dr_[imode];
             Dt_pml = pml_fields->Dt_[imode];
             //Electric field El^(d,p) Remind that in PML, there no current
-            for( unsigned int i=solvermin ; i<solvermax ; i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax ; i++ ) {
                 for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
                     // Standard FDTD
                     // ( *Dl_pml )( i, j ) = + ( *Dl_pml )( i, j )
@@ -447,7 +450,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
                 }
             }
             //Electric field Er^(p,d) Remind that in PML, there no current
-            for( unsigned int i=solvermin ; i<solvermax ; i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax ; i++ ) {
                 for( unsigned int j=isYmin*3 ; j<nr_d ; j++ ) {
                     // Standard FDTD
                     // ( *Dr_pml )( i, j ) = + ( *Dr_pml )( i, j )
@@ -464,7 +467,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
                 }
             }
             //Electric field Et^(p,p) Remind that in PML, there no current
-            for( unsigned int i=solvermin ; i<solvermax ; i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax ; i++ ) {
                 for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
                     // Standard FDTD
                     // ( *Dt_pml )( i, j ) = + 1 * ( *Dt_pml )( i, j )
@@ -653,7 +656,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
             Dt_pml = pml_fields->Dt_[imode];
             //Electric field El^(d,p) Remind that in PML, there no current
             for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     // Standard FDTD
                     // ( *Dl_pml )( i, j ) = + ( *Dl_pml )( i, j )
                     //                     + dt / ( ( j_glob_pml+j )*dr ) * ( ( j+j_glob_pml+0.5 ) * ( *Ht_pml )( i, j+1 ) - ( j+j_glob_pml-0.5 )*( *Ht_pml )( i, j ) )
@@ -670,7 +673,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
             }
             //Electric field Er^(p,d) Remind that in PML, there no current
             for( unsigned int i=0 ; i<nl_p ; i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     // Standard FDTD
                     // ( *Dr_pml )( i, j ) = + ( *Dr_pml )( i, j )
                     //                     - dt/dl * ( ( *Ht_pml )( i+1, j ) - ( *Ht_pml )( i, j ) )
@@ -687,7 +690,7 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
             }
             //Electric field Et^(p,p) Remind that in PML, there no current
             for( unsigned int i=0 ; i<nl_p ; i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     // Standard FDTD
                     // ( *Dt_pml )( i, j ) = + 1 * ( *Dt_pml )( i, j )
                     //                     - dt/dr * ( ( *Hl_pml )( i, j+1 ) - ( *Hl_pml )( i, j ) )
@@ -706,8 +709,13 @@ void PML_SolverAM::compute_E_from_D( ElectroMagn *fields, int iDim, int min_or_m
     }
 }
 
-void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
+void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nl_d = dimPrim[0] + 1;
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nr_d = dimPrim[1] + 1;
+    
     ElectroMagnBCAM_PML* pml_fields = static_cast<ElectroMagnBCAM_PML*>( fields->emBoundCond[iDim*2+min_or_max] );
     cField2D* El_pml = NULL;
     cField2D* Er_pml = NULL;
@@ -742,7 +750,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
             Br_pml = pml_fields->Br_[imode];
             Bt_pml = pml_fields->Bt_[imode];
             //Magnetic field Bl^(p,d)
-            for( unsigned int i=solvermin ; i<solvermax;  i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax;  i++ ) {
                 for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
                     // Standard FDTD
                     // ( *Bl_pml )( i, j ) = + 1 * ( *Bl_pml )( i, j )
@@ -759,7 +767,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
                 }
             }
             //Magnetic field Br^(d,p)
-            for( unsigned int i=solvermin ; i<solvermax ; i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax ; i++ ) {
                 for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
                     //Standard FDTD
                     // ( *Br_pml )( i, j ) = + 1 * ( *Br_pml )( i, j )
@@ -776,7 +784,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
                 }
             }
             //Magnetic field Bt^(d,d)
-            for( unsigned int i=solvermin ; i<solvermax ; i++ ) {
+            for( unsigned int i=solvermin ; i<(unsigned int)solvermax ; i++ ) {
                 for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
                     // Standard FDTD
                     // ( *Bt_pml )( i, j ) = + 1 * ( *Bt_pml )( i, j )
@@ -945,7 +953,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
             Bt_pml = pml_fields->Bt_[imode];
             //Magnetic field Bl^(p,d)
             for( unsigned int i=0 ; i<nl_p;  i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     // Standard FDTD
                     // ( *Bl_pml )( i, j ) = + 1 * ( *Bl_pml )( i, j )
                     //                       - dt / ( ( j_glob_pml+j-0.5 )*dr ) * ( ( double )( j+j_glob_pml )*( *Et_pml )( i, j ) - ( double )( j+j_glob_pml-1. )*( *Et_pml )( i, j-1 ) )
@@ -962,7 +970,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
             }
             //Magnetic field Br^(d,p)
             for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     //Standard FDTD
                     // ( *Br_pml )( i, j ) = + 1 * ( *Br_pml )( i, j )
                     //                       + dt/dl * ( ( *Et_pml )( i, j ) - ( *Et_pml )( i-1, j ) )
@@ -979,7 +987,7 @@ void PML_SolverAM::compute_H_from_B( ElectroMagn *fields, int iDim, int min_or_m
             }
             //Magnetic field Bt^(d,d)
             for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
-                for( unsigned int j=solvermin ; j<solvermax ; j++ ) {
+                for( unsigned int j=solvermin ; j<(unsigned int)solvermax ; j++ ) {
                     // Standard FDTD
                     // ( *Bt_pml )( i, j ) = + 1 * ( *Bt_pml )( i, j )
                     //                       + dt/dr * ( ( *El_pml )( i, j ) - ( *El_pml )( i, j-1 ) )

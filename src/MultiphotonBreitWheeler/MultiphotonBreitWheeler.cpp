@@ -174,12 +174,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Time to event
     double event_time;
 
-    // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
-
     // Position shortcut
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = n_dimensions_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -308,13 +302,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Update of the position
                     // Move the photons
 
-//#ifdef  __DEBUG
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        particles.position_old(i,ipart) = position[i][ipart];
-//#endif
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
-
 // withou tasks
 
                     // pair_energy += MultiphotonBreitWheeler::pair_emission( ipart,
@@ -339,7 +326,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
 #ifndef _OMPTASKS
                     // Without tasks
-
+                    SMILEI_UNUSED( ibin );
                     // Creation of new electrons in the temporary array new_pair[0]
                     new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
 
@@ -640,7 +627,6 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param ibin        Index of the current bin
-    //! \param nbin        Number of bins
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
@@ -648,7 +634,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
 void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
     Particles &particles,
     SmileiMPI *smpi,
-    int ibin, int nbin,
+    int ibin,
     int *bmin, int *bmax, int ithread )
 {
 

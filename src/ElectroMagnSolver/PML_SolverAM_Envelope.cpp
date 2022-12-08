@@ -67,7 +67,7 @@ PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
 {
 }
 
-void PML_SolverAM_Envelope::operator()( ElectroMagn *fields )
+void PML_SolverAM_Envelope::operator()( ElectroMagn * )
 {
     ERROR( "This is not a solver for the main domain" );
 
@@ -75,29 +75,17 @@ void PML_SolverAM_Envelope::operator()( ElectroMagn *fields )
     //cField2D *A_nm1      = static_cast<cField2D *>( envelope->A0_ );  // the envelope at timestep n-1
 }
 
-void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
+void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_max, std::vector<unsigned int> dimPrim, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
 {
-    if ( iDim == 0 ) {
-        // Global radial index where begin the PML domain
-        // because j_glob is not define for this region
-        if (min_or_max==0) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
-        }
-        else if (min_or_max==1) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
-        }
-        nl_p = ncells_pml_domain;
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    
+    if( iDim == 0 ) {
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 );
+    } else if( iDim == 1 ) {
+        j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+patch->size_[1] + patch->oversize[1] - 1; // For norder=4
     }
-    else if ( iDim == 1 ) {
-        // Global radial index where begin the PML domain
-        // because j_glob is not define for this region
-        j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-2; // For norder=4
-        // Redifine length of pml region
-        nr_p = ncells_pml_domain;
-        // nl_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
-        nl_p += ncells_pml_min[0] + ncells_pml_max[0];
-    }
-
+    
     isYmin = (patch->isYmin());
 
     //PML Coeffs Kappa,Sigma ...
@@ -125,7 +113,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     rmax = patch->getDomainLocalMax( 1 ) ;
     // std::cout << rmax << std::endl;
     //std::cout << '('<< iDim << ',' <<j_glob_pml*dr << ')' << std::endl;
-    r0 = rmax + (oversize[1] + 1. )*dr ;
+    r0 = rmax + (patch->oversize[1] + 1. )*dr ;
 
     if ( iDim == 0 ) {
         // 3 cells (oversize) are vaccum so the PML media begin at r0 which is :
@@ -145,7 +133,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_l_p[i] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( unsigned int i=startpml; i<nl_p ; i++ ) {
+        for ( int i=startpml; i< (int) nl_p ; i++ ) {
             // Parameters
             kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
@@ -240,7 +228,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            for ( unsigned int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
+            for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i< (int) nl_p ; i++ ) {
                 // Parameters
                 kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
@@ -272,7 +260,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             integrate_alpha_r_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        for ( unsigned int j=startpml; j<nr_p ; j++ ) {
+        for ( int j=startpml; j< (int) nr_p ; j++ ) {
             // Parameters
             kappa_r_p[j] = kappa_cr + (kappa_r_max - kappa_cr) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
@@ -330,8 +318,10 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     }
 }
 
-void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, unsigned int solvermin, unsigned int solvermax )
+void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim, int min_or_max, std::vector<unsigned int> dimPrim, unsigned int solvermin, unsigned int solvermax )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     EnvelopeBCAM_PML* pml_fields = static_cast<EnvelopeBCAM_PML*>( envelope->EnvBoundCond[iDim*2+min_or_max] );
 
     cField2D* A_nm1_pml = NULL;

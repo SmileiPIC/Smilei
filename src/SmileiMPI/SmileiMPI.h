@@ -114,8 +114,8 @@ public:
     void isend( ProbeParticles *probe, int to, int tag, unsigned int );
     void recv( ProbeParticles *probe, int from, int tag, unsigned int );
 
-    void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
-    void recv( int *integer, int from, int tag, unsigned int );
+    void isend( int *integer, int to, int tag, MPI_Request &request );
+    void recv( int *integer, int from, int tag );
 
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
@@ -316,16 +316,6 @@ public:
         }
     }
 
-    // Compute global number of particles
-    //     - deprecated with patch introduction
-    //! \todo{Patch managmen}
-    inline int globalNbrParticles( Species *species, int locNbrParticles )
-    {
-        int nParticles( 0 );
-        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, world_ );
-        return nParticles;
-    }
-
     bool test_mode;
 
     // Task tracing diag
@@ -352,15 +342,15 @@ public:
     };
 
     // If particle event tracing diagnostic is activated, trace event
-    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread,
-                                 unsigned int event_start_or_end, int event_name)
+#ifdef _PARTEVENTTRACING
+    void traceEventIfDiagTracing( bool, int, unsigned int, int ) {};
+#else
+    void traceEventIfDiagTracing( bool diag_PartEventTracing, int thread,
+                                  unsigned int event_start_or_end, int event_name )
     {
-        // If particle event tracing diagnostic is activated, trace event
-        // otherwise, this becomes an empty method
-        #  ifdef _PARTEVENTTRACING
-        if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
-        #  endif
+        if( diag_PartEventTracing ) trace_event( thread, (MPI_Wtime()-reference_time_), event_start_or_end, event_name );
     };
+#endif
 
 
 protected:

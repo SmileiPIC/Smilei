@@ -255,7 +255,7 @@ bool PyTools::extract_pyProfiles( std::string name, std::string component, int n
 };
 
 // extract a vector of 1 or N profiles
-bool PyTools::extract_1orNProfiles( int numberOfProfiles, std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
+bool PyTools::extract_1orNProfiles( unsigned int numberOfProfiles, std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
 {
     if( ! extract_pyProfiles( name, component, nComponent, prof ) ) {
         ERROR( "In "<<component<<"#"<<nComponent<<": expected a list of profiles" );

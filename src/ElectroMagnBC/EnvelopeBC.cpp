@@ -11,16 +11,16 @@
 using namespace std;
 
 // Constructor for EnvelopeBC
-EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int i_boundary ) :
+EnvelopeBC::EnvelopeBC( Params &params, Patch *, unsigned int i_boundary ) :
     i_boundary_( i_boundary )
 {
 
     // time step
     dt = params.timestep;
 
-    std::vector<unsigned int> n_space(params.n_space);
+    std::vector<unsigned int> n_space(params.patch_size_);
     if (params.multiple_decomposition)
-        n_space = params.n_space_region;
+        n_space = params.region_size_;
 
     std::vector<unsigned int> oversize(params.oversize);
     if (params.multiple_decomposition)

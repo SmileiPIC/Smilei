@@ -23,8 +23,8 @@ EnvelopeBC1D_refl::EnvelopeBC1D_refl( Params &params, Patch *patch, unsigned int
     oversize_ = params.oversize[0];
     
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
-    nx_d = params.n_space[0]+2+2*params.oversize[0];
+    nx_p = params.patch_size_[0]+1+2*params.oversize[0];
+    nx_d = params.patch_size_[0]+2+2*params.oversize[0];
     
     
 }
@@ -32,7 +32,7 @@ EnvelopeBC1D_refl::EnvelopeBC1D_refl( Params &params, Patch *patch, unsigned int
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void EnvelopeBC1D_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch )
+void EnvelopeBC1D_refl::apply( LaserEnvelope *envelope, ElectroMagn *, Patch *patch )
 {
 
     // Static cast of the field

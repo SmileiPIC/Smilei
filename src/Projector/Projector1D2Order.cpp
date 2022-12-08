@@ -311,7 +311,7 @@ void Projector1D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     
 } // END Project global current densities (ionize)
 
-void Projector1D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector1D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -346,7 +346,7 @@ void Projector1D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
@@ -443,7 +443,7 @@ void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector1D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector1D2Order::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, double *b_Chi, int /*bin_shift*/, int /*bdim0*/, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 {
     
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
@@ -540,7 +540,7 @@ void Projector1D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection on buffers
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector1D2Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int /*ispec*/, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );

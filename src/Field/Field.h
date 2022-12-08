@@ -44,24 +44,24 @@ public:
     };
 
     //! Constructor for Field: with the Field dimensions as input argument
-    Field( std::vector<unsigned int> dims )
+    Field( std::vector<unsigned int> )
     {
         data_ = NULL;
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
-    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal )
+    Field( std::vector<unsigned int>, unsigned int, bool )
     {
         data_ = NULL;
     };
 
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
-    Field( std::vector<unsigned int> dims, std::string name_in ) : name( name_in )
+    Field( std::vector<unsigned int>, std::string name_in ) : name( name_in )
     {
         data_ = NULL;
     };
 
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
-    Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name( name_in )
+    Field( std::vector<unsigned int>, unsigned int, bool, std::string name_in ) : name( name_in )
     {
         data_ = NULL;
     };
@@ -69,7 +69,6 @@ public:
     //! Destructor for Field
     virtual ~Field()
     {
-        ;
     };
 
     //! Virtual method used to allocate Field
@@ -237,9 +236,9 @@ public:
 
     virtual Field* clone() = 0;
 
-    virtual void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch  *outPatch ) = 0;
-    virtual void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch  *outPatch ) = 0;
-    virtual void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;
+    virtual void put( Field *outField, Params &params, Patch *thisPatch, Patch  *outPatch ) = 0;
+    virtual void add( Field *outField, Params &params, Patch *thisPatch, Patch  *outPatch ) = 0;
+    virtual void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) = 0;
 
     std::vector<Field*> sendFields_;
     std::vector<Field*> recvFields_;

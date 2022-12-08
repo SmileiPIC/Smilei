@@ -22,6 +22,10 @@ MF_SolverAM_Yee::~MF_SolverAM_Yee()
 void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
 {
 
+    const unsigned int nl_p = fields->dimPrim[0];
+    const unsigned int nl_d = fields->dimDual[0];
+    const unsigned int nr_p = fields->dimPrim[1];
+    const unsigned int nr_d = fields->dimDual[1];
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
     
         // Static-cast of the fields

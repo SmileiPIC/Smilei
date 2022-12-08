@@ -216,19 +216,19 @@ public:
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
 
-    //! number of cells in every direction of the local domain
-    std::vector<unsigned int> n_space;
+    //! number of cells in every direction of the patch
+    std::vector<unsigned int> patch_size_;
     
-    //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
-    std::vector<unsigned int> n_space_region;
+    //! number of cells in every direction of the region (can be different from 1 MPI process to another)
+    std::vector<unsigned int> region_size_;
     
     std::vector<unsigned int> number_of_region;
     std::vector< std::vector<int> > offset_map;
     std::vector< std::vector< std::vector<int> > > map_rank;
-    std::vector<int> coordinates;
+    std::vector<int> region_coordinates;
     
     //! number of cells in every direction of the global domain
-    std::vector<unsigned int> n_space_global;
+    std::vector<unsigned int> global_size_;
 
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;

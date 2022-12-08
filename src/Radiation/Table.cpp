@@ -40,7 +40,7 @@ void Table::allocate () {
     }
     
     unsigned int size = 1;
-    for (auto i = 0; i < dimension_ ; ++i) {
+    for( unsigned int i = 0; i < dimension_ ; ++i ) {
         size *= dim_size_[i];
     }
     if (size_ != size) {
@@ -59,7 +59,7 @@ void Table::allocate () {
 // -----------------------------------------------------------------------------
 void Table::set_size(unsigned int * dim_size) {
     size_ = 1;
-    for (auto i = 0; i < dimension_ ; ++i) {
+    for( unsigned int i = 0; i < dimension_ ; ++i ) {
         dim_size_[i] = dim_size[i];
         
         if (dim_size_[i] == 0) {
@@ -75,7 +75,7 @@ void Table::set_size(unsigned int * dim_size) {
 // -----------------------------------------------------------------------------
 void Table::compute_parameters() {
     
-    for (auto i = 0; i < dimension_ ; ++i) {
+    for( unsigned int i = 0; i < dimension_ ; ++i ) {
         if (dim_size_[i] <= 1) {
             ERROR("Dimension " << i << " must have a size above 1.")
         }
@@ -99,7 +99,7 @@ void Table::compute_parameters() {
     inv_delta_ = 1./delta_;
     
     // Inverse photon_chi discetization (regularly used)
-    for (auto i = 0; i < dimension_ ; ++i) {
+    for( unsigned int i = 0; i < dimension_ ; ++i ) {
             inv_dim_size_minus_one_[i] = 1.0/( dim_size_[i] - 1. );
     }
 }

@@ -24,8 +24,8 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &params, Patch *patch ) : Pro
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
     
-    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
+    nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
     
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
@@ -53,7 +53,7 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
+void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particles &particles, int istart, int iend, double */*invgf*/, int *iold, double *deltaold )
 {
     double* position_x = particles.getPtrPosition(0);
     double* position_y = particles.getPtrPosition(1);
@@ -263,7 +263,7 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold )
+void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double /*invgf*/, int *iold, double *deltaold )
 {
     int nparts = particles.size();
     
@@ -648,7 +648,7 @@ void Projector3D2OrderGPU::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, 
 } // END Project global current densities (ionize)
 
 //Wrapper for projection
-void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -680,7 +680,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
     
 }
 // Projector for susceptibility used as source term in envelope equation
-void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );

@@ -10,10 +10,9 @@
 using namespace std;
 
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patch = NULL ):
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *, Patch * = NULL ):
     latest_timestep( -1 )
 {
-    // patch  == NULL else error
     
     if( PyTools::nComponents( "DiagScalar" ) > 1 ) {
         ERROR( "Only one DiagScalar can be specified" );
@@ -35,8 +34,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
         res_time       = params.res_time;
         dt             = params.timestep;
         cell_volume    = params.cell_volume;
-        n_space        = params.n_space;
-        n_space_global = params.n_space_global;
+        patch_size_    = params.patch_size_;
+        global_size_   = params.global_size_;
         
         filename = "scalars.txt";
     } else {
@@ -56,7 +55,7 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticScalar::openFile( Params &, SmileiMPI *smpi )
 {
     if( !smpi->isMaster() || fout.is_open() ) {
         return;
@@ -121,7 +120,7 @@ Scalar_value_location *DiagnosticScalar::newScalar_MAXLOC( string name )
 }
 
 
-void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticScalar::init( Params &params, SmileiMPI *, VectorPatch &vecPatches )
 {
 
     // Make the list of fields
@@ -329,7 +328,7 @@ bool DiagnosticScalar::prepare( int itime )
 } // END prepare
 
 
-void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
+void DiagnosticScalar::run( Patch *patch, int itime, SimWindow * )
 {
 
     // Must keep track of Poynting flux even without diag
@@ -403,7 +402,7 @@ void DiagnosticScalar::write( int itime, SmileiMPI *smpi )
 
 
 //! Compute the various scalars when requested
-void DiagnosticScalar::compute( Patch *patch, int itime )
+void DiagnosticScalar::compute( Patch *patch, int )
 {
     ElectroMagn *EMfields = patch->EMfields;
     std::vector<Species *> &vecSpecies = patch->vecSpecies;
@@ -624,6 +623,9 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             j_max = iFieldStart[1];
             k_max = iFieldStart[2];
             
+            vector<unsigned int> Pcoordinates = patch->Pcoordinates;
+            Pcoordinates.resize( 3, 1 );
+            
             for( unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++ ) {
                 for( unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++ ) {
                     for( unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++ ) {
@@ -645,14 +647,14 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                 }
             }
             
-            i_min += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
-            j_min += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
-            k_min += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
-            minloc.index = ( int )( i_min*n_space_global[1]*n_space_global[2] + j_min*n_space_global[2] + k_min );
-            i_max += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
-            j_max += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
-            k_max += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
-            maxloc.index = ( int )( i_max*n_space_global[1]*n_space_global[2] + j_max*n_space_global[2] + k_max );
+            i_min += Pcoordinates[0]*patch_size_[0] - iFieldStart[0];
+            j_min += Pcoordinates[1]*patch_size_[1] - iFieldStart[1];
+            k_min += Pcoordinates[2]*patch_size_[2] - iFieldStart[2];
+            minloc.index = ( int )( i_min*global_size_[1]*global_size_[2] + j_min*global_size_[2] + k_min );
+            i_max += Pcoordinates[0]*patch_size_[0] - iFieldStart[0];
+            j_max += Pcoordinates[1]*patch_size_[1] - iFieldStart[1];
+            k_max += Pcoordinates[2]*patch_size_[2] - iFieldStart[2];
+            maxloc.index = ( int )( i_max*global_size_[1]*global_size_[2] + j_max*global_size_[2] + k_max );
             
             #pragma omp critical
             {
