@@ -791,7 +791,7 @@ public:
         PyTools::extract( "time_frozen", this_species->time_frozen_, "Species", ispec );
         if( this_species->time_frozen_ > 0 && this_species->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
-                WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
+                CAREFUL( 2,"For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
         }
         if (this_species->time_frozen_ > 0) {
@@ -914,7 +914,7 @@ public:
                 );
             }
             if( this_species->thermal_boundary_temperature_.size()==1 ) {
-                WARNING( "For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions" );
+                CAREFUL(2, "For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions" );
                 this_species->thermal_boundary_temperature_.resize( 3 );
                 this_species->thermal_boundary_temperature_[1] = this_species->thermal_boundary_temperature_[0];
                 this_species->thermal_boundary_temperature_[2] = this_species->thermal_boundary_temperature_[0];
@@ -981,7 +981,7 @@ public:
 
                     if( this_species->maximum_charge_state_ == 0 ) {
                         this_species->maximum_charge_state_ = this_species->atomic_number_;
-                        WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<this_species->maximum_charge_state_ << " taken from atomic_number" );
+                        CAREFUL(2, "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<this_species->maximum_charge_state_ << " taken from atomic_number" );
                     }
                     this_species->ionization_rate_ = PyTools::extract_py( "ionization_rate", "Species", ispec );
                     if( this_species->ionization_rate_ == Py_None ) {
@@ -1006,8 +1006,8 @@ public:
                 }
 
                 if( params.vectorization_mode != "off" ) {
-                    WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment!" );
-                    WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
+                    CAREFUL(2, "Performances of advanced physical processes which generates new particles could be degraded for the moment!" );
+                    CAREFUL(2, "\t The improvement of their integration in vectorized algorithms is in progress." );
                 }
 
                 PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec );
