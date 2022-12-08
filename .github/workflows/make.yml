@@ -46,4 +46,4 @@ jobs:
           export PYTHONEXE=python3
           export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
           cd validation
-          python3 validation.py -b "tst_quick_1d.py" -m 2 -o 2 -v
+          python3 validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
