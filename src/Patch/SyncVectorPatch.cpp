@@ -334,12 +334,12 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 
 #if defined( SMILEI_OPENACC_MODE )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
-                int blabla = n_space[0];
-                #pragma acc parallel if ( is_memory_on_device) present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize])
+                int nspace0 = n_space[0];
+                #pragma acc parallel if ( is_memory_on_device) present(pt1[0-nspace0*ny_*nz_:ptsize],pt2[0:ptsize])
                 #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target if( is_memory_on_device )
-    #pragma omp teams distribute parallel for
+                #pragma omp target if( is_memory_on_device )
+                #pragma omp teams distribute parallel for
 #endif
                 for( unsigned int i = 0; i < last; i++ ) {
                     pt1[i] += pt2[i];
@@ -610,8 +610,8 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target if( is_memory_on_device )
-    #pragma omp teams distribute parallel for collapse( 2 )
+                        #pragma omp target if( is_memory_on_device )
+                         #pragma omp teams distribute parallel for collapse( 2 )
 #endif
                         for( unsigned int j = 0; j < outer_last; j += outer_stride ) {
                             for( unsigned int i = 0; i < inner_last; i++ ) {

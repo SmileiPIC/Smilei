@@ -71,6 +71,10 @@ public :
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                     fields[ifield]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+fields[ifield]->isDual_[0] );
                     fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
+#ifdef SMILEI_OPENACC_MODE
+                    double * pointer = fields[ifield]->sendFields_[iNeighbor]->data_;
+                    int size = fields[ifield]->globalDims_;
+#endif
                 }
             }
             if ( !dynamic_cast<cField*>( fields[ipatch] ) )
@@ -80,6 +84,13 @@ public :
         }
 
         // iDim = 0, local
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( SMILEI_OPENACC_MODE )
+    // At initialization, we may get a CPU buffer than needs to be handled on the host.
+        const bool is_memory_on_device = fields.size() > 0 &&
+                                     smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
+#endif
+
         for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {
             nx_ = fields[icomp*nPatches]->dims_[0];
             ny_ = 1;
@@ -101,6 +112,17 @@ public :
                     pt1 = &( *field1 )( n_space[0]*ny_*nz_ );
                     pt2 = &( *field2 )( 0 );
                     //Sum 2 ==> 1
+
+#if defined( SMILEI_OPENACC_MODE )
+                    int ptsize = fields[ifield]->globalDims_;
+                    int nspace0 = n_space[0];
+                    #pragma acc parallel if ( is_memory_on_device) present(pt1[0-nspace0*ny_*nz_:ptsize],pt2[0:ptsize])
+                    #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                    #pragma omp target if( is_memory_on_device )
+                    #pragma omp teams distribute parallel for
+#endif
+
                     for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
                         pt1[i] += pt2[i];
                     }
@@ -144,6 +166,11 @@ public :
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                         fields[ifield]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+fields[ifield]->isDual_[1] );
                         fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
+#ifdef SMILEI_OPENACC_MODE
+                double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2]->data_;
+                int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->globalDims_;
+                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+#endif
                     }
                 }
                 if ( !dynamic_cast<cField*>( fields[ipatch] ) )
@@ -153,6 +180,12 @@ public :
             }
 
             // iDim = 1, local
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            const bool is_memory_on_device = fields.size() > 0 &&
+                                         smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.fields[0]->data() );
+#endif
+
             for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {
                 nx_ = fields[icomp*nPatches]->dims_[0];
                 ny_ = 1;
@@ -175,6 +208,17 @@ public :
                         field2 = static_cast<F *>( fields[ifield] );
                         pt1 = &( *field1 )( n_space[1]*nz_ );
                         pt2 = &( *field2 )( 0 );
+
+#if defined( SMILEI_OPENACC_MODE )
+                        int ptsize = fields[ifield]->globalDims_;
+                        int blabla = n_space[1];
+                        #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
+                        #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                        #pragma omp target if( is_memory_on_device )
+                        #pragma omp teams distribute parallel for collapse(2)
+#endif
+
                         for( unsigned int j = 0; j < nx_ ; j++ ) {
                             for( unsigned int i = 0; i < gsp[1]*nz_ ; i++ ) {
                                 pt1[i] += pt2[i];
@@ -221,12 +265,22 @@ public :
                         if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                             fields[ifield]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+fields[ifield]->isDual_[2] );
                             fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
+#ifdef SMILEI_OPENACC_MODE
+                            double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->data_;
+                            int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+#endif                       
                         }
                     }
                     vecPatches( ipatch )->initSumField( fields[ifield], 2, smpi );
                 }
 
                 // iDim = 2 local
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const bool is_memory_on_device = fields.size() > 0 &&
+                                             smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
+#endif
+
                 for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {
                     nx_ = fields[icomp*nPatches]->dims_[0];
                     ny_ = 1;
@@ -249,6 +303,17 @@ public :
                             field2 = static_cast<F *>( fields[ifield] );
                             pt1 = &( *field1 )( n_space[2] );
                             pt2 = &( *field2 )( 0 );
+
+#if defined( SMILEI_OPENACC_MODE )
+                            int ptsize = fields[ifield]->globalDims_;
+                            int blabla = n_space[2];
+                            #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
+                            #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                            #pragma omp target if( is_memory_on_device )
+                            #pragma omp teams distribute parallel for collapse( 2 )
+#endif
+
                             for( unsigned int j = 0; j < nx_*ny_ ; j++ ) {
                                 for( unsigned int i = 0; i < gsp[2] ; i++ ) {
                                     pt1[i] += pt2[i];
