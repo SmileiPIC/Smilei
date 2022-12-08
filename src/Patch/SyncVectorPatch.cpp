@@ -275,18 +275,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches.densitiesMPIx[ifield             ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->extract_fields_sum( 0, iNeighbor, oversize[0] );
-#ifdef SMILEI_OPENACC_MODE
-                Field* field = vecPatches.densitiesMPIx[ifield      ];
-                double* Jx   = field->sendFields_[iNeighbor]->data_;
-                int sizeofJx = field->sendFields_[iNeighbor]->globalDims_;
-                field = vecPatches.densitiesMPIx[ifield+nPatchMPIx  ];
-                double* Jy   = field->sendFields_[iNeighbor]->data_;
-                int sizeofJy = field->sendFields_[iNeighbor]->globalDims_;
-                field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
-                double*   Jz = field->sendFields_[iNeighbor]->data_;
-                int sizeofJz = field->sendFields_[iNeighbor]->globalDims_;
-                //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                 Field* field = vecPatches.densitiesMPIx[ifield      ];
+//                 double* Jx   = field->sendFields_[iNeighbor]->data_;
+//                 int sizeofJx = field->sendFields_[iNeighbor]->globalDims_;
+//                 field = vecPatches.densitiesMPIx[ifield+nPatchMPIx  ];
+//                 double* Jy   = field->sendFields_[iNeighbor]->data_;
+//                 int sizeofJy = field->sendFields_[iNeighbor]->globalDims_;
+//                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
+//                 double*   Jz = field->sendFields_[iNeighbor]->data_;
+//                 int sizeofJz = field->sendFields_[iNeighbor]->globalDims_;
+//                 //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
             }
         }
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi, true ); // Jx
@@ -297,7 +297,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
     // iDim = 0, local
     const int nFieldLocalx = vecPatches.densitiesLocalx.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_MODE )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
     const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
@@ -364,18 +364,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
-                Field* field = vecPatches.densitiesMPIx[ifield      ];
-                double* Jx   = field->recvFields_[(iNeighbor+1)%2]->data_;
-                int sizeofJx = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                field = vecPatches.densitiesMPIx[ifield+nPatchMPIx  ];
-                double* Jy   = field->recvFields_[(iNeighbor+1)%2]->data_;
-                int sizeofJy = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
-                double*   Jz = field->recvFields_[(iNeighbor+1)%2]->data_;
-                int sizeofJz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                 Field* field = vecPatches.densitiesMPIx[ifield      ];
+//                 double* Jx   = field->recvFields_[(iNeighbor+1)%2]->data_;
+//                 int sizeofJx = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
+//                 field = vecPatches.densitiesMPIx[ifield+nPatchMPIx  ];
+//                 double* Jy   = field->recvFields_[(iNeighbor+1)%2]->data_;
+//                 int sizeofJy = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
+//                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
+//                 double*   Jz = field->recvFields_[(iNeighbor+1)%2]->data_;
+//                 int sizeofJz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
+//                 //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                 vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -408,18 +408,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     vecPatches.densitiesMPIy[ifield             ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->extract_fields_sum( 1, iNeighbor, oversize[1] );
-#ifdef SMILEI_OPENACC_MODE
-                    Field* field = vecPatches.densitiesMPIy[ifield      ];
-                    double* Jx   = field->sendFields_[iNeighbor+2]->data_;
-                    int sizeofJx = field->sendFields_[iNeighbor+2]->globalDims_;
-                    field = vecPatches.densitiesMPIy[ifield+nPatchMPIy  ];
-                    double* Jy   = field->sendFields_[iNeighbor+2]->data_;
-                    int sizeofJy = field->sendFields_[iNeighbor+2]->globalDims_;
-                    field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
-                    double*   Jz = field->sendFields_[iNeighbor+2]->data_;
-                    int sizeofJz = field->sendFields_[iNeighbor+2]->globalDims_;
-                    //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                     Field* field = vecPatches.densitiesMPIy[ifield      ];
+//                     double* Jx   = field->sendFields_[iNeighbor+2]->data_;
+//                     int sizeofJx = field->sendFields_[iNeighbor+2]->globalDims_;
+//                     field = vecPatches.densitiesMPIy[ifield+nPatchMPIy  ];
+//                     double* Jy   = field->sendFields_[iNeighbor+2]->data_;
+//                     int sizeofJy = field->sendFields_[iNeighbor+2]->globalDims_;
+//                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
+//                     double*   Jz = field->sendFields_[iNeighbor+2]->data_;
+//                     int sizeofJz = field->sendFields_[iNeighbor+2]->globalDims_;
+//                     //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                 }
             }
             vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi, true ); // Jx
@@ -502,18 +502,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
-                    Field* field = vecPatches.densitiesMPIy[ifield      ];
-                    double* Jx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
-                    int sizeofJx = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    field = vecPatches.densitiesMPIy[ifield+nPatchMPIy  ];
-                    double* Jy   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
-                    int sizeofJy = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
-                    double*   Jz = field->recvFields_[(iNeighbor+1)%2+2]->data_;
-                    int sizeofJz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                     Field* field = vecPatches.densitiesMPIy[ifield      ];
+//                     double* Jx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
+//                     int sizeofJx = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+//                     field = vecPatches.densitiesMPIy[ifield+nPatchMPIy  ];
+//                     double* Jy   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
+//                     int sizeofJy = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+//                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
+//                     double*   Jz = field->recvFields_[(iNeighbor+1)%2+2]->data_;
+//                     int sizeofJz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+//                     //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                     vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->inject_fields_sum( 1, iNeighbor, oversize[1] );
@@ -544,18 +544,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         vecPatches.densitiesMPIz[ifield             ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->extract_fields_sum( 2, iNeighbor, oversize[2] );
-#ifdef SMILEI_OPENACC_MODE
-                        Field* field = vecPatches.densitiesMPIz[ifield      ];
-                        double* Jx   = field->sendFields_[iNeighbor+4]->data_;
-                        int sizeofJx = field->sendFields_[iNeighbor+4]->globalDims_;
-                        field = vecPatches.densitiesMPIz[ifield+nPatchMPIz  ];
-                        double* Jy   = field->sendFields_[iNeighbor+4]->data_;
-                        int sizeofJy = field->sendFields_[iNeighbor+4]->globalDims_;
-                        field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz];
-                        double*   Jz = field->sendFields_[iNeighbor+4]->data_;
-                        int sizeofJz = field->sendFields_[iNeighbor+4]->globalDims_;
-                        //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                         Field* field = vecPatches.densitiesMPIz[ifield      ];
+//                         double* Jx   = field->sendFields_[iNeighbor+4]->data_;
+//                         int sizeofJx = field->sendFields_[iNeighbor+4]->globalDims_;
+//                         field = vecPatches.densitiesMPIz[ifield+nPatchMPIz  ];
+//                         double* Jy   = field->sendFields_[iNeighbor+4]->data_;
+//                         int sizeofJy = field->sendFields_[iNeighbor+4]->globalDims_;
+//                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz];
+//                         double*   Jz = field->sendFields_[iNeighbor+4]->data_;
+//                         int sizeofJz = field->sendFields_[iNeighbor+4]->globalDims_;
+//                         //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                     }
                 }
                 vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi, true ); // Jx
@@ -636,18 +636,18 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2 ); // Jz
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
-                        Field* field = vecPatches.densitiesMPIz[ifield      ];
-                        double* Jx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
-                        int sizeofJx = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        field = vecPatches.densitiesMPIz[ifield+nPatchMPIz  ];
-                        double* Jy   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
-                        int sizeofJy = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz ];
-                        double*   Jz = field->recvFields_[(iNeighbor+1)%2+4]->data_;
-                        int sizeofJz = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                         Field* field = vecPatches.densitiesMPIz[ifield      ];
+//                         double* Jx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
+//                         int sizeofJx = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
+//                         field = vecPatches.densitiesMPIz[ifield+nPatchMPIz  ];
+//                         double* Jy   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
+//                         int sizeofJy = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
+//                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz ];
+//                         double*   Jz = field->recvFields_[(iNeighbor+1)%2+4]->data_;
+//                         int sizeofJz = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
+//                         //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                         vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->inject_fields_sum( 2, iNeighbor, oversize[2] );

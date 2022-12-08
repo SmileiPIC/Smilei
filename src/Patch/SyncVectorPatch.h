@@ -71,10 +71,10 @@ public :
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                     fields[ifield]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+fields[ifield]->isDual_[0] );
                     fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
-#ifdef SMILEI_OPENACC_MODE
-                    double * pointer = fields[ifield]->sendFields_[iNeighbor]->data_;
-                    int size = fields[ifield]->globalDims_;
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                     double * pointer = fields[ifield]->sendFields_[iNeighbor]->data_;
+//                     int size = fields[ifield]->globalDims_;
+// #endif
                 }
             }
             if ( !dynamic_cast<cField*>( fields[ipatch] ) )
@@ -85,7 +85,7 @@ public :
 
         // iDim = 0, local
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || ( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_MODE )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
         const bool is_memory_on_device = fields.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
@@ -169,11 +169,11 @@ public :
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                         fields[ifield]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+fields[ifield]->isDual_[1] );
                         fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
-#ifdef SMILEI_OPENACC_MODE
-                double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2]->data_;
-                int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
-#endif
+// #ifdef SMILEI_OPENACC_MODE
+//                 double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2]->data_;
+//                 int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->globalDims_;
+//                 //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+// #endif
                     }
                 }
                 if ( !dynamic_cast<cField*>( fields[ipatch] ) )
@@ -274,10 +274,10 @@ public :
                         if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                             fields[ifield]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+fields[ifield]->isDual_[2] );
                             fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
-#ifdef SMILEI_OPENACC_MODE
-                            double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->data_;
-                            int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-#endif                       
+// #ifdef SMILEI_OPENACC_MODE
+//                             double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->data_;
+//                             int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+// #endif                       
                         }
                     }
                     vecPatches( ipatch )->initSumField( fields[ifield], 2, smpi, true );
