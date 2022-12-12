@@ -382,6 +382,14 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		
+		# Handle moving window
+		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
+			self._xoffset = h5item.attrs["x_moved"]
+			if self.dim>1 and hasattr(self,"_extent"):
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
+		
 		for field in self._fieldname: # for each field in operation
 			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
@@ -431,6 +439,14 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		
+		# Handle moving window
+		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
+			self._xoffset = h5item.attrs["x_moved"]
+			if self.dim>1 and hasattr(self,"_extent"):
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
+		
 		step = 2 if self._is_complex else 1
 		for field in self._fieldname: # for each field in operation
 			available_modes = self._fields[field]
