@@ -396,7 +396,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             for( unsigned int i=0; i<species_->file_position_npart_; i+=chunksize ) {
                 // Get position arrays for this chunks
                 std::vector<std::string> ax = {"position/x", "position/y", "position/z"};
-                hsize_t npart  = min( chunksize, species_->file_position_npart_ - i );
+                hsize_t npart  = std::min( chunksize, species_->file_position_npart_ - i );
                 for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
                    fp.vect( ax[idim], buffer[idim], true, i, npart );
                    position[idim] = &buffer[idim][0];

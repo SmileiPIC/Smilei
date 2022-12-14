@@ -7,7 +7,7 @@
 Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     : Projector2D{ parameters, a_patch }
 {
-    // Shouldn't Projector2D's state initializationn be done in Projector2D's
+    // Shouldn't Projector2D's state initialization be done in Projector2D's
     // constructor ?
     Projector2D::dx_inv_         = 1.0 / parameters.cell_length[0];
     Projector2D::dy_inv_         = 1.0 / parameters.cell_length[1];
@@ -19,7 +19,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
 
     // Due to the initialization order (Projector2D's constructor does not
     // initialize it's member variable) we better initialize
-    // Projector2D2OrderGPU's member variable after explicititly initializing
+    // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
     pxr  = !parameters.is_pxr;
     dt   = parameters.timestep;
