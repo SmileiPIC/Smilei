@@ -29,7 +29,16 @@ public:
         bool diag_flag = false );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+    inline void currentsAndDensity(
+        double *Jx, 
+        double *Jy,
+        double *Jz, 
+        double *rho,
+        Particles &particles,
+        unsigned int ipart,
+        double invgf,
+        int *iold,
+        double *deltaold );
 
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;

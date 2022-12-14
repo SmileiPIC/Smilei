@@ -188,7 +188,17 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+void Projector2D2Order::currentsAndDensity(
+    double *Jx, 
+    double *Jy, 
+    double *Jz,
+    double *rho, 
+    Particles &particles, 
+    unsigned int ipart, 
+    double invgf, 
+    int *iold, 
+    double *deltaold, 
+    int bin_shift )
 {
     int nparts = particles.size();
     
@@ -202,7 +212,6 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     double crx_p = charge_weight*dx_ov_dt_;
     double cry_p = charge_weight*dy_ov_dt_;
     double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
-    
     
     // variable declaration
     double xpn, ypn;

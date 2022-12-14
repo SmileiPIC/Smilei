@@ -539,7 +539,17 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold )
+void 
+Projector3D2OrderGPU::currentsAndDensity( 
+    double *Jx,
+    double *Jy,
+    double *Jz, 
+    double *rho, 
+    Particles &particles, 
+    unsigned int ipart, 
+    double invgf, 
+    int *iold, 
+    double *deltaold )
 {
     int nparts = particles.size();
 
@@ -970,16 +980,16 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
     } else {
 
         double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
-        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->globalDims_ : EMfields->Jx_->globalDims_;
+        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
 
         double *const __restrict__ b_Jy  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
-        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->globalDims_ : EMfields->Jy_->globalDims_;
+        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
 
         double *const __restrict__ b_Jz  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
-        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->globalDims_ : EMfields->Jz_->globalDims_;
+        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
 
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
-        unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->globalDims_ : EMfields->rho_->globalDims_;
+        unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
 
         //int Jy_size = EMfields->Jy_->globalDims_ ;
         //int Jz_size = EMfields->Jz_->globalDims_ ;
