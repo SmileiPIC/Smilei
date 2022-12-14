@@ -230,14 +230,14 @@ class Validation(object):
             self.machine_class = MachineRuche
         elif "irene" in self.HOSTNAME:
             self.machine_class = MachineIrene
-        elif self.HOSTNAME in ["CINES01", "lumi01"]:
-            # TODO(Etienne M): For now, we use the Cines' porting machine,
-            # at some point yoy'll have to change that to the true Adastra
-            # hostname
-            self.machine_class = MachineAdastra
         else:
-            print("Unknown machine hostname '" + self.HOSTNAME + "'. Using default settings !")
-            self.machine_class = Machine
+            import socket
+            self.HOSTNAME = socket.getfqdn()
+            if 'adastra' in self.HOSTNAME or 'CINES01' in self.HOSTNAME or 'lumi01' in self.HOSTNAME:
+                self.machine_class = MachineAdastra
+            else:
+                print("Unknown machine hostname '" + self.HOSTNAME + "'. Using default settings !")
+                self.machine_class = Machine
         self.machine = self.machine_class( self.smilei_path, self.options )
         
         # Define sync()
