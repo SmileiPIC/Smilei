@@ -13,19 +13,10 @@
 # To compile you may want these modules:
 #
 # module purge
-# # Hardware, libfabric is not loaded by craype-network-ofi cines01 (while it is on lumi01)
-# module load craype-network-ofi craype-x86-trento libfabric/1.15.0.0
-# # Compiler
-# module load PrgEnv-cray/8.3.3 cce/14.0.1
-# # MPI
-# module load cray-mpich/8.1.17
-# # GPU
-# module load craype-accel-amd-gfx90a
-# module load rocm/4.5.2
-# # Other libs
-# module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.12.1
-# # Introduce perftools-* in case the user needs it, note that this module is not advertised by "module av" !
-# module load perftools-base/22.06.0
+# module load craype-accel-amd-gfx90a craype-x86-trento
+# module load PrgEnv-cray/8.3.3
+# module load cray-mpich/8.1.21 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
+# module load amd-mixed/5.2.3
 # module list
 #
 # Optionally, you may want to use a virtual python environment in which to 
@@ -52,14 +43,19 @@ THRUSTCXX := $(SMILEICXX)
 # Feature flags
 ################################################################################
 
-ADASTRA_FEATURE_FLAGS := -std=c++11
+ifneq (,$(call parse_config,gpu_amd))
+    # Use C++14 as required by rocThrust
+	ADASTRA_FEATURE_FLAGS := -std=c++14
+else
+	ADASTRA_FEATURE_FLAGS := -std=c++11
+endif
 
 ################################################################################
 # Warning flags
 ################################################################################
 
 ADASTRA_WARNING_FLAGS := -Wextra -pedantic -fdiagnostics-show-option -fstrict-aliasing -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-aliasing -Wsuggest-override -Wswitch-default -Wswitch-enum -Wtautological-compare -Wundef -Wunreachable-code
-ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+# ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
 ################################################################################
 # Optimization flags
@@ -86,6 +82,9 @@ ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS)
 # Omp flags
 ################################################################################
 
+# No need to be specific with something like:
+# -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a
+# The craype-accel-amd-gfx90a module does it for us.
 ADASTRA_OMP_FLAGS := -fopenmp
 
 ################################################################################
@@ -93,30 +92,19 @@ ADASTRA_OMP_FLAGS := -fopenmp
 ################################################################################
 
 ifneq (,$(call parse_config,gpu_amd))
-    # Add mi100/250x amd gpu arch
-	# xnack is a feature required to use the AMD unified memory (through 
-	# HMM/HSA). xnack- disable it, xnack+ enabled it, and if not specified,
-	# the compiler produces xnack agnostic code.
-	# Details at: https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#migration-of-memory-by-allocator-and-xnack-mode
-    ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
-    ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
-	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
-    # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
-	# ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a:xnack-
-
-    # TODO(Etienne M): This should be disabled right ? Unfortunately its a mess to undefine from this machine file
-    # ADASTRA_OPTIMIZATION_FLAGS += -U_VECTO
-
     # When using OMP
     ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP=1
-    ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+
+    # ADASTRA_ACCELERATOR_GPU_TARGET := gfx908
+	# ADASTRA_ACCELERATOR_GPU_TARGET := gfx908:xnack-
+    # ADASTRA_ACCELERATOR_GPU_TARGET := gfx90a
+	# ADASTRA_ACCELERATOR_GPU_TARGET := gfx90a:xnack-
 
     # When using hip/cuda to build kernels
     # When you ask CCE to drive the hip compilation
     # NOTE: the -x hip flag MUST come before the .cu files !
-    ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
-    # When you use hipcc directly
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # Diagnostics
     # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
@@ -127,7 +115,10 @@ endif
 # Includes
 ################################################################################
 
-ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
+# ADASTRA_INCLUDES_MPI := -I$(CRAY_MPICH_DIR)/include
+# ADASTRA_INCLUDES_HIP := -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
+
+ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP)
 
 ################################################################################
 # Libs
@@ -137,14 +128,17 @@ ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -
 # -foffload=-lm
 
 # Small perf increase but causes ABI problems when cray-pat is used
-# ADASTRA_OMP_STATIC := -static-openmp
-# ADASTRA_MPI_gfx908_LIB := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
-# ADASTRA_MPI_gfx90a_LIB := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
-# ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_MPI_gfx908_LIB) $(ADASTRA_MPI_gfx90a_LIB)
+# ADASTRA_LIBRARIES_OMP_STATIC := -static-openmp
 
-# ADASTRA_HIP := -L$(ROCM_PATH)/lib -lamdhip64
+# ADASTRA_LIBRARIES_MPI_gfx908 := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
+# ADASTRA_LIBRARIES_MPI_gfx90a := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
+# ADASTRA_LIBRARIES_MPI        := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_LIBRARIES_MPI_gfx90a)
 
-ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
+# The CCE is able to look for the rocm headers but it has no way of knowing if
+# it has to link with the HIP runtime. We have to do it manually.
+ADASTRA_LIBRARIES_HIP := -L$(ROCM_PATH)/lib -lamdhip64
+
+ADASTRA_LIBRARIES := $(ADASTRA_LIBRARIES_OMP_STATIC) $(ADASTRA_LIBRARIES_MPI) $(ADASTRA_LIBRARIES_HIP)
 
 ################################################################################
 #
@@ -171,13 +165,15 @@ CXXFLAGS += $(ADASTRA_OMP_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added
 CXXFLAGS += $(ADASTRA_INCLUDES)
+CXXFLAGS += -v
 
 LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
-LDFLAGS += $(ADASTRA_LIBS)
+LDFLAGS += $(ADASTRA_LIBRARIES)
 # We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
 LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
 # Without Ofast/O3 at link time, the kernel'll not be optimized ~~. 
 # Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
 # -v to dump omp kernel info (register alloc/spill etc.)
-LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS) -v
+LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
+LDFLAGS += -v
 # LDFLAGS += --save-temps # OpenMP device kernel info. To use with the Cray compiler

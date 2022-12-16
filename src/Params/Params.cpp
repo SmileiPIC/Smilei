@@ -1175,7 +1175,7 @@ void Params::compute()
         }
         PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
         for( unsigned int i=0; i<nDim_field; i++ ) {
-            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+            region_oversize[i] = std::max( region_oversize[i], region_ghost_cells );
         }
         if( is_spectral && geometry == "AMcylindrical" )  {
             //Force ghost cells number in L when spectral
