@@ -1364,10 +1364,10 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         } // end condition on diag and not particle test
 
      } // end moving particle
-     #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
-     {
-     smpi->reduceDynamicsBufferSize( buffer_id, params.geometry=="AMcylindrical" );
-     }
+     //#pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+     //{
+     //smpi->reduceDynamicsBufferSize( buffer_id, params.geometry=="AMcylindrical" );
+     //}
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
 
      if(time_dual>time_frozen_){
