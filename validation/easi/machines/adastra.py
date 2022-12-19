@@ -91,21 +91,26 @@ numactl -H
 LaunchSRun() {{
     module list
 
-    cat <<EOF > soft_gpu_visibility_restrict.sh
+    SRUN_FLAGS_BASE="--mpi=cray_shasta --kill-on-bad-exit=1"
+
+    SRUN_FLAGS_BINDING="--cpu-bind=none --mem-bind=none"
+    # SRUN_FLAGS_BINDING="--cpus-per-task={the_reserved_thread_count} --gpu-bind=closest"
+
+    SRUN_FLAGS_EXTRA="--label"
+
+    cat <<EOF > soft_gpu_visibility_restrict.sh && chmod +x soft_gpu_visibility_restrict.sh
 #!/bin/bash
 export HIP_VISIBLE_DEVICES=\$SLURM_LOCALID
 exec "\$@"
 EOF
 
-    chmod +x soft_gpu_visibility_restrict.sh
+    SRUN_WRAPPER_SCRIPT="soft_gpu_visibility_restrict.sh"
+    # SRUN_WRAPPER_SCRIPT="embind"
+    # SRUN_WRAPPER_SCRIPT="strace"
 
-    srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- soft_gpu_visibility_restrict.sh "$@" > {the_output_file} 2>&1
-    # srun --cpus-per-task={the_reserved_thread_count} --gpu-bind=closest --mpi=cray_shasta --kill-on-bad-exit=1 -- "$@" > {the_output_file} 2>&1
-    # srun --cpu-bind=none --mem-bind=none                                --mpi=cray_shasta --kill-on-bad-exit=1 -- embind "$@" > {the_output_file} 2>&1
-
-    # srun strace "$@" > {the_output_file} 2>&1
-    # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
-    # srun bash -c "$kCmd" > {the_output_file} 2>&1
+    set -x
+    srun ${{SRUN_FLAGS_BASE}} ${{SRUN_FLAGS_BINDING}} ${{SRUN_FLAGS_EXTRA}} -- ${{SRUN_WRAPPER_SCRIPT}} "$@" > {the_output_file} 2>&1
+    set +x
 }}
 
 # You must have built smilei with the 'perftools' module loaded!

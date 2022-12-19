@@ -389,9 +389,9 @@ namespace detail {
         //         - compute bins
         // NOTE: This method consumes a lot of memory ! O(N)
 
-        const auto new_particle_to_inject_count = particle_to_inject.deviceSize();
-        const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
-                                                                                                last_particle );
+        const auto new_particle_to_inject_count  = particle_to_inject.deviceSize();
+        const auto current_local_particles_count = std::distance( first_particle, last_particle );
+        const auto new_particle_count            = new_particle_to_inject_count + current_local_particles_count;
 
         // NOTE: We really want a non-initializing vector here!
         // It's possible to give a custom allocator to thrust::device_vector.
@@ -817,15 +817,10 @@ void nvidiaParticles::initializeDataOnDevice()
     // The world shall end if we call this function multiple times
     SMILEI_ASSERT( nvidia_double_prop_.empty() );
 
-    // "Over-reserve" to minimize the cost of future reallocation, it might be
-    // interesting to set the value to 1.2F ~~
-    const auto kGrowthFactor      = 1.0F;
     const auto kPositionDimension = Position.size();
-    const auto kHostParticleCount = Position[0].size();
 
+    // We sure that we have as many say, position dimension as the base class.
     resizeDimensions( kPositionDimension );
-    reserve( static_cast<unsigned int>( static_cast<float>( kHostParticleCount ) * kGrowthFactor ) );
-    resize( kHostParticleCount );
 
     // Initialize the list of pointers
 
@@ -855,14 +850,14 @@ void nvidiaParticles::initializeDataOnDevice()
         nvidia_double_prop_.push_back( &nvidia_tau_ );
     }
 
-    if( deviceSize() == 0 ) {
-        // At this point, it means that kHostParticleCount == 0
-        reserve( 100 );
-        // Continue, we may have to re-initialize the bins, even thought there is
-        // no particles yet.
-    }
+    const auto kHostParticleCount = Position[0].size();
 
-    syncGPU();
+    if( kHostParticleCount == 0 ) {
+        // Should we reserve some space ?
+        // reserve( 100 );
+    } else {
+        syncGPU();
+    }
 
     if( prepareBinIndex() < 0 ) {
         // Either we deal with a simulation with unsupported space dimensions
