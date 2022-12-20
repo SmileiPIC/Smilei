@@ -67,8 +67,7 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                        \
+        #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
                                                      device_particle_position_x /* [0:particle_count] */, \
                                                      device_particle_position_y /* [0:particle_count] */, \
                                                      device_particle_momentum_z /* [0:particle_count] */, \
@@ -445,46 +444,35 @@ namespace hip {
                 __device__ void
                 AddNoReturn( float *a_pointer, float a_value )
                 {
+        #if defined( __gfx90a__ )
+                    ::unsafeAtomicAdd( a_pointer, a_value );
+
+                    // uint32_t *as_uint32{ reinterpret_cast<uint32_t *>( a_pointer ) };
+                    // uint32_t  last_seen_value{ __atomic_load_n( as_uint32, __ATOMIC_RELAXED ) };
+                    // uint32_t  assumed;
+                    // do {
+                    //     assumed         = last_seen_value;
+                    //     last_seen_value = ::atomicCAS( as_uint32,
+                    //                                    last_seen_value,
+                    //                                    __float_as_uint( a_value + __float_as_uint( last_seen_value ) ) );
+                    // } while( assumed != last_seen_value );
+        #else
                     ::atomicAdd( a_pointer, a_value );
+        #endif
                 }
 
                 __device__ void
                 AddNoReturn( double *a_pointer, double a_value )
                 {
+        #if defined( __gfx90a__ )
+                    ::unsafeAtomicAdd( a_pointer, a_value );
+        #else
                     ::atomicAdd( a_pointer, a_value );
-
-                    // NOTE:
-                    // On MI100, LDS (or GDS) double atomicAdd is compiled
-                    // into a CAS loop such as the one below (which gives the
-                    // same performance).
-                    // On MI200, there is hardware support for this type of
-                    // atomic operation.
-                    //
-                    // Example of TAS CAS loop:
-                    // https://github.com/ROCm-Developer-Tools/HIP/pull/1816/files?diff=split&w=0
-                    //
-                    // unsigned long long *uaddr{ reinterpret_cast<unsigned long long *>( a_pointer ) };
-                    // unsigned long long  r{ __atomic_load_n( uaddr, __ATOMIC_RELAXED ) };
-                    // unsigned long long  assumed;
-                    // do {
-                    //     assumed = r;
-                    //     r       = ::atomicCAS( uaddr,
-                    //                            r,
-                    //                            __double_as_longlong( a_value + __longlong_as_double( r ) ) );
-                    // } while( assumed != r );
+        #endif
                 }
             } // namespace LDS
 
             namespace GDS {
-                __device__ void
-                AddNoReturn( float *a_pointer, float a_value )
-                {
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                    ::atomicAddNoRet( a_pointer, a_value );
-        #pragma clang diagnostic pop
-                }
-
                 __device__ void
                 AddNoReturn( double *a_pointer, double a_value )
                 {

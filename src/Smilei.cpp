@@ -124,15 +124,7 @@ int main( int argc, char *argv[] )
         // oblivious to the program (only one, the one by default).
         // This could be a missed but very advanced optimization for some
         // kernels/exchange.
-        ERROR( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 or ROCR_VISIBLE_DEVICES in your slurm script." );
-        // WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
-
-        // // This assumes the MPI rank on a node are sequential
-        // const int this_process_gpu = smpi.getRank() % gpu_count;
-
-        // // std::cout << "Using GPU id: " << this_process_gpu << "\n";
-
-        // ::omp_set_default_device( this_process_gpu );
+        ERROR( "Simlei needs only one accelerator (GPU). Look for HIP_VISIBLE_DEVICES or 'gpu-bind=closest' in your SLURM script or use a custom binding script." );
     } else {
         // ::omp_set_default_device(0);
     }
