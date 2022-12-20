@@ -629,9 +629,8 @@ void ElectroMagn::computeTotalRhoJOnDevice()
         double *const __restrict__ Jzsp = Jz_s[ispec] ? Jz_s[ispec]->data() : nullptr;
         double *const __restrict__ rhosp = rho_s[ispec] ? rho_s[ispec]->data() : nullptr;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-#elif defined( SMILEI_OPENACC_MODE )
+
+#if defined( SMILEI_OPENACC_MODE )
             #pragma acc parallel present( \
                                           Jxp[0:Jx_size],     \
                                           Jyp[0:Jy_size],     \
@@ -642,10 +641,11 @@ void ElectroMagn::computeTotalRhoJOnDevice()
                                           Jzsp[0:Jz_size],    \
                                           rhosp[0:rho_size]   \
                                           )  
+            {
 #endif
-        {
         if (Jxsp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -656,6 +656,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
         }
         if (Jysp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -666,6 +667,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
         }
         if (Jzsp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -676,6 +678,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
         }
         if (rhosp) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -684,7 +687,9 @@ void ElectroMagn::computeTotalRhoJOnDevice()
                 rhop[i] += rhosp[i];
             }
         }
+#if defined( SMILEI_OPENACC_MODE )
         } // end parallel region
+#endif
 
         //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( rhosp, rho_size );
 

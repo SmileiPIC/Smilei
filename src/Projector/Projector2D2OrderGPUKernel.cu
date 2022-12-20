@@ -67,6 +67,7 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
+#if defined (SMILEI_ACCELERATOR_GPU_OMP)
         #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
                                                      device_particle_position_x /* [0:particle_count] */, \
                                                      device_particle_position_y /* [0:particle_count] */, \
@@ -85,7 +86,7 @@ namespace naive {
                      deltaold [0:3 * particle_count]) \
         #pragma acc loop gang worker vector
 #endif
-        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
+        for ( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
             const double *const __restrict__ deltaold = &deltaold_[particle_index];
@@ -740,8 +741,8 @@ namespace hip {
                 atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
-        }
-    } // namespace kernel
+        } // end DepositCurrent
+
 
        template <typename ComputeFloat,
                   typename ReductionFloat,
@@ -992,7 +993,7 @@ namespace hip {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[0] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * Sx1[i] * Sy1[j]  ) ) );
+                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j]  ) ) );
                     }
                 }
 
@@ -1247,7 +1248,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
 //! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
 //!
 extern "C" void
-currentDepositionKernel( double *__restrict__ host_Jx,
+currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
                          double *__restrict__ host_Jy,
                          double *__restrict__ host_Jz,
                          double *__restrict__ host_rho,

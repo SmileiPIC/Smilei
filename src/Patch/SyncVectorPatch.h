@@ -186,7 +186,7 @@ public :
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             const bool is_memory_on_device = fields.size() > 0 &&
-                                         smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.fields[0]->data() );
+                smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
 
             for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {

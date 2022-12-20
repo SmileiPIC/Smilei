@@ -70,6 +70,7 @@ currentDepositionKernel( double *__restrict__ Jx,
                          int    nprimy,
                          int    pxr );
 
+extern "C" void
 currentAndDensityDepositionKernel( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,

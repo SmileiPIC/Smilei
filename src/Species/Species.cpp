@@ -569,17 +569,17 @@ Species::prepareSpeciesCurrentAndChargeOnDevice(
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
     }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp target
-#elif defined( SMILEI_OPENACC_MODE )
+
+#if defined( SMILEI_OPENACC_MODE )
         #pragma acc parallel present( Jx_s[0:Jx_size],     \
                                         Jy_s[0:Jy_size], \
                                         Jz_s[0:Jz_size],   \
                                         rho_s[0:rho_size] )  
-#endif
         {
+#endif
         if (Jx_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -590,6 +590,7 @@ Species::prepareSpeciesCurrentAndChargeOnDevice(
         }
         if (Jy_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -600,6 +601,7 @@ Species::prepareSpeciesCurrentAndChargeOnDevice(
         }
         if (Jz_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -610,6 +612,7 @@ Species::prepareSpeciesCurrentAndChargeOnDevice(
         }
         if (rho_s) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
             #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
             #pragma acc loop gang worker vector
@@ -618,7 +621,9 @@ Species::prepareSpeciesCurrentAndChargeOnDevice(
                 rho_s[i] = 0;
             }
         }
+#if defined( SMILEI_OPENACC_MODE )  
         } // end parallel region
+#endif
 }
 
 //! Deallocate species Current (J) and Charge (Rho) arrays on Device
@@ -703,7 +708,7 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
 
-#if defined( SMILEI_ACCELERATOR_MODE) 
+#if defined( SMILEI_OPENACC_MODE) 
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1) );
