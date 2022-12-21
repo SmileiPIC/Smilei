@@ -217,7 +217,7 @@ public:
     //! Erase Particles from istart ot the end in the buffers of thread ithread
     void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     //! Resize the CPU buffers to at least accommodate particle_count particles.
     //! In addition, this method make sure the CPU buffers are mapped on the
     //! device. This method is justifies as it tries to reduce the number of

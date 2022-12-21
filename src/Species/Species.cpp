@@ -699,7 +699,7 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_MODE )
         smpi->resizeDeviceBuffers( ithread,
                                    nDim_field,
                                    particles->numberOfParticles() );
@@ -729,7 +729,7 @@ void Species::dynamics( double time_dual,
 #endif
         }
 
-#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
         // Make sure some bin preconditions are respected
         SMILEI_ASSERT( particles->first_index.size() == 1 );
         SMILEI_ASSERT( particles->last_index.size() >= 1 );
