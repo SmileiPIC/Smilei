@@ -6,6 +6,7 @@
 #include "MA_Solver2D_norm.h"
 #include "MA_Solver2D_Friedman.h"
 #include "MA_Solver3D_norm.h"
+#include "MA_Solver3D_Friedman.h"
 #include "MA_SolverAM_norm.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
@@ -18,6 +19,7 @@
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
+
 #include "MF_Solver1D_M4.h"
 #include "MF_Solver2D_M4.h"
 #include "MF_Solver3D_M4.h"
@@ -81,7 +83,12 @@ public:
                 if( params.is_pxr ) {
                     solver = new PXR_Solver3D_FDTD( params );
                 } else {
-                    solver = new MA_Solver3D_norm( params );
+                    if( params.Friedman_filter ) {
+                      solver = new MA_Solver3D_Friedman( params );
+                    } else {
+                      solver = new MA_Solver3D_norm( params );
+                    }
+
                 }
             }
 

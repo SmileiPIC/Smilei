@@ -586,8 +586,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( model != "Friedman" ) {
             ERROR_NAMELIST( "Currently, only the `Friedman` model is available in FieldFilter()",  LINK_NAMELIST + std::string("#field-filtering"));
         }
-        if(( geometry != "2Dcartesian" ) && ( geometry != "1Dcartesian" )) {
-            ERROR_NAMELIST( "Currently, the `Friedman` field filter is only availble in `1Dcartesian` and `2Dcartesian` geometry",  LINK_NAMELIST + std::string("#field-filtering") );
+        if(( geometry != "1Dcartesian" ) && ( geometry != "2Dcartesian" ) && ( geometry != "3Dcartesian" )) {
+            ERROR_NAMELIST( "Currently, the `Friedman` field filter is only availble in `1Dcartesian` and `2Dcartesian` and `3Dcartesian` geometry",  LINK_NAMELIST + std::string("#field-filtering") );
         }
         Friedman_filter = true;
         PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );

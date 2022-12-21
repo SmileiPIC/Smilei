@@ -37,7 +37,7 @@ ElectroMagn3D::ElectroMagn3D( Params &params, vector<Species *> &vecSpecies, Pat
         Jy_s[ispec]  = new Field3D( Tools::merge( "Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         Jz_s[ispec]  = new Field3D( Tools::merge( "Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         rho_s[ispec] = new Field3D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        
+
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
@@ -106,7 +106,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-    
+
     // Allocation of the EM fields
     Ex_  = FieldFactory::create3D( dimPrim, 0, false, "Ex", params );
     Ey_  = FieldFactory::create3D( dimPrim, 1, false, "Ey", params );
@@ -122,6 +122,23 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
         Env_Chi_   = new Field3D( dimPrim, "Env_Chi" );
         Env_E_abs_ = new Field3D( dimPrim, "Env_E_abs" );
         Env_Ex_abs_= new Field3D( dimPrim, "Env_Ex_abs" );
+    }
+
+    // Allocation of filtered fields when Friedman filtering is required
+    if( params.Friedman_filter ) {
+        filter_ = new FriedmanFields();
+        filter_->Ex_.resize( 3 );
+        filter_->Ex_[0] = new Field3D( dimPrim, 0, false, "Ex_f" );
+        filter_->Ex_[1] = new Field3D( dimPrim, 0, false, "Ex_m1" );
+        filter_->Ex_[2] = new Field3D( dimPrim, 0, false, "Ex_m2" );
+        filter_->Ey_.resize( 3 );
+        filter_->Ey_[0] = new Field3D( dimPrim, 1, false, "Ey_f" );
+        filter_->Ey_[1] = new Field3D( dimPrim, 1, false, "Ey_m1" );
+        filter_->Ey_[2] = new Field3D( dimPrim, 1, false, "Ey_m2" );
+        filter_->Ez_.resize( 3 );
+        filter_->Ez_[0] = new Field3D( dimPrim, 2, false, "Ez_f" );
+        filter_->Ez_[1] = new Field3D( dimPrim, 2, false, "Ez_m1" );
+        filter_->Ez_[2] = new Field3D( dimPrim, 2, false, "Ez_m2" );
     }
 
     // Total charge currents and densities
@@ -1042,7 +1059,7 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 
         // Magnetic field Bz^(d,d,p)
         memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
-        
+
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
