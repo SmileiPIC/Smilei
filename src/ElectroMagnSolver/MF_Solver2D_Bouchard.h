@@ -1,7 +1,7 @@
 #ifndef MF_SOLVER2D_BOUCHARD_H
 #define MF_SOLVER2D_BOUCHARD_H
 
-#include "Solver2D.h" 
+#include "Solver2D.h"
 class ElectroMagn;
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ public:
 
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields);
- 
+
     // Parameters for the Maxwell-Faraday solver
     double dx;
     double dy;
@@ -36,7 +36,7 @@ public:
 
 protected:
     // Check if time filter is applied or not
-         bool isEFilterApplied;
+    bool isEFilterApplied;
 
 };//END class
 
