@@ -8,6 +8,7 @@
 #include "MA_Solver3D_norm.h"
 #include "MA_Solver3D_Friedman.h"
 #include "MA_SolverAM_norm.h"
+#include "MA_SolverAM_Friedman.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
@@ -56,6 +57,7 @@ public:
         if( params.geometry == "1Dcartesian" ) {
 
             if( params.Friedman_filter ) {
+                if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in 1Dcartesian geometry" );
                 solver = new MA_Solver1D_Friedman( params );
             } else {
                 solver = new MA_Solver1D_norm( params );
@@ -66,6 +68,9 @@ public:
             if( params.is_spectral ) {
                 solver = new PXR_Solver2D_GPSTD( params );
             } else if( params.Friedman_filter ) {
+                if ( (params.maxwell_sol != "Yee") && (params.maxwell_sol != "Bouchard") && (params.maxwell_sol != "Grassi") && (params.maxwell_sol != "GrassiSpL") ){
+                    ERROR( "Only Yee, Bouchard, Grassi and GrassiSpL Maxwell solvers are compatible with Friedman filter in 2Dcartesian geometry" );
+                }
                 solver = new MA_Solver2D_Friedman( params );
             } else {
                 solver = new MA_Solver2D_norm( params );
@@ -84,6 +89,7 @@ public:
                     solver = new PXR_Solver3D_FDTD( params );
                 } else {
                     if( params.Friedman_filter ) {
+                      if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in 3Dcartesian geometry" );
                       solver = new MA_Solver3D_Friedman( params );
                     } else {
                       solver = new MA_Solver3D_norm( params );
@@ -97,7 +103,13 @@ public:
             if( params.is_pxr ) {
                 solver = new PXR_SolverAM_GPSTD( params );
             } else {
-                solver = new MA_SolverAM_norm( params );
+                if( params.Friedman_filter ) {
+                    if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in AMcylindrical geometry" );
+                    solver = new MA_SolverAM_Friedman( params );
+                } else {
+                    solver = new MA_SolverAM_norm( params );
+                }
+
             }
 
         }

@@ -356,7 +356,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
                 if (embc->Hx_) dump_PML(embc, g);
-            }          
+            }
         }
     }
     else {
@@ -395,7 +395,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 } else if( dynamic_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
                     EnvelopeBC3D_PML *envbc = static_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
                     if (envbc->A_n_) dump_PMLenvelope(envbc, g, bcId);
-                }          
+                }
             }
 
         } else {
@@ -419,8 +419,9 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
             dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
         }
+        if (params.geometry=="AMcylindrical") ERROR("Checkpoints of Friedman-filtered fields is not implemented in AMcylindrical geometry");
     }
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
@@ -501,7 +502,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 
         s.attr( "partCapacity", spec->getParticlesCapacity() );
         s.attr( "partSize", spec->getNbrOfParticles() );
-        
+
         s.attr( "nrj_bc_lost", spec->nrj_bc_lost );
         s.attr( "nrj_mw_inj", spec->nrj_mw_inj );
         s.attr( "nrj_mw_out", spec->nrj_mw_out );
@@ -540,7 +541,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         } // End if partSize
 
     } // End for ispec
-    
+
     // Save some scalars
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
@@ -554,7 +555,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         }
     }
     g.vect( "nuclear_reaction_multiplier", rate_multiplier );
-    
+
     // Save data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
@@ -746,7 +747,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             } else if( dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] );
                 if (embc->Hx_) restart_PML(embc, g);
-            }          
+            }
         }
 
     }
@@ -790,7 +791,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 } else if( dynamic_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] )){
                     EnvelopeBC3D_PML *envbc = static_cast<EnvelopeBC3D_PML *>( EMfields->envelope->EnvBoundCond[bcId] );
                     if (envbc->A_n_) restart_PMLenvelope(envbc, g, bcId);
-                }          
+                }
             }
         } else {
             for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
@@ -817,7 +818,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
         }
     }
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
@@ -919,13 +920,13 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
         spec->particles->initialize( partSize, nDim_particle, params.keep_position_old );
-        
+
         s.attr( "nrj_bc_lost", spec->nrj_bc_lost );
         s.attr( "nrj_mw_inj", spec->nrj_mw_inj );
         s.attr( "nrj_mw_out", spec->nrj_mw_out );
         s.attr( "nrj_new_part", spec->nrj_new_part_ );
         s.attr( "radiatedEnergy", spec->nrj_radiated_ );
-        
+
         if( partSize>0 ) {
             for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream namePos( "" );
@@ -959,7 +960,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
         }
     }
-    
+
     // Load some scalars
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
@@ -975,7 +976,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             }
         }
     }
-    
+
     // Load data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
@@ -1090,7 +1091,7 @@ void  Checkpoint::dump_PMLenvelope(Tpml envbc, H5Write &g, unsigned int bcId ){
         dump_cFieldsPerProc( g, envbc->u3_nm1_y_ );
     }
     if ( std::is_same<Tpml, EnvelopeBC3D_PML>::value and bcId > 3) {
-        EnvelopeBC3D_PML *envbc3d = dynamic_cast<EnvelopeBC3D_PML *>( envbc );        
+        EnvelopeBC3D_PML *envbc3d = dynamic_cast<EnvelopeBC3D_PML *>( envbc );
         dump_cFieldsPerProc( g, envbc3d->u1_nm1_z_ );
         dump_cFieldsPerProc( g, envbc3d->u2_nm1_z_ );
         dump_cFieldsPerProc( g, envbc3d->u3_nm1_z_ );
@@ -1155,7 +1156,7 @@ void  Checkpoint::restart_PMLenvelope(Tpml envbc, H5Read &g, unsigned int bcId )
         restart_cFieldsPerProc( g, envbc->u3_nm1_y_ );
     }
     if ( std::is_same<Tpml, EnvelopeBC3D_PML>::value and bcId > 3) {
-        EnvelopeBC3D_PML *envbc3d = dynamic_cast<EnvelopeBC3D_PML *>( envbc );        
+        EnvelopeBC3D_PML *envbc3d = dynamic_cast<EnvelopeBC3D_PML *>( envbc );
         restart_cFieldsPerProc( g, envbc3d->u1_nm1_z_ );
         restart_cFieldsPerProc( g, envbc3d->u2_nm1_z_ );
         restart_cFieldsPerProc( g, envbc3d->u3_nm1_z_ );
@@ -1176,5 +1177,3 @@ void  Checkpoint::restart_PMLenvelopeAM(EnvelopeBCAM_PML *envbc, H5Read &g, unsi
         restart_cFieldsPerProc( g, envbc->u3_nm1_r_ );
     }
 }
-
-
