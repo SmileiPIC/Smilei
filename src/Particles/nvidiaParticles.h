@@ -37,6 +37,11 @@ public:
     //! Allocate the right amount of position and momentum dimensions
     void resizeDimensions( unsigned int nDim );
 
+    //! Reserve space for (particle_count * growth_factor) particles only if 
+    //! particle_count >= deviceCapacity(). Must be called after
+    //! allocateDimensions()
+    void softReserve( unsigned int particle_count, float growth_factor = 1.3F );
+
     //! Reserve space for particle_count particles. Must be called after
     //! allocateDimensions()
     void reserve( unsigned int particle_count );
@@ -72,7 +77,8 @@ public:
     //! Update the particles from device to host
     void syncCPU() override;
 
-    //! Get number of particles on device
+    unsigned int deviceCapacity() const override;
+
     inline unsigned int deviceSize() const override
     {
         return gpu_nparts_;

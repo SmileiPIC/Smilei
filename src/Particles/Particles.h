@@ -484,11 +484,16 @@ public:
     //!
     virtual void importAndSortParticles( Particles *particles_to_inject );
 
-    //! return Device size
+    //! Returns the capacity of the vectors representing the particle
+    //! components. One can resize up to deviceCapacity without triggering
+    //! a reallocation and potentially invaliding the iterators.
+    virtual unsigned int deviceCapacity() const;
+
+    //! Get number of particles on device
     virtual unsigned int deviceSize() const {
         ERROR( "deviceSize is a feature only available for accelerator device" );
         return 0;
-    };
+    }
 
     // ---------------------------------------------------------------------------------------
     // Parameters

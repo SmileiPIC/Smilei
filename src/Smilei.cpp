@@ -690,9 +690,9 @@ int main( int argc, char *argv[] )
             checkpoint.dump( vecPatches, region, itime, &smpi, simWindow, params );
             #pragma omp barrier
             // ----------------------------------------------------------------------
-            
+
         } //End omp parallel region
-        
+
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
             ERROR( "Load balancing not tested on GPU !" );
