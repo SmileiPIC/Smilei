@@ -389,14 +389,15 @@ namespace detail {
         //         - compute bins
         // NOTE: This method consumes a lot of memory ! O(N)
 
-        const auto new_particle_to_inject_count = particle_to_inject.deviceSize();
-        const auto new_particle_count           = new_particle_to_inject_count + std::distance( first_particle,
-                                                                                                last_particle );
+        const auto new_particle_to_inject_count  = particle_to_inject.deviceSize();
+        const auto current_local_particles_count = std::distance( first_particle, last_particle );
+        const auto new_particle_count            = new_particle_to_inject_count + current_local_particles_count;
 
         // NOTE: We really want a non-initializing vector here!
         // It's possible to give a custom allocator to thrust::device_vector.
         // Create one with construct(<>) as a noop and derive from
-        // thrust::device_malloc_allocator
+        // thrust::device_malloc_allocator. For now we do an explicit resize.
+        particle_to_inject.softReserve( new_particle_count );
         particle_to_inject.resize( new_particle_count ); // We probably invalidated the iterators
 
         // Copy out of cluster/tile/chunk particles
@@ -435,8 +436,10 @@ namespace detail {
                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,
                              first_particle_to_inject_no_key );
 
-        // Same as for particle_to_inject, non-initializing vector is best
+        // This free generates a lot of memory fragmentation.
         // particle_container.free();
+        // Same as for particle_to_inject, non-initializing vector is best.
+        particle_container.softReserve( new_particle_count );
         particle_container.resize( new_particle_count );
 
         // Merge by key
@@ -455,9 +458,12 @@ namespace detail {
         // Recompute bins
         computeBinIndex( particle_container );
 
-        // Try to completely free the memory allocated for particle_to_inject. A
-        // simple resize does not do what you expect.
-        particle_to_inject.free();
+        // This free generates a lot of memory fragmentation. If we enable it we
+        // reduce significantly the memory usage over time but a memory spike
+        // will still be present. Unfortunately, this free generates soo much
+        // fragmentation (like the one above) that at some point the GPU memory
+        // allocator will fail!
+        // particle_to_inject.free();
     }
 
 
@@ -664,6 +670,37 @@ void nvidiaParticles::resizeDimensions( unsigned int nDim )
     nvidia_momentum_.resize( 3 );
 }
 
+void nvidiaParticles::softReserve( unsigned int particle_count, float growth_factor  )
+{
+    if( particle_count <= deviceCapacity() ) {
+        // Dont reserve, for now we have enough capacity.
+        return;
+    }
+
+    const unsigned int new_capacity = static_cast<unsigned int>( particle_count * growth_factor );
+
+    for( unsigned int idim = 0; idim < nvidia_position_.size(); idim++ ) {
+        nvidia_position_[idim].reserve( new_capacity );
+    }
+
+    for( unsigned int idim = 0; idim < 3; idim++ ) {
+        nvidia_momentum_[idim].reserve( new_capacity );
+    }
+
+    nvidia_weight_.reserve( new_capacity );
+    nvidia_charge_.reserve( new_capacity );
+
+    if( isQuantumParameter ) {
+        nvidia_chi_.reserve( new_capacity );
+    }
+
+    if( isMonteCarlo ) {
+        nvidia_tau_.reserve( new_capacity );
+    }
+
+    nvidia_cell_keys_.reserve( new_capacity );
+}
+
 void nvidiaParticles::reserve( unsigned int particle_count )
 {
     for( unsigned int idim = 0; idim < nvidia_position_.size(); idim++ ) {
@@ -817,15 +854,10 @@ void nvidiaParticles::initializeDataOnDevice()
     // The world shall end if we call this function multiple times
     SMILEI_ASSERT( nvidia_double_prop_.empty() );
 
-    // "Over-reserve" to minimize the cost of future reallocation, it might be
-    // interesting to set the value to 1.2F ~~
-    const auto kGrowthFactor      = 1.0F;
     const auto kPositionDimension = Position.size();
-    const auto kHostParticleCount = Position[0].size();
 
+    // We sure that we have as many say, position dimension as the base class.
     resizeDimensions( kPositionDimension );
-    reserve( static_cast<unsigned int>( static_cast<float>( kHostParticleCount ) * kGrowthFactor ) );
-    resize( kHostParticleCount );
 
     // Initialize the list of pointers
 
@@ -855,14 +887,14 @@ void nvidiaParticles::initializeDataOnDevice()
         nvidia_double_prop_.push_back( &nvidia_tau_ );
     }
 
-    if( deviceSize() == 0 ) {
-        // At this point, it means that kHostParticleCount == 0
-        reserve( 100 );
-        // Continue, we may have to re-initialize the bins, even thought there is
-        // no particles yet.
-    }
+    const auto kHostParticleCount = Position[0].size();
 
-    syncGPU();
+    if( kHostParticleCount == 0 ) {
+        // Should we reserve some space ?
+        // reserve( 100 );
+    } else {
+        syncGPU();
+    }
 
     if( prepareBinIndex() < 0 ) {
         // Either we deal with a simulation with unsupported space dimensions
@@ -942,7 +974,13 @@ void nvidiaParticles::syncCPU()
         Tau.resize( gpu_nparts_ );
         thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
     }
+}
 
+unsigned int nvidiaParticles::deviceCapacity() const
+{
+    SMILEI_ASSERT( nvidia_momentum_.size() >= 1 );
+    // Could be any particle component that we know will be used in any case.
+    return nvidia_momentum_[0].capacity();
 }
 
 // -----------------------------------------------------------------------------

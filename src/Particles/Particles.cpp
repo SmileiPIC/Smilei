@@ -1230,6 +1230,12 @@ void Particles::importAndSortParticles( Particles *particles_to_inject )
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
 }
 
+unsigned int Particles::deviceCapacity() const
+{
+    ERROR( "deviceCapacity is a feature only available for accelerator device" );
+    return 0;
+}
+
 #ifdef __DEBUG
 bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 {

@@ -217,19 +217,24 @@ namespace smilei {
 
 //////////////////////////////////////
 /// @def SMILEI_GPU_ASSERT_MEMORY_ON_DEVICE
+/// @def SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE
 ///
-/// Makes sure the host pointer is mapped on the device through OpenACC/OpenMP.
-/// This can be used to simulate the present() clause of OpenACC in an OpenMP
-/// context. There is no present() clause in OpenMP.
+/// Makes sure the host pointer is mapped on or is not mapped on the device
+/// through OpenACC/OpenMP. This can be used to simulate the present() clause of
+///  OpenACC in an OpenMP context. There is no present() clause in OpenMP.
 ///
 /// Example usage:
-///
-///    #pragma omp target teams distribute parallel for
-///    for(...) { ... }
+///     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( a_host_pointer, 10 );
+///     SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer );  // Succeed
+///     SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_host_pointer ); // Fails
+///     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( a_host_pointer, 10 );
+///     SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer );  // Fails
+///     SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_host_pointer ); // Succeed
 ///
 //////////////////////////////////////
 #define SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_host_pointer ) )
 
+#define SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_host_pointer ) )
 
             ////////////////////////////////////////////////////////////////////////////////
             // NonInitializingVector methods definition

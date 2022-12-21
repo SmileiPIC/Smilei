@@ -699,7 +699,13 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+        smpi->resizeDeviceBuffers( ithread,
+                                   nDim_field,
+                                   particles->numberOfParticles() );
+#else
+        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry == "AMcylindrical" );
+#endif
 
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
@@ -723,28 +729,11 @@ void Species::dynamics( double time_dual,
 #endif
         }
 
-        //Point to local thread dedicated buffers
-        //Still needed for ionization
-        vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-
 #if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-
-        // Make sure some precondition are respected
+        // Make sure some bin preconditions are respected
         SMILEI_ASSERT( particles->first_index.size() == 1 );
         SMILEI_ASSERT( particles->last_index.size() >= 1 );
         SMILEI_ASSERT( particles->last_index.back() == particles->last_index[0] );
-
-        const int particle_count = particles->last_index.back();
-
-        // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
-
-        {
-
 #endif
         for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) {
 
@@ -767,7 +756,7 @@ void Species::dynamics( double time_dual,
 #endif
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
-                ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj );
+                ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], &smpi->dynamics_Epart[ithread], patch, Proj );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -1000,15 +989,6 @@ void Species::dynamics( double time_dual,
 //            }
 //        }
 
-#if defined( SMILEI_ACCELERATOR_MODE )
-        }
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
-#endif
     } //End if moving or ionized particles
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
