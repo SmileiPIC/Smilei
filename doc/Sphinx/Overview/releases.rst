@@ -25,13 +25,14 @@ Changes made in the repository (not released)
 
 * In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
 * ``PML`` can now be used as a bounday condition for the envelope model too.
-* It is no longer necessary to use ``PML`` on all boundaries anymore. It is still required to use PML on both sides of a given boundary. 
+* It is no longer necessary to use ``PML`` on all boundaries anymore. It is still required to use PML on both sides of a given boundary.
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Much faster ``DiagFields`` (speedup ~ x3)
 * Collisions: new parameter ``time_frozen``
 * Performances diagnostic: new parameter ``cumulative``
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
+* Friedman filter: now available in all geometries (previously available only in ``2Dcartesian``)
 * Bugfixes:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
@@ -73,7 +74,7 @@ Release 4.7
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Lasers can be injected from all boundaries
-* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present
 * Option to create neutrons for D-D fusion
 * Collisions can be done less often
 * Lasers can be injected from all boundaries
