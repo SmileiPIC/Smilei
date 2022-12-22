@@ -277,12 +277,12 @@ if (mag == 'ON'):
 
 ApplyWhenFiltreIsON='ON' # toujours ON ici sert pour le decoupage (voir lecture_namelist.py)
 
-restart_run='initial'
 # initial pour un premier run
 # restart pour lire un fichier restart pour continuer
-# all job have to be in $SCRATCHDIR directory (see below for the eact path)
-chemin_restart='restart'
+restart_run='initial'
+# restart_run='restart'
 
+chemin_restart='.'
 
 if (restart_run == 'initial'):
     Checkpoints(
