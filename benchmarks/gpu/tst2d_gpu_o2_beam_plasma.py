@@ -67,7 +67,7 @@ OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichi
 SizePatch=128
 
 #################################
-NumberOfTimeStep=120000
+NumberOfTimeStep=1000
 
 Scalar_save = 'ON'
 NumberOfTimeStepForSnapshotSCALAR = 100
@@ -287,8 +287,6 @@ chemin_restart='restart'
 if (restart_run == 'initial'):
     Checkpoints(
             dump_step = NumberOfTimeStep,
-#            dump_minutes = 240.,
-#            dump_deflate = 0,
             exit_after_dump = True,
             keep_n_dumps = 2,
 )
@@ -304,7 +302,7 @@ if (Scalar_save == 'ON'):
     DiagScalar(
         every = NumberOfTimeStepForSnapshotSCALAR ,
         vars = ["Utot","Uelm","Ukin","Uelm_Ex","Uelm_Ey","Uelm_Ez","Uelm_Bx_m","Uelm_By_m","Uelm_Bz_m", "Ukin_electron-beam","Ukin_electron", "Ukin_ion"],
-        precision = 10
+        precision = 15
     )
 
 if (Fields_save == 'ON'):
