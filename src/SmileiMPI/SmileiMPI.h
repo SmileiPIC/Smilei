@@ -224,8 +224,8 @@ public:
     //! allocation/deallocation which produces a lot of fragmentation on some
     //! GPUs. In fact, it emulates the reserve behavior of an std::vector.
     //!
-    //! TODO(Etienne M): To avoid a leak at the end of the program or when a
-    //! SmileiMPI is destroyed. We should free the device memory. This can be
+    //! TODO(Etienne M): FREE To avoid a leak at the end of the program or when
+    //! a SmileiMPI is destroyed. We should free the device memory. This can be
     //! done using a resizeDeviceBuffers( ithread, ndim_field, 0).
     //!
     void resizeDeviceBuffers( unsigned int ithread,
@@ -286,7 +286,9 @@ public:
             dynamics_deltaold[ithread].reserve( new_capacity * ndim_field );
 
             // These *full size resize* are useless on the device, because we
-            // wont use the CPU buffer in device mode.
+            // wont use the CPU buffer in device mode. See
+            // smilei::tools::gpu::NonInitializingVector for more explanations.
+
             //      dynamics_Epart[ithread].resize( particle_count * 3 );
             //      dynamics_Bpart[ithread].resize( particle_count * 3 );
             //      dynamics_invgf[ithread].resize( particle_count * 1 );
