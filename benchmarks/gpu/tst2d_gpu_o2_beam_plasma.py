@@ -277,26 +277,30 @@ if (mag == 'ON'):
 
 ApplyWhenFiltreIsON='ON' # toujours ON ici sert pour le decoupage (voir lecture_namelist.py)
 
-# initial pour un premier run
-# restart pour lire un fichier restart pour continuer
-restart_run='initial'
+# 'disable' to ... disable
+# 'initial' pour un premier run
+# 'restart' pour lire un fichier restart pour continuer
+
+restart_run='disable'
+# restart_run='initial'
 # restart_run='restart'
 
 chemin_restart='.'
 
-if (restart_run == 'initial'):
+if restart_run == 'initial':
     Checkpoints(
             dump_step = NumberOfTimeStep,
             exit_after_dump = True,
-            keep_n_dumps = 2,
-)
-if (restart_run == 'restart'):
+            keep_n_dumps = 2)
+elif restart_run == 'restart':
     Checkpoints(
             restart_dir = chemin_restart,
             dump_step = NumberOfTimeStep,
             exit_after_dump = True,
-            keep_n_dumps = 2,
-)
+            keep_n_dumps = 2)
+else:
+    print("Restart disabled !")
+
 ####### DIAGNOSTICS######
 if (Scalar_save == 'ON'):
     DiagScalar(
