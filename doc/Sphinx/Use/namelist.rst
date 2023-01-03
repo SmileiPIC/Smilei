@@ -1796,7 +1796,9 @@ Following is the generic laser envelope creator ::
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
   * ``"explicit_reduced_dispersion"``: the finite difference derivatives along ``x`` in the ``"explicit"`` solver are substituted by
-    optimized derivatives to reduce numerical dispersion.
+    optimized derivatives to reduce numerical dispersion. For more accurate results over long distances, the use of this solver is recommended.
+    Please note that the CFL limit of this solver is lower than the one of the ``"explicit"`` solver. Thus, a smaller integration 
+    timestep may be necessary.
 
 .. py:data:: Envelope_boundary_conditions
 
