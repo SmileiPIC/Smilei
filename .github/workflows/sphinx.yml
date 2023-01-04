@@ -9,11 +9,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ammaraskar/sphinx-action@master
+    - uses: actions/checkout@v3
       with:
-        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git && git config --global --add safe.directory /github/workspace && git describe --tags --always --abbrev=0"
-        docs-folder: "doc/Sphinx"        
+        fetch-depth: 0
+    - name: Build doc
+      run: |
+        sudo apt-get --allow-releaseinfo-change update -y 
+        sudo apt-get install -y git make sphinx
+        make -C doc/Sphinx html
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
@@ -24,8 +27,6 @@ jobs:
         git config --local user.name "GitHub Action"
         git add .
         git commit -m "Update documentation" -a || true
-        echo "end"
-        find . 
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
