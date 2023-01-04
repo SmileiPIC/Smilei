@@ -9,11 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ammaraskar/sphinx-action@master
-      with:
-        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git && git describe --tags --abbrev=0"
-        docs-folder: "doc/Sphinx"        
+    - name: Build doc
+      run: |
+        apt-get --allow-releaseinfo-change update -y 
+        apt-get install -y git
+        make doc
     - name: Commit documentation changes
       run: |
         git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
