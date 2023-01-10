@@ -6,73 +6,108 @@ def arrondiChiffre(chiffre, nombreChiffreApresLaVirgule):
     LeChiffreArrondi = int(LeChiffreArrondi)
     LeChiffreArrondi = float(LeChiffreArrondi)/float(10**nombreChiffreApresLaVirgule)
     return LeChiffreArrondi
+#def my_filter(particles):
+#    global vb, VT
+#    randomNumber = np.random(len(particules.px), size=NtrajectPart)
+#    return(particles[randomNumber].px>vb+VT)*(particles[randomNumber].px<vb-VT)
+
 ##############################################
 #######
 #######  personnal values
 #######
 ##############################################
 fluct = 'OFF'
+mag = 'OFF'
+PROBE = 'ON' # utilise les sorties paralleles avec PROBES
 
 TeV = 200                      # electron & ion temperature in eV
 Te = TeV/511.e3                # electron & ion temperature in me c^2
 
-Tex=Te
-Tey=Te
-Tez=Te
+Tex = Te
+Tey = Te
+Tez = Te
 
-Tix=0.1*Te
-Tiy=0.1*Te
-Tiz=0.1*Te
+TexBeam = 1*Tex 
+TeyBeam = 1*Tey
+TezBeam = 1*Tez
 
-n0  = 1                         #in unit of n_c
+Tix = 0.1*Te
+Tiy = 0.1*Te
+Tiz = 0.1*Te
+
+if (mag == 'ON'):
+    bxo = 0.33 #0.35
+    byo = 0
+    bzo = 0
+
+DNlevel=0.05   # average level of density fluctuations
+n0  = 1                        #in unit of n_c
 nb = 0.0005*n0                      #in unit of n_c
 
 
 Lde = m.sqrt(Te/n0)                #-- Debye length in units of c/\omega_{pe}
-VT =  m.sqrt(2*Te/n0)               #-- VT ain unit of 1/c
-vb = 9*VT                           # -- in unit of 1/c
-v0 = -(nb/(n0-nb))*vb
-dx  =m.sqrt(2)*Lde #0.5*Lde                  # cell length (same in x & y)
+VT =  m.sqrt(2*Te/n0)              #-- VT ain unit of 1/c
+vb = 9*VT  
+
+                        # -- in unit of 1/c
+
+dx  =m.sqrt(2.)*Lde #0.5*Lde                  # cell length (same in x & y)
 dy  = dx
 dt  = 0.5 * dx/m.sqrt(2.)
+#dt = dt/3.
 
-number_part_per_cell = 180 # 1800
+number_part_per_cell = 1800
 rapport_de_masse=1836.
 
-NumberOfCell_inX=1024
-NumberOfCell_inY=1024
+NumberOfCell_inX=128*32 # = 4096
+NumberOfCell_inY=128*16 # = 2048
+
 OutputEveryNumberOfCellForFieldData=1 # on sauvegarde les point grille des fichiers grilles
 
-# 16 | 128
-SizePatch=256
+SizePatch=128
 
 #################################
-NumberOfTimeStep=600
+NumberOfTimeStep=1000
 
-Scalar_save = True
-NumberOfTimeStepForSnapshotSCALAR = 10 #-> 6000 sorties # sortie valeurs scalaire tout les NumberOfTimeStepForSnapshotSCALAR pas de temps
+Scalar_save = 'ON'
+NumberOfTimeStepForSnapshotSCALAR = 100
 
-Fields_save = False
-NumberOfTimeStepForSnapshotFIELD = 20 # sortie des fichiers champs tout les NumberOfTimeStepForSnapshotFIELD pas de temps
+Fields_save = 'OFF'
+NumberOfTimeStepForSnapshotFIELD = 100 # sortie des fichiers champs tout les NumberOfTimeStepForSnapshotFIELD pas de temps
+FLUSH_EVERY_SnapshotFIELD = 10*NumberOfTimeStepForSnapshotFIELD # flush les donnees tout FLUSH_EVERY
 
-Particles_save = False
+Particles_save = 'OFF'
 NumberOfTimeStepForSnapshotPART = 3000 # -> # sortie des fichiers particules tout les NumberOfTimeStepForSnapshotPART pas de temps
+NumberOfTimeStepForTrajectoriesPART=10 # sortie des trajectoires de NtrajectPart particules tout les NumberOfTimeStepForTrajectoriesPART pas de temps
+NtrajectPart = 20000
 
-Distribution_save = False # -> # sortie des focntions de distribution tout les NumberOfTimeStepForSnapshotDISTRI pas de temps
-NumberOfTimeStepForSnapshotDISTRI = 600
+Distribution_save = 'OFF'
+NumberOfTimeStepForSnapshotDISTRI = 6000
 # Velocity limit for the distribution histogram
-Distri_VXmin = -6.*VT
-Distri_VXmax = vb+15.*VT
+Distri_VXmin = -20.*VT
+Distri_VXmax = vb+20.*VT
 
-Distri_VYmin = -15.*VT
-Distri_VYmax = 15.*VT
+Distri_VYmin = -20.*VT
+Distri_VYmax = 20.*VT
 
-Distri_VZmin = -15.*VT
-Distri_VZmax = 15.*VT
+Distri_VZmin = Distri_VYmin
+Distri_VZmax = Distri_VYmax
+
+Distri_VXminION = -0.06*VT
+Distri_VXmaxION = 0.06*VT
+
+Distri_VYminION = -0.08*VT
+Distri_VYmaxION = 0.08*VT
+
+Distri_VZminION = Distri_VYminION
+Distri_VZmaxION = Distri_VYmaxION
+
 # number of bins for the histogram
-Nbins = 400
+NbinsX = 800
+NbinsY = 400
+NbinsV = 600
+PrintOUTInformationEvery=2
 
-NumberOfPrintOUTInformation=10# signifie que le code ecrit dans le .out 10 fois durant le run
 #################################
 
 dt=arrondiChiffre(dt,3)# pour avoir des snapshots espaces correctement
@@ -88,9 +123,10 @@ Lx = NumberOfCell_inX*dx
 Ly = NumberOfCell_inY*dy
 
 
-DNlevel=0.#0.05   # average level of fluctuations
-lambdaX=9      # average wavelength of fluctuations along x
-lambdaY=9      # average wavelength of fluctuations along y
+#DNlevel=0.05   # average level of fluctuations
+SeedRandom=1
+lambdaX=12      # average wavelength of fluctuations along x
+lambdaY=12      # average wavelength of fluctuations along y
 
 if (fluct=='ON'):
 
@@ -112,7 +148,7 @@ if (fluct=='ON'):
     kappaX=2*np.pi/lambdaX
     kappaY=2*np.pi/lambdaY
     
-    np.random.seed(seed=1)
+    np.random.seed(seed=SeedRandom)
     rm=np.random.rand(NumberOfCell_inX, NumberOfCell_inY) # Nx*Ny matrix with random numbers
 
     for ii in range(0,NumberOfCell_inX):
@@ -129,7 +165,10 @@ if (fluct=='ON'):
     densikk=np.fft.ifftshift(np.fft.fft2(densi))
 
     dn=np.fft.ifftshift(densi)
-
+    # v0 = -(nb/(n0+DNlevel-nb))*vb
+    v0 = -(nb/(n0-nb))*vb
+else:
+    v0 = -(nb/(n0-nb))*vb
 
 def n_ion(x,y):
     if (fluct=='ON'):
@@ -164,11 +203,11 @@ Main(
     number_of_cells= [NumberOfCell_inX,NumberOfCell_inY],
     number_of_patches = [number_of_patchX,number_of_patchY],
     timestep = dt,
+    print_every=PrintOUTInformationEvery,
     simulation_time = NumberOfTimeStep*dt,
     EM_boundary_conditions = [["periodic"],["periodic"]],
     random_seed = 0,
     gpu_computing=True,
-    print_every = 2
 )
 
 # # Disabled for GPUs as of 2022/06
@@ -198,7 +237,7 @@ Species(
 )
 Species(
     name = "electron",
-    position_initialization = "random",
+    position_initialization = "ion",
     momentum_initialization = "maxwell-juettner",
     mean_velocity = [v0,0.,0.],
     temperature = [Tex, Tey, Tez],
@@ -210,10 +249,10 @@ Species(
 )
 Species(
     name = "electron-beam",
-    position_initialization = "random",
+    position_initialization = "ion",
     momentum_initialization = "maxwell-juettner",
     mean_velocity = [vb,0.,0.],
-    temperature = [Tex, Tey, Tez],
+    temperature = [TexBeam, TeyBeam, TezBeam],
     particles_per_cell = number_part_per_cell,
     mass = 1,
     charge = -1.,
@@ -221,68 +260,347 @@ Species(
     boundary_conditions = [["periodic", "periodic"],["periodic", "periodic"]]
 )
 
+# EXTERNAL MAGNETIC FIELDS
+if (mag == 'ON'):
+    ExternalField(
+        field = "Bx",
+        profile = bxo
+    )
+    ExternalField(
+        field = "By",
+        profile = byo
+    )
+    ExternalField(
+        field = "Bz",
+        profile = bzo
+    )
 
 ApplyWhenFiltreIsON='ON' # toujours ON ici sert pour le decoupage (voir lecture_namelist.py)
 
-restart_run='initial'
-# initial pour un premier run
-# restart pour lire un fichier restart pour continuer
-# all job have to be in $SCRATCHDIR directory (see below for the eact path)
-# chemin_restart='/scratch/cnt0026/lpp0106/ckrafft/SmileiGG12v2_Occi-016'
-chemin_restart='SmileiGG12v2_Occi-016'
+# 'disable' to ... disable
+# 'initial' pour un premier run
+# 'restart' pour lire un fichier restart pour continuer
 
+restart_run='disable'
+# restart_run='initial'
+# restart_run='restart'
 
-if (restart_run == 'initial'):
+chemin_restart='.'
+
+if restart_run == 'initial':
     Checkpoints(
             dump_step = NumberOfTimeStep,
-#            dump_minutes = 240.,
-#            dump_deflate = 0,
             exit_after_dump = True,
-            keep_n_dumps = 2,
-)
-if (restart_run == 'restart'):
+            keep_n_dumps = 2)
+elif restart_run == 'restart':
     Checkpoints(
             restart_dir = chemin_restart,
             dump_step = NumberOfTimeStep,
             exit_after_dump = True,
-            keep_n_dumps = 2,
-)
+            keep_n_dumps = 2)
+else:
+    print("Restart disabled !")
+
 ####### DIAGNOSTICS######
-if (Scalar_save):
+if (Scalar_save == 'ON'):
     DiagScalar(
         every = NumberOfTimeStepForSnapshotSCALAR ,
         vars = ["Utot","Uelm","Ukin","Uelm_Ex","Uelm_Ey","Uelm_Ez","Uelm_Bx_m","Uelm_By_m","Uelm_Bz_m", "Ukin_electron-beam","Ukin_electron", "Ukin_ion"],
         precision = 15
     )
 
-if (Fields_save):
-    DiagFields(
-        every = NumberOfTimeStepForSnapshotFIELD,
-        flush_every = NumberOfTimeStepForSnapshotFIELD,
-        fields = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Rho_electron', 'Rho_electron-beam', 'Rho_ion']
-    )
+if (Fields_save == 'ON'):
+    if (PROBE == 'ON'):
+        DiagProbe(
+            every = NumberOfTimeStepForSnapshotFIELD,
+            origin = [0., 0.],
+	    flush_every = FLUSH_EVERY_SnapshotFIELD,
+            corners = [ [(NumberOfCell_inX+1)*dx, 0 ], [0, (NumberOfCell_inY+1)*dy]],
+            number = [(NumberOfCell_inX+1)/OutputEveryNumberOfCellForFieldData, (NumberOfCell_inY+1)/OutputEveryNumberOfCellForFieldData],
+#            fields = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez',
+#                      'Rho_electron', 'Rho_electron-beam', 'Rho_ion']
+            fields = ['Bz', 'Ex', 'Ey',
+                      'Rho_electron', 'Rho_electron-beam', 'Rho_ion']
+        )
+    
+    else:
+        DiagFields(
+            every = NumberOfTimeStepForSnapshotFIELD,
+            flush_every = NumberOfTimeStepForSnapshotFIELD,
+            fields = ['Bz', 'Ex', 'Ey','Jx_electron-beam','Jy_electron-beam', 'Jz_electron-beam', 'Rho_electron', 'Rho_electron-beam', 'Rho_ion']
+        )
+
+if (Distribution_save == 'ON'):
+
+# # ******* PLASMA
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["vx", Distri_VXminION, Distri_VXmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["vy", Distri_VYminION, Distri_VYmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["vz", Distri_VZminION, Distri_VZmaxION , NbinsV]
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["y", 0., Ly, NbinsY]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vx", Distri_VXminION, Distri_VXmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vy", Distri_VYminION, Distri_VYmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vz", Distri_VZminION, Distri_VZmaxION , NbinsV]
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vx", Distri_VXminION, Distri_VXmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vy", Distri_VYminION, Distri_VYmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vz", Distri_VZminION, Distri_VZmaxION , NbinsV]
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["vx", Distri_VXminION, Distri_VXmaxION , NbinsV],
+#                 ["vy", Distri_VYminION, Distri_VYmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"],
+#         axes = [
+#                 ["vx", Distri_VXminION, Distri_VXmaxION , NbinsV],
+#                 ["vz", Distri_VZminION, Distri_VZmaxION , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["ion"], 
+#         axes = [
+#                 ["vy", Distri_VYminION, Distri_VYmaxION , NbinsV],
+#                 ["vz", Distri_VZminION, Distri_VZmaxION , NbinsV]
+#                 ]
+#         )
 
 
-if (Distribution_save):
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron"],
-        axes = [
-                ["x", 0., Ly, Nbins],
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
+# # ******* PLASMA
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["y", 0., Ly, NbinsY]
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["x", 0., Lx, NbinsX],
+#                 ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["y", 0., Ly, NbinsY],
+#                 ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+#                 ]
+#         )
+
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+#                 ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+#                 ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+#                 ]
+#         )
+#     DiagParticleBinning(
+#         deposited_quantity = "weight",
+#         every = NumberOfTimeStepForSnapshotDISTRI,
+#         time_average = 1,
+#         species = ["electron"],
+#         axes = [
+#                 ["vy", Distri_VYmin, Distri_VYmax , NbinsV],
+#                 ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+#                 ] 
+#         )
+
+
+
+#    ******  PLASMA-BEAM
 
     DiagParticleBinning(
         deposited_quantity = "weight",
@@ -290,51 +608,7 @@ if (Distribution_save):
         time_average = 1,
         species = ["electron-beam"],
         axes = [
-                ["x", 0., Lx, Nbins],
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
-
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron-beam"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
-
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron", "electron-beam"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron", "electron-beam"],
-        axes = [
-                ["x", 0., Lx, Nbins],
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins]
-                ]
-        )
-
-#******
-
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron-beam"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins]
+                ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
                 ]
         )
     DiagParticleBinning(
@@ -343,10 +617,18 @@ if (Distribution_save):
         time_average = 1,
         species = ["electron-beam"],
         axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
+                ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
                 ]
         )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
 
     DiagParticleBinning(
         deposited_quantity = "weight",
@@ -354,81 +636,250 @@ if (Distribution_save):
         time_average = 1,
         species = ["electron-beam"],
         axes = [
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
+                ["x", 0., Lx, NbinsX],
+                ["y", 0., Ly, NbinsY]
                 ]
         )
 	
-
     DiagParticleBinning(
         deposited_quantity = "weight",
         every = NumberOfTimeStepForSnapshotDISTRI,
         time_average = 1,
-        species = ["electron"],
+        species = ["electron-beam"],
         axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins]
+                ["x", 0., Lx, NbinsX],
+                ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
                 ]
         )
     DiagParticleBinning(
         deposited_quantity = "weight",
         every = NumberOfTimeStepForSnapshotDISTRI,
         time_average = 1,
-        species = ["electron"],
+        species = ["electron-beam"],
         axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
+                ["x", 0., Lx, NbinsX],
+                ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
                 ]
         )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["x", 0., Lx, NbinsX],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
 
     DiagParticleBinning(
         deposited_quantity = "weight",
         every = NumberOfTimeStepForSnapshotDISTRI,
         time_average = 1,
-        species = ["electron"],
+        species = ["electron-beam"],
         axes = [
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
+                ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+                ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
                 ]
         )
-	
-
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron", "electron-beam"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins]
-                ]
-        )
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron","electron-beam"],
-        axes = [
-                ["vx", Distri_VXmin, Distri_VXmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
-                ]
-        )
-
-    DiagParticleBinning(
-        deposited_quantity = "weight",
-        every = NumberOfTimeStepForSnapshotDISTRI,
-        time_average = 1,
-        species = ["electron","electron-beam"],
-        axes = [
-                ["vy", Distri_VYmin, Distri_VYmax , Nbins],
-                ["vz", Distri_VZmin, Distri_VZmax , Nbins]
-                ]
-        )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron-beam"],
+    #     axes = [
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
 
 
-if (Particles_save):
+#    ******  PLASMA + PLASMA-BEAM
+
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["x", 0., Lx, NbinsX],
+    #             ["y", 0., Ly, NbinsY]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["x", 0., Lx, NbinsX],
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["x", 0., Lx, NbinsX],
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["x", 0., Lx, NbinsX],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["y", 0., Ly, NbinsY],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vx", Distri_VXmin, Distri_VXmax , NbinsV],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+    # DiagParticleBinning(
+    #     deposited_quantity = "weight",
+    #     every = NumberOfTimeStepForSnapshotDISTRI,
+    #     time_average = 1,
+    #     species = ["electron", "electron-beam"],
+    #     axes = [
+    #             ["vy", Distri_VYmin, Distri_VYmax , NbinsV],
+    #             ["vz", Distri_VZmin, Distri_VZmax , NbinsV]
+    #             ]
+    #     )
+
+    
+
+if (Particles_save=='ON'):
     DiagTrackParticles(
         species = "electron-beam",
         every = NumberOfTimeStepForSnapshotPART,
         attributes = ["x", "y", "px", "py", "pz"]
         )
+#    DiagTrackParticles(
+#        species = "electron-beam",
+#	filter = my_filter,
+#	every = NumberOfTimeStepForTrajectoriesPART,
+#        flush_every = NumberOfTimeStepForSnapshotPART,
+#        attributes = ["x", "y", "px", "py", "pz"]
+#	)	
