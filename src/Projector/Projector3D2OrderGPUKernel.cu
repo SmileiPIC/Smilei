@@ -830,7 +830,8 @@ namespace hip {
                              int    i_domain_begin,
                              int    j_domain_begin,
                              int    k_domain_begin,
-                             int    nprimy, nprimz,
+                             int    nprimy, 
+                             int    nprimz,
                              int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
@@ -915,7 +916,8 @@ namespace hip {
                              int    i_domain_begin,
                              int    j_domain_begin,
                              int    k_domain_begin,
-                             int    nprimy, nprimz,
+                             int    nprimy,
+                             int    nprimz,
                              int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
@@ -1005,7 +1007,8 @@ currentDepositionKernel( double *__restrict__ host_Jx,
                          int    i_domain_begin,
                          int    j_domain_begin,
                          int    k_domain_begin,
-                         int    nprimy, nprimz,
+                         int    nprimy, 
+                         int    nprimz,
                          int    not_spectral )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
