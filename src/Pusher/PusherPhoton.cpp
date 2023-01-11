@@ -41,15 +41,33 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     const double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
     const double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    #ifndef SMILEI_OPENACC_MODE
-        #pragma omp simd
-    #else
-        // int nparts = particles.last_index.back();
-        //int np = iend-istart;
-        int nparts = smpi->dynamics_invgf[ithread].size();
-        #pragma acc parallel present(invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z)
-        #pragma acc loop gang worker vector
-    #endif
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    const int istart_offset   = istart - ipart_buffer_offset;
+    const int particle_number = iend - istart;
+
+    #pragma omp target is_device_ptr( /* tofrom: */                                          \
+                       momentum_x /* [istart:particle_number] */,             \
+                       momentum_y /* [istart:particle_number] */,             \
+                       momentum_z /* [istart:particle_number] */,             \
+                       position_x /* [istart:particle_number] */,             \
+                       position_y /* [istart:particle_number] */,             \
+                       position_z /* [istart:particle_number] */ )
+    #pragma omp teams distribute parallel for
+#elif defined(SMILEI_OPENACC_MODE)
+    const int istart_offset   = istart - ipart_buffer_offset;
+    const int particle_number = iend - istart;
+
+    #pragma acc parallel present(invgf [0:nparts])                      \
+        deviceptr(position_x,                                           \
+                  position_y,                                           \
+                  position_z,                                           \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z)
+    #pragma acc loop gang worker vector
+#else
+    #pragma omp simd
+#endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
         invgf[ipart - ipart_ref] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
