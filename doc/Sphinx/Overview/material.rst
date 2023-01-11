@@ -47,6 +47,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
 
+.. [Yoon2023]
+
+  Y. D. Yoon, D. E. Wendel, G. S. Yun,
+  `Equilibrium selection via current sheet relaxation and guide field amplification`,
+  `Nat Commun 14, 139 (2023) <http://dx.doi.org/10.1038/s41467-023-35821-9>`_
+
 .. [Massimo2022]
 
   Francesco Massimo, Mathieu Lobet, Julien Derouillat, Arnaud Beck, Guillaume Bouchard, Mickael Grech, Frédéric Pérez, Tommaso Vinci,
