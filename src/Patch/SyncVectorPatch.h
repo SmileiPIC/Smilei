@@ -37,7 +37,8 @@ public :
     // timers and itime were here introduced for debugging
     template<typename T, typename F> static
     void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
-    {
+    {   
+
         unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
         T *pt1, *pt2;
         F* field1;
@@ -89,6 +90,12 @@ public :
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
         const bool is_memory_on_device = fields.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
+
+        // std::cout << "fields size: " << fields.size() << std::endl;
+        // std::cout << "fields name: " << fields[0]->name << std::endl;
+        // for( unsigned int ifield = 0 ; ifield < fields.size() ; ifield++ ) {
+        //     std::cout << smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[ifield]->data() ) << std::endl;
+        // }
 #endif
 
         for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {
@@ -102,7 +109,7 @@ public :
                 }
             }
             gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
-            #pragma omp for schedule(static) private(pt1,pt2)
+            #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
             for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
                 if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[0][0] ) {
@@ -184,7 +191,7 @@ public :
 
             // iDim = 1, local
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
             const bool is_memory_on_device = fields.size() > 0 &&
                 smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -202,7 +209,7 @@ public :
                 gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
                 gsp[1] = 1+2*oversize[1]+fields[icomp*nPatches]->isDual_[1]; //Ghost size primal
 
-                #pragma omp for schedule(static) private(pt1,pt2)
+                #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
                 for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                     unsigned int ipatch = ifield%nPatches;
                     if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
@@ -285,7 +292,7 @@ public :
 
                 // iDim = 2 local
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
                 const bool is_memory_on_device = fields.size() > 0 &&
                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -303,7 +310,7 @@ public :
                     gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
                     gsp[1] = 1+2*oversize[1]+fields[icomp*nPatches]->isDual_[1]; //Ghost size primal
                     gsp[2] = 1+2*oversize[2]+fields[icomp*nPatches]->isDual_[2]; //Ghost size primal
-                    #pragma omp for schedule(static) private(pt1,pt2)
+                    #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
                     for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                         unsigned int ipatch = ifield%nPatches;
                         if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
@@ -360,8 +367,7 @@ public :
             } // End if dims_.size()>2
 
         } // End if dims_.size()>1
-
-    }
+    };
 
     static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
 

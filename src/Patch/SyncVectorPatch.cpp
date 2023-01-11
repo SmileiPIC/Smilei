@@ -430,7 +430,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         // iDim = 1,
         const int nFieldLocaly = vecPatches.densitiesLocaly.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
         const bool is_memory_on_device = vecPatches.densitiesLocaly.size() > 0 &&
                                          smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocaly[0]->data() );
 #endif
@@ -566,7 +566,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             // iDim = 2 local
             const int nFieldLocalz = vecPatches.densitiesLocalz.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
             const bool is_memory_on_device = vecPatches.densitiesLocalz.size() > 0 &&
                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalz[0]->data() );
 #endif
