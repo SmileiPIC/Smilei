@@ -229,9 +229,9 @@ namespace hip {
             const unsigned int thread_index_offset           = threadIdx.x;
 
             // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 2D */ );
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 2D */ );
-            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 2D */ );
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
+            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -240,7 +240,7 @@ namespace hip {
             // NOTE: We use a bit to much LDS. For Jx, the first row could be
             // discarded, for Jy we could remove the first column.
 
-            static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 3 /* 2D */, 2 /* 2nd order interpolation */ );
+            static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 3 /* 3D */, 2 /* 2nd order interpolation */ );
 
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
@@ -364,7 +364,7 @@ namespace hip {
                     const ComputeFloat zpn      = static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv;
                     const int          kp       = std::round( zpn );
                     const int          kpo      = iold[2 * particle_count];
-                    const int          kp_m_jpo = kp - kpo - k_domain_begin;
+                    const int          kp_m_kpo = kp - kpo - k_domain_begin;
                     const ComputeFloat delta    = zpn - static_cast<ComputeFloat>( kp );
                     const ComputeFloat delta2   = delta * delta;
 
@@ -383,7 +383,7 @@ namespace hip {
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
                 const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
                 const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
-                const ComputeFloat cry_p         = charge_weight * dz_ov_dt;
+                const ComputeFloat crz_p         = charge_weight * dz_ov_dt;
 
                 // This is the particle position as grid index
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
@@ -399,15 +399,21 @@ namespace hip {
 
                 // Jx
 
-                ComputeFloat tmpJx[5]{};
+                const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
 
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<ComputeFloat>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
+                for( unsigned int j = 0; j < 5; ++j ) {
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = crx_p * (   Sy0[j]*Sz0[k] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
+                                                     + static_cast<ComputeFloat>(one_third) *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int jk_loc = ( j + jpo ) * GPUClusterWithGCWidth + kpo + k;
+                        for( unsigned int i = 1; i < 5; ++i ) {
+                            tmp_reduction -= ( Sx1[i-1] - Sx0[i-1] ) * tmp;
+                            const int loc = (ipo+i)*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                            atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
+
+                        }
                     }
                 }
 
