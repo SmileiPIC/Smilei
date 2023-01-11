@@ -304,7 +304,7 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
     // Initialize all current-related arrays to zero
     for( unsigned int i=0; i<5; i++ ) {
         Sx1[i] = 0.;
-        Sy1[i] = 0.;*/
+        Sy1[i] = 0.;
     }
 
     // --------------------------------------------------------
@@ -339,7 +339,7 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
         for( unsigned int j=0 ; j<5 ; j++ ) {
             rhoj[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
-    }
+    }*/
 }
 
 void Projector3D2OrderGPU::ionizationCurrents( Field      *Jx,

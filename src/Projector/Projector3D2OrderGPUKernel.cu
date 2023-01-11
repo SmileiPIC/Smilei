@@ -1092,8 +1092,8 @@ currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
                                  host_iold_, host_deltaold_,
                                  inv_cell_volume,
                                  dx_inv, dy_inv, dz_inv,
-                                 dx_ov_dt, dy_ov_dt, dz_ov_dt
-                                 i_domain_begin, j_domain_begin, k_domain_begin
+                                 dx_ov_dt, dy_ov_dt, dz_ov_dt,
+                                 i_domain_begin, j_domain_begin, k_domain_begin,
                                  nprimy, nprimz,
                                  not_spectral );
 }
