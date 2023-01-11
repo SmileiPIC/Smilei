@@ -177,7 +177,7 @@ namespace detail {
                    SizeType local_y_dimension_in_cell,
                    SizeType local_z_dimension_in_cell,
                    SizeType global_x_patch_offset_in_cell,
-                   SizeType global_y_patch_offset_in_cell ;
+                   SizeType global_y_patch_offset_in_cell,
                    SizeType global_z_patch_offset_in_cell );
 
         //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
@@ -299,11 +299,13 @@ namespace detail {
         switch( particle_container.dimension() ) {
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::computeParticleClusterKey( particle_container,
+                                                                                                parameters,
                                                                                                 a_parent_patch );
                 break;
             }
             case 3: {
                 Cluster3D<Params::getGPUClusterWidth( 3 /* 3D */ )>::computeParticleClusterKey( particle_container,
+                                                                                                parameters,
                                                                                                 a_parent_patch );
                 break;
             }
