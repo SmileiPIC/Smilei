@@ -411,10 +411,10 @@ namespace hip {
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
                                                      +                           one_third  *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
                         ComputeFloat tmp_reduction{};
-                        const int jk_loc = ( j + jpo ) * GPUClusterWithGCWidth + kpo + k;
+                        const int jk_loc = ( ipo * GPUClusterWithGCWidth + jpo + j ) * GPUClusterWithGCWidth + kpo + k;
                         for( unsigned int i = 1; i < 5; ++i ) {
                             tmp_reduction -= ( Sx1[i-1] - Sx0[i-1] ) * tmp;
-                            const int loc = (ipo+i)*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                            const int loc = i*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
                             atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
@@ -428,10 +428,10 @@ namespace hip {
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sx0[i] ) 
                                                      +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
                         ComputeFloat tmp_reduction{};
-                        const int ik_loc = ( i + ipo ) * GPUClusterWithGCWidth * GPUClusterWithGCWidth + kpo + k;
+                        const int ik_loc = (( i + ipo ) * GPUClusterWithGCWidth + jpo ) * GPUClusterWithGCWidth + kpo + k;
                         for( unsigned int j = 1; j < 5; ++j ) {
                             tmp_reduction -= ( Sy1[j-1] - Sy0[j-1] ) * tmp;
-                            const int loc = (jpo+j)*GPUClusterWithGCWidth + ik_loc;
+                            const int loc = j*GPUClusterWithGCWidth + ik_loc;
                             atomic::LDS::AddNoReturn( &Jy_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
@@ -445,10 +445,10 @@ namespace hip {
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i] ) 
                                                      +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
                         ComputeFloat tmp_reduction{};
-                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + j)) * GPUClusterWithGCWidth;
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + j)) * GPUClusterWithGCWidth + kpo;
                         for( unsigned int k = 1; k < 5; ++k ) {
                             tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
-                            const int loc =  kpo+k  + ij_loc;
+                            const int loc =  k  + ij_loc;
                             atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
@@ -471,13 +471,12 @@ namespace hip {
                 const unsigned int global_z_scratch_space_coordinate = global_z_scratch_space_coordinate_offset + local_z_scratch_space_coordinate;
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy * nprimz + global_y_scratch_space_coordinate * nprimz;
-                const unsigned int scratch_space_index = field_index; 
+                const unsigned int global_memory_index = (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate) * nprimz + global_z_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>( Jz_scratch_space[field_index] ) );
             }
         } // end DepositCurrent
 
@@ -537,6 +536,9 @@ namespace hip {
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
+
+            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+            ComputeFloat one_third = 1./3.;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -700,78 +702,75 @@ namespace hip {
                 const int jpo = iold[1 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                const int kpo = iold[2 * particle_count] -
+                                2 /* Offset so we dont uses negative numbers in the loop */ -
+                                global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                
 
                 // Jx
 
-                ComputeFloat tmpJx[5]{};
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<ComputeFloat>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
+                for( unsigned int j = 0; j < 5; ++j ) {
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = crx_p * (   Sy0[j]*Sz0[k] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
+                                                     +                           one_third  *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int jk_loc = ( ipo  * GPUClusterWithGCWidth + jpo + j ) * GPUClusterWithGCWidth + kpo + k;
+                        for( unsigned int i = 1; i < 5; ++i ) {
+                            tmp_reduction -= ( Sx1[i-1] - Sx0[i-1] ) * tmp;
+                            const int loc = i*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                            atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
                     }
                 }
 
                 // Jy
 
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ComputeFloat tmp{};
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
-                    }
-                }
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ComputeFloat tmp{};
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
+                for( unsigned int i = 0; i < 5; ++i ) {
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = cry_p * (   Sx0[i]*Sz0[k] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sx0[i] ) 
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ik_loc = (( i + ipo ) * GPUClusterWithGCWidth + jpo ) * GPUClusterWithGCWidth + kpo + k;
+                        for( unsigned int j = 1; j < 5; ++j ) {
+                            tmp_reduction -= ( Sy1[j-1] - Sy0[j-1] ) * tmp;
+                            const int loc = j*GPUClusterWithGCWidth + ik_loc;
+                            atomic::LDS::AddNoReturn( &Jy_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
                     }
                 }
 
                 // Jz
 
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
-                                                                                                                      Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
+                for( unsigned int i = 0; i < 5; ++i ) {
+                    for( unsigned int j = 0; j < 5; ++j ) {
+                        ComputeFloat tmp = crz_p * (   Sx0[i]*Sy0[j] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i] ) 
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + jpo + j) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  ij_loc + k;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
                     }
                 }
 
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
-                                                                                                                      Sy1[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
-                    }
-                }
 
                 // Rho
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[i] ) ) );
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[j] ) ) );
+
+                for( unsigned int i = 0; i < 5; ++i ) {
+                    for( unsigned int j = 0; j < 5; ++j ) {
+                        ComputeFloat tmp = charge_weight * Sx1[i]*Sy1[j]; 
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + j)) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 0; k < 5; ++k ) {
+                            const int loc =  ij_loc + k;
+                            atomic::LDS::AddNoReturn( &rho_scratch_space[loc], static_cast<ReductionFloat>( tmp * Sz1[k] ) );
+                        }
                     }
                 }
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[0] ) ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j]  ) ) );
-                    }
-                }
-
             }
 
             __syncthreads();
@@ -781,21 +780,23 @@ namespace hip {
                  field_index += workgroup_size ) {
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-                const unsigned int local_y_scratch_space_coordinate = field_index % Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+                const unsigned int local_x_scratch_space_coordinate = field_index / (GPUClusterWithGCWidth * GPUClusterWithGCWidth) ;
+                const unsigned int local_y_scratch_space_coordinate = (field_index % (GPUClusterWithGCWidth * GPUClusterWithGCWidth)) / GPUClusterWithGCWidth;
+                const unsigned int local_z_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
 
                 const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
                 const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
+                const unsigned int global_z_scratch_space_coordinate = global_z_scratch_space_coordinate_offset + local_z_scratch_space_coordinate;
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
-                const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
+                const unsigned int global_memory_index = (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate) * nprimz + global_z_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>(  Jx_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>(  Jy_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_rho[global_memory_index],                                                                                            static_cast<double>( rho_scratch_space[field_index] ) );
+
             }
         }
     } // namespace kernel
