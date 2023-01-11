@@ -24,7 +24,7 @@ public:
     //  1. Constructor/destructor
 
     //! ParticleInjector constructor
-    ParticleInjector( Params &, Patch * );
+    ParticleInjector();
 
     //! ParticleInjector destructor
     virtual ~ParticleInjector();
@@ -139,7 +139,7 @@ public:
         return 4;
     }
     
-    //! Return injector min or max (0 or 1)
+    //! Return if injector is on the min or the max (0 or 1)
     inline unsigned int min_max() {
         std::string mm = box_side_.substr( 1, 3 );
         if( mm == "min" ) {

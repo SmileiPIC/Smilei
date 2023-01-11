@@ -51,7 +51,7 @@ public:
     };
 
     //! Computation of a field from provided coefficients
-    inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *const f, int idx, int idy, int idz, int nx, int ny, int nz )
+    inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *const f, int idx, int idy, int idz, int, int ny, int nz )
     {
         double interp_res( 0. );
         //unroll ?
@@ -66,16 +66,16 @@ public:
     };
 
     //! Interpolator specific to the envelope model
-    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
+    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override;
 
     //! Interpolator specific to the envelope model
-    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
+    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override;
 
     //! Interpolator specific to the envelope model
-    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override ;
+    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override;
 
     //! Interpolator specific to the envelope model
-    void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override;
 
 private:
 

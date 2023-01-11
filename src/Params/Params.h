@@ -131,6 +131,10 @@ public:
     std::vector< std::vector<bool> > open_boundaries;
     bool save_magnectic_fields_for_SM;
     std::vector< std::vector<int> > number_of_pml_cells;
+    std::vector< std::vector<double> > envelope_pml_sigma_parameters;
+    std::vector< std::vector<double> > envelope_pml_kappa_parameters;
+    std::vector< std::vector<double> > envelope_pml_alpha_parameters;
+
 
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;
@@ -183,6 +187,8 @@ public:
     //! Fridman filtering parameter [real between 0 and 1]
     double Friedman_theta;
 
+    // mark if OpenMP tasks are used or not
+    bool omptasks;
     //! Clusters width
     //unsigned int cluster_width_;
     int cluster_width_;
@@ -210,19 +216,19 @@ public:
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
 
-    //! number of cells in every direction of the local domain
-    std::vector<unsigned int> n_space;
+    //! number of cells in every direction of the patch
+    std::vector<unsigned int> patch_size_;
     
-    //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
-    std::vector<unsigned int> n_space_region;
+    //! number of cells in every direction of the region (can be different from 1 MPI process to another)
+    std::vector<unsigned int> region_size_;
     
     std::vector<unsigned int> number_of_region;
     std::vector< std::vector<int> > offset_map;
     std::vector< std::vector< std::vector<int> > > map_rank;
-    std::vector<int> coordinates;
+    std::vector<int> region_coordinates;
     
     //! number of cells in every direction of the global domain
-    std::vector<unsigned int> n_space_global;
+    std::vector<unsigned int> global_size_;
 
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
@@ -296,10 +302,10 @@ public:
     //! of Niel et al.
     bool has_Niel_radiation_;
     //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
-    bool hasDiagRadiationSpectrum;
+    bool has_diag_radiation_spectrum_;
 
     //! Tells whether there is a species with multiphoton Breit-Wheeler
-    bool hasMultiphotonBreitWheeler;
+    bool has_multiphoton_Breit_Wheeler_;
     
     //! Tells whether position_old is used
     bool keep_position_old;

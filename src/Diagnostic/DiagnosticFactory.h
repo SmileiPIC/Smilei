@@ -73,11 +73,11 @@ public:
     static std::vector<Diagnostic *> createLocalDiagnostics( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
     {
         std::vector<Diagnostic *> vecDiagnostics;
-        //MESSAGE("in create local diags:  global dims after declaring vecdiag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
+        //MESSAGE("in create local diags:  global dims after declaring vecdiag " << vecPatches(0)->EMfields->Jx_s[1]->number_of_points_);
         
         for( unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents( "DiagFields" ); n_diag_fields++ ) {
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create( params, smpi, vecPatches, n_diag_fields, openPMD ) );
-            //  MESSAGE("in create local diags:  global dims after creating and pushing back field diag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
+            //  MESSAGE("in create local diags:  global dims after creating and pushing back field diag " << vecPatches(0)->EMfields->Jx_s[1]->number_of_points_);
         }
         
         for( unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents( "DiagProbe" ); n_diag_probe++ ) {

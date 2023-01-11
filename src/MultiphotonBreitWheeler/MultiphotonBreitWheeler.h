@@ -48,8 +48,7 @@ public:
                      double & pair_energy,
                      int istart,
                      int iend,
-                     int ithread, int ipart_ref = 0 );
-
+                     int ithread, int ibin = 0, int ipart_ref = 0 );
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
     //! \param kx photon x momentum
@@ -93,14 +92,39 @@ public:
     //! Clean photons that decayed into pairs (weight <= 0)
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
-    //! \param istart      Index of the first particle
-    //! \param iend        Index of the last particle
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param nbin        Number of bins
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
     void removeDecayedPhotons(
         Particles &particles,
         SmileiMPI *smpi,
         int ibin, int nbin,
         int *bmin, int *bmax, int ithread );
+
+
+    //! Clean photons that decayed into pairs (weight <= 0) and resize each bin
+    //! But keeping the space between bins (so called no compression)
+    //! Developers have to be aware that the space exists using the Particles bin indexes
+    //! \param particles   particle object containing the particle
+    //!                    properties of the current species
+    //! \param smpi        MPI properties
+    //! \param ibin        Index of the current bin
+    //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
+    //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
+    //! \param ithread     Thread index
+    void removeDecayedPhotonsWithoutBinCompression(
+        Particles &particles,
+        SmileiMPI *smpi,
+        int ibin,
+        int *bmin, int *bmax, int ithread );
+
+    //! Return the sampling for each pair
+    int getPairCreationSampling(int i) {
+        return mBW_pair_creation_sampling_[i];
+    }
 
     //! Return the pair converted energy
     // double inline getPairEnergy( void )
@@ -110,6 +134,12 @@ public:
 
     // Local array of new pairs of electron-positron
     // Particles new_pair[2];
+
+    // Local array of new pairs of electron-positron per bin
+    std::vector<Particles *> new_pair_per_bin;
+
+    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
+    void joinNewElectronPositronPairs(Particles **new_pair,unsigned int Nbins);
 
 private:
 
@@ -122,7 +152,7 @@ private:
     //! Time step
     double dt_;
 
-    // Number of pairs created per even
+    // Number of pairs created per event
     int mBW_pair_creation_sampling_[2];
 
     // Inverse of the number of pairs created per even

@@ -57,7 +57,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
   Francesco Massimo, Mathieu Lobet, Julien Derouillat, Arnaud Beck, Guillaume Bouchard, Mickael Grech, Frédéric Pérez, Tommaso Vinci,
   `A Task Programming Implementation for the Particle in Cell Code Smilei`,
-  `PASC '22: Proceedings of the Platform for Advanced Scientific Computing Conference 5, 1 (2022) <https://doi.org/10.1145/3539781.3539788>`_, 
+  `PASC '22: Proceedings of the Platform for Advanced Scientific Computing Conference 5, 1 (2022) <https://doi.org/10.1145/3539781.3539788>`_,
   `arXiv:2204.12837 <https://arxiv.org/abs/2204.12837>`_
 
 .. [Yao2022]

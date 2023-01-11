@@ -210,7 +210,7 @@ void ElectroMagnBC3D_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     if( i_boundary_==0 && patch->isXmin() ) {
     

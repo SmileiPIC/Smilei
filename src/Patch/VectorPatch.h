@@ -103,7 +103,30 @@ public :
             
         return false;
     }
-    
+
+#  ifdef _PARTEVENTTRACING  
+    // Write Output for Particle Event Tracing diagnostic - this method must be called inside a pragma omp single construct
+    void writeParticleEventTracingOutput(Params &params, SmileiMPI *smpi, int iteration){
+        int rank(0);
+        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+        for (int ithread=0; ithread<omp_get_max_threads(); ithread++){ // write a file for eacht thread
+            std::ofstream outfile;
+            std::string namefile = "particle_event_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
+            outfile.open(namefile, std::ios_base::app); // append to file
+            outfile << "Start Iteration "<<std::to_string(iteration)<<"\n";
+            for (int event_id = 0; event_id<smpi->particle_event_tracing_event_time_[ithread].size();event_id++){
+                // Write line in file with structure Time Start/End EventName
+                outfile<<std::to_string((smpi->particle_event_tracing_event_time_[ithread][event_id]))<<" "
+                       <<(smpi->particle_event_tracing_start_or_end_[ithread][event_id])<<" "
+                       <<(smpi->particle_event_tracing_event_name_[ithread][event_id])<<" \n" ;
+            } // end loop on traced events
+        outfile << "End Iteration "<<std::to_string(iteration)<<"\n";
+        smpi->particle_event_tracing_event_time_[ithread].clear();
+        smpi->particle_event_tracing_start_or_end_[ithread].clear();
+        smpi->particle_event_tracing_event_name_[ithread].clear();
+        } // end loop on threads
+    } // end writeParticleEventTracingOutput
+#endif
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
     
@@ -124,6 +147,15 @@ public :
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    double time_dual,
                    Timers &timers, int itime );
+
+    //! macro-particle operations without tasks
+    void dynamicsWithoutTasks( Params &params,
+                   SmileiMPI *smpi,
+                   SimWindow *simWindow,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   double time_dual,
+                   Timers &timers, int itime );
     
     //! For all patches, exchange particles and sort them.
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
@@ -133,7 +165,7 @@ public :
                                       double time_dual, Timers &timers, int itime );
 
     //! Particle merging
-    void mergeParticles(Params &params, SmileiMPI *smpi, double time_dual,Timers &timers, int itime );
+    void mergeParticles( Params &params, double time_dual, Timers &timers, int itime );
 
     //! Clean MPI buffers and resize particle arrays to save memory
     void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
@@ -163,11 +195,20 @@ public :
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
     //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
     void ponderomotiveUpdatePositionAndCurrents( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+
     void resetRhoJ(bool old = false);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
@@ -185,6 +226,7 @@ public :
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
+    void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
     
@@ -241,6 +283,26 @@ public :
     
     //! Init new envelope from input namelist
     void initNewEnvelope( Params &params );
+
+#ifdef _OMPTASKS
+    //! macro-particle operations with tasks
+    void dynamicsWithTasks( Params &params,
+                   SmileiMPI *smpi,
+                   SimWindow *simWindow,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   double time_dual,
+                   Timers &timers, int itime );
+    //! macro-particle operations with envelope and tasks
+    void ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+    void ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
+#endif
     
     // Lists of fields
     std::vector<Field *> densities;

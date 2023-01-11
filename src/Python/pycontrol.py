@@ -87,6 +87,8 @@ def _smilei_check():
             input*1.
             return tconstant()
         except: return input
+    Main.pml_sigma = [ toSpaceProfile(p) for p in (Main.pml_sigma ) ]
+    Main.pml_kappa = [ toSpaceProfile(p) for p in (Main.pml_kappa ) ]
     for s in Species:
         s.number_density      = toSpaceProfile(s.number_density)
         s.charge_density  = toSpaceProfile(s.charge_density)
@@ -132,6 +134,11 @@ def _keep_python_running():
     profiles += [ant.space_time_profile for ant in Antenna]
     profiles += [e.profile for e in PrescribedField]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
+        # Verify if PML are used
+        for bcs in Main.EM_boundary_conditions:
+            for bc in bcs:
+                if (bc == "PML"):
+                    return True
         for s in Species:
             profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
     if len(MovingWindow)>0:

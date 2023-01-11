@@ -7,8 +7,8 @@
 
 using namespace std;
 
-InterpolatorAM::InterpolatorAM( Params &params, Patch *patch )
-    : Interpolator( params, patch )
+InterpolatorAM::InterpolatorAM( Patch *patch )
+    : Interpolator()
 {
 
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );

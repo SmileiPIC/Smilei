@@ -33,7 +33,7 @@ void Interpolator2DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields,
                                              int *istart,
                                              int *iend,
                                              int ithread,
-                                             unsigned int scell,
+                                             unsigned int,
                                              int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
@@ -341,11 +341,11 @@ void Interpolator2DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields,
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
 // -----------------------------------------------------------------------------
-void Interpolator2DWT2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2DWT2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     double *Epart[3], *Bpart[3];
 
@@ -516,24 +516,24 @@ void Interpolator2DWT2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particle
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2DWT2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2DWT2OrderV::oneField( Field **, Particles &, int *, int *, double *, double *, double *, double * )
 {
     ERROR( "Single field 2D2O interpolator not available in vectorized mode" );
 }
 
-void Interpolator2DWT2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT2OrderV::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Vectorized interpolation for the envelope model is not implemented for 2D geometry" );
 } // END Interpolator2D2OrderWT
 
 
-void Interpolator2DWT2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT2OrderV::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Vectorized interpolation for the envelope model is not implemented for 2D geometry" );
 } // END Interpolator2D2OrderWT
 
 
-void Interpolator2DWT2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator2DWT2OrderV::envelopeAndSusceptibility( ElectroMagn *, Particles &, int , double *, double *, double *, double * )
 {
     ERROR( "Vectorized interpolation for the envelope model is not implemented for 2D geometry" );
 } // END Interpolator2D2OrderWT

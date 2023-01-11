@@ -14,7 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator2DWT2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2DWT2Order::Interpolator2DWT2Order( Params &params, Patch *patch ) : Interpolator2D( params, patch )
+Interpolator2DWT2Order::Interpolator2DWT2Order( Params &params, Patch *patch ) : Interpolator2D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -68,7 +68,7 @@ void Interpolator2DWT2Order::fields( ElectroMagn *EMfields, Particles &particles
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
 // -----------------------------------------------------------------------------
-void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -95,7 +95,7 @@ void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles
     // Calculate coeffs
     coeffs( xpn, ypn );
 
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,pt)
     *( ELoc+0*nparts ) = compute( &coeffxd_[1], &coeffypt_[1], Ex2D, id_, jp_ );
@@ -120,7 +120,7 @@ void Interpolator2DWT2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles
 }
 
 //! Interpolator on another field than the basic ones
-void Interpolator2DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2DWT2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxpt_[1];
@@ -145,8 +145,8 @@ void Interpolator2DWT2Order::fieldsWrapper( ElectroMagn *EMfields,
                                             int *istart,
                                             int *iend,
                                             int ithread,
-                                            unsigned int scell,
-                                            int ipart_ref )
+                                            unsigned int,
+                                            int )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -154,7 +154,7 @@ void Interpolator2DWT2Order::fieldsWrapper( ElectroMagn *EMfields,
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -187,7 +187,7 @@ void Interpolator2DWT2Order::fieldsSelection( ElectroMagn *EMfields,
 
     } else {
 
-        int npart_tot = particles.size();
+        int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
@@ -198,7 +198,7 @@ void Interpolator2DWT2Order::fieldsSelection( ElectroMagn *EMfields,
 // -----------------------------------------------------------------------------
 //! Interpolator specific to the envelope model
 // -----------------------------------------------------------------------------
-void Interpolator2DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field2D *Phi2D = static_cast<Field2D *>( EMfields->envelope->Phi_ );
@@ -215,7 +215,7 @@ void Interpolator2DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -254,7 +254,7 @@ void Interpolator2DWT2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles
 } // END Interpolator2DWT2Order
 
 
-void Interpolator2DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field2D *Phi_m2D = static_cast<Field2D *>( EMfields->envelope->Phi_m );
@@ -270,7 +270,7 @@ void Interpolator2DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Partic
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts( particles.numberOfParticles() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
@@ -407,7 +407,7 @@ void Interpolator2DWT2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, P
 
 } // END Interpolator2DWT2Order
 
-void Interpolator2DWT2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2DWT2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Static cast of the envelope fields
     Field2D *EnvEabs  = static_cast<Field2D *>( EMfields->Env_E_abs_ );

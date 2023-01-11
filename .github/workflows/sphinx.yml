@@ -1,4 +1,8 @@
-name: docs
+# 
+# Generate the documentation
+# _________________________________________
+
+name: doc
 
 on:
   push:

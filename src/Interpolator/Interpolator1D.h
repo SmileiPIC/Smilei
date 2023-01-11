@@ -10,7 +10,7 @@
 class Interpolator1D : public Interpolator
 {
 public:
-    Interpolator1D( Params &params, Patch *patch ) ;
+    Interpolator1D( Patch *patch ) ;
     
     virtual ~Interpolator1D() override {};
     

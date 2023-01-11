@@ -14,7 +14,7 @@ class ElectroMagnAM : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagnAM
-    ElectroMagnAM( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
+    ElectroMagnAM( Params &params, std::vector<Species *> &vecSpecies, Patch *patch );
     ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *patch );
     
     //! Destructor for ElectroMagnAM
@@ -52,34 +52,34 @@ public:
     void initPoisson( Patch *patch ) override;
     double compute_r() override;
     void compute_Ap( Patch *patch ) override;
-    void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void compute_Ap_relativistic_Poisson( Patch *, double ) override {};
     void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     void compute_Ap_Poisson_AM( Patch *patch, unsigned int imode );
     //Access to Ap
-    double compute_pAp() override {return 0.;};
+    double compute_pAp() override { return 0.; };
     std::complex<double> compute_pAp_AM();
-    void update_pand_r( double r_dot_r, double p_dot_Ap ) override {;};
+    void update_pand_r( double, double ) override {};
     void update_p( double rnew_dot_rnew, double r_dot_r ) override;
     void update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap );
     void initE( Patch *patch ) override;
-    void delete_phi_r_p_Ap( Patch *patch );
-    void delete_relativistic_fields( Patch *patch );
-    void delete_Poisson_fields( Patch *patch );
-    void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
-    void initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
-    void initE_Poisson_AM( Patch *patch, unsigned int imode );
-    void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
-    void initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean );
-    void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
-    void center_fields_from_relativistic_Poisson_AM( Patch *patch );
-    void initRelativisticPoissonFields( Patch *patch ) override;
-    void initPoissonFields( Patch *patch );
-    void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );
-    void sum_rel_fields_to_em_fields( Patch *patch ) override {;}
-    void sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode );
-    void sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode );
+    void delete_phi_r_p_Ap();
+    void delete_relativistic_fields();
+    void delete_Poisson_fields();
+    void initE_relativistic_Poisson( Patch *, double ) override {};
+    void initE_relativistic_Poisson_AM( double gamma_mean, unsigned int imode );
+    void initE_Poisson_AM( unsigned int imode );
+    void initB_relativistic_Poisson( double ) override {};
+    void initB_relativistic_Poisson_AM( double gamma_mean );
+    void center_fields_from_relativistic_Poisson() override {};
+    void center_fields_from_relativistic_Poisson_AM();
+    void initRelativisticPoissonFields() override;
+    void initPoissonFields();
+    void initPoisson_init_phi_r_p_Ap( unsigned int imode );
+    void sum_rel_fields_to_em_fields() override {};
+    void sum_rel_fields_to_em_fields_AM( Params &params, unsigned int imode );
+    void sum_Poisson_fields_to_em_fields_AM( unsigned int imode );
     void centeringE( std::vector<double> E_Add ) override;
-    void centeringErel( std::vector<double> E_Add ) override {;}
+    void centeringErel( std::vector<double> ) override {};
     
     double getEx_Xmin() override
     {
@@ -146,7 +146,7 @@ public:
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes) override;
 
     //! Method used to apply a single-pass custom FIR based filter on currents
-    void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff) override {return ;};
+    void customFIRCurrentFilter(unsigned int, std::vector<unsigned int>, std::vector<double> ) override {};
  
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname, Params& params ) override;
@@ -162,20 +162,6 @@ public:
     //! Method used to gather species densities and currents on a single array
     void synchronizePatch( unsigned int clrw );
     void finalizePatch( unsigned int clrw );
-    
-    //! \todo Create properties the laser time-profile (MG & TV)
-    
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nl_p;
-    
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nl_d;
-    
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int nr_p;
-    
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int nr_d;
     
     //! Spatial step dl for 2D3V cylindrical simulations
     double dl;
@@ -255,6 +241,22 @@ public:
     
     //!Pointers toward R inverse values stored in patch
     double *invR, *invRd;
+
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalDensities(int, int, 
+                              double*, double*, double*, double*, 
+                              std::vector<unsigned int>, bool ) override final {};
+
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalAMDensities(int ispec, int ibin, 
+                              std::complex<double> *b_Jl, std::complex<double> *b_Jr, 
+                              std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final;  
+
+    // copy susceptibility projected on sub-buffers to global susceptibility
+    void copyInLocalSusceptibility(int ispec, int ibin, 
+                                   double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) override final;
+
 };
 
 #endif

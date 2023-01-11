@@ -85,14 +85,28 @@ public:
     void isend( std::vector<double> *vec, int to, int tag, MPI_Request &request );
     void recv( std::vector<double> *vec, int from, int tag );
 
+    //Sending and reveiving ElectroMagn and ElectroMagAM
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc );
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes, bool send_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
-    void isend( Field *field, int to, int tag, MPI_Request &request );
-    void isendComplex( Field *field, int to, int tag, MPI_Request &request );
-    void recv( Field *field, int from, int tag );
-    void recvComplex( Field *field, int from, int tag );
+
+    //Templates to send/receive PML for both 2D and 3D
+    template <typename Tpml>
+    int  recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag, bool recv_xmin_bc);
+    template <typename Tpml>
+    void  send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc);
+
+
+    //Sending and reveiving Fields and cFields
+    void isend( Field *field, int to, int tag, MPI_Request &request );                 // Sends the whole Field
+    void isend( Field *field, int to, int tag, MPI_Request &request, int x_first );       // Sends the first "x_first" columns of the Field
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request );          // Sends the whole cField
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first );// Sends only the first x_first columns of the cField
+    void recv( Field *field, int from, int tag);                     //Receives the whole Field
+    void recvShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
+    void recvComplex( Field *field, int from, int tag);              //Receives the whole cField
+    void recvComplexShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
 
     void sendComplex( Field *field, int to, int tag );
     void irecvComplex( Field *field, int from, int tag, MPI_Request &request );
@@ -100,9 +114,9 @@ public:
     void isend( ProbeParticles *probe, int to, int tag, unsigned int );
     void recv( ProbeParticles *probe, int from, int tag, unsigned int );
 
-    void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
-    void recv( int *integer, int from, int tag, unsigned int );
-    
+    void isend( int *integer, int to, int tag, MPI_Request &request );
+    void recv( int *integer, int from, int tag );
+
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
     void irecv( Field* field, int from, int tag, MPI_Request& request );
@@ -156,19 +170,19 @@ public:
     {
         return smilei_omp_max_threads;
     }
-    
+
     //! Return local number of cores
     inline int getNumCores()
     {
         return number_of_cores;
     }
-    
+
     //! Return global number of cores
     inline int getGlobalNumCores()
     {
         return global_number_of_cores;
     }
-    
+
     //! Return tag upper bound of this MPI implementation
     inline int getTagUB()
     {
@@ -206,9 +220,18 @@ public:
     std::vector<std::vector<double>> dynamics_EnvEabs_part;
     //! value of the EnvEabs used for envelope ionization
     std::vector<std::vector<double>> dynamics_EnvExabs_part;
-    
-    // Resize buffers for a given number of particles
-    inline void dynamics_resize( int ithread, int ndim_field, int npart, bool isAM = false )
+
+    //! Return buffer size in thread ithread
+    inline int __attribute__((always_inline)) getBufferSize(const int ithread)
+    {
+        return dynamics_invgf[ithread].size();
+    }
+
+    //! Erase Particles from istart ot the end in the buffers of thread ithread
+    void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
+
+    // Resize buffers for a given number of particles (threaded version)
+    inline void resizeBuffers( int ithread, int ndim_field, int npart, bool isAM = false )
     {
         dynamics_Epart[ithread].resize( 3*npart );
         dynamics_Bpart[ithread].resize( 3*npart );
@@ -231,7 +254,58 @@ public:
             }
         }
     }
-    
+
+
+        // Resize buffers vector for a given number of buffers
+    inline void resizeBuffers( int n_buffers, bool isAM = false)
+    {
+        dynamics_Epart.resize( n_buffers );
+        dynamics_Bpart.resize( n_buffers );
+        dynamics_invgf.resize( n_buffers );
+        dynamics_iold.resize( n_buffers );
+        dynamics_deltaold.resize( n_buffers );
+        if( isAM ) {
+            dynamics_eithetaold.resize( n_buffers );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart.resize( n_buffers );
+            dynamics_GradPHI_mpart.resize( n_buffers );
+            dynamics_PHIpart.resize( n_buffers );
+            dynamics_PHI_mpart.resize( n_buffers );
+            dynamics_inv_gamma_ponderomotive.resize( n_buffers );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part.resize( n_buffers );
+                dynamics_EnvExabs_part.resize( n_buffers );
+            }
+        }
+    }
+
+    // Resize buffers to avoid memory leak with tasks
+    inline void reduceDynamicsBufferSize( int buffer_id, bool isAM = false )
+    {
+        dynamics_Epart[buffer_id].resize( 1 );
+        dynamics_Bpart[buffer_id].resize( 1 );
+        dynamics_invgf[buffer_id].resize( 1 );
+        dynamics_iold[buffer_id].resize( 1 );
+        dynamics_deltaold[buffer_id].resize( 1 );
+        if( isAM ) {
+            dynamics_eithetaold[buffer_id].resize( 1 );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart[buffer_id].resize( 1 );
+            dynamics_GradPHI_mpart[buffer_id].resize( 1 );
+            dynamics_PHIpart[buffer_id].resize( 1 );
+            dynamics_PHI_mpart[buffer_id].resize( 1 );
+            dynamics_inv_gamma_ponderomotive[buffer_id].resize( 1 );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part[buffer_id].resize( 1 );
+                dynamics_EnvExabs_part[buffer_id].resize( 1 );
+            }
+        }
+    }
+
     // Resize buffers for old properties only
     inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )
     {
@@ -241,18 +315,43 @@ public:
             dynamics_eithetaold[ithread].resize( npart );
         }
     }
-    
-    // Compute global number of particles
-    //     - deprecated with patch introduction
-    //! \todo{Patch managmen}
-    inline int globalNbrParticles( Species *species, int locNbrParticles )
-    {
-        int nParticles( 0 );
-        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, world_ );
-        return nParticles;
-    }
 
     bool test_mode;
+
+    // Task tracing diag
+    std::vector<std::vector<double>> particle_event_tracing_event_time_;
+    std::vector<std::vector<unsigned int>> particle_event_tracing_start_or_end_;
+    std::vector<std::vector<int>> particle_event_tracing_event_name_;
+    int iter_frequency_particle_event_tracing_;
+    double reference_time_;
+
+    // determine if "task" tracing is performed at this iteration
+    bool diagPartEventTracing(double time_dual, double timestep ){
+        bool diagTracing = false;
+        if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_particle_event_tracing_)==0){
+            diagTracing = true;
+        }
+        return diagTracing;
+    }
+    // trace event or "task"
+    void trace_event(int thread, double event_time,unsigned int event_start_or_end, int event_name)
+    {
+        particle_event_tracing_event_time_[thread].push_back(event_time);           // write time
+        particle_event_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
+        particle_event_tracing_event_name_[thread].push_back(event_name);           // write Event Name
+    };
+
+    // If particle event tracing diagnostic is activated, trace event
+#ifdef _PARTEVENTTRACING
+    void traceEventIfDiagTracing( bool, int, unsigned int, int ) {};
+#else
+    void traceEventIfDiagTracing( bool diag_PartEventTracing, int thread,
+                                  unsigned int event_start_or_end, int event_name )
+    {
+        if( diag_PartEventTracing ) trace_event( thread, (MPI_Wtime()-reference_time_), event_start_or_end, event_name );
+    };
+#endif
+
 
 protected:
     //! Global MPI Communicator

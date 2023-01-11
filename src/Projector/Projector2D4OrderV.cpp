@@ -25,7 +25,7 @@ Projector2D4OrderV::Projector2D4OrderV( Params &params, Patch *patch ) : Project
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
 
-    nscelly_ = params.n_space[1] + 1;
+    nscelly_ = params.patch_size_[1] + 1;
 
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
@@ -61,7 +61,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
                                              int * __restrict__ iold,
                                              double * __restrict__ deltaold,
                                              unsigned int buffer_size,
-                                             int ipart_ref )
+                                             int ipart_ref, int bin_shift )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -97,7 +97,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
     }
 
     // Jx, Jy, Jz
-    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
+    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref, bin_shift );
 
     // rho^(p,p,d)
     cell_nparts = ( int )iend-( int )istart;
@@ -201,7 +201,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int /*bin_shift*/ )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -400,7 +400,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
                                    int * __restrict__ iold,
                                    double * __restrict__ deltaold,
                                    unsigned int buffer_size,
-                                   int ipart_ref )
+                                   int ipart_ref, int /*bin_shift*/ )
 {
 
     // std::cerr << "Projection" << std::endl;
@@ -835,7 +835,7 @@ void Projector2D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 
-void Projector2D4OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int scell, int ipart_ref )
+void Projector2D4OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

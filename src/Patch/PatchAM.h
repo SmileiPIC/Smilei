@@ -17,13 +17,14 @@ public:
     PatchAM( PatchAM *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles );
     
     void initStep2( Params &params, DomainDecomposition *domain_decomposition ) override final;
+    void initInvR( Params &params );
     
     //! Destructor for Patch
     ~PatchAM() override  final;
     
     //! Return the volume (or surface or length depending on simulation dimension)
     //! of one cell at the position of a given particle
-    double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
+    double getPrimalCellVolume( Particles *, unsigned int, Params & ) override final
     {
         ERROR( "getPrimalCellVolume not implemented in geometry AM" );
         return cell_volume;

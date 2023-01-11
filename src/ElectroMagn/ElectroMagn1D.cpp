@@ -8,6 +8,7 @@
 
 #include "Params.h"
 #include "Field1D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 
@@ -22,16 +23,16 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn1D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn1D::ElectroMagn1D( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch )
-    : ElectroMagn( params, domain_decomposition, vecSpecies, patch )
+ElectroMagn1D::ElectroMagn1D( Params &params, vector<Species *> &vecSpecies, Patch *patch )
+    : ElectroMagn( params, vecSpecies, patch )
 {
     initElectroMagn1DQuantities( params, patch );
     
     // Charge and current densities for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = new Field1D( Tools::merge( "Jx_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jy_s[ispec]  = new Field1D( Tools::merge( "Jy_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jz_s[ispec]  = new Field1D( Tools::merge( "Jz_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jx_s [ispec] = new Field1D( Tools::merge( "Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s [ispec] = new Field1D( Tools::merge( "Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s [ispec] = new Field1D( Tools::merge( "Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         rho_s[ispec] = new Field1D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
@@ -49,43 +50,20 @@ ElectroMagn1D::ElectroMagn1D( ElectroMagn1D *emFields, Params &params, Patch *pa
     
     // Charge and current densities for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        if( emFields->Jx_s[ispec] != NULL ) {
-            if( emFields->Jx_s[ispec]->data_ != NULL ) {
-                Jx_s[ispec]  = new Field1D( dimPrim, 0, false, emFields->Jx_s[ispec]->name );
-            } else {
-                Jx_s[ispec]  = new Field1D( emFields->Jx_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jx_s[ispec] ) {
+            Jx_s[ispec] = FieldFactory::create1D( dimPrim, 0, false, emFields->Jx_s[ispec]->name, params, emFields->Jx_s[ispec]->data_ != NULL );
         }
-        if( emFields->Jy_s[ispec] != NULL ) {
-            if( emFields->Jy_s[ispec]->data_ != NULL ) {
-                Jy_s[ispec]  = new Field1D( dimPrim, 1, false, emFields->Jy_s[ispec]->name );
-            } else {
-                Jy_s[ispec]  = new Field1D( emFields->Jy_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jy_s[ispec] ) {
+            Jy_s[ispec] = FieldFactory::create1D( dimPrim, 1, false, emFields->Jy_s[ispec]->name, params, emFields->Jy_s[ispec]->data_ != NULL );
         }
-        if( emFields->Jz_s[ispec] != NULL ) {
-            if( emFields->Jz_s[ispec]->data_ != NULL ) {
-                Jz_s[ispec]  = new Field1D( dimPrim, 2, false, emFields->Jz_s[ispec]->name );
-            } else {
-                Jz_s[ispec]  = new Field1D( emFields->Jz_s[ispec]->name, dimPrim );
-            }
+        if( emFields->Jz_s[ispec] ) {
+            Jz_s[ispec] = FieldFactory::create1D( dimPrim, 2, false, emFields->Jz_s[ispec]->name, params, emFields->Jz_s[ispec]->data_ != NULL );
         }
-        if( emFields->rho_s[ispec] != NULL ) {
-            if( emFields->rho_s[ispec]->data_ != NULL ) {
-                rho_s[ispec] = new Field1D( dimPrim, emFields->rho_s[ispec]->name );
-            } else {
-                rho_s[ispec]  = new Field1D( emFields->rho_s[ispec]->name, dimPrim );
-            }
+        if( emFields->rho_s[ispec] ) {
+            rho_s[ispec] = FieldFactory::create1D( dimPrim, emFields->rho_s[ispec]->name, emFields->rho_s[ispec]->data_ != NULL );
         }
-        
-        if( params.Laser_Envelope_model ) {
-            if( emFields->Env_Chi_s[ispec] != NULL ) {
-                if( emFields->Env_Chi_s[ispec]->data_ != NULL ) {
-                    Env_Chi_s[ispec] = new Field1D( dimPrim, emFields->Env_Chi_s[ispec]->name );
-                } else {
-                    Env_Chi_s[ispec]  = new Field1D( emFields->Env_Chi_s[ispec]->name, dimPrim );
-                }
-            }
+        if( params.Laser_Envelope_model && emFields->Env_Chi_s[ispec] ) {
+            Env_Chi_s[ispec] = FieldFactory::create1D( dimPrim, emFields->Env_Chi_s[ispec]->name, emFields->Env_Chi_s[ispec]->data_ != NULL );
         }
         
     }
@@ -105,21 +83,6 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     
     // Electromagnetic fields
     // ----------------------
-    // number of nodes of the primal-grid
-    nx_p = n_space[0]+1 + 2*oversize[0];
-    // number of nodes of the dual-grid
-    nx_d = n_space[0]+2 + 2*oversize[0];
-    // dimPrim/dimDual = nx_p/nx_d
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
     
     // Allocation of the EM fields
     Ex_  = new Field1D( dimPrim, 0, false, "Ex" );
@@ -180,7 +143,7 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         
@@ -236,12 +199,12 @@ void ElectroMagn1D::initPoisson( Patch *patch )
     index_max_p_.resize( 1, 0 );
     
     index_min_p_[0] = oversize[0];
-    index_max_p_[0] = nx_p - 2 - oversize[0];
+    index_max_p_[0] = dimPrim[0] - 2 - oversize[0];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
     if( patch->isXmax() ) {
-        index_max_p_[0] = nx_p-1;
+        index_max_p_[0] = dimPrim[0] - 1;
     }
     
     phi_ = new Field1D( dimPrim );  // scalar potential
@@ -271,7 +234,7 @@ double ElectroMagn1D::compute_r()
 
 void ElectroMagn1D::compute_Ap( Patch *patch )
 {
-
+    const unsigned int nx_p = dimPrim[0];
     double one_ov_dx_sq       = 1.0/( dx*dx );
     double two_ov_dx2         = 2.0*( 1.0/( dx*dx ) );
     
@@ -292,7 +255,8 @@ void ElectroMagn1D::compute_Ap( Patch *patch )
 
 void ElectroMagn1D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
-
+    const unsigned int nx_p = dimPrim[0];
+    
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -344,6 +308,8 @@ void ElectroMagn1D::update_p( double rnew_dot_rnew, double r_dot_r )
 
 void ElectroMagn1D::initE( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int nx_d = dimDual[0];
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
     Field1D *rho1D = static_cast<Field1D *>( rho_ );
     
@@ -372,6 +338,8 @@ void ElectroMagn1D::initE( Patch *patch )
 
 void ElectroMagn1D::initE_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int nx_d = dimDual[0];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -404,7 +372,7 @@ void ElectroMagn1D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initE_relativistic_Poisson
 
-void ElectroMagn1D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn1D::initB_relativistic_Poisson( double )
 {
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
@@ -413,14 +381,14 @@ void ElectroMagn1D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initB_relativistic_Poisson
 
-void ElectroMagn1D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn1D::center_fields_from_relativistic_Poisson()
 {
 
     // In 1D no centering is necessary, as E is already centered and there is no field B in relativistic initialization
     
 }
 
-void ElectroMagn1D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn1D::initRelativisticPoissonFields()
 {
     // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
     
@@ -433,14 +401,14 @@ void ElectroMagn1D::initRelativisticPoissonFields( Patch *patch )
     
 } // initRelativisticPoissonFields
 
-void ElectroMagn1D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn1D::sum_rel_fields_to_em_fields()
 {
     Field1D *Ex1Drel  = static_cast<Field1D *>( Ex_rel_ );
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
     
     
     // Ex
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) = ( *Ex1D )( i ) + ( *Ex1Drel )( i );
     }
     
@@ -459,7 +427,7 @@ void ElectroMagn1D::sum_rel_fields_to_em_fields( Patch *patch )
 void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 {
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_ );
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) += E_Add[0];
     }
     
@@ -468,7 +436,7 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 void ElectroMagn1D::centeringErel( std::vector<double> E_Add )
 {
     Field1D *Ex1D  = static_cast<Field1D *>( Ex_rel_ );
-    for( unsigned int i=0; i<nx_d; i++ ) {
+    for( unsigned int i=0; i<dimDual[0]; i++ ) {
         ( *Ex1D )( i ) += E_Add[0];
     }
     
@@ -575,7 +543,7 @@ void ElectroMagn1D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn1D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
+void ElectroMagn1D::binomialCurrentFilter(unsigned int, std::vector<unsigned int>)
 {
 
     Field1D *Jx1D     = static_cast<Field1D *>( Jx_ );
@@ -653,7 +621,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
     if (ipass < passes[0]){
         Field1D *tmp   = new Field1D( dimPrim, 0, false );
         tmp->copyFrom( Jx1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimDual[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jx1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                 ( *Jx1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -663,7 +631,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
         delete tmp;
         tmp   = new Field1D( dimPrim, 1, false );
         tmp->copyFrom( Jy1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimPrim[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jy1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                 ( *Jy1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -673,7 +641,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
         delete tmp;
         tmp   = new Field1D( dimPrim, 2, false );
         tmp->copyFrom( Jz1D );
-        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<dimPrim[0]-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             ( *Jz1D )( i ) = 0. ;
             for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
                ( *Jz1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
@@ -687,7 +655,7 @@ void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 
 
 // Create a new field
-Field *ElectroMagn1D::createField( string fieldname, Params& params )
+Field *ElectroMagn1D::createField( string fieldname, Params& )
 {
     if( fieldname.substr( 0, 2 )=="Ex" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
@@ -776,7 +744,7 @@ void ElectroMagn1D::computeTotalEnvChi()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Env_Chi_s[ispec] ) {
             Field1D *Env_Chi1D_s  = static_cast<Field1D *>( Env_Chi_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ ) {
+            for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
                 ( *Env_Chi1D )( i ) += ( *Env_Chi1D_s )( i );
             }
         }
@@ -856,7 +824,7 @@ void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 
 
 
-void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
+void ElectroMagn1D::initAntennas( Patch *patch, Params& )
 {
 
     // Filling the space profiles of antennas
@@ -877,3 +845,82 @@ void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
     }
     
 }
+
+void ElectroMagn1D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field1D *Jx1D,*Jy1D,*Jz1D,*rho1D;
+    
+    if ( (Jx_s [ispec] != NULL) & diag_flag){
+        Jx1D  = static_cast<Field1D *>( Jx_s [ispec] ) ;
+    } else {
+        Jx1D  = static_cast<Field1D *>( Jx_ )  ;
+    }
+
+    if ( (Jy_s [ispec] != NULL) & diag_flag){
+        Jy1D  = static_cast<Field1D *>( Jy_s [ispec] ) ;
+    } else {
+        Jy1D  = static_cast<Field1D *>( Jy_ )  ;
+    }
+
+    if ( (Jz_s [ispec] != NULL) & diag_flag){
+        Jz1D  = static_cast<Field1D *>( Jz_s [ispec] ) ;
+    } else {
+        Jz1D  = static_cast<Field1D *>( Jz_ )  ;
+    }
+
+    if ( (rho_s [ispec] != NULL) & diag_flag){
+        rho1D  = static_cast<Field1D *>( rho_s [ispec] ) ;
+    } else {
+        rho1D  = static_cast<Field1D *>( rho_ )  ;
+    }
+    
+    //cout << "In";
+    int iloc;
+
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+
+    for (int i = 0; i < b_dim0 ; i++) {
+	      iloc = ibin + i ;
+        // Jx (d)
+        (*Jx1D) (iloc) += b_Jx [i];   //  primal along y
+
+        // Jy (p)
+        (*Jy1D) (iloc) += b_Jy [i];
+        //(*Jy2D)(iloc,j) +=  b_Jy [i*(b_dim1+1)+j];   //  dual along y
+
+        // Jz (p)
+        (*Jz1D) (iloc) +=  b_Jz [i];   //  primal along y
+
+        // rho (p)
+        if (diag_flag){
+	          (*rho1D)(iloc) +=  b_rho[i];   // primal along y
+        }
+    }
+
+} // end ElectroMagn1D::copyInLocalDensities
+
+void ElectroMagn1D::copyInLocalSusceptibility(int ispec, int ibin, 
+                          double *b_Chi, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field1D *Chi1D;
+
+    //cout << "In";
+    int iloc;
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+
+    if ( (Env_Chi_s [ispec] != NULL) & diag_flag){
+        Chi1D  = static_cast<Field1D *>(Env_Chi_s[ispec]) ;
+    } else {
+        Chi1D  = static_cast<Field1D *>(Env_Chi_);
+    }
+
+    // Env_Chi (p,p,p)
+    for (int i = 0; i < b_dim0 ; i++) {
+        iloc = ibin + i ;
+        (*Chi1D)(iloc) +=  b_Chi[i];     
+    }
+  
+} // end ElectroMagn2D::copyInLocalSusceptibility
+

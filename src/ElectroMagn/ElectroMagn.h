@@ -71,6 +71,26 @@ struct Antenna {
     bool spacetime;
 };
 
+
+//! Structure for the Friedman field filters
+struct FriedmanFields {
+    ~FriedmanFields() {
+        for( unsigned int i=0; i<Ex_.size(); i++ ) {
+            delete Ex_[i];
+        }
+        for( unsigned int i=0; i<Ey_.size(); i++ ) {
+            delete Ey_[i];
+        }
+        for( unsigned int i=0; i<Ez_.size(); i++ ) {
+            delete Ez_[i];
+        }
+    }
+    std::vector<Field *> Ex_;
+    std::vector<Field *> Ey_;
+    std::vector<Field *> Ez_;
+};
+
+
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
 {
@@ -81,12 +101,27 @@ class ElectroMagn
     
 public:
     //! Constructor for Electromagn
-    ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
+    ElectroMagn( Params &params, std::vector<Species *> &vecSpecies, Patch *patch );
     ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
     virtual void finishInitialization( int nspecies, Patch *patch );
-    
+
+    // copy currents projected on sub-buffers to global currents
+    virtual void copyInLocalDensities(int ispec, int ibin, 
+                                      double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                                      std::vector<unsigned int> b_dim, bool diag_flag) = 0;
+
+    // copy currents projected on sub-buffers to global currents
+    virtual void copyInLocalAMDensities(int, int, 
+                                        std::complex<double> *, std::complex<double> *, 
+                                        std::complex<double> *, std::complex<double> *, 
+                                        std::vector<unsigned int>, bool ){}; 
+
+    // copy susceptibility projected on sub-buffers to global susceptibility
+    virtual void copyInLocalSusceptibility(int ispec, int ibin, 
+                                           double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) = 0;
+
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
     
@@ -205,16 +240,7 @@ public:
     //! Envelope of laser electric field along the longitudinal direction, absolute value
     Field *Env_Ex_abs_;
     
-    //! Vector of electric fields used when a filter is applied
-    std::vector<Field *> Exfilter;
-    std::vector<Field *> Eyfilter;
-    std::vector<Field *> Ezfilter;
-    
-    //! Vector of magnetic fields used when a filter is applied
-    std::vector<Field *> Bxfilter;
-    std::vector<Field *> Byfilter;
-    std::vector<Field *> Bzfilter;
-    
+    FriedmanFields * filter_;
     
     //! all Fields in electromagn
     std::vector<Field *> allFields;
@@ -244,8 +270,8 @@ public:
     //! Volume of the single cell (from params)
     const double cell_volume;
     
-    //! n_space (from params) always 3D
-    std::vector<unsigned int> n_space;
+    //! size_ (from params) always 3D
+    std::vector<unsigned int> size_;
     
     //! Index of starting elements in arrays without duplicated borders
     //! By constuction 1 element is shared in primal field, 2 in dual
@@ -289,10 +315,10 @@ public:
     virtual void update_p( double rnew_dot_rnew, double r_dot_r ) = 0;
     virtual void initE( Patch *patch ) = 0;
     virtual void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) = 0;
-    virtual void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) = 0;
-    virtual void center_fields_from_relativistic_Poisson( Patch *patch ) = 0; // centers in Yee cells the fields
-    virtual void sum_rel_fields_to_em_fields( Patch *patch ) = 0;
-    virtual void initRelativisticPoissonFields( Patch *patch ) = 0;
+    virtual void initB_relativistic_Poisson( double gamma_mean ) = 0;
+    virtual void center_fields_from_relativistic_Poisson() = 0; // centers in Yee cells the fields
+    virtual void sum_rel_fields_to_em_fields() = 0;
+    virtual void initRelativisticPoissonFields() = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     virtual void centeringErel( std::vector<double> E_Add ) = 0;
     
@@ -336,7 +362,7 @@ public:
     virtual void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes ) = 0;
     virtual void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff) = 0;
     
-    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
+    void boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow );
     
     void laserDisabled();
     
@@ -422,7 +448,7 @@ public:
     void applyAntenna( unsigned int iAntenna, double intensity );
     
     //! Method that fills the initial spatial profile of the antenna
-    virtual void initAntennas( Patch *patch, Params& params ) {};
+    virtual void initAntennas( Patch *, Params& ) {};
     
     virtual double computeEnergy();
     

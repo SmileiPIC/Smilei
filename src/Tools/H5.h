@@ -20,12 +20,8 @@ public:
     void addString( std::string s )
     {
         if( s.size() <= width ) {
+            s.resize( width );
             str.append( s );
-            std::ostringstream t( "" );
-            for( unsigned int i=0; i<width-s.size(); i++ ) {
-                t<<"\0";
-            }
-            str.append( t.str() );
         } else {
             str.append( s.substr( 0, width ) );
         }

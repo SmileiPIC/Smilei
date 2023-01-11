@@ -36,7 +36,7 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 //
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
-//! \param RadiationTables Cross-section data tables and useful functions
+//! \param radiation_tables Cross-section data tables and useful functions
 //                     for nonlinear inverse Compton scattering
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
@@ -45,13 +45,14 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 // -----------------------------------------------------------------------------
 void RadiationLandauLifshitz::operator()(
     Particles       &particles,
-    Particles       *photons,
+    Particles       */*photons*/,
     SmileiMPI       *smpi,
-    RadiationTables &RadiationTables,
+    RadiationTables &radiation_tables,
     double          &radiated_energy,
     int istart,
     int iend,
     int ithread,
+    int /*ibin*/,
     int ipart_ref )
 {
 
@@ -61,7 +62,7 @@ void RadiationLandauLifshitz::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = Epart->size()/3;
+    const int nparts = smpi->getBufferSize(ithread);
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -73,7 +74,7 @@ void RadiationLandauLifshitz::operator()(
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
 
     // Minimum value of chi for the radiation
-    const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
+    const double minimum_chi_continuous = radiation_tables.getMinimumChiContinuous();
 
     // Momentum shortcut
     double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
@@ -124,7 +125,7 @@ void RadiationLandauLifshitz::operator()(
 
             // Radiated energy during the time step
             const double temp =
-                RadiationTables.getClassicalRadiatedEnergy( particle_chi, dt_ ) * gamma / ( gamma*gamma-1. );
+                radiation_tables.getClassicalRadiatedEnergy( particle_chi, dt_ ) * gamma / ( gamma*gamma-1. );
 
             // Update of the momentum
             momentum_x[ipart] -= temp*momentum_x[ipart];

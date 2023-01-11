@@ -18,6 +18,8 @@ public:
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
 
+    void basicForComplexOnBuffer( std::complex<double> *, Particles &, unsigned int, unsigned int, int, int, int ) override final {};
+
     //! Apply boundary conditions on Rho and J
     void axisBC( ElectroMagnAM *emAM, bool diag_flag ) override final;
     void apply_axisBC(std::complex<double> *rho, unsigned int imode, unsigned int nonzeromode);
@@ -30,6 +32,9 @@ public:
 
     //!Wrapper
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) override final;
+
+    //!Wrapper for projection on buffers
+    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int , Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
 
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
 

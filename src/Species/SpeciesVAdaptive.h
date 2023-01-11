@@ -33,8 +33,7 @@ public:
                           Params &params, bool diag_flag,
                           PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                           RadiationTables &RadiationTables,
-                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                          std::vector<Diagnostic *> &localDiags ) override;
+                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables ) override;
                           
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
@@ -52,19 +51,39 @@ public:
     //void countSortParticles(Params& param);
     //void computeParticleCellKeys(Params &params);
     
-    void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
             ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
+            Params &params,
+            Patch *patch, SmileiMPI *smpi ) override;
             
     void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
-            
-            
+            Patch *patch, SmileiMPI *smpi ) override;
+
+#ifdef _OMPTASKS
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! without vectorized operators but with the cell sorting algorithm
+    void scalarDynamicsTasks( double time, unsigned int ispec,
+                               ElectroMagn *EMfields,
+                               Params &params, bool diag_flag,
+                               PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                               RadiationTables &RadiationTables,
+                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id ) override;
+
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual,
+            ElectroMagn *EMfields,
+            Params &params, 
+            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
+
+    void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+            ElectroMagn *EMfields,
+            Params &params, bool diag_flag, PartWalls *partWalls,
+            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
+
+#endif
+    
 private:
 
     // Metrics for the adaptive vectorization

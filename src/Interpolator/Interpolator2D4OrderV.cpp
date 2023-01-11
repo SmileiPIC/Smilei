@@ -37,7 +37,7 @@ Interpolator2D4OrderV::Interpolator2D4OrderV( Params &params, Patch *patch ) : I
 void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
                                             Particles &particles,
                                             SmileiMPI *smpi,
-                                            int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+                                            int *istart, int *iend, int ithread, unsigned int, int ipart_ref )
 {
     // std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     // std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -45,7 +45,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
     // std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     //
     // //Loop on bin particles
-    // int nparts( particles.size() );
+    // int nparts( particles.numberOfParticles() );
     // for( int ipart=*istart ; ipart<*iend; ipart++ ) {
     //     //Interpolation on current particle
     //     fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -412,24 +412,24 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2D4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator2D4OrderV::oneField( Field **, Particles &, int *, int *, double *, double *, double *, double * )
 {
     ERROR( "Single field 2D2O interpolator not available in vectorized mode" );
 }
 
-void Interpolator2D4OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D4OrderV::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int , int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 
-void Interpolator2D4OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D4OrderV::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int , int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 // probes like diagnostic !
-void Interpolator2D4OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator2D4OrderV::envelopeAndSusceptibility( ElectroMagn *, Particles &, int , double *, double *, double *, double * )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

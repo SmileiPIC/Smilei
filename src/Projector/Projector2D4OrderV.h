@@ -21,7 +21,7 @@ public:
                                                          int    * __restrict__ iold,
                                                          double * __restrict__ deltaold,
                                                          unsigned int buffer_size,
-                                                         int ipart_ref = 0 );
+                                                         int ipart_ref = 0, int bin_shift = 0);
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void __attribute__((always_inline)) currentsAndDensity( double * __restrict__ Jx,
@@ -35,16 +35,19 @@ public:
                                                                    int    * __restrict__ iold,
                                                                    double * __restrict__ deltaold,
                                                                    unsigned int buffer_size,
-                                                                   int ipart_ref = 0 );
+                                                                   int ipart_ref = 0, int bin_shift = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;
 
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;
 
     //!Wrapper
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref ) override final;
+
+    //!Wrapper for projection on buffers
+    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int, Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
 
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override;
 
