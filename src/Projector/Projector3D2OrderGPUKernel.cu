@@ -210,7 +210,8 @@ namespace hip {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          k_domain_begin,
-                                         int          nprimy, nprimz,
+                                         int          nprimy, 
+                                         int          nprimz,
                                          int          not_spectral )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
@@ -232,6 +233,9 @@ namespace hip {
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
+
+            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+            ComputeFloat one_third = 1./3.;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -397,7 +401,7 @@ namespace hip {
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
-                const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+                
 
                 // Jx
 
@@ -405,7 +409,7 @@ namespace hip {
                     for( unsigned int k = 0; k < 5; ++k ) {
                         ComputeFloat tmp = crx_p * (   Sy0[j]*Sz0[k] 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
-                                                     + static_cast<ComputeFloat>(one_third) *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
+                                                     +                           one_third  *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
                         ComputeFloat tmp_reduction{};
                         const int jk_loc = ( j + jpo ) * GPUClusterWithGCWidth + kpo + k;
                         for( unsigned int i = 1; i < 5; ++i ) {
@@ -422,7 +426,7 @@ namespace hip {
                     for( unsigned int k = 0; k < 5; ++k ) {
                         ComputeFloat tmp = cry_p * (   Sx0[i]*Sz0[k] 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sx0[i] ) 
-                                                     + static_cast<ComputeFloat>(one_third) *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
                         ComputeFloat tmp_reduction{};
                         const int ik_loc = ( i + ipo ) * GPUClusterWithGCWidth * GPUClusterWithGCWidth + kpo + k;
                         for( unsigned int j = 1; j < 5; ++j ) {
@@ -439,12 +443,12 @@ namespace hip {
                     for( unsigned int j = 0; j < 5; ++j ) {
                         ComputeFloat tmp = crz_p * (   Sx0[i]*Sy0[j] 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i] ) 
-                                                     + static_cast<ComputeFloat>(one_third) *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
                         ComputeFloat tmp_reduction{};
                         const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + j)) * GPUClusterWithGCWidth;
                         for( unsigned int k = 1; k < 5; ++k ) {
                             tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
-                            const int loc =  kpo+k  + ik_loc;
+                            const int loc =  kpo+k  + ij_loc;
                             atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
@@ -510,7 +514,8 @@ namespace hip {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          k_domain_begin,
-                                         int          nprimy, nprimz,
+                                         int          nprimy,
+                                         int          nprimz,
                                          int          not_spectral )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
@@ -531,7 +536,7 @@ namespace hip {
             // The unit is the cell
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
-            const unsigned int global_y_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
+            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -663,10 +668,10 @@ namespace hip {
                 }
                 {
                     // const int    kp             = static_cast<int>( zpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv;
+                    const ComputeFloat zpn      = static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv;
                     const int          kp       = std::round( zpn );
                     const int          kpo      = iold[2 * particle_count];
-                    const int          kp_m_jpo = kp - kpo - k_domain_begin;
+                    const int          kp_m_kpo = kp - kpo - k_domain_begin;
                     const ComputeFloat delta    = zpn - static_cast<ComputeFloat>( kp );
                     const ComputeFloat delta2   = delta * delta;
 
