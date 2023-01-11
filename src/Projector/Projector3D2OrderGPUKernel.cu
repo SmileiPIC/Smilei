@@ -458,20 +458,22 @@ namespace hip {
                  field_index += workgroup_size ) {
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-                const unsigned int local_y_scratch_space_coordinate = field_index % Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+                const unsigned int local_x_scratch_space_coordinate = field_index / (GPUClusterWithGCWidth * GPUClusterWithGCWidth) ;
+                const unsigned int local_y_scratch_space_coordinate = (field_index % (GPUClusterWithGCWidth * GPUClusterWithGCWidth)) / GPUClusterWithGCWidth;
+                const unsigned int local_z_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
 
                 const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
                 const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
+                const unsigned int global_z_scratch_space_coordinate = global_z_scratch_space_coordinate_offset + local_z_scratch_space_coordinate;
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
-                const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
+                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy * nprimz + global_y_scratch_space_coordinate * nprimz;
+                const unsigned int scratch_space_index = field_index; 
 
                 // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         } // end DepositCurrent
 
