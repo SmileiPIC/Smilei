@@ -434,16 +434,58 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             double ener_tot=0.0; // total kinetic energy of current species ispec
             
             unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-            
+
+// #if defined( SMILEI_ACCELERATOR_MODE )
+            const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
+            const short *const __restrict__ charge_ptr = vecSpecies[ispec]->particles->getPtrCharge();
+            const double *const __restrict__ momentum_x = vecSpecies[ispec]->particles->getPtrMomentum(0);
+            const double *const __restrict__ momentum_y = vecSpecies[ispec]->particles->getPtrMomentum(1);
+            const double *const __restrict__ momentum_z = vecSpecies[ispec]->particles->getPtrMomentum(2);
+// #endif
+
             if( vecSpecies[ispec]->mass_ > 0 ) {
-            
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr( charge_ptr, \
+                       weight_ptr, \
+                       momentum_x /* [istart:particle_number] */,             \
+                       momentum_y /* [istart:particle_number] */,             \
+                       momentum_z /* [istart:particle_number] */)
+    #pragma omp teams distribute parallel for reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc parallel deviceptr(weight_ptr \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z,                                           \
+                  charge_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+#else
+    #pragma omp simd reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+#endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
-                    density  += vecSpecies[ispec]->particles->weight( iPart );
-                    charge   += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( double )vecSpecies[ispec]->particles->charge( iPart );
-                    ener_tot += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
+
+// #if defined( SMILEI_ACCELERATOR_MODE )
+                    density  += weight_ptr[iPart];
+                    charge   += weight_ptr[iPart] * charge_ptr[iPart];
+                    const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
+                                                    + momentum_y[iPart]*momentum_y[iPart]
+                                                    + momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
+// #else
+//                     density  += vecSpecies[ispec]->particles->weight( iPart );
+//                     charge   += vecSpecies[ispec]->particles->weight( iPart )
+//                                 * ( double )vecSpecies[ispec]->particles->charge( iPart );
+//                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
+//                                 * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
+// #endif
+
                 }
                 ener_tot *= vecSpecies[ispec]->mass_;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
