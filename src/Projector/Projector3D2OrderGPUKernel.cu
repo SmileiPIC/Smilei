@@ -397,9 +397,9 @@ namespace hip {
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
-                // Jx
-
                 const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+
+                // Jx
 
                 for( unsigned int j = 0; j < 5; ++j ) {
                     for( unsigned int k = 0; k < 5; ++k ) {
@@ -411,49 +411,42 @@ namespace hip {
                         for( unsigned int i = 1; i < 5; ++i ) {
                             tmp_reduction -= ( Sx1[i-1] - Sx0[i-1] ) * tmp;
                             const int loc = (ipo+i)*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
-                            atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
-
+                            atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
                 }
 
                 // Jy
 
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ComputeFloat tmp{};
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
-                    }
-                }
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    ComputeFloat tmp{};
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
+                for( unsigned int i = 0; i < 5; ++i ) {
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = cry_p * (   Sx0[i]*Sz0[k] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sx0[i] ) 
+                                                     + static_cast<ComputeFloat>(one_third) *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ik_loc = ( i + ipo ) * GPUClusterWithGCWidth * GPUClusterWithGCWidth + kpo + k;
+                        for( unsigned int j = 1; j < 5; ++j ) {
+                            tmp_reduction -= ( Sy1[j-1] - Sy0[j-1] ) * tmp;
+                            const int loc = (jpo+j)*GPUClusterWithGCWidth + ik_loc;
+                            atomic::LDS::AddNoReturn( &Jy_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
                     }
                 }
 
                 // Jz
 
-                for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
-                                                                                                                      Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
-                    }
-                }
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
-                                                                                                                      Sy1[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
+                for( unsigned int i = 0; i < 5; ++i ) {
+                    for( unsigned int j = 0; j < 5; ++j ) {
+                        ComputeFloat tmp = crz_p * (   Sx0[i]*Sy0[j] 
+                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i] ) 
+                                                     + static_cast<ComputeFloat>(one_third) *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + j)) * GPUClusterWithGCWidth;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  kpo+k  + ik_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
                     }
                 }
             }
