@@ -111,7 +111,8 @@ currentAndDensityDepositionKernel( double *__restrict__ Jx,
                          int    i_domain_begin,
                          int    j_domain_begin,
                          int    k_domain_begin,
-                         int    nprimy, nprimz,
+                         int    nprimy, 
+                         int    nprimz,
                          int    not_spectral );
 
 
@@ -146,7 +147,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int    i_domain_begin,
               int    j_domain_begin,
               int    k_domain_begin,
-              int    nprimy, nprimz,
+              int    nprimy, 
+              int    nprimz,
               double,
               int not_spectral )
     {
@@ -215,7 +217,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int    i_domain_begin,
                         int    j_domain_begin,
                         int    k_domain_begin,
-                        int    nprimy, nprimz,
+                        int    nprimy,
+                        int    nprimz,
                         double,
                         int not_spectral )
     {
