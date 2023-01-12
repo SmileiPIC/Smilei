@@ -1,4 +1,4 @@
-#include "Projector3D2OrderGPU.h"
+#include "Projector3D2OrderGPUOMP.h"
 
 #include "ElectroMagn.h"
 #include "Patch.h"
@@ -270,14 +270,13 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
 {
 
 
-    ERROR("basic proj not implemented yet for 3D GPU");
     // Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    /*int iloc, ny( nprimy );
+    int iloc, ny( nprimy );
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
 
@@ -297,14 +296,15 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
     }
 
     // variable declaration
-    double xpn, ypn;
+    double xpn, ypn, zpn;
     double delta, delta2;
-    double Sx1[5], Sy1[5]; // arrays used for the Esirkepov projection method
+    double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
 
     // Initialize all current-related arrays to zero
     for( unsigned int i=0; i<5; i++ ) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
+        Sz1[i] = 0.;
     }
 
     // --------------------------------------------------------
@@ -328,18 +328,29 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
     Sy1[2] = 0.75-delta2;
     Sy1[3] = 0.5 * ( delta2+delta+0.25 );
 
+    zpn = particles.position( 1, ipart ) * dz_inv_;
+    int kp = std::round( zpn + 0.5*( type==2 ) );
+    delta  = zpn - ( double )kp;
+    delta2 = delta*delta;
+    Sz1[1] = 0.5 * ( delta2-delta+0.25 );
+    Sz1[2] = 0.75-delta2;
+    Sz1[3] = 0.5 * ( delta2+delta+0.25 );
+
     // ---------------------------
     // Calculate the total current
     // ---------------------------
     ip -= i_domain_begin_ + 2;
     jp -= j_domain_begin_ + 2;
+    kp -= k_domain_begin_ + 2;
 
     for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ip )*ny+jp;
         for( unsigned int j=0 ; j<5 ; j++ ) {
-            rhoj[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+            iloc = (( i+ip )*ny+jp+j)*nz + kp;
+            for( unsigned int k=0 ; k<5 ; k++ ) {
+                rhoj[iloc+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[j];
+            }
         }
-    }*/
+    }
 }
 
 void Projector3D2OrderGPU::ionizationCurrents( Field      *Jx,
