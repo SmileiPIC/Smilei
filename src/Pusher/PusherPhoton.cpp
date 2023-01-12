@@ -42,7 +42,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     const double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int istart_offset   = istart - ipart_buffer_offset;
+    const int istart_offset   = istart - ipart_ref;
     const int particle_number = iend - istart;
 
     #pragma omp target is_device_ptr( /* tofrom: */                                          \
