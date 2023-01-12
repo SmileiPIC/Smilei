@@ -34,7 +34,7 @@
 namespace naive {
 
     static inline void
-    currentDepositionKernel( double *__restrict__ Jx,
+    currentDepositionKernel2D( double *__restrict__ Jx,
                              double *__restrict__ Jy,
                              double *__restrict__ Jz,
                              int Jx_size,
@@ -214,7 +214,7 @@ namespace naive {
     } // end currentDepositionKernel
 
     static inline void
-    currentAndDensityDepositionKernel(
+    currentAndDensityDepositionKernel2D(
                             double *__restrict__ Jx,
                             double *__restrict__ Jy,
                             double *__restrict__ Jz,
@@ -1027,7 +1027,7 @@ namespace hip {
 
 
     static inline void
-    currentDepositionKernel( double *__restrict__ host_Jx,
+    currentDepositionKernel2D( double *__restrict__ host_Jx,
                              double *__restrict__ host_Jy,
                              double *__restrict__ host_Jz,
                              int Jx_size,
@@ -1106,7 +1106,7 @@ namespace hip {
     }
 
     static inline void
-    currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+    currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
                              double *__restrict__ host_Jy,
                              double *__restrict__ host_Jz,
                              double *__restrict__ host_rho,
@@ -1194,7 +1194,7 @@ namespace hip {
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
 extern "C" void
-currentDepositionKernel( double *__restrict__ host_Jx,
+currentDepositionKernel2D( double *__restrict__ host_Jx,
                          double *__restrict__ host_Jy,
                          double *__restrict__ host_Jz,
                          int Jx_size,
@@ -1226,7 +1226,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
     #else
     hip::
     #endif
-        currentDepositionKernel( host_Jx, host_Jy, host_Jz,
+        currentDepositionKernel2D( host_Jx, host_Jy, host_Jz,
                                  Jx_size, Jy_size, Jz_size,
                                  device_particle_position_x, device_particle_position_y,
                                  device_particle_momentum_z,
@@ -1248,7 +1248,7 @@ currentDepositionKernel( double *__restrict__ host_Jx,
 //! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
 //!
 extern "C" void
-currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
                          double *__restrict__ host_Jy,
                          double *__restrict__ host_Jz,
                          double *__restrict__ host_rho,
@@ -1282,7 +1282,7 @@ currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
     #else
     hip::
     #endif
-        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
+        currentAndDensityDepositionKernel2D( host_Jx, host_Jy, host_Jz, host_rho,
                                  Jx_size, Jy_size, Jz_size, rho_size,
                                  device_particle_position_x, device_particle_position_y,
                                  device_particle_momentum_z,

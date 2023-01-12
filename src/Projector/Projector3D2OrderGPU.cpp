@@ -48,7 +48,7 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
 extern "C" void
-currentDepositionKernel( double *__restrict__ Jx,
+currentDepositionKernel3D( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,
                          int Jx_size,
@@ -81,7 +81,7 @@ currentDepositionKernel( double *__restrict__ Jx,
                          int    not_spectral );
 
 extern "C" void
-currentAndDensityDepositionKernel( double *__restrict__ Jx,
+currentAndDensityDepositionKernel3D( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,
                          double *__restrict__ rho,
@@ -153,7 +153,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int not_spectral )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        currentDepositionKernel( Jx,
+        currentDepositionKernel3D( Jx,
                                  Jy,
                                  Jz,
                                  Jx_size,
@@ -223,7 +223,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int not_spectral )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        currentAndDensityDepositionKernel( Jx,
+        currentAndDensityDepositionKernel3D( Jx,
                                  Jy,
                                  Jz,
                                  rho,
