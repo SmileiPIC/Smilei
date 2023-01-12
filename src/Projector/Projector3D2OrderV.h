@@ -105,7 +105,7 @@ private:
         //                            X                                 //
         double pos = position_x[istart+ipart] * dx_inv_;
         int cell = round( pos );
-        int cell_shift = cell-ipo-i_domain_begin;
+        int cell_shift = cell-ipo-i_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -122,7 +122,7 @@ private:
         //                            Y                                 //
         pos = position_y[istart+ipart] * dy_inv_;
         cell = round( pos );
-        cell_shift = cell-jpo-j_domain_begin;
+        cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );
@@ -139,7 +139,7 @@ private:
         //                            Z                                 //
         pos = position_z[istart+ipart] * dz_inv_;
         cell = round( pos );
-        cell_shift = cell-kpo-k_domain_begin;
+        cell_shift = cell-kpo-k_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );
@@ -170,7 +170,7 @@ private:
         //                            X                                 //
         double pos = particles.position( 0, istart+ipart ) * dx_inv_;
         int cell = round( pos );
-        int cell_shift = cell-ipo-i_domain_begin;
+        int cell_shift = cell-ipo-i_domain_begin_;
         double delta  = pos - ( double )cell;
         double delta2 = delta*delta;
         double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -187,7 +187,7 @@ private:
         //                            Y                                 //
         pos = particles.position( 1, istart+ipart ) * dy_inv_;
         cell = round( pos );
-        cell_shift = cell-jpo-j_domain_begin;
+        cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );
@@ -204,7 +204,7 @@ private:
         //                            Z                                 //
         pos = particles.position( 2, istart+ipart ) * dz_inv_;
         cell = round( pos );
-        cell_shift = cell-kpo-k_domain_begin;
+        cell_shift = cell-kpo-k_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );
@@ -239,7 +239,7 @@ private:
         //                            X                                 //
         double pos = position_x[istart+ipart] * dx_inv_;
         int cell = round( pos );
-        int cell_shift = cell-ipo-i_domain_begin;
+        int cell_shift = cell-ipo-i_domain_begin_;
         double delta  = pos - ( double )cell;
         double delta2 = delta*delta;
         double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -256,7 +256,7 @@ private:
         //                            Y                                 //
         pos = position_y[istart+ipart] * dy_inv_;
         cell = round( pos );
-        cell_shift = cell-jpo-j_domain_begin;
+        cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );
@@ -273,7 +273,7 @@ private:
         //                            Z                                 //
         pos = position_z[istart+ipart] * dz_inv_;
         cell = round( pos );
-        cell_shift = cell-kpo-k_domain_begin;
+        cell_shift = cell-kpo-k_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
         deltam =  0.5 * ( delta2-delta+0.25 );

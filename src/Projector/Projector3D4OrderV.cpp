@@ -18,15 +18,15 @@ using namespace std;
 Projector3D4OrderV::Projector3D4OrderV( Params &params, Patch *patch ) : Projector3D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
+    dx_ov_dt_  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
+    dy_ov_dt_  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
-    dz_ov_dt  = params.cell_length[2] / params.timestep;
+    dz_ov_dt_  = params.cell_length[2] / params.timestep;
 
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
-    k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
+    k_domain_begin_ = patch->getCellStartingGlobalIndex( 2 );
 
     nscelly = params.n_space[1] + 1;
     nscellz = params.n_space[2] + 1;
@@ -127,7 +127,7 @@ void Projector3D4OrderV::currentsAndDensity( double * __restrict__ Jx,
             //                            X                                 //
             double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
             double delta2 = delta*delta;
             double delta3 = delta2*delta;
@@ -150,7 +150,7 @@ void Projector3D4OrderV::currentsAndDensity( double * __restrict__ Jx,
             //                            Y                                 //
             pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -173,7 +173,7 @@ void Projector3D4OrderV::currentsAndDensity( double * __restrict__ Jx,
             //                            Z
             pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
-            cell_shift = cell-kpo-k_domain_begin;
+            cell_shift = cell-kpo-k_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -327,9 +327,9 @@ void Projector3D4OrderV::basic( double *rhoj, Particles &particles, unsigned int
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 3;
-    jp -= j_domain_begin + 3;
-    kp -= k_domain_begin + 3;
+    ip -= i_domain_begin_ + 3;
+    jp -= j_domain_begin_ + 3;
+    kp -= k_domain_begin_ + 3;
 
     for( unsigned int i=0 ; i<7 ; i++ ) {
         iloc = ( i+ip )*nyz;
@@ -450,12 +450,12 @@ void Projector3D4OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     Szd[3] = dble_19_ov_96   + dble_11_ov_24 * zpmzkd  + dble_1_ov_4  * zpmzkd2 - dble_1_ov_6  * zpmzkd3 - dble_1_ov_6  * zpmzkd4;
     Szd[4] = dble_1_ov_384   + dble_1_ov_48  * zpmzkd  + dble_1_ov_16 * zpmzkd2 + dble_1_ov_12 * zpmzkd3 + dble_1_ov_24 * zpmzkd4;
 
-    ip  -= i_domain_begin;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    kd  -= k_domain_begin;
+    ip  -= i_domain_begin_;
+    id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    kd  -= k_domain_begin_;
 
     for( unsigned int i=0 ; i<5 ; i++ ) {
         int iploc=ip+i-2;
@@ -580,12 +580,12 @@ void Projector3D4OrderV::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy,
     Szd[3] = dble_19_ov_96   + dble_11_ov_24 * zpmzkd  + dble_1_ov_4  * zpmzkd2 - dble_1_ov_6  * zpmzkd3 - dble_1_ov_6  * zpmzkd4;
     Szd[4] = dble_1_ov_384   + dble_1_ov_48  * zpmzkd  + dble_1_ov_16 * zpmzkd2 + dble_1_ov_12 * zpmzkd3 + dble_1_ov_24 * zpmzkd4;
 
-    ip  -= i_domain_begin + bin_shift;
-    // id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    // jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    // kd  -= k_domain_begin;
+    ip  -= i_domain_begin_ + bin_shift;
+    // id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    // jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    // kd  -= k_domain_begin_;
     
     // for( unsigned int i=0 ; i<5 ; i++ ) {
     //     int iploc=ip+i-2;
@@ -743,7 +743,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            X                                 //
             double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -766,7 +766,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Y                                 //
             pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -789,7 +789,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Z                                 //
             pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
-            cell_shift = cell-kpo-k_domain_begin;
+            cell_shift = cell-kpo-k_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -818,7 +818,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            double crx_p = charge_weight[ipart]*dx_ov_dt;
+            double crx_p = charge_weight[ipart]*dx_ov_dt_;
 
             double sum[7];
             sum[0] = 0.;
@@ -964,7 +964,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            X                                 //
             double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -987,7 +987,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Y                                 //
             pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -1010,7 +1010,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Z                                 //
             pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
-            cell_shift = cell-kpo-k_domain_begin;
+            cell_shift = cell-kpo-k_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -1037,7 +1037,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            double cry_p = charge_weight[ipart]*dy_ov_dt;
+            double cry_p = charge_weight[ipart]*dy_ov_dt_;
 
             double sum[7];
             sum[0] = 0.;
@@ -1169,7 +1169,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            X                                 //
             double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -1192,7 +1192,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Y                                 //
             pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -1215,7 +1215,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             //                            Z                                 //
             pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
-            cell_shift = cell-kpo-k_domain_begin;
+            cell_shift = cell-kpo-k_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             delta3 = delta2*delta;
@@ -1242,7 +1242,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            double crz_p = charge_weight[ipart]*dz_ov_dt;
+            double crz_p = charge_weight[ipart]*dz_ov_dt_;
 
             double sum[7];
             sum[0] = 0.;
