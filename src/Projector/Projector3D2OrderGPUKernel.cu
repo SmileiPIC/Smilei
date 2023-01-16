@@ -476,7 +476,7 @@ namespace hip {
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[field_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>( Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
             }
         } // end DepositCurrent
 
@@ -794,7 +794,7 @@ namespace hip {
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>(  Jx_scratch_space[field_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>(  Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
                 atomic::GDS::AddNoReturn( &device_rho[global_memory_index],                                                                                            static_cast<double>( rho_scratch_space[field_index] ) );
 
             }
