@@ -333,8 +333,8 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
     Sy1[2] = 0.75-delta2;
     Sy1[3] = 0.5 * ( delta2+delta+0.25 );
 
-    zpn = particles.position( 1, ipart ) * dz_inv_;
-    int kp = std::round( zpn + 0.5*( type==2 ) );
+    zpn = particles.position( 2, ipart ) * dz_inv_;
+    int kp = std::round( zpn + 0.5*( type==3 ) );
     delta  = zpn - ( double )kp;
     delta2 = delta*delta;
     Sz1[1] = 0.5 * ( delta2-delta+0.25 );
