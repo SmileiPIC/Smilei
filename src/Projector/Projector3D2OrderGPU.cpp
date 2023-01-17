@@ -271,7 +271,11 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
 
 
     // Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
-
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
+     
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -292,6 +296,7 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
             ny++;
         } else {
             charge_weight *= particles.momentum( 2, ipart );
+            nz ++;
         }
     }
 
@@ -347,7 +352,7 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
         for( unsigned int j=0 ; j<5 ; j++ ) {
             iloc = (( i+ip )*ny+jp+j)*nz + kp;
             for( unsigned int k=0 ; k<5 ; k++ ) {
-                rhoj[iloc+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[j];
+                rhoj[iloc+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
         }
     }
