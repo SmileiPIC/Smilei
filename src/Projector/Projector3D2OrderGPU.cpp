@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <accelmath.h>
     #include <openacc.h>
 #endif
@@ -50,19 +50,32 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort)
+//! Project local currents and local density (sort)
+//! param[in] Jx,Jy,Jz pointers to the current grids
+//! param[in] rho pointers to the charge grids
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
+void 
+Projector3D2OrderGPU::currentsAndDensityGPU( 
+    double *const __restrict__ Jx, 
+    double *const __restrict__ Jy, 
+    double *const __restrict__ Jz, 
+    double *const __restrict__ rho,
+    unsigned int Jx_size,
+    unsigned int Jy_size,
+    unsigned int Jz_size,
+    unsigned int rho_size,
+    Particles &particles, 
+    int istart, int iend, 
+    double *invgf,                                     
+    int *iold, 
+    double *deltaold, 
+    bool diag_flag )
 {
     if( iend == istart ) {
         return;
     }
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
-
-    double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
-    double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
-    double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -71,12 +84,6 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const double *const __restrict__ weight     = particles.getPtrWeight();
 
     const int nparts = particles.last_index.back();
-
-#if defined( ACCELERATOR_GPU_ACC )
-    const int sizeofEx = EMfields->Jx_->globalDims_;
-    const int sizeofEy = EMfields->Jy_->globalDims_;
-    const int sizeofEz = EMfields->Jz_->globalDims_;
-#endif
 
     const int packsize = nparts;
     const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.
@@ -87,6 +94,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx0{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy0{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sz0{ kTmpArraySize };
+    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx1{ kTmpArraySize };
+    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy1{ kTmpArraySize };
+    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sz1{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSx{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSy{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSz{ kTmpArraySize };
@@ -95,6 +105,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx0 );
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy0 );
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz0 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx1 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy1 );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz1 );
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSx );
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSy );
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSz );
@@ -103,6 +116,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ Sx0  = host_device_Sx0.data();
     double *const __restrict__ Sy0  = host_device_Sy0.data();
     double *const __restrict__ Sz0  = host_device_Sz0.data();
+    double *const __restrict__ Sx1  = host_device_Sx1.data();
+    double *const __restrict__ Sy1  = host_device_Sy1.data();
+    double *const __restrict__ Sz1  = host_device_Sz1.data();
     double *const __restrict__ DSx  = host_device_DSx.data();
     double *const __restrict__ DSy  = host_device_DSy.data();
     double *const __restrict__ DSz  = host_device_DSz.data();
@@ -120,12 +136,15 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       position_y /* [istart_pack:current_pack_size] */, \
                                       position_z /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   deltaold [0:3 * nparts], \
                                   Sx0 [0:kTmpArraySize],   \
                                   Sy0 [0:kTmpArraySize],   \
                                   Sz0 [0:kTmpArraySize],   \
+                                  Sx1 [0:kTmpArraySize],   \
+                                  Sy1 [0:kTmpArraySize],   \
+                                  Sz1 [0:kTmpArraySize],   \
                                   DSx [0:kTmpArraySize],   \
                                   DSy [0:kTmpArraySize],   \
                                   DSz [0:kTmpArraySize] )  \
@@ -156,10 +175,10 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             // -------------------------------------
 
             // arrays used for the Esirkepov projection method
-            for( int i=0; i<5; i++ ) {
-                DSx[ipart_pack+i*packsize] = 0.;
-                DSy[ipart_pack+i*packsize] = 0.;
-                DSz[ipart_pack+i*packsize] = 0.;
+            for( unsigned int i=0; i<5; i++ ) {
+                Sx1[ipart_pack+i*packsize] = 0.;
+                Sy1[ipart_pack+i*packsize] = 0.;
+                Sz1[ipart_pack+i*packsize] = 0.;
             }
 
             // --------------------------------------------------------
@@ -198,9 +217,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const int ip_m_ipo = ip-ipo-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
-            DSx[ipart_pack+(ip_m_ipo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            DSx[ipart_pack+(ip_m_ipo+2)*packsize] = 0.75-delta2;
-            DSx[ipart_pack+(ip_m_ipo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sx1[ipart_pack+(ip_m_ipo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
+            Sx1[ipart_pack+(ip_m_ipo+2)*packsize] = 0.75-delta2;
+            Sx1[ipart_pack+(ip_m_ipo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
 
             const double ypn = position_y[ ipart ] * dy_inv_;
             const int jp = std::round( ypn );
@@ -208,9 +227,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const int jp_m_jpo = jp-jpo-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
-            DSy[ipart_pack+(jp_m_jpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            DSy[ipart_pack+(jp_m_jpo+2)*packsize] = 0.75-delta2;
-            DSy[ipart_pack+(jp_m_jpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sy1[ipart_pack+(jp_m_jpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
+            Sy1[ipart_pack+(jp_m_jpo+2)*packsize] = 0.75-delta2;
+            Sy1[ipart_pack+(jp_m_jpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
 
             const double zpn = position_z[ ipart ] * dz_inv_;
             const int kp = std::round( zpn );
@@ -218,15 +237,15 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const int kp_m_kpo = kp-kpo-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
-            DSz[ipart_pack+(kp_m_kpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            DSz[ipart_pack+(kp_m_kpo+2)*packsize] = 0.75-delta2;
-            DSz[ipart_pack+(kp_m_kpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sz1[ipart_pack+(kp_m_kpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
+            Sz1[ipart_pack+(kp_m_kpo+2)*packsize] = 0.75-delta2;
+            Sz1[ipart_pack+(kp_m_kpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
 
             // computes Esirkepov coefficients
             for( int i=0; i < 5; i++ ) {
-                DSx[ipart_pack+i*packsize] -= Sx0[ipart_pack+i*packsize];
-                DSy[ipart_pack+i*packsize] -= Sy0[ipart_pack+i*packsize];
-                DSz[ipart_pack+i*packsize] -= Sz0[ipart_pack+i*packsize];
+                DSx[ipart_pack+i*packsize] = Sx1[ipart_pack+i*packsize] - Sx0[ipart_pack+i*packsize];
+                DSy[ipart_pack+i*packsize] = Sy1[ipart_pack+i*packsize] - Sy0[ipart_pack+i*packsize];
+                DSz[ipart_pack+i*packsize] = Sz1[ipart_pack+i*packsize] - Sz0[ipart_pack+i*packsize];
             }
 
             // ---------------------------
@@ -243,7 +262,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( DSx [0:kTmpArraySize], sumX [0:kTmpArraySize] )
 
     // #pragma acc parallel deviceptr( DSx, sumX )
@@ -268,9 +287,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jx [0:sizeofEx],         \
+                                  Jx [0:Jx_size],         \
                                   Sy0 [0:kTmpArraySize],   \
                                   Sz0 [0:kTmpArraySize],   \
                                   DSy [0:kTmpArraySize],   \
@@ -279,7 +298,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         deviceptr( charge, weight ) vector_length( 8 )
 
     // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jx [0:sizeofEx] )    \
+    //                               Jx [0:Jx_size] )    \
     //     deviceptr( charge, weight, Sy0,                \
     //                Sz0, DSy, DSz, sumX ) vector_length( 8 )
 
@@ -291,7 +310,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crx_p = dx_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex0 = iold[ipart+0*packsize]*yz_size0+iold[ipart+1*packsize]*z_size0+iold[ipart+2*packsize];
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -307,7 +326,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc atomic
 #endif
                         Jx [ jdx ] += val;
@@ -320,7 +339,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( DSy [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
 
@@ -346,9 +365,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jy [0:sizeofEy],         \
+                                  Jy [0:Jy_size],         \
                                   Sx0 [0:kTmpArraySize],   \
                                   Sz0 [0:kTmpArraySize],   \
                                   DSx [0:kTmpArraySize],   \
@@ -357,7 +376,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         deviceptr( charge, weight ) vector_length( 8 )
 
     // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jy [0:sizeofEy] )    \
+    //                               Jy [0:Jy_size] )    \
     //     deviceptr( charge, weight, Sx0,                \
     //                Sz0, DSx, DSz, sumX ) vector_length( 8 )
 
@@ -369,7 +388,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double cry_p = dy_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex1 = iold[ipart+0*packsize]*yz_size1+iold[ipart+1*packsize]*z_size1+iold[ipart+2*packsize];
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -385,7 +404,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc atomic
 #endif
                         Jy [ jdx ] += val;
@@ -398,7 +417,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( DSz [0:kTmpArraySize], \
                                   sumX [0:kTmpArraySize] )
 
@@ -424,18 +443,18 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jz [0:sizeofEz],         \
+                                  Jz [0:Jz_size],         \
                                   Sx0 [0:kTmpArraySize],   \
                                   Sy0 [0:kTmpArraySize],   \
                                   DSx [0:kTmpArraySize],   \
                                   DSy [0:kTmpArraySize],   \
                                   sumX [0:kTmpArraySize] ) \
-        deviceptr( charge, weight ) vector_length( 8 )
+        deviceptr( charge, weight )
 
     // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jz [0:sizeofEz] )    \
+    //                               Jz [0:Jz_size] )    \
     //     deviceptr( charge, weight, Sx0,                \
     //                Sy0, DSx, DSy, sumX ) vector_length( 8 )
 
@@ -447,7 +466,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             const double crz_p = dz_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
             const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( int k=1 ; k<5 ; k++ ) {
@@ -463,7 +482,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp atomic update
-#elif defined( ACCELERATOR_GPU_ACC )
+#elif defined( SMILEI_OPENACC_MODE )
     #pragma acc atomic
 #endif
                         Jz[ jdx ] += val;
@@ -473,13 +492,64 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
         } // End for ipart
 
+        if (diag_flag) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr( /* to: */                                     \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+          #pragma acc parallel present( iold [0:3 * nparts], \
+                                  rho [0:rho_size],          \
+                                  Sx1 [0:kTmpArraySize],     \
+                                  Sy1 [0:kTmpArraySize],     \
+                                  Sz1 [0:kTmpArraySize])     \
+                                  deviceptr( charge, weight )
+          #pragma acc loop gang worker
+#endif
+          for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+              int ipart_pack = ipart - ipack*packsize;
+
+              double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+              int z_size2 =  nprimz;
+              int yz_size2 =  nprimz*nprimy;
+              int linindex2 = iold[ipart+0*nparts]*yz_size2+iold[ipart+1*nparts]*z_size2+iold[ipart+2*nparts];
+
+              #pragma acc loop vector
+              for( int k=1 ; k<5 ; k++ ) {
+                   for( int i=0 ; i<5 ; i++ ) {
+                       for( int j=0 ; j<5 ; j++ ) {
+                           int idx = linindex2 + j*z_size2 + i*yz_size2;
+                           int jdx = idx + k;
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                           #pragma omp atomic update
+#elif defined( SMILEI_OPENACC_MODE )
+                           #pragma acc atomic
+#endif
+                           rho[ jdx ] += charge_weight * Sx1[ipart_pack+i*packsize]*Sy1[ipart_pack+j*packsize]*Sz1[ipart_pack+k*packsize];
+                       }//j
+                   }//i
+               }//k
+          } // End for ipart
+        } // if diag_flag
+
     } // End for ipack
 } // END Project local current densities (Jx, Jy, Jz, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold )
+void 
+Projector3D2OrderGPU::currentsAndDensity( 
+    double *Jx,
+    double *Jy,
+    double *Jz, 
+    double *rho, 
+    Particles &particles, 
+    unsigned int ipart, 
+    double invgf, 
+    int *iold, 
+    double *deltaold )
 {
     int nparts = particles.size();
 
@@ -864,52 +934,98 @@ void Projector3D2OrderGPU::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, 
 } // END Project global current densities (ionize)
 
 //Wrapper for projection
-void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector3D2OrderGPU::currentsAndDensityWrapper(
+    ElectroMagn *EMfields, 
+    Particles &particles, 
+    SmileiMPI *smpi, 
+    int istart, 
+    int iend, 
+    int ithread, 
+    bool diag_flag, 
+    bool is_spectral, 
+    int ispec, 
+    int icell, 
+    int ipart_ref )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    Jx_  =  &( *EMfields->Jx_ )( 0 );
-    Jy_  =  &( *EMfields->Jy_ )( 0 );
-    Jz_  =  &( *EMfields->Jz_ )( 0 );
-    rho_ =  &( *EMfields->rho_ )( 0 );
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
+
+        double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
+        double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
+        double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
+        double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
+
+        unsigned int Jx_size  = EMfields->Jx_->globalDims_ ;
+        unsigned int Jy_size  = EMfields->Jy_->globalDims_ ;
+        unsigned int Jz_size  = EMfields->Jz_->globalDims_ ;
+        unsigned int rho_size = EMfields->rho_->globalDims_ ;
+
         if( !is_spectral ) {
-            currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+            currentsAndDensityGPU( Jx, Jy, Jz, rho, 
+                                   Jx_size, Jy_size, Jz_size, rho_size, 
+                                   particles, istart, iend, 
+                                   &( *invgf )[0], 
+                                   &( *iold )[0], 
+                                   &( *delta )[0] );
         } else {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currentsAndDensity( Jx_, Jy_, Jz_, rho_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+                currentsAndDensity( Jx, Jy, Jz, rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
             }
         }
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
-        /*double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
-        double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
-        double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
-        double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
-        int sizeofJx = EMfields->Jx_->globalDims_ ;
-        int sizeofJy = EMfields->Jy_->globalDims_ ;
-        int sizeofJz = EMfields->Jz_->globalDims_ ;
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-        particles.syncCPU();
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            basic( rho, particles,  ipart, 0 );
-        }
-        */
-        //for( int ipart=istart ; ipart<iend; ipart++ ) {
-        //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-        //}
-    }
 
+        double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
+        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
+
+        double *const __restrict__ b_Jy  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
+        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
+
+        double *const __restrict__ b_Jz  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
+        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
+
+        double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
+        unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
+
+        //int Jy_size = EMfields->Jy_->globalDims_ ;
+        //int Jz_size = EMfields->Jz_->globalDims_ ;
+        //int rho_size = EMfields->rho_->globalDims_ ;
+
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho, sizeofRho );
+
+        //double *const __restrict__ b_Jy  = &( *EMfields->Jy_ )( 0 ) ;
+        //double *const __restrict__ b_Jz  = &( *EMfields->Jz_ )( 0 ) ;
+        //double *const __restrict__ b_rho = &( *EMfields->rho_ )( 0 ) ;
+
+        // double * b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double * b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double * b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+
+        currentsAndDensityGPU( b_Jx, b_Jy, b_Jz, b_rho, 
+                                Jx_size, Jy_size, Jz_size, rho_size, 
+                                particles, istart, iend, 
+                                &( *invgf )[0], 
+                                &( *iold )[0], 
+                                &( *delta )[0],
+                                true);
+
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, Jy_size );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jz, Jz_size );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_rho, rho_size );
+        //double sum = 0;
+        //std::cerr << EMfields->rho_s[ispec] << std::endl;
+        //for (int i = 0 ; i < rho_size ; i++) {
+        //    sum += b_rho[i];
+        //}
+        //std::cerr << "sum Rho in proj: " << sum << std::endl;
+    }
 }
 
 // Projector for susceptibility used as source term in envelope equation

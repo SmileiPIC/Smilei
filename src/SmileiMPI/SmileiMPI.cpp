@@ -1917,7 +1917,7 @@ void SmileiMPI::eraseBufferParticleTrail( const int ndim, const int istart, cons
 }
 
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
 void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
                                      unsigned int ndim_field,
                                      unsigned int particle_count,

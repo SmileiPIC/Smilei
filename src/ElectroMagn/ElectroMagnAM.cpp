@@ -1619,6 +1619,14 @@ void ElectroMagnAM::computeTotalRhoJ()
     }//END loop on mmodes
 } //END computeTotalRhoJ
 
+// #if defined( SMILEI_ACCELERATOR_MODE )
+// //! Method used to compute the total charge density and currents by summing over all species on Device
+// void ElectroMagnAM::computeTotalRhoJOnDevice()
+// {
+//     ERROR("not implemented");
+// }
+// #endif
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <accelmath.h>
 #endif
 
@@ -151,7 +151,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-#if defined(ACCELERATOR_GPU_ACC)
+#if defined(SMILEI_OPENACC_MODE)
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
     const int sizeofEz = EMfields->Ez_->globalDims_;
@@ -184,7 +184,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_y /* [first_index:npart_range_size] */,        \
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(ACCELERATOR_GPU_ACC)
+#elif defined(SMILEI_OPENACC_MODE)
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \

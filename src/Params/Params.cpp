@@ -783,7 +783,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
     if( gpu_computing ) {
-#if( defined( ACCELERATOR_GPU_ACC ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if( defined( SMILEI_OPENACC_MODE ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // If compiled for GPU and asking for GPU
         MESSAGE( 1, "Smilei will run on GPU devices" );
 #else
@@ -1188,7 +1188,7 @@ void Params::compute()
 
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
         cluster_width_ = n_space[0];
         // On GPU, dont do the CPU automatic cluster_width computation, only one
         // bin is expected.
@@ -1900,7 +1900,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
@@ -1917,7 +1917,7 @@ bool Params::isGPUParticleBinningAvailable() const
 
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
 
 int Params::getGPUClusterWidth() const
 {

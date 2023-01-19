@@ -45,7 +45,7 @@ public:
     void compute_parameters();
     
     //! get value using linear interpolation at position x
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc routine seq
 #endif
     double get(double x);

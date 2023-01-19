@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <openacc.h>
 #endif
 
@@ -43,7 +43,6 @@ ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomp
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
-
     }
 
 }//END constructor Electromagn3D
@@ -59,7 +58,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
 
     initElectroMagn3DQuantities( params, patch );
 
-    // Charge currents currents and density for each species
+    // Charge currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) { // end loop on ispec
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
@@ -83,7 +82,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
             if( emFields->rho_s[ispec]->data_ != NULL ) {
                 rho_s[ispec] = new Field3D( dimPrim, emFields->rho_s[ispec]->name );
             } else {
-                rho_s[ispec]  = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
+                rho_s[ispec] = new Field3D( emFields->rho_s[ispec]->name, dimPrim );
             }
         }
 
@@ -96,12 +95,7 @@ ElectroMagn3D::ElectroMagn3D( ElectroMagn3D *emFields, Params &params, Patch *pa
                 }
             }
         }
-
-
-
     } // loop on ispec
-
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1142,7 +1136,7 @@ void ElectroMagn3D::centerMagneticFields()
     double *const __restrict__ Bz3D_m     = Bz_m->data();
 
     // Magnetic field Bx^(p,d,d)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     const int sizeofBx = Bx_->globalDims_;
     const int sizeofBy = By_->globalDims_;
     const int sizeofBz = Bz_->globalDims_;
@@ -1154,11 +1148,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1174,7 +1168,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1182,12 +1176,12 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1201,7 +1195,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field Bz^(d,d,p)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1209,11 +1203,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1604,7 +1598,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Compute the total density and currents from species density and currents
+// Compute the total density and currents from species density and currents on GPU
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn3D::computeTotalRhoJ()
 {
@@ -1613,7 +1607,6 @@ void ElectroMagn3D::computeTotalRhoJ()
     Field3D *Jy3D    = static_cast<Field3D *>( Jy_ );
     Field3D *Jz3D    = static_cast<Field3D *>( Jz_ );
     Field3D *rho3D   = static_cast<Field3D *>( rho_ );
-
 
     // -----------------------------------
     // Species currents and charge density
@@ -1653,8 +1646,7 @@ void ElectroMagn3D::computeTotalRhoJ()
         }
 
     }//END loop on species ispec
-//END computeTotalRhoJ
-}
+} //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total susceptibility from species susceptibility

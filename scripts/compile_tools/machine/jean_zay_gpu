@@ -20,10 +20,10 @@ ACCELERATOR_GPU_FLAGS        += -Minfo=accel # what is offloaded/copied
 # ACCELERATOR_GPU_FLAGS        += -Minfo=all   # very verbose output
 
 # OpenACC support
-ACCELERATOR_GPU_KERNEL_FLAGS += -DACCELERATOR_GPU_ACC
-ACCELERATOR_GPU_FLAGS += -DACCELERATOR_GPU_ACC
+ACCELERATOR_GPU_FLAGS += -DSMILEI_OPENACC_MODE
+ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_OPENACC_MODE
 
-# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'ACCELERATOR_GPU_ACC'
+# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_OPENACC_MODE'
 # ACCELERATOR_GPU_FLAGS        += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
 # ACCELERATOR_GPU_KERNEL_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
 # LDFLAGS                      += -mp=gpu

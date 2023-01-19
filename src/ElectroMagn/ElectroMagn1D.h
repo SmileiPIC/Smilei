@@ -115,6 +115,11 @@ public:
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ() override;
 
+// #if defined( SMILEI_ACCELERATOR_MODE )
+//     //! Method used to compute the total charge density and currents by summing over all species on Device
+//     void computeTotalRhoJOnDevice() override;
+// #endif
+
     //! Method used to compute the total susceptibility by summing over all species
     void computeTotalEnvChi() override;
 

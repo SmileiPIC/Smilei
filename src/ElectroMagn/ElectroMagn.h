@@ -281,7 +281,7 @@ public:
     virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
     virtual void restartRhoJs();
-    
+
     //! Method used to initialize the total susceptibility
     virtual void restartEnvChi();
     //! Method used to initialize the total susceptibility of species
@@ -290,6 +290,12 @@ public:
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+
+#if defined( SMILEI_ACCELERATOR_MODE )
+    //! Method used to sum all species densities and currents to compute the total charge density and currents
+    //! This function is valid wathever the geometry
+    virtual void computeTotalRhoJOnDevice();
+#endif
     
     //! Method used to sum all species susceptibility to compute the total susceptibility
     virtual void computeTotalEnvChi() = 0;

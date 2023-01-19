@@ -44,7 +44,7 @@ public:
         } else {
             int *const cell_keys = species->particles->getPtrCellKeys();
 
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr( cell_keys )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )

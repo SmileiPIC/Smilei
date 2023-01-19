@@ -6,7 +6,7 @@
 // #include "PyTools.h"
 
 #include "Particles.h"
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 #include "nvidiaParticles.h"
 #endif
 #include "Params.h"
@@ -376,6 +376,23 @@ public:
     {
         return particles->capacity();
     }
+
+#if defined( SMILEI_ACCELERATOR_MODE )
+    //! Prepare the species Current and Rho grids on Device
+    void
+    prepareSpeciesCurrentAndChargeOnDevice( 
+        unsigned int ispec,
+        ElectroMagn * EMfields
+    );
+
+    //! Deallocate species Current (J) and Charge (Rho) arrays on Device
+    void
+    deleteSpeciesCurrentAndChargeOnDevice(
+        unsigned int ispec,
+        ElectroMagn * EMfields
+    );
+
+#endif
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
     //! For all particles of the species
