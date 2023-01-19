@@ -67,26 +67,26 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-#if defined (SMILEI_ACCELERATOR_GPU_OMP)
-        #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
-                                                     device_particle_position_x /* [0:particle_count] */, \
-                                                     device_particle_position_y /* [0:particle_count] */, \
-                                                     device_particle_momentum_z /* [0:particle_count] */, \
-                                                     device_particle_charge /* [0:particle_count] */,     \
-                                                     device_particle_weight /* [0:particle_count] */ )
-        #pragma omp teams thread_limit( 64 ) distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-        #pragma acc parallel                          \
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
+                                                         device_particle_position_x /* [0:particle_count] */, \
+                                                         device_particle_position_y /* [0:particle_count] */, \
+                                                         device_particle_momentum_z /* [0:particle_count] */, \
+                                                         device_particle_charge /* [0:particle_count] */,     \
+                                                         device_particle_weight /* [0:particle_count] */ )
+            #pragma omp teams thread_limit( 64 ) distribute parallel for
+        #elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc parallel                      \
             deviceptr( device_particle_position_x,    \
                        device_particle_position_y,    \
                        device_particle_momentum_z,    \
                        device_particle_charge,        \
-                       device_particle_weight)        \
-            present( iold [0:3 * particle_count],     \
-                     deltaold [0:3 * particle_count]) \
-        #pragma acc loop gang worker vector
-#endif
-        for ( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
+                       device_particle_weight )       \
+                present( iold [0:3 * particle_count], \
+                         deltaold [0:3 * particle_count] )
+            #pragma acc loop gang worker vector
+        #endif
+        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
             const double *const __restrict__ deltaold = &deltaold_[particle_index];
@@ -170,7 +170,7 @@ namespace naive {
 
             for( unsigned int i = 0; i < 1; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
-                    /* Jx[iloc] += tmpJx[0]; */
+                /* Jx[iloc] += tmpJx[0]; */
 
                 SMILEI_ACCELERATOR_ATOMIC
                 Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
@@ -214,35 +214,34 @@ namespace naive {
     } // end currentDepositionKernel
 
     static inline void
-    currentAndDensityDepositionKernel2D(
-                            double *__restrict__ Jx,
-                            double *__restrict__ Jy,
-                            double *__restrict__ Jz,
-                            double *__restrict__ rho,
-                            int Jx_size,
-                            int Jy_size,
-                            int Jz_size,
-                            int rho_size,
-                            const double *__restrict__ device_particle_position_x,
-                            const double *__restrict__ device_particle_position_y,
-                            const double *__restrict__ device_particle_momentum_z,
-                            const short *__restrict__ device_particle_charge,
-                            const double *__restrict__ device_particle_weight,
-                            const int *__restrict__ host_bin_index,
-                            unsigned int,
-                            unsigned int,
-                            const double *__restrict__ invgf_,
-                            const int *__restrict__ iold_,
-                            const double *__restrict__ deltaold_,
-                            double inv_cell_volume,
-                            double dx_inv,
-                            double dy_inv,
-                            double dx_ov_dt,
-                            double dy_ov_dt,
-                            int    i_domain_begin,
-                            int    j_domain_begin,
-                            int    nprimy,
-                            int    pxr )
+    currentAndDensityDepositionKernel( double *__restrict__ Jx,
+                                       double *__restrict__ Jy,
+                                       double *__restrict__ Jz,
+                                       double *__restrict__ rho,
+                                       int Jx_size,
+                                       int Jy_size,
+                                       int Jz_size,
+                                       int rho_size,
+                                       const double *__restrict__ device_particle_position_x,
+                                       const double *__restrict__ device_particle_position_y,
+                                       const double *__restrict__ device_particle_momentum_z,
+                                       const short *__restrict__ device_particle_charge,
+                                       const double *__restrict__ device_particle_weight,
+                                       const int *__restrict__ host_bin_index,
+                                       unsigned int,
+                                       unsigned int,
+                                       const double *__restrict__ invgf_,
+                                       const int *__restrict__ iold_,
+                                       const double *__restrict__ deltaold_,
+                                       double inv_cell_volume,
+                                       double dx_inv,
+                                       double dy_inv,
+                                       double dx_ov_dt,
+                                       double dy_ov_dt,
+                                       int    i_domain_begin,
+                                       int    j_domain_begin,
+                                       int    nprimy,
+                                       int    pxr )
     {
         // The OMP implementation is NOT bin aware. As per the precondition on
         // host_bin_index, index zero always contains the number of particles.
@@ -250,25 +249,25 @@ namespace naive {
         const unsigned int bin_count      = 1;
         const int          particle_count = host_bin_index[bin_count - 1];
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp target     is_device_ptr /* map */ ( /* to: */                                        \
-                                                     device_particle_position_x /* [0:particle_count] */, \
-                                                     device_particle_position_y /* [0:particle_count] */, \
-                                                     device_particle_momentum_z /* [0:particle_count] */, \
-                                                     device_particle_charge /* [0:particle_count] */,     \
-                                                     device_particle_weight /* [0:particle_count] */ )
-        #pragma omp teams thread_limit( 64 ) distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-        #pragma acc parallel                          \
+        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
+                                                         device_particle_position_x /* [0:particle_count] */, \
+                                                         device_particle_position_y /* [0:particle_count] */, \
+                                                         device_particle_momentum_z /* [0:particle_count] */, \
+                                                         device_particle_charge /* [0:particle_count] */,     \
+                                                         device_particle_weight /* [0:particle_count] */ )
+            #pragma omp teams thread_limit( 64 ) distribute parallel for
+        #elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc parallel                      \
             deviceptr( device_particle_position_x,    \
                        device_particle_position_y,    \
                        device_particle_momentum_z,    \
                        device_particle_charge,        \
-                       device_particle_weight)        \
-            present( iold [0:3 * particle_count],     \
-                     deltaold [0:3 * particle_count]) \
-        #pragma acc loop gang worker vector
-#endif
+                       device_particle_weight )       \
+                present( iold [0:3 * particle_count], \
+                         deltaold [0:3 * particle_count] )
+            #pragma acc loop gang worker vector
+        #endif
         for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
             const double invgf                        = invgf_[particle_index];
             const int *const __restrict__ iold        = &iold_[particle_index];
@@ -354,13 +353,13 @@ namespace naive {
             // case i =0
             for( unsigned int i = 0; i < 1; ++i ) {
                 const int iloc = ( i + ipo ) * nprimy + jpo;
-                    /* Jx[iloc] += tmpJx[0]; */
+                /* Jx[iloc] += tmpJx[0]; */
 
                 SMILEI_ACCELERATOR_ATOMIC
                 Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
 
                 SMILEI_ACCELERATOR_ATOMIC
-                rho[iloc] += charge_weight * Sx1[0]*Sy1[0];
+                rho[iloc] += charge_weight * Sx1[0] * Sy1[0];
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; j++ ) {
                     tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
@@ -372,7 +371,7 @@ namespace naive {
                     Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
                                               Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
                     SMILEI_ACCELERATOR_ATOMIC
-                    rho[iloc + j] += charge_weight * Sx1[0]*Sy1[j];
+                    rho[iloc + j] += charge_weight * Sx1[0] * Sy1[j];
                 }
             }
 
@@ -390,7 +389,7 @@ namespace naive {
                 Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
 
                 SMILEI_ACCELERATOR_ATOMIC
-                rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
+                rho[iloc] += charge_weight * Sx1[i] * Sy1[0];
 
                 double tmp = 0.0;
                 for( unsigned int j = 1; j < 5; ++j ) {
@@ -408,7 +407,7 @@ namespace naive {
                                               Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
 
                     SMILEI_ACCELERATOR_ATOMIC
-                    rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+                    rho[iloc + j] += charge_weight * Sx1[i] * Sy1[j];
                 }
             }
         }
@@ -744,37 +743,37 @@ namespace hip {
         } // end DepositCurrent
 
 
-       template <typename ComputeFloat,
+        template <typename ComputeFloat,
                   typename ReductionFloat,
                   std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
         DepositCurrentAndDensity_2D_Order2( double *__restrict__ device_Jx,
-                                         double *__restrict__ device_Jy,
-                                         double *__restrict__ device_Jz,
-                                         double *__restrict__ device_rho,
-                                         int Jx_size,
-                                         int Jy_size,
-                                         int Jz_size,
-                                         int rho_size,
-                                         const double *__restrict__ device_particle_position_x,
-                                         const double *__restrict__ device_particle_position_y,
-                                         const double *__restrict__ device_particle_momentum_z,
-                                         const short *__restrict__ device_particle_charge,
-                                         const double *__restrict__ device_particle_weight,
-                                         const int *__restrict__ device_bin_index,
-                                         const double *__restrict__ device_invgf_,
-                                         const int *__restrict__ device_iold_,
-                                         const double *__restrict__ device_deltaold_,
-                                         ComputeFloat inv_cell_volume,
-                                         ComputeFloat dx_inv,
-                                         ComputeFloat dy_inv,
-                                         ComputeFloat dx_ov_dt,
-                                         ComputeFloat dy_ov_dt,
-                                         int          i_domain_begin,
-                                         int          j_domain_begin,
-                                         int          nprimy,
-                                         int          pxr )
+                                            double *__restrict__ device_Jy,
+                                            double *__restrict__ device_Jz,
+                                            double *__restrict__ device_rho,
+                                            int Jx_size,
+                                            int Jy_size,
+                                            int Jz_size,
+                                            int rho_size,
+                                            const double *__restrict__ device_particle_position_x,
+                                            const double *__restrict__ device_particle_position_y,
+                                            const double *__restrict__ device_particle_momentum_z,
+                                            const short *__restrict__ device_particle_charge,
+                                            const double *__restrict__ device_particle_weight,
+                                            const int *__restrict__ device_bin_index,
+                                            const double *__restrict__ device_invgf_,
+                                            const int *__restrict__ device_iold_,
+                                            const double *__restrict__ device_deltaold_,
+                                            ComputeFloat inv_cell_volume,
+                                            ComputeFloat dx_inv,
+                                            ComputeFloat dy_inv,
+                                            ComputeFloat dx_ov_dt,
+                                            ComputeFloat dy_ov_dt,
+                                            int          i_domain_begin,
+                                            int          j_domain_begin,
+                                            int          nprimy,
+                                            int          pxr )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -816,9 +815,9 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                Jx_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jy_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jz_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
+                Jx_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
+                Jy_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
+                Jz_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
                 rho_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
             }
 
@@ -993,10 +992,9 @@ namespace hip {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
                     atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[0] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j]  ) ) );
+                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j] ) ) );
                     }
                 }
-
             }
 
             __syncthreads();
@@ -1106,34 +1104,34 @@ namespace hip {
     }
 
     static inline void
-    currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
-                             double *__restrict__ host_Jy,
-                             double *__restrict__ host_Jz,
-                             double *__restrict__ host_rho,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             int rho_size,
-                             const double *__restrict__ device_particle_position_x,
-                             const double *__restrict__ device_particle_position_y,
-                             const double *__restrict__ device_particle_momentum_z,
-                             const short *__restrict__ device_particle_charge,
-                             const double *__restrict__ device_particle_weight,
-                             const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             const double *__restrict__ host_invgf_,
-                             const int *__restrict__ host_iold_,
-                             const double *__restrict__ host_deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    nprimy,
-                             int    pxr )
+    currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+                                       double *__restrict__ host_Jy,
+                                       double *__restrict__ host_Jz,
+                                       double *__restrict__ host_rho,
+                                       int Jx_size,
+                                       int Jy_size,
+                                       int Jz_size,
+                                       int rho_size,
+                                       const double *__restrict__ device_particle_position_x,
+                                       const double *__restrict__ device_particle_position_y,
+                                       const double *__restrict__ device_particle_momentum_z,
+                                       const short *__restrict__ device_particle_charge,
+                                       const double *__restrict__ device_particle_weight,
+                                       const int *__restrict__ host_bin_index,
+                                       unsigned int x_dimension_bin_count,
+                                       unsigned int y_dimension_bin_count,
+                                       const double *__restrict__ host_invgf_,
+                                       const int *__restrict__ host_iold_,
+                                       const double *__restrict__ host_deltaold_,
+                                       double inv_cell_volume,
+                                       double dx_inv,
+                                       double dy_inv,
+                                       double dx_ov_dt,
+                                       double dy_ov_dt,
+                                       int    i_domain_begin,
+                                       int    j_domain_begin,
+                                       int    nprimy,
+                                       int    pxr )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1248,57 +1246,57 @@ currentDepositionKernel2D( double *__restrict__ host_Jx,
 //! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
 //!
 extern "C" void
-currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
-                         double *__restrict__ host_Jy,
-                         double *__restrict__ host_Jz,
-                         double *__restrict__ host_rho,
-                         int Jx_size,
-                         int Jy_size,
-                         int Jz_size,
-                         int rho_size,
-                         const double *__restrict__ device_particle_position_x,
-                         const double *__restrict__ device_particle_position_y,
-                         const double *__restrict__ device_particle_momentum_z,
-                         const short *__restrict__ device_particle_charge,
-                         const double *__restrict__ device_particle_weight,
-                         const int *__restrict__ host_bin_index,
-                         unsigned int x_dimension_bin_count,
-                         unsigned int y_dimension_bin_count,
-                         const double *__restrict__ host_invgf_,
-                         const int *__restrict__ host_iold_,
-                         const double *__restrict__ host_deltaold_,
-                         double inv_cell_volume,
-                         double dx_inv,
-                         double dy_inv,
-                         double dx_ov_dt,
-                         double dy_ov_dt,
-                         int    i_domain_begin,
-                         int    j_domain_begin,
-                         int    nprimy,
-                         int    pxr )
+currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+                                   double *__restrict__ host_Jy,
+                                   double *__restrict__ host_Jz,
+                                   double *__restrict__ host_rho,
+                                   int Jx_size,
+                                   int Jy_size,
+                                   int Jz_size,
+                                   int rho_size,
+                                   const double *__restrict__ device_particle_position_x,
+                                   const double *__restrict__ device_particle_position_y,
+                                   const double *__restrict__ device_particle_momentum_z,
+                                   const short *__restrict__ device_particle_charge,
+                                   const double *__restrict__ device_particle_weight,
+                                   const int *__restrict__ host_bin_index,
+                                   unsigned int x_dimension_bin_count,
+                                   unsigned int y_dimension_bin_count,
+                                   const double *__restrict__ host_invgf_,
+                                   const int *__restrict__ host_iold_,
+                                   const double *__restrict__ host_deltaold_,
+                                   double inv_cell_volume,
+                                   double dx_inv,
+                                   double dy_inv,
+                                   double dx_ov_dt,
+                                   double dy_ov_dt,
+                                   int    i_domain_begin,
+                                   int    j_domain_begin,
+                                   int    nprimy,
+                                   int    pxr )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     naive:: // the naive, OMP version serves as a reference along with the CPU version
     #else
     hip::
     #endif
-        currentAndDensityDepositionKernel2D( host_Jx, host_Jy, host_Jz, host_rho,
-                                 Jx_size, Jy_size, Jz_size, rho_size,
-                                 device_particle_position_x, device_particle_position_y,
-                                 device_particle_momentum_z,
-                                 device_particle_charge,
-                                 device_particle_weight,
-                                 host_bin_index,
-                                 x_dimension_bin_count,
-                                 y_dimension_bin_count,
-                                 host_invgf_,
-                                 host_iold_, host_deltaold_,
-                                 inv_cell_volume,
-                                 dx_inv, dy_inv,
-                                 dx_ov_dt, dy_ov_dt,
-                                 i_domain_begin, j_domain_begin,
-                                 nprimy,
-                                 pxr );
+        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
+                                           Jx_size, Jy_size, Jz_size, rho_size,
+                                           device_particle_position_x, device_particle_position_y,
+                                           device_particle_momentum_z,
+                                           device_particle_charge,
+                                           device_particle_weight,
+                                           host_bin_index,
+                                           x_dimension_bin_count,
+                                           y_dimension_bin_count,
+                                           host_invgf_,
+                                           host_iold_, host_deltaold_,
+                                           inv_cell_volume,
+                                           dx_inv, dy_inv,
+                                           dx_ov_dt, dy_ov_dt,
+                                           i_domain_begin, j_domain_begin,
+                                           nprimy,
+                                           pxr );
 }
 
 #endif

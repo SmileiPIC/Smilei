@@ -699,7 +699,7 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
         smpi->resizeDeviceBuffers( ithread,
                                    nDim_field,
                                    particles->numberOfParticles() );
