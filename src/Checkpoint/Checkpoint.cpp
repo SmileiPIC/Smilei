@@ -243,7 +243,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     MESSAGE( " Checkpoint #" << num_dump << "at iteration " << itime << " dumped" );
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     MESSAGE( " Copying device data in main memory" );
     // TODO(Etienne M): This may very well be redundant if we did a diagnostic
     // during the last iteration. Indeed, we copy everything from the device to
