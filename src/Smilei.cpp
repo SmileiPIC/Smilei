@@ -421,7 +421,7 @@ int main( int argc, char *argv[] )
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     TITLE( "GPU allocation and copy of the fields and particles" );
     // Because most of the initialization "needs" (for now) to be done on
-    // the host, we introduce the GPU only at it's end.
+    // the host, we introduce the GPU only at its end.
     vecPatches.allocateDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
     vecPatches.copyEMFieldsFromHostToDevice();
     // The initial particle binning is done in initializeDataOnDevice.
