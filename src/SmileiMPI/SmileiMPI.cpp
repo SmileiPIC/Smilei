@@ -880,6 +880,8 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         if( nbrOfPartsRecv > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
             recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
+            patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
+            patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
             MPI_Type_free( &( recvParts ) );
         }
         /*std::cerr << "Species: " << ispec

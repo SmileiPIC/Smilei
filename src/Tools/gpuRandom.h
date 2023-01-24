@@ -2,6 +2,7 @@
 #define GPU_RANDOM
 
 #if defined( ACCELERATOR_GPU_ACC )
+    #include <openacc.h>
     #include <openacc_curand.h>
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     // #define __HIP_PLATFORM_HCC__

@@ -322,6 +322,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
+                        vector<int> nbr_new_particles( nSpecies, 0 );
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             ParticleCreator particle_creator;
                             particle_creator.associate(mypatch->vecSpecies[ispec]);
@@ -335,8 +336,20 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.box_size_[1]   = params.n_space[1];
                             init_space.box_size_[2]   = params.n_space[2];
                             
-                            particle_creator.create( init_space, params, mypatch, 0 );
-                            
+			     nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
+
+                        } // end loop nSpecies
+
+                        if ( params.gpu_computing ) {
+                            // ADD NEW PARTS ON GPU
+                            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                              mypatch->vecSpecies[ispec]->particles_to_move->clear();
+                              mypatch->vecSpecies[ispec]->particles->copyParticles( 0, mypatch->vecSpecies[ispec]->getNbrOfParticles(),
+                                                                                    *mypatch->vecSpecies[ispec]->particles_to_move, 0 );
+                              mypatch->vecSpecies[ispec]->particles->initializeDataOnDevice();
+                              mypatch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
+                            }
+
                         }
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
@@ -345,6 +358,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         }
                         
                     } // end test patch_particle_created[ithread][j]
+
+                    if ( params.gpu_computing ) {
+                      mypatch->initializeDataOnDevice(); // Initializes only field data structures, particle data structure are initialized separately
+                    }
                 } // end j loop
             } // End ithread loop
         } // End omp master region

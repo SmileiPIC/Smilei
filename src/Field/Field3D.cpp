@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#ifdef ACCELERATOR_GPU_ACC
+#include <openacc.h>
+#endif
+
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
@@ -83,6 +87,7 @@ Field3D::~Field3D()
         }
     }
     if( data_!=NULL ) {
+        #pragma acc exit data delete (data_[0:globalDims_]) if (acc_deviceptr(data_) != NULL)
         delete [] data_;
         for( unsigned int i=0; i<dims_[0]; i++ ) {
             delete [] this->data_3D[i];

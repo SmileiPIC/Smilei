@@ -131,6 +131,9 @@ public:
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
+
+    void initializeDataOnDevice();
+    void deleteDataOnDevice();
     
     //! init comm / sum densities
     virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr = false );

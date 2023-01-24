@@ -702,9 +702,9 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
         
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
-            ERROR( "Load balancing not tested on GPU !" );
-#endif
+//#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+//            ERROR( "Load balancing not tested on GPU !" );
+//#endif
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {
