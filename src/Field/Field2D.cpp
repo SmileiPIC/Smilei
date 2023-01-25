@@ -197,8 +197,9 @@ double Field2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
         idxlocalstart[i] = istart[i][isDual_[i]];
         idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
-    
+
     for( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+        #pragma omp simd reduction(+:nrj)
         for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
             nrj += data_2D[i][j]*data_2D[i][j];
         }
@@ -207,6 +208,39 @@ double Field2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     return nrj;
 }
 
+// Perform the norm2 on Device
+#if defined(SMILEI_ACCELERATOR_MODE)
+double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+{
+    double nrj( 0. );
+    
+    int idxlocalstart[2];
+    int idxlocalend[2];
+    for( int i=0 ; i<2 ; i++ ) {
+        idxlocalstart[i] = istart[i][isDual_[i]];
+        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+    }
+    
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target \
+              /* Teams distribute */ parallel for collapse(2) \
+		      map(tofrom: nrj)  \
+		      is_device_ptr( data_ )             \
+		      reduction(+:nrj) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr( data_ )
+    #pragma acc loop gang worker vector collapse(2) reduction(+:nrj)
+#endif
+
+    for( int i=idxlocalstart[0] * dim_[1] ; i<idxlocalend[0] * dim_[1] ; i += dim_[1] ) {
+        for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
+            nrj += data_[i + j]*data_[i + j];
+        }
+    }
+
+    return nrj;
+}
+#endif
 
 void Field2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
 {

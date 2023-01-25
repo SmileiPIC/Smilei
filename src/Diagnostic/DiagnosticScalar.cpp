@@ -590,7 +590,11 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             // total energy in current field
             double Uem = 0.;
             if( ! AM ) {
+#if defined( SMILEI_ACCELERATOR_MODE )
+                Uem = field->norm2OnDevice( EMfields->istart, EMfields->bufsize );
+#else
                 Uem = field->norm2( EMfields->istart, EMfields->bufsize );
+#endif
             } else {
                 Uem = 0.5 * AMfields->dr * dynamic_cast<cField2D*>( field )->norm2_cylindrical( AMfields->istart, AMfields->bufsize, AMfields->j_glob_ );
                 if( ifield < 6 ) {

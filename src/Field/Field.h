@@ -185,8 +185,15 @@ public:
         return data_[idx];
     };
 
+    //! Compute the norm2 of the field
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
 
+    //! Compute the norm2OnDevice of the field
+#if defined(SMILEI_ACCELERATOR_MODE)
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
+#endif
+
+    //! Compute the sum of the field
     double sum( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     {
         double sum( 0. );

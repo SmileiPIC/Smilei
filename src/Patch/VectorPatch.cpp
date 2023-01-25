@@ -1273,27 +1273,53 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 #if defined( SMILEI_ACCELERATOR_MODE )
     bool data_on_cpu_updated = false;
 #endif
+
     // Global diags: scalars + particles
     timers.diags.restart();
+
+    // Determine which data is required from the device
+#if defined( SMILEI_ACCELERATOR_MODE )
+    bool need_particles = false;
+    bool need_fields    = false;
+    for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
+
+            if (typeid(globalDiags[idiag]) == typeid(DiagnosticScalar)) {
+                need_particles = true;
+                need_fields    = true;
+            }
+
+            need_particles = true;
+            need_fields    = true;
+
+        }
+    }
+    if (need_particles && need_fields) {
+        #pragma omp single
+        {
+            copyDeviceStateToHost(diag_flag);
+        }
+    }
+#endif
 
     // Pre-process for binning diags with auto limits
     vector<double> MPI_mins, MPI_maxs;
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
 
-#if defined( SMILEI_ACCELERATOR_MODE)
-        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
-            !data_on_cpu_updated &&
-            ( itime > 0 ) ) {
-    #pragma omp single
-            {
-                // Must be done by one and only one thread
-                copyDeviceStateToHost(diag_flag);
-            }
-    #pragma omp barrier
-            data_on_cpu_updated = true;
-        }
-#endif
+// #if defined( SMILEI_ACCELERATOR_MODE)
+//         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+//             !data_on_cpu_updated &&
+//             ( itime > 0 ) ) {
+//     #pragma omp single
+//             {
+//                 // Must be done by one and only one thread
+//                 copyDeviceStateToHost(diag_flag);
+//             }
+//     #pragma omp barrier
+//             data_on_cpu_updated = true;
+//         }
+// #endif
 
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
