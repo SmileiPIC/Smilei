@@ -437,7 +437,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 
 // #if defined( SMILEI_ACCELERATOR_MODE )
             const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
-            const short *const __restrict__ charge_ptr = vecSpecies[ispec]->particles->getPtrCharge();
+            const short  *const __restrict__ charge_ptr = vecSpecies[ispec]->particles->getPtrCharge();
             const double *const __restrict__ momentum_x = vecSpecies[ispec]->particles->getPtrMomentum(0);
             const double *const __restrict__ momentum_y = vecSpecies[ispec]->particles->getPtrMomentum(1);
             const double *const __restrict__ momentum_z = vecSpecies[ispec]->particles->getPtrMomentum(2);
@@ -446,14 +446,17 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             if( vecSpecies[ispec]->mass_ > 0 ) {
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr( charge_ptr, \
-                       weight_ptr, \
-                       momentum_x /* [istart:particle_number] */,             \
-                       momentum_y /* [istart:particle_number] */,             \
-                       momentum_z /* [istart:particle_number] */)
-    #pragma omp teams distribute parallel for reduction(+:density) \
-                     reduction(+:charge)  \
-                     reduction(+:ener_tot)
+    #pragma omp target \
+                      /* Teams distribute */ parallel for \
+		      map(tofrom: density, charge, ener_tot)  \
+		      is_device_ptr( charge_ptr, \
+                      weight_ptr, \
+                      momentum_x /* [istart:particle_number] */,             \
+                      momentum_y /* [istart:particle_number] */,             \
+                      momentum_z /* [istart:particle_number] */)             \
+		      reduction(+:density) \
+                      reduction(+:charge)  \
+                      reduction(+:ener_tot) 
 #elif defined(SMILEI_OPENACC_MODE)
     #pragma acc parallel deviceptr(weight_ptr \
                   momentum_x,                                           \
@@ -475,8 +478,8 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                     density  += weight_ptr[iPart];
                     charge   += weight_ptr[iPart] * charge_ptr[iPart];
                     const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
-                                                    + momentum_y[iPart]*momentum_y[iPart]
-                                                    + momentum_z[iPart]*momentum_z[iPart]);
+                                                     + momentum_y[iPart]*momentum_y[iPart]
+                                                     + momentum_z[iPart]*momentum_z[iPart]);
                     ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
 // #else
 //                     density  += vecSpecies[ispec]->particles->weight( iPart );
@@ -488,6 +491,8 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 
                 }
                 ener_tot *= vecSpecies[ispec]->mass_;
+	        //std::cout << density 
+	        //          << " " << charge << std::endl;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
