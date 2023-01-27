@@ -97,7 +97,7 @@ public:
 
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
 #if defined(SMILEI_ACCELERATOR_MODE)
-    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
 #endif
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
     void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;

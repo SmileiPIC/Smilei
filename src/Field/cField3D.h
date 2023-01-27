@@ -85,7 +85,7 @@ public:
 
     //! Compute the norm2OnDevice of the field
 #if defined(SMILEI_ACCELERATOR_MODE)
-    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override = 0;
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
 #endif
 
     inline std::complex<double> &operator()( unsigned int i )

@@ -85,7 +85,7 @@ public:
 
     //! Compute the norm2OnDevice of the field
 #if defined(SMILEI_ACCELERATOR_MODE)
-    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override = 0;
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
 #endif
 
     virtual double norm2_cylindrical( unsigned int istart[3][2], unsigned int bufsize[3][2], int j_ref );
