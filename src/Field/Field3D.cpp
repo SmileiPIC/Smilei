@@ -227,6 +227,42 @@ double Field3D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     return nrj;
 }
 
+// Perform the norm2 on Device
+#if defined(SMILEI_ACCELERATOR_MODE)
+double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+{
+    double nrj( 0. );
+    
+    int idxlocalstart[3];
+    int idxlocalend[3];
+    for( int i=0 ; i<3 ; i++ ) {
+        idxlocalstart[i] = istart[i][isDual_[i]];
+        idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
+    }
+    
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target \
+              /* Teams distribute */ parallel for collapse(3) \
+		      map(tofrom: nrj)  \
+		      is_device_ptr( data_ )             \
+		      reduction(+:nrj) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr( data_ )
+    #pragma acc loop gang worker vector collapse(3) reduction(+:nrj)
+#endif
+
+    for( int i=idxlocalstart[0]*dims_[1]*dims_[2] ; i<idxlocalend[0]*dims_[1]*dims_[2] ; i += dims_[1]*dims_[2] ) {
+        for( int j=idxlocalstart[1]* dim_[2] ; j<idxlocalend[1]* dim_[2] ; j += dim_[2] ) {
+            for( int k=idxlocalstart[2] ; k<idxlocalend[2] ; k++ ) {
+                nrj += data_[i + j + k]*data_[i + j + k];
+            }
+        }
+    }
+
+    return nrj;
+}
+#endif
+
 void Field3D::extract_slice_yz( unsigned int ix, Field2D *slice )
 {
     DEBUGEXEC( if( dims_[1]!=slice->dims_[0] ) ERROR( name << " : " <<  dims_[1] << " and " << slice->dims_[0] ) );

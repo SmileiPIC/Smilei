@@ -101,7 +101,7 @@ public:
 
     //! Compute the norm2OnDevice of the field
 #if defined(SMILEI_ACCELERATOR_MODE)
-    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
 #endif
 
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
