@@ -252,7 +252,7 @@ double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
 #endif
 
     for( int i=idxlocalstart[0]*dims_[1]*dims_[2] ; i<idxlocalend[0]*dims_[1]*dims_[2] ; i += dims_[1]*dims_[2] ) {
-        for( int j=idxlocalstart[1]* dim_[2] ; j<idxlocalend[1]* dim_[2] ; j += dim_[2] ) {
+        for( int j=idxlocalstart[1]* dims_[2] ; j<idxlocalend[1]* dims_[2] ; j += dims_[2] ) {
             for( int k=idxlocalstart[2] ; k<idxlocalend[2] ; k++ ) {
                 nrj += data_[i + j + k]*data_[i + j + k];
             }

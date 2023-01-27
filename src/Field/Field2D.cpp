@@ -208,7 +208,7 @@ double Field2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     return nrj;
 }
 
-// Perform the norm2 on Device
+//! Perform the norm2 on Device
 #if defined(SMILEI_ACCELERATOR_MODE)
 double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 {
@@ -232,7 +232,7 @@ double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
     #pragma acc loop gang worker vector collapse(2) reduction(+:nrj)
 #endif
 
-    for( int i=idxlocalstart[0] * dim_[1] ; i<idxlocalend[0] * dim_[1] ; i += dim_[1] ) {
+    for( int i=idxlocalstart[0] * dims_[1] ; i<idxlocalend[0] * dims_[1] ; i += dims_[1] ) {
         for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
             nrj += data_[i + j]*data_[i + j];
         }
