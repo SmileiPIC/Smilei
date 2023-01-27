@@ -229,7 +229,7 @@ double Field3D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 
 // Perform the norm2 on Device
 #if defined(SMILEI_ACCELERATOR_MODE)
-double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 {
     double nrj( 0. );
     
@@ -244,10 +244,10 @@ double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
     #pragma omp target \
               /* Teams distribute */ parallel for collapse(3) \
 		      map(tofrom: nrj)  \
-		      is_device_ptr( data_ )             \
+		      /*is_device_ptr( data_ ) */           \
 		      reduction(+:nrj) 
 #elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel deviceptr( data_ )
+    #pragma acc parallel //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3) reduction(+:nrj)
 #endif
 

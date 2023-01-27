@@ -447,7 +447,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
-                      /* Teams distribute */ parallel for \
+                      /* teams distribute */ parallel for \
 		      map(tofrom: density, charge, ener_tot)  \
 		      is_device_ptr( charge_ptr, \
                       weight_ptr, \

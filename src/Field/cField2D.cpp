@@ -219,6 +219,14 @@ double cField2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     return nrj;
 }
 
+//! Perform the norm2 on Device
+#if defined(SMILEI_ACCELERATOR_MODE)
+double cField2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+{
+    ERROR("Not implemented");
+}
+#endif
+
 double cField2D::norm2_cylindrical( unsigned int istart[3][2], unsigned int bufsize[3][2], int j_ref )
 {
     double nrj( 0. );
