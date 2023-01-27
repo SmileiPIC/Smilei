@@ -82,6 +82,12 @@ public:
 
 
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
+
+    //! Compute the norm2OnDevice of the field
+#if defined(SMILEI_ACCELERATOR_MODE)
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override = 0;
+#endif
+
     virtual double norm2_cylindrical( unsigned int istart[3][2], unsigned int bufsize[3][2], int j_ref );
     
     inline std::complex<double> &operator()( unsigned int i )
