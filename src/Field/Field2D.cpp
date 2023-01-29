@@ -243,7 +243,7 @@ double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
 #endif
 
     for( unsigned int i=idxlocalstart[0] ; i< idxlocalend[0] ; i++) {
-        for( unsigned int j=idxlocalstart[1] ; j< iyend ; j++ ) {
+        for( unsigned int j=iystart ; j< iyend ; j++ ) {
             nrj += field[i*ny + j]*field[i*ny + j];
             //nrj += 1;
         }
