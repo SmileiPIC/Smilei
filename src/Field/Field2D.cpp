@@ -212,6 +212,9 @@ double Field2D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 #if defined(SMILEI_ACCELERATOR_MODE)
 double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 {
+
+    //std::cout << name << std::endl;
+
     double nrj( 0. );
     
     int idxlocalstart[2];
@@ -221,22 +224,32 @@ double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
         idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
     
+    const unsigned iystart = idxlocalstart[1];
+    const unsigned iyend = idxlocalend[1];
+    const unsigned ny = dims_[1];
+
+    const double *const __restrict__ field = data();
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
-              /* Teams distribute */ parallel for collapse(2) \
+                      teams distribute parallel for collapse(2) \
 		      map(tofrom: nrj)  \
-		      /*is_device_ptr( data_ )*/ \
+                      map(to: ny, idxlocalstart[0], idxlocalstart[1], iystart, iyend) \
+		      /* is_device_ptr( data_ )*/ \
 		      reduction(+:nrj) 
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(2) reduction(+:nrj)
 #endif
 
-    for( int i=idxlocalstart[0] * dims_[1] ; i<idxlocalend[0] * dims_[1] ; i += dims_[1] ) {
-        for( int j=idxlocalstart[1] ; j<idxlocalend[1] ; j++ ) {
-            nrj += data_[i + j]*data_[i + j];
+    for( unsigned int i=idxlocalstart[0] ; i< idxlocalend[0] ; i++) {
+        for( unsigned int j=idxlocalstart[1] ; j< iyend ; j++ ) {
+            nrj += field[i*ny + j]*field[i*ny + j];
+            //nrj += 1;
         }
     }
+
+    //std::cout << nrj << std::endl;
 
     return nrj;
 }
