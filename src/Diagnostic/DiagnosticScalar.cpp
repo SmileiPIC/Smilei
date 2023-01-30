@@ -434,7 +434,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
             
-            unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
+            const unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
 
 // #if defined( SMILEI_ACCELERATOR_MODE )
             const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
@@ -447,50 +447,76 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             if( vecSpecies[ispec]->mass_ > 0 ) {
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: density)  \
+		      is_device_ptr(weight_ptr) \
+		      reduction(+:density) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) 
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    density  += weight_ptr[iPart];
+                }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
-                      /* teams distribute */ parallel for \
-		      map(tofrom: density, charge, ener_tot)  \
-		      is_device_ptr( charge_ptr, \
-                      weight_ptr, \
+                      teams distribute parallel for \
+		      map(tofrom: charge)  \
+		      is_device_ptr( charge_ptr, weight_ptr) \
+                      reduction(+:charge)  
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr, charge_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    charge   += weight_ptr[iPart] * charge_ptr[iPart];
+                }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: ener_tot)  \
+		      is_device_ptr(weight_ptr, \
                       momentum_x /* [istart:particle_number] */,             \
                       momentum_y /* [istart:particle_number] */,             \
                       momentum_z /* [istart:particle_number] */)             \
-		      reduction(+:density) \
-                      reduction(+:charge)  \
                       reduction(+:ener_tot) 
 #elif defined(SMILEI_OPENACC_MODE)
     #pragma acc parallel deviceptr(weight_ptr \
                   momentum_x,                                           \
                   momentum_y,                                           \
-                  momentum_z,                                           \
-                  charge_ptr)
-    #pragma acc loop gang worker vector reduction(+:density) \
-                     reduction(+:charge)  \
-                     reduction(+:ener_tot)
-#else
+                  momentum_z)
+    #pragma acc loop gang worker vector reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
+                                                     + momentum_y[iPart]*momentum_y[iPart]
+                                                     + momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
+
+                }
+
+#ifndef SMILEI_ACCELERATOR_MODE
     #pragma omp simd reduction(+:density) \
                      reduction(+:charge)  \
                      reduction(+:ener_tot)
-#endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                
-
-// #if defined( SMILEI_ACCELERATOR_MODE )
-                    density  += weight_ptr[iPart];
+	            density  += weight_ptr[iPart];
                     charge   += weight_ptr[iPart] * charge_ptr[iPart];
                     const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
                                                      + momentum_y[iPart]*momentum_y[iPart]
                                                      + momentum_z[iPart]*momentum_z[iPart]);
                     ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
-// #else
 //                     density  += vecSpecies[ispec]->particles->weight( iPart );
 //                     charge   += vecSpecies[ispec]->particles->weight( iPart )
 //                                 * ( double )vecSpecies[ispec]->particles->charge( iPart );
 //                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
 //                                 * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
-// #endif
+		}
+#endif
 
-                }
                 ener_tot *= vecSpecies[ispec]->mass_;
 	        //std::cout << density 
 	        //          << " " << charge << std::endl;
@@ -695,7 +721,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 	    //std::atomic<double> minval_a = {minval};
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
-                /* teams distribute */ parallel for collpase(3) \
+                teams distribute parallel for collpase(3) \
 		        map(tofrom: minval, maxval, i_min, i_max, j_min, j_max, k_min, k_max)  \
                 map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
 	        //reduction(min:minval)
