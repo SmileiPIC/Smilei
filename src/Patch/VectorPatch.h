@@ -487,7 +487,9 @@ public :
     
     //! Data synchronization from device (GPU) to host (CPU)
     void copyDeviceStateToHost(
-            bool species_J_and_rho = false
+            bool copy_fields = true,
+            bool copy_particles = true,
+            bool copy_species_J_and_rho = false
         );
     
 private :

@@ -1281,25 +1281,44 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 #if defined( SMILEI_ACCELERATOR_MODE )
     bool need_particles = false;
     bool need_fields    = false;
+
+    // Global diags
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
 
             if (typeid(globalDiags[idiag]) == typeid(DiagnosticScalar)) {
+                //need_particles = true;
+                //need_fields    = true;
+            } else if (typeid(globalDiags[idiag]) == typeid(DiagnosticParticleBinning)) {
+                need_particles = true;
+            } else {
                 need_particles = true;
                 need_fields    = true;
             }
-
-            need_particles = true;
-            need_fields    = true;
-
         }
     }
-    if (need_particles && need_fields) {
+
+    // Local diags (fields, probes, tracks)
+    for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
+        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+            ( itime > 0 ) ) {
+            if (typeid(localDiags[idiag]) == typeid(DiagnosticTrack)) {
+                need_particles = true;
+            } else if (typeid(localDiags[idiag]) == typeid(DiagnosticProbes)) {
+                need_fields    = true;
+            } else {
+                need_particles = true;
+                need_fields    = true; 
+            }
+        }
+    }
+
+    // if (need_particles && need_fields) {
         #pragma omp single
         {
-            copyDeviceStateToHost(diag_flag);
+            copyDeviceStateToHost(need_fields, need_particles, diag_flag);
         }
-    }
+    // }
 #endif
 
     // Pre-process for binning diags with auto limits
@@ -1419,19 +1438,19 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers_[globalDiags.size()+idiag]->restart();
 
-#if defined( SMILEI_ACCELERATOR_MODE )
-        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
-            !data_on_cpu_updated &&
-            ( itime > 0 ) ) {
-    #pragma omp single
-            {
-                // Must be done by one and only one thread
-                copyDeviceStateToHost(diag_flag);
-            }
-    #pragma omp barrier
-            data_on_cpu_updated = true;
-        }
-#endif
+// #if defined( SMILEI_ACCELERATOR_MODE )
+//         if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
+//             !data_on_cpu_updated &&
+//             ( itime > 0 ) ) {
+//     #pragma omp single
+//             {
+//                 // Must be done by one and only one thread
+//                 copyDeviceStateToHost(true, true, diag_flag);
+//             }
+//     #pragma omp barrier
+//             data_on_cpu_updated = true;
+//         }
+// #endif
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
@@ -4729,7 +4748,9 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 //! Sync all data (fields and particles) from device to host
 void
 VectorPatch::copyDeviceStateToHost(
-    bool species_J_and_rho)
+    bool copy_fields,
+    bool copy_particles,
+    bool copy_species_J_and_rho)
 {
 #if defined( SMILEI_ACCELERATOR_MODE)
     // TODO(Etienne M): DIAGS may need more or less data copied from the GPU. We
@@ -4752,23 +4773,53 @@ VectorPatch::copyDeviceStateToHost(
     const int sizeofBz = patches_[0]->EMfields->Bz_->globalDims_;
 
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
-        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
-            Species *spec = species( ipatch, ispec );
-            spec->particles->syncCPU();
+
+        if (copy_particles) {
+            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
+                Species *spec = species( ipatch, ispec );
+                spec->particles->syncCPU();
+            }
         }
 
-        double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
-        double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
-        double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-        double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+        if (copy_fields) {
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
+            double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+            double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+            double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+            double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
+
+            double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+            double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+            double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+
+            double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+            double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+            double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+
+            double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+            double *const By = patches_[ipatch]->EMfields->By_->data();
+            double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofJx );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofJy );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofJz );
+
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
+
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bx, sizeofBx );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( By, sizeofBy );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bz, sizeofBz );
+        }
 
         // Current and Charge for each species
-        if (species_J_and_rho) {
+        if (copy_species_J_and_rho) {
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 if (patches_[ipatch]->EMfields->Jx_s[ispec]) {
                     unsigned int size = patches_[ipatch]->EMfields->Jx_s[ispec]->globalDims_;
@@ -4791,31 +4842,8 @@ VectorPatch::copyDeviceStateToHost(
                     smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
                 }
             }
-        }
+        } // end copy_species_J_and_rho
 
-        double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
-
-        double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
-
-        double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        double *const By = patches_[ipatch]->EMfields->By_->data();
-        double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofJz );
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bz, sizeofBz );
     }
 #else
     ERROR( "GPU related code should not be reached in CPU mode!" );
