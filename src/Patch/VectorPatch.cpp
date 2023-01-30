@@ -1286,15 +1286,18 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
 
-            const std::type_info& diag_type = typeid(globalDiags[idiag]);
+            //std::cout << " " << dynamic_cast<DiagnosticScalar*>( globalDiags[idiag] )
+	   //	      << std::endl;
 
-            if (diag_type == typeid(DiagnosticScalar)) {
+            if (dynamic_cast<DiagnosticScalar*>( globalDiags[idiag])) {
                 //need_particles = true;
                 //need_fields    = true;
-            } else if (diag_type == typeid(DiagnosticParticleBinning)) {
+            } else if (dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag])) {
                 need_particles = true;
-            } else if (diag_type == typeid(DiagnosticFields3D)) {   
-                need_fields    = true;
+            } else if (dynamic_cast<DiagnosticScreen*>( globalDiags[idiag])) {
+                need_particles = true;
+            } else if (dynamic_cast<DiagnosticRadiationSpectrum*>( globalDiags[idiag])) {
+                need_particles = true;
             } else {
                 need_particles = true;
                 need_fields    = true;
@@ -1306,10 +1309,14 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
             ( itime > 0 ) ) {
-            if (typeid(localDiags[idiag]) == typeid(DiagnosticTrack)) {
+            if (dynamic_cast<DiagnosticTrack*>(localDiags[idiag])) {
                 need_particles = true;
-            } else if (typeid(localDiags[idiag]) == typeid(DiagnosticProbes)) {
+            } else if (dynamic_cast<DiagnosticProbes*>(localDiags[idiag])) {
                 need_fields    = true;
+            } else if (dynamic_cast<DiagnosticFields*>(localDiags[idiag])) {   
+                need_fields    = true;
+            } else if (dynamic_cast<DiagnosticPerformances*>(localDiags[idiag])) {   
+		 // Nothing to be done
             } else {
                 need_particles = true;
                 need_fields    = true; 
@@ -1320,6 +1327,8 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // if (need_particles && need_fields) {
         #pragma omp single
         {
+	    //std::cout << need_fields << " " << need_particles 
+	    //	      << std::endl;
             copyDeviceStateToHost(need_fields, need_particles, diag_flag);
         }
     // }
