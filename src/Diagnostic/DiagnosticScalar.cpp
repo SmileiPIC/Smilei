@@ -2,6 +2,7 @@
 #include "DiagnosticScalar.h"
 #include "VectorPatch.h"
 #include "Tools.h"
+#include "Pragma.h"
 
 #include <iomanip>
 #include <algorithm>
@@ -735,25 +736,25 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
                         double fieldval = field_data[ii];
                         if( minval > fieldval ) {
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                minval = fieldval;
 			                //minval_a.store(fieldval, std::memory_order_relaxed);
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                i_min=i;
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                j_min=j;
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                k_min=k;
 			            }
 			            //minval = std::min(fieldval,minval);
                         if( maxval < fieldval ) {
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                maxval = fieldval;
-                            #pragma omp atomic write
+                            ATOMIC("write")
                             i_max=i;
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                j_max=j;
-                            #pragma omp atomic write
+                            ATOMIC("write")
 			                k_max=k;
                         }
                     }
