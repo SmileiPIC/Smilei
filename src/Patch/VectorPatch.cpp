@@ -1286,11 +1286,15 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
 
-            if (typeid(globalDiags[idiag]) == typeid(DiagnosticScalar)) {
+            const std::type_info& diag_type = typeid(globalDiags[idiag]);
+
+            if (diag_type == typeid(DiagnosticScalar)) {
                 //need_particles = true;
                 //need_fields    = true;
-            } else if (typeid(globalDiags[idiag]) == typeid(DiagnosticParticleBinning)) {
+            } else if (diag_type == typeid(DiagnosticParticleBinning)) {
                 need_particles = true;
+            } else if (diag_type == typeid(DiagnosticFields3D)) {   
+                need_fields    = true;
             } else {
                 need_particles = true;
                 need_fields    = true;
