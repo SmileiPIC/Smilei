@@ -434,7 +434,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
             
-            unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
+            const unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
 
 // #if defined( SMILEI_ACCELERATOR_MODE )
             const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
@@ -703,32 +703,32 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     #pragma acc parallel //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3)
 #endif
-	    for( unsigned int i=ixstart; i<ixend; i++ ) {
+	        for( unsigned int i=ixstart; i<ixend; i++ ) {
                 for( unsigned int j=iystart; j<iyend; j++ ) {
-		    for( unsigned int k=izstart; k<izend; k++ ) {
+		            for( unsigned int k=izstart; k<izend; k++ ) {
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
                         double fieldval = field_data[ii];
                         if( minval > fieldval ) {
                             #pragma omp atomic write
-			    minval = fieldval;
-			    //minval_a.store(fieldval, std::memory_order_relaxed);
+			                minval = fieldval;
+			                //minval_a.store(fieldval, std::memory_order_relaxed);
                             #pragma omp atomic write
-			    i_min=i;
+			                i_min=i;
                             #pragma omp atomic write
-			    j_min=j;
+			                j_min=j;
                             #pragma omp atomic write
-			    k_min=k;
-			}
-			//minval = std::min(fieldval,minval);
+			                k_min=k;
+			            }
+			            //minval = std::min(fieldval,minval);
                         if( maxval < fieldval ) {
                             #pragma omp atomic write
-			    maxval = fieldval;
+			                maxval = fieldval;
                             #pragma omp atomic write
                             i_max=i;
                             #pragma omp atomic write
-			    j_max=j;
+			                j_max=j;
                             #pragma omp atomic write
-			    k_max=k;
+			                k_max=k;
                         }
                     }
                 }
