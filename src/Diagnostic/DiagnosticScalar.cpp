@@ -736,25 +736,25 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
                         double fieldval = field_data[ii];
                         if( minval > fieldval ) {
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                minval = fieldval;
 			                //minval_a.store(fieldval, std::memory_order_relaxed);
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                i_min=i;
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                j_min=j;
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                k_min=k;
 			            }
 			            //minval = std::min(fieldval,minval);
                         if( maxval < fieldval ) {
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                maxval = fieldval;
-                            ATOMIC("write")
+                            ATOMIC(write)
                             i_max=i;
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                j_max=j;
-                            ATOMIC("write")
+                            ATOMIC(write)
 			                k_max=k;
                         }
                     }
