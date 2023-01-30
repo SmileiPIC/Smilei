@@ -641,7 +641,6 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
         fields.push_back( EMfields->Env_Ex_abs_ );
     }
     
-    double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
     val_index minloc, maxloc;
@@ -674,12 +673,64 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             i_max = iFieldStart[0];
             j_max = iFieldStart[1];
             k_max = iFieldStart[2];
-            
+
+#if defined( SMILEI_ACCELERATOR_MODE)
+            // We use scalar rather than arrays because omp target 
+            // sometime fails to pass them to the device
+            const unsigned int ixstart = iFieldStart[0];
+            const unsigned int ixend   = iFieldEnd[0];
+            const unsigned int iystart = iFieldStart[1];
+            const unsigned int iyend   = iFieldEnd[1];
+            const unsigned int izstart = iFieldStart[2];
+            const unsigned int izend   = iFieldEnd[2];
+
+            double * const __restrict__ field_data = *field->data();
+#endif
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target \
+                /* teams distribute */ parallel for collapse(3) \
+		        map(tofrom: minloc.val, maxloc.val, i_min, i_max, j_min, j_max, k_min, k_max)  \
+                map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel //deviceptr( data_ )
+    #pragma acc loop gang worker vector collapse(2)
+#endif
+
+#if defined( SMILEI_ACCELERATOR_MODE)
+            for( unsigned int k=izstart; k<izend; k++ ) {
+                for( unsigned int j=iystart; j<iyend; j++ ) {
+                    for( unsigned int i=ixstart; i<ixend; i++ ) {
+                        const unsigned int ii = k+ ( j + i*ny ) *nz;
+                        const double fieldval = field_data[ii];
+                        if( minloc.val > fieldval ) {
+                            #pragma omp atomic write
+                            {
+                                minloc.val = fieldval;
+                                i_min=i;
+                                j_min=j;
+                                k_min=k;
+                            }
+                    }
+                        if( maxloc.val < fieldval ) {
+                            #pragma omp atomic write
+                            {
+                                maxloc.val = fieldval;
+                                i_max=i;
+                                j_max=j;
+                                k_max=k;
+                            }
+                        }
+                    }
+                }
+            }
+// CPU version
+#else
             for( unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++ ) {
                 for( unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++ ) {
                     for( unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++ ) {
-                        unsigned int ii = k+ ( j + i*iFieldGlobalSize[1] ) *iFieldGlobalSize[2];
-                        fieldval = ( *field )( ii );
+                        const unsigned int ii = k+ ( j + i*iFieldGlobalSize[1] ) *iFieldGlobalSize[2];
+                        const double fieldval = ( *field )( ii );
                         if( minloc.val > fieldval ) {
                             minloc.val = fieldval;
                             i_min=i;
@@ -695,7 +746,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                     }
                 }
             }
-            
+#endif    
             i_min += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
             j_min += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
             k_min += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
