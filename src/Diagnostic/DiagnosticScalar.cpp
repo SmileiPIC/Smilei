@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <limits>
+#include <atomic>
 
 using namespace std;
 
@@ -684,17 +685,24 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             const unsigned int izstart = iFieldStart[2];
             const unsigned int izend   = iFieldEnd[2];
 
-            double * const __restrict__ field_data = *field->data();
+            const double ny = field->dims_[1];
+            const double nz = field->dims_[2];
+
+            double minval = minloc.val;
+            double maxval = maxloc.val;
+
+            const double *const __restrict__ field_data = field->data();
+	    std::atomic<double> minval_a = {minval};
 #endif
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
-                /* teams distribute */ parallel for collapse(3) \
-		        map(tofrom: minloc.val, maxloc.val, i_min, i_max, j_min, j_max, k_min, k_max)  \
+                /* teams distribute */ parallel for \
+		        map(tofrom: minval, maxval, i_min, i_max, j_min, j_max, k_min, k_max)  \
                 map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel //deviceptr( data_ )
-    #pragma acc loop gang worker vector collapse(2)
+    #pragma acc loop gang worker vector collapse(3)
 #endif
 
 #if defined( SMILEI_ACCELERATOR_MODE)
@@ -702,28 +710,33 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                 for( unsigned int j=iystart; j<iyend; j++ ) {
                     for( unsigned int i=ixstart; i<ixend; i++ ) {
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
-                        const double fieldval = field_data[ii];
-                        if( minloc.val > fieldval ) {
+                        double fieldval = field_data[ii];
+                        if( minval > fieldval ) {
+                            #pragma omp atomic
+                            minval = field_data[ii];
+			    //minval_a.store(fieldval, std::memory_order_relaxed);
+                            /*#pragma omp atomic write
+			    i_min=i;
                             #pragma omp atomic write
-                            {
-                                minloc.val = fieldval;
-                                i_min=i;
-                                j_min=j;
-                                k_min=k;
-                            }
-                    }
-                        if( maxloc.val < fieldval ) {
+			    j_min=j;
                             #pragma omp atomic write
-                            {
-                                maxloc.val = fieldval;
-                                i_max=i;
-                                j_max=j;
-                                k_max=k;
-                            }
+			    k_min=k;*/
+			}
+                        if( maxval < fieldval ) {
+                            /*#pragma omp atomic write
+			    maxval = fieldval;
+                            #pragma omp atomic write
+                            i_max=i;
+                            #pragma omp atomic write
+			    j_max=j;
+                            #pragma omp atomic write
+			    k_max=k;*/
                         }
                     }
                 }
             }
+	    minloc.val = minval;
+	    maxloc.val = maxval;
 // CPU version
 #else
             for( unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++ ) {
