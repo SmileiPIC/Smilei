@@ -184,6 +184,6 @@ void DiagnosticFields2D::getField( Patch *patch, unsigned int ifield )
 // Write current buffer to file
 H5Write DiagnosticFields2D::writeField( H5Write * loc, std::string name )
 {
-    return loc->array( name, data[0], filespace, memspace );
+    return loc->array( name, data[0], filespace, memspace, false, file_datatype_ );
 }
 

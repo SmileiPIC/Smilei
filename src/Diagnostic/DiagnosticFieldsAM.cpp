@@ -237,6 +237,6 @@ template<typename F>
 H5Write DiagnosticFieldsAM::writeField( H5Write *loc, string name, F& linearized_data )
 {
     // Rewrite the file with the previously defined partition
-    return loc->array( name, linearized_data[0], H5T_NATIVE_DOUBLE, filespace, memspace );
+    return loc->array( name, linearized_data[0], H5T_NATIVE_DOUBLE, filespace, memspace, false, file_datatype_ );
 }
 
