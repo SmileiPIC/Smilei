@@ -13,29 +13,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ammaraskar/sphinx-action@master
+    - uses: actions/checkout@v3
       with:
-        pre-build-command: "apt-get --allow-releaseinfo-change update -y && apt-get install -y git"
-        docs-folder: "doc/Sphinx"        
-    - name: Commit documentation changes
+        fetch-depth: 0
+    - name: Build doc
       run: |
-        git clone https://github.com/ammaraskar/sphinx-action-test.git --branch gh-pages --single-branch gh-pages
-        cp -r doc/Sphinx/_build/html/* gh-pages/
-        cd gh-pages
-        touch .nojekyll
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m "Update documentation" -a || true
-        echo "end"
-        find . 
-    - name: Push changes
-      uses: ad-m/github-push-action@master
+        sudo apt-get --allow-releaseinfo-change update -y 
+        sudo apt-get install -y git make sphinx
+        make -C doc/Sphinx html
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        branch: gh-pages
-        directory: gh-pages
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        keep_history: false
-        force: true
-        tags: true
+        publish_dir: doc/Sphinx/_build/html
+        enable_jekyll: false
+        force_orphan: true
