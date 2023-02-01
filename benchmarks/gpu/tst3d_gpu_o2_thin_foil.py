@@ -50,13 +50,7 @@ x_start_preplasma = 3 * l0     # x position where the preplasma starts
 x_start_foil = 4 * l0          # x position where the foil starts
 foil_width = 3 * l0     # width of the foil in the x direction
 
-cells_per_patch = [8 , 8, 8]                    # Cells per patch
-
-number_of_patches = [0, 0, 0]
-
-number_of_patches[0] = 2
-number_of_patches[1] = int(grid_length[1] / (cell_length[1] * cells_per_patch[1]))
-number_of_patches[2] = int(grid_length[2] / (cell_length[2] * cells_per_patch[2]))
+number_of_patches = [4, 1, 1]
 
 boundary_conditions = [["reflective", "reflective"],["periodic", "periodic"],["periodic", "periodic"]]
 

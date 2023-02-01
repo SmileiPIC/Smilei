@@ -183,44 +183,70 @@ void refl_particle_AM( Species *species, int imin, int imax, int direction, doub
     }    
 }
 
-void remove_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_inf( Species* species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double>& invgf, Random* rand, double& energy_change )
 {
-    energy_change = 0.;
-    double* position = species->particles->getPtrPosition(direction);
-    double* momentum_x = species->particles->getPtrMomentum(0);
-    double* momentum_y = species->particles->getPtrMomentum(1);
-    double* momentum_z = species->particles->getPtrMomentum(2);
-    short* charge    = species->particles->getPtrCharge();
-    double* weight   = species->particles->getPtrWeight();
-    int* cell_keys   = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf) {
-            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            energy_change += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
-            charge[ ipart ] = 0;
+    double change_in_energy = 0.0;
+
+    double* position   = species->particles->getPtrPosition( direction );
+    double* momentum_x = species->particles->getPtrMomentum( 0 );
+    double* momentum_y = species->particles->getPtrMomentum( 1 );
+    double* momentum_z = species->particles->getPtrMomentum( 2 );
+    short*  charge     = species->particles->getPtrCharge();
+    double* weight     = species->particles->getPtrWeight();
+    int*    cell_keys  = species->particles->getPtrCellKeys();
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
+                                                                                                                               : change_in_energy )
+    #pragma omp teams distribute parallel for reduction( + \
+                                                         : change_in_energy )
+#endif
+    for( int ipart = imin; ipart < imax; ++ipart ) {
+        if( position[ipart] < limit_inf ) {
+            const double LorentzFactor = std::sqrt( 1.0 +
+                                                    momentum_x[ipart] * momentum_x[ipart] +
+                                                    momentum_y[ipart] * momentum_y[ipart] +
+                                                    momentum_z[ipart] * momentum_z[ipart] );
+            change_in_energy += weight[ipart] * ( LorentzFactor - 1.0 ); // energy lost REDUCTION
+            charge[ipart]    = 0;
             cell_keys[ipart] = -1;
         }
     }
+
+    energy_change = change_in_energy;
 }
 
-void remove_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_sup( Species* species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double>& invgf, Random* rand, double& energy_change )
 {
-    energy_change = 0.;
-    double* position = species->particles->getPtrPosition(direction);
-    double* momentum_x = species->particles->getPtrMomentum(0);
-    double* momentum_y = species->particles->getPtrMomentum(1);
-    double* momentum_z = species->particles->getPtrMomentum(2);
-    short* charge    = species->particles->getPtrCharge();
-    double* weight   = species->particles->getPtrWeight();
-    int* cell_keys   = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] >= limit_sup) {
-            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            energy_change += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
-            charge[ ipart ] = 0;
+    double change_in_energy = 0.0;
+
+    double* position   = species->particles->getPtrPosition( direction );
+    double* momentum_x = species->particles->getPtrMomentum( 0 );
+    double* momentum_y = species->particles->getPtrMomentum( 1 );
+    double* momentum_z = species->particles->getPtrMomentum( 2 );
+    short*  charge     = species->particles->getPtrCharge();
+    double* weight     = species->particles->getPtrWeight();
+    int*    cell_keys  = species->particles->getPtrCellKeys();
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
+                                                                                                                               : change_in_energy )
+    #pragma omp teams distribute parallel for reduction( + \
+                                                         : change_in_energy )
+#endif
+    for( int ipart = imin; ipart < imax; ++ipart ) {
+        if( position[ipart] >= limit_sup ) {
+            const double LorentzFactor = std::sqrt( 1.0 +
+                                                    momentum_x[ipart] * momentum_x[ipart] +
+                                                    momentum_y[ipart] * momentum_y[ipart] +
+                                                    momentum_z[ipart] * momentum_z[ipart] );
+            change_in_energy += weight[ipart] * ( LorentzFactor - 1.0 ); // energy lost REDUCTION
+            charge[ipart]    = 0;
             cell_keys[ipart] = -1;
         }
     }
+
+    energy_change = change_in_energy;
 }
 
 void remove_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )

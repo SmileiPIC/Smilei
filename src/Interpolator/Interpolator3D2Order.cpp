@@ -134,11 +134,25 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
-    double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
-    double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+    const int nparts = particles.numberOfParticles();
 
-    int    *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
-    double *const __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
+    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
+    // dereferenced ptrs in the for loop's condition.
+    const int first_index = *istart;
+    const int last_index  = *iend;
+
+    if( first_index == last_index ) {
+        // Early exit to avoid UB. If the dynamics_* array have are empty() we
+        // can't call data().
+        return;
+    }
+
+    SMILEI_ASSERT( !smpi->dynamics_Epart[ithread].empty() );
+
+    double *const __restrict__ ELoc  = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ BLoc  = smpi->dynamics_Bpart[ithread].data();
+    int *const __restrict__ iold     = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -151,7 +165,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-#if defined(SMILEI_OPENACC_MODE)
+#if defined( SMILEI_OPENACC_MODE )
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
     const int sizeofEz = EMfields->Ez_->globalDims_;
@@ -166,13 +180,6 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int nx_d = nx_p + 1;
     const int ny_d = ny_p + 1;
     const int nz_d = nz_p + 1;
-
-    const int nparts = particles.numberOfParticles();
-
-    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
-    // dereferenced ptrs in the for loop's condition.
-    const int first_index = *istart;
-    const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
     // const int npart_range_size         = last_index - first_index;
