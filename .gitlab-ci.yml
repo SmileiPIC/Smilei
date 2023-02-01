@@ -14,7 +14,6 @@ install:
   stage: install
   only:
     - develop
-    - adaptation_for_gpu
 
   script:
     # Force workdir cleaning in case of retried
@@ -33,7 +32,6 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - adaptation_for_gpu
 
   script:
     # Move in test dir
