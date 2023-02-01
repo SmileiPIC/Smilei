@@ -1438,6 +1438,11 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 #else
         MESSAGE( 1, "OpenMP disabled" );
 #endif
+#ifdef _OMPTASKS
+        MESSAGE( 1, "OpenMP task parallelization activated");
+#else 
+        MESSAGE( 1, "OpenMP task parallelization not activated");
+#endif
         MESSAGE( "" );
 
         ostringstream np;
