@@ -134,8 +134,14 @@ ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP)
 # ADASTRA_LIBRARIES_MPI_gfx90a := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
 # ADASTRA_LIBRARIES_MPI        := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_LIBRARIES_MPI_gfx90a)
 
-# The CCE is able to look for the rocm headers but it has no way of knowing if
-# it has to link with the HIP runtime. We have to do it manually.
+# NOTE:
+# We have to link manually with the ROCm runtime. Why ? I mean, CPE is smart
+# enough to link with or without the libmpi_gtl_hsa.so (used to enable GPU aware
+# support for the Cray MPICH). This choice is made depending on wether 
+# craype-accel-amd-* is loaded or not. So it could very well choose to link with
+# libamdhip64. In addition, libmpi_gtl_hsa.so has libamdhip64 as a dependency so
+# the resulting executable will depend on libamdhip64 wether we like it or not.
+
 ADASTRA_LIBRARIES_HIP := -L$(ROCM_PATH)/lib -lamdhip64
 
 ADASTRA_LIBRARIES := $(ADASTRA_LIBRARIES_OMP_STATIC) $(ADASTRA_LIBRARIES_MPI) $(ADASTRA_LIBRARIES_HIP)

@@ -24,11 +24,11 @@ class MachineAdastra(Machine):
 
 echo "Date              = $(date -R) | $(date +%s)"
 echo "Hostname          = $(hostname -s)"
-echo "Working Directory = $(pwd)"
+echo "Working directory = $(pwd)"
 echo ""
-echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
-echo "Number of Tasks Allocated      = $SLURM_NTASKS"
-echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
+echo "Number of nodes allocated       = $SLURM_JOB_NUM_NODES"
+echo "Number of tasks allocated       = $SLURM_NTASKS"
+echo "Number of cores/tasks allocated = $SLURM_CPUS_PER_TASK"
 
 ################################################################################
 # Environment setup
@@ -64,6 +64,8 @@ export MPICH_VERSION_DISPLAY=1
 export MPICH_ENV_DISPLAY=1
 export MPICH_CPUMASK_DISPLAY=1
 export MPICH_MPIIO_HINTS_DISPLAY=1
+# export MPICH_OFI_VERBOSE=1
+# export MPICH_OFI_NIC_VERBOSE=2
 
 export MPICH_GPU_SUPPORT_ENABLED=1
 

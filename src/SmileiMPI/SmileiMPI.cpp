@@ -1915,3 +1915,109 @@ void SmileiMPI::eraseBufferParticleTrail( const int ndim, const int istart, cons
         }
     }
 }
+
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
+                                     unsigned int ndim_field,
+                                     unsigned int particle_count,
+                                     float        growth_factor )
+{
+    const auto kCurrentCapacity = dynamics_Epart[ithread].capacity();
+
+    if( particle_count > kCurrentCapacity ) {
+        // We know we have to resize
+
+        if( !dynamics_Epart[ithread].empty() ) {
+            // Not the first allocation
+
+            if( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dynamics_Epart[ithread].data() ) ) {
+                // Free the memory before resizing if OpenMP was used to map the
+                // dynamics_* buffers in a previous PIC loop.
+
+                // NOTE: we dont care about the values contained in these
+                // buffers, it is temporary. Thus we do not need to do a realloc
+                // (that is, allocating a second, larger buffer and copying the
+                // content of the soon to be freed buffer into the new buffer).
+                // This realloc behavior is what std::vector does, and clearly,
+                // not what we need (!).
+
+                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_Bpart[ithread].data() );
+                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_invgf[ithread].data() );
+                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_iold[ithread].data() );
+                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_deltaold[ithread].data() );
+
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Epart[ithread].data(), kCurrentCapacity * 3 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Bpart[ithread].data(), kCurrentCapacity * 3 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_invgf[ithread].data(), kCurrentCapacity * 1 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_iold[ithread].data(), kCurrentCapacity * ndim_field );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_deltaold[ithread].data(), kCurrentCapacity * ndim_field );
+            }
+
+            // Either it is the first time allocating buffer for dynamics_* or
+            // we freed the previously device mapped buffers.
+
+            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Epart[ithread].data() );
+            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Bpart[ithread].data() );
+            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_invgf[ithread].data() );
+            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_iold[ithread].data() );
+            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_deltaold[ithread].data() );
+        }
+
+        const unsigned int new_capacity = static_cast<unsigned int>( particle_count * growth_factor );
+
+        // NOTE: this reserve can trigger OOM errors or more precisely, its
+        // not strictly needed. Ideally, we would not even need to resize
+        // and use a plain old hipMalloc or thrust::device_vector.
+        dynamics_Epart[ithread].reserve( new_capacity * 3 );
+        dynamics_Bpart[ithread].reserve( new_capacity * 3 );
+        dynamics_invgf[ithread].reserve( new_capacity * 1 );
+        dynamics_iold[ithread].reserve( new_capacity * ndim_field );
+        dynamics_deltaold[ithread].reserve( new_capacity * ndim_field );
+
+        // These *full size resize* are useless on the device, because we
+        // wont use the CPU buffer in device mode. See
+        // smilei::tools::gpu::NonInitializingVector for more explanations.
+
+        //      dynamics_Epart[ithread].resize( particle_count * 3 );
+        //      dynamics_Bpart[ithread].resize( particle_count * 3 );
+        //      dynamics_invgf[ithread].resize( particle_count * 1 );
+        //      dynamics_iold[ithread].resize( particle_count * ndim_field );
+        //      dynamics_deltaold[ithread].resize( particle_count * ndim_field );
+
+        // NOTE: If a vector's size() is ​0​, data() may or may not return a
+        // null pointer. Thus we must make sure we always have at least a
+        // size() > 0.
+
+        dynamics_Epart[ithread].resize( 1 );
+        dynamics_Bpart[ithread].resize( 1 );
+        dynamics_invgf[ithread].resize( 1 );
+        dynamics_iold[ithread].resize( 1 );
+        dynamics_deltaold[ithread].resize( 1 );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), new_capacity * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), new_capacity * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), new_capacity * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_iold[ithread].data(), new_capacity * ndim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_deltaold[ithread].data(), new_capacity * ndim_field );
+    } else {
+        if( particle_count == 0 ) {
+            // Add the following semantic:
+            //  resizeDeviceBuffers( ithread, ndim_field, 0); means that the
+            //  device memory is released.
+            return;
+        }
+
+        // Dont reserve, for now we have enough capacity.
+    }
+
+    // We have CPU buffers with the correct capacity and their equivalent on
+    // the device.
+
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_Epart[ithread].data() );
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_Bpart[ithread].data() );
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_invgf[ithread].data() );
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_iold[ithread].data() );
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_deltaold[ithread].data() );
+}
+#endif

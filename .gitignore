@@ -6,6 +6,7 @@ build/*
 *~
 .depend
 validation/workdir*
+validation/old
 smilei
 smilei_test
 *.aux
