@@ -1,6 +1,7 @@
 stages:
     - install
     - compile_default
+    - run_quick
     - run_default
     - compile_picsar
     - run_picsar
