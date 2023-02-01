@@ -389,10 +389,10 @@ public:
     {
     #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
-            case 2:
-                return 4;
             case 1:
                 return -1;
+            case 2:
+                return 4;
             case 3:
                 return 4;
             default:

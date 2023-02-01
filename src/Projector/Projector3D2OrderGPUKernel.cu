@@ -35,77 +35,77 @@ namespace naive {
 
     static inline void
     currentDepositionKernel3D( double *__restrict__ Jx,
-                             double *__restrict__ Jy,
-                             double *__restrict__ Jz,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             const double *__restrict__ device_particle_position_x,
-                             const double *__restrict__ device_particle_position_y,
-                             const double *__restrict__ device_particle_position_z,
-                             const short *__restrict__ device_particle_charge,
-                             const double *__restrict__ device_particle_weight,
-                             const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             unsigned int z_dimension_bin_count,
-                             const double *__restrict__ invgf_,
-                             const int *__restrict__ iold_,
-                             const double *__restrict__ deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dz_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             double dz_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    k_domain_begin,
-                             int    nprimy,
-                             int    nprimz,
-                             int    not_spectral )
+                               double *__restrict__ Jy,
+                               double *__restrict__ Jz,
+                               int Jx_size,
+                               int Jy_size,
+                               int Jz_size,
+                               const double *__restrict__ device_particle_position_x,
+                               const double *__restrict__ device_particle_position_y,
+                               const double *__restrict__ device_particle_position_z,
+                               const short *__restrict__ device_particle_charge,
+                               const double *__restrict__ device_particle_weight,
+                               const int *__restrict__ host_bin_index,
+                               unsigned int x_dimension_bin_count,
+                               unsigned int y_dimension_bin_count,
+                               unsigned int z_dimension_bin_count,
+                               const double *__restrict__ invgf_,
+                               const int *__restrict__ iold_,
+                               const double *__restrict__ deltaold_,
+                               double inv_cell_volume,
+                               double dx_inv,
+                               double dy_inv,
+                               double dz_inv,
+                               double dx_ov_dt,
+                               double dy_ov_dt,
+                               double dz_ov_dt,
+                               int    i_domain_begin,
+                               int    j_domain_begin,
+                               int    k_domain_begin,
+                               int    nprimy,
+                               int    nprimz,
+                               int    not_spectral )
     {
 
-        ERROR("No Naive implementation in 3D")
+        ERROR( "No Naive implementation in 3D" )
 
-         } // end currentDepositionKernel
+    } // end currentDepositionKernel
 
     static inline void
-    currentAndDensityDepositionKernel3D(
-                            double *__restrict__ Jx,
-                            double *__restrict__ Jy,
-                            double *__restrict__ Jz,
-                            double *__restrict__ rho,
-                            int Jx_size,
-                            int Jy_size,
-                            int Jz_size,
-                            int rho_size,
-                            const double *__restrict__ device_particle_position_x,
-                            const double *__restrict__ device_particle_position_y,
-                            const double *__restrict__ device_particle_position_z,
-                            const short *__restrict__ device_particle_charge,
-                            const double *__restrict__ device_particle_weight,
-                            const int *__restrict__ host_bin_index,
-                            unsigned int,
-                            unsigned int,
-                            const double *__restrict__ invgf_,
-                            const int *__restrict__ iold_,
-                            const double *__restrict__ deltaold_,
-                            double inv_cell_volume,
-                            double dx_inv,
-                            double dy_inv,
-                            double dz_inv,
-                            double dx_ov_dt,
-                            double dy_ov_dt,
-                            double dz_ov_dt,
-                            int    i_domain_begin,
-                            int    j_domain_begin,
-                            int    k_domain_begin,
-                            int    nprimy, nprimz,
-                            int    not_spectral )
+    currentAndDensityDepositionKernel3D( double *__restrict__ Jx,
+                                         double *__restrict__ Jy,
+                                         double *__restrict__ Jz,
+                                         double *__restrict__ rho,
+                                         int Jx_size,
+                                         int Jy_size,
+                                         int Jz_size,
+                                         int rho_size,
+                                         const double *__restrict__ device_particle_position_x,
+                                         const double *__restrict__ device_particle_position_y,
+                                         const double *__restrict__ device_particle_position_z,
+                                         const short *__restrict__ device_particle_charge,
+                                         const double *__restrict__ device_particle_weight,
+                                         const int *__restrict__ host_bin_index,
+                                         unsigned int,
+                                         unsigned int,
+                                         const double *__restrict__ invgf_,
+                                         const int *__restrict__ iold_,
+                                         const double *__restrict__ deltaold_,
+                                         double inv_cell_volume,
+                                         double dx_inv,
+                                         double dy_inv,
+                                         double dz_inv,
+                                         double dx_ov_dt,
+                                         double dy_ov_dt,
+                                         double dz_ov_dt,
+                                         int    i_domain_begin,
+                                         int    j_domain_begin,
+                                         int    k_domain_begin,
+                                         int    nprimy,
+                                         int    nprimz,
+                                         int    not_spectral )
     {
-        ERROR("No Naive implementation in 3D")
+        ERROR( "No Naive implementation in 3D" )
     } // end currentDepositionKernel
 
 
@@ -210,7 +210,7 @@ namespace hip {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          k_domain_begin,
-                                         int          nprimy, 
+                                         int          nprimy,
                                          int          nprimz,
                                          int          not_spectral )
         {
@@ -234,8 +234,8 @@ namespace hip {
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
-            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-            ComputeFloat one_third = 1./3.;
+            const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+            ComputeFloat one_third             = 1. / 3.;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -401,8 +401,6 @@ namespace hip {
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
-                
-
                 // Jx
 
                 for( unsigned int j = 0; j < 5; ++j ) {
@@ -462,8 +460,8 @@ namespace hip {
                  field_index += workgroup_size ) {
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / (GPUClusterWithGCWidth * GPUClusterWithGCWidth) ;
-                const unsigned int local_y_scratch_space_coordinate = (field_index % (GPUClusterWithGCWidth * GPUClusterWithGCWidth)) / GPUClusterWithGCWidth;
+                const unsigned int local_x_scratch_space_coordinate = field_index / ( GPUClusterWithGCWidth * GPUClusterWithGCWidth );
+                const unsigned int local_y_scratch_space_coordinate = ( field_index % ( GPUClusterWithGCWidth * GPUClusterWithGCWidth ) ) / GPUClusterWithGCWidth;
                 const unsigned int local_z_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
 
                 const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
@@ -471,7 +469,7 @@ namespace hip {
                 const unsigned int global_z_scratch_space_coordinate = global_z_scratch_space_coordinate_offset + local_z_scratch_space_coordinate;
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate) * nprimz + global_z_scratch_space_coordinate;
+                const unsigned int global_memory_index = ( global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate ) * nprimz + global_z_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[field_index] ) );
@@ -481,41 +479,41 @@ namespace hip {
         } // end DepositCurrent
 
 
-       template <typename ComputeFloat,
+        template <typename ComputeFloat,
                   typename ReductionFloat,
                   std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
         DepositCurrentAndDensity_3D_Order2( double *__restrict__ device_Jx,
-                                         double *__restrict__ device_Jy,
-                                         double *__restrict__ device_Jz,
-                                         double *__restrict__ device_rho,
-                                         int Jx_size,
-                                         int Jy_size,
-                                         int Jz_size,
-                                         int rho_size,
-                                         const double *__restrict__ device_particle_position_x,
-                                         const double *__restrict__ device_particle_position_y,
-                                         const double *__restrict__ device_particle_position_z,
-                                         const short *__restrict__ device_particle_charge,
-                                         const double *__restrict__ device_particle_weight,
-                                         const int *__restrict__ device_bin_index,
-                                         const double *__restrict__ device_invgf_,
-                                         const int *__restrict__ device_iold_,
-                                         const double *__restrict__ device_deltaold_,
-                                         ComputeFloat inv_cell_volume,
-                                         ComputeFloat dx_inv,
-                                         ComputeFloat dy_inv,
-                                         ComputeFloat dz_inv,
-                                         ComputeFloat dx_ov_dt,
-                                         ComputeFloat dy_ov_dt,
-                                         ComputeFloat dz_ov_dt,
-                                         int          i_domain_begin,
-                                         int          j_domain_begin,
-                                         int          k_domain_begin,
-                                         int          nprimy,
-                                         int          nprimz,
-                                         int          not_spectral )
+                                            double *__restrict__ device_Jy,
+                                            double *__restrict__ device_Jz,
+                                            double *__restrict__ device_rho,
+                                            int Jx_size,
+                                            int Jy_size,
+                                            int Jz_size,
+                                            int rho_size,
+                                            const double *__restrict__ device_particle_position_x,
+                                            const double *__restrict__ device_particle_position_y,
+                                            const double *__restrict__ device_particle_position_z,
+                                            const short *__restrict__ device_particle_charge,
+                                            const double *__restrict__ device_particle_weight,
+                                            const int *__restrict__ device_bin_index,
+                                            const double *__restrict__ device_invgf_,
+                                            const int *__restrict__ device_iold_,
+                                            const double *__restrict__ device_deltaold_,
+                                            ComputeFloat inv_cell_volume,
+                                            ComputeFloat dx_inv,
+                                            ComputeFloat dy_inv,
+                                            ComputeFloat dz_inv,
+                                            ComputeFloat dx_ov_dt,
+                                            ComputeFloat dy_ov_dt,
+                                            ComputeFloat dz_ov_dt,
+                                            int          i_domain_begin,
+                                            int          j_domain_begin,
+                                            int          k_domain_begin,
+                                            int          nprimy,
+                                            int          nprimz,
+                                            int          not_spectral )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -537,8 +535,8 @@ namespace hip {
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
-            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-            ComputeFloat one_third = 1./3.;
+            const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+            ComputeFloat one_third             = 1. / 3.;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -562,9 +560,9 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                Jx_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jy_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jz_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
+                Jx_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
+                Jy_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
+                Jz_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
                 rho_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
             }
 
@@ -705,7 +703,6 @@ namespace hip {
                 const int kpo = iold[2 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
-                
 
                 // Jx
 
@@ -780,8 +777,8 @@ namespace hip {
                  field_index += workgroup_size ) {
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / (GPUClusterWithGCWidth * GPUClusterWithGCWidth) ;
-                const unsigned int local_y_scratch_space_coordinate = (field_index % (GPUClusterWithGCWidth * GPUClusterWithGCWidth)) / GPUClusterWithGCWidth;
+                const unsigned int local_x_scratch_space_coordinate = field_index / ( GPUClusterWithGCWidth * GPUClusterWithGCWidth );
+                const unsigned int local_y_scratch_space_coordinate = ( field_index % ( GPUClusterWithGCWidth * GPUClusterWithGCWidth ) ) / GPUClusterWithGCWidth;
                 const unsigned int local_z_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
 
                 const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
@@ -789,14 +786,13 @@ namespace hip {
                 const unsigned int global_z_scratch_space_coordinate = global_z_scratch_space_coordinate_offset + local_z_scratch_space_coordinate;
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate) * nprimz + global_z_scratch_space_coordinate;
+                const unsigned int global_memory_index = ( global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate ) * nprimz + global_z_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>(  Jx_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>(  Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_rho[global_memory_index],                                                                                            static_cast<double>( rho_scratch_space[field_index] ) );
-
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * ( global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate )], static_cast<double>( Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[field_index] ) );
             }
         }
     } // namespace kernel
@@ -804,36 +800,36 @@ namespace hip {
 
     static inline void
     currentDepositionKernel3D( double *__restrict__ host_Jx,
-                             double *__restrict__ host_Jy,
-                             double *__restrict__ host_Jz,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             const double *__restrict__ device_particle_position_x,
-                             const double *__restrict__ device_particle_position_y,
-                             const double *__restrict__ device_particle_position_z,
-                             const short *__restrict__ device_particle_charge,
-                             const double *__restrict__ device_particle_weight,
-                             const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             unsigned int z_dimension_bin_count,
-                             const double *__restrict__ host_invgf_,
-                             const int *__restrict__ host_iold_,
-                             const double *__restrict__ host_deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dz_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             double dz_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    k_domain_begin,
-                             int    nprimy, 
-                             int    nprimz,
-                             int    not_spectral )
+                               double *__restrict__ host_Jy,
+                               double *__restrict__ host_Jz,
+                               int Jx_size,
+                               int Jy_size,
+                               int Jz_size,
+                               const double *__restrict__ device_particle_position_x,
+                               const double *__restrict__ device_particle_position_y,
+                               const double *__restrict__ device_particle_position_z,
+                               const short *__restrict__ device_particle_charge,
+                               const double *__restrict__ device_particle_weight,
+                               const int *__restrict__ host_bin_index,
+                               unsigned int x_dimension_bin_count,
+                               unsigned int y_dimension_bin_count,
+                               unsigned int z_dimension_bin_count,
+                               const double *__restrict__ host_invgf_,
+                               const int *__restrict__ host_iold_,
+                               const double *__restrict__ host_deltaold_,
+                               double inv_cell_volume,
+                               double dx_inv,
+                               double dy_inv,
+                               double dz_inv,
+                               double dx_ov_dt,
+                               double dy_ov_dt,
+                               double dz_ov_dt,
+                               int    i_domain_begin,
+                               int    j_domain_begin,
+                               int    k_domain_begin,
+                               int    nprimy,
+                               int    nprimz,
+                               int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -888,38 +884,38 @@ namespace hip {
 
     static inline void
     currentAndDensityDepositionKernel3D( double *__restrict__ host_Jx,
-                             double *__restrict__ host_Jy,
-                             double *__restrict__ host_Jz,
-                             double *__restrict__ host_rho,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             int rho_size,
-                             const double *__restrict__ device_particle_position_x,
-                             const double *__restrict__ device_particle_position_y,
-                             const double *__restrict__ device_particle_position_z,
-                             const short *__restrict__ device_particle_charge,
-                             const double *__restrict__ device_particle_weight,
-                             const int *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             unsigned int z_dimension_bin_count,
-                             const double *__restrict__ host_invgf_,
-                             const int *__restrict__ host_iold_,
-                             const double *__restrict__ host_deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dz_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             double dz_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    k_domain_begin,
-                             int    nprimy,
-                             int    nprimz,
-                             int    not_spectral )
+                                         double *__restrict__ host_Jy,
+                                         double *__restrict__ host_Jz,
+                                         double *__restrict__ host_rho,
+                                         int Jx_size,
+                                         int Jy_size,
+                                         int Jz_size,
+                                         int rho_size,
+                                         const double *__restrict__ device_particle_position_x,
+                                         const double *__restrict__ device_particle_position_y,
+                                         const double *__restrict__ device_particle_position_z,
+                                         const short *__restrict__ device_particle_charge,
+                                         const double *__restrict__ device_particle_weight,
+                                         const int *__restrict__ host_bin_index,
+                                         unsigned int x_dimension_bin_count,
+                                         unsigned int y_dimension_bin_count,
+                                         unsigned int z_dimension_bin_count,
+                                         const double *__restrict__ host_invgf_,
+                                         const int *__restrict__ host_iold_,
+                                         const double *__restrict__ host_deltaold_,
+                                         double inv_cell_volume,
+                                         double dx_inv,
+                                         double dy_inv,
+                                         double dz_inv,
+                                         double dx_ov_dt,
+                                         double dy_ov_dt,
+                                         double dz_ov_dt,
+                                         int    i_domain_begin,
+                                         int    j_domain_begin,
+                                         int    k_domain_begin,
+                                         int    nprimy,
+                                         int    nprimz,
+                                         int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -981,36 +977,36 @@ namespace hip {
 //!
 extern "C" void
 currentDepositionKernel3D( double *__restrict__ host_Jx,
-                         double *__restrict__ host_Jy,
-                         double *__restrict__ host_Jz,
-                         int Jx_size,
-                         int Jy_size,
-                         int Jz_size,
-                         const double *__restrict__ device_particle_position_x,
-                         const double *__restrict__ device_particle_position_y,
-                         const double *__restrict__ device_particle_position_z,
-                         const short *__restrict__ device_particle_charge,
-                         const double *__restrict__ device_particle_weight,
-                         const int *__restrict__ host_bin_index,
-                         unsigned int x_dimension_bin_count,
-                         unsigned int y_dimension_bin_count,
-                         unsigned int z_dimension_bin_count,
-                         const double *__restrict__ host_invgf_,
-                         const int *__restrict__ host_iold_,
-                         const double *__restrict__ host_deltaold_,
-                         double inv_cell_volume,
-                         double dx_inv,
-                         double dy_inv,
-                         double dz_inv,
-                         double dx_ov_dt,
-                         double dy_ov_dt,
-                         double dz_ov_dt,
-                         int    i_domain_begin,
-                         int    j_domain_begin,
-                         int    k_domain_begin,
-                         int    nprimy, 
-                         int    nprimz,
-                         int    not_spectral )
+                           double *__restrict__ host_Jy,
+                           double *__restrict__ host_Jz,
+                           int Jx_size,
+                           int Jy_size,
+                           int Jz_size,
+                           const double *__restrict__ device_particle_position_x,
+                           const double *__restrict__ device_particle_position_y,
+                           const double *__restrict__ device_particle_position_z,
+                           const short *__restrict__ device_particle_charge,
+                           const double *__restrict__ device_particle_weight,
+                           const int *__restrict__ host_bin_index,
+                           unsigned int x_dimension_bin_count,
+                           unsigned int y_dimension_bin_count,
+                           unsigned int z_dimension_bin_count,
+                           const double *__restrict__ host_invgf_,
+                           const int *__restrict__ host_iold_,
+                           const double *__restrict__ host_deltaold_,
+                           double inv_cell_volume,
+                           double dx_inv,
+                           double dy_inv,
+                           double dz_inv,
+                           double dx_ov_dt,
+                           double dy_ov_dt,
+                           double dz_ov_dt,
+                           int    i_domain_begin,
+                           int    j_domain_begin,
+                           int    k_domain_begin,
+                           int    nprimy,
+                           int    nprimz,
+                           int    not_spectral )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -1018,61 +1014,61 @@ currentDepositionKernel3D( double *__restrict__ host_Jx,
     hip::
     #endif
         currentDepositionKernel3D( host_Jx, host_Jy, host_Jz,
-                                 Jx_size, Jy_size, Jz_size,
-                                 device_particle_position_x, device_particle_position_y,
-                                 device_particle_position_z,
-                                 device_particle_charge,
-                                 device_particle_weight,
-                                 host_bin_index,
-                                 x_dimension_bin_count,
-                                 y_dimension_bin_count,
-                                 z_dimension_bin_count,
-                                 host_invgf_,
-                                 host_iold_, host_deltaold_,
-                                 inv_cell_volume,
-                                 dx_inv, dy_inv, dz_inv,
-                                 dx_ov_dt, dy_ov_dt, dz_ov_dt,
-                                 i_domain_begin, j_domain_begin, k_domain_begin,
-                                 nprimy, nprimz,
-                                 not_spectral );
+                                   Jx_size, Jy_size, Jz_size,
+                                   device_particle_position_x, device_particle_position_y,
+                                   device_particle_position_z,
+                                   device_particle_charge,
+                                   device_particle_weight,
+                                   host_bin_index,
+                                   x_dimension_bin_count,
+                                   y_dimension_bin_count,
+                                   z_dimension_bin_count,
+                                   host_invgf_,
+                                   host_iold_, host_deltaold_,
+                                   inv_cell_volume,
+                                   dx_inv, dy_inv, dz_inv,
+                                   dx_ov_dt, dy_ov_dt, dz_ov_dt,
+                                   i_domain_begin, j_domain_begin, k_domain_begin,
+                                   nprimy, nprimz,
+                                   not_spectral );
 }
 
 //! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
 //!
 extern "C" void
 currentAndDensityDepositionKernel3D( double *__restrict__ host_Jx,
-                         double *__restrict__ host_Jy,
-                         double *__restrict__ host_Jz,
-                         double *__restrict__ host_rho,
-                         int Jx_size,
-                         int Jy_size,
-                         int Jz_size,
-                         int rho_size,
-                         const double *__restrict__ device_particle_position_x,
-                         const double *__restrict__ device_particle_position_y,
-                         const double *__restrict__ device_particle_position_z,
-                         const short *__restrict__ device_particle_charge,
-                         const double *__restrict__ device_particle_weight,
-                         const int *__restrict__ host_bin_index,
-                         unsigned int x_dimension_bin_count,
-                         unsigned int y_dimension_bin_count,
-                         unsigned int z_dimension_bin_count,
-                         const double *__restrict__ host_invgf_,
-                         const int *__restrict__ host_iold_,
-                         const double *__restrict__ host_deltaold_,
-                         double inv_cell_volume,
-                         double dx_inv,
-                         double dy_inv,
-                         double dz_inv,
-                         double dx_ov_dt,
-                         double dy_ov_dt,
-                         double dz_ov_dt,
-                         int    i_domain_begin,
-                         int    j_domain_begin,
-                         int    k_domain_begin,
-                         int    nprimy,
-                         int    nprimz,
-                         int    not_spectral )
+                                     double *__restrict__ host_Jy,
+                                     double *__restrict__ host_Jz,
+                                     double *__restrict__ host_rho,
+                                     int Jx_size,
+                                     int Jy_size,
+                                     int Jz_size,
+                                     int rho_size,
+                                     const double *__restrict__ device_particle_position_x,
+                                     const double *__restrict__ device_particle_position_y,
+                                     const double *__restrict__ device_particle_position_z,
+                                     const short *__restrict__ device_particle_charge,
+                                     const double *__restrict__ device_particle_weight,
+                                     const int *__restrict__ host_bin_index,
+                                     unsigned int x_dimension_bin_count,
+                                     unsigned int y_dimension_bin_count,
+                                     unsigned int z_dimension_bin_count,
+                                     const double *__restrict__ host_invgf_,
+                                     const int *__restrict__ host_iold_,
+                                     const double *__restrict__ host_deltaold_,
+                                     double inv_cell_volume,
+                                     double dx_inv,
+                                     double dy_inv,
+                                     double dz_inv,
+                                     double dx_ov_dt,
+                                     double dy_ov_dt,
+                                     double dz_ov_dt,
+                                     int    i_domain_begin,
+                                     int    j_domain_begin,
+                                     int    k_domain_begin,
+                                     int    nprimy,
+                                     int    nprimz,
+                                     int    not_spectral )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -1080,23 +1076,23 @@ currentAndDensityDepositionKernel3D( double *__restrict__ host_Jx,
     hip::
     #endif
         currentAndDensityDepositionKernel3D( host_Jx, host_Jy, host_Jz, host_rho,
-                                 Jx_size, Jy_size, Jz_size, rho_size,
-                                 device_particle_position_x, device_particle_position_y,
-                                 device_particle_position_z,
-                                 device_particle_charge,
-                                 device_particle_weight,
-                                 host_bin_index,
-                                 x_dimension_bin_count,
-                                 y_dimension_bin_count,
-                                 z_dimension_bin_count,
-                                 host_invgf_,
-                                 host_iold_, host_deltaold_,
-                                 inv_cell_volume,
-                                 dx_inv, dy_inv, dz_inv,
-                                 dx_ov_dt, dy_ov_dt, dz_ov_dt,
-                                 i_domain_begin, j_domain_begin, k_domain_begin,
-                                 nprimy, nprimz,
-                                 not_spectral );
+                                             Jx_size, Jy_size, Jz_size, rho_size,
+                                             device_particle_position_x, device_particle_position_y,
+                                             device_particle_position_z,
+                                             device_particle_charge,
+                                             device_particle_weight,
+                                             host_bin_index,
+                                             x_dimension_bin_count,
+                                             y_dimension_bin_count,
+                                             z_dimension_bin_count,
+                                             host_invgf_,
+                                             host_iold_, host_deltaold_,
+                                             inv_cell_volume,
+                                             dx_inv, dy_inv, dz_inv,
+                                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
+                                             i_domain_begin, j_domain_begin, k_domain_begin,
+                                             nprimy, nprimz,
+                                             not_spectral );
 }
 
 #endif

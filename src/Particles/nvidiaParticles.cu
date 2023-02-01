@@ -643,12 +643,12 @@ namespace detail {
         const SizeType local_z_particle_cluster_coordinate_in_cluster = local_z_particle_coordinate_in_cell / z_cluster_dimension_in_cell;
 
         const SizeType y_stride = local_y_dimension_in_cluster_;
+        const SizeType z_stride = local_z_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index =  (local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_  +
-                                         local_y_particle_cluster_coordinate_in_cluster) *
-                                         local_z_dimension_in_cluster_ + 
-                                         local_z_particle_cluster_coordinate_in_cluster;
+        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
+                                       local_y_particle_cluster_coordinate_in_cluster * z_stride +
+                                       local_z_particle_cluster_coordinate_in_cluster;
 
         return static_cast<IDType>( cluster_index );
     }
