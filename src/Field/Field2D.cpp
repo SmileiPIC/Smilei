@@ -231,8 +231,7 @@ double Field2D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
     const double *const __restrict__ field = data();
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target \
-                      teams distribute parallel for collapse(2) \
+    #pragma omp target teams distribute parallel for collapse(2) \
 		      map(tofrom: nrj)  \
                       map(to: ny, idxlocalstart[0], idxlocalstart[1], iystart, iyend) \
 		      /* is_device_ptr( data_ )*/ \

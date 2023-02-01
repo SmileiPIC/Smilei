@@ -447,6 +447,9 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 
             if( vecSpecies[ispec]->mass_ > 0 ) {
 
+// GPU mode
+#ifdef SMILEI_ACCELERATOR_MODE
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target teams distribute parallel for \
 		      map(tofrom: density)  \
@@ -498,13 +501,14 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                     ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
 
                 }
+// CPU mode
+#else 
 
-#ifndef SMILEI_ACCELERATOR_MODE
     #pragma omp simd reduction(+:density) \
                      reduction(+:charge)  \
                      reduction(+:ener_tot)
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-	            density  += weight_ptr[iPart];
+	                density  += weight_ptr[iPart];
                     charge   += weight_ptr[iPart] * charge_ptr[iPart];
                     const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
                                                      + momentum_y[iPart]*momentum_y[iPart]
@@ -515,7 +519,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
 //                                 * ( double )vecSpecies[ispec]->particles->charge( iPart );
 //                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
 //                                 * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
-		}
+		        }
 #endif
 
                 ener_tot *= vecSpecies[ispec]->mass_;
