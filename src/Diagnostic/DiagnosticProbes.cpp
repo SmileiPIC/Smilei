@@ -343,6 +343,17 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         ERROR( "Probe #"<<n_probe<<": `time_integral` incompatible with the moving window" );
     }
     
+    // Extract the datatype
+    string datatype = "";
+    PyTools::extract( "datatype", datatype, "DiagProbe", n_probe );
+    if( datatype == "double" ) {
+        file_datatype_ = H5T_NATIVE_DOUBLE;
+    } else if( datatype == "float" ) {
+        file_datatype_ = H5T_NATIVE_FLOAT;
+    } else {
+        ERROR( "Probe #"<<n_probe<<": unknown datatype `"<<datatype<<"`" );
+    }
+    
     // Pre-calculate patch size
     patch_length.resize( nDim_particle );
     for( unsigned int k=0; k<nDim_particle; k++ ) {
@@ -677,7 +688,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
                 H5Space memspace( {nPart_MPI, nDim_particle}, {}, {} );
                 H5Space filespace( {nPart_total_actual, nDim_particle}, {offset_in_file[0], 0}, {nPart_MPI, nDim_particle} );
                 // Create dataset
-                file_->array( "positions", *(posArray->data_), &filespace, &memspace );
+                file_->array( "positions", *(posArray->data_), &filespace, &memspace, false, file_datatype_ );
                 file_->flush();
                 
                 delete posArray;
@@ -843,7 +854,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             H5Space memspace( {(hsize_t)nFields, nPart_MPI}, {}, {} );
             H5Space filespace( {(hsize_t)nFields, nPart_total_actual}, {0, offset_in_file[0]}, {(hsize_t)nFields, nPart_MPI} );
             // Create new dataset for this timestep
-            H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
+            H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true, file_datatype_ );
             // Write x_moved
             d.attr( "x_moved", x_moved );
             
@@ -882,7 +893,7 @@ uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch * )
     footprint += ndumps * ( uint64_t )( 480 + nFields * 6 );
 
     // Add size of each field
-    footprint += ndumps * ( uint64_t )( nFields * nPart_total ) * 8;
+    footprint += ndumps * ( uint64_t )( nFields * nPart_total ) * (file_datatype_==H5T_NATIVE_DOUBLE?8:4);
 
     return footprint;
 }
