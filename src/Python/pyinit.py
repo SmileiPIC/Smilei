@@ -495,6 +495,7 @@ class DiagProbe(SmileiComponent):
     fields = []
     flush_every = 1
     time_integral = False
+    datatype = "double"
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""
@@ -544,6 +545,7 @@ class DiagFields(SmileiComponent):
     time_average = 1
     subgrid = None
     flush_every = 1
+    datatype = "double"
 
 class DiagTrackParticles(SmileiComponent):
     """Track diagnostic"""
