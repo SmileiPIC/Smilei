@@ -99,7 +99,7 @@ cField2D::~cField2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void cField2D::allocateDims()
 {
-    //! \todo{Comment on what you are doing here (MG for JD)}
+    // Check that the dimension is really 2D
     if( dims_.size()!=2 ) {
         ERROR( "Alloc error must be 2 : " << dims_.size() );
     }
@@ -110,7 +110,6 @@ void cField2D::allocateDims()
     isDual_.resize( dims_.size(), 0 );
     
     cdata_ = new complex<double>[dims_[0]*dims_[1]];
-    //! \todo{check row major order!!! (JD)}
     
     data_2D= new complex<double> *[dims_[0]];
     for( unsigned int i=0; i<dims_[0]; i++ ) {
@@ -150,7 +149,7 @@ void cField2D::allocateDims( unsigned int dims1, unsigned int dims2 )
 // ---------------------------------------------------------------------------------------------------------------------
 void cField2D::allocateDims( unsigned int mainDim, bool isPrimal )
 {
-    //! \todo{Comment on what you are doing here (MG for JD)}
+    // Check that the diemnsion is really 2D
     if( dims_.size()!=2 ) {
         ERROR( "Alloc error must be 2 : " << dims_.size() );
     }
