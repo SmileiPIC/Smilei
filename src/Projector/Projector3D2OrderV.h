@@ -157,7 +157,7 @@ private:
     };
 
 
-    inline void __attribute__((always_inline)) compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *delta0, int *iold, double *Sx1, double *Sy1, double *Sz1 )
+    inline void __attribute__((always_inline)) compute_distances( Particles &particles, int, int ipart, int istart, int, double *, int *iold, double *Sx1, double *Sy1, double *Sz1 )
     {
 
         int ipo = iold[0];
@@ -224,9 +224,9 @@ private:
     inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
                                     double * __restrict__ position_y,
                                     double * __restrict__ position_z,
-                                    int npart_total,
+                                    int,
                                     int ipart, int istart,
-                                    double *delta0, int *iold, double *Sx1, double *Sy1, double *Sz1 )
+                                    double *, int *iold, double *Sx1, double *Sy1, double *Sz1 )
     {
 
         int ipo = iold[0];

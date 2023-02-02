@@ -16,6 +16,10 @@ MA_SolverAM_norm::~MA_SolverAM_norm()
 
 void MA_SolverAM_norm::operator()( ElectroMagn *fields )
 {
+    const unsigned int nl_p = fields->dimPrim[0];
+    const unsigned int nl_d = fields->dimDual[0];
+    const unsigned int nr_p = fields->dimPrim[1];
+    const unsigned int nr_d = fields->dimDual[1];
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
     
         // Static-cast of the fields_SolverAM_norm.cpp

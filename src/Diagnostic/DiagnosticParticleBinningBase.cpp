@@ -146,7 +146,7 @@ DiagnosticParticleBinningBase::~DiagnosticParticleBinningBase()
 
 
 // Called only by patch master of process master
-void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticParticleBinningBase::openFile( Params &, SmileiMPI *smpi )
 {
     if( !smpi->isMaster() || file_ ) {
         return;
@@ -288,7 +288,7 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
 }
 
 // run one particle binning diagnostic
-void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *simWindow )
+void DiagnosticParticleBinningBase::run( Patch *patch, int, SimWindow *simWindow )
 {
 
     
@@ -389,7 +389,7 @@ void DiagnosticParticleBinningBase::clear()
 
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticParticleBinningBase::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticParticleBinningBase::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
     

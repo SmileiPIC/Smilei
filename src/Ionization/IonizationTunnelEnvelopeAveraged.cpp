@@ -53,13 +53,7 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     
 }
 
-
-
-void IonizationTunnelEnvelopeAveraged::operator()( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, Patch *patch, Projector *Proj, int ipart_ref )
-{}
-
-
-void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, std::vector<double> *Epart, std::vector<double> *EnvEabs_part, std::vector<double> *EnvExabs_part, std::vector<double> *Phipart, Patch *patch, Projector *Proj, int ibin, int ipart_ref )
+void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, std::vector<double> *Epart, std::vector<double> *EnvEabs_part, std::vector<double> *EnvExabs_part, std::vector<double> *Phipart, Patch *patch, Projector *, int ibin, int ipart_ref )
 {
     unsigned int Z, Zp1, newZ, k_times;
     double E, E_sq, EnvE_sq, Aabs, invE, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
@@ -191,10 +185,11 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         if( k_times !=0 ) {
             // loop on all the ionization levels that have been ionized for this ion:
             // each level creates an electron
-            for (int ionized_level = 0; ionized_level < k_times ; ionized_level++){
+            for( unsigned int ionized_level = 0; ionized_level < k_times ; ionized_level++){
 #ifndef _OMPTASKS
                 // Creation of electrons without tasks
-
+                SMILEI_UNUSED( ibin );
+                
                 new_electrons.createParticle();
                 //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
                 int idNew = new_electrons.size() - 1;

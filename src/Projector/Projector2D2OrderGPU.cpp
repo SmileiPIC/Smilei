@@ -15,7 +15,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     Projector2D::dy_ov_dt_       = parameters.cell_length[1] / parameters.timestep;
     Projector2D::i_domain_begin_ = a_patch->getCellStartingGlobalIndex( 0 );
     Projector2D::j_domain_begin_ = a_patch->getCellStartingGlobalIndex( 1 );
-    Projector2D::nprimy          = parameters.n_space[1] + 2 * parameters.oversize[1] + 1;
+    Projector2D::nprimy          = parameters.patch_size_[1] + 2 * parameters.oversize[1] + 1;
 
     // Due to the initialization order (Projector2D's constructor does not
     // initialize it's member variable) we better initialize
@@ -330,10 +330,6 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
     std::vector<double> &invgf = smpi->dynamics_invgf[ithread];
-    Jx_                        = EMfields->Jx_->data();
-    Jy_                        = EMfields->Jy_->data();
-    Jz_                        = EMfields->Jz_->data();
-    rho_                       = EMfields->rho_->data();
 
     if( diag_flag ) {
         // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
@@ -405,8 +401,14 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
             //                         pxr );
             // }
         } else {
+
+            Jx_                        = EMfields->Jx_->data();
+            Jy_                        = EMfields->Jy_->data();
+            Jz_                        = EMfields->Jz_->data();
+            rho_                       = EMfields->rho_->data();
+
             currents( Jx_, Jy_, Jz_,
-                      EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
+                      EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
                       particles, x_dimension_bin_count_, y_dimension_bin_count_,
                       invgf.data(), iold.data(), delta.data(),
                       inv_cell_volume,

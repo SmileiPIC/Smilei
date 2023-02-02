@@ -85,11 +85,9 @@ unsigned int CollisionalIonization::createDatabase( double reference_angular_fre
             for( int k=0; k<atomic_number-Zstar; k++ ) { // For each orbital
                 bp = IonizationTables::binding_energy( atomic_number, Zstar, k );
                 // If next orbital is on same level, then continue directly to next
-                if( k<atomic_number-Zstar-1 ) {
-                    if( bp == IonizationTables::binding_energy( atomic_number, Zstar, k+1 ) ) {
-                        N++;
-                        continue;
-                    }
+                if( k<atomic_number-Zstar-1 && bp == IonizationTables::binding_energy( atomic_number, Zstar, k+1 ) ) {
+                    N++;
+                    continue;
                 }
                 // If electron energy below the ionization energy, then skip to next level
                 e = ep/bp;
@@ -211,17 +209,6 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Calculate the cumulative probability for k-th ionization (Nuter et al, 2011)
         if( k==0 ) {
             cum_prob = prob[k];
-        } else if( k<kmax ) {
-            for( int p=0; p<k; p++ ) {
-                double cp = 1. - rate[k]*irate[p];
-                for( int j=0  ; j<p; j++ ) {
-                    cp *= 1.-rate[p]*irate[j];
-                }
-                for( int j=p+1; j<k; j++ ) {
-                    cp *= 1.-rate[p]*irate[j];
-                }
-                cum_prob += ( prob[k]-prob[p] )/cp;
-            }
         } else {
             for( int p=0; p<k; p++ ) {
                 double cp = 1. - rate[k]*irate[p];
@@ -231,7 +218,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
                 for( int j=p+1; j<k; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
-                cum_prob += ( 1.-prob[k]+rate[k]*irate[p]*( prob[p]-1. ) )/cp;
+                cum_prob += ( prob[k]-prob[p] )/cp;
             }
         }
         
@@ -284,7 +271,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime )
+void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
 {
     patch->vecSpecies[ionization_electrons_]->importParticles( params, patch, new_electrons, localDiags );
 }

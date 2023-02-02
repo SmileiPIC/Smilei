@@ -133,7 +133,7 @@ private:
     bool positions_written;
     
     //! patch size
-    std::vector<double> patch_size;
+    std::vector<double> patch_length;
 };
 
 

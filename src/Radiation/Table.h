@@ -60,7 +60,7 @@ public:
         return &data_[0];
     };
     
-    virtual void set(std::vector<double> & input_axis1_min, std::vector<double> & input_data) {};
+    virtual void set(std::vector<double> &, std::vector<double> &) {};
 
     // --------------------------------------------------------
     // Parameters

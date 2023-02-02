@@ -703,6 +703,9 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
 
 def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]],
+        Env_pml_sigma_parameters = [[0.90,2],[10.0,2],[10.0,2]],
+        Env_pml_kappa_parameters = [[1.00,1.00,2],[1.00,1.00,2],[1.00,1.00,2]],
+        Env_pml_alpha_parameters = [[0.90,0.90,1],[0.75,0.75,1],[0.75,0.75,1]],
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import exp, sqrt, arctan, vectorize
@@ -725,6 +728,9 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
         envelope_profile    = gaussian_beam_with_temporal_profile,
         envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
+        Env_pml_sigma_parameters = Env_pml_sigma_parameters,
+        Env_pml_kappa_parameters = Env_pml_kappa_parameters,
+        Env_pml_alpha_parameters = Env_pml_alpha_parameters,
         polarization_phi    = polarization_phi,
         ellipticity         = ellipticity
     )

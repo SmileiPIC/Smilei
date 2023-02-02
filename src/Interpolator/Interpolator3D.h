@@ -12,7 +12,7 @@ class Interpolator3D : public Interpolator
 public:
 
     //! Creator for Interpolator3D
-    Interpolator3D( Params &params, Patch *patch );
+    Interpolator3D( Patch *patch );
 
     virtual ~Interpolator3D() override {} ;
 

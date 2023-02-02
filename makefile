@@ -40,7 +40,7 @@ VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
-    CXXFLAGS += -Wno-reorder -Wno-unused-parameter
+    CXXFLAGS += -Wno-reorder
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -Wdeprecated-register
 endif
@@ -82,6 +82,8 @@ endif
 
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\"
+# Remove OpenMPI warnings
+CXXFLAGS += -DOMPI_SKIP_MPICXX
 # C++ version
 ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
@@ -301,7 +303,7 @@ endif
 
 EXEC = smilei
 
-default: header $(EXEC) $(EXEC)_test
+default: $(EXEC) $(EXEC)_test
 
 #-----------------------------------------------------
 # Header
@@ -520,6 +522,9 @@ help:
 	@echo '    omptasks                     : to compile with OpenMP tasks'
 	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
 	@echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
+#	@echo '    omptasks                     : to compile with OpenMP tasks'
+#	@echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
+#	@echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

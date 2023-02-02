@@ -8,7 +8,7 @@
 class DomainDecomposition
 {
 public:
-    DomainDecomposition( Params &params ) {};
+    DomainDecomposition( Params & ) {};
     virtual ~DomainDecomposition( ) {};
     
     std::vector<unsigned int> ndomain_;

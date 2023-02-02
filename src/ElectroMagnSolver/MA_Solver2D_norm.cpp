@@ -27,12 +27,24 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     const double *const __restrict__ Jy2D = fields->Jy_->data(); // [x * ny_d + y] : dual in y   primal in x,z
     const double *const __restrict__ Jz2D = fields->Jz_->data(); // [x * ny_p + y] : dual in z   primal in x,y
 
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+
+    // double sumJx = 0;
+    // double sumJy = 0;
+    // double sumJz = 0;
+
     // Electric field Ex^(d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_d; ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_p; ++y ) {
             Ex2D[x * ny_p + y] += -dt * Jx2D[x * ny_p + y] + dt_ov_dy * ( Bz2D[x * ny_d + y + 1] - Bz2D[x * ny_d + y] );
         }
@@ -44,6 +56,9 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_d; ++y ) {
             Ey2D[x * ny_d + y] += -dt * Jy2D[x * ny_d + y] - dt_ov_dx * ( Bz2D[( x + 1 ) * ny_d + y] - Bz2D[x * ny_d + y] );
         }
@@ -55,6 +70,9 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_p; ++y ) {
             Ez2D[x * ny_p + y] += -dt * Jz2D[x * ny_p + y] +
                                   dt_ov_dx * ( By2D[( x + 1 ) * ny_p + y] - By2D[x * ny_p + y] ) -

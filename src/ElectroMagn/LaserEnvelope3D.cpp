@@ -17,8 +17,8 @@
 using namespace std;
 
 
-LaserEnvelope3D::LaserEnvelope3D( Params &params, Patch *patch, ElectroMagn *EMfields )
-    : LaserEnvelope( params, patch, EMfields )
+LaserEnvelope3D::LaserEnvelope3D( Params &params, Patch *patch )
+    : LaserEnvelope( params, patch )
 {
 
     one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
@@ -30,7 +30,7 @@ LaserEnvelope3D::LaserEnvelope3D( Params &params, Patch *patch, ElectroMagn *EMf
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = params.n_space[i]+1;
+        dimPrim[i] = params.patch_size_[i]+1;
         // + Ghost domain
         dimPrim[i] += 2*params.oversize[i];
     }
@@ -54,8 +54,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params &params, Patch *patch, ElectroMagn *EMf
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved )
-    : LaserEnvelope( envelope, patch, EMfields, params, n_moved )
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, Params &params, unsigned int n_moved )
+    : LaserEnvelope( envelope, patch, params, n_moved )
 {
     A_           = new cField3D( envelope->A_->dims_, "A" );
     A0_          = new cField3D( envelope->A0_->dims_, "Aold" );
@@ -206,7 +206,7 @@ LaserEnvelope3D::~LaserEnvelope3D()
 {
 }
 
-void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
+void LaserEnvelope3D::updateEnvelope( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -221,11 +221,56 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
-    Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    
+    Field3D *Env_Chi3D     = static_cast<Field3D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
+
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
+    bool isZmin = patch->isBoundary( 2, 0 );
+    bool isZmax = patch->isBoundary( 2, 1 );
+ 
     // temporary variable for updated envelope
     cField3D *A3Dnew;
     A3Dnew  = new cField3D( A_->dims_ );
+
+    if (isYmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < 4 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, 4, k );
+                }
+            }
+        }
+    }
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, A_->dims_[1]-5,k );
+                }
+            }
+        }
+    }
+
+    if (isZmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < 4 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, 4);
+                }
+            }
+        }
+    }
+
+    if (isZmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for ( unsigned int k=A_->dims_[2]-4 ; k < A_->dims_[2]-1 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, A_->dims_[2]-5 );
+                }
+            }
+        }
+    }
     
     //// explicit solver
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
@@ -261,7 +306,7 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     delete A3Dnew;
 } // end LaserEnvelope3D::updateEnvelope
 
-void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
+void LaserEnvelope3D::updateEnvelopeReducedDispersion( Patch *patch )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -283,12 +328,58 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
-    Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-  
+    Field3D *Env_Chi3D     = static_cast<Field3D *>( patch->EMfields->Env_Chi_ ); // source term of envelope equation
+
+    bool isYmin = patch->isBoundary( 1, 0 );
+    bool isYmax = patch->isBoundary( 1, 1 );
+    bool isZmin = patch->isBoundary( 2, 0 );
+    bool isZmax = patch->isBoundary( 2, 1 );
+ 
     
     // temporary variable for updated envelope
     cField3D *A3Dnew;
     A3Dnew  = new cField3D( A_->dims_ );
+
+    if (isYmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < 4 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, 4, k );
+                }
+            }
+        }
+    }
+
+    if (isYmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=A_->dims_[1]-4 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, A_->dims_[1]-5,k );
+                }
+            }
+        }
+    }
+
+    if (isZmin){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for( unsigned int k=1 ; k < 4 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, 4);
+                }
+            }
+        }
+    }
+
+    if (isZmax){
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) {
+            for ( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) {
+                for ( unsigned int k=A_->dims_[2]-4 ; k < A_->dims_[2]-1 ; k++ ) {
+                    ( *Env_Chi3D )( i, j, k ) = 1.*( *Env_Chi3D )( i, j, A_->dims_[2]-5 );
+                }
+            }
+        }
+    }
+
     
     //// explicit solver
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
@@ -362,7 +453,7 @@ void LaserEnvelope3D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 } // end LaserEnvelope3D::computePhiEnvAEnvE
 
 
-void LaserEnvelope3D::computeGradientPhi( ElectroMagn *EMfields )
+void LaserEnvelope3D::computeGradientPhi( ElectroMagn * )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update

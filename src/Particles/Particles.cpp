@@ -794,13 +794,6 @@ void Particles::swapParticle( unsigned int part1, unsigned int part2, unsigned i
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Move iPart at the end of vectors (to do for MPI)
-// ---------------------------------------------------------------------------------------------------------------------
-void Particles::pushToEnd( unsigned int iPart )
-{
-
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create a new particle at the end of vectors
@@ -968,7 +961,7 @@ void Particles::compress(bool compute_cell_keys) {
 
     unsigned int nbin = numberOfBins();
 
-    for (int ibin = 0 ; ibin < nbin-1 ; ibin++) {
+    for( unsigned int ibin = 0 ; ibin < nbin-1 ; ibin++ ) {
 
         // Removal of the photons
         const unsigned int nb_deleted_photon = first_index[ibin+1] - last_index[ibin];
@@ -976,7 +969,7 @@ void Particles::compress(bool compute_cell_keys) {
         if( nb_deleted_photon > 0 ) {
             eraseParticle( last_index[ibin], nb_deleted_photon, compute_cell_keys );
 
-            for( int ii=ibin+1; ii<nbin; ii++ ) {
+            for( int ii=ibin+1; ii< (int) nbin; ii++ ) {
                 first_index[ii] -= nb_deleted_photon;
                 last_index[ii] -= nb_deleted_photon;
             }

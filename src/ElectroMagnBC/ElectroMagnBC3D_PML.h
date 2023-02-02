@@ -54,7 +54,9 @@ public:
     int domain_oversize_x;
     int domain_oversize_y;
     int domain_oversize_z;
-
+    
+    std::vector<unsigned int> dimPrim;
+    
     int ncells_pml_xmin ;
     int ncells_pml_xmax ;
     int ncells_pml_ymin ;
@@ -76,8 +78,8 @@ public:
 
     int min2exchange;
     int max2exchange;
-    int solvermin;
-    int solvermax;
+    unsigned int solvermin;
+    unsigned int solvermax;
 
     int ypml_size_in_x;
     int zpml_size_in_x;

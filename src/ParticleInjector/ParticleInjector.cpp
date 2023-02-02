@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 //! Constructor for ParticleInjector
 // ---------------------------------------------------------------------------------------------------------------------
-ParticleInjector::ParticleInjector( Params &params, Patch *patch ):
+ParticleInjector::ParticleInjector():
     velocity_profile_( 3, NULL ),
     temperature_profile_( 3, NULL ),
     density_profile_( NULL ),

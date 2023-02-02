@@ -79,8 +79,8 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
     }
 
     length_[0]=0;
-    length_[1]=params.n_space[1]+1;
-    length_[2]=params.n_space[2]+1;
+    length_[1]=params.patch_size_[1]+1;
+    length_[2]=params.patch_size_[2]+1;
 
     dx_inv_[0] = 1./cell_length[0];
     dx_inv_[1] = 1./cell_length[1];
@@ -110,7 +110,7 @@ void SpeciesV::initCluster( Params &params )
 {
     int ncells = 1;
     for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-        ncells *= ( params.n_space[iDim]+1 );
+        ncells *= ( params.patch_size_[iDim]+1 );
     }
     particles->last_index.resize( ncells, 0 );
     particles->first_index.resize( ncells, 0 );
@@ -119,20 +119,20 @@ void SpeciesV::initCluster( Params &params )
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
-    Nbins = (params.n_space[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
+    Nbins = (params.patch_size_[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
     //Primal dimension of fields.
-    f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
-    f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
-    f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
+    f_dim0 =  params.patch_size_[0] + 2 * oversize[0] +1;
+    f_dim1 =  params.patch_size_[1] + 2 * oversize[1] +1;
+    f_dim2 =  params.patch_size_[2] + 2 * oversize[2] +1;
 
     //Dual dimension of fields.
-    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
-    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
-    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+    f_dim0_d =  params.patch_size_[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.patch_size_[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.patch_size_[2] + 2 * oversize[2] +2;
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_field == 1 ) {
@@ -241,8 +241,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                          PartWalls *partWalls,
                          Patch *patch, SmileiMPI *smpi,
                          RadiationTables &RadiationTables,
-                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                         vector<Diagnostic *> &localDiags )
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -446,7 +445,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     // Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     //     *particles, smpi,
                     //     ipack*packsize_+scell,
-                    //     particles->first_index.size(),
                     //     &particles->first_index[0],
                     //     &particles->last_index[0],
                     //     ithread );
@@ -458,7 +456,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 // Warining : can not be here if npack_ > 0
                 //            In this case, it should be at the end of dynamics
                 removeTaggedParticlesPerBin(smpi, ithread, true);
-                
+
                 // Delete the gap between the bins due to photon destruction
                 // Warining : can not be here if npack_ > 0
                 //            In this case, it should be at the end of dynamics
@@ -669,8 +667,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                          PartWalls *partWalls,
                          Patch *patch, SmileiMPI *smpi,
                          RadiationTables &RadiationTables,
-                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                         vector<Diagnostic *> &localDiags, int buffer_id )
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 
@@ -996,8 +993,8 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             // Variables to compute cell_keys for the sorting
             unsigned int length[3];
             length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
+            length[1]=params.patch_size_[1]+1;
+            length[2]=params.patch_size_[2]+1;
 
 
 
@@ -1304,7 +1301,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
+void SpeciesV::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
@@ -1333,7 +1330,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool ol
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sortParticles( Params &params, Patch *patch )
+void SpeciesV::sortParticles( Params &params )
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -1342,7 +1339,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     unsigned int ip_src;
 
     //Number of dual cells
-    ncell = ( params.n_space[0]+1 );
+    ncell = ( params.patch_size_[0]+1 );
     for( unsigned int i=1; i < nDim_field; i++ ) {
         ncell *= length_[i];
     }
@@ -1509,11 +1506,11 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     unsigned int iPart;
 
-    double * __restrict__ position_x = particles->getPtrPosition(0);
-    double * __restrict__ position_y = particles->getPtrPosition(1);
-    double * __restrict__ position_z = particles->getPtrPosition(2);
-
     if (params.geometry == "AMcylindrical"){
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+        const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
         double min_loc_l = std::round(min_loc_vec[0]*dx_inv_[0]);
         double min_loc_r = std::round(min_loc_vec[1]*dx_inv_[1]);
@@ -1526,9 +1523,13 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
                 cell_keys[iPart] *= length_[1];
                 cell_keys[iPart] += std::round( std::sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
             }
-       }
+        }
 
     } else if (nDim_field == 3) {
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+        const double *const __restrict__ position_z = particles->getPtrPosition(2);
 
         double min_loc_x = std::round (min_loc_vec[0] * dx_inv_[0]);
         double min_loc_y = std::round (min_loc_vec[1] * dx_inv_[1]);
@@ -1548,6 +1549,9 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     } else if (nDim_field == 2) {
 
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
+        const double *const __restrict__ position_y = particles->getPtrPosition(1);
+
         double min_loc_x = std::round (min_loc_vec[0] * dx_inv_[0]);
         double min_loc_y = std::round (min_loc_vec[1] * dx_inv_[1]);
 
@@ -1562,6 +1566,8 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
             }
         }
     } else if (nDim_field == 1) {
+
+        const double *const __restrict__ position_x = particles->getPtrPosition(0);
 
         double min_loc_x = round (min_loc_vec[0] * dx_inv_[0]);
 
@@ -1618,7 +1624,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 
 }
 
-void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
+void SpeciesV::importParticles( Params &params, Patch *, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
     unsigned int npart = source_particles.size(), ncells=particles->first_index.size();
@@ -1702,10 +1708,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 // ---------------------------------------------------------------------------------------------------------------------
 //! Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
-                               Params &params,
-                               Patch *patch, SmileiMPI *smpi,
-                               std::vector<Diagnostic *> &localDiags )
+void SpeciesV::mergeParticles( double time_dual )
 {
 //     int ithread;
 // #ifdef _OPENMP
@@ -1740,7 +1743,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
-            ( *Merge )( mass_, *particles, mask, smpi, particles->first_index[scell],
+            ( *Merge )( mass_, *particles, mask, particles->first_index[scell],
                         particles->last_index[scell], count[scell]);
 
         }
@@ -1838,11 +1841,10 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Params &params, 
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -1963,11 +1965,10 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 } // end ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags, int buffer_id )
+        Params &params,
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -2057,7 +2058,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]] , particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -2142,11 +2143,10 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Params &params,
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -2208,10 +2208,9 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
 
         }
 
-    } else { // immobile particle (at the moment only project density)
-
-    }//END if time vs. time_frozen_
-
+    } //END if time vs. time_frozen_
+    
+    SMILEI_UNUSED( patch );
 } // end ponderomotiveProjectSusceptibility
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -2224,8 +2223,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
 void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -2249,11 +2247,6 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
-
-        //Prepare for sorting
-        for( unsigned int i=0; i<count.size(); i++ ) {
-            count[i] = 0;
-        }
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -2315,25 +2308,12 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,11);
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                // Apply wall and boundary conditions
-                if( mass_>0 ) { // condition mass_>0
-
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            for( int i = 0 ; i<( int )nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
-                        }
-                    }
-                } else if( mass_==0 ) { // condition mass_=0
-                    ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
-                    LINK_NAMELIST + std::string("#laser-envelope-model"));
-                }
-            } // end scell
+            if( mass_>0 ) { // condition mass_>0
+                computeParticleCellKeys( params );
+            } else if( mass_==0 ) { // condition mass_=0
+                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+                LINK_NAMELIST + std::string("#laser-envelope-model"));
+            }
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,11);
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
@@ -2399,8 +2379,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        std::vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS

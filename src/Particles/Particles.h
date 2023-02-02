@@ -178,9 +178,6 @@ public:
     //! Warning: do not update first_index and last_index
     void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
-    //! Move iPart at the end of vectors
-    void pushToEnd( unsigned int iPart );
-
     //! Create new particle
     void createParticle();
 
@@ -424,20 +421,23 @@ public:
     virtual void syncGPU();
     virtual void syncCPU();
 
+    //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {
-        return Position[idim].data();
+        return ((std::size_t)idim < Position.size()) ? Position[idim].data() : nullptr;
     };
+    //! Return the pointer toward the Position_old[idim] vector
     virtual double* getPtrPositionOld( int idim ) {
-        return Position_old[idim].data();
+        return ((std::size_t)idim < Position_old.size()) ? Position_old[idim].data() : nullptr;
     };
+    //! Return the pointer toward the Momentum[idim] vector
     virtual double* getPtrMomentum( int idim ) {
-        return &(Momentum[idim][0]);
+        return ((std::size_t)idim < Momentum.size()) ? Momentum[idim].data() : nullptr;
     };
     virtual double* getPtrWeight() {
         return &(Weight[0]);
     };
     virtual double* getPtrChi() {
-        return &(Chi[0]);
+        return (isQuantumParameter ? Chi.data() : nullptr);
     };
     virtual short* getPtrCharge() {
         return &(Charge[0]);
@@ -446,7 +446,7 @@ public:
         return &(Id[0]);
     };
     virtual double* getPtrTau() {
-        return &(Tau[0]);
+        return (isMonteCarlo ? Tau.data() : nullptr);
     };
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);

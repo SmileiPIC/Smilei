@@ -11,8 +11,8 @@ Pusher::Pusher( Params &params, Species *species ) :
     }
     
     nspace[0] = 0;
-    nspace[1] = params.n_space[1]+1;
-    nspace[2] = params.n_space[2]+1;
+    nspace[1] = params.patch_size_[1]+1;
+    nspace[2] = params.patch_size_[2]+1;
     
     mass_          = species->mass_;
     if( mass_ > 0. ) {

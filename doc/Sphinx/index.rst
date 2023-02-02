@@ -14,7 +14,7 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <div style="width:100%; text-align:center; margin-bottom:8em;">
+  <div style="width:100%; text-align:center; margin-bottom:4em;">
   <a href="Overview/releases.html" class="icon">
 
 .. image:: /_static/download.svg
@@ -80,9 +80,16 @@ interaction to astrophysics.
   Tutorials</a>
 
   </div>
-
-
-
+  
+  <a href="https://mdls.fr/task-based-programming-for-kinetic-plasma-simulations" style="color:#3E4349; text-decoration:none">
+      <div style="text-align:center; background-color:#e6f0ff; padding:0.3em; border-radius:0.8em;border-left:0.3em #0672BA solid; border-right:0.3em #0672BA solid;">
+          <b>Job offer:</b> 2-year position (computer science specialist to explore task programming) at Maison de la Simulation, CEA Saclay, France
+      </div>
+  </a>
+  
+  <div style="width:100%; text-align:center; margin-bottom:2em;">
+  </div>
+  
 .. toctree::
    :maxdepth: 2
    :hidden:

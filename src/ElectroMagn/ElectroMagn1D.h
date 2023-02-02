@@ -10,7 +10,7 @@ class ElectroMagn1D : public ElectroMagn
 {
 public:
     //! Constructor for ElectroMagn1D
-    ElectroMagn1D( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
+    ElectroMagn1D( Params &params, std::vector<Species *> &vecSpecies, Patch *patch );
     ElectroMagn1D( ElectroMagn1D *emFields, Params &params, Patch *patch );
     //! Destructor for ElectroMagn1D
     ~ElectroMagn1D();
@@ -31,10 +31,10 @@ public:
     void update_p( double rnew_dot_rnew, double r_dot_r ) override;
     void initE( Patch *patch ) override;
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override;
-    void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override;
-    void center_fields_from_relativistic_Poisson( Patch *patch ) override;
-    void initRelativisticPoissonFields( Patch *patch ) override;
-    void sum_rel_fields_to_em_fields( Patch *patch ) override;
+    void initB_relativistic_Poisson( double gamma_mean ) override;
+    void center_fields_from_relativistic_Poisson() override;
+    void initRelativisticPoissonFields() override;
+    void sum_rel_fields_to_em_fields() override;
     void centeringE( std::vector<double> E_Add ) override;
     void centeringErel( std::vector<double> E_Add ) override;
 
@@ -122,12 +122,6 @@ public:
 
     //! Method used to compute the total susceptibility by summing over all species
     void computeTotalEnvChi() override;
-
-    //! Number of nodes on the primal grid
-    unsigned int nx_p;
-
-    //! Number of nodes on the dual grid
-    unsigned int nx_d;
 
     //! Spatial step dx for 1Dcartesian simulations
     double dx;

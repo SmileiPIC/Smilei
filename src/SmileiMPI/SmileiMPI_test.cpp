@@ -132,7 +132,7 @@ void SmileiMPI_test::init( Params &params, DomainDecomposition *domain_decomposi
 // ---------------------------------------------------------------------------------------------------------------------
 //  Initialize patch distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI_test::init_patch_count( Params &params, DomainDecomposition *domain_decomposition )
+void SmileiMPI_test::init_patch_count( Params &params, DomainDecomposition */*domain_decomposition*/ )
 {
 
     unsigned int Npatches;
@@ -145,7 +145,7 @@ void SmileiMPI_test::init_patch_count( Params &params, DomainDecomposition *doma
     //ncells_perpatch = 1;
     // vector<double> cell_xmin( 3, 0. ), cell_xmax( 3, 1. ), cell_dx( 3, 2. ), x_cell( 3, 0 );
     // for( unsigned int i = 0; i < params.nDim_field; i++ ) {
-    //     ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
+    //     ncells_perpatch *= params.patch_size_[i]+2*params.oversize[i];
     //     if( params.cell_length[i]!=0. ) {
     //         cell_dx[i] = params.cell_length[i];
     //     }

@@ -160,7 +160,7 @@ DiagnosticScreen::~DiagnosticScreen()
 } // END DiagnosticScreen::~DiagnosticScreen
 
 
-bool DiagnosticScreen::prepare( int itime )
+bool DiagnosticScreen::prepare( int )
 {
 
     // This diag always runs, but the output is not done at every timestep
@@ -170,7 +170,7 @@ bool DiagnosticScreen::prepare( int itime )
 
 
 // run one screen diagnostic
-void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
+void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
 {
 
     unsigned int ndim = screen_point.size();

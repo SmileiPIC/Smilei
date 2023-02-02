@@ -26,7 +26,7 @@ Projector2D2OrderV::Projector2D2OrderV( Params &params, Patch *patch ) : Project
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nscelly_ = params.n_space[1] + 1;
+    nscelly_ = params.patch_size_[1] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     nprimy = nscelly_ + 2*oversize[1];
@@ -654,7 +654,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 // Project susceptibility
-void Projector2D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector2D2OrderV::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry" );
 }
@@ -665,7 +665,7 @@ void Projector2D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 void Projector2D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, 
         int bin_shift, Particles &particles, SmileiMPI *smpi, 
         int istart, int iend, int ithread, bool diag_flag, 
-        bool is_spectral, int ispec, int scell, int ipart_ref )
+        bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.

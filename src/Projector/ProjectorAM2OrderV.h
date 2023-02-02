@@ -39,10 +39,10 @@ public:
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell,  int ipart_ref ) override final;
     
     //!Wrapper for projection on buffers
-    void currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_width, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) override final {};
+    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int, Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
 
     //!Wrapper for projection on AM buffers
-    void currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int ipart_ref = 0 ) override final {};
+    void currentsAndDensityWrapperOnAMBuffers( ElectroMagn *, std::complex<double> *, std::complex<double> *, std::complex<double> *, std::complex<double> *, int, int, Particles &, SmileiMPI *, int, int, int, bool, int = 0 ) override final {};
 
     // Project susceptibility
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override final;
@@ -52,7 +52,7 @@ private:
     inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
                                                                    double * __restrict__ position_y,
                                                                    double * __restrict__ position_z,
-                                                                   int * __restrict__ cell_keys,
+                                                                   int * __restrict__,
                                                                    int npart_total, int ipart, int istart, int ipart_ref,
                                                                    double *deltaold, std::complex<double> *array_eitheta_old, int *iold,
                                                                    double *Sl0, double *Sr0, double *DSl, double *DSr,
@@ -124,7 +124,7 @@ private:
 
     }
 
-    inline void __attribute__((always_inline)) computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *e_bar )
+    inline void __attribute__((always_inline)) computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double, double *invR_local, std::complex<double> *e_bar )
     {
 
         int vecSize = 8;

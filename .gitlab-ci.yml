@@ -43,6 +43,17 @@ compile_default:
     # Run validation script
     - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
+runQuick:
+  stage: run_default
+  only:
+    - develop
+
+  script:
+    # Move in test dir
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
+
 run1D:
   stage: run_default
   only:
