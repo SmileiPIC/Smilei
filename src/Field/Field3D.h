@@ -96,13 +96,18 @@ public:
         return newInstance;
     }
 
-
+    //! Compute the norm2 of the field
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
-    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override;
 
-    //!\todo{Comment what are these stuffs (MG for JD)}
+    //! Compute the norm2OnDevice of the field
+#if defined(SMILEI_ACCELERATOR_MODE)
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
+#endif
+
+    void put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override;
+
     //double *data_3D;
     //! this will present the data as a 3d matrix
     double *** data_3D;

@@ -164,7 +164,7 @@ public :
                                       double time_dual, Timers &timers, int itime );
 
     //! Particle merging
-    void mergeParticles(Params &params, SmileiMPI *smpi, double time_dual,Timers &timers, int itime );
+    void mergeParticles( Params &params, double time_dual, Timers &timers, int itime );
 
     //! Clean MPI buffers and resize particle arrays to save memory
     void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
@@ -487,7 +487,9 @@ public :
     
     //! Data synchronization from device (GPU) to host (CPU)
     void copyDeviceStateToHost(
-            bool species_J_and_rho = false
+            bool copy_fields = true,
+            bool copy_particles = true,
+            bool copy_species_J_and_rho = false
         );
     
 private :

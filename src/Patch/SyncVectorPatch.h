@@ -17,28 +17,29 @@ class SyncVectorPatch
 public :
 
     //! Particles synchronization
-    static void exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
-    static void finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
-    static void finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
+    static void exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
+    static void finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
+    static void finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi );
 
     //! Densities synchronization
-    static void sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     //! Densities synchronization per mode
-    static void sumRhoJ( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumRhoJ( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     //! Densities synchronization per species
-    static void sumRhoJs( Params &params, VectorPatch &vecPatches, int ispec, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumRhoJs( Params &params, VectorPatch &vecPatchesm, SmileiMPI *smpi );
     //! Densities synchronization per species per mode
-    static void sumRhoJs( Params &params, VectorPatch &vecPatches, int imode, int ispec, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumRhoJs( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     //! Densities synchronization, including envelope
-    static void sumEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smp, Timers &timers, int itime );
-    static void sumEnvChis( Params &params, VectorPatch &vecPatches, int ispec, SmileiMPI *smp, Timers &timers, int itime );
+    static void sumEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smp );
+    static void sumEnvChis( Params &params, VectorPatch &vecPatches, SmileiMPI *smp );
 
     // fields : contains a single field component for all patches of vecPatches
-    // timers and itime were here introduced for debugging
     template<typename T, typename F> static
-    void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
+
+    void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
     {
-        unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
+        unsigned int nx_, ny_, nz_, h0, oversize[3], size[3], gsp[3];
+
         T *pt1, *pt2;
         F* field1;
         F* field2;
@@ -50,9 +51,9 @@ public :
         oversize[1] = vecPatches( 0 )->EMfields->oversize[1];
         oversize[2] = vecPatches( 0 )->EMfields->oversize[2];
 
-        n_space[0] = vecPatches( 0 )->EMfields->n_space[0];
-        n_space[1] = vecPatches( 0 )->EMfields->n_space[1];
-        n_space[2] = vecPatches( 0 )->EMfields->n_space[2];
+        size[0] = vecPatches( 0 )->EMfields->size_[0];
+        size[1] = vecPatches( 0 )->EMfields->size_[1];
+        size[2] = vecPatches( 0 )->EMfields->size_[2];
 
         unsigned int nComp = fields.size()/nPatches;
 
@@ -73,7 +74,7 @@ public :
                     fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
 // #ifdef SMILEI_OPENACC_MODE
 //                     double * pointer = fields[ifield]->sendFields_[iNeighbor]->data_;
-//                     int size = fields[ifield]->globalDims_;
+//                     int size = fields[ifield]->size();
 // #endif
                 }
             }
@@ -89,6 +90,12 @@ public :
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
         const bool is_memory_on_device = fields.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
+
+        // std::cout << "fields size: " << fields.size() << std::endl;
+        // std::cout << "fields name: " << fields[0]->name << std::endl;
+        // for( unsigned int ifield = 0 ; ifield < fields.size() ; ifield++ ) {
+        //     std::cout << smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[ifield]->data() ) << std::endl;
+        // }
 #endif
 
         for( unsigned int icomp=0 ; icomp<nComp ; icomp++ ) {
@@ -102,22 +109,22 @@ public :
                 }
             }
             gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
-            #pragma omp for schedule(static) private(pt1,pt2)
+            #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
             for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
                 if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[0][0] ) {
                     //The patch to the west belongs to the same MPI process than I.
                     field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[0][0]-h0+icomp*nPatches] );
                     field2 = static_cast<F *>( fields[ifield] );
-                    pt1 = &( *field1 )( n_space[0]*ny_*nz_ );
+                    pt1 = &( *field1 )( size[0]*ny_*nz_ );
                     pt2 = &( *field2 )( 0 );
                     //Sum 2 ==> 1
 
                     const unsigned int last = gsp[0] * ny_ * nz_;
 
 #if defined( SMILEI_OPENACC_MODE )
-                    int ptsize = fields[ifield]->globalDims_;
-                    int nspace0 = n_space[0];
+                    int ptsize = fields[ifield]->size();
+                    int nspace0 = size[0];
                     #pragma acc parallel if ( is_memory_on_device) present(pt1[0-nspace0*ny_*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -171,7 +178,7 @@ public :
                         fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
 // #ifdef SMILEI_OPENACC_MODE
 //                 double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2]->data_;
-//                 int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->globalDims_;
+//                 int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->size();
 //                 //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 // #endif
                     }
@@ -184,7 +191,7 @@ public :
 
             // iDim = 1, local
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
             const bool is_memory_on_device = fields.size() > 0 &&
                 smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -202,14 +209,14 @@ public :
                 gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
                 gsp[1] = 1+2*oversize[1]+fields[icomp*nPatches]->isDual_[1]; //Ghost size primal
 
-                #pragma omp for schedule(static) private(pt1,pt2)
+                #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
                 for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                     unsigned int ipatch = ifield%nPatches;
                     if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
                         //The patch to the south belongs to the same MPI process than I.
                         field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches] );
                         field2 = static_cast<F *>( fields[ifield] );
-                        pt1 = &( *field1 )( n_space[1]*nz_ );
+                        pt1 = &( *field1 )( size[1]*nz_ );
                         pt2 = &( *field2 )( 0 );
 
                         const int outer_last   = nx_ * ny_ * nz_;
@@ -217,8 +224,8 @@ public :
                         const int inner_last   = gsp[1] * nz_;
 
 #if defined( SMILEI_OPENACC_MODE )
-                        int ptsize = fields[ifield]->globalDims_;
-                        int blabla = n_space[1];
+                        int ptsize = fields[ifield]->size();
+                        int blabla = size[1];
                         #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -276,7 +283,7 @@ public :
                             fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
 // #ifdef SMILEI_OPENACC_MODE
 //                             double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->data_;
-//                             int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
+//                             int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->size();
 // #endif                       
                         }
                     }
@@ -285,7 +292,7 @@ public :
 
                 // iDim = 2 local
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
                 const bool is_memory_on_device = fields.size() > 0 &&
                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -303,14 +310,14 @@ public :
                     gsp[0] = 1+2*oversize[0]+fields[icomp*nPatches]->isDual_[0]; //Ghost size primal
                     gsp[1] = 1+2*oversize[1]+fields[icomp*nPatches]->isDual_[1]; //Ghost size primal
                     gsp[2] = 1+2*oversize[2]+fields[icomp*nPatches]->isDual_[2]; //Ghost size primal
-                    #pragma omp for schedule(static) private(pt1,pt2)
+                    #pragma omp for schedule(static) private(pt1,pt2, field1, field2)
                     for( unsigned int ifield=icomp*nPatches ; ifield<( icomp+1 )*nPatches ; ifield++ ) {
                         unsigned int ipatch = ifield%nPatches;
                         if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
                             //The patch below me belongs to the same MPI process than I.
                             field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches] );
                             field2 = static_cast<F *>( fields[ifield] );
-                            pt1 = &( *field1 )( n_space[2] );
+                            pt1 = &( *field1 )( size[2] );
                             pt2 = &( *field2 )( 0 );
 
                             const int outer_last   = nx_ * ny_ * nz_;
@@ -318,8 +325,8 @@ public :
                             const int inner_last = gsp[2];
 
 #if defined( SMILEI_OPENACC_MODE )
-                            int ptsize = fields[ifield]->globalDims_;
-                            int blabla = n_space[2];
+                            int ptsize = fields[ifield]->size();
+                            int blabla = size[2];
                             #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                             #pragma acc loop worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -360,10 +367,9 @@ public :
             } // End if dims_.size()>2
 
         } // End if dims_.size()>1
+    };
 
-    }
-
-    static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
     void templateGenerator();
 
@@ -374,23 +380,23 @@ public :
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches );
 
     static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
-    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );   
+    // static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );
     static void exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
-    static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
+    // static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
 
     static void exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeJ( Params &params, VectorPatch &vecPatches );
 
     static void exchangeA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangeA( Params &params, VectorPatch &vecPatches );
+    // static void finalizeexchangeA( Params &params, VectorPatch &vecPatches );
     // static void exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     // static void finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches );
     // static void exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     // static void finalizeexchangePhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangeEnvEx( Params &params, VectorPatch &vecPatches );
+    // static void finalizeexchangeEnvEx( Params &params, VectorPatch &vecPatches );
     static void exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
+    // static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
 
     template<typename T, typename MT> static void exchangeAlongAllDirections( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
@@ -403,11 +409,11 @@ public :
     static void exchangeSynchronizedPerDirection( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
     static void exchangeAllComponentsAlongX( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAllComponentsAlongX( std::vector<Field *> &fields, VectorPatch &vecPatches );
+    static void finalizeExchangeAllComponentsAlongX( VectorPatch &vecPatches );
     static void exchangeAllComponentsAlongY( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAllComponentsAlongY( std::vector<Field *> &fields, VectorPatch &vecPatches );
+    static void finalizeExchangeAllComponentsAlongY( VectorPatch &vecPatches );
     static void exchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void finalizeExchangeAllComponentsAlongZ( VectorPatch &vecPatches );
 
     //! Deprecated field functions
     template<typename T, typename F> static void exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );

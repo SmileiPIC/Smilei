@@ -24,7 +24,7 @@ public:
     
     void laserDisabled();
     
-    virtual void save_fields( Field *, Patch *patch ) {};
+    virtual void save_fields( Field *, Patch * ) {};
     virtual void disableExternalFields() {};
     
     //! Vector for the various lasers

@@ -34,7 +34,7 @@ ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     if( i_boundary_ == 0 && patch->isXmin() ) {
     

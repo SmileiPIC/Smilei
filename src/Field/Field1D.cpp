@@ -58,7 +58,7 @@ Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
     dims_ = dims;
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     sendFields_.resize(2,NULL);
     recvFields_.resize(2,NULL);
 }
@@ -101,7 +101,7 @@ void Field1D::allocateDims()
         data_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 
@@ -153,7 +153,7 @@ void Field1D::allocateDims( unsigned int mainDim, bool isPrimal )
         data_[i]=0.0;
     }
     
-    globalDims_ = dims_[0];
+    number_of_points_ = dims_[0];
     
 }
 
@@ -189,14 +189,21 @@ double Field1D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
     return nrj;
 }
 
+//! Perform the norm2 on Device
+#if defined(SMILEI_ACCELERATOR_MODE)
+double Field1D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+{
+    ERROR("Not implemented");
+}
+#endif
 
-void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field1D::put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field1D *out1D = static_cast<Field1D *>( outField );
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int iout = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *out1D )( iout+i ) = ( *this )( i );
@@ -204,13 +211,13 @@ void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
-void Field1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+void Field1D::add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch )
 {
     Field1D *out1D = static_cast<Field1D *>( outField );
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int iout = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *out1D )( iout+i ) += ( *this )( i );
@@ -218,13 +225,13 @@ void Field1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
-void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
+void Field1D::get( Field *inField, Params &params, Patch *inPatch, Patch *thisPatch )
 {
     Field1D *in1D  = static_cast<Field1D *>( inField );
     
     std::vector<unsigned int> dual =  in1D->isDual_;
     
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+    int iin = thisPatch->Pcoordinates[0]*params.patch_size_[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.oversize[0] );
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *this )( i ) = ( *in1D )( iin+i );
@@ -234,31 +241,31 @@ void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
 
 void Field1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
-        sendFields_[iDim*2+iNeighbor] = new Field1D(n_space);
-        recvFields_[iDim*2+iNeighbor] = new Field1D(n_space);
+        sendFields_[iDim*2+iNeighbor] = new Field1D(size);
+        recvFields_[iDim*2+iNeighbor] = new Field1D(size);
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
-        sendFields_[iDim*2+iNeighbor] = new Field1D(n_space);
+        sendFields_[iDim*2+iNeighbor] = new Field1D(size);
         delete recvFields_[iDim*2+iNeighbor];
-        recvFields_[iDim*2+iNeighbor] = new Field1D(n_space);
+        recvFields_[iDim*2+iNeighbor] = new Field1D(size);
     }
 }
 
 void Field1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
 
     vector<int> idx( 1, 0 );
     idx[iDim] = 1;
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
     int ix = idx[0]*istart;
 
-    unsigned int NX = n_space[0];
+    unsigned int NX = size[0];
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
@@ -269,15 +276,15 @@ void Field1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
 void Field1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = ghost_size;
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = ghost_size;
 
     vector<int> idx( 1, 0 );
     idx[iDim] = 1;
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    unsigned int NX = n_space[0];
+    unsigned int NX = size[0];
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
@@ -288,15 +295,15 @@ void Field1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
 void Field1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = 2*ghost_size+1+isDual_[iDim];
 
     vector<int> idx( 1, 0 );
     idx[iDim] = 1;
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
     int ix = idx[0]*istart;
 
-    unsigned int NX = n_space[0];
+    unsigned int NX = size[0];
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
@@ -307,15 +314,15 @@ void Field1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
 void Field1D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 {
-    std::vector<unsigned int> n_space = dims_;
-    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+    std::vector<unsigned int> size = dims_;
+    size[iDim] = 2*ghost_size+1+isDual_[iDim];
 
     vector<int> idx( 1, 0 );
     idx[iDim] = 1;
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    unsigned int NX = n_space[0];
+    unsigned int NX = size[0];
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;

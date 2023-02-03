@@ -397,11 +397,12 @@ class Movie:
 
 class SaveAs:
 
-	def __init__(self, smartPath, fig, plt):
+	def __init__(self, smartPath, fig, dpi=200):
 		import os.path as p
 		from os import sep as sep
 		default_extension = ".png"
 		self.figure = fig
+		self.dpi = dpi
 
 		self.prefix = False
 		if type(smartPath) is str:
@@ -439,7 +440,7 @@ class SaveAs:
 	def frame(self, id=None):
 		if self.prefix:
 			file = self.prefix + ("" if id is None else "%010d"%int(id)) + self.suffix
-			self.figure.savefig(file)
+			self.figure.savefig(file, dpi=self.dpi)
 
 
 class _multiPlotUtil(object):
@@ -596,7 +597,7 @@ class _multiPlotUtil(object):
 	def animate(self):
 		# Loop all times
 		mov = Movie(self.fig, self.movie, self.fps, self.dpi)
-		save = SaveAs(self.saveAs, self.fig, self.plt)
+		save = SaveAs(self.saveAs, self.fig, self.dpi)
 		for i,time in enumerate(self.alltimes):
 			t = None
 			for Diag in self.Diags:

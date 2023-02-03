@@ -667,8 +667,8 @@ namespace detail {
         doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>{ parameters.cell_length[0],
                                                                                           parameters.cell_length[1],
-                                                                                          parameters.n_space[0],
-                                                                                          parameters.n_space[1],
+                                                                                          parameters.patch_size_[0],
+                                                                                          parameters.patch_size_[1],
                                                                                           a_parent_patch.Pcoordinates[0],
                                                                                           a_parent_patch.Pcoordinates[1] } );
     }
@@ -800,8 +800,8 @@ namespace detail {
 
         const Cluster2D cluster_manipulator{ parameters.cell_length[0],
                                              parameters.cell_length[1],
-                                             parameters.n_space[0],
-                                             parameters.n_space[1],
+                                             parameters.patch_size_[0],
+                                             parameters.patch_size_[1],
                                              a_parent_patch.Pcoordinates[0],
                                              a_parent_patch.Pcoordinates[1] };
 

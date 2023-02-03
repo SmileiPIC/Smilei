@@ -30,7 +30,7 @@ class MergingVranicSpherical : public Merging
 public:
 
     //! Constructor for RadiationLandauLifshitz
-    MergingVranicSpherical( Params &params, Species *species, Random * rand );
+    MergingVranicSpherical( Species *species, Random * rand );
 
     //! Destructor for RadiationLandauLifshitz
     ~MergingVranicSpherical();
@@ -39,19 +39,17 @@ public:
     //! Overloading of () operator: perform the Vranic particle merging
     //! \param particles   particle object containing the particle
     //!                    properties
-    //! \param smpi        MPI properties
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param count       Final number of particles
     // ---------------------------------------------------------------------
-    virtual void operator()(
+    void operator()(
         double mass,
         Particles &particles,
         std::vector <int> &mask,
-        SmileiMPI *smpi,
         int istart,
         int iend,
-        int & count);
+        int & count) override;
         //unsigned int &remaining_particles,
         //unsigned int &merged_particles);
 

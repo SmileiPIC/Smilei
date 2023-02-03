@@ -27,14 +27,21 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     const double *const __restrict__ Jy3D = fields->Jy_->data();
     const double *const __restrict__ Jz3D = fields->Jz_->data();
 
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+    const unsigned int nz_p = fields->dimPrim[2];
+    const unsigned int nz_d = fields->dimDual[2];
+    
     // Electric field Ex^(d,p,p)
 #if defined( SMILEI_OPENACC_MODE )
-    const int sizeofEx = fields->Ex_->globalDims_;
-    const int sizeofEy = fields->Ey_->globalDims_;
-    const int sizeofEz = fields->Ez_->globalDims_;
-    const int sizeofBx = fields->Bx_->globalDims_;
-    const int sizeofBy = fields->By_->globalDims_;
-    const int sizeofBz = fields->Bz_->globalDims_;
+    const int sizeofEx = fields->Ex_->number_of_points_;
+    const int sizeofEy = fields->Ey_->number_of_points_;
+    const int sizeofEz = fields->Ez_->number_of_points_;
+    const int sizeofBx = fields->Bx_->number_of_points_;
+    const int sizeofBy = fields->By_->number_of_points_;
+    const int sizeofBz = fields->Bz_->number_of_points_;
 
     #pragma acc parallel present( Ex3D[0:sizeofEx], Jx3D[0:sizeofEx], By3D[0:sizeofBy], Bz3D[0:sizeofBz] )
     #pragma acc loop gang

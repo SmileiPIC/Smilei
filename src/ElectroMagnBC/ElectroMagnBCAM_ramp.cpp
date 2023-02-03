@@ -45,7 +45,7 @@ ElectroMagnBCAM_ramp::ElectroMagnBCAM_ramp( Params &params, Patch *patch, unsign
 //
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCAM_ramp::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBCAM_ramp::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
 
     // Loop on imode

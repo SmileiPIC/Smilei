@@ -17,12 +17,13 @@ using namespace std;
 // PatchAM constructor
 // ---------------------------------------------------------------------------------------------------------------------
 PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved )
-    : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
+    : Patch( params, smpi, domain_decomposition, ipatch )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
     if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
+        initInvR( params );
         initStep3( params, smpi, n_moved );
         finishCreation( params, smpi, domain_decomposition );
     } else { // Cartesian
@@ -43,9 +44,10 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
 // PatchAM cloning constructor
 // ---------------------------------------------------------------------------------------------------------------------
 PatchAM::PatchAM( PatchAM *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true )
-    : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles )
+    : Patch( patch, params, smpi, ipatch )
 {
     initStep2( params, domain_decomposition );
+    initInvR( params );
     initStep3( params, smpi, n_moved );
     finishCloning( patch, params, smpi, n_moved, with_particles );
 } // End PatchAM::PatchAM
@@ -57,7 +59,6 @@ PatchAM::PatchAM( PatchAM *patch, Params &params, SmileiMPI *smpi, DomainDecompo
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decomposition )
 {
-    Pcoordinates.resize( 2 );
     Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
     
     std::vector<int> xcall( 2, 0 );
@@ -96,8 +97,12 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             
         }
     }
-    int j_glob_ = Pcoordinates[1]*params.n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-    int nr_p = params.n_space[1]+1+2*params.oversize[1];
+    
+}
+
+void PatchAM::initInvR( Params &params ) {
+    int j_glob_ = Pcoordinates[1]*size_[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+    int nr_p = size_[1]+1+2*oversize[1];
     double dr = params.cell_length[1];
     invR.resize( nr_p );
 
@@ -119,9 +124,7 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             invR[j] = 1./( ( (double)j_glob_ +(double)j + 0.5)*dr);
         }
      }
-    
 }
-
 
 PatchAM::~PatchAM()
 {
@@ -160,13 +163,13 @@ void PatchAM::initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi )
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( static_cast<cField*>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+            MPI_Isend( static_cast<cField*>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->number_of_points_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
         } // END of Send
         
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( static_cast<cField*>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+            MPI_Irecv( static_cast<cField*>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->number_of_points_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                        MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
 
         } // END of Recv
@@ -184,8 +187,8 @@ void PatchAM::createType2( Params &params )
         return;
     }
     
-    // int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
+    // int nx0 = params.region_size_[0] + 1 + 2*oversize[0];
+    int ny0 = params.region_size_[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.cluster_width_;
 
     // MPI_Datatype ntype_[nDim][primDual][primDual]
@@ -197,7 +200,7 @@ void PatchAM::createType2( Params &params )
             
             // Still used ??? Yes, for moving window and SDMD
             ntype_complex_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(2*ny*params.n_space[0], MPI_DOUBLE, &(ntype_complex_[ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_contiguous(2*ny*params.patch_size_[0], MPI_DOUBLE, &(ntype_complex_[ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &( ntype_complex_[ix_isPrim][iy_isPrim] ) );
         }
     }
@@ -213,47 +216,32 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
     cField2D* f2D =  static_cast<cField2D*>(field);
-    int istart, ix, iy, iDim, iNeighbor,bufsize;
-    void* b;
 
-    bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
-    b=(void *)malloc(bufsize);
+    int bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    void* b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
-    iDim = 0; // We exchange only in the X direction for movewin.
-    iNeighbor = 0; // We send only towards the West and receive from the East.
 
-    MPI_Datatype ntype = ntype_complex_[isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-
-    if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-
-        istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
-        ix = istart;
-        iy =   0;
-        MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+    if( MPI_neighbor_[0][0]!=MPI_PROC_NULL ) {
+        int ix = 2*oversize[0] + 1 + isDual[0];
+        int iy =   0;
+        MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][0], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(nshift);
     // and then receive the complementary field from the East.
 
-    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-
-        istart = n_elem[iDim] - nshift    ;
-        ix = istart;
-        iy =   0 ;
-        MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
-    } // END of Recv
-
-
-    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if( MPI_neighbor_[0][1]!=MPI_PROC_NULL ) {
+        int ix = n_elem[0] - nshift;
+        int iy =   0 ;
+        MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][1], 0, MPI_COMM_WORLD, &rrequest);
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);
     free(b);
-
 
 } // END exchangeField_movewin
 

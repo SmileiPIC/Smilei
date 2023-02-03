@@ -133,7 +133,10 @@ private:
     bool positions_written;
     
     //! patch size
-    std::vector<double> patch_size;
+    std::vector<double> patch_length;
+    
+    //! Datatype for writing to HDF5 file
+    hid_t file_datatype_;
 };
 
 

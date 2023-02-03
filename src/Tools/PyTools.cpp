@@ -254,8 +254,8 @@ bool PyTools::extract_pyProfiles( std::string name, std::string component, int n
     return true;
 };
 
-// extract a vector of 1 or 3 profiles
-bool PyTools::extract_1or3Profiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
+// extract a vector of 1 or N profiles
+bool PyTools::extract_1orNProfiles( unsigned int numberOfProfiles, std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
 {
     if( ! extract_pyProfiles( name, component, nComponent, prof ) ) {
         ERROR( "In "<<component<<"#"<<nComponent<<": expected a list of profiles" );
@@ -263,11 +263,12 @@ bool PyTools::extract_1or3Profiles( std::string name, std::string component, int
     if( prof.size() == 0 ) {
         return false;
     } else if( prof.size() == 1 ) {
-        prof.resize( 3 );
-        prof[1] = prof[0]; Py_INCREF( prof[0] );
-        prof[2] = prof[0]; Py_INCREF( prof[0] );
-    } else if( prof.size() != 3 ) {
-        ERROR( "In "<<component<<"#"<<nComponent<<": expected 1 or 3 profiles" );
+        prof.resize( numberOfProfiles );
+        for( unsigned int i=1; i<numberOfProfiles; i++ ) {
+            prof[i] = prof[0]; Py_INCREF( prof[0] );
+        }
+    } else if( prof.size() != numberOfProfiles ) {
+        ERROR( "In "<<component<<"#"<<nComponent<<": expected 1 or " << numberOfProfiles << " profiles" );
     }
     return true;
 };

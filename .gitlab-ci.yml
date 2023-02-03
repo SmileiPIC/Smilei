@@ -1,6 +1,7 @@
 stages:
     - install
     - compile_default
+    - run_quick
     - run_default
     - compile_picsar
     - run_picsar
@@ -15,6 +16,7 @@ install:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Force workdir cleaning in case of retried
@@ -34,6 +36,7 @@ compile_default:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -41,11 +44,23 @@ compile_default:
     # Run validation script
     - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
+runQuick:
+  stage: run_quick
+  only:
+    - develop
+
+  script:
+    # Move in test dir
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
+
 run1D:
   stage: run_default
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -59,6 +74,7 @@ run2D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -74,6 +90,7 @@ run3D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -90,6 +107,7 @@ runAM:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -102,6 +120,7 @@ runCollisions:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -114,6 +133,7 @@ compile_picsar:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -125,6 +145,7 @@ run_picsar:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -135,6 +156,7 @@ compile_debug:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -146,6 +168,7 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -157,6 +180,7 @@ compile_no_openmp:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -168,7 +192,8 @@ compile_omptasks:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
-    
+    - gpu_species_current_and_density
+
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -179,6 +204,7 @@ run_omptasks:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
+    - gpu_species_current_and_density
     
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

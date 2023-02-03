@@ -86,14 +86,28 @@ public:
     void isend( std::vector<double> *vec, int to, int tag, MPI_Request &request );
     void recv( std::vector<double> *vec, int from, int tag );
 
+    //Sending and reveiving ElectroMagn and ElectroMagAM
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc );
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes, bool send_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
-    void isend( Field *field, int to, int tag, MPI_Request &request );
-    void isendComplex( Field *field, int to, int tag, MPI_Request &request );
-    void recv( Field *field, int from, int tag );
-    void recvComplex( Field *field, int from, int tag );
+
+    //Templates to send/receive PML for both 2D and 3D
+    template <typename Tpml>
+    int  recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag, bool recv_xmin_bc);
+    template <typename Tpml>
+    void  send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc);
+
+
+    //Sending and reveiving Fields and cFields
+    void isend( Field *field, int to, int tag, MPI_Request &request );                 // Sends the whole Field
+    void isend( Field *field, int to, int tag, MPI_Request &request, int x_first );       // Sends the first "x_first" columns of the Field
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request );          // Sends the whole cField
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first );// Sends only the first x_first columns of the cField
+    void recv( Field *field, int from, int tag);                     //Receives the whole Field
+    void recvShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
+    void recvComplex( Field *field, int from, int tag);              //Receives the whole cField
+    void recvComplexShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
 
     void sendComplex( Field *field, int to, int tag );
     void irecvComplex( Field *field, int from, int tag, MPI_Request &request );
@@ -101,8 +115,8 @@ public:
     void isend( ProbeParticles *probe, int to, int tag, unsigned int );
     void recv( ProbeParticles *probe, int from, int tag, unsigned int );
 
-    void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
-    void recv( int *integer, int from, int tag, unsigned int );
+    void isend( int *integer, int to, int tag, MPI_Request &request );
+    void recv( int *integer, int from, int tag );
 
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
@@ -319,16 +333,6 @@ public:
         }
     }
 
-    // Compute global number of particles
-    //     - deprecated with patch introduction
-    //! \todo{Patch managmen}
-    inline int globalNbrParticles( Species *species, int locNbrParticles )
-    {
-        int nParticles( 0 );
-        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, world_ );
-        return nParticles;
-    }
-
     bool test_mode;
 
     // Task tracing diag
@@ -355,15 +359,15 @@ public:
     };
 
     // If particle event tracing diagnostic is activated, trace event
-    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread,
-                                 unsigned int event_start_or_end, int event_name)
+#ifdef _PARTEVENTTRACING
+    void traceEventIfDiagTracing( bool, int, unsigned int, int ) {};
+#else
+    void traceEventIfDiagTracing( bool diag_PartEventTracing, int thread,
+                                  unsigned int event_start_or_end, int event_name )
     {
-        // If particle event tracing diagnostic is activated, trace event
-        // otherwise, this becomes an empty method
-        #  ifdef _PARTEVENTTRACING
-        if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
-        #  endif
+        if( diag_PartEventTracing ) trace_event( thread, (MPI_Wtime()-reference_time_), event_start_or_end, event_name );
     };
+#endif
 
 
 protected:

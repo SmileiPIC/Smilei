@@ -15,13 +15,13 @@ void Field::put_to( double val )
 
 #if defined( SMILEI_OPENACC_MODE )
     // Test if data exists on GPU, put_to can be used on CPU and GPU during a simulation
-    #pragma acc parallel present( an_other_data_pointer [0:globalDims_] ) if( is_hostptr_mapped_on_device )
+    #pragma acc parallel present( an_other_data_pointer [0:size()] ) if( is_hostptr_mapped_on_device )
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target if( is_hostptr_mapped_on_device )
     #pragma omp teams distribute parallel for
 #endif
-    for( unsigned int i = 0; i < globalDims_; i++ ) {
+    for( unsigned int i = 0; i < size(); i++ ) {
         an_other_data_pointer[i] = val;
     }
 }

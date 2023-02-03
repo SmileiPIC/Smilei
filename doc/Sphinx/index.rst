@@ -14,7 +14,7 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <div style="width:100%; text-align:center; margin-bottom:8em;">
+  <div style="width:100%; text-align:center; margin-bottom:4em;">
   <a href="Overview/releases.html" class="icon">
 
 .. image:: /_static/download.svg
@@ -78,11 +78,7 @@ interaction to astrophysics.
 .. raw:: html
 
   Tutorials</a>
-
-  </div>
-
-
-
+  
 .. toctree::
    :maxdepth: 2
    :hidden:

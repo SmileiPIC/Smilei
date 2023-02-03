@@ -23,14 +23,14 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI *smpi, VectorP
     patch_offset_in_grid = { params.oversize[0]+1, params.oversize[1]+1, params.oversize[2]+1 };
    
     // Calculate the patch size
-    patch_size = { params.n_space[0], params.n_space[1], params.n_space[2] };
+    patch_size_ = { params.patch_size_[0], params.patch_size_[1], params.patch_size_[2] };
     
     // Get the full size of the array in file
     vector<hsize_t> final_array_size(3);
     // Take subgrid into account
     for( unsigned int i=0; i<3; i++ ) {
         hsize_t start = 0;
-        final_array_size[i] = params.number_of_patches[i] * params.n_space[i] + 1;
+        final_array_size[i] = params.number_of_patches[i] * params.patch_size_[i] + 1;
         findSubgridIntersection1( i, start, final_array_size[i], start );
     }
     // Define the chunk size (necessary above 2^28 points)
@@ -78,7 +78,7 @@ bool patch_sorting( PatchIXYZ patch1_ixyz, PatchIXYZ patch2_ixyz ) {
     }
 }
 
-void DiagnosticFields3D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticFields3D::setFileSplitting( SmileiMPI *, VectorPatch &vecPatches )
 {
     H5Sselect_none( filespace->sid_ );
     
@@ -106,8 +106,8 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     while( i < patch_ixyz.size() ) {
         
         // For this slab of patches at a given X, find the number of points in X
-        offset[0] = patch_ixyz[i].x * patch_size[0] + ( ( patch_ixyz[i].x==0 )?0:1 );
-        npoints[0] = patch_size[0] + ( ( patch_ixyz[i].x==0 )?1:0 );
+        offset[0] = patch_ixyz[i].x * patch_size_[0] + ( ( patch_ixyz[i].x==0 )?0:1 );
+        npoints[0] = patch_size_[0] + ( ( patch_ixyz[i].x==0 )?1:0 );
         findSubgridIntersection1( 0, offset[0], npoints[0], start_in_patch[0] );
         
         // Now iterate on the patches along Y & Z that share the same X
@@ -115,8 +115,8 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
         while( i < patch_ixyz.size() && patch_ixyz[i].x == patch_ixyz[i0].x ) {
             
             // For this line of patches at a given Y, find the number of points in Y
-            offset[1] = patch_ixyz[i].y * patch_size[1] + ( ( patch_ixyz[i].y==0 )?0:1 );
-            npoints[1] = patch_size[1] + ( ( patch_ixyz[i].y==0 )?1:0 );
+            offset[1] = patch_ixyz[i].y * patch_size_[1] + ( ( patch_ixyz[i].y==0 )?0:1 );
+            npoints[1] = patch_size_[1] + ( ( patch_ixyz[i].y==0 )?1:0 );
             findSubgridIntersection1( 1, offset[1], npoints[1], start_in_patch[1] );
             
             // Now iterate on the patches along Z that share the same Y & X
@@ -125,8 +125,8 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
                 
                 unsigned int ipatch = patch_ixyz[i].i;
                 // Find the number of points along Z for this patch
-                offset[2] = patch_ixyz[i].z * patch_size[2] + ( ( patch_ixyz[i].z==0 )?0:1 );
-                npoints[2] = patch_size[2] + ( ( patch_ixyz[i].z==0 )?1:0 );
+                offset[2] = patch_ixyz[i].z * patch_size_[2] + ( ( patch_ixyz[i].z==0 )?0:1 );
+                npoints[2] = patch_size_[2] + ( ( patch_ixyz[i].z==0 )?1:0 );
                 findSubgridIntersection1( 2, offset[2], npoints[2], start_in_patch[2] );
                 
                 // Add this patch to the filespace
@@ -185,8 +185,8 @@ void DiagnosticFields3D::getField( Patch *patch, unsigned int ifield )
     // Find the intersection between this patch and the subgrid
     hsize_t patch_begin[3], patch_npoints[3], start_in_patch[3];
     for( unsigned int i=0; i<3; i++ ) {
-        patch_begin  [i] = patch->Pcoordinates[i] * patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?0:1 );
-        patch_npoints[i] = patch_size[i] + ( ( patch->Pcoordinates[i]==0 )?1:0 );
+        patch_begin  [i] = patch->Pcoordinates[i] * patch_size_[i] + ( ( patch->Pcoordinates[i]==0 )?0:1 );
+        patch_npoints[i] = patch_size_[i] + ( ( patch->Pcoordinates[i]==0 )?1:0 );
         findSubgridIntersection1( i, patch_begin[i], patch_npoints[i], start_in_patch[i] );
         start_in_patch[i] += patch_offset_in_grid[i] - ( ( patch->Pcoordinates[i]==0 )?1:0 );
     }
@@ -216,8 +216,8 @@ void DiagnosticFields3D::getField( Patch *patch, unsigned int ifield )
 
 
 // Write current buffer to file
-H5Write DiagnosticFields3D::writeField( H5Write * loc, string name, int itime )
+H5Write DiagnosticFields3D::writeField( H5Write * loc, string name )
 {
-    return loc->array( name, data[0], filespace, memspace );
+    return loc->array( name, data[0], filespace, memspace, false, file_datatype_ );
 }
 

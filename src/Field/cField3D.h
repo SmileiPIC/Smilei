@@ -82,18 +82,22 @@ public:
 
 
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
-    
+
+    //! Compute the norm2OnDevice of the field
+#if defined(SMILEI_ACCELERATOR_MODE)
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
+#endif
+
     inline std::complex<double> &operator()( unsigned int i )
     {
-        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
+        DEBUGEXEC( if( i>=number_of_points_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
         DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
-    void dump( std::vector<unsigned int> dims ) {};
     
-    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
-    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override;
+    void put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
+    void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override;
     
     void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
     void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;

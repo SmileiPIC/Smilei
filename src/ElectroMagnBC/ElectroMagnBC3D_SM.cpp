@@ -41,9 +41,9 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
         B_val[axis1_] = new Field2D( dims1, "B_val" );
         B_val[axis2_] = new Field2D( dims2, "B_val" );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[0]->data_, B_val[0]->globalDims_ );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[1]->data_, B_val[1]->globalDims_ );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[2]->data_, B_val[2]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[0]->data_, B_val[0]->number_of_points_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[1]->data_, B_val[1]->number_of_points_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[2]->data_, B_val[2]->number_of_points_ );
 
         B_val[0]->put_to( 0. );
         B_val[1]->put_to( 0. );
@@ -74,15 +74,15 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
 ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
 {
     if( B_val[0] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->number_of_points_ );
         delete B_val[0];
     }
     if( B_val[1] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->number_of_points_ );
         delete B_val[1];
     }
     if( B_val[2] ) {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->number_of_points_ );
         delete B_val[2];
     }
 }
@@ -121,9 +121,9 @@ void ElectroMagnBC3D_SM::save_fields( Field *my_field, Patch *patch )
 
 void ElectroMagnBC3D_SM::disableExternalFields()
 {
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->globalDims_ );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->globalDims_ );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->globalDims_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[0]->data_, B_val[0]->number_of_points_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[1]->data_, B_val[1]->number_of_points_ );
+    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( B_val[2]->data_, B_val[2]->number_of_points_ );
     delete B_val[0];
     B_val[0] = NULL;
     delete B_val[1];
@@ -185,16 +185,16 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         const int isBoundary2max = patch->isBoundary( axis2_, 1 );
 
 #ifdef SMILEI_OPENACC_MODE
-        const int sizeofE0 = E[axis0_]->globalDims_;
-        const int sizeofE1 = E[axis1_]->globalDims_;
-        const int sizeofE2 = E[axis2_]->globalDims_;
-        const int sizeofB0 = B[axis0_]->globalDims_;
-        const int sizeofB1 = B[axis1_]->globalDims_;
-        const int sizeofB2 = B[axis2_]->globalDims_;
+        const int sizeofE0 = E[axis0_]->number_of_points_;
+        const int sizeofE1 = E[axis1_]->number_of_points_;
+        const int sizeofE2 = E[axis2_]->number_of_points_;
+        const int sizeofB0 = B[axis0_]->number_of_points_;
+        const int sizeofB1 = B[axis1_]->number_of_points_;
+        const int sizeofB2 = B[axis2_]->number_of_points_;
 
-        const int B_ext_size0 = B_val[axis0_]->globalDims_;
-        const int B_ext_size1 = B_val[axis1_]->globalDims_;
-        const int B_ext_size2 = B_val[axis2_]->globalDims_;
+        const int B_ext_size0 = B_val[axis0_]->number_of_points_;
+        const int B_ext_size1 = B_val[axis1_]->number_of_points_;
+        const int B_ext_size2 = B_val[axis2_]->number_of_points_;
 #endif
 
         // Component along axis 1

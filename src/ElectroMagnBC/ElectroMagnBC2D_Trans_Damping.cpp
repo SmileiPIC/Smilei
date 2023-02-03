@@ -30,7 +30,7 @@ ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC2D_Trans_Damping::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBC2D_Trans_Damping::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     // Static cast of the fields
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
