@@ -1323,14 +1323,14 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
         }
     }
 
-    // if (need_particles && need_fields) {
+    if (itime > 0) {
         #pragma omp single
         {
 	    //std::cout << need_fields << " " << need_particles 
 	    //	      << std::endl;
             copyDeviceStateToHost(need_fields, need_particles, diag_flag);
         }
-    // }
+    }
 #endif
 
     // Pre-process for binning diags with auto limits
