@@ -440,8 +440,8 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( is_the_right_field )
     #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( SMILEI_OPENACC_MODE )
-    int subSize = sendFields_[iDim*2+iNeighbor]->size();
-    int fSize = size();
+    const int subSize = sendFields_[iDim*2+iNeighbor]->size();
+    const int fSize = number_of_points_;
     bool fieldName( (name.substr(0,1) == "B") );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
@@ -483,7 +483,7 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     const double *const sub   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
     double *const       field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  fSize              = size();
+    const int  fSize              = number_of_points_;
     const bool is_the_right_field = name[0] == 'B';
 
     #pragma omp target if( is_the_right_field ) \
@@ -492,7 +492,7 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( SMILEI_OPENACC_MODE )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
-    int fSize = size();
+    const int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "B" );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
@@ -535,7 +535,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     const double *const field = data_;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  fSize              = size();
+    const int  fSize              = number_of_points_;
     const bool is_the_right_field = name[0] == 'J';
 
     #pragma omp target if( is_the_right_field ) \
@@ -543,8 +543,8 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( SMILEI_OPENACC_MODE )
-    int subSize = sendFields_[iDim*2+iNeighbor]->size();
-    int fSize = size();
+    const int subSize = sendFields_[iDim*2+iNeighbor]->size();
+    const int fSize = number_of_points_;
     bool fieldName( (name.substr(0,1) == "J") );
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
@@ -587,7 +587,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     const double *const sub   = recvFields_[iDim * 2 + ( iNeighbor + 1 ) % 2]->data_;
     double *const       field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int  fSize              = size();
+    const int  fSize              = number_of_points_;
     const bool is_the_right_field = name[0] == 'J';
 
     #pragma omp target if( is_the_right_field ) \
@@ -596,7 +596,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp teams distribute parallel for collapse( 3 )
 #elif defined( SMILEI_OPENACC_MODE )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
-    int fSize = size();
+    int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "J" );
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
