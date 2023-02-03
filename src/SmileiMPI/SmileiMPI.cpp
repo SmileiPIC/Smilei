@@ -1923,23 +1923,22 @@ template <typename Container>
 static inline void
 TryFreeDeviceCapacity( Container &a_container )
 {
-    if( a_container.empty() ) {
-        if( a_container.capacity() > 0 ) {
-            // SMILEI_ASSERT( false );
-
-            a_container.resize( 1 ); // Dirty trick to get access to data().
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_container.data() );
-        }
-    } else {
-        if( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_container.data() ) ) {
-            // Not the first allocation
-
-            SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_container.data() );
-
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( a_container.data(), a_container.capacity() );
-        }
+    if( a_container.empty() && a_container.capacity() > 0 ) {
+        // Make sure we can get data() to free what was allocated on the GPU.
+        a_container.resize( 1 );
     }
- 
+
+    if( !a_container.empty() &&
+        smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_container.data() ) ) {
+        // Not the first allocation
+
+        SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_container.data() );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( a_container.data(), a_container.capacity() );
+
+        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_container.data() );
+    }
+
     // Either it is the first time allocating buffer for dynamics_* or
     // we freed the previously device mapped buffers.
 }
@@ -2005,12 +2004,6 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
     }
 
     if( particle_count > kCurrentParticleCapacity ) {
-        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Epart[ithread].data() );
-        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Bpart[ithread].data() );
-        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_invgf[ithread].data() );
-        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_iold[ithread].data() );
-        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_deltaold[ithread].data() );
-
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), dynamics_Epart[ithread].capacity() );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), dynamics_Bpart[ithread].capacity() );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), dynamics_invgf[ithread].capacity() );
