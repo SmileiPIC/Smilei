@@ -556,9 +556,9 @@ void DiagnosticScalar::compute( Patch *patch, int )
     #pragma acc loop gang worker vector reduction(+:ener_tot)
 #endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                    const double gamma = std::sqrt( momentum_x[iPart]*momentum_x[iPart] 
-                                                    momentum_y[iPart]*momentum_y[iPart]
-                                                    momentum_z[iPart]*momentum_z[iPart]);
+                    const double gamma = std::sqrt( momentum_x[iPart]*momentum_x[iPart]  
+                                                    + momentum_y[iPart]*momentum_y[iPart]
+                                                    + momentum_z[iPart]*momentum_z[iPart]);
                     ener_tot += weight_ptr[iPart] * gamma ;
 
                 }
