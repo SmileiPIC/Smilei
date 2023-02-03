@@ -18,8 +18,8 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     Projector3D::i_domain_begin_ = a_patch->getCellStartingGlobalIndex( 0 );
     Projector3D::j_domain_begin_ = a_patch->getCellStartingGlobalIndex( 1 );
     Projector3D::k_domain_begin_ = a_patch->getCellStartingGlobalIndex( 2 );
-    Projector3D::nprimy          = parameters.n_space[1] + 2 * parameters.oversize[1] + 1;
-    Projector3D::nprimz          = parameters.n_space[2] + 2 * parameters.oversize[2] + 1;
+    Projector3D::nprimy          = parameters.patch_size_[1] + 2 * parameters.oversize[1] + 1;
+    Projector3D::nprimz          = parameters.patch_size_[2] + 2 * parameters.oversize[2] + 1;
 
     // Due to the initialization order (Projector2D's constructor does not
     // initialize it's member variable) we better initialize
@@ -459,7 +459,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
             // }
         } else {
             currents( Jx_, Jy_, Jz_,
-                      EMfields->Jx_->globalDims_, EMfields->Jy_->globalDims_, EMfields->Jz_->globalDims_,
+                      EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
                       particles, x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
                       invgf.data(), iold.data(), delta.data(),
                       inv_cell_volume,
