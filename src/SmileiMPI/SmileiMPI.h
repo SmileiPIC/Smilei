@@ -218,11 +218,15 @@ public:
     void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
-    //! Resize the CPU buffers to at least accommodate particle_count particles.
-    //! In addition, this method make sure the CPU buffers are mapped on the
-    //! device. This method is justifies as it tries to reduce the number of
+    //! Map CPU buffers onto the GPU to at least accommodate particle_count
+    //! particles. This method tries to reduce the number of
     //! allocation/deallocation which produces a lot of fragmentation on some
     //! GPUs. In fact, it emulates the reserve behavior of an std::vector.
+    //!
+    //! If you change the capacity of dynamics_Epart, dynamics_Bpart,
+    //! dynamics_invgf, dynamics_iold or dynamics_deltaold vector outside of
+    //! this method, you expose yourself to memory leak or corruption (in
+    //! GPU mode).
     //!
     //! TODO(Etienne M): FREE To avoid a leak at the end of the program or when
     //! a SmileiMPI is destroyed. We should free the device memory. This can be
