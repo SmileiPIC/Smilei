@@ -107,7 +107,7 @@ runAM:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
-    #- gpu_species_current_and_density
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -120,7 +120,7 @@ runCollisions:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
-    #- gpu_species_current_and_density
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
