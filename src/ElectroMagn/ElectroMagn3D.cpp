@@ -1162,9 +1162,9 @@ void ElectroMagn3D::centerMagneticFields()
 
     // Magnetic field Bx^(p,d,d)
 #if defined( SMILEI_OPENACC_MODE )
-    const int sizeofBx = Bx_->number_of_points_;
-    const int sizeofBy = By_->number_of_points_;
-    const int sizeofBz = Bz_->globalDnumber_of_points_ims_;
+    const int sizeofBx = Bx_->size();
+    const int sizeofBy = By_->size();
+    const int sizeofBz = Bz_->size();
 
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang

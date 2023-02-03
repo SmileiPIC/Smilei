@@ -66,7 +66,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
                                  Ez [0:nparts],    \
                                  Bx [0:nparts],    \
                                  By [0:nparts],    \
-                                 Bz [0:nparts],    \
+                                 Bz [0:nparts]),    \
         deviceptr(position_x,                                           \
                   position_y,                                           \
                   position_z,                                           \

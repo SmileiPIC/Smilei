@@ -54,10 +54,10 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
                        position_z /* [istart:particle_number] */ )
     #pragma omp teams distribute parallel for
 #elif defined(SMILEI_OPENACC_MODE)
-    const int istart_offset   = istart - ipart_buffer_offset;
+    const int istart_offset   = istart - ipart_ref;
     const int particle_number = iend - istart;
 
-    #pragma acc parallel present(invgf [0:nparts])                      \
+    #pragma acc parallel present(invgf [0:particle_number])                      \
         deviceptr(position_x,                                           \
                   position_y,                                           \
                   position_z,                                           \
