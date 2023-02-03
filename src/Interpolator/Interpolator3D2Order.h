@@ -51,7 +51,17 @@ public:
 
     SMILEI_ACCELERATOR_DECLARE_ROUTINE
     //! Computation of a field from provided coefficients
-    static inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *f, int idx, int idy, int idz, int nx, int ny, int nz )
+    static inline double __attribute__((always_inline)) compute( 
+        const double *const __restrict__ coeffx, 
+        const double *const __restrict__ coeffy, 
+        const double *const __restrict__ coeffz, 
+        const double *const __restrict__ f, 
+        int idx, 
+        int idy, 
+        int idz, 
+        int nx, 
+        int ny, 
+        int nz )
     {
         double interp_res( 0. );
         //unroll ?

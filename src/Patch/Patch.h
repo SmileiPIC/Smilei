@@ -33,9 +33,9 @@ class Patch
     friend class AsyncMPIbuffers;
 public:
     //! Constructor for Patch
-    Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved );
+    Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch );
     //! Cloning Constructor for Patch
-    Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles );
+    Patch( Patch *patch, Params &params, SmileiMPI *smpi, unsigned int ipatch );
     
     //! First initialization step for patches
     void initStep1( Params &params );
@@ -88,6 +88,9 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
     
+    std::vector<unsigned int> size_;
+    std::vector<unsigned int> oversize;
+    
 #ifdef  __DETAILED_TIMERS
     
     // OpenMP properties
@@ -112,21 +115,21 @@ public:
     //! Clean the MPI buffers for communications
     void cleanMPIBuffers( int ispec, Params &params );
     //! manage Idx of particles per direction,
-    void initExchParticles( SmileiMPI *smpi, int ispec, Params &params );
+    void initExchParticles( int ispec, Params &params );
     //! init comm  nbr of particles
     void exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize comm / nbr of particles, init exch / particles
-    void endNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
+    void endNbrOfParticles( int ispec, int iDim );
     //! extract particles from main data structure to buffers, init exch / particles
     void prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! effective exchange of particles
     void exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize exch / particles
-    void finalizeExchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
+    void finalizeExchParticles( int ispec, int iDim );
     //! Treat diagonalParticles
-    void cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
+    void cornersParticles( int ispec, Params &params, int iDim );
     //! inject particles received in main data structure and particles sorting
-    void importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch );
+    void importAndSortParticles( int ispec, Params &params );
     //! clean memory resizing particles structure
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
@@ -135,7 +138,7 @@ public:
     //! init comm / sum densities
     virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr = false );
     //! init comm / sum densities
-    virtual void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) {};
+    virtual void initSumFieldComplex( Field *, int, SmileiMPI * ) {};
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field *field, int iDim );
     
@@ -227,7 +230,6 @@ public:
     
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids
     void updateMPIenv( SmileiMPI *smpi );
-    void updateTagenv( SmileiMPI *smpi );
     
     // Test who is MPI neighbor of current patch
     inline bool is_a_MPI_neighbor( int iDim, int iNeighbor )
@@ -281,7 +283,7 @@ public:
     {
         return min_local_[i];
     }
-    //! Return real (excluding oversize) min coordinates (ex : rank 0 returns 0.) for direction i
+    //! Return real (excluding oversize) max coordinates for direction i
     //! @see min_local_
     inline double getDomainLocalMax( int i ) const
     {
@@ -383,8 +385,6 @@ protected:
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
-    
-    std::vector<unsigned int> oversize;
     
     double cell_volume;
     

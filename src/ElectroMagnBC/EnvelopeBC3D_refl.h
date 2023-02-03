@@ -22,7 +22,7 @@ public:
     EnvelopeBC3D_refl( Params &params, Patch *patch, unsigned int i_boundary );
     ~EnvelopeBC3D_refl() {};
     
-    void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
+    void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, Patch *patch ) override;
     
     
 private:

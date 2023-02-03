@@ -25,9 +25,9 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &params, Patch *patch ) : Pro
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
 
-    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
-
+    nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
+    
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
     k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
@@ -959,10 +959,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
         double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
 
-        unsigned int Jx_size  = EMfields->Jx_->globalDims_ ;
-        unsigned int Jy_size  = EMfields->Jy_->globalDims_ ;
-        unsigned int Jz_size  = EMfields->Jz_->globalDims_ ;
-        unsigned int rho_size = EMfields->rho_->globalDims_ ;
+        unsigned int Jx_size  = EMfields->Jx_->size() ;
+        unsigned int Jy_size  = EMfields->Jy_->size() ;
+        unsigned int Jz_size  = EMfields->Jz_->size() ;
+        unsigned int rho_size = EMfields->rho_->size() ;
 
         if( !is_spectral ) {
             currentsAndDensityGPU( Jx, Jy, Jz, rho, 
@@ -973,7 +973,12 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
                                    &( *delta )[0] );
         } else {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currentsAndDensity( Jx, Jy, Jz, rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+                currentsAndDensity( Jx, Jy, Jz, rho, 
+                                    particles,  
+                                    ipart, 
+                                    ( *invgf )[ipart], 
+                                    &( *iold )[ipart], 
+                                    &( *delta )[ipart] );
             }
         }
         // Otherwise, the projection may apply to the species-specific arrays
@@ -991,9 +996,9 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
 
-        //int Jy_size = EMfields->Jy_->globalDims_ ;
-        //int Jz_size = EMfields->Jz_->globalDims_ ;
-        //int rho_size = EMfields->rho_->globalDims_ ;
+        //int Jy_size = EMfields->Jy_->size() ;
+        //int Jz_size = EMfields->Jz_->size() ;
+        //int rho_size = EMfields->rho_->size() ;
 
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
@@ -1028,8 +1033,18 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
     }
 }
 
-// Projector for susceptibility used as source term in envelope equation
-void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+//! Projector for susceptibility used as source term in envelope equation
+void Projector3D2OrderGPU::susceptibility(
+    ElectroMagn *EMfields, 
+    Particles &particles, 
+    double species_mass, 
+    SmileiMPI *smpi, 
+    int istart, 
+    int iend, 
+    int ithread,
+    int /*icell*/,
+    int /*ipart_ref*/ )
+
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
 

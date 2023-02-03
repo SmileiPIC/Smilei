@@ -28,15 +28,15 @@ public:
     //! \param species Species object
     //! \param params Parameters
     //  ------------------------------------------------------------------------
-    static Merging *create( Params &params, Species *species, Random * rand )
+    static Merging *create( Species *species, Random * rand )
     {
         Merging *Merge = NULL;
 
         // assign the correct Radiation model to Radiate
         if( species->merging_method_ == "vranic_spherical" ) {
-            Merge = new MergingVranicSpherical( params, species, rand );
+            Merge = new MergingVranicSpherical( species, rand );
         } else if (species->merging_method_ == "vranic_cartesian") {
-            Merge = new MergingVranicCartesian( params, species, rand );
+            Merge = new MergingVranicCartesian( species, rand );
         }
 
         return Merge;

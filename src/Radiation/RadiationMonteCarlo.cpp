@@ -73,6 +73,8 @@ void RadiationMonteCarlo::operator()(
 {
 #ifdef _OMPTASKS
     photons = &(new_photons_per_bin_[ibin]);
+#else
+    SMILEI_UNUSED( ibin );
 #endif
     // _______________________________________________________________
     // Parameters
@@ -604,6 +606,7 @@ void RadiationMonteCarlo::operator()(
             // No emission since particle_chi is too low
             else { // if (particle_chi < radiation_tables.getMinimumChiContinuous())
                 local_it_time = dt_;
+
             } // end if
         } // end while
     } // end for
@@ -613,6 +616,13 @@ void RadiationMonteCarlo::operator()(
 #endif
 
     //if (photons) std::cerr << photons->deviceSize()  << std::endl;
+
+    // Remove extra space to save memory
+#ifndef SMILEI_OPENACC_MODE
+    if (photons) {
+        photons->shrinkToFit( true );
+    }
+#endif
 
     // Update the patch radiated energy
     radiated_energy += radiated_energy_loc;

@@ -14,33 +14,21 @@ PXR_Solver3D_FDTD::~PXR_Solver3D_FDTD()
 {
 }
 
+#ifdef _PICSAR
 void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
-#ifdef _PICSAR
     int cdim=3;
     int n0, n1, n2;
     int ov0, ov1, ov2;
     // unable to convert unsigned int to an iso_c_binding supported type
     
-    std::vector<unsigned int> n_space(params.n_space);
-    std::vector<unsigned int> oversize(params.oversize);
+    n0=( int ) (0 + EMfields->size_[0]);
+    n1=( int ) (0 + EMfields->size_[1]);
+    n2=( int ) (0 + EMfields->size_[2]);
 
-    if (full_domain) {
-        n_space = params.n_space_global;
-        oversize = params.region_oversize;
-    }
-    else if (params.multiple_decomposition) {
-        n_space = params.n_space_region;
-        oversize = params.region_oversize;
-    }
-
-    n0=( int ) (0 + n_space[0]);
-    n1=( int ) (0 + n_space[1]);
-    n2=( int ) (0 + n_space[2]);
-
-    ov0=( int ) oversize[0];
-    ov1=( int ) oversize[1];
-    ov2=( int ) oversize[2];
+    ov0=( int ) EMfields->oversize[0];
+    ov1=( int ) EMfields->oversize[1];
+    ov2=( int ) EMfields->oversize[2];
     
     Field3D* Ex3D_pxr = static_cast<Field3D*>( EMfields->Ex_);
     Field3D* Ey3D_pxr = static_cast<Field3D*>( EMfields->Ey_);
@@ -75,13 +63,15 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool fu
                                 &( Jz3D_pxr->data_[0] ),
                                 &( rho3D_pxr->data_[0] ),
                                 &( rhoold3D_pxr->data_[0] ), &cdim );
-#else
-    ERROR( "Smilei not linked with picsar, use make config=picsar" );
-#endif
-                                
 }
+#else
+void PXR_Solver3D_FDTD::coupling( Params &, ElectroMagn *, bool )
+{
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
+}
+#endif
 
-void PXR_Solver3D_FDTD::operator()( ElectroMagn *fields )
+void PXR_Solver3D_FDTD::operator()( ElectroMagn * )
 {
     //duplicate_field_into_pxr( fields );
     

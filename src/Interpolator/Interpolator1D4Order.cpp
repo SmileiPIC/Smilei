@@ -9,7 +9,7 @@
 
 using namespace std;
 
-Interpolator1D4Order::Interpolator1D4Order( Params &params, Patch *patch ) : Interpolator1D( params, patch )
+Interpolator1D4Order::Interpolator1D4Order( Params &params, Patch *patch ) : Interpolator1D( patch )
 {
     dx_inv_ = 1.0/params.cell_length[0];
 
@@ -59,7 +59,7 @@ void Interpolator1D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
 
 }//END Interpolator1D4Order
 
-void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
 
     int ipart = *istart;
@@ -107,7 +107,7 @@ void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator1D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator1D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
     double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;
@@ -120,7 +120,7 @@ void Interpolator1D4Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     double *Epart = &( smpi->dynamics_Epart[ithread][0] );
     double *Bpart = &( smpi->dynamics_Bpart[ithread][0] );
@@ -191,19 +191,19 @@ void Interpolator1D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
     }
 }
 
-void Interpolator1D4Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1D4Order::fieldsAndEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 
-void Interpolator1D4Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator1D4Order::timeCenteredEnvelope( ElectroMagn *, Particles &, SmileiMPI *, int *, int *, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
 
 // probes like diagnostic !
-void Interpolator1D4Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+void Interpolator1D4Order::envelopeAndSusceptibility( ElectroMagn *, Particles &, int, double *, double *, double *, double * )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

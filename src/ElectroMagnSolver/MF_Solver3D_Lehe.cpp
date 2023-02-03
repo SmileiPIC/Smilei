@@ -31,6 +31,12 @@ MF_Solver3D_Lehe::~MF_Solver3D_Lehe()
 
 void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
 {
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+    const unsigned int nz_p = fields->dimPrim[2];
+    const unsigned int nz_d = fields->dimDual[2];
     // Static-cast of the fields
     Field3D *Ex3D = static_cast<Field3D *>( fields->Ex_ );
     Field3D *Ey3D = static_cast<Field3D *>( fields->Ey_ );

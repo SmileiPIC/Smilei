@@ -24,8 +24,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for ElectromagnAM
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch ),
+ElectroMagnAM::ElectroMagnAM( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch ),
     isYmin( patch->isYmin() ),
     isYmax( patch->isYmax() )
 {
@@ -37,12 +37,12 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
             ostringstream species_mode_name( "" );
             species_mode_name << vecSpecies[ispec]->name_ << "_mode_" << imode;
-            Jl_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jl_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
-            Jr_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jr_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
-            Jt_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jt_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
-            rho_AM_s[imode*n_species+ispec] = new cField2D( ( "Rho_"+ species_mode_name.str() ).c_str(), dimPrim );
-            if ((imode == 0) && (params.Laser_Envelope_model )){
-                Env_Chi_s[ispec] = new Field2D( ( "Env_Chi_"+ species_mode_name.str() ).c_str(), dimPrim );
+            Jl_s    [imode*n_species+ispec] = new cField2D( Tools::merge( "Jl_" , species_mode_name.str() ).c_str(), dimPrim );
+            Jr_s    [imode*n_species+ispec] = new cField2D( Tools::merge( "Jr_" , species_mode_name.str() ).c_str(), dimPrim );
+            Jt_s    [imode*n_species+ispec] = new cField2D( Tools::merge( "Jt_" , species_mode_name.str() ).c_str(), dimPrim );
+            rho_AM_s[imode*n_species+ispec] = new cField2D( Tools::merge( "Rho_", species_mode_name.str() ).c_str(), dimPrim );
+            if( (imode == 0) && params.Laser_Envelope_model ){
+                Env_Chi_s[ispec] = new Field2D( Tools::merge( "Env_Chi_" , species_mode_name.str() ).c_str(), dimPrim );
             }
         }
     }
@@ -60,46 +60,24 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
     // Charge currents currents and density for each species
     for( unsigned int imode=0; imode<nmodes; imode++ ) {
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        
+            
             int ifield = imode*n_species+ispec;
-
-            if( emFields->Jl_s[ifield] != NULL ) {
-                if( emFields->Jl_s[ifield]->cdata_ != NULL ) {
-                    Jl_s[ifield]  = FieldFactory::createComplex(dimPrim, 0, false, emFields->Jl_s[ifield]->name, params);
-                } else {
-                    Jl_s[ifield]  = FieldFactory::createComplex(emFields->Jl_s[ifield]->name, dimPrim, params);
-                }
+            
+            if( emFields->Jl_s[ifield] ) {
+                Jl_s[ifield] = FieldFactory::createAM( dimPrim, 0, false, emFields->Jl_s[ifield]->name, params, emFields->Jl_s[ifield]->cdata_ != NULL );
             }
-            if( emFields->Jr_s[ifield] != NULL ) {
-                if( emFields->Jr_s[ifield]->cdata_ != NULL ) {
-                    Jr_s[ifield]  = FieldFactory::createComplex(dimPrim, 1, false, emFields->Jr_s[ifield]->name, params);
-                } else {
-                    Jr_s[ifield]  = FieldFactory::createComplex(emFields->Jr_s[ifield]->name, dimPrim, params);
-                }
+            if( emFields->Jr_s[ifield] ) {
+                Jr_s[ifield] = FieldFactory::createAM( dimPrim, 1, false, emFields->Jr_s[ifield]->name, params, emFields->Jr_s[ifield]->cdata_ != NULL );
             }
-            if( emFields->Jt_s[ifield] != NULL ) {
-                if( emFields->Jt_s[ifield]->cdata_ != NULL ) {
-                    Jt_s[ifield]  = FieldFactory::createComplex(dimPrim, 2, false, emFields->Jt_s[ifield]->name, params);
-                } else {
-                    Jt_s[ifield]  = FieldFactory::createComplex(emFields->Jt_s[ifield]->name, dimPrim, params);
-                }
+            if( emFields->Jt_s[ifield] ) {
+                Jt_s[ifield] = FieldFactory::createAM( dimPrim, 2, false, emFields->Jt_s[ifield]->name, params, emFields->Jt_s[ifield]->cdata_ != NULL );
             }
-            if( emFields->rho_AM_s[ifield] != NULL ) {
-                if( emFields->rho_AM_s[ifield]->cdata_ != NULL ) {
-                    rho_AM_s[ifield] = new cField2D( dimPrim, emFields->rho_AM_s[ifield]->name );
-                } else {
-                    rho_AM_s[ifield]  = new cField2D( emFields->rho_AM_s[ifield]->name, dimPrim );
-                }
+            if( emFields->rho_AM_s[ifield] ) {
+                rho_AM_s[ifield] = FieldFactory::createAM( dimPrim, emFields->rho_AM_s[ifield]->name, emFields->rho_AM_s[ifield]->cdata_ != NULL );
             }
-
-            if( (imode==0) && (params.Laser_Envelope_model) && (emFields->Env_Chi_s[ifield] != NULL) ) {
-                if( emFields->Env_Chi_s[ifield]->data_ != NULL ) {
-                    Env_Chi_s[ifield] = new Field2D( dimPrim, emFields->Env_Chi_s[ifield]->name );
-                } else {
-                    Env_Chi_s[ifield]  = new Field2D( emFields->Env_Chi_s[ifield]->name, dimPrim );
-                }    
+            if( (imode==0) && params.Laser_Envelope_model && emFields->Env_Chi_s[ifield] ) {
+                Env_Chi_s[ifield] = FieldFactory::create2D( dimPrim, emFields->Env_Chi_s[ifield]->name, emFields->Env_Chi_s[ifield]->data_ != NULL );
             }
-
         }
         
     }
@@ -164,18 +142,12 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2-(params.is_pxr);
+        dimPrim[i] = size_[i]+1;
+        dimDual[i] = size_[i]+2-(params.is_pxr);
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
-    // number of nodes of the primal and dual grid in the x-direction
-    nl_p = n_space[0]+1+2*oversize[0];
-    nl_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
-    // number of nodes of the primal and dual grid in the y-direction
-    nr_p = n_space[1]+1+2*oversize[1];
-    nr_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
     
@@ -200,20 +172,20 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         ostringstream mode_id( "" );
         mode_id << "_mode_" << imode;
         
-        El_[imode]  = FieldFactory::createComplex( dimPrim, 0, false, ( "El"+mode_id.str() ).c_str(), params );
-        Er_[imode]  = FieldFactory::createComplex( dimPrim, 1, false, ( "Er"+mode_id.str() ).c_str(), params );
-        Et_[imode]  = FieldFactory::createComplex( dimPrim, 2, false, ( "Et"+mode_id.str() ).c_str(), params );
-        Bl_[imode]  = FieldFactory::createComplex( dimPrim, 0, true, ( "Bl"+mode_id.str() ).c_str(), params );
-        Br_[imode]  = FieldFactory::createComplex( dimPrim, 1, true, ( "Br"+mode_id.str() ).c_str(), params );
-        Bt_[imode]  = FieldFactory::createComplex( dimPrim, 2, true, ( "Bt"+mode_id.str() ).c_str(), params );
-        Bl_m[imode] = FieldFactory::createComplex( dimPrim, 0, true, ( "Bl_m"+mode_id.str() ).c_str(), params );
-        Br_m[imode] = FieldFactory::createComplex( dimPrim, 1, true, ( "Br_m"+mode_id.str() ).c_str(), params );
-        Bt_m[imode] = FieldFactory::createComplex( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str(), params );
+        El_[imode]  = FieldFactory::createAM( dimPrim, 0, false, ( "El"+mode_id.str() ).c_str(), params );
+        Er_[imode]  = FieldFactory::createAM( dimPrim, 1, false, ( "Er"+mode_id.str() ).c_str(), params );
+        Et_[imode]  = FieldFactory::createAM( dimPrim, 2, false, ( "Et"+mode_id.str() ).c_str(), params );
+        Bl_[imode]  = FieldFactory::createAM( dimPrim, 0, true, ( "Bl"+mode_id.str() ).c_str(), params );
+        Br_[imode]  = FieldFactory::createAM( dimPrim, 1, true, ( "Br"+mode_id.str() ).c_str(), params );
+        Bt_[imode]  = FieldFactory::createAM( dimPrim, 2, true, ( "Bt"+mode_id.str() ).c_str(), params );
+        Bl_m[imode] = FieldFactory::createAM( dimPrim, 0, true, ( "Bl_m"+mode_id.str() ).c_str(), params );
+        Br_m[imode] = FieldFactory::createAM( dimPrim, 1, true, ( "Br_m"+mode_id.str() ).c_str(), params );
+        Bt_m[imode] = FieldFactory::createAM( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str(), params );
         
         // Total charge currents and densities
-        Jl_[imode]   = FieldFactory::createComplex( dimPrim, 0, false, ( "Jl"+mode_id.str() ).c_str(), params );
-        Jr_[imode]   = FieldFactory::createComplex( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str(), params );
-        Jt_[imode]   = FieldFactory::createComplex( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
+        Jl_[imode]   = FieldFactory::createAM( dimPrim, 0, false, ( "Jl"+mode_id.str() ).c_str(), params );
+        Jr_[imode]   = FieldFactory::createAM( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str(), params );
+        Jt_[imode]   = FieldFactory::createAM( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
         if(params.is_pxr == true) {
             rho_old_AM_[imode]  = new cField2D( dimPrim, ( "RhoOld"+mode_id.str() ).c_str() );
@@ -268,7 +240,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
@@ -290,7 +262,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
 }
 
 
-void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
+void ElectroMagnAM::finishInitialization( int nspecies, Patch * )
 {
     // Fill allfields
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
@@ -321,17 +293,17 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
     // For species-related fields
     // The order is necessary in DiagnosticProbes - DO NOT CHANGE -
     species_starts.resize( 0 );
-    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+    for( int ispec=0; ispec<nspecies; ispec++ ) {
         species_starts.push_back( allFields.size() );
         for( unsigned int imode=0; imode<nmodes; imode++ ) {
-            int ifield = imode*n_species+ispec;
+            int ifield = imode*nspecies+ispec;
             allFields.push_back( Jl_s[ifield] );
             allFields.push_back( Jr_s[ifield] );
             allFields.push_back( Jt_s[ifield] );
             allFields.push_back( rho_AM_s[ifield] );
         }
         if( Env_A_abs_ != NULL ){
-            int ifield = 0*n_species+ispec; // only mode 0
+            int ifield = 0*nspecies+ispec; // only mode 0
             allFields.push_back( Env_Chi_s[ifield] );
         }
     }
@@ -460,13 +432,13 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
-    index_max_p_[0] = nl_p - 2 - oversize[0];
-    index_max_p_[1] = nr_p - 2 - oversize[1];
+    index_max_p_[0] = dimPrim[0] - 2 - oversize[0];
+    index_max_p_[1] = dimPrim[1] - 2 - oversize[1];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
     if( patch->isXmax() ) {
-        index_max_p_[0] = nl_p-1;
+        index_max_p_[0] = dimPrim[0]-1;
     }
     
     phi_AM_ = new cField2D( dimPrim );  // scalar potential
@@ -476,8 +448,10 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     
 } // initPoisson
 
-void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode ){
-
+void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( unsigned int imode ){
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    
     cField2D *rho   = rho_AM_[imode];
     double j_;
     double dr_sq_dl = dr*dr*dl; // Poisson's equation including the source term is multiplied by r_j*dr*dl
@@ -504,7 +478,7 @@ double ElectroMagnAM::compute_r()
     return rnew_dot_rnew_localAM_;
 } // compute_r
 
-void ElectroMagnAM::compute_Ap( Patch *patch )
+void ElectroMagnAM::compute_Ap( Patch * )
 {
 #ifdef _TODO_AM
 #endif
@@ -512,7 +486,8 @@ void ElectroMagnAM::compute_Ap( Patch *patch )
 
 void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
 {
-    
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
       
@@ -574,7 +549,8 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 
 void ElectroMagnAM::compute_Ap_Poisson_AM( Patch *patch, unsigned int imode )
 {
-      
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     // Poisson's equation in finite differences is multiplied by r_j*dr*dl to condition it before conjugate gradient
 
     double dr_sq_ov_dl   = ( dr*dr )/dl;
@@ -644,6 +620,8 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
 
 void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
@@ -656,6 +634,8 @@ void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot
 
 void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
@@ -666,7 +646,7 @@ void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 
 
 
-void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
+void ElectroMagnAM::initRelativisticPoissonFields(){
     // ------ Init temporary fields for relativistic field initialization
     
     // E fields centered as in FDTD, to be added to the already present electric fields
@@ -695,7 +675,7 @@ void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
 
 }
 
-void ElectroMagnAM::initPoissonFields( Patch *patch ){
+void ElectroMagnAM::initPoissonFields(){
     // ------ Init temporary fields for field initialization
     
     // E fields centered as in FDTD, to be added to the already present electric fields
@@ -705,8 +685,12 @@ void ElectroMagnAM::initPoissonFields( Patch *patch ){
 
 }
 
-void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
+void ElectroMagnAM::initE_relativistic_Poisson_AM( double gamma_mean, unsigned int imode )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -785,8 +769,12 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initE_relativistic_Poisson_AM
 
-void ElectroMagnAM::initE_Poisson_AM( Patch *patch, unsigned int imode )
+void ElectroMagnAM::initE_Poisson_AM( unsigned int imode )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     
     cField2D *ElAM  = static_cast<cField2D *>( El_Poisson_ );
     cField2D *ErAM  = static_cast<cField2D *>( Er_Poisson_ );
@@ -863,8 +851,12 @@ void ElectroMagnAM::initE_Poisson_AM( Patch *patch, unsigned int imode )
 } // initE_Poisson_AM
 
 
-void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean )
+void ElectroMagnAM::initB_relativistic_Poisson_AM( double gamma_mean )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    // const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -916,8 +908,12 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initB_relativistic_Poisson_AM
 
-void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
+void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM()
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
 
     // B field centered in time as E field, at time t
     cField2D *BlAMrel  = static_cast<cField2D *>( Bl_rel_ );
@@ -966,8 +962,12 @@ void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
     
 }
 
-void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Params &params, unsigned int imode )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     cField2D *ElAMrel  = static_cast<cField2D *>( El_rel_ );
     cField2D *ErAMrel  = static_cast<cField2D *>( Er_rel_ );
     cField2D *EtAMrel  = static_cast<cField2D *>( Et_rel_ );
@@ -1147,8 +1147,12 @@ void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params
     
 } // sum_rel_fields_to_em_fields
 
-void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( unsigned int imode )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     cField2D *ElAMPoisson  = static_cast<cField2D *>( El_Poisson_ );
     cField2D *ErAMPoisson  = static_cast<cField2D *>( Er_Poisson_ );
     cField2D *EtAMPoisson  = static_cast<cField2D *>( Et_Poisson_ );
@@ -1181,7 +1185,7 @@ void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &pa
     
 } // sum_Poisson_fields_to_em_fields
 
-void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
+void ElectroMagnAM::delete_phi_r_p_Ap(){
     // delete temporary fields used for relativistic initialization
     delete phi_AM_;
     delete r_AM_;
@@ -1189,7 +1193,7 @@ void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
     delete Ap_AM_;
 }
 
-void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
+void ElectroMagnAM::delete_relativistic_fields(){
     // delete temporary fields used for relativistic initialization
     delete El_rel_;
     delete Er_rel_;
@@ -1206,7 +1210,7 @@ void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
     delete Bt_rel_t_minus_halfdt_;
 }
 
-void ElectroMagnAM::delete_Poisson_fields(Patch *patch){
+void ElectroMagnAM::delete_Poisson_fields(){
     // delete temporary fields used for relativistic initialization
     delete El_Poisson_;
     delete Er_Poisson_;
@@ -1214,7 +1218,7 @@ void ElectroMagnAM::delete_Poisson_fields(Patch *patch){
     
 }
 
-void ElectroMagnAM::initE( Patch *patch )
+void ElectroMagnAM::initE( Patch * )
 {
 #ifdef _TODO_AM
 #endif
@@ -1229,6 +1233,10 @@ void ElectroMagnAM::initE( Patch *patch )
 
 void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     cField2D *El  = El_[0];
     cField2D *Er  = Er_[0];
     cField2D *Et  = Et_[0];
@@ -1264,6 +1272,10 @@ void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     if( is_spectral ) {
         for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
             Bl_m[imode]->deallocateDataAndSetTo( Bl_[imode] );
@@ -1298,23 +1310,23 @@ void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 Field *ElectroMagnAM::createField( string fieldname, Params& params )
 {
     if( fieldname.substr( 0, 2 )=="El" ) {
-        return FieldFactory::createComplex( dimPrim, 0, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 0, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Er" ) {
-        return FieldFactory::createComplex( dimPrim, 1, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 1, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Et" ) {
-        return FieldFactory::createComplex( dimPrim, 2, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 2, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Bl" ) {
-        return FieldFactory::createComplex( dimPrim, 0, true,  fieldname, params );
+        return FieldFactory::createAM( dimPrim, 0, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Br" ) {
-        return FieldFactory::createComplex( dimPrim, 1, true,  fieldname, params );
+        return FieldFactory::createAM( dimPrim, 1, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Bt" ) {
-        return FieldFactory::createComplex( dimPrim, 2, true,  fieldname, params );
+        return FieldFactory::createAM( dimPrim, 2, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jl" ) {
-        return FieldFactory::createComplex( dimPrim, 0, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 0, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jr" ) {
-        return FieldFactory::createComplex( dimPrim, 1, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 1, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jt" ) {
-        return FieldFactory::createComplex( dimPrim, 2, false, fieldname, params );
+        return FieldFactory::createAM( dimPrim, 2, false, fieldname, params );
     } else if( fieldname.substr( 0, 3 )=="Rho" ) {
         return new cField2D( dimPrim, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_A_abs" ) {
@@ -1337,6 +1349,10 @@ Field *ElectroMagnAM::createField( string fieldname, Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::centerMagneticFields()
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     
         // Static cast of the fields
@@ -1378,6 +1394,10 @@ void ElectroMagnAM::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     
         // Static cast of the fields
@@ -1554,6 +1574,8 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::computeTotalRhoold()
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     // sum all rho_AM_s which were used as temporary buffers on rho_old_AM
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         cField2D *rhoold  = rho_old_AM_[imode];
@@ -1571,6 +1593,10 @@ void ElectroMagnAM::computeTotalRhoold()
 }
 void ElectroMagnAM::computeTotalRhoJ()
 {
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_d = dimDual[1];
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     
         // static cast of the total currents and densities
@@ -1632,6 +1658,8 @@ void ElectroMagnAM::computeTotalRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::computeTotalEnvChi()
 { 
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nr_p = dimPrim[1];
     // static cast of the total susceptibility
     Field2D *Env_Chi2Dcyl   = static_cast<Field2D *>( Env_Chi_);
     
@@ -1891,11 +1919,11 @@ void ElectroMagnAM::initAntennas( Patch *patch, Params& params )
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
         if( antennas[i].fieldName == "Jl" ) {
-            antennas[i].field = FieldFactory::createComplex( dimPrim, 0, false, "Jl", params );
+            antennas[i].field = FieldFactory::createAM( dimPrim, 0, false, "Jl", params );
         } else if( antennas[i].fieldName == "Jr" ) {
-            antennas[i].field = FieldFactory::createComplex( dimPrim, 1, false, "Jr", params );
+            antennas[i].field = FieldFactory::createAM( dimPrim, 1, false, "Jr", params );
         } else if( antennas[i].fieldName == "Jt" ) {
-            antennas[i].field = FieldFactory::createComplex( dimPrim, 2, false, "Jt", params );
+            antennas[i].field = FieldFactory::createAM( dimPrim, 2, false, "Jt", params );
         } else {
             ERROR( "Antenna cannot be applied to field "<<antennas[i].fieldName );
         }

@@ -63,7 +63,7 @@ correspond to different tasks that can be run in parallel.
 
 .. _Cluster_definition_doc:
 
-.. figure:: _static/Cluster_definition_doc.png
+.. figure:: /_static/Cluster_definition_doc.png
     :width: 60%
     :align: center
 
@@ -115,7 +115,7 @@ distributions.
 
 .. _Cluster_width_scan_doc:
 
-.. figure:: _static/Cluster_width_scan_doc.png
+.. figure:: /_static/Cluster_width_scan_doc.png
     :width: 90%
     :align: center
 
@@ -130,7 +130,7 @@ the start of the simulation. A namelist for a similar case can be found in the
 
 .. _radiation_pressure_rho:
 
-.. figure:: _static/Radiation_Pressure_Rho.png
+.. figure:: /_static/Radiation_Pressure_Rho.png
     :width: 60%
     :align: center
 
@@ -151,7 +151,7 @@ to the result.
 
 .. _part_event_tracing:
 
-.. figure:: _static/Task_tracing_doc.png
+.. figure:: /_static/Task_tracing_doc.png
     :width: 100%
     :align: center
 

@@ -98,7 +98,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     // Set the grid spatial dimensions
     for( unsigned int idim=0; idim<ndim-1; idim++ ) {
         unsigned int j = ( side+idim+1 )%ndim;
-        N[idim] = params->n_space_global[j] + 2*params->oversize[j] + 2;
+        N[idim] = params->global_size_[j] + 2*params->oversize[j] + 2;
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }

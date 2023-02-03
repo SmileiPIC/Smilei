@@ -65,8 +65,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
         RadiationTables &RadiationTables,
-        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-        vector<Diagnostic *> &localDiags )
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -359,8 +358,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
         PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
         RadiationTables &RadiationTables,
-        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -693,8 +691,8 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             // Variables to compute cell_keys for the sorting
             unsigned int length[3];
             length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
+            length[1]=params.patch_size_[1]+1;
+            length[2]=params.patch_size_[2]+1;
 
 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,2);
@@ -966,8 +964,8 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     particles->cell_keys.resize(nparts);
 
     length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
+    length[1]=params.patch_size_[1]+1;
+    length[2]=params.patch_size_[2]+1;
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
@@ -999,8 +997,8 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     float scalar_time = 0.;
 
     //split cell into smaller sub_cells for refined sorting
-    // cell = (params.n_space[0]+1);
-    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+    // cell = (params.patch_size_[0]+1);
+    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.patch_size_[i]+1);
 
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
@@ -1118,11 +1116,10 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
 }
 
 
-void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Params &params, 
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -1208,11 +1205,10 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Params &params, 
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -1299,7 +1295,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ), &( particles->last_index[last_cell_of_bin[ibin]] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -1380,8 +1376,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -1412,13 +1407,6 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->resizeBuffers( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-
-        //Prepare for sorting
-        for( unsigned int i=0; i<count.size(); i++ ) {
-            count[i] = 0;
-        }
-
-
 
         // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
 #ifdef  __DETAILED_TIMERS
@@ -1468,27 +1456,12 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 
 
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
-        for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-            // Apply wall and boundary conditions
-            if( mass_>0 ) {
-                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                            particles->cell_keys[iPart] *= this->length_[i];
-                            particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                        }
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-
-                }
-
-            } else if( mass_==0 ) {
-                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
-                LINK_NAMELIST + std::string("#laser-envelope-model"));
-            } // end mass_ = 0? condition
-        }
+        if( mass_>0 ) {
+            computeParticleCellKeys( params );
+        } else if( mass_==0 ) {
+            ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+            LINK_NAMELIST + std::string("#laser-envelope-model"));
+        } // end mass_ = 0? condition
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,11);
 
 #ifdef  __DETAILED_TIMERS
@@ -1540,8 +1513,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 
 

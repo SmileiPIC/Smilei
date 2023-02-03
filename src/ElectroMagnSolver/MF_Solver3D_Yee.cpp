@@ -24,14 +24,22 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     double *const __restrict__ By3D       = fields->By_->data();
     double *const __restrict__ Bz3D       = fields->Bz_->data();
 
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+    const unsigned int nz_p = fields->dimPrim[2];
+    const unsigned int nz_d = fields->dimDual[2];
+
+    
     // Magnetic field Bx^(p,d,d)
 #if defined( SMILEI_OPENACC_MODE )
-    const int sizeofEx = fields->Ex_->globalDims_;
-    const int sizeofEy = fields->Ey_->globalDims_;
-    const int sizeofEz = fields->Ez_->globalDims_;
-    const int sizeofBx = fields->Bx_->globalDims_;
-    const int sizeofBy = fields->By_->globalDims_;
-    const int sizeofBz = fields->Bz_->globalDims_;
+    const int sizeofEx = fields->Ex_->number_of_points_;
+    const int sizeofEy = fields->Ey_->number_of_points_;
+    const int sizeofEz = fields->Ez_->number_of_points_;
+    const int sizeofBx = fields->Bx_->number_of_points_;
+    const int sizeofBy = fields->By_->number_of_points_;
+    const int sizeofBz = fields->Bz_->number_of_points_;
 
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang

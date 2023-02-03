@@ -25,7 +25,7 @@ public:
     LaserProfile() {};
     virtual ~LaserProfile() {};
     virtual double getAmplitude( std::vector<double> pos, double t, int j, int k ) = 0;
-    virtual std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
+    virtual std::complex<double> getAmplitudecomplex( std::vector<double>, double, int, int )
     {
         return 0.;
     };
@@ -34,8 +34,8 @@ public:
     {
         return "?";
     };
-    virtual void createFields( Params &params, Patch *patch ) {};
-    virtual void initFields( Params &params, Patch *patch ) {};
+    virtual void createFields( Params &, Patch *, ElectroMagn * ) {};
+    virtual void initFields( Params &, Patch *, ElectroMagn * ) {};
 };
 
 
@@ -71,15 +71,15 @@ public:
         return profiles[imode]->getAmplitudecomplex( pos, t, j, k );
     }
     
-    void createFields( Params &params, Patch *patch )
+    void createFields( Params &params, Patch *patch, ElectroMagn *EMfields )
     {
-        profiles[0]->createFields( params, patch );
-        profiles[1]->createFields( params, patch );
+        profiles[0]->createFields( params, patch, EMfields );
+        profiles[1]->createFields( params, patch, EMfields );
     };
-    void initFields( Params &params, Patch *patch )
+    void initFields( Params &params, Patch *patch, ElectroMagn *EMfields )
     {
-        profiles[0]->initFields( params, patch );
-        profiles[1]->initFields( params, patch );
+        profiles[0]->initFields( params, patch, EMfields );
+        profiles[1]->initFields( params, patch, EMfields );
     };
     
     //! Boundary from which the laser enters the box (xmin, xmax, ymin, ymax, zmin, zmax)
@@ -113,9 +113,9 @@ public:
     LaserProfileSeparable( double, Profile *, Profile *, Profile *, Profile *, double, bool, unsigned int );
     LaserProfileSeparable( LaserProfileSeparable * );
     ~LaserProfileSeparable();
-    void createFields( Params &params, Patch *patch );
-    void initFields( Params &params, Patch *patch );
-    double getAmplitude( std::vector<double> pos, double t, int j, int k );
+    void createFields( Params &params, Patch *patch, ElectroMagn *EMfields ) override;
+    void initFields( Params &params, Patch *patch, ElectroMagn *EMfields ) override;
+    double getAmplitude( std::vector<double> pos, double t, int j, int k ) override;
 protected:
     Field *space_envelope, *phase;
 private:
@@ -136,7 +136,7 @@ public:
     LaserProfileNonSeparable( LaserProfileNonSeparable *lp )
         : spaceAndTimeProfile_( new Profile( lp->spaceAndTimeProfile_ ) ) {};
     ~LaserProfileNonSeparable();
-    inline double getAmplitude( std::vector<double> pos, double t, int j, int k )
+    inline double getAmplitude( std::vector<double> pos, double t, int, int ) override
     {
         double amp;
         #pragma omp critical
@@ -144,7 +144,7 @@ public:
         return amp;
     }
 
-    inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
+    inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int, int ) override
     {
         std::complex<double> amp;
         #pragma omp critical
@@ -167,9 +167,9 @@ public:
     LaserProfileFile( LaserProfileFile *lp )
         : magnitude( NULL ), phase( NULL ), file( lp->file ), extraProfile( new Profile( lp->extraProfile ) ), primal_( lp->primal_ ), axis_( lp->axis_ ) {};
     ~LaserProfileFile();
-    void createFields( Params &params, Patch *patch );
-    void initFields( Params &params, Patch *patch );
-    double getAmplitude( std::vector<double> pos, double t, int j, int k );
+    void createFields( Params &params, Patch *patch, ElectroMagn *EMfields ) override;
+    void initFields( Params &params, Patch *patch, ElectroMagn *EMfields ) override;
+    double getAmplitude( std::vector<double> pos, double t, int j, int k ) override;
 protected:
     Field3D *magnitude, *phase;
     std::vector<double> omega;
@@ -187,7 +187,7 @@ public:
     LaserProfileNULL() {};
     ~LaserProfileNULL() {};
     
-    inline double getAmplitude( std::vector<double> pos, double t, int j, int k )
+    inline double getAmplitude( std::vector<double>, double, int, int ) override
     {
         return 0.;
     }

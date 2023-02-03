@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -59,7 +59,7 @@ void Interpolator3D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], &coeffzp_[1], Bz3D, id_, jd_, kp_ );
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -113,7 +113,7 @@ void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field3D *F = static_cast<Field3D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
@@ -132,7 +132,7 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
     double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
@@ -152,12 +152,12 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
 #if defined(SMILEI_OPENACC_MODE)
-    const int sizeofEx = EMfields->Ex_->globalDims_;
-    const int sizeofEy = EMfields->Ey_->globalDims_;
-    const int sizeofEz = EMfields->Ez_->globalDims_;
-    const int sizeofBx = EMfields->Bx_m->globalDims_;
-    const int sizeofBy = EMfields->By_m->globalDims_;
-    const int sizeofBz = EMfields->Bz_m->globalDims_;
+    const int sizeofEx = EMfields->Ex_->size();
+    const int sizeofEy = EMfields->Ey_->size();
+    const int sizeofEz = EMfields->Ez_->size();
+    const int sizeofBx = EMfields->Bx_m->size();
+    const int sizeofBy = EMfields->By_m->size();
+    const int sizeofBz = EMfields->Bz_m->size();
 #endif
 
     const int nx_p = EMfields->Bx_m->dims_[0];
@@ -263,7 +263,7 @@ void Interpolator3D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
     }
 }
 
-void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Electromagnetic fields
     double* Ex3D = EMfields->Ex_->data_;
@@ -363,7 +363,7 @@ void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Envelope fields
     double* Phi_m3D = EMfields->envelope->Phi_m->data_;
@@ -533,7 +533,7 @@ void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Envelope fields
     double* EnvEabs  = EMfields->Env_E_abs_->data_;
@@ -559,9 +559,9 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double zpn = particles.position( 2, ipart )*d_inv_[2];
 
         // Indexes of the central nodes
-        idx_p[0] = round( xpn );
-        idx_p[1] = round( ypn );
-        idx_p[2] = round( zpn );
+        idx_p[0] = std::round( xpn );
+        idx_p[1] = std::round( ypn );
+        idx_p[2] = std::round( zpn );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;

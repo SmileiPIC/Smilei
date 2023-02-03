@@ -28,8 +28,8 @@ Projector3D2OrderV::Projector3D2OrderV( Params &params, Patch *patch ) : Project
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
     k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
 
-    nscelly = params.n_space[1] + 1;
-    nscellz = params.n_space[2] + 1;
+    nscelly = params.patch_size_[1] + 1;
+    nscellz = params.patch_size_[2] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     oversize[2] = params.oversize[2];
@@ -508,7 +508,7 @@ void Projector3D2OrderV::currents( double * __restrict__ Jx,
                                    Particles &particles,
                                    unsigned int istart,
                                    unsigned int iend,
-                                   double * __restrict__ invgf,
+                                   double * __restrict__ /*invgf*/,
                                    int    * __restrict__ iold,
                                    double * __restrict__ deltaold,
                                    unsigned int buffer_size,
@@ -896,7 +896,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 
 }
 
-void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, double *b_Chi, int bin_shift, int /*bdim0*/, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     
     int iold[3];
@@ -1084,7 +1084,7 @@ void Projector3D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx,
                                                              SmileiMPI *smpi, 
                                                              int istart, int iend, 
                                                              int ithread, bool diag_flag, 
-                                                             bool is_spectral, int ispec, 
+                                                             bool is_spectral, int /*ispec*/, 
                                                              int scell, int ipart_ref )
 {
     if( istart == iend ) {

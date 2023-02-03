@@ -30,6 +30,8 @@ public:
     
     void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
     void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int nmodes );
+    template <typename Tpml>
+    void  exchangePML_movewin( Region& region, Tpml embc, int clrw );
 
     //! Tells whether there is a moving window or not
     inline bool isActive()
@@ -88,7 +90,7 @@ private:
     
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
-    //! Store locally params.n_space[0], window slides only in x
+    //! Store locally params.patch_size_[0], window slides only in x
     double n_space_x_;
     //! Total length the window has moved along x up to now.
     double x_moved;

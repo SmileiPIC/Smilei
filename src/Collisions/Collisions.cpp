@@ -133,7 +133,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     logLmean_ += logL;
 }
 
-void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime )
+void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
 {
     if( npairs_tot_>0. ) {
         smean_    /= npairs_tot_;
