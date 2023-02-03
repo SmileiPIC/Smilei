@@ -523,12 +523,59 @@ void DiagnosticScalar::compute( Patch *patch, int )
 	        //std::cout << density 
 	        //          << " " << charge << std::endl;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
+
+// GPU mode
+#ifdef SMILEI_ACCELERATOR_MODE
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: density)  \
+		      is_device_ptr(weight_ptr) \
+		      reduction(+:density) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) 
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    density  += weight_ptr[iPart];
+                }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: ener_tot)  \
+		      is_device_ptr(weight_ptr, \
+                      momentum_x /* [istart:particle_number] */,             \
+                      momentum_y /* [istart:particle_number] */,             \
+                      momentum_z /* [istart:particle_number] */)             \
+                      reduction(+:ener_tot) 
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc parallel deviceptr(weight_ptr, \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z)
+    #pragma acc loop gang worker vector reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    const double gamma = std::sqrt( momentum_x[iPart]*momentum_x[iPart] 
+                                                    momentum_y[iPart]*momentum_y[iPart]
+                                                    momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * gamma ;
+
+                }
+
+// CPU mode
+#else 
+
+    #pragma omp simd reduction(+:density) \
+                     reduction(+:ener_tot)
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
-                    density  += vecSpecies[ispec]->particles->weight( iPart );
+                    density  += weight_ptr[iPart];
                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
                                 * ( vecSpecies[ispec]->particles->momentumNorm( iPart ) );
                 }
+#endif
+
             }
             
             *sNtot[ispec] += ( double )nPart;
