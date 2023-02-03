@@ -488,7 +488,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                       momentum_z /* [istart:particle_number] */)             \
                       reduction(+:ener_tot) 
 #elif defined(SMILEI_OPENACC_MODE)
-    #pragma acc parallel deviceptr(weight_ptr \
+    #pragma acc parallel deviceptr(weight_ptr, \
                   momentum_x,                                           \
                   momentum_y,                                           \
                   momentum_z)
@@ -731,7 +731,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                 map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
 	        //reduction(min:minval)
 #elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel //deviceptr( data_ )
+    #pragma acc parallel present(field_data) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3)
 #endif
 	        for( unsigned int i=ixstart; i<ixend; i++ ) {
