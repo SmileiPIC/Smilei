@@ -2598,6 +2598,12 @@ This is done by including a block ``DiagFields``::
     	subgrid = s_[100:300, 300:500, 300:600]
 
 
+.. py:data:: datatype
+
+  :default: ``"double"``
+  
+  The data type when written to the HDF5 file. Accepts ``"double"`` (8 bytes) or ``"float"`` (4 bytes).
+
 
 ----
 
@@ -2705,6 +2711,12 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   If ``True``, the output is integrated over time. As this option forces field interpolation
   at every timestep, it is recommended to use few probe points.
+
+.. py:data:: datatype
+
+  :default: ``"double"``
+  
+  The data type when written to the HDF5 file. Accepts ``"double"`` (8 bytes) or ``"float"`` (4 bytes).
 
 
 **Examples of probe diagnostics**
