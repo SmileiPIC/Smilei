@@ -1,6 +1,7 @@
 stages:
     - install
     - compile_default
+    - run_quick
     - run_default
     - compile_picsar
     - run_picsar
@@ -44,7 +45,7 @@ compile_default:
     - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
 runQuick:
-  stage: run_default
+  stage: run_quick
   only:
     - develop
 
@@ -59,7 +60,7 @@ run1D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
-    #- gpu_species_current_and_density
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir
@@ -73,7 +74,7 @@ run2D:
   only:
     - develop
     - develop_gpu_omp_for_nvidia
-    #- gpu_species_current_and_density
+    - gpu_species_current_and_density
 
   script:
     # Move in test dir

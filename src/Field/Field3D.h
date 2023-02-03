@@ -108,7 +108,6 @@ public:
     void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override;
     void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override;
 
-    //!\todo{Comment what are these stuffs (MG for JD)}
     //double *data_3D;
     //! this will present the data as a 3d matrix
     double *** data_3D;

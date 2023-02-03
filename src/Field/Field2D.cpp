@@ -88,7 +88,6 @@ Field2D::~Field2D()
 // ---------------------------------------------------------------------------------------------------------------------
 void Field2D::allocateDims()
 {
-    //! \todo{Comment on what you are doing here (MG for JD)}
     if( dims_.size()!=2 ) {
         ERROR( "Alloc error must be 2 : " << dims_.size() );
     }
@@ -138,7 +137,6 @@ void Field2D::allocateDims( unsigned int dims1, unsigned int dims2 )
 // ---------------------------------------------------------------------------------------------------------------------
 void Field2D::allocateDims( unsigned int mainDim, bool isPrimal )
 {
-    //! \todo{Comment on what you are doing here (MG for JD)}
     if( dims_.size()!=2 ) {
         ERROR( "Alloc error must be 2 : " << dims_.size() );
     }

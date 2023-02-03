@@ -98,6 +98,9 @@ protected :
     
     //! Save the field type (needed for OpenPMD units dimensionality)
     std::vector<unsigned int> field_type;
+    
+    //! Datatype for writing to HDF5 file
+    hid_t file_datatype_;
 };
 
 #endif

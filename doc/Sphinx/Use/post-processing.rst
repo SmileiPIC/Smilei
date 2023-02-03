@@ -683,7 +683,7 @@ at one given timestep.
 
   All these methods have the same arguments described below.
 
-.. py:function:: plot(timestep=None, saveAs=None, axes=None, **kwargs)
+.. py:function:: plot(timestep=None, saveAs=None, axes=None, dpi=200, **kwargs)
 
   | If the data is 1D, it is plotted as a **curve**.
   | If the data is 2D, it is plotted as a **map**.
@@ -695,6 +695,7 @@ at one given timestep.
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
     etc.
   * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
+  * ``dpi``: the number of dots per inch for ``saveAs``.
 
   You may also have keyword-arguments (``kwargs``) described in :ref:`otherkwargs`.
 
@@ -752,7 +753,7 @@ This third plotting method animates the data over time.
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"`` or  ``"movie.gif"``.
     If ``movie=""`` no movie is created.
   * ``fps``: number of frames per second (only if movie requested).
-  * ``dpi``: number of dots per inch (only if movie requested).
+  * ``dpi``: number of dots per inch for both ``movie`` and ``saveAs``
 
 **Example**::
 
@@ -805,7 +806,7 @@ Simultaneous plotting of multiple diagnostics
     If absent, stacks plots vertically.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
-  * ``dpi`` : resolution of the movie.
+  * ``dpi`` : resolution of the ``movie`` or ``saveAs``.
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``, etc.
