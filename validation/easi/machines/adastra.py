@@ -10,7 +10,8 @@ class MachineAdastra(Machine):
     # You may need to escape some.
     the_slurm_script = """#!/bin/bash
 #SBATCH --job-name=smilei_validation
-#SBATCH --constraint=mi250x&turbo
+#SBATCH --account={the_account}
+#SBATCH --constraint={the_partition}&turbo
 #SBATCH --nodes={the_node_count} --exclusive
 #SBATCH --ntasks={the_mpi_process_count}
 #SBATCH --cpus-per-task={the_reserved_thread_count} --gpus-per-node={the_gpu_per_node_count}
@@ -70,6 +71,11 @@ export MPICH_MPIIO_HINTS_DISPLAY=1
 export MPICH_GPU_SUPPORT_ENABLED=1
 
 export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
+
+# Workaround to the deadlock we get in MPI communication
+export FI_MR_CACHE_MONITOR=memhooks
+# Ou:
+# export FI_MR_CACHE_MAX_COUNT=0 
 
 set +x
 
@@ -245,6 +251,8 @@ exit $kRETVAL
         with open(self.smilei_path.exec_script, 'w') as f:
             f.write(self.the_slurm_script.format(a_task_command=self.RUN_COMMAND,
                                                  a_task_command_arguments=arguments,
+                                                 the_account=self.options.account,
+                                                 the_partition=self.options.partition,
                                                  the_node_count=self.options.nodes,
                                                  the_mpi_process_count=self.options.mpi,
                                                  the_reserved_thread_count=self.options.reserved_thread_per_task,

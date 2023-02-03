@@ -2360,9 +2360,11 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
                                      unsigned int particle_count,
                                      float        growth_factor )
 {
-    const auto kCurrentCapacity = dynamics_Epart[ithread].capacity();
+    // We could also use dynamics_Epart[ithread].capacity() and divide by 3 due
+    // to the x,y,z component for each particle.
+    const auto kCurrentParticleCapacity = dynamics_invgf[ithread].capacity();
 
-    if( particle_count > kCurrentCapacity ) {
+    if( particle_count > kCurrentParticleCapacity ) {
         // We know we have to resize
 
         if( !dynamics_Epart[ithread].empty() ) {
@@ -2384,11 +2386,11 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
                 SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_iold[ithread].data() );
                 SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_deltaold[ithread].data() );
 
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Epart[ithread].data(), kCurrentCapacity * 3 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Bpart[ithread].data(), kCurrentCapacity * 3 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_invgf[ithread].data(), kCurrentCapacity * 1 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_iold[ithread].data(), kCurrentCapacity * ndim_field );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_deltaold[ithread].data(), kCurrentCapacity * ndim_field );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Epart[ithread].data(), kCurrentParticleCapacity * 3 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Bpart[ithread].data(), kCurrentParticleCapacity * 3 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_invgf[ithread].data(), kCurrentParticleCapacity * 1 );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_iold[ithread].data(), kCurrentParticleCapacity * ndim_field );
+                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_deltaold[ithread].data(), kCurrentParticleCapacity * ndim_field );
             }
 
             // Either it is the first time allocating buffer for dynamics_* or
@@ -2401,16 +2403,16 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
             SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_deltaold[ithread].data() );
         }
 
-        const unsigned int new_capacity = static_cast<unsigned int>( particle_count * growth_factor );
+        const unsigned int new_particle_capacity = static_cast<unsigned int>( particle_count * growth_factor );
 
         // NOTE: this reserve can trigger OOM errors or more precisely, its
         // not strictly needed. Ideally, we would not even need to resize
         // and use a plain old hipMalloc or thrust::device_vector.
-        dynamics_Epart[ithread].reserve( new_capacity * 3 );
-        dynamics_Bpart[ithread].reserve( new_capacity * 3 );
-        dynamics_invgf[ithread].reserve( new_capacity * 1 );
-        dynamics_iold[ithread].reserve( new_capacity * ndim_field );
-        dynamics_deltaold[ithread].reserve( new_capacity * ndim_field );
+        dynamics_Epart[ithread].reserve( new_particle_capacity * 3 );
+        dynamics_Bpart[ithread].reserve( new_particle_capacity * 3 );
+        dynamics_invgf[ithread].reserve( new_particle_capacity * 1 );
+        dynamics_iold[ithread].reserve( new_particle_capacity * ndim_field );
+        dynamics_deltaold[ithread].reserve( new_particle_capacity * ndim_field );
 
         // These *full size resize* are useless on the device, because we
         // wont use the CPU buffer in device mode. See
@@ -2432,21 +2434,19 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
         dynamics_iold[ithread].resize( 1 );
         dynamics_deltaold[ithread].resize( 1 );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), new_capacity * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), new_capacity * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), new_capacity * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_iold[ithread].data(), new_capacity * ndim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_deltaold[ithread].data(), new_capacity * ndim_field );
-    } else {
-        if( particle_count == 0 ) {
-            // Add the following semantic:
-            //  resizeDeviceBuffers( ithread, ndim_field, 0); means that the
-            //  device memory is released.
-            return;
-        }
-
-        // Dont reserve, for now we have enough capacity.
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), new_particle_capacity * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), new_particle_capacity * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), new_particle_capacity * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_iold[ithread].data(), new_particle_capacity * ndim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_deltaold[ithread].data(), new_particle_capacity * ndim_field );
+    } else if( particle_count == 0 ) {
+        // We may have not allocated memory on the accelerator, typically at
+        // initialization or during the first iterations. Except for this case,
+        // we should always have the dynamics_* on GPU.
+        return;
     }
+
+    // Dont reserve, for now we have enough capacity.
 
     // We have CPU buffers with the correct capacity and their equivalent on
     // the device.

@@ -34,7 +34,7 @@
 # Compilers
 ################################################################################
 
-SMILEICXX := $(CC)
+SMILEICXX := CC
 SMILEICXX.DEPS := $(SMILEICXX)
 # THRUSTCXX := hipcc
 THRUSTCXX := $(SMILEICXX)
@@ -76,7 +76,7 @@ ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADAS
 # To check for leaks, use this feature
 # ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined
 # -g and -ggdb have no know runtime overhead expect for program size
-ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS)
+ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS) -v # --cray-print-opts=all -craype-verbose
 
 ################################################################################
 # Omp flags
@@ -171,7 +171,6 @@ CXXFLAGS += $(ADASTRA_OMP_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added
 CXXFLAGS += $(ADASTRA_INCLUDES)
-CXXFLAGS += -v
 
 LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
 LDFLAGS += $(ADASTRA_LIBRARIES)
@@ -181,5 +180,4 @@ LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
 # Some kind of LTO is used, or maybe the kernel optimization is only done at link time.
 # -v to dump omp kernel info (register alloc/spill etc.)
 LDFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
-LDFLAGS += -v
 # LDFLAGS += --save-temps # OpenMP device kernel info. To use with the Cray compiler

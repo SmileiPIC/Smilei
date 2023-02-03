@@ -156,7 +156,7 @@ Options:
        <max time>: format hh:mm:ss
   -p <partition name>
        <partition name>: partition name on super-computers
-                           - adastra
+                           - MI250 (to access Adastra's GPUs)
                            - irene_a64fx
                            - irene_skylake
                            - jollyjumper
