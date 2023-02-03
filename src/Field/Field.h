@@ -114,7 +114,7 @@ public:
     double *data_;
 
     //! Return the size of the linearized array
-    inline unsigned int size() {
+    inline unsigned int __attribute__((always_inline)) size() {
         return number_of_points_;
     }
 
