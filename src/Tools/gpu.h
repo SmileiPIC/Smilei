@@ -111,6 +111,7 @@ namespace smilei {
             /// Do not allocate classes using non trivial constructor/destructor !
             ///
             /// NOTE:
+            /// - Do not resize in between allocations or you will confuse OpenMP and risk memory corruption!
             /// - The OpenACC implementation is not complete!
             /// - You can exploit virtual memory and allocate a large part of the memory on the
             /// the host (malloc) and not use it. The OS will allocate address space and not physical
@@ -126,7 +127,7 @@ namespace smilei {
             /// at the beginning of the program.
             /// - Everything is hidden in gpu.cpp so we dont get conflicts between GPU specific languages (HIP/Cuda)
             /// and OpenMP/OpenACC (the cray compiler can't enable both hip and OpenMP support at the same time).
-            /// - The is_device_ptr() clause has support for device pointers created outside of OpenMP but the behavior 
+            /// - The is_device_ptr() clause has support for device pointers created outside of OpenMP but the behavior
             /// is implementation defined. For us, it behaves as expected.
             ///
             struct HostDeviceMemoryManagement
@@ -375,6 +376,9 @@ namespace smilei {
             template <typename Container>
             void HostDeviceMemoryManagement::DeviceAllocate( const Container& a_vector )
             {
+                // Dont use capacity(), because that does not play nice with 
+                // functions like DeviceAllocateAndCopyHostToDevice (copy
+                // uninitialized values).
                 DeviceAllocate( a_vector.data(), a_vector.size() );
             }
 
