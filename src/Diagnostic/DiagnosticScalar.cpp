@@ -766,7 +766,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
 	    minloc.val = minval;
 	    maxloc.val = maxval;
 // CPU version
-
+#else
             for( unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++ ) {
                 for( unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++ ) {
                     for( unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++ ) {
