@@ -470,9 +470,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
                       reduction(+:charge)  
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(weight_ptr, charge_ptr)
-    #pragma acc loop gang worker vector reduction(+:density) \
-                     reduction(+:charge)  \
-                     reduction(+:ener_tot)
+    #pragma acc loop gang worker vector reduction(+:charge)
 #endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                     charge   += weight_ptr[iPart] * charge_ptr[iPart];
@@ -611,7 +609,8 @@ void DiagnosticScalar::compute( Patch *patch, int )
     }
     
     double Uelm_ = 0.0; // total electromagnetic energy in the fields
-    
+
+
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
@@ -638,7 +637,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             Uelm_ += Uem;
         }
     }
-    
+   
     // Total elm energy
     if( necessary_Uelm ) {
         *Uelm += Uelm_;
@@ -722,6 +721,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             double maxval = maxloc.val;
 
             const double *const __restrict__ field_data = field->data();
+
 	    //std::atomic<double> minval_a = {minval};
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
@@ -733,14 +733,14 @@ void DiagnosticScalar::compute( Patch *patch, int )
     #pragma acc parallel present(field_data) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3)
 #endif
-	        for( unsigned int i=ixstart; i<ixend; i++ ) {
+	    for( unsigned int i=ixstart; i<ixend; i++ ) {
                 for( unsigned int j=iystart; j<iyend; j++ ) {
-		            for( unsigned int k=izstart; k<izend; k++ ) {
+		    for( unsigned int k=izstart; k<izend; k++ ) {
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
-                        double fieldval = field_data[ii];
+                        const double fieldval = field_data[ii];
                         if( minval > fieldval ) {
                             ATOMIC(write)
-			                minval = fieldval;
+			    minval = fieldval;
 			                //minval_a.store(fieldval, std::memory_order_relaxed);
                             ATOMIC(write)
 			                i_min=i;
