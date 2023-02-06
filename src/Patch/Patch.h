@@ -91,8 +91,35 @@ public:
     std::vector<unsigned int> size_;
     std::vector<unsigned int> oversize;
     
+    // Detailed timers (at the patch level)
+    // -----------------------
+
 #ifdef  __DETAILED_TIMERS
-    
+
+    // Initialize timers
+    // 0 - Interpolation
+    // 1 - Pusher
+    // 2 - Projection
+    // 3 - exchange init + cell_keys
+    // 4 - ionization
+    // 5 - radiation
+    // 6 - Breit-Wheeler
+    // 7 - Interp Fields_Env
+    // 8 - Proj Susceptibility
+    // 9 - Push Momentum
+    // 10 - Interp Env_Old
+    // 11 - Proj Currents
+    // 12 - Push Pos
+    // 13 - Sorting
+
+    const int interpolation_timer_id_ = 0;
+    const int push_timer_id_          = 1;
+    const int projection_timer_id_    = 2;
+    const int cell_keys_timer_id_     = 3;
+    const int ionization_timer_id_    = 4;
+    const int radiation_timer_id_     = 5;
+    const int mBW_timer_id_           = 6;
+
     // OpenMP properties
     // -----------------------
     
@@ -103,8 +130,24 @@ public:
     
     //! Timers for the patch
     std::vector<double> patch_timers_;
+
+    //! temporary timers
+    std::vector<double> patch_tmp_timers_;
+
 #endif
+
+    inline void __attribute__((always_inline)) startFineTimer(unsigned int index) {
+#ifdef  __DETAILED_TIMERS
+        patch_tmp_timers_[index] = MPI_Wtime();
+#endif
+    }
     
+    inline void __attribute__((always_inline)) stopFineTimer(unsigned int index) {
+#ifdef  __DETAILED_TIMERS
+        patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
+#endif
+    }
+
     // Random number generator.
     Random * rand_;
     
