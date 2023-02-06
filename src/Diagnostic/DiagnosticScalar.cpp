@@ -566,8 +566,8 @@ void DiagnosticScalar::compute( Patch *patch, int )
 // CPU mode
 #else 
 
-    #pragma omp simd reduction(+:density) \
-                     reduction(+:ener_tot)
+                #pragma omp simd reduction(+:density) \
+                                reduction(+:ener_tot)
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
                     density  += weight_ptr[iPart];
