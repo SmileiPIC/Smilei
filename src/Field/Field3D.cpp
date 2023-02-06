@@ -258,12 +258,12 @@ double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target teams distribute parallel for collapse(3) \
-		      map(tofrom: nrj)  \
+	      map(tofrom: nrj)  \
               map(from: ixstart, ixend, iystart, iyend, izstart, izend) \
-		      /*is_device_ptr( data_ ) */           \
-		      reduction(+:nrj) 
+	      /*is_device_ptr( data_ ) */           \
+	      reduction(+:nrj) 
 #elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel //deviceptr( data_ )
+    #pragma acc parallel present(field[0:number_of_points_]) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3) reduction(+:nrj)
 #endif
 
@@ -271,7 +271,7 @@ double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
         for( unsigned int j=iystart ; j<iyend ; j++ ) {
             for( unsigned int k=izstart ; k<izend ; k++ ) {
                 const unsigned int index = (i * ny + j) * nz + k;
-                nrj += data_[index]*data_[index];
+                nrj += field[index]*field[index];
             }
         }
     }

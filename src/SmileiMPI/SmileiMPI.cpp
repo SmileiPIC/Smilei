@@ -2357,98 +2357,98 @@ void SmileiMPI::eraseBufferParticleTrail( const int ndim, const int istart, cons
 
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+
+template <typename Container>
+static inline void
+TryFreeDeviceCapacity( Container &a_container )
+{
+    if( a_container.empty() && a_container.capacity() > 0 ) {
+        // Make sure we can get data() to free what was allocated on the GPU.
+        a_container.resize( 1 );
+    }
+
+    if( !a_container.empty() &&
+        smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( a_container.data() ) ) {
+        // Not the first allocation
+
+        SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_container.data() );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( a_container.data(), a_container.capacity() );
+
+        SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( a_container.data() );
+    }
+
+    // Either it is the first time allocating buffer for dynamics_* or
+    // we freed the previously device mapped buffers.
+}
+
 void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
                                      unsigned int ndim_field,
                                      unsigned int particle_count,
                                      float        growth_factor )
 {
+    // If the capacity of these buffers is changed outside of this function, we
+    // will encounter memory leak or corruption. Indeed we may loose
+    // *synchronization* between the GPu memory and the host memory through.
+
     // We could also use dynamics_Epart[ithread].capacity() and divide by 3 due
     // to the x,y,z component for each particle.
     const auto kCurrentParticleCapacity = dynamics_invgf[ithread].capacity();
 
     if( particle_count > kCurrentParticleCapacity ) {
-        // We know we have to resize
+        // We know we have to resize because we do not have enough capacity.
 
-        if( !dynamics_Epart[ithread].empty() ) {
-            // Not the first allocation
+        // Free the memory before resizing if OpenMP was used to map the
+        // dynamics_* buffers in a previous PIC loop.
 
-            if( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dynamics_Epart[ithread].data() ) ) {
-                // Free the memory before resizing if OpenMP was used to map the
-                // dynamics_* buffers in a previous PIC loop.
+        // NOTE: we dont care about the values contained in these
+        // buffers, it is temporary. Thus we do not need to do a realloc
+        // (that is, allocating a second, larger buffer and copying the
+        // content of the soon to be freed buffer into the new buffer).
+        // This realloc behavior is what std::vector does, and clearly,
+        // not what we need (!).
 
-                // NOTE: we dont care about the values contained in these
-                // buffers, it is temporary. Thus we do not need to do a realloc
-                // (that is, allocating a second, larger buffer and copying the
-                // content of the soon to be freed buffer into the new buffer).
-                // This realloc behavior is what std::vector does, and clearly,
-                // not what we need (!).
-
-                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_Bpart[ithread].data() );
-                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_invgf[ithread].data() );
-                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_iold[ithread].data() );
-                SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( dynamics_deltaold[ithread].data() );
-
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Epart[ithread].data(), kCurrentParticleCapacity * 3 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_Bpart[ithread].data(), kCurrentParticleCapacity * 3 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_invgf[ithread].data(), kCurrentParticleCapacity * 1 );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_iold[ithread].data(), kCurrentParticleCapacity * ndim_field );
-                smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dynamics_deltaold[ithread].data(), kCurrentParticleCapacity * ndim_field );
-            }
-
-            // Either it is the first time allocating buffer for dynamics_* or
-            // we freed the previously device mapped buffers.
-
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Epart[ithread].data() );
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_Bpart[ithread].data() );
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_invgf[ithread].data() );
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_iold[ithread].data() );
-            SMILEI_GPU_ASSERT_MEMORY_NOT_ON_DEVICE( dynamics_deltaold[ithread].data() );
-        }
+        TryFreeDeviceCapacity( dynamics_Epart[ithread] );
+        TryFreeDeviceCapacity( dynamics_Bpart[ithread] );
+        TryFreeDeviceCapacity( dynamics_invgf[ithread] );
+        TryFreeDeviceCapacity( dynamics_iold[ithread] );
+        TryFreeDeviceCapacity( dynamics_deltaold[ithread] );
 
         const unsigned int new_particle_capacity = static_cast<unsigned int>( particle_count * growth_factor );
 
-        // NOTE: this reserve can trigger OOM errors or more precisely, its
-        // not strictly needed. Ideally, we would not even need to resize
-        // and use a plain old hipMalloc or thrust::device_vector.
         dynamics_Epart[ithread].reserve( new_particle_capacity * 3 );
         dynamics_Bpart[ithread].reserve( new_particle_capacity * 3 );
         dynamics_invgf[ithread].reserve( new_particle_capacity * 1 );
         dynamics_iold[ithread].reserve( new_particle_capacity * ndim_field );
         dynamics_deltaold[ithread].reserve( new_particle_capacity * ndim_field );
+    }
 
-        // These *full size resize* are useless on the device, because we
-        // wont use the CPU buffer in device mode. See
-        // smilei::tools::gpu::NonInitializingVector for more explanations.
+    if( particle_count > kCurrentParticleCapacity ||
+        particle_count > 0 ) {
+        // Make sure we do not deal with empty() buffers. Some diagnostics
+        // can resize(0). Could be a resize(1).
 
-        //      dynamics_Epart[ithread].resize( particle_count * 3 );
-        //      dynamics_Bpart[ithread].resize( particle_count * 3 );
-        //      dynamics_invgf[ithread].resize( particle_count * 1 );
-        //      dynamics_iold[ithread].resize( particle_count * ndim_field );
-        //      dynamics_deltaold[ithread].resize( particle_count * ndim_field );
+        dynamics_Epart[ithread].resize( particle_count * 3 );
+        dynamics_Bpart[ithread].resize( particle_count * 3 );
+        dynamics_invgf[ithread].resize( particle_count * 1 );
+        dynamics_iold[ithread].resize( particle_count * ndim_field );
+        dynamics_deltaold[ithread].resize( particle_count * ndim_field );
+    } else {
+        // no reserve, particle_count == 0
 
-        // NOTE: If a vector's size() is ​0​, data() may or may not return a
-        // null pointer. Thus we must make sure we always have at least a
-        // size() > 0.
-
-        dynamics_Epart[ithread].resize( 1 );
-        dynamics_Bpart[ithread].resize( 1 );
-        dynamics_invgf[ithread].resize( 1 );
-        dynamics_iold[ithread].resize( 1 );
-        dynamics_deltaold[ithread].resize( 1 );
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), new_particle_capacity * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), new_particle_capacity * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), new_particle_capacity * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_iold[ithread].data(), new_particle_capacity * ndim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_deltaold[ithread].data(), new_particle_capacity * ndim_field );
-    } else if( particle_count == 0 ) {
         // We may have not allocated memory on the accelerator, typically at
         // initialization or during the first iterations. Except for this case,
         // we should always have the dynamics_* on GPU.
         return;
     }
 
-    // Dont reserve, for now we have enough capacity.
+    if( particle_count > kCurrentParticleCapacity ) {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Epart[ithread].data(), dynamics_Epart[ithread].capacity() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_Bpart[ithread].data(), dynamics_Bpart[ithread].capacity() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_invgf[ithread].data(), dynamics_invgf[ithread].capacity() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_iold[ithread].data(), dynamics_iold[ithread].capacity() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( dynamics_deltaold[ithread].data(), dynamics_deltaold[ithread].capacity() );
+    }
 
     // We have CPU buffers with the correct capacity and their equivalent on
     // the device.

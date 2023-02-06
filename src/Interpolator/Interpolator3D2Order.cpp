@@ -142,12 +142,15 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int last_index  = *iend;
 
     if( first_index == last_index ) {
-        // Early exit to avoid UB. If the dynamics_* array have are empty() we
-        // can't call data().
+        // Early exit to avoid UB. If the dynamics_* array are empty() we can't
+        // call data().
         return;
     }
 
     SMILEI_ASSERT( !smpi->dynamics_Epart[ithread].empty() );
+    SMILEI_ASSERT( !smpi->dynamics_Bpart[ithread].empty() );
+    SMILEI_ASSERT( !smpi->dynamics_iold[ithread].empty() );
+    SMILEI_ASSERT( !smpi->dynamics_deltaold[ithread].empty() );
 
     double *const __restrict__ ELoc  = smpi->dynamics_Epart[ithread].data();
     double *const __restrict__ BLoc  = smpi->dynamics_Bpart[ithread].data();

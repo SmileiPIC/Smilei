@@ -470,9 +470,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
                       reduction(+:charge)  
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(weight_ptr, charge_ptr)
-    #pragma acc loop gang worker vector reduction(+:density) \
-                     reduction(+:charge)  \
-                     reduction(+:ener_tot)
+    #pragma acc loop gang worker vector reduction(+:charge)
 #endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                     charge   += weight_ptr[iPart] * charge_ptr[iPart];
@@ -525,12 +523,59 @@ void DiagnosticScalar::compute( Patch *patch, int )
 	        //std::cout << density 
 	        //          << " " << charge << std::endl;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
+
+// GPU mode
+#ifdef SMILEI_ACCELERATOR_MODE
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: density)  \
+		      is_device_ptr(weight_ptr) \
+		      reduction(+:density) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) 
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    density  += weight_ptr[iPart];
+                }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: ener_tot)  \
+		      is_device_ptr(weight_ptr, \
+                      momentum_x /* [istart:particle_number] */,             \
+                      momentum_y /* [istart:particle_number] */,             \
+                      momentum_z /* [istart:particle_number] */)             \
+                      reduction(+:ener_tot) 
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc parallel deviceptr(weight_ptr, \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z)
+    #pragma acc loop gang worker vector reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    const double gamma = std::sqrt( momentum_x[iPart]*momentum_x[iPart]  
+                                                    + momentum_y[iPart]*momentum_y[iPart]
+                                                    + momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * gamma ;
+
+                }
+
+// CPU mode
+#else 
+
+                #pragma omp simd reduction(+:density) \
+                                reduction(+:ener_tot)
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
-                    density  += vecSpecies[ispec]->particles->weight( iPart );
+                    density  += weight_ptr[iPart];
                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
                                 * ( vecSpecies[ispec]->particles->momentumNorm( iPart ) );
                 }
+#endif
+
             }
             
             *sNtot[ispec] += ( double )nPart;
@@ -611,7 +656,8 @@ void DiagnosticScalar::compute( Patch *patch, int )
     }
     
     double Uelm_ = 0.0; // total electromagnetic energy in the fields
-    
+
+
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
@@ -638,7 +684,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             Uelm_ += Uem;
         }
     }
-    
+   
     // Total elm energy
     if( necessary_Uelm ) {
         *Uelm += Uelm_;
@@ -722,6 +768,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             double maxval = maxloc.val;
 
             const double *const __restrict__ field_data = field->data();
+
 	    //std::atomic<double> minval_a = {minval};
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target \
@@ -733,14 +780,14 @@ void DiagnosticScalar::compute( Patch *patch, int )
     #pragma acc parallel present(field_data) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3)
 #endif
-	        for( unsigned int i=ixstart; i<ixend; i++ ) {
+	    for( unsigned int i=ixstart; i<ixend; i++ ) {
                 for( unsigned int j=iystart; j<iyend; j++ ) {
-		            for( unsigned int k=izstart; k<izend; k++ ) {
+		    for( unsigned int k=izstart; k<izend; k++ ) {
                         const unsigned int ii = k+ ( j + i*ny ) *nz;
-                        double fieldval = field_data[ii];
+                        const double fieldval = field_data[ii];
                         if( minval > fieldval ) {
                             ATOMIC(write)
-			                minval = fieldval;
+			    minval = fieldval;
 			                //minval_a.store(fieldval, std::memory_order_relaxed);
                             ATOMIC(write)
 			                i_min=i;
