@@ -23,7 +23,7 @@ public :
     
     virtual void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
     
-    virtual H5Write writeField( H5Write*, std::string, int ) = 0;
+    virtual H5Write writeField( H5Write*, std::string ) = 0;
     
     virtual bool needsRhoJs( int itime ) override;
     
@@ -71,7 +71,7 @@ protected :
     //! Number of cells to skip in each direction
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
-    std::vector<unsigned int> patch_size;
+    std::vector<unsigned int> patch_size_;
     //! Buffer for the output of a field
     std::vector<double> data;
     
@@ -98,6 +98,9 @@ protected :
     
     //! Save the field type (needed for OpenPMD units dimensionality)
     std::vector<unsigned int> field_type;
+    
+    //! Datatype for writing to HDF5 file
+    hid_t file_datatype_;
 };
 
 #endif

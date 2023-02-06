@@ -13,8 +13,7 @@ import numpy as np
 # On CPU, it may not be a bad idea to slightly oversubscribe the cores with more patches.
 # On GPU, large patches work better.
 kGridDimensionInCell   = [128, 128, 128]
-kCellPerPatchDimension = [kGridDimensionInCell[i]//16 for i in range(3)] # Tuned for 1 GPU only (with one GPU per MPI)
-kPatchPerGridDimension = [kGridDimensionInCell[i]//kCellPerPatchDimension[i] for i in range(3)]
+kPatchPerGridDimension = [2, 2, 1]
 
 # Smilei conf 2022 recommends cell length < 4 * Debye length
 kCellLengthFactor = 1.0 / 2.0 # / 4.0
@@ -71,10 +70,10 @@ Main(gpu_computing = True,
 
 Vectorization(mode = "off")
 
-LoadBalancing(every = 20,
-              initial_balance = False,
-              cell_load = 1.0,
-              frozen_particle_load = 0.1)
+# LoadBalancing(every = 20,
+#               initial_balance = False,
+#               cell_load = 1.0,
+#               frozen_particle_load = 0.1)
 
 Species(name = "proton",
         position_initialization = kPositionInitialization,

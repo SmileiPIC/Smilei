@@ -31,7 +31,7 @@ ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Reflective Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     if( i_boundary_ == 0 ) {
         if( patch->isXmin() ) {

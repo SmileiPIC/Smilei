@@ -20,12 +20,8 @@ public:
     void addString( std::string s )
     {
         if( s.size() <= width ) {
+            s.resize( width );
             str.append( s );
-            std::ostringstream t( "" );
-            for( unsigned int i=0; i<width-s.size(); i++ ) {
-                t<<"\0";
-            }
-            str.append( t.str() );
         } else {
             str.append( s.substr( 0, width ) );
         }
@@ -383,23 +379,26 @@ public:
     }
     
     //! Write a multi-dimensional array of uints
-    H5Write array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace, bool independent = false )
+    H5Write array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace, bool independent = false, hid_t file_type = -1 )
     {
-        return array( name, v, H5T_NATIVE_UINT, filespace, memspace, independent );
+        return array( name, v, H5T_NATIVE_UINT, filespace, memspace, independent, file_type );
     }
     
     //! Write a multi-dimensional array of doubles
-    H5Write array( std::string name, double &v, H5Space *filespace, H5Space *memspace, bool independent = false )
+    H5Write array( std::string name, double &v, H5Space *filespace, H5Space *memspace, bool independent = false, hid_t file_type = -1 )
     {
-        return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace, independent );
+        return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace, independent, file_type );
     }
     
     //! Write a multi-dimensional array
     template<class T>
-    H5Write array( std::string name, T &v, hid_t type, H5Space *filespace, H5Space *memspace, bool independent = false )
+    H5Write array( std::string name, T &v, hid_t mem_type, H5Space *filespace, H5Space *memspace, bool independent = false, hid_t file_type = -1 )
     {
-        H5Write d = dataset( name, type, filespace );
-        d.write( v, type, filespace, memspace, independent );
+        if( file_type < 0 ) {
+            file_type = mem_type;
+        }
+        H5Write d = dataset( name, file_type, filespace );
+        d.write( v, mem_type, filespace, memspace, independent );
         return d;
     }
     

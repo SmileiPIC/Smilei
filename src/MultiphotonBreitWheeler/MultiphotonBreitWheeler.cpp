@@ -10,7 +10,7 @@
 #include "MultiphotonBreitWheeler.h"
 #include "Species.h"
 
-#if defined(ACCELERATOR_GPU_ACC)
+#if defined(SMILEI_OPENACC_MODE)
     #define __HIP_PLATFORM_NVCC__
     #define __HIP_PLATFORM_NVIDIA__
     #include "gpuRandom.h"
@@ -184,12 +184,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Time to event
     double event_time;
 
-    // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
-
     // Position shortcut
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = n_dimensions_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -254,7 +248,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair1_chi = new_pair[1]->isQuantumParameter ? new_pair[1]->getPtrChi() : nullptr;
     double *const __restrict__ pair1_tau = new_pair[1]->isMonteCarlo ? new_pair[1]->getPtrTau() : nullptr;
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     // Parameters for random generator
     unsigned long long seed;
     unsigned long long seq;
@@ -331,7 +325,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                                 Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                                 Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
                                 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                                 
     }
 
@@ -355,7 +349,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                 while( tau[ipart] <= epsilon_tau_ ) {
                     //tau[ipart] = -log( 1.-Rand::uniform() );
                     
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     tau[ipart] = -std::log( 1.-rand_->uniform() );
 #else
                     
@@ -398,13 +392,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Update of the position
                     // Move the photons
 
-//#ifdef  __DEBUG
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        particles.position_old(i,ipart) = position[i][ipart];
-//#endif
-//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
-//                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
-
 // withou tasks
 
                     // pair_energy += MultiphotonBreitWheeler::pair_emission( ipart,
@@ -419,7 +406,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double pair_chi[2];
 
                     // Draw random number in [0,1[
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     const double random_number = rand_->uniform();
 #else
                     seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
@@ -441,10 +428,10 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     double uz = momentum_z[ipart]/photon_gamma[ipart];
 #ifndef _OMPTASKS
                     // Without tasks
-
+                    SMILEI_UNUSED( ibin );
                     // Creation of new electrons in the temporary array new_pair[0]
                     new_pair[0]->createParticles( mBW_pair_creation_sampling_[0] );
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     // Final size
                     int nparticles = new_pair[0]->size();
 
@@ -455,7 +442,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 #endif
 
                     // For all new paticles
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     #pragma omp simd
 #endif
                     for( int ipair=i_pair_start; ipair < i_pair_start+mBW_pair_creation_sampling_[0]; ipair++ ) {
@@ -479,7 +466,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         }
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                         // Old positions
                         if( particles.keepOldPositions() ) {
                             pair0_position_old_x[ipair]=position_x[ipart] ;
@@ -507,7 +494,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     // Create particle for the second pair species
                     new_pair[1]->createParticles( mBW_pair_creation_sampling_[1] );
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     // Final size
                     nparticles = new_pair[1]->size();
 
@@ -518,7 +505,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 #endif
 
                     // For all new paticles
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     #pragma omp simd
 #endif
                     for( auto ipair=i_pair_start; ipair < i_pair_start + mBW_pair_creation_sampling_[1]; ipair++ ) {
@@ -543,7 +530,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         }
             //               + new_pair[k].momentum(i,ipair)*remaining_dt*inv_gamma;
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                         // Old positions
                         if( particles.keepOldPositions() ) {
                             pair1_position_old_x[ipair]=position_x[ipart] ;
@@ -642,7 +629,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         }
     } // end ipart loop
     
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     }
 #endif
 }
@@ -759,7 +746,6 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param ibin        Index of the current bin
-    //! \param nbin        Number of bins
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
@@ -768,7 +754,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotons(
 void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
     Particles &particles,
     SmileiMPI *smpi,
-    int ibin, int nbin,
+    int ibin,
     int *bmin, int *bmax, int ithread )
 {
 
@@ -809,7 +795,7 @@ void MultiphotonBreitWheeler::removeDecayedPhotonsWithoutBinCompression(
                 if( ipart < last_photon_index ) {
                     // The last existing photon comes to the position of
                     // the deleted photon
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                     particles.overwriteParticle( last_photon_index, ipart );
 #else
 #endif

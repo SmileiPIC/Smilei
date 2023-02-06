@@ -24,14 +24,22 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     double *const __restrict__ By3D       = fields->By_->data();
     double *const __restrict__ Bz3D       = fields->Bz_->data();
 
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
+    const unsigned int ny_p = fields->dimPrim[1];
+    const unsigned int ny_d = fields->dimDual[1];
+    const unsigned int nz_p = fields->dimPrim[2];
+    const unsigned int nz_d = fields->dimDual[2];
+
+    
     // Magnetic field Bx^(p,d,d)
-#if defined( ACCELERATOR_GPU_ACC )
-    const int sizeofEx = fields->Ex_->globalDims_;
-    const int sizeofEy = fields->Ey_->globalDims_;
-    const int sizeofEz = fields->Ez_->globalDims_;
-    const int sizeofBx = fields->Bx_->globalDims_;
-    const int sizeofBy = fields->By_->globalDims_;
-    const int sizeofBz = fields->Bz_->globalDims_;
+#if defined( SMILEI_OPENACC_MODE )
+    const int sizeofEx = fields->Ex_->number_of_points_;
+    const int sizeofEy = fields->Ey_->number_of_points_;
+    const int sizeofEz = fields->Ez_->number_of_points_;
+    const int sizeofBx = fields->Bx_->number_of_points_;
+    const int sizeofBy = fields->By_->number_of_points_;
+    const int sizeofBz = fields->Bz_->number_of_points_;
 
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
@@ -40,11 +48,11 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
@@ -55,7 +63,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field By^(d,p,d)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -63,11 +71,11 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
@@ -78,7 +86,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field Bz^(d,d,p)
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -86,11 +94,11 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
         #pragma acc loop worker
 #endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector
 #endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {

@@ -2,18 +2,19 @@
 #include "DiagnosticScalar.h"
 #include "VectorPatch.h"
 #include "Tools.h"
+#include "Pragma.h"
 
 #include <iomanip>
 #include <algorithm>
 #include <limits>
+#include <atomic>
 
 using namespace std;
 
 
-DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patch = NULL ):
+DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *, Patch * = NULL ):
     latest_timestep( -1 )
 {
-    // patch  == NULL else error
     
     if( PyTools::nComponents( "DiagScalar" ) > 1 ) {
         ERROR( "Only one DiagScalar can be specified" );
@@ -35,8 +36,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
         res_time       = params.res_time;
         dt             = params.timestep;
         cell_volume    = params.cell_volume;
-        n_space        = params.n_space;
-        n_space_global = params.n_space_global;
+        patch_size_    = params.patch_size_;
+        global_size_   = params.global_size_;
         
         filename = "scalars.txt";
     } else {
@@ -56,7 +57,7 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticScalar::openFile( Params &, SmileiMPI *smpi )
 {
     if( !smpi->isMaster() || fout.is_open() ) {
         return;
@@ -82,7 +83,7 @@ void DiagnosticScalar::closeFile()
 
 unsigned int DiagnosticScalar::calculateWidth( string key )
 {
-    return 2 + max( ( ( unsigned int )key.length() ), precision+8 );
+    return 2 + std::max( ( ( unsigned int )key.length() ), precision+8 );
     // The +8 accounts for the dot and exponent in decimal representation)
 }
 
@@ -121,7 +122,7 @@ Scalar_value_location *DiagnosticScalar::newScalar_MAXLOC( string name )
 }
 
 
-void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticScalar::init( Params &params, SmileiMPI *, VectorPatch &vecPatches )
 {
 
     // Make the list of fields
@@ -329,7 +330,7 @@ bool DiagnosticScalar::prepare( int itime )
 } // END prepare
 
 
-void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
+void DiagnosticScalar::run( Patch *patch, int itime, SimWindow * )
 {
 
     // Must keep track of Poynting flux even without diag
@@ -403,7 +404,7 @@ void DiagnosticScalar::write( int itime, SmileiMPI *smpi )
 
 
 //! Compute the various scalars when requested
-void DiagnosticScalar::compute( Patch *patch, int itime )
+void DiagnosticScalar::compute( Patch *patch, int )
 {
     ElectroMagn *EMfields = patch->EMfields;
     std::vector<Species *> &vecSpecies = patch->vecSpecies;
@@ -433,19 +434,96 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             double charge=0.0;   // sum of charges of current species ispec
             double ener_tot=0.0; // total kinetic energy of current species ispec
             
-            unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
-            
+            const unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
+
+// #if defined( SMILEI_ACCELERATOR_MODE )
+            const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
+            const short  *const __restrict__ charge_ptr = vecSpecies[ispec]->particles->getPtrCharge();
+            const double *const __restrict__ momentum_x = vecSpecies[ispec]->particles->getPtrMomentum(0);
+            const double *const __restrict__ momentum_y = vecSpecies[ispec]->particles->getPtrMomentum(1);
+            const double *const __restrict__ momentum_z = vecSpecies[ispec]->particles->getPtrMomentum(2);
+// #endif
+
             if( vecSpecies[ispec]->mass_ > 0 ) {
-            
+
+// GPU mode
+#ifdef SMILEI_ACCELERATOR_MODE
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: density)  \
+		      is_device_ptr(weight_ptr) \
+		      reduction(+:density) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) 
+#endif
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
-                
-                    density  += vecSpecies[ispec]->particles->weight( iPart );
-                    charge   += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( double )vecSpecies[ispec]->particles->charge( iPart );
-                    ener_tot += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
+                    density  += weight_ptr[iPart];
                 }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target \
+                      teams distribute parallel for \
+		      map(tofrom: charge)  \
+		      is_device_ptr( charge_ptr, weight_ptr) \
+                      reduction(+:charge)  
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(weight_ptr, charge_ptr)
+    #pragma acc loop gang worker vector reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    charge   += weight_ptr[iPart] * charge_ptr[iPart];
+                }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: ener_tot)  \
+		      is_device_ptr(weight_ptr, \
+                      momentum_x /* [istart:particle_number] */,             \
+                      momentum_y /* [istart:particle_number] */,             \
+                      momentum_z /* [istart:particle_number] */)             \
+                      reduction(+:ener_tot) 
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc parallel deviceptr(weight_ptr, \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z)
+    #pragma acc loop gang worker vector reduction(+:ener_tot)
+#endif
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+                    const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
+                                                     + momentum_y[iPart]*momentum_y[iPart]
+                                                     + momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
+
+                }
+// CPU mode
+#else 
+
+    #pragma omp simd reduction(+:density) \
+                     reduction(+:charge)  \
+                     reduction(+:ener_tot)
+                for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
+	                density  += weight_ptr[iPart];
+                    charge   += weight_ptr[iPart] * charge_ptr[iPart];
+                    const double gamma = std::sqrt(1 + momentum_x[iPart]*momentum_x[iPart] 
+                                                     + momentum_y[iPart]*momentum_y[iPart]
+                                                     + momentum_z[iPart]*momentum_z[iPart]);
+                    ener_tot += weight_ptr[iPart] * (gamma - 1.0 );
+//                     density  += vecSpecies[ispec]->particles->weight( iPart );
+//                     charge   += vecSpecies[ispec]->particles->weight( iPart )
+//                                 * ( double )vecSpecies[ispec]->particles->charge( iPart );
+//                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
+//                                 * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
+		        }
+#endif
+
                 ener_tot *= vecSpecies[ispec]->mass_;
+	        //std::cout << density 
+	        //          << " " << charge << std::endl;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
@@ -543,7 +621,11 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             // total energy in current field
             double Uem = 0.;
             if( ! AM ) {
+#if defined( SMILEI_ACCELERATOR_MODE )
+                Uem = field->norm2OnDevice( EMfields->istart, EMfields->bufsize );
+#else
                 Uem = field->norm2( EMfields->istart, EMfields->bufsize );
+#endif
             } else {
                 Uem = 0.5 * AMfields->dr * dynamic_cast<cField2D*>( field )->norm2_cylindrical( AMfields->istart, AMfields->bufsize, AMfields->j_glob_ );
                 if( ifield < 6 ) {
@@ -590,7 +672,6 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
         fields.push_back( EMfields->Env_Ex_abs_ );
     }
     
-    double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
     val_index minloc, maxloc;
@@ -623,12 +704,74 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             i_max = iFieldStart[0];
             j_max = iFieldStart[1];
             k_max = iFieldStart[2];
-            
+
+#if defined( SMILEI_ACCELERATOR_MODE)
+            // We use scalar rather than arrays because omp target 
+            // sometime fails to pass them to the device
+            const unsigned int ixstart = iFieldStart[0];
+            const unsigned int ixend   = iFieldEnd[0];
+            const unsigned int iystart = iFieldStart[1];
+            const unsigned int iyend   = iFieldEnd[1];
+            const unsigned int izstart = iFieldStart[2];
+            const unsigned int izend   = iFieldEnd[2];
+
+            const double ny = field->dims_[1];
+            const double nz = field->dims_[2];
+
+            double minval = minloc.val;
+            double maxval = maxloc.val;
+
+            const double *const __restrict__ field_data = field->data();
+	    //std::atomic<double> minval_a = {minval};
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target \
+                teams distribute parallel for collpase(3) \
+		        map(tofrom: minval, maxval, i_min, i_max, j_min, j_max, k_min, k_max)  \
+                map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
+	        //reduction(min:minval)
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present(field_data) //deviceptr( data_ )
+    #pragma acc loop gang worker vector collapse(3)
+#endif
+	        for( unsigned int i=ixstart; i<ixend; i++ ) {
+                for( unsigned int j=iystart; j<iyend; j++ ) {
+		            for( unsigned int k=izstart; k<izend; k++ ) {
+                        const unsigned int ii = k+ ( j + i*ny ) *nz;
+                        double fieldval = field_data[ii];
+                        if( minval > fieldval ) {
+                            ATOMIC(write)
+			                minval = fieldval;
+			                //minval_a.store(fieldval, std::memory_order_relaxed);
+                            ATOMIC(write)
+			                i_min=i;
+                            ATOMIC(write)
+			                j_min=j;
+                            ATOMIC(write)
+			                k_min=k;
+			            }
+			            //minval = std::min(fieldval,minval);
+                        if( maxval < fieldval ) {
+                            ATOMIC(write)
+			                maxval = fieldval;
+                            ATOMIC(write)
+                            i_max=i;
+                            ATOMIC(write)
+			                j_max=j;
+                            ATOMIC(write)
+			                k_max=k;
+                        }
+                    }
+                }
+            }
+	    minloc.val = minval;
+	    maxloc.val = maxval;
+// CPU version
+#else
             for( unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++ ) {
                 for( unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++ ) {
                     for( unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++ ) {
-                        unsigned int ii = k+ ( j + i*iFieldGlobalSize[1] ) *iFieldGlobalSize[2];
-                        fieldval = ( *field )( ii );
+                        const unsigned int ii = k+ ( j + i*iFieldGlobalSize[1] ) *iFieldGlobalSize[2];
+                        const double fieldval = ( *field )( ii );
                         if( minloc.val > fieldval ) {
                             minloc.val = fieldval;
                             i_min=i;
@@ -644,15 +787,20 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
                     }
                 }
             }
-            
-            i_min += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
-            j_min += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
-            k_min += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
-            minloc.index = ( int )( i_min*n_space_global[1]*n_space_global[2] + j_min*n_space_global[2] + k_min );
-            i_max += patch->Pcoordinates[0]*n_space[0] - iFieldStart[0];
-            j_max += patch->Pcoordinates[1]*n_space[1] - iFieldStart[1];
-            k_max += patch->Pcoordinates[2]*n_space[2] - iFieldStart[2];
-            maxloc.index = ( int )( i_max*n_space_global[1]*n_space_global[2] + j_max*n_space_global[2] + k_max );
+
+#endif    
+
+            vector<unsigned int> Pcoordinates = patch->Pcoordinates;
+            Pcoordinates.resize( 3, 1 );
+
+            i_min += Pcoordinates[0]*patch_size_[0] - iFieldStart[0];
+            j_min += Pcoordinates[1]*patch_size_[1] - iFieldStart[1];
+            k_min += Pcoordinates[2]*patch_size_[2] - iFieldStart[2];
+            minloc.index = ( int )( i_min*global_size_[1]*global_size_[2] + j_min*global_size_[2] + k_min );
+            i_max += Pcoordinates[0]*patch_size_[0] - iFieldStart[0];
+            j_max += Pcoordinates[1]*patch_size_[1] - iFieldStart[1];
+            k_max += Pcoordinates[2]*patch_size_[2] - iFieldStart[2];
+            maxloc.index = ( int )( i_max*global_size_[1]*global_size_[2] + j_max*global_size_[2] + k_max );
             
             #pragma omp critical
             {

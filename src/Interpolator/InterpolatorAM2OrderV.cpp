@@ -17,19 +17,19 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for InterpolatorAM2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : InterpolatorAM( params, patch )
+InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : InterpolatorAM( patch )
 {
 
     nmodes_ = params.nmodes;
     D_inv_[0] = 1.0/params.cell_length[0];
     D_inv_[1] = 1.0/params.cell_length[1];
-    nscellr_ = params.n_space[1] + 1;
+    nscellr_ = params.patch_size_[1] + 1;
     oversize_[0] = params.oversize[0];
     oversize_[1] = params.oversize[1];
 }
 
 //Function used in Probes
-//void InterpolatorAM2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+//void InterpolatorAM2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 //{
 //    int ipart = *istart;
 //    

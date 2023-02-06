@@ -17,8 +17,6 @@ public:
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) = 0;
     
-    void applyBConEdges( ElectroMagn *EMfields, Patch *patch );
-    
 protected:
 
     //! Number of ghost cells of the region in the longitudinal direction 

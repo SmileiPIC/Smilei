@@ -45,7 +45,7 @@ public:
     void compute_parameters();
     
     //! get value using linear interpolation at position x
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc routine seq
 #endif
     double get(double x);
@@ -60,7 +60,7 @@ public:
         return &data_[0];
     };
     
-    virtual void set(std::vector<double> & input_axis1_min, std::vector<double> & input_data) {};
+    virtual void set(std::vector<double> &, std::vector<double> &) {};
 
     // --------------------------------------------------------
     // Parameters

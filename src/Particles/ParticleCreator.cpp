@@ -282,7 +282,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
 
         // If requested, copy positions from other species
         if( position_initialization_on_species_ ) {
-            unsigned int ispec = species_->position_initialization_on_species_index;
+            unsigned int ispec = species_->position_initialization_on_species_index_;
 
             if( species_->getParticlesSize() != patch->vecSpecies[ispec]->getParticlesSize() ) {
                 ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
@@ -295,7 +295,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         if( position_initialization_ == "regular" ) {
             renormalize = false;
         } else if( position_initialization_on_species_ ) {
-            unsigned int ispec = species_->position_initialization_on_species_index;
+            unsigned int ispec = species_->position_initialization_on_species_index_;
             if( patch->vecSpecies[ispec]->position_initialization_ == "regular" ) {
                 renormalize = false;
             }
@@ -334,7 +334,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params, patch->rand_ );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0], patch->rand_ );
-                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params, renormalize );
+                        ParticleCreator::createWeight( particles_, nPart, iPart, density( i, j, k ), params, renormalize );
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
 
                         iPart += nPart;
@@ -352,7 +352,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Based on a count sort to comply with initial sorting.
 
         // Get pointers to position arrays and find which particles are in the patch
-        double *momentum[3], *position[species_->nDim_particle], *weight;
+        double *momentum[3], *position[species_->nDim_particle], *weight = nullptr;
         std::vector< std::vector<double> > arrays( 4+species_->nDim_particle );
         std::vector<unsigned int> my_particles_indices(0);
         bool init_momentum = species_->momentum_initialization_array_ || ( species_->file_momentum_npart_ > 0 );
@@ -396,7 +396,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             for( unsigned int i=0; i<species_->file_position_npart_; i+=chunksize ) {
                 // Get position arrays for this chunks
                 std::vector<std::string> ax = {"position/x", "position/y", "position/z"};
-                hsize_t npart  = min( chunksize, species_->file_position_npart_ - i );
+                hsize_t npart  = std::min( chunksize, species_->file_position_npart_ - i );
                 for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
                    fp.vect( ax[idim], buffer[idim], true, i, npart );
                    position[idim] = &buffer[idim][0];
@@ -929,8 +929,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void ParticleCreator::createWeight( std::string position_initialization,
-                                    Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
+void ParticleCreator::createWeight( Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
                                     Params &params, bool renormalize )
 {
     double w = n_real_particles / nPart;

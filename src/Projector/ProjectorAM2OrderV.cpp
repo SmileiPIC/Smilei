@@ -26,25 +26,25 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     one_ov_dt  = 1.0 / params.timestep;
     dr_inv_   = 1.0/dr;
     dr_ov_dt_  = dr / dt;
-    
+
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
-    
-    nscellr_ = params.n_space[1] + 1;
+
+    nscellr_ = params.patch_size_[1] + 1;
     oversize_[0] = params.oversize[0];
     oversize_[1] = params.oversize[1];
     nprimr_ = nscellr_ + 2*oversize_[1];
-    npriml_ = params.n_space[0] + 1 + 2*oversize_[0];
+    npriml_ = params.patch_size_[0] + 1 + 2*oversize_[0];
 
     Nmode_=params.nmodes;
     dq_inv_[0] = dl_inv_;
     dq_inv_[1] = dr_inv_;
-    
+
     invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);
-    
+
     DEBUG( "cell_length "<< params.cell_length[0] );
-    
+
 }
 
 
@@ -78,12 +78,12 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
     int jpo = iold[1];
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
-    
+
     int vecSize = 8;
     int bsize = 5*5*vecSize*Nmode_;
-    
+
     std::complex<double> brho[bsize] __attribute__( ( aligned( 64 ) ) );
-    
+
     double Sl0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sr0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double DSl[40] __attribute__( ( aligned( 64 ) ) );
@@ -101,31 +101,31 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
     double * __restrict__ weight     = particles.getPtrWeight();
     short  * __restrict__ charge     = particles.getPtrCharge();
     int * __restrict__ cell_keys  = particles.getPtrCellKeys();
-  
+
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
         brho[j] = 0.;
     }
-    
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    
+
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
+
         int np_computed = min( cell_nparts-ivect, vecSize );
         int istart0 = ( int )istart + ivect;
-        complex<double> e_bar[8], e_delta_m1[8]; 
-        
+        complex<double> e_bar[8], e_delta_m1[8];
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             compute_distances( position_x, position_y, position_z, cell_keys, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
-       
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeRho( ipart, charge_weight, DSl, DSr, Sl0_buff_vect, Sr0_buff_vect, brho, invR_local, e_bar);
-        } 
+        }
     }
 
     int iloc0 = ipom2*nprimr_+jpom2;
@@ -163,7 +163,7 @@ void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &part
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
+
     int iloc, nr( nprimr_ );
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
@@ -220,7 +220,7 @@ void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &part
     // ---------------------------
     ip -= i_domain_begin_ + 2;
     jp -= j_domain_begin_ + 2;
-    
+
     if( type != 2 ) {
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
@@ -242,8 +242,8 @@ void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &part
 void ProjectorAM2OrderV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
 
-   for (unsigned int imode=0; imode < Nmode_; imode++){ 
-       
+   for (unsigned int imode=0; imode < Nmode_; imode++){
+
        std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
        std::complex<double> *Jl = &( *emAM->Jl_[imode] )( 0 );
        std::complex<double> *Jr = &( *emAM->Jr_[imode] )( 0 );
@@ -272,10 +272,10 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
 
    double sign = -1.;
    for (unsigned int i=0; i< imode; i++) sign *= -1;
-   
+
    if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
-           //Fold rho 
+           //Fold rho
            for( unsigned int j=1 ; j<3; j++ ) {
                rhoj[i+j] += sign * rhoj[i-j];
                rhoj[i-j]  = sign * rhoj[i+j];
@@ -332,7 +332,6 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
            }
        }
    }
-   return;
 }
 
 void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
@@ -356,78 +355,75 @@ void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
 
         }
     }
-
-return;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization (WARNING: Not Vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
+void ProjectorAM2OrderV::ionizationCurrents( Field */*Jx*/, Field */*Jy*/, Field */*Jz*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
 {
-    return;
 /*    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
     Field2D *Jy2D  = static_cast<Field2D *>( Jy );
     Field2D *Jz2D  = static_cast<Field2D *>( Jz );
-    
-    
+
+
     //Declaration of local variables
     int ip, id, jp, jd;
     double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
     double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
     double Sxp[3], Sxd[3], Syp[3], Syd[3];
-    
+
     // weighted currents
     double weight = inv_cell_volume * particles.weight( ipart );
     double Jx_ion = Jion.x * weight;
     double Jy_ion = Jion.y * weight;
     double Jz_ion = Jion.z * weight;
-    
+
     //Locate particle on the grid
     xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
     ypn    = particles.position( 1, ipart ) * dy_inv_; // normalized distance to the first node
-    
+
     // x-primal index
     ip      = round( xpn );                  // x-index of the central node
     xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
     xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
-    
+
     // x-dual index
     id      = round( xpn+0.5 );              // x-index of the central node
     xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
     xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
-    
+
     // y-primal index
     jp      = round( ypn );                  // y-index of the central node
     ypmyjp  = ypn - ( double )jp;            // normalized distance to the nearest grid point
     ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
-    
+
     // y-dual index
     jd      = round( ypn+0.5 );              // y-index of the central node
     ypmyjd  = ypn - ( double )jd + 0.5;      // normalized distance to the nearest grid point
     ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
-    
+
     Sxp[0] = 0.5 * ( xpmxip2-xpmxip+0.25 );
     Sxp[1] = ( 0.75-xpmxip2 );
     Sxp[2] = 0.5 * ( xpmxip2+xpmxip+0.25 );
-    
+
     Sxd[0] = 0.5 * ( xpmxid2-xpmxid+0.25 );
     Sxd[1] = ( 0.75-xpmxid2 );
     Sxd[2] = 0.5 * ( xpmxid2+xpmxid+0.25 );
-    
+
     Syp[0] = 0.5 * ( ypmyjp2-ypmyjp+0.25 );
     Syp[1] = ( 0.75-ypmyjp2 );
     Syp[2] = 0.5 * ( ypmyjp2+ypmyjp+0.25 );
-    
+
     Syd[0] = 0.5 * ( ypmyjd2-ypmyjd+0.25 );
     Syd[1] = ( 0.75-ypmyjd2 );
     Syd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
-    
+
     ip  -= i_domain_begin_;
     id  -= i_domain_begin_;
     jp  -= j_domain_begin_;
     jd  -= j_domain_begin_;
-    
+
     for( unsigned int i=0 ; i<3 ; i++ ) {
         int iploc=ip+i-1;
         int idloc=id+i-1;
@@ -442,8 +438,8 @@ void ProjectorAM2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
             ( *Jz2D )( iploc, jploc ) += Jz_ion * Sxp[i]*Syp[j];
         }
     }//i*/
-    
-    
+
+
 } // END Project global current densities (ionize)
 
 
@@ -464,19 +460,19 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
+
     int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
-    
+
     int vecSize = 8;
     int bsize = 5*5*vecSize*Nmode_;
-    
+
     std::complex<double> bJl[bsize] __attribute__( ( aligned( 64 ) ) );
     std::complex<double> bJr[bsize] __attribute__( ( aligned( 64 ) ) );
     std::complex<double> bJt[bsize] __attribute__( ( aligned( 64 ) ) );
-    
+
     double Sl0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sr0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double DSl[40] __attribute__( ( aligned( 64 ) ) );
@@ -499,45 +495,45 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     double * __restrict__ weight     = particles.getPtrWeight();
     short  * __restrict__ charge     = particles.getPtrCharge();
     int * __restrict__ cell_keys  = particles.getPtrCellKeys();
-  
+
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
         bJl[j] = 0.;
         bJr[j] = 0.;
         bJt[j] = 0.;
     }
-    
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    
+
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
+
         int np_computed = min( cell_nparts-ivect, vecSize );
         int istart0 = ( int )istart + ivect;
-        complex<double> e_bar[8], e_delta_m1[8]; 
-        
+        complex<double> e_bar[8], e_delta_m1[8];
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             compute_distances( position_x, position_y, position_z, cell_keys, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
-       
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJl, dl_ov_dt_, invR_local, e_bar);
-        } 
+        }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeJr( ipart, charge_weight, DSl, DSr, Sl0_buff_vect, bJr, one_ov_dt, invRd_local, e_bar, jpom2);
-        } 
+        }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeJt( ipart, &momentum_y[istart0], &momentum_z[istart0], charge_weight, &invgf[istart0-ipart_ref], DSl, DSr, Sl0_buff_vect, Sr0_buff_vect, bJt, invR_local, r_bar, e_bar, e_delta_m1, one_ov_dt);
-        } 
+        }
     } //End ivect
-    
+
     int iloc0 = ipom2*nprimr_+jpom2;
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
@@ -600,12 +596,12 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
     }
-    
+
     //Independent of cell. Should not be here
     //{
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -618,8 +614,8 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
     int iold[2];
     iold[0] = scell/nscellr_+oversize_[0];
     iold[1] = ( scell%nscellr_ )+oversize_[1];
-    
-    
+
+
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
@@ -627,7 +623,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         } else {
             ERROR( "Vectorized projection is not supported in spectral AM" );
         }
-        
+
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
         //double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
@@ -641,6 +637,185 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 // Project susceptibility
 void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
-    ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for AM geometry" );
-}
+    double dts2 = dt/2.;
+    double dts4 = dt/4.;
+    double * __restrict__ Chi_envelope = &( *EMfields->Env_Chi_ )( 0 ) ;
 
+    int iold[2];
+    iold[0] = icell/nscellr_+oversize_[0];
+    iold[1] = ( icell%nscellr_ )+oversize_[1];
+
+    int ipom2 = iold[0]-2;
+    int jpom2 = iold[1]-2;
+
+    int vecSize = 8;
+    int bsize = 5*5*vecSize; // Chi has only one mode //*Nmode_;
+
+    std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
+    double * __restrict__ inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread][0] );
+
+
+    int nparts = smpi->dynamics_invgf[ithread].size();
+    double * __restrict__ Ex       = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey       = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez       = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Phi      = &( ( *Phipart )[0*nparts] );
+    double * __restrict__ GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double * __restrict__ GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double * __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
+
+    double bChi[bsize] __attribute__( ( aligned( 64 ) ) );
+
+    double Sl1[32] __attribute__( ( aligned( 64 ) ) );
+    double Sr1[32] __attribute__( ( aligned( 64 ) ) );
+    // double Sl0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
+    // double Sr0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
+    // double DSl[40] __attribute__( ( aligned( 64 ) ) );
+    // double DSr[40] __attribute__( ( aligned( 64 ) ) );
+    double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
+    // double r_bar[8] __attribute__( ( aligned( 64 ) ) );
+
+    //double *invR_local = &(invR_[jpom2]);
+    // double *invRd_local = &(invRd_[jpom2]);
+
+    double *invR_local = &(invR_[jpom2]);
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+    //int * __restrict__ cell_keys  = particles.getPtrCellKeys();
+
+    // Closest multiple of 8 higher or equal than npart = iend-istart.
+    int cell_nparts( ( int )iend-( int )istart );
+
+    double one_over_mass=1./species_mass;
+
+    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
+
+        int np_computed = min( cell_nparts-ivect, vecSize );
+        int istart0 = ( int )istart + ivect;
+
+        #pragma omp simd
+        for( unsigned int j=0; j<200*Nmode_; j++ ) {
+            bChi[j] = 0.;
+        }
+
+       #pragma omp simd
+       for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+           double gamma_ponderomotive, gamma0, gamma0_sq;
+           double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
+           double pxsm, pysm, pzsm;
+
+           int ipart2 = istart-ipart_ref+ipart;
+
+           double c = charge[istart0+ipart];
+
+           charge_over_mass_dts2       = c *dts2*one_over_mass;
+           // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
+           charge_sq_over_mass_sq_dts4 = c*c*dts4*one_over_mass*one_over_mass;
+           // (charge over mass)^2
+           charge_sq_over_mass_sq      = c*c*one_over_mass*one_over_mass;
+
+           // compute initial ponderomotive gamma
+           gamma0_sq = (1. + momentum_x[istart0+ipart]*momentum_x[istart0+ipart]
+                     + momentum_y[istart0+ipart]*momentum_y[istart0+ipart]
+                     + momentum_z[istart0+ipart]*momentum_z[istart0+ipart]
+                     + Phi[istart0-ipart_ref+ipart]*charge_sq_over_mass_sq);
+
+           gamma0    = sqrt( gamma0_sq ) ;
+
+           // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+           pxsm = ( gamma0 * charge_over_mass_dts2*( Ex[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhix[ipart2] ) ) * momentum_x[istart0+ipart] / gamma0_sq;
+           pysm = ( gamma0 * charge_over_mass_dts2*( Ey[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhiy[ipart2] ) ) * momentum_y[istart0+ipart] / gamma0_sq;
+           pzsm = ( gamma0 * charge_over_mass_dts2*( Ez[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhiz[ipart2] ) ) * momentum_z[istart0+ipart] / gamma0_sq;
+
+           // update of gamma ponderomotive
+           gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
+           // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+           inv_gamma_ponderomotive[istart0 + ipart - ipart_ref] = 1./gamma_ponderomotive;
+
+           // susceptibility for the macro-particle
+           charge_weight[ipart-ipart_ref] = c*c*inv_cell_volume * weight[istart0+ipart-ipart_ref]*one_over_mass*inv_gamma_ponderomotive[istart0 + ipart - ipart_ref] ;
+
+           // variable declaration
+           double xpn, rpn;
+           double delta, delta2;
+
+           // Initialize all current-related arrays to zero
+           Sl1[ipart] = 0.;
+           Sr1[ipart] = 0.;
+
+           Sl1[vecSize+ipart] = 0.;
+           Sr1[vecSize+ipart] = 0.;
+
+           Sl1[2*vecSize+ipart] = 0.;
+           Sr1[2*vecSize+ipart] = 0.;
+
+           // --------------------------------------------------------
+           // Locate particles & Calculate Esirkepov coef. S, DS and W
+           // --------------------------------------------------------
+
+           // locate the particle on the primal grid at current time-step & calculate coeff. S1
+          xpn = position_x[istart0+ipart-ipart_ref] * dl_inv_;
+          int ip = round( xpn );
+          delta  = xpn - ( double )ip;
+          delta2 = delta*delta;
+          Sl1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+          Sl1[1*vecSize+ipart] = 0.75-delta2;
+          Sl1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+
+          rpn = position_y[istart0+ipart-ipart_ref] * dr_inv_ * position_y[istart0+ipart-ipart_ref] * dr_inv_;
+          rpn += position_z[istart0+ipart-ipart_ref] * dr_inv_ * position_z[istart0+ipart-ipart_ref] * dr_inv_;
+          rpn = sqrt(rpn);
+          int jp = round( rpn );
+          delta  = rpn - ( double )jp;
+          delta2 = delta*delta;
+          jp -= j_domain_begin_ + 2;
+          Sr1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 ) * invR_[1+jp];
+          Sr1[1*vecSize+ipart] = (0.75-delta2)               * invR_[2+jp];
+          Sr1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 ) * invR_[3+jp];
+
+      } // end ipart loop
+
+      #pragma omp simd
+      for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+          UNROLL_S(5)
+          for( unsigned int i=0 ; i<3 ; i++ ) {
+              UNROLL_S(5)
+              for ( unsigned int j=0; j<3 ; j++ ) {
+                  int index( ( i*5 + j )*vecSize+ipart );//cout <<ipart<<" "<<i<<" "<<j<<endl;
+                  bChi [index] += charge_weight[ipart]* Sl1[i*vecSize+ipart]*Sr1[j*vecSize+ipart] ;
+              }
+          }
+      } // end ipart loop
+
+      // ---------------------------
+      // Calculate the total charge
+      // ---------------------------
+      int iloc0 = ipom2*nprimr_+jpom2;
+      int iloc = iloc0;
+      for( unsigned int i=0 ; i<5 ; i++ ) {
+          #pragma omp simd
+          for( unsigned int j=0 ; j<5 ; j++ ) {
+              double tmpChi( 0. );
+              int ilocal = ( i*5+j )*vecSize;
+              UNROLL(8)
+              for( int ipart=0 ; ipart<8; ipart++ ) {
+                  tmpChi += bChi [ilocal+ipart];
+              }
+              Chi_envelope[iloc+j] += tmpChi;
+          }
+          iloc += nprimr_;
+      }
+
+    } // end ivect
+
+} // end ProjectorAM2OrderV::susceptibility

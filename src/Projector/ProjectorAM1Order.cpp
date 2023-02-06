@@ -32,8 +32,8 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
 
     oversize_[1] = params.oversize[1]; 
-    nprimr_ = params.n_space[1] + 2*params.oversize[1] + 1;
-    npriml_ = params.n_space[0] + 2*params.oversize[0] + 1;
+    nprimr_ = params.patch_size_[1] + 2*params.oversize[1] + 1;
+    npriml_ = params.patch_size_[0] + 2*params.oversize[0] + 1;
 
     invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);
@@ -326,13 +326,11 @@ void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imo
             rho[i] = rho[i+1] * slope;
         }//i
     }
-
-    return;
 }
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool /*is_spectral*/, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
         
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
@@ -350,13 +348,13 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM1Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
+void ProjectorAM1Order::ionizationCurrents( Field */*Jl*/, Field */*Jr*/, Field */*Jt*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
 {
 }
 
 
 // Projector for susceptibility used as source term in envelope equation
-void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int /*icell*/, int /*ipart_ref*/ )
 
 {
     // -------------------------------------
@@ -470,7 +468,5 @@ void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
           
         EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
     }//i
-    
-return;
 }
 

@@ -28,4 +28,12 @@
     #define UNROLL_S(n)
 #endif
 
+#if defined ( SMILEI_ACCELERATOR_GPU_OMP )
+    #define ATOMIC(mode) \
+    _Pragma( TOSTRING(omp atomic mode))
+#elif defined ( SMILEI_OPENACC_MODE )
+    #define ATOMIC(mode) \
+    _Pragma( TOSTRING(acc atomic mode))
+#endif
+
 #endif

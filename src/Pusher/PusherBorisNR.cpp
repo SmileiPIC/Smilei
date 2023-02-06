@@ -43,13 +43,41 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 
     const short *const __restrict__ charge = particles.getPtrCharge();
 
-    #ifndef ACCELERATOR_GPU_ACC
-        #pragma omp simd
-    #else
-        int np = iend-istart;
-        #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
-        #pragma acc loop gang worker vector
-    #endif
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    const int istart_offset   = istart - ipart_buffer_offset;
+    const int particle_number = iend - istart;
+
+    #pragma omp target is_device_ptr( /* to: */                               \
+                                      charge /* [istart:particle_number] */ ) \
+        is_device_ptr( /* tofrom: */                                          \
+                       momentum_x /* [istart:particle_number] */,             \
+                       momentum_y /* [istart:particle_number] */,             \
+                       momentum_z /* [istart:particle_number] */,             \
+                       position_x /* [istart:particle_number] */,             \
+                       position_y /* [istart:particle_number] */,             \
+                       position_z /* [istart:particle_number] */ )
+    #pragma omp teams distribute parallel for
+#elif defined(SMILEI_OPENACC_MODE)
+    const int istart_offset   = istart - ipart_buffer_offset;
+    const int particle_number = iend - istart;
+
+    #pragma acc parallel present(Ex [0:nparts],    \
+                                 Ey [0:nparts],    \
+                                 Ez [0:nparts],    \
+                                 Bx [0:nparts],    \
+                                 By [0:nparts],    \
+                                 Bz [0:nparts]),    \
+        deviceptr(position_x,                                           \
+                  position_y,                                           \
+                  position_z,                                           \
+                  momentum_x,                                           \
+                  momentum_y,                                           \
+                  momentum_z,                                           \
+                  charge)
+    #pragma acc loop gang worker vector
+#else
+    #pragma omp simd
+#endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
         const int ipart2 = ipart - ipart_buffer_offset;

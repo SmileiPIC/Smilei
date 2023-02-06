@@ -55,7 +55,7 @@ Species::Species( Params &params, Patch *patch ) :
     radiating_( false ),
     relativistic_field_initialization_( false ),
     iter_relativistic_initialization_( 0 ),
-    ionization_model( "none" ),
+    ionization_model_( "none" ),
     density_profile_type_( "none" ),
     charge_profile_( NULL ),
     density_profile_( NULL ),
@@ -70,7 +70,7 @@ Species::Species( Params &params, Patch *patch ) :
     momentum_initialization_array_( NULL ),
     n_numpy_particles_( 0 ),
     position_initialization_on_species_( false ),
-    position_initialization_on_species_index( -1 ),
+    position_initialization_on_species_index_( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
     photon_species_( nullptr ),
@@ -108,8 +108,8 @@ Species::Species( Params &params, Patch *patch ) :
     inv_nDim_particles = 1./( ( double )nDim_particle );
 
     length_[0]=0;
-    length_[1]=params.n_space[1]+1;
-    length_[2]=params.n_space[2]+1;
+    length_[1]=params.patch_size_[1]+1;
+    length_[2]=params.patch_size_[2]+1;
 
     merge_momentum_cell_size_.resize(3);
 
@@ -131,24 +131,24 @@ void Species::initCluster( Params &params )
     // been delegated to the operators).
 
     // Arrays of the min and max indices of the particle bins
-    particles->first_index.resize( params.n_space[0]/cluster_width_ );
-    particles->last_index.resize( params.n_space[0]/cluster_width_ );
-    Nbins = params.n_space[0]/cluster_width_ ;
+    particles->first_index.resize( params.patch_size_[0]/cluster_width_ );
+    particles->last_index.resize( params.patch_size_[0]/cluster_width_ );
+    Nbins = params.patch_size_[0]/cluster_width_ ;
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
     //Primal dimension of fields.
-    f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
-    f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
-    f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
+    f_dim0 =  params.patch_size_[0] + 2 * oversize[0] +1;
+    f_dim1 =  params.patch_size_[1] + 2 * oversize[1] +1;
+    f_dim2 =  params.patch_size_[2] + 2 * oversize[2] +1;
 
     //Dual dimension of fields.
-    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
-    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
-    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+    f_dim0_d =  params.patch_size_[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.patch_size_[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.patch_size_[2] + 2 * oversize[2] +2;
 
-    b_dim.resize( params.nDim_field, 1 );
+    b_dim.resize( 3, 1 );
     if( nDim_particle == 1 ) {
         b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         b_dim[1] =  1;
@@ -271,7 +271,7 @@ void Species::resizeCluster( Params &params )
 
     // We keep the current number of particles (from the vector size)
     int npart = particles->hostVectorSize();
-    int size = params.n_space[0]/cluster_width_;
+    int size = params.patch_size_[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( size );
@@ -307,9 +307,9 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
     init_space.cell_index_[0] = 0;
     init_space.cell_index_[1] = 0;
     init_space.cell_index_[2] = 0;
-    init_space.box_size_[0]   = params.n_space[0];
-    init_space.box_size_[1]   = params.n_space[1];
-    init_space.box_size_[2]   = params.n_space[2];
+    init_space.box_size_[0]   = params.patch_size_[0];
+    init_space.box_size_[1]   = params.patch_size_[1];
+    init_space.box_size_[2]   = params.patch_size_[2];
 
     // Creation of the particle creator
     ParticleCreator particle_creator;
@@ -367,7 +367,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
-    Merge = MergingFactory::create( params, this, patch->rand_ );
+    Merge = MergingFactory::create( this, patch->rand_ );
 
     // Evaluation of the particle computation time
     if (params.has_adaptive_vectorization ) {
@@ -530,6 +530,132 @@ Species::~Species()
 
 }
 
+#if defined( SMILEI_ACCELERATOR_MODE )
+//! Prepare the species Current and Rho grids on Device
+void
+Species::prepareSpeciesCurrentAndChargeOnDevice( 
+    unsigned int ispec,
+    ElectroMagn * EMfields)
+{
+
+    unsigned int Jx_size;
+    unsigned int Jy_size;
+    unsigned int Jz_size;
+    unsigned int rho_size;
+
+    double * __restrict__ Jx_s = nullptr;
+    double * __restrict__ Jy_s = nullptr;
+    double * __restrict__ Jz_s = nullptr;
+    double * __restrict__ rho_s = nullptr;
+
+    if (EMfields->Jx_s[ispec]) {
+        Jx_size             = EMfields->Jx_s[ispec]->size();
+        Jx_s  = EMfields->Jx_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx_s, Jx_size );
+    }
+    if (EMfields->Jy_s[ispec]) {
+        Jy_size             = EMfields->Jy_s[ispec]->size();
+        Jy_s  = EMfields->Jy_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy_s, Jy_size );
+    }
+    if (EMfields->Jz_s[ispec]) {
+        Jz_size             = EMfields->Jz_s[ispec]->size();
+        Jz_s  = EMfields->Jz_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz_s, Jz_size );
+    }
+    if (EMfields->rho_s[ispec]) {
+        rho_size             = EMfields->rho_s[ispec]->size();
+        rho_s  = EMfields->rho_s[ispec]->data() ;
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( rho_s, rho_size );
+    }
+
+
+#if defined( SMILEI_OPENACC_MODE )
+        #pragma acc parallel present( Jx_s[0:Jx_size],     \
+                                        Jy_s[0:Jy_size], \
+                                        Jz_s[0:Jz_size],   \
+                                        rho_s[0:rho_size] )  
+        {
+#endif
+        if (Jx_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jx_s[i] = 0;
+            }
+        }
+        if (Jy_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jy_size; i++ ) {
+                Jy_s[i] = 0;
+            }
+        }
+        if (Jz_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jz_size; i++ ) {
+                Jz_s[i] = 0;
+            }
+        }
+        if (rho_s) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<rho_size; i++ ) {
+                rho_s[i] = 0;
+            }
+        }
+#if defined( SMILEI_OPENACC_MODE )  
+        } // end parallel region
+#endif
+}
+
+//! Deallocate species Current (J) and Charge (Rho) arrays on Device
+void
+Species::deleteSpeciesCurrentAndChargeOnDevice(
+    unsigned int ispec,
+    ElectroMagn * EMfields)
+{
+    if (EMfields->Jx_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jx_s[ispec]->data() ;
+        const int size                      = EMfields->Jx_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->Jy_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jy_s[ispec]->data() ;
+        const int size                      = EMfields->Jy_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->Jz_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->Jz_s[ispec]->data() ;
+        const int size                      = EMfields->Jz_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+    if (EMfields->rho_s[ispec]) {
+        double *const __restrict__ pointer  = EMfields->rho_s[ispec]->data();
+        const int size                      = EMfields->rho_s[ispec]->size();
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+    }
+}
+
+#endif // end if SMILEI_ACCELERATOR_MODE
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Method calculating the Particle dynamics (interpolation, pusher, projection and more)
 //! For all particles of the species
@@ -543,12 +669,12 @@ Species::~Species()
 void Species::dynamics( double time_dual,
                         unsigned int ispec,
                         ElectroMagn *EMfields,
-                        Params &params, bool diag_flag,
+                        Params &params,
+                        bool diag_flag,
                         PartWalls *partWalls,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                        vector<Diagnostic *> &localDiags )
+                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
 {
     int tid( 0 );
 
@@ -572,7 +698,13 @@ void Species::dynamics( double time_dual,
     if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         // Prepare temporary buffers for this iteration
-        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry=="AMcylindrical" );
+#if defined( SMILEI_ACCELERATOR_MODE )
+        smpi->resizeDeviceBuffers( ithread,
+                                   nDim_field,
+                                   particles->numberOfParticles() );
+#else
+        smpi->resizeBuffers( ithread, nDim_field, particles->numberOfParticles(), params.geometry == "AMcylindrical" );
+#endif
 
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
@@ -581,44 +713,26 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
 
-#ifndef ACCELERATOR_GPU_ACC
-            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
-            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
-#else
+#if defined( SMILEI_OPENACC_MODE) 
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->resetCellKeys();
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1) );
             static_cast<nvidiaParticles*>(mBW_pair_particles_[1])->resetCellKeys();
+#else
+            mBW_pair_particles_[0]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0));
+            mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 #endif
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
-
         }
 
-        //Point to local thread dedicated buffers
-        //Still needed for ionization
-        vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-
-        // Make sure some precondition are respected
+#if defined( SMILEI_ACCELERATOR_MODE )
+        // Make sure some bin preconditions are respected
         SMILEI_ASSERT( particles->first_index.size() == 1 );
         SMILEI_ASSERT( particles->last_index.size() >= 1 );
         SMILEI_ASSERT( particles->last_index.back() == particles->last_index[0] );
-
-        const int particle_count = particles->last_index.back();
-
-        // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
-
-        {
-
 #endif
         for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) {
 
@@ -641,7 +755,7 @@ void Species::dynamics( double time_dual,
 #endif
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
-                ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj );
+                ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], &smpi->dynamics_Epart[ithread], patch, Proj );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -718,7 +832,6 @@ void Species::dynamics( double time_dual,
 
                 Multiphoton_Breit_Wheeler_process->removeDecayedPhotonsWithoutBinCompression(
                     *particles, smpi, ibin,
-                    particles->first_index.size(),
                     &particles->first_index[0],
                     &particles->last_index[0],
                     ithread );
@@ -740,7 +853,7 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
             removeTaggedParticles(smpi,
                                 &particles->first_index[0],
                                 &particles->last_index[0],
@@ -874,15 +987,6 @@ void Species::dynamics( double time_dual,
 //            }
 //        }
 
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        }
-
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Epart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_Bpart[ithread].data(), particle_count * 3 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_invgf[ithread].data(), particle_count * 1 );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_iold[ithread].data(), particle_count * nDim_field );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( smpi->dynamics_deltaold[ithread].data(), particle_count * nDim_field );
-#endif
     } //End if moving or ionized particles
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
@@ -920,7 +1024,6 @@ void Species::dynamics( double time_dual,
 
         }
     } // End projection for frozen particles
-
 } //END dynamics
 
 #ifdef _OMPTASKS
@@ -930,8 +1033,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         PartWalls *partWalls,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                        vector<Diagnostic *> &localDiags, int buffer_id )
+                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -1437,10 +1539,10 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         } // end condition on diag and not particle test
 
      } // end moving particle
-     #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
-     {
-     smpi->reduceDynamicsBufferSize( buffer_id, params.geometry=="AMcylindrical" );
-     }
+     //#pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+     //{
+     //smpi->reduceDynamicsBufferSize( buffer_id, params.geometry=="AMcylindrical" );
+     //}
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
 
      if(time_dual>time_frozen_){
@@ -1499,22 +1601,21 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::scalarDynamics( double time_dual, unsigned int ispec,
-                               ElectroMagn *EMfields,
-                               Params &params, bool diag_flag,
-                               PartWalls *partWalls,
-                               Patch *patch, SmileiMPI *smpi,
-                               RadiationTables &RadiationTables,
-                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                               vector<Diagnostic *> &localDiags )
+void Species::scalarDynamics( double, unsigned int ,
+                               ElectroMagn *,
+                               Params &, bool ,
+                               PartWalls *,
+                               Patch *, SmileiMPI *,
+                               RadiationTables &,
+                               MultiphotonBreitWheelerTables & )
 {
 
 }
 
-void Species::projectionForDiags( double time_dual, unsigned int ispec,
-                                    ElectroMagn *EMfields,
-                                    Params &params, bool diag_flag,
-                                    Patch *patch, SmileiMPI *smpi )
+void Species::projectionForDiags( unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  Patch *patch )
 {
     if( diag_flag &&( !particles->is_test ) ) {
 
@@ -1567,15 +1668,12 @@ void Species::projectionForDiags( double time_dual, unsigned int ispec,
 //! - radiation reaction
 //! - multiphoton Breit-Wheeler
 // -----------------------------------------------------------------------------
-void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
-        Params &params,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+void Species::dynamicsImportParticles( double time_dual, Params &params, Patch *patch, vector<Diagnostic *> &localDiags )
 {
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
         electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-                 }
+    }
 
     // if moving particle
     if( time_dual>time_frozen_ ) { // moving particle
@@ -1588,7 +1686,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 
                 //std::cerr << "eraseLeaving" << std::endl;
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
                 // We first erase empty slots in the buffer of photons
                 // radiation_photons_->cell_keys is used as a mask
                 static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
@@ -1604,7 +1702,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                 //photon_species_->particles->last_index[0] = photon_species_->particles->deviceSize();
 
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
                 // We explicitely clear the device Particles
                 //std::cerr << "Clear" << std::endl;
                 static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
@@ -1619,7 +1717,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             // Addition of the electron-positron particles
             for( int k=0; k<2; k++ ) {
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
                 // We first erase empty slots in the buffer of photons
                 // radiation_photons_->cell_keys is used as a mask
                 static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->eraseLeavingParticles();
@@ -1630,7 +1728,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                                                       *mBW_pair_particles_[k],
                                                       localDiags );
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
                 // We explicitely clear the device Particles
                 static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->deviceClear();
 #endif
@@ -1649,7 +1747,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
+void Species::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
@@ -1667,7 +1765,6 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             unsigned int Nmode = emAM->rho_AM_.size();
             for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                //unsigned int ifield = imode*(*EMfields).n_species+ispec;
                 complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
@@ -1685,17 +1782,18 @@ void Species::extractParticles()
     particles->extractParticles( particles_to_move );
 }
 
-void Species::injectParticles( Params &params )
-{
-}
+// void Species::injectParticles( Params &params )
+// {
+// }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sortParticles( Params &params, Patch * patch )
+void Species::sortParticles( Params &params )
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
 
     // -----------------------------
     // GPU version
@@ -1731,7 +1829,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     // --------------------------
     // CPU version
 
-    injectParticles( params );
+    // injectParticles( params );
 
     int ndim = params.nDim_field;
     int idim;
@@ -1967,14 +2065,14 @@ void Species::sortParticles( Params &params, Patch * patch )
 //! This function configures the type of species according to the default mode
 //! regardless the number of particles per cell
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::defaultConfigure( Params &param, Patch *patch )
+void Species::defaultConfigure( Params &, Patch * )
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This function configures the species according to the vectorization mode
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::configuration( Params &param, Patch *patch )
+void Species::configuration( Params &, Patch * )
 {
 }
 
@@ -1982,7 +2080,7 @@ void Species::configuration( Params &param, Patch *patch )
 //! This function reconfigures the species operators after evaluating
 //! the best mode from the particle distribution
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::reconfiguration( Params &param, Patch *patch )
+void Species::reconfiguration( Params &, Patch * )
 {
 }
 
@@ -1995,7 +2093,7 @@ void Species::countSortParticles( Params &params )
     int ix, iy;
     double x, y;
 
-    nxy = params.n_space[0]*params.n_space[1];
+    nxy = params.patch_size_[0]*params.patch_size_[1];
     token = ( particles == &particles_sorted[0] );
 
     int indices[nxy];
@@ -2015,7 +2113,7 @@ void Species::countSortParticles( Params &params )
         ix = floor( x * dx_inv_[0] ) ;
         iy = floor( y * dx_inv_[1] ) ;
 
-        ixy = iy + ix*params.n_space[1];
+        ixy = iy + ix*params.patch_size_[1];
 
 
         indices[ixy] ++;
@@ -2037,7 +2135,7 @@ void Species::countSortParticles( Params &params )
         ix = floor( x * dx_inv_[1] ) ;
         iy = floor( y * dx_inv_[2] ) ;
 
-        ixy = iy + ix*params.n_space[1];
+        ixy = iy + ix*params.patch_size_[1];
         particles->overwriteParticle( ip, particles_sorted[token], indices[ixy] );
         indices[ixy]++;
     }
@@ -2049,7 +2147,7 @@ void Species::countSortParticles( Params &params )
 //! Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     // ---------------------------------------------------
     // GPU version
     // Warning: the GPU version does not handle bin and sorting
@@ -2127,7 +2225,11 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     //particles->cell_keys.resize( particles->size() );
     particles->resizeCellKeys( particles->size() );
 
+    // Clear all particles
     source_particles.clear();
+
+    // Put capacity to 0 to save memory
+    source_particles.shrinkToFit(true);
 
 #endif
 
@@ -2151,7 +2253,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
 
     const int nparts = smpi->dynamics_Epart[ithread].size()/3;
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 
     double *const __restrict__ weight =  particles->getPtrWeight();
 
@@ -2190,7 +2292,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
 
     const int nbin = particles->numberOfBins();
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel \
     present(Ex[0:nparts],Ey[0:nparts],Ez[0:nparts], \
     Bx[0:nparts], By[0:nparts], Bz[0:nparts], \
@@ -2226,7 +2328,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
             // if copy_first_index < particles->first_index[ibin+1], it means that the empty space is larger than the number of particles in ibin
             // then we move the full bin
             // Else we only move the particles from copy_first_index to last_index[ibin+1]
-            if (copy_first_index < particles->first_index[ibin+1]) {
+            if( (int) copy_first_index < particles->first_index[ibin+1] ) {
                 copy_first_index = particles->first_index[ibin+1];
                 copy_particle_number = particle_number;
             } else {
@@ -2235,7 +2337,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
 
             if (copy_particle_number>0) {
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                 particles->overwriteParticle(copy_first_index, particles->last_index[ibin], copy_particle_number, compute_cell_keys );
 #else
                 for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
@@ -2261,36 +2363,38 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
                     }
                 }
 #endif
-                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+
+                for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                     Ex[copy_first_index + ipart] = Ex[particles->last_index[ibin] + ipart];
                     Ey[copy_first_index + ipart] = Ey[particles->last_index[ibin] + ipart];
                     Ez[copy_first_index + ipart] = Ez[particles->last_index[ibin] + ipart];
                 }
 
-                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+                for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                     Bx[copy_first_index + ipart] = Bx[particles->last_index[ibin] + ipart];
                     By[copy_first_index + ipart] = By[particles->last_index[ibin] + ipart];
                     Bz[copy_first_index + ipart] = Bz[particles->last_index[ibin] + ipart];
                 }
 
-                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+                for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                     gamma[copy_first_index + ipart] = gamma[particles->last_index[ibin] + ipart];
                 }
-                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+
+                for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                     for ( int iDim=particles->dimension()-1; iDim>=0 ; iDim-- ) {
                         iold[iDim*nparts + copy_first_index + ipart] = iold[iDim*nparts + particles->last_index[ibin] + ipart];
                     }
                 }
 
-                for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+                for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                     for ( int iDim=particles->dimension()-1; iDim>=0 ; iDim-- ) {
                         deltaold[iDim*nparts + copy_first_index + ipart] = deltaold[iDim*nparts + particles->last_index[ibin] + ipart];
                     }
                 }
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                 if (thetaold) {
-                    for (auto ipart = 0 ; ipart < copy_particle_number ; ipart ++) {
+                    for( unsigned int ipart = 0 ; ipart < copy_particle_number ; ipart ++ ) {
                         thetaold[copy_first_index + ipart] = thetaold[particles->last_index[ibin] + ipart];
                     }
                 }
@@ -2326,7 +2430,7 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
         }
     }
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 } // end parallel region
 #endif
 
@@ -2360,7 +2464,7 @@ void Species::removeTaggedParticlesPerBin(
     // Weight shortcut
     double *const __restrict__ weight =  particles->getPtrWeight();
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     double *const __restrict__ position_x = particles->getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_particle > 1 ? particles->getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_particle > 2 ? particles->getPtrPosition( 2 ) : nullptr;
@@ -2378,7 +2482,7 @@ void Species::removeTaggedParticlesPerBin(
     // Total number of bins / cells
     const int nbin = particles->numberOfBins();
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel  \
     present(Epart[0:nparts*3],\
     Bpart[0:nparts*3], \
@@ -2420,7 +2524,7 @@ void Species::removeTaggedParticlesPerBin(
                     if( ipart < last_photon_index ) {
                         // The last existing photon comes to the position of
                         // the deleted photon
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                         particles->overwriteParticle( last_photon_index, ipart, compute_cell_keys );
 #else
                         weight[ipart] = weight[last_photon_index];
@@ -2454,7 +2558,7 @@ void Species::removeTaggedParticlesPerBin(
                         }
                         gamma[ipart] = gamma[0*nparts+last_photon_index];
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
                         if (thetaold) {
                             thetaold[0*nparts+ipart] = thetaold[0*nparts+last_photon_index];
                         }
@@ -2481,7 +2585,7 @@ void Species::removeTaggedParticlesPerBin(
         } // if last_index[ibin] > first_index[ibin]
     } // end loop over the bins
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     } // end parallel region
 #endif
 }
@@ -2496,7 +2600,7 @@ void Species::removeTaggedParticles(
     bool compute_cell_keys)
 {
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 
     unsigned int new_n_parts = 0;
     unsigned int nb_deleted  = 0;
@@ -2565,7 +2669,7 @@ void Species::removeTaggedParticles(
         // that will not be erased
 
         // Backward loop over the tagged particles to fill holes in the photon particle array (at the bin level only)
-//#ifdef ACCELERATOR_GPU_ACC
+//#ifdef SMILEI_OPENACC_MODE
 //        #pragma acc loop seq
 //#endif
         for( int ipart=last_moving_index-1 ; ipart>=*first_index; ipart-- ) {
@@ -2696,10 +2800,9 @@ void Species::setXminBoundaryCondition()
 // ---------------------------------------------------------------------------------------------------------------------
 // Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::mergeParticles( double time_dual, unsigned int ispec,
-                              Params &params,
-                              Patch *patch, SmileiMPI *smpi,
-                              std::vector<Diagnostic *> &localDiags ) {}
+void Species::mergeParticles( double /*time_dual*/ )
+{
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -2707,11 +2810,10 @@ void Species::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual,
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Params &params,
+        Patch *patch, SmileiMPI *smpi )
 {
 
     int ithread;
@@ -2808,11 +2910,10 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 #ifdef _OMPTASKS
-void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Params &params,
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -2894,7 +2995,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
-                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, 0 );
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
 
 #ifdef  __DETAILED_TIMERS
@@ -2977,13 +3078,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
+void Species::ponderomotiveProjectSusceptibility( double time_dual, 
         ElectroMagn *EMfields,
-        Params &params, bool diag_flag,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Params &params, 
+        Patch *patch, SmileiMPI *smpi )
 {
-
     int ithread;
 #ifdef _OPENMP
     ithread = Tools::getOMPThreadNum();
@@ -3023,8 +3122,9 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
 
         } // end loop on ibin
-    } else { // immobile particle
     } //END if time vs. time_frozen_
+    
+    SMILEI_UNUSED( patch );
 } // ponderomotiveProjectSusceptibility
 
 
@@ -3038,8 +3138,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags )
+        Patch *patch, SmileiMPI *smpi )
 {
 
     const int ithread = Tools::getOMPThreadNum();
@@ -3147,7 +3246,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             if( params.geometry != "AMcylindrical" ) {
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    for( unsigned int iPart= (unsigned int)(particles->first_index[ibin]) ; (unsigned int)(iPart<particles->last_index[ibin]); iPart++ ) {
+                    for( unsigned int iPart = (unsigned int)(particles->first_index[ibin]) ; iPart < (unsigned int)(particles->last_index[ibin]); iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
                 }//End loop on bins
@@ -3180,8 +3279,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
-        Patch *patch, SmileiMPI *smpi,
-        vector<Diagnostic *> &localDiags, int buffer_id )
+        Patch *patch, SmileiMPI *smpi, int buffer_id )
 {
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -3461,7 +3559,11 @@ void Species::check( Patch *patch, std::string title )
     }
     std::cerr << "Check sum at " << title
               << " for "<< this->name_
-              << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " in patch (" << patch->Pcoordinates[0];
+    for( unsigned int idim = 1; idim<patch->Pcoordinates.size(); idim++ ) {
+        std::cerr << "," <<  patch->Pcoordinates[idim];
+    }
+    std::cerr << ") "
               << " mpi process " << patch->MPI_me_
               << " - mode: " << this->vectorized_operators
               << " - nb bin: " << particles->first_index.size()

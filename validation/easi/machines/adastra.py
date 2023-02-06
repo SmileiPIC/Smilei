@@ -10,12 +10,12 @@ class MachineAdastra(Machine):
     # You may need to escape some.
     the_slurm_script = """#!/bin/bash
 #SBATCH --job-name=smilei_validation
-# #SBATCH --partition=accel
-#SBATCH --nodes={the_node_count} --ntasks={the_mpi_process_count}
-#SBATCH --cpus-per-task={the_omp_thread_count} --gpus-per-task={the_gpu_count} # --gpus-per-node=8
-#SBATCH --gpu-bind=closest
+#SBATCH --account={the_account}
+#SBATCH --constraint={the_partition}&turbo
+#SBATCH --nodes={the_node_count} --exclusive
+#SBATCH --ntasks={the_mpi_process_count}
+#SBATCH --cpus-per-task={the_reserved_thread_count} --gpus-per-node={the_gpu_per_node_count}
 #SBATCH --threads-per-core=1 # --hint=nomultithread
-# #SBATCH --exclusive
 #SBATCH --output=output --error=output
 #SBATCH --time={the_maximum_task_duration}
 
@@ -25,33 +25,31 @@ class MachineAdastra(Machine):
 
 echo "Date              = $(date -R) | $(date +%s)"
 echo "Hostname          = $(hostname -s)"
-echo "Working Directory = $(pwd)"
+echo "Working directory = $(pwd)"
 echo ""
-echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
-echo "Number of Tasks Allocated      = $SLURM_NTASKS"
-echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
+echo "Number of nodes allocated       = $SLURM_JOB_NUM_NODES"
+echo "Number of tasks allocated       = $SLURM_NTASKS"
+echo "Number of cores/tasks allocated = $SLURM_CPUS_PER_TASK"
 
 ################################################################################
 # Environment setup
 ################################################################################
 
-set -e
+set -eu
 
-# Build  the environment (delegating this to a script would be better)
+# Build the environment (delegating this to a script would be better)
 module purge
-module load craype-network-ofi craype-x86-rome libfabric/1.13.1
-module load PrgEnv-cray/8.3.3 cce/13.0.1
-module load cray-mpich/8.1.13
-module load rocm/4.5.0
-module load craype-accel-amd-gfx908 # MI100
-# module load craype-accel-amd-gfx90a # MI250X
-module load cray-hdf5-parallel/1.12.1.5 cray-python/3.9.7.1
+
+module load craype-accel-amd-gfx90a craype-x86-trento
+module load PrgEnv-cray/8.3.3
+module load cray-mpich/8.1.21 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
+module load amd-mixed/5.2.3
 
 # OpenMP
-export OMP_DISPLAY_ENV=VERBOSE
+# export OMP_DISPLAY_ENV=VERBOSE
 export OMP_DISPLAY_AFFINITY=TRUE
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS={the_omp_thread_count}
 export OMP_SCHEDULE=DYNAMIC
 export OMP_PLACES=THREADS
 export OMP_PROC_BIND=FALSE
@@ -67,10 +65,17 @@ export MPICH_VERSION_DISPLAY=1
 export MPICH_ENV_DISPLAY=1
 export MPICH_CPUMASK_DISPLAY=1
 export MPICH_MPIIO_HINTS_DISPLAY=1
+# export MPICH_OFI_VERBOSE=1
+# export MPICH_OFI_NIC_VERBOSE=2
 
 export MPICH_GPU_SUPPORT_ENABLED=1
 
 export MPICH_ABORT_ON_ERROR=1 # Errors are not checked by Smilei, they must not happen
+
+# Workaround to the deadlock we get in MPI communication
+export FI_MR_CACHE_MONITOR=memhooks
+# Ou:
+# export FI_MR_CACHE_MAX_COUNT=0 
 
 set +x
 
@@ -94,29 +99,33 @@ numactl -H
 LaunchSRun() {{
     module list
 
-    cat <<EOF > soft_gpu_visibility_restrict.sh
-#!/bin/bash
-# Note: When not using ROCm, this script should not change the behavior of any 
-# software component.
+    SRUN_FLAGS_BASE="--mpi=cray_shasta --kill-on-bad-exit=1"
 
-export ROCR_VISIBLE_DEVICES=\$SLURM_LOCALID
+    SRUN_FLAGS_BINDING="--cpu-bind=none --mem-bind=none"
+    # SRUN_FLAGS_BINDING="--cpus-per-task={the_reserved_thread_count} --gpu-bind=closest"
+
+    SRUN_FLAGS_EXTRA="--label"
+
+    cat <<EOF > soft_gpu_visibility_restrict.sh && chmod +x soft_gpu_visibility_restrict.sh
+#!/bin/bash
+export HIP_VISIBLE_DEVICES=\$SLURM_LOCALID
 exec "\$@"
 EOF
 
-    chmod +x soft_gpu_visibility_restrict.sh
+    SRUN_WRAPPER_SCRIPT="soft_gpu_visibility_restrict.sh"
+    # SRUN_WRAPPER_SCRIPT="embind"
+    # SRUN_WRAPPER_SCRIPT="strace"
 
-    srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- soft_gpu_visibility_restrict.sh "$@" > {the_output_file} 2>&1
-
-    # srun strace "$@" > {the_output_file} 2>&1
-    # kCmd="if [ \${{SLURM_PROCID}} -eq 0 ]; then strace $@; else $@; fi"
-    # srun bash -c "$kCmd" > {the_output_file} 2>&1
+    set -x
+    srun ${{SRUN_FLAGS_BASE}} ${{SRUN_FLAGS_BINDING}} ${{SRUN_FLAGS_EXTRA}} -- ${{SRUN_WRAPPER_SCRIPT}} "$@" > {the_output_file} 2>&1
+    set +x
 }}
 
 # You must have built smilei with the 'perftools' module loaded!
 #
 LaunchSRunPATProfile() {{
-    module load perftools-base/21.12.0
-    module load perftools
+    module load perftools-base/22.09.0
+    # module load perftools
 
     # # Enable extra verbose tracing, can be very useful, produces a lot of data
     # export PAT_RT_SUMMARY=0
@@ -125,7 +134,7 @@ LaunchSRunPATProfile() {{
     # Assuming "$1" is an executable
 
     # GPU profiling
-    pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
+    # pat_build -g hip,io,mpi -w -f $1 -o instrumented_executable
 
     # CPU profiling
     # export PAT_RT_SAMPLING_INTERVAL=1000; # 1ms interval
@@ -135,7 +144,9 @@ LaunchSRunPATProfile() {{
     # # -u make the program crash (abi break) or silently corrupts it state
     # pat_build -g mpi,syscall,io,omp,hdf5 -w -f $1 -o instrumented_executable
 
-    LaunchSRun ./instrumented_executable ${{@:2}}
+    # LaunchSRun ./instrumented_executable ${{@:2}}
+
+    LaunchSRun "$@"
 }}
 
 LaunchROCmProfile() {{
@@ -159,7 +170,7 @@ LaunchROCmProfile() {{
     # High overhead (~15%)
     # echo 'pmc : VALUUtilization VALUBusy SALUBusy GPUBusy MemUnitBusy MemUnitStalled Wavefronts FetchSize WriteSize' > hw_counters.txt
     #
-    # echo 'pmc : VALUUtilization VALUBusy SALUBusy L2CacheHit MemUnitBusy MemUnitStalled WriteUnitStalled ALUStalledByLDS LDSBankConflict' > hw_counters.txt
+    # echo 'pmc : VALUUtilization VALUBusy L2CacheHit LDSBankConflict ALUStalledByLDS SALUBusy MemUnitBusy MemUnitStalled WriteUnitStalled' > hw_counters.txt
     #
     # How to do an AMD roofline:
     # https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#roofline-profiling
@@ -214,13 +225,22 @@ exit $kRETVAL
         # This'll start the tasks
         self.RUN_COMMAND = self.smilei_path.workdirs + '/smilei'
         
+        if 'gpu_amd' in self.options.compile_mode:
+            self.options.reserved_thread_per_task = 8
+            self.options.openmp_thread_per_task = 1
+            # We need 8 to get a proper binding. We reserve the node in exclusive mode anyway.
+            self.options.gpu_per_node_count = 8
+        else:
+            self.options.reserved_thread_per_task = self.options.omp
+            self.options.openmp_thread_per_task = self.options.omp
+            self.options.gpu_per_node_count = 0
+
         if self.options.nodes:
-            self.NODES = self.options.nodes
+            pass
         else:
             # 4 MI200~GPUs per node. Each GPU contains 2 GCD
             kMaxGPUPerNode = 4 * 2
-            # self.gpu_per_node = self.options.mpi if self.options.mpi <= kMaxGPUPerNode else kMaxGPUPerNode
-            self.NODES = int(ceil(self.options.mpi / kMaxGPUPerNode))
+            self.options.nodes = int(ceil(self.options.mpi / kMaxGPUPerNode))
 
     def run(self, arguments, dir):
         """
@@ -229,14 +249,17 @@ exit $kRETVAL
 
         # Write the slurm script
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write(self.the_slurm_script.format(a_task_command=self.RUN_COMMAND, 
-                                                 a_task_command_arguments=arguments, 
-                                                 the_node_count=self.NODES, 
-                                                 the_mpi_process_count=self.options.mpi, 
-                                                 the_maximum_task_duration=self.options.max_time, 
-                                                 the_omp_thread_count=self.options.omp,
+            f.write(self.the_slurm_script.format(a_task_command=self.RUN_COMMAND,
+                                                 a_task_command_arguments=arguments,
+                                                 the_account=self.options.account,
+                                                 the_partition=self.options.partition,
+                                                 the_node_count=self.options.nodes,
+                                                 the_mpi_process_count=self.options.mpi,
+                                                 the_reserved_thread_count=self.options.reserved_thread_per_task,
+                                                 the_gpu_per_node_count=self.options.gpu_per_node_count,
+                                                 the_omp_thread_count=self.options.openmp_thread_per_task,
                                                  the_output_file=self.smilei_path.output_file,
-                                                 the_gpu_count='1' if 'gpu_amd' in self.options.compile_mode else '0'))
+                                                 the_maximum_task_duration=self.options.max_time))
 
         # Schedule the task(s)
         self.launch_job(self.RUN_COMMAND + ' ' + arguments, 

@@ -25,7 +25,7 @@ Projector2D4Order::Projector2D4Order( Params &params, Patch *patch ) : Projector
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
 
     DEBUG( "cell_length "<< params.cell_length[0] );
 
@@ -640,7 +640,7 @@ void  Projector2D4Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector2D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -674,7 +674,7 @@ void Projector2D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector2D4Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector2D4Order::susceptibility( ElectroMagn *, Particles &, double , SmileiMPI *, int, int, int, int, int )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
@@ -682,7 +682,7 @@ void Projector2D4Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection on buffers
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+void Projector2D4Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int /*ispec*/, int /*icell*/, int /*ipart_ref*/ )
 {
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );

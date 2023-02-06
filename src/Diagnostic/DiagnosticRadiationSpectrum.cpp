@@ -117,7 +117,7 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi )
 }
 
 // run one particle binning diagnostic
-void DiagnosticRadiationSpectrum::run( Patch* patch, int itime, SimWindow* simWindow )
+void DiagnosticRadiationSpectrum::run( Patch* patch, int, SimWindow* simWindow )
 {
 
     // Calculate the total number of particles in this patch and resize buffers

@@ -155,13 +155,13 @@ private:
     npy_intp dims[1];
     unsigned int start; // particles are read starting at that index
 
-    void checkType( PyObject *obj, std::string &errorPrefix, bool *dummy )
+    void checkType( PyObject *obj, std::string &errorPrefix, bool * )
     {
         if( !PyArray_ISBOOL( ( PyArrayObject * )obj ) ) {
             ERROR( errorPrefix << " must return an array of booleans" );
         }
     };
-    void checkType( PyObject *obj, std::string &errorPrefix, double *dummy )
+    void checkType( PyObject *obj, std::string &errorPrefix, double * )
     {
         if( !PyArray_ISFLOAT( ( PyArrayObject * )obj ) ) {
             ERROR( errorPrefix << " must return an array of floats" );

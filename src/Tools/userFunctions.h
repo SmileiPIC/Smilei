@@ -1,5 +1,5 @@
 
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
 #include <openacc.h>
 #endif
 
@@ -36,7 +36,7 @@ public:
     //! \param array array in which to find the value
     //! \param elem element to be found
     //! \param nb_elem number of elements
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc routine seq
 #endif
     template <class T>

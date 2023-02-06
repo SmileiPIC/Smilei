@@ -343,10 +343,21 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         ERROR( "Probe #"<<n_probe<<": `time_integral` incompatible with the moving window" );
     }
     
+    // Extract the datatype
+    string datatype = "";
+    PyTools::extract( "datatype", datatype, "DiagProbe", n_probe );
+    if( datatype == "double" ) {
+        file_datatype_ = H5T_NATIVE_DOUBLE;
+    } else if( datatype == "float" ) {
+        file_datatype_ = H5T_NATIVE_FLOAT;
+    } else {
+        ERROR( "Probe #"<<n_probe<<": unknown datatype `"<<datatype<<"`" );
+    }
+    
     // Pre-calculate patch size
-    patch_size.resize( nDim_particle );
+    patch_length.resize( nDim_particle );
     for( unsigned int k=0; k<nDim_particle; k++ ) {
-        patch_size[k] = params.n_space[k]*params.cell_length[k];
+        patch_length[k] = params.patch_size_[k]*params.cell_length[k];
     }
 
     // Create filename
@@ -400,7 +411,7 @@ DiagnosticProbes::~DiagnosticProbes()
 }
 
 
-void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
+void DiagnosticProbes::openFile( Params &, SmileiMPI *smpi )
 {
     file_ = new H5Write( filename, &smpi->world() );
     
@@ -447,7 +458,7 @@ bool DiagnosticProbes::prepare( int itime )
 } 
 
 
-void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch & )
 {
     // create the file
     openFile( params, smpi );
@@ -475,20 +486,20 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
         if( geometry == "AMcylindrical" ) {
             mins[0] = numeric_limits<double>::max();
             maxs[0] = numeric_limits<double>::lowest();
-            patchMin[0] = ( vecPatches( ipatch )->Pcoordinates[0] )*patch_size[0];
-            patchMax[0] = ( vecPatches( ipatch )->Pcoordinates[0]+1 )*patch_size[0];
+            patchMin[0] = ( vecPatches( ipatch )->Pcoordinates[0] )*patch_length[0];
+            patchMax[0] = ( vecPatches( ipatch )->Pcoordinates[0]+1 )*patch_length[0];
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[1]+1 )*patch_length[1];
                 patchMin[k] = - patchMax[k] ; //patchMin = -rmax for the first filter
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] =  numeric_limits<double>::lowest();
-                patchMin[k] = ( vecPatches( ipatch )->Pcoordinates[k] )*patch_size[k];
-                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[k]+1 )*patch_size[k];
+                patchMin[k] = ( vecPatches( ipatch )->Pcoordinates[k] )*patch_length[k];
+                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[k]+1 )*patch_length[k];
             }
         }
         // loop patch corners
@@ -545,7 +556,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
         particles->initialize( ntot, nDim_particle, false );
         // In AM, redefine patchmin as rmin and not -rmax anymore
         if( geometry == "AMcylindrical" ) {
-            patchMin[1] = patchMax[1] - ( double )patch_size[1];
+            patchMin[1] = patchMax[1] - patch_length[1];
         }
         // Loop useful probe points
         ipart_local=0;
@@ -620,7 +631,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
 
 
 
-void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
+void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers & )
 {
     ostringstream name_t;
     
@@ -677,7 +688,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
                 H5Space memspace( {nPart_MPI, nDim_particle}, {}, {} );
                 H5Space filespace( {nPart_total_actual, nDim_particle}, {offset_in_file[0], 0}, {nPart_MPI, nDim_particle} );
                 // Create dataset
-                file_->array( "positions", *(posArray->data_), &filespace, &memspace );
+                file_->array( "positions", *(posArray->data_), &filespace, &memspace, false, file_datatype_ );
                 file_->flush();
                 
                 delete posArray;
@@ -843,7 +854,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             H5Space memspace( {(hsize_t)nFields, nPart_MPI}, {}, {} );
             H5Space filespace( {(hsize_t)nFields, nPart_total_actual}, {0, offset_in_file[0]}, {(hsize_t)nFields, nPart_MPI} );
             // Create new dataset for this timestep
-            H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
+            H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true, file_datatype_ );
             // Write x_moved
             d.attr( "x_moved", x_moved );
             
@@ -862,7 +873,7 @@ bool DiagnosticProbes::needsRhoJs( int itime )
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
-uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch *patch )
+uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch * )
 {
     uint64_t footprint = 0;
 
@@ -882,7 +893,7 @@ uint64_t DiagnosticProbes::getDiskFootPrint( int istart, int istop, Patch *patch
     footprint += ndumps * ( uint64_t )( 480 + nFields * 6 );
 
     // Add size of each field
-    footprint += ndumps * ( uint64_t )( nFields * nPart_total ) * 8;
+    footprint += ndumps * ( uint64_t )( nFields * nPart_total ) * (file_datatype_==H5T_NATIVE_DOUBLE?8:4);
 
     return footprint;
 }

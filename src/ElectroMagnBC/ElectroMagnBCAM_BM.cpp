@@ -167,7 +167,7 @@ void ElectroMagnBCAM_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     //This condition can only be applied to Rmax
     

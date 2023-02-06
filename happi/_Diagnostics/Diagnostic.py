@@ -245,7 +245,7 @@ class Diagnostic(object):
 		else:
 			return axes
 
-	def plot(self, timestep=None, saveAs=None, axes=None, **kwargs):
+	def plot(self, timestep=None, saveAs=None, axes=None, dpi=200, **kwargs):
 		""" Plots the diagnostic.
 
 		Parameters:
@@ -267,6 +267,8 @@ class Diagnostic(object):
 			You can even specify a filename such as mydir/prefix.png
 			and it will automatically make successive files showing
 			the timestep: mydir/prefix0.png, mydir/prefix1.png, etc.
+        dpi: (default: 200)
+            The number of dots per inch for `saveAs`
 
 		Example:
 		--------
@@ -286,14 +288,14 @@ class Diagnostic(object):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 
-		save = SaveAs(saveAs, fig, self._plt)
+		save = SaveAs(saveAs, fig, dpi)
 		self._plotOnAxes(ax, timestep)
 		self._plt.draw()
 		self._plt.pause(0.00001)
 		save.frame()
 		return
 
-	def streak(self, saveAs=None, axes=None, **kwargs):
+	def streak(self, saveAs=None, axes=None, dpi=200, **kwargs):
 		""" Plots the diagnostic with one axis being time.
 
 		Parameters:
@@ -313,6 +315,8 @@ class Diagnostic(object):
 			You can even specify a filename such as mydir/prefix.png
 			and it will automatically make successive files showing
 			the timestep: mydir/prefix0.png, mydir/prefix1.png, etc.
+        dpi: (default: 200)
+            The number of dots per inch for `saveAs`
 
 		Example:
 		--------
@@ -366,7 +370,7 @@ class Diagnostic(object):
 		self._plt.pause(0.00001)
 
 		# Save?
-		save = SaveAs(saveAs, fig, self._plt)
+		save = SaveAs(saveAs, fig, dpi)
 		save.frame()
 
 	def animate(self, movie="", fps=15, dpi=200, saveAs=None, axes=None, **kwargs):
@@ -392,8 +396,8 @@ class Diagnostic(object):
 			If movie="" no movie is created.
 		fps: int (default: 15)
 			Number of frames per second (only if movie requested).
-		dpi: int (default: 200)
-			Number of dots per inch (only if movie requested).
+        dpi: (default: 200)
+            The number of dots per inch for `movie` or `saveAs`
 		saveAs: path string (default: None)
 			Name of a directory where to save each frame as figures.
 			You can even specify a filename such as mydir/prefix.png
@@ -421,7 +425,7 @@ class Diagnostic(object):
 		# Movie requested ?
 		mov = Movie(fig, movie, fps, dpi)
 		# Save to file requested ?
-		save = SaveAs(saveAs, fig, self._plt)
+		save = SaveAs(saveAs, fig, dpi)
 		# Plot first time
 		self._plotOnAxes(ax, self._timesteps[0])
 		mov.grab_frame()

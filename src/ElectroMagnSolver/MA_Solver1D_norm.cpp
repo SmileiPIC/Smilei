@@ -15,6 +15,8 @@ MA_Solver1D_norm::~MA_Solver1D_norm()
 
 void MA_Solver1D_norm::operator()( ElectroMagn *fields )
 {
+    const unsigned int nx_p = fields->dimPrim[0];
+    const unsigned int nx_d = fields->dimDual[0];
     Field1D *Ex1D = static_cast<Field1D *>( fields->Ex_ );
     Field1D *Ey1D = static_cast<Field1D *>( fields->Ey_ );
     Field1D *Ez1D = static_cast<Field1D *>( fields->Ez_ );

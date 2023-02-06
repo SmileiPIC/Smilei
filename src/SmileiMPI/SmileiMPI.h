@@ -1,14 +1,15 @@
 #ifndef SMILEIMPI_H
 #define SMILEIMPI_H
 
+#include <mpi.h>
+
 #include <string>
 #include <vector>
 
-#include <mpi.h>
-
-#include "Tools.h"
-#include "Particles.h"
 #include "Field.h"
+#include "Particles.h"
+#include "Tools.h"
+#include "gpu.h"
 
 class Params;
 class Species;
@@ -85,14 +86,28 @@ public:
     void isend( std::vector<double> *vec, int to, int tag, MPI_Request &request );
     void recv( std::vector<double> *vec, int from, int tag );
 
+    //Sending and reveiving ElectroMagn and ElectroMagAM
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc );
     void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes, bool send_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
-    void isend( Field *field, int to, int tag, MPI_Request &request );
-    void isendComplex( Field *field, int to, int tag, MPI_Request &request );
-    void recv( Field *field, int from, int tag );
-    void recvComplex( Field *field, int from, int tag );
+
+    //Templates to send/receive PML for both 2D and 3D
+    template <typename Tpml>
+    int  recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag, bool recv_xmin_bc);
+    template <typename Tpml>
+    void  send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc);
+
+
+    //Sending and reveiving Fields and cFields
+    void isend( Field *field, int to, int tag, MPI_Request &request );                 // Sends the whole Field
+    void isend( Field *field, int to, int tag, MPI_Request &request, int x_first );       // Sends the first "x_first" columns of the Field
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request );          // Sends the whole cField
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first );// Sends only the first x_first columns of the cField
+    void recv( Field *field, int from, int tag);                     //Receives the whole Field
+    void recvShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
+    void recvComplex( Field *field, int from, int tag);              //Receives the whole cField
+    void recvComplexShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
 
     void sendComplex( Field *field, int to, int tag );
     void irecvComplex( Field *field, int from, int tag, MPI_Request &request );
@@ -100,8 +115,8 @@ public:
     void isend( ProbeParticles *probe, int to, int tag, unsigned int );
     void recv( ProbeParticles *probe, int from, int tag, unsigned int );
 
-    void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
-    void recv( int *integer, int from, int tag, unsigned int );
+    void isend( int *integer, int to, int tag, MPI_Request &request );
+    void recv( int *integer, int from, int tag );
 
     // Functions for double grid exchange
     void send( Field* field, int to  , int tag );
@@ -216,7 +231,23 @@ public:
     //! Erase Particles from istart ot the end in the buffers of thread ithread
     void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
 
-    // Resize buffers for a given number of particles (threaded version)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+    //! Resize the CPU buffers to at least accommodate particle_count particles.
+    //! In addition, this method make sure the CPU buffers are mapped on the
+    //! device. This method is justifies as it tries to reduce the number of
+    //! allocation/deallocation which produces a lot of fragmentation on some
+    //! GPUs. In fact, it emulates the reserve behavior of an std::vector.
+    //!
+    //! TODO(Etienne M): FREE To avoid a leak at the end of the program or when
+    //! a SmileiMPI is destroyed. We should free the device memory. This can be
+    //! done using a resizeDeviceBuffers( ithread, ndim_field, 0).
+    //!
+    void resizeDeviceBuffers( unsigned int ithread,
+                              unsigned int ndim_field,
+                              unsigned int particle_count,
+                              float        growth_factor = 1.3F );
+#endif
+
     inline void resizeBuffers( int ithread, int ndim_field, int npart, bool isAM = false )
     {
         dynamics_Epart[ithread].resize( 3*npart );
@@ -302,16 +333,6 @@ public:
         }
     }
 
-    // Compute global number of particles
-    //     - deprecated with patch introduction
-    //! \todo{Patch managmen}
-    inline int globalNbrParticles( Species *species, int locNbrParticles )
-    {
-        int nParticles( 0 );
-        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, world_ );
-        return nParticles;
-    }
-
     bool test_mode;
 
     // Task tracing diag
@@ -338,15 +359,15 @@ public:
     };
 
     // If particle event tracing diagnostic is activated, trace event
-    void traceEventIfDiagTracing(bool diag_PartEventTracing, int thread,
-                                 unsigned int event_start_or_end, int event_name)
+#ifdef _PARTEVENTTRACING
+    void traceEventIfDiagTracing( bool, int, unsigned int, int ) {};
+#else
+    void traceEventIfDiagTracing( bool diag_PartEventTracing, int thread,
+                                  unsigned int event_start_or_end, int event_name )
     {
-        // If particle event tracing diagnostic is activated, trace event
-        // otherwise, this becomes an empty method
-        #  ifdef _PARTEVENTTRACING
-        if(diag_PartEventTracing) trace_event(thread,(MPI_Wtime()-reference_time_),event_start_or_end,event_name);
-        #  endif
+        if( diag_PartEventTracing ) trace_event( thread, (MPI_Wtime()-reference_time_), event_start_or_end, event_name );
     };
+#endif
 
 
 protected:

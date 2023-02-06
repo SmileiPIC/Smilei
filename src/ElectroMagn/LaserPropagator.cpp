@@ -21,11 +21,11 @@ void fftfreq( vector<double> &freqs, unsigned int n, double d, unsigned int star
     unsigned int N = ( n-1 ) / 2 + 1;
     double nm = -( ( double )n );
     double val = 2.*M_PI/( n*d );
-    unsigned int imax = min( N, stop );
+    unsigned int imax = std::min( N, stop );
     for( unsigned int i=start       ; i<imax; i++ ) {
         freqs[i-start] = val*i;
     }
-    for( unsigned int i=max( N, start ); i<stop; i++ ) {
+    for( unsigned int i=std::max( N, start ); i<stop; i++ ) {
         freqs[i-start] = val*( nm+i );
     }
 }
@@ -50,7 +50,7 @@ vector<unsigned int> partial_reverse_argsort( vector<double> x, unsigned int nma
     for( unsigned int i=0; i<n; i++ ) {
         y[i] = i;
     }
-    nmax = min( nmax, n );
+    nmax = std::min( nmax, n );
     std::partial_sort(
         y.begin(),
         y.begin()+nmax,
@@ -98,7 +98,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     // Set the grid spatial dimensions
     for( unsigned int idim=0; idim<ndim-1; idim++ ) {
         unsigned int j = ( side+idim+1 )%ndim;
-        N[idim] = params->n_space_global[j] + 2*params->oversize[j] + 2;
+        N[idim] = params->global_size_[j] + 2*params->oversize[j] + 2;
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }
@@ -139,7 +139,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     
     // Display some info
     MESSAGE( 2, "Uses " << MPI_size << " MPI processes");
-    uint64_t Ntot = (ndim+1) * max( (uint64_t)Nlocal[0]*(uint64_t)N[1], (uint64_t)N[0]*(uint64_t)Nlocal[1] ) * (uint64_t)( N[2] ? N[2] : 1 );
+    uint64_t Ntot = (ndim+1) * std::max( (uint64_t)Nlocal[0]*(uint64_t)N[1], (uint64_t)N[0]*(uint64_t)Nlocal[1] ) * (uint64_t)( N[2] ? N[2] : 1 );
     MESSAGE( 2, "Estimated memory required per MPI process: " << 2*2*Ntot*sizeof(double)/(1024*1024) << " MB");
     
 #else

@@ -61,10 +61,16 @@ public:
     virtual void shift_x( unsigned int delta ) override = 0;
     
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override = 0;
-    
+
+    //! Compute the norm2OnDevice of the field
+#if defined(SMILEI_ACCELERATOR_MODE)
+    virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
+#endif
+
+
     inline std::complex<double> &operator()( unsigned int i )
     {
-        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
+        DEBUGEXEC( if( i>=number_of_points_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
         DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
@@ -73,7 +79,7 @@ public:
     inline std::complex<double> &operator()( unsigned int i, unsigned int j )
     {
         int unsigned idx = i*dims_[1]+j;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits & "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( real( cdata_[idx] )+imag( cdata_[idx] ) ) ) ERROR( "Not finite "<< i << " " << j << " = " << cdata_[idx] ) );
         return cdata_[idx];
     };
@@ -81,24 +87,24 @@ public:
     inline std::complex<double> operator()( unsigned int i, unsigned int j ) const
     {
         unsigned int idx = i*dims_[1]+j;
-        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
+        DEBUGEXEC( if( idx>=number_of_points_ ) ERROR( "Out of limits "<< i << " " << j ) );
         DEBUGEXEC( if( !std::isfinite( real( cdata_[idx] )+imag( cdata_[idx] ) ) ) ERROR( "Not finite "<< i << " " << j << " = " << cdata_[idx] ) );
         return cdata_[idx];
     };
     
-    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override = 0;
-    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override = 0;
-    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override = 0;
+    void put( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override = 0;
+    void add( Field *outField, Params &params, Patch *thisPatch, Patch *outPatch ) override = 0;
+    void get( Field  *inField, Params &params, Patch   *inPatch, Patch *thisPatch ) override = 0;
     
     std::complex<double> *cdata_;
 
     void copyFrom( Field *from_field ) override
     {
-        DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
+        DEBUGEXEC( if( number_of_points_!=from_field->number_of_points_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
         cField *from_cfield = dynamic_cast<cField*>(from_field);
         DEBUGEXEC( if( from_cfield == NULL ) ERROR( "Cannot copy real field "<< from_field->name << " to complex field " << name ) );
 
-        for( unsigned int i=0; i< globalDims_; i++ ) {
+        for( unsigned int i=0; i< number_of_points_; i++ ) {
             ( *this )( i )=( *from_cfield )( i );
         }
     }

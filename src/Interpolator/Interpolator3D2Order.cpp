@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #include <accelmath.h>
 #endif
 
@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3D2Order
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Interpolator3D( patch )
 {
 
     d_inv_[0] = 1.0/params.cell_length[0];
@@ -59,7 +59,7 @@ void Interpolator3D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], &coeffzp_[1], Bz3D, id_, jd_, kp_ );
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
 
@@ -113,7 +113,7 @@ void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
+void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field3D *F = static_cast<Field3D *>( *field );
     double *coeffx = F->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
@@ -132,13 +132,27 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int, int )
 {
-    double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
-    double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+    const int nparts = particles.numberOfParticles();
 
-    int    *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
-    double *const __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
+    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
+    // dereferenced ptrs in the for loop's condition.
+    const int first_index = *istart;
+    const int last_index  = *iend;
+
+    if( first_index == last_index ) {
+        // Early exit to avoid UB. If the dynamics_* array have are empty() we
+        // can't call data().
+        return;
+    }
+
+    SMILEI_ASSERT( !smpi->dynamics_Epart[ithread].empty() );
+
+    double *const __restrict__ ELoc  = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ BLoc  = smpi->dynamics_Bpart[ithread].data();
+    int *const __restrict__ iold     = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
@@ -151,13 +165,13 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-#if defined(ACCELERATOR_GPU_ACC)
-    const int sizeofEx = EMfields->Ex_->globalDims_;
-    const int sizeofEy = EMfields->Ey_->globalDims_;
-    const int sizeofEz = EMfields->Ez_->globalDims_;
-    const int sizeofBx = EMfields->Bx_m->globalDims_;
-    const int sizeofBy = EMfields->By_m->globalDims_;
-    const int sizeofBz = EMfields->Bz_m->globalDims_;
+#if defined(SMILEI_OPENACC_MODE)
+    const int sizeofEx = EMfields->Ex_->size();
+    const int sizeofEy = EMfields->Ey_->size();
+    const int sizeofEz = EMfields->Ez_->size();
+    const int sizeofBx = EMfields->Bx_m->size();
+    const int sizeofBy = EMfields->By_m->size();
+    const int sizeofBz = EMfields->Bz_m->size();
 #endif
 
     const int nx_p = EMfields->Bx_m->dims_[0];
@@ -166,13 +180,6 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int nx_d = nx_p + 1;
     const int ny_d = ny_p + 1;
     const int nz_d = nz_p + 1;
-
-    const int nparts = particles.numberOfParticles();
-
-    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
-    // dereferenced ptrs in the for loop's condition.
-    const int first_index = *istart;
-    const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
     // const int npart_range_size         = last_index - first_index;
@@ -184,7 +191,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_y /* [first_index:npart_range_size] */,        \
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(ACCELERATOR_GPU_ACC)
+#elif defined(SMILEI_OPENACC_MODE)
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
@@ -263,7 +270,7 @@ void Interpolator3D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
     }
 }
 
-void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Electromagnetic fields
     double* Ex3D = EMfields->Ex_->data_;
@@ -363,7 +370,7 @@ void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Envelope fields
     double* Phi_m3D = EMfields->envelope->Phi_m->data_;
@@ -533,7 +540,7 @@ void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 
 } // END Interpolator3D2Order
 
-void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )
 {
     // Envelope fields
     double* EnvEabs  = EMfields->Env_E_abs_->data_;
@@ -559,9 +566,9 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double zpn = particles.position( 2, ipart )*d_inv_[2];
 
         // Indexes of the central nodes
-        idx_p[0] = round( xpn );
-        idx_p[1] = round( ypn );
-        idx_p[2] = round( zpn );
+        idx_p[0] = std::round( xpn );
+        idx_p[1] = std::round( ypn );
+        idx_p[2] = std::round( zpn );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;

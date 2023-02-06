@@ -48,14 +48,14 @@ RadiationCorrLandauLifshitz::~RadiationCorrLandauLifshitz()
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationCorrLandauLifshitz::operator()(
     Particles       &particles,
-    Particles       *photons,
+    Particles       */*photons*/,
     SmileiMPI       *smpi,
     RadiationTables &radiation_tables,
     double          &radiated_energy,
     int             istart,
     int             iend,
     int             ithread,
-    int             ibin,
+    int             /*ibin*/,
     int             ipart_ref)
 {
 
@@ -96,7 +96,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // cumulative Radiated energy from istart to iend
     double radiated_energy_loc = 0;
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
     // double * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
@@ -112,7 +112,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // Computation
 
     // NVIDIA GPUs
-    #if defined (ACCELERATOR_GPU_ACC)
+    #if defined (SMILEI_OPENACC_MODE)
         const int istart_offset   = istart - ipart_ref;
         const int np = iend-istart;
         #pragma acc parallel \
@@ -185,7 +185,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
@@ -210,7 +210,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Update of the quantum parameter
     
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 #endif
@@ -229,7 +229,7 @@ void RadiationCorrLandauLifshitz::operator()(
                        Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                        Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    #ifndef ACCELERATOR_GPU_ACC
+    #ifndef SMILEI_OPENACC_MODE
     } // end loop ipart
     #else
             } // end if
@@ -241,7 +241,7 @@ void RadiationCorrLandauLifshitz::operator()(
     radiated_energy += radiated_energy_loc;
 
 
-#ifndef ACCELERATOR_GPU_ACC
+#ifndef SMILEI_OPENACC_MODE
     // _______________________________________________________________
     // Cleaning
 

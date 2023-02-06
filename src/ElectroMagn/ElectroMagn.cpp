@@ -24,65 +24,28 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for the virtual class ElectroMagn
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, vector<Species *> &vecSpecies, Patch *patch ) :
+ElectroMagn::ElectroMagn( Params &params, vector<Species *> &vecSpecies, Patch *patch ) :
     timestep( params.timestep ),
     cell_length( params.cell_length ),
     n_species( vecSpecies.size() ),
     nDim_field( params.nDim_field ),
     cell_volume( params.cell_volume ),
-    oversize( params.oversize ),
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( params.is_pxr ),
     nrj_mw_out( 0. ),
-    nrj_mw_inj( 0. )
+    nrj_mw_inj( 0. ),
+    filter_( NULL )
 {
-    n_space.resize( params.n_space.size() );
-    // Test if the patch is a small patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
-        || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
-        n_space = params.n_space;
+    size_ = patch->size_;
+    oversize = patch->oversize;
+    // Dimension of the primal and dual grids
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    for( unsigned int i=0 ; i < nDim_field ; i++ ) {
+        dimPrim[i] = size_[i] + 2*oversize[i] + 1;
+        dimDual[i] = size_[i] + 2*oversize[i] + 2 - (params.is_pxr);
     }
-    else if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
-        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
-            n_space[i] = params.n_space_region[i];
-            oversize[i] = params.region_oversize[i];
-        }
-    }
-    else { //NULL (Global domain)
-        n_space = params.n_space_global;
-        for ( unsigned int i = 0 ; i < nDim_field ; i++ )
-            oversize[i] = params.region_oversize[i];
-    }
-
-    if( dynamic_cast<PatchAM *>( patch ) ) {
-        PatchAM *patchAM = static_cast<PatchAM *>( patch );
-        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
-        int nr_p = n_space[1]+1+2*oversize[1];
-        double dr = params.cell_length[1];
-        patchAM->invR.resize( nr_p );
-
-        if( !params.is_spectral ){
-            patchAM->invRd.resize( nr_p+1 );
-            for( int j = 0; j< nr_p; j++ ) {
-                if( j_glob_ + j == 0 ) {
-                    patchAM->invR[j] = 8./dr; // No Verboncoeur correction
-                    //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
-                } else {
-                    patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
-                }
-            }
-            for( int j = 0; j< nr_p + 1; j++ ) {
-                patchAM->invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
-            }
-        } else { // if spectral, primal grid shifted by half cell length
-            for( int j = 0; j< nr_p; j++ ) {
-                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
-                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
-            }
-        }
-    }
-
     
     // take useful things from params
     initElectroMagnQuantities();
@@ -103,44 +66,18 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     n_species( emFields->n_species ),
     nDim_field( emFields->nDim_field ),
     cell_volume( emFields->cell_volume ),
-    n_space( emFields->n_space ),
+    size_( emFields->size_ ),
     oversize( emFields->oversize ),
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( emFields->is_pxr ),
     nrj_mw_out( 0. ),
-    nrj_mw_inj( 0. )
+    nrj_mw_inj( 0. ),
+    filter_( NULL )
 {
-
-    if ( dynamic_cast<PatchAM *>( patch ) ) {
-        PatchAM *patchAM = static_cast<PatchAM *>( patch );
-        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
-        int nr_p = n_space[1]+1+2*oversize[1];
-        double dr = params.cell_length[1];
-        patchAM->invR.resize( nr_p );
-
-        if( !params.is_spectral ) {
-            patchAM->invRd.resize( nr_p+1 );
-            for( int j = 0; j< nr_p; j++ ) {
-                if( j_glob_ + j == 0 ) {
-                    patchAM->invR[j] = 8./dr; // No Verboncoeur correction
-                    //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
-                } else {
-                    patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
-                }
-            }
-            for( int j = 0; j< nr_p + 1; j++ ) {
-                patchAM->invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
-            }
-        } else { // if spectral, primal grid shifted by half cell length
-            for( int j = 0; j< nr_p; j++ ) {
-                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
-                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
-            }
-        }
-    }
-
-
+    dimPrim = emFields->dimPrim;
+    dimDual = emFields->dimDual;
+    
     initElectroMagnQuantities();
     
     emBoundCond = ElectroMagnBC_Factory::create( params, patch );
@@ -161,10 +98,6 @@ void ElectroMagn::initElectroMagnQuantities()
     poynting[1].resize( nDim_field, 0.0 );
     poynting_inst[0].resize( nDim_field, 0.0 );
     poynting_inst[1].resize( nDim_field, 0.0 );
-    
-    // if( n_space.size() != 3 ) {
-    //     ERROR( "this should not happen" );
-    // }
     
     Ex_=NULL;
     Ey_=NULL;
@@ -209,7 +142,7 @@ void ElectroMagn::initElectroMagnQuantities()
 }
 
 
-void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
+void ElectroMagn::finishInitialization( int nspecies, Patch * )
 {
 
     // Fill allfields
@@ -334,23 +267,8 @@ ElectroMagn::~ElectroMagn()
         }
     }
     
-    for( unsigned int i=0; i<Exfilter.size(); i++ ) {
-        delete Exfilter[i];
-    }
-    for( unsigned int i=0; i<Eyfilter.size(); i++ ) {
-        delete Eyfilter[i];
-    }
-    for( unsigned int i=0; i<Ezfilter.size(); i++ ) {
-        delete Ezfilter[i];
-    }
-    for( unsigned int i=0; i<Bxfilter.size(); i++ ) {
-        delete Bxfilter[i];
-    }
-    for( unsigned int i=0; i<Byfilter.size(); i++ ) {
-        delete Byfilter[i];
-    }
-    for( unsigned int i=0; i<Bzfilter.size(); i++ ) {
-        delete Bzfilter[i];
+    if( filter_ ) {
+        delete filter_;
     }
     
     int nBC = emBoundCond.size();
@@ -399,7 +317,7 @@ void ElectroMagn::updateGridSize( Params &params, Patch *patch )
     unsigned int i=0;
     {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
@@ -432,7 +350,7 @@ void ElectroMagn::updateGridSize( Params &params, Patch *patch )
 
 
 
-void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
+void ElectroMagn::boundaryConditions( double time_dual, Patch *patch, SimWindow *simWindow )
 {
     // Compute EM Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) { //Boundary conditions are applied after moving the window.
@@ -476,7 +394,6 @@ void ElectroMagn::restartEnvChi()
     Env_Chi_->put_to( 0. );
 }
 
-
 void ElectroMagn::restartRhoJs()
 {
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
@@ -493,7 +410,6 @@ void ElectroMagn::restartRhoJs()
             rho_s[ispec]->put_to( 0. );
         }
     }
-    
     restartRhoJ();
 }
 
@@ -512,7 +428,7 @@ void ElectroMagn::restartEnvChis()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn::incrementAvgField( Field *field, Field *field_avg )
 {
-    for( unsigned int i=0; i<field->globalDims_; i++ ) {
+    for( unsigned int i=0; i<field->number_of_points_; i++ ) {
         ( *field_avg )( i ) += ( *field )( i );
     }
 }//END incrementAvgField
@@ -599,10 +515,119 @@ void ElectroMagn::applyAntenna( unsigned int iAntenna, double intensity )
     
         field = allFields[antennas[iAntenna].index];
         
-        for( unsigned int i=0; i< field->globalDims_ ; i++ ) {
+        for( unsigned int i=0; i< field->number_of_points_ ; i++ ) {
             ( *field )( i ) += intensity * ( *antennaField )( i );
         }
         
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Compute the total density and currents from species density and currents on Device
+//! This function is valid wathever the geometry
+// ---------------------------------------------------------------------------------------------------------------------
+#if defined( SMILEI_ACCELERATOR_MODE )
+void ElectroMagn::computeTotalRhoJOnDevice()
+{
+
+    double *const __restrict__ Jxp = Jx_->data();
+    double *const __restrict__ Jyp = Jy_->data();
+    double *const __restrict__ Jzp = Jz_->data();
+    double *const __restrict__ rhop = rho_->data();
+
+    unsigned int Jx_size = Jx_->number_of_points_;
+    unsigned int Jy_size = Jy_->number_of_points_;
+    unsigned int Jz_size = Jz_->number_of_points_;
+    unsigned int rho_size = rho_->number_of_points_;
+
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+
+        double *const __restrict__ Jxsp = Jx_s[ispec] ? Jx_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jysp = Jy_s[ispec] ? Jy_s[ispec]->data() : nullptr;
+        double *const __restrict__ Jzsp = Jz_s[ispec] ? Jz_s[ispec]->data() : nullptr;
+        double *const __restrict__ rhosp = rho_s[ispec] ? rho_s[ispec]->data() : nullptr;
+
+
+#if defined( SMILEI_OPENACC_MODE )
+            #pragma acc parallel present( \
+                                          Jxp[0:Jx_size],     \
+                                          Jyp[0:Jy_size],     \
+                                          Jzp[0:Jz_size],     \
+                                          rhop[0:rho_size],   \
+                                          Jxsp[0:Jx_size],    \
+                                          Jysp[0:Jy_size],    \
+                                          Jzsp[0:Jz_size],    \
+                                          rhosp[0:rho_size]   \
+                                          )  
+            {
+#endif
+        if (Jxsp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jx_size; i++ ) {
+                Jxp[i] += Jxsp[i];
+            }
+        }
+        if (Jysp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jy_size; i++ ) {
+                Jyp[i] += Jysp[i];
+            }
+        }
+        if (Jzsp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<Jz_size; i++ ) {
+                Jzp[i] += Jzsp[i];
+            }
+        }
+        if (rhosp) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+            #pragma acc loop gang worker vector
+#endif
+            for( unsigned int i=0 ; i<rho_size; i++ ) {
+                rhop[i] += rhosp[i];
+            }
+        }
+#if defined( SMILEI_OPENACC_MODE )
+        } // end parallel region
+#endif
+
+        //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( rhosp, rho_size );
+
+        //double sum = 0;
+        //for (int i = 0 ; i < rho_size ; i++) {
+        //    sum += rhosp[i];
+        //}
+        //std::cerr << "sum rhos"<<ispec<<" in total: " << sum << std::endl;
+
+        //cerr << Jxsp << " " << Jysp << " " << " " << Jzsp << " " << rhosp << std::endl;
+    } // end loop species
+
+    //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jyp, Jy_size );
+
+    //double sum = 0;
+    //for (int i = 0 ; i < rho_size ; i++) {
+    //   sum += rhop[i];
+    //}
+    //std::cerr << "sum rho in total: " << sum << std::endl;
+
+    //cerr << "end:computeTotalRho" << std::endl;
+} //END computeTotalRhoJOnDevice
+#endif

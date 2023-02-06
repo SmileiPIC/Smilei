@@ -38,7 +38,7 @@ OpenPMDparams::OpenPMDparams( Params &p ):
         fieldSolver = "other";
         fieldSolverParameters = params->maxwell_sol;
     }
-    patchSize = params->n_space;
+    patchSize = params->patch_size_;
     
     // Units
     unitDimension.resize( SMILEI_NUNITS );
@@ -107,8 +107,11 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             } else if( params->EM_BCs[i][j].substr(0,4) == "ramp" ) {
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( params->EM_BCs[i][j] );
+            } else if( params->EM_BCs[i][j] == "PML" ) {
+                fieldBoundary          .addString( "open" );
+                fieldBoundaryParameters.addString( "PML" );
             } else {
-                //ERROR( " impossible boundary condition " );
+                ERROR( " impossible boundary condition: "<<params->EM_BCs[i][j] );
             }
             particleBoundary          .addString( "" );
             particleBoundaryParameters.addString( "" );
@@ -149,7 +152,7 @@ void OpenPMDparams::writeBasePathAttributes( H5Write &location, unsigned int iti
     location.attr( "timeUnitSI", unitSI[SMILEI_UNIT_TIME] );
 }
 
-void OpenPMDparams::writeParticlesAttributes( H5Write &location )
+void OpenPMDparams::writeParticlesAttributes( H5Write & )
 {
 }
 
@@ -193,7 +196,7 @@ void OpenPMDparams::writeFieldAttributes( H5Write &location, vector<unsigned int
     location.attr( "gridUnitSI", unitSI[SMILEI_UNIT_POSITION] );
 }
 
-void OpenPMDparams::writeSpeciesAttributes( H5Write &location )
+void OpenPMDparams::writeSpeciesAttributes( H5Write & )
 {
 }
 

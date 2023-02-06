@@ -51,7 +51,7 @@ public:
     };
 
     //! Computation of a field from provided coefficients
-    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, double *f, int idx, int idy, int idz, int nx, int ny, int nz )
+    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, double *f, int idx, int idy, int idz, int, int ny, int nz )
     {
         double interp_res( 0. );
         //unroll ?

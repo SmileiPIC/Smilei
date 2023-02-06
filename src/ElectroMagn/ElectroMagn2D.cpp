@@ -16,23 +16,23 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch ) :
-    ElectroMagn( params, domain_decomposition, vecSpecies, patch )
+
+ElectroMagn2D::ElectroMagn2D( Params &params, std::vector<Species *> &vecSpecies, Patch *patch ) :
+    ElectroMagn( params, vecSpecies, patch )
 {
 
     initElectroMagn2DQuantities( params, patch );
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
-        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
-        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        Jx_s[ispec]  = new Field2D( Tools::merge( "Jx_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s[ispec]  = new Field2D( Tools::merge( "Jy_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s[ispec]  = new Field2D( Tools::merge( "Jz_" , vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         rho_s[ispec] = new Field2D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
             Env_Chi_s[ispec] = new Field2D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
-        
     }
     
 }//END constructor Electromagn2D
@@ -46,42 +46,21 @@ ElectroMagn2D::ElectroMagn2D( ElectroMagn2D *emFields, Params &params, Patch *pa
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        if ( emFields->Jx_s[ispec] != NULL ) {
-            if ( emFields->Jx_s[ispec]->data_ != NULL )
-                Jx_s[ispec]  = FieldFactory::create(dimPrim, 0, false, emFields->Jx_s[ispec]->name, params);
-            else
-                Jx_s[ispec]  = FieldFactory::create(emFields->Jx_s[ispec]->name, dimPrim, params);
+        if( emFields->Jx_s[ispec] ) {
+            Jx_s[ispec] = FieldFactory::create2D( dimPrim, 0, false, emFields->Jx_s[ispec]->name, params, emFields->Jx_s[ispec]->data_ != NULL );
         }
-        if ( emFields->Jy_s[ispec] != NULL ) {
-            if ( emFields->Jy_s[ispec]->data_ != NULL )
-                Jy_s[ispec]  = FieldFactory::create(dimPrim, 1, false, emFields->Jy_s[ispec]->name, params);
-            else
-                Jy_s[ispec]  = FieldFactory::create(emFields->Jy_s[ispec]->name, dimPrim, params);
+        if( emFields->Jy_s[ispec] ) {
+            Jy_s[ispec] = FieldFactory::create2D( dimPrim, 1, false, emFields->Jy_s[ispec]->name, params, emFields->Jy_s[ispec]->data_ != NULL );
         }
-        if ( emFields->Jz_s[ispec] != NULL ) {
-            if ( emFields->Jz_s[ispec]->data_ != NULL )
-                Jz_s[ispec]  = FieldFactory::create(dimPrim, 2, false, emFields->Jz_s[ispec]->name, params);
-            else
-                Jz_s[ispec]  = FieldFactory::create(emFields->Jz_s[ispec]->name, dimPrim, params);
+        if( emFields->Jz_s[ispec] ) {
+            Jz_s[ispec] = FieldFactory::create2D( dimPrim, 2, false, emFields->Jz_s[ispec]->name, params, emFields->Jz_s[ispec]->data_ != NULL );
         }
-        if( emFields->rho_s[ispec] != NULL ) {
-            if( emFields->rho_s[ispec]->data_ != NULL ) {
-                rho_s[ispec] = new Field2D( dimPrim, emFields->rho_s[ispec]->name );
-            } else {
-                rho_s[ispec]  = new Field2D( emFields->rho_s[ispec]->name, dimPrim );
-            }
+        if( emFields->rho_s[ispec] ) {
+            rho_s[ispec] = FieldFactory::create2D( dimPrim, emFields->rho_s[ispec]->name, emFields->rho_s[ispec]->data_ != NULL );
         }
-        
-        if( params.Laser_Envelope_model ) {
-            if( emFields->Env_Chi_s[ispec] != NULL ) {
-                if( emFields->Env_Chi_s[ispec]->data_ != NULL ) {
-                    Env_Chi_s[ispec] = new Field2D( dimPrim, emFields->Env_Chi_s[ispec]->name );
-                } else {
-                    Env_Chi_s[ispec]  = new Field2D( emFields->Env_Chi_s[ispec]->name, dimPrim );
-                }
-            }
+        if( params.Laser_Envelope_model && emFields->Env_Chi_s[ispec] ) {
+            Env_Chi_s[ispec] = FieldFactory::create2D( dimPrim, emFields->Env_Chi_s[ispec]->name, emFields->Env_Chi_s[ispec]->data_ != NULL );
         }
-        
         
     }
     
@@ -109,37 +88,17 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     // ----------------------
     // Electromagnetic fields
     // ----------------------
-    //! \todo Homogenize 1D/2D dimPrim/dimDual or nx_p/nx_d/ny_p/ny_d
-    
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    
-    // Dimension of the primal and dual grids
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2-(params.is_pxr);
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
-    Ex_  = FieldFactory::create( dimPrim, 0, false, "Ex", params );
-    Ey_  = FieldFactory::create( dimPrim, 1, false, "Ey", params );
-    Ez_  = FieldFactory::create( dimPrim, 2, false, "Ez", params );
-    Bx_  = FieldFactory::create( dimPrim, 0, true,  "Bx", params );
-    By_  = FieldFactory::create( dimPrim, 1, true,  "By", params );
-    Bz_  = FieldFactory::create( dimPrim, 2, true,  "Bz", params );
-    Bx_m = FieldFactory::create( dimPrim, 0, true,  "Bx_m", params );
-    By_m = FieldFactory::create( dimPrim, 1, true,  "By_m", params );
-    Bz_m = FieldFactory::create( dimPrim, 2, true,  "Bz_m", params );
+    Ex_  = FieldFactory::create2D( dimPrim, 0, false, "Ex", params );
+    Ey_  = FieldFactory::create2D( dimPrim, 1, false, "Ey", params );
+    Ez_  = FieldFactory::create2D( dimPrim, 2, false, "Ez", params );
+    Bx_  = FieldFactory::create2D( dimPrim, 0, true,  "Bx", params );
+    By_  = FieldFactory::create2D( dimPrim, 1, true,  "By", params );
+    Bz_  = FieldFactory::create2D( dimPrim, 2, true,  "Bz", params );
+    Bx_m = FieldFactory::create2D( dimPrim, 0, true,  "Bx_m", params );
+    By_m = FieldFactory::create2D( dimPrim, 1, true,  "By_m", params );
+    Bz_m = FieldFactory::create2D( dimPrim, 2, true,  "Bz_m", params );
     
     if( params.Laser_Envelope_model ) {
         Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs" );
@@ -149,27 +108,28 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     }
     // Allocation of filtered fields when Friedman filtering is required
     if( params.Friedman_filter ) {
-        Exfilter.resize( 3 );
-        Exfilter[0] = new Field2D( dimPrim, 0, false, "Ex_f" );
-        Exfilter[1] = new Field2D( dimPrim, 0, false, "Ex_m1" );
-        Exfilter[2] = new Field2D( dimPrim, 0, false, "Ex_m2" );
-        Eyfilter.resize( 3 );
-        Eyfilter[0] = new Field2D( dimPrim, 1, false, "Ey_f" );
-        Eyfilter[1] = new Field2D( dimPrim, 1, false, "Ey_m1" );
-        Eyfilter[2] = new Field2D( dimPrim, 1, false, "Ey_m2" );
-        Ezfilter.resize( 3 );
-        Ezfilter[0] = new Field2D( dimPrim, 2, false, "Ez_f" );
-        Ezfilter[1] = new Field2D( dimPrim, 2, false, "Ez_m1" );
-        Ezfilter[2] = new Field2D( dimPrim, 2, false, "Ez_m2" );
+        filter_ = new FriedmanFields();
+        filter_->Ex_.resize( 3 );
+        filter_->Ex_[0] = new Field2D( dimPrim, 0, false, "Ex_f" );
+        filter_->Ex_[1] = new Field2D( dimPrim, 0, false, "Ex_m1" );
+        filter_->Ex_[2] = new Field2D( dimPrim, 0, false, "Ex_m2" );
+        filter_->Ey_.resize( 3 );
+        filter_->Ey_[0] = new Field2D( dimPrim, 1, false, "Ey_f" );
+        filter_->Ey_[1] = new Field2D( dimPrim, 1, false, "Ey_m1" );
+        filter_->Ey_[2] = new Field2D( dimPrim, 1, false, "Ey_m2" );
+        filter_->Ez_.resize( 3 );
+        filter_->Ez_[0] = new Field2D( dimPrim, 2, false, "Ez_f" );
+        filter_->Ez_[1] = new Field2D( dimPrim, 2, false, "Ez_m1" );
+        filter_->Ez_[2] = new Field2D( dimPrim, 2, false, "Ez_m2" );
     }
     
     // Total charge currents and densities
-    Jx_   = FieldFactory::create( dimPrim, 0, false, "Jx", params );
-    Jy_   = FieldFactory::create( dimPrim, 1, false, "Jy", params );
-    Jz_   = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+    Jx_   = FieldFactory::create2D( dimPrim, 0, false, "Jx", params );
+    Jy_   = FieldFactory::create2D( dimPrim, 1, false, "Jy", params );
+    Jz_   = FieldFactory::create2D( dimPrim, 2, false, "Jz", params );
     rho_  = new Field2D( dimPrim, "Rho" );
     
-    if(params.is_pxr == true) {
+    if( params.is_pxr ) {
         rhoold_ = new Field2D( dimPrim, "RhoOld" );
     }
     
@@ -183,11 +143,6 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
         index_bc_min[i] = oversize[i];
         index_bc_max[i] = dimDual[i]-oversize[i]-1;
     }
-    /*
-     MESSAGE("index_bc_min / index_bc_max / nx_p / nx_d" << index_bc_min[0]
-     << " " << index_bc_max[0] << " " << nx_p<< " " << nx_d);
-     */
-    
     
     // Define limits of non duplicated elements
     // (by construction 1 (prim) or 2 (dual) elements shared between per MPI process)
@@ -213,7 +168,7 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
         
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
-            bufsize[i][isDual] = n_space[i] + 1;
+            bufsize[i][isDual] = size_[i] + 1;
         }
         
         for( int isDual=0 ; isDual<2 ; isDual++ ) {
@@ -272,13 +227,13 @@ void ElectroMagn2D::initPoisson( Patch *patch )
     
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
-    index_max_p_[0] = nx_p - 2 - oversize[0];
-    index_max_p_[1] = ny_p - 2 - oversize[1];
+    index_max_p_[0] = dimPrim[0] - 2 - oversize[0];
+    index_max_p_[1] = dimPrim[1] - 2 - oversize[1];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
     if( patch->isXmax() ) {
-        index_max_p_[0] = nx_p-1;
+        index_max_p_[0] = dimPrim[0]-1;
     }
     
     phi_ = new Field2D( dimPrim );  // scalar potential
@@ -287,8 +242,8 @@ void ElectroMagn2D::initPoisson( Patch *patch )
     Ap_  = new Field2D( dimPrim );  // A*p vector
     
     
-    for( unsigned int i=0; i<nx_p; i++ ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
+    for( unsigned int i=0; i<dimPrim[0]; i++ ) {
+        for( unsigned int j=0; j<dimPrim[1]; j++ ) {
             ( *phi_ )( i, j )   = 0.0;
             ( *r_ )( i, j )     = -( *rho2D )( i, j );
             ( *p_ )( i, j )     = ( *r_ )( i, j );
@@ -310,6 +265,9 @@ double ElectroMagn2D::compute_r()
 
 void ElectroMagn2D::compute_Ap( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+
     double one_ov_dx_sq       = 1.0/( dx*dx );
     double one_ov_dy_sq       = 1.0/( dy*dy );
     double two_ov_dx2dy2      = 2.0*( 1.0/( dx*dx )+1.0/( dy*dy ) );
@@ -371,6 +329,8 @@ void ElectroMagn2D::compute_Ap( Patch *patch )
 
 void ElectroMagn2D::compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -446,6 +406,8 @@ double ElectroMagn2D::compute_pAp()
 
 void ElectroMagn2D::update_pand_r( double r_dot_r, double p_dot_Ap )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
     double alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -458,6 +420,8 @@ void ElectroMagn2D::update_pand_r( double r_dot_r, double p_dot_Ap )
 
 void ElectroMagn2D::update_p( double rnew_dot_rnew, double r_dot_r )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
     double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nx_p; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
@@ -468,6 +432,10 @@ void ElectroMagn2D::update_p( double rnew_dot_rnew, double r_dot_r )
 
 void ElectroMagn2D::initE( Patch *patch )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     Field2D *Ex2D  = static_cast<Field2D *>( Ex_ );
     Field2D *Ey2D  = static_cast<Field2D *>( Ey_ );
     Field2D *rho2D = static_cast<Field2D *>( rho_ );
@@ -517,6 +485,9 @@ void ElectroMagn2D::initE( Patch *patch )
 
 void ElectroMagn2D::initE_relativistic_Poisson( Patch *patch, double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -586,8 +557,10 @@ void ElectroMagn2D::initE_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initE_relativistic_Poisson
 
-void ElectroMagn2D::initB_relativistic_Poisson( Patch *patch, double gamma_mean )
+void ElectroMagn2D::initB_relativistic_Poisson( double gamma_mean )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_d = dimDual[1];
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
@@ -624,8 +597,12 @@ void ElectroMagn2D::initB_relativistic_Poisson( Patch *patch, double gamma_mean 
     
 } // initB_relativistic_Poisson
 
-void ElectroMagn2D::center_fields_from_relativistic_Poisson( Patch *patch )
+void ElectroMagn2D::center_fields_from_relativistic_Poisson()
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
 
     // B field centered in time as E field, at time t
     Field2D *Bx2Drel  = static_cast<Field2D *>( Bx_rel_ );
@@ -674,7 +651,7 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson( Patch *patch )
     
 }
 
-void ElectroMagn2D::initRelativisticPoissonFields( Patch *patch )
+void ElectroMagn2D::initRelativisticPoissonFields()
 {
     // init temporary fields for relativistic field initialization,
     // to be added to the already present electromagnetic fields
@@ -701,8 +678,12 @@ void ElectroMagn2D::initRelativisticPoissonFields( Patch *patch )
     
 } // initRelativisticPoissonFields
 
-void ElectroMagn2D::sum_rel_fields_to_em_fields( Patch *patch )
+void ElectroMagn2D::sum_rel_fields_to_em_fields()
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     Field2D *Ex2Drel  = static_cast<Field2D *>( Ex_rel_ );
     Field2D *Ey2Drel  = static_cast<Field2D *>( Ey_rel_ );
     Field2D *Ez2Drel  = static_cast<Field2D *>( Ez_rel_ );
@@ -822,6 +803,10 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields( Patch *patch )
 
 void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     Field2D *Ex2D  = static_cast<Field2D *>( Ex_ );
     Field2D *Ey2D  = static_cast<Field2D *>( Ey_ );
     
@@ -840,6 +825,10 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 
 void ElectroMagn2D::centeringErel( std::vector<double> E_Add )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     Field2D *Ex2D  = static_cast<Field2D *>( Ex_rel_ );
     Field2D *Ey2D  = static_cast<Field2D *>( Ey_rel_ );
     
@@ -866,6 +855,10 @@ void ElectroMagn2D::centeringErel( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    // const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     // Static cast of the fields
     if( !is_spectral ) {
         /* const */ double *const Bx2D   = Bx_->data();
@@ -911,6 +904,10 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
@@ -1029,6 +1026,10 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
 {
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
@@ -1180,6 +1181,12 @@ void ElectroMagn2D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsig
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::centerMagneticFields()
 {
+
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int ny_p = dimPrim[1];
+    // const unsigned int nx_d = dimDual[0];
+    const unsigned int ny_d = dimDual[1];
+
     const double *const __restrict__ Bx2D = Bx_->data();
     const double *const __restrict__ By2D = By_->data();
     const double *const __restrict__ Bz2D = Bz_->data();
@@ -1193,6 +1200,9 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_d; ++y ) {
             Bx2D_m[x * ny_d + y] = ( Bx2D[x * ny_d + y] + Bx2D_m[x * ny_d + y] ) * 0.5;
         }
@@ -1204,6 +1214,9 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_p; ++y ) {
             By2D_m[x * ny_p + y] = ( By2D[x * ny_p + y] + By2D_m[x * ny_p + y] ) * 0.5;
         }
@@ -1214,6 +1227,9 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
         for( unsigned int y = 0; y < ny_d; ++y ) {
             Bz2D_m[x * ny_d + y] = ( Bz2D[x * ny_d + y] + Bz2D_m[x * ny_d + y] ) * 0.5;
         }
@@ -1223,15 +1239,15 @@ void ElectroMagn2D::centerMagneticFields()
 // Create a new field
 Field * ElectroMagn2D::createField( std::string fieldname, Params& params )
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create(dimPrim, 0, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create(dimPrim, 1, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create(dimPrim, 2, true,  fieldname, params);
-    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
-    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create2D(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create2D(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create2D(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create2D(dimPrim, 0, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create2D(dimPrim, 1, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create2D(dimPrim, 2, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create2D(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create2D(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create2D(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
 
     ERROR("Cannot create field "<<fieldname);
@@ -1289,6 +1305,14 @@ void ElectroMagn2D::computeTotalRhoJ()
 //END computeTotalRhoJ
 }
 
+// #if defined( SMILEI_ACCELERATOR_MODE )
+// //! Method used to compute the total charge density and currents by summing over all species on Device
+// void ElectroMagn2D::computeTotalRhoJOnDevice()
+// {
+//     ERROR("not implemented");
+// }
+// #endif
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1304,8 +1328,8 @@ void ElectroMagn2D::computeTotalEnvChi()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Env_Chi_s[ispec] ) {
             Field2D *Env_Chi2D_s  = static_cast<Field2D *>( Env_Chi_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ ) {
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
+                for( unsigned int j=0 ; j<dimPrim[1] ; j++ ) {
                     ( *Env_Chi2D )( i, j ) += ( *Env_Chi2D_s )( i, j );
                 }
             }
@@ -1465,11 +1489,11 @@ void ElectroMagn2D::initAntennas( Patch *patch, Params& params )
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
         if( antennas[i].fieldName == "Jx" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 0, false, "Jx", params );
+            antennas[i].field = FieldFactory::create2D( dimPrim, 0, false, "Jx", params );
         } else if( antennas[i].fieldName == "Jy" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 1, false, "Jy", params );
+            antennas[i].field = FieldFactory::create2D( dimPrim, 1, false, "Jy", params );
         } else if( antennas[i].fieldName == "Jz" ) {
-            antennas[i].field = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+            antennas[i].field = FieldFactory::create2D( dimPrim, 2, false, "Jz", params );
         } else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 #include "ParticlesFactory.h"
 
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
 extern "C" void* CreateGPUParticles( const void* parameters,
                                      const void* a_parent_patch );
 #endif
@@ -22,7 +22,7 @@ Particles* ParticlesFactory::create( const Params& parameters,
         // We export a C interface to avoid potential ABI problems
         // that could occur when using two different compilers (e.g., one to
         // compile cuda/hip and another one for the host code).
-#if defined( ACCELERATOR_GPU_ACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         particles = static_cast<Particles*>( CreateGPUParticles( &parameters, &a_parent_patch ) );
 #else
         SMILEI_UNUSED( a_parent_patch );

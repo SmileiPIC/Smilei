@@ -13,12 +13,12 @@
 #include "userFunctions.h"
 
 
-void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -35,12 +35,12 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     }
 }
 
-void internal_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( ACCELERATOR_GPU_ACC )
+#if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -57,7 +57,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     }
 }
 
-void internal_inf_AM( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_inf_AM( Species *species, int imin, int imax, int /*direction*/, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position_y = species->particles->getPtrPosition(1);
@@ -71,7 +71,7 @@ void internal_inf_AM( Species *species, int imin, int imax, int direction, doubl
     }
 }
 
-void internal_sup_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void internal_sup_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
     double* position_y = species->particles->getPtrPosition(1);
@@ -85,12 +85,12 @@ void internal_sup_AM( Species *species, int imin, int imax, int direction, doubl
     }
 }
 
-void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -105,12 +105,12 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef ACCELERATOR_GPU_ACC
+#ifdef SMILEI_OPENACC_MODE
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -125,7 +125,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void reflect_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void reflect_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
@@ -141,7 +141,7 @@ void reflect_particle_wall( Species *species, int imin, int imax, int direction,
 }
 
 // direction not used below, direction is "r"
-void refl_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     
@@ -183,59 +183,99 @@ void refl_particle_AM( Species *species, int imin, int imax, int direction, doub
     }    
 }
 
-void remove_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_inf( Species* species, 
+                          int imin, int imax, 
+                          int direction, 
+                          double limit_inf, 
+                          double dt, 
+                          std::vector<double>& invgf, 
+                          Random* rand, 
+                          double& energy_change )
 {
-    energy_change = 0.;
-    double* position = species->particles->getPtrPosition(direction);
-    double* momentum_x = species->particles->getPtrMomentum(0);
-    double* momentum_y = species->particles->getPtrMomentum(1);
-    double* momentum_z = species->particles->getPtrMomentum(2);
-    short* charge    = species->particles->getPtrCharge();
-    double* weight   = species->particles->getPtrWeight();
-    int* cell_keys   = species->particles->getPtrCellKeys();
-    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
-    #pragma acc loop gang worker vector
+
+    double change_in_energy = 0.0;
+
+    const double *const position   = species->particles->getPtrPosition( direction );
+    const double *const momentum_x = species->particles->getPtrMomentum( 0 );
+    const double *const momentum_y = species->particles->getPtrMomentum( 1 );
+    const double *const momentum_z = species->particles->getPtrMomentum( 2 );
+    short  *const charge     = species->particles->getPtrCharge();
+    const double *const weight     = species->particles->getPtrWeight();
+    int    *const cell_keys  = species->particles->getPtrCellKeys();
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
-    #pragma omp teams distribute parallel for
+    #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
+                                                                                                                               : change_in_energy )
+    #pragma omp teams distribute parallel for reduction( + \
+                                                         : change_in_energy )
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector reduction(+ : change_in_energy)
+#else
+    #pragma omp simd reduction(+ : change_in_energy)
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf) {
-            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            energy_change += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
-            charge[ ipart ] = 0;
+    for( int ipart = imin; ipart < imax; ++ipart ) {
+        if( position[ipart] < limit_inf ) {
+            const double LorentzFactor = std::sqrt( 1.0 +
+                                                    momentum_x[ipart] * momentum_x[ipart] +
+                                                    momentum_y[ipart] * momentum_y[ipart] +
+                                                    momentum_z[ipart] * momentum_z[ipart] );
+            change_in_energy += weight[ipart] * ( LorentzFactor - 1.0 ); // energy lost REDUCTION
+            charge[ipart]    = 0;
             cell_keys[ipart] = -1;
         }
     }
+
+    energy_change = change_in_energy;
 }
 
-void remove_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_sup( Species* species, 
+                          int imin, int imax, 
+                          int direction, 
+                          double limit_sup, 
+                          double dt, 
+                          std::vector<double>& invgf, 
+                          Random* rand, 
+                          double& energy_change )
 {
-    energy_change = 0.;
-    double* position = species->particles->getPtrPosition(direction);
-    double* momentum_x = species->particles->getPtrMomentum(0);
-    double* momentum_y = species->particles->getPtrMomentum(1);
-    double* momentum_z = species->particles->getPtrMomentum(2);
-    short* charge    = species->particles->getPtrCharge();
-    double* weight   = species->particles->getPtrWeight();
-    int* cell_keys   = species->particles->getPtrCellKeys();
-    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
-    #pragma acc loop gang worker vector
+
+    double change_in_energy = 0.0;
+
+    const double *const position   = species->particles->getPtrPosition( direction );
+    const double *const momentum_x = species->particles->getPtrMomentum( 0 );
+    const double *const momentum_y = species->particles->getPtrMomentum( 1 );
+    const double *const momentum_z = species->particles->getPtrMomentum( 2 );
+    short  *const charge     = species->particles->getPtrCharge();
+    const double *const weight     = species->particles->getPtrWeight();
+    int    *const cell_keys  = species->particles->getPtrCellKeys();
+
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
-    #pragma omp teams distribute parallel for
+    #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
+                                                                                                                               : change_in_energy )
+    #pragma omp teams distribute parallel for reduction( + \
+                                                         : change_in_energy )
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector reduction(+ : change_in_energy)
+#else
+    #pragma omp simd reduction(+ : change_in_energy)
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] >= limit_sup) {
-            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            energy_change += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
-            charge[ ipart ] = 0;
+    for( int ipart = imin; ipart < imax; ++ipart ) {
+        if( position[ipart] >= limit_sup ) {
+            const double LorentzFactor = std::sqrt( 1.0 +
+                                                    momentum_x[ipart] * momentum_x[ipart] +
+                                                    momentum_y[ipart] * momentum_y[ipart] +
+                                                    momentum_z[ipart] * momentum_z[ipart] );
+            change_in_energy += weight[ipart] * ( LorentzFactor - 1.0 ); // energy lost REDUCTION
+            charge[ipart]    = 0;
             cell_keys[ipart] = -1;
         }
     }
+
+    energy_change = change_in_energy;
 }
 
-void remove_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -258,7 +298,7 @@ void remove_particle_wall( Species *species, int imin, int imax, int direction, 
     }
 }
 
-void remove_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position_y = species->particles->getPtrPosition(1);
@@ -281,7 +321,7 @@ void remove_particle_AM( Species *species, int imin, int imax, int direction, do
 }
 
 //! Delete photon (mass_==0) at the boundary and keep the energy for diagnostics
-void remove_photon_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_photon_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -301,7 +341,7 @@ void remove_photon_inf( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void remove_photon_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void remove_photon_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;
     double* position = species->particles->getPtrPosition(direction);
@@ -321,7 +361,7 @@ void remove_photon_sup( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -341,7 +381,7 @@ void stop_particle_inf( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -361,7 +401,7 @@ void stop_particle_sup( Species *species, int imin, int imax, int direction, dou
     }
 }
 
-void stop_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0;
     double* position = species->particles->getPtrPosition(direction);
@@ -384,7 +424,7 @@ void stop_particle_wall( Species *species, int imin, int imax, int direction, do
     }
 }
 
-void stop_particle_AM( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void stop_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
 {
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
@@ -418,7 +458,7 @@ void stop_particle_AM( Species *species, int imin, int imax, int direction, doub
     
 }
 
-void thermalize_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void thermalize_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
 {
     int nDim = species->nDim_particle;
     double* position = species->particles->getPtrPosition(direction);
@@ -520,7 +560,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
     }
 }
 
-void thermalize_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
+void thermalize_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
 {
     int nDim = species->nDim_particle;
     double* position = species->particles->getPtrPosition(direction);

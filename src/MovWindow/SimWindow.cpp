@@ -20,6 +20,7 @@
 #include <fstream>
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
+#include "EnvelopeBC_Factory.h"
 #include "DoubleGrids.h"
 #include "SyncVectorPatch.h"
 
@@ -57,7 +58,7 @@ SimWindow::SimWindow( Params &params )
     }
     
     cell_length_x_   = params.cell_length[0];
-    n_space_x_       = params.n_space[0];
+    n_space_x_       = params.patch_size_[0];
     additional_shifts_iteration = floor(additional_shifts_time / params.timestep + 0.5);
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
@@ -131,7 +132,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             }
 
             vecPatches_old.resize( nPatches );
-            n_moved += params.n_space[0];
+            n_moved += params.patch_size_[0];
         }
         //Cut off laser before exchanging any patches to avoid deadlock and store pointers in vecpatches_old.
 #ifndef _NO_MPI_TM
@@ -210,7 +211,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #ifndef _NO_MPI_TM
             #pragma omp critical
 #endif
-            mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
+                mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
             
             // Do not receive Xmin condition
             if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
@@ -236,10 +237,24 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         delete embc;
                     }
                 }
-                mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+#ifndef _NO_MPI_TM
+                #pragma omp critical
+#endif
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition)
+                if (!params.multiple_decomposition){
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                }
             }
             
             mypatch->EMfields->laserDisabled();
@@ -269,7 +284,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
             }
             
-            mypatch->updateTagenv( smpi );
             if( mypatch->isXmin() ) {
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                     mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
@@ -282,10 +296,24 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         delete embc;
                     }
                 }
-                mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+#ifndef _NO_MPI_TM
+                #pragma omp critical
+#endif
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition)
+                if (!params.multiple_decomposition){
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                }
             }
             if( mypatch->wasXmax( params ) ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {
@@ -293,7 +321,20 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         delete embc;
                     }
                 }
-                mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+#ifndef _NO_MPI_TM
+                #pragma omp critical
+#endif
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
                 mypatch->EMfields->updateGridSize( params, mypatch );
                 
@@ -332,9 +373,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.cell_index_[0] = 0;
                             init_space.cell_index_[1] = 0;
                             init_space.cell_index_[2] = 0;
-                            init_space.box_size_[0]   = params.n_space[0];
-                            init_space.box_size_[1]   = params.n_space[1];
-                            init_space.box_size_[2]   = params.n_space[2];
+                            init_space.box_size_[0]   = params.patch_size_[0];
+                            init_space.box_size_[1]   = params.patch_size_[1];
+                            init_space.box_size_[2]   = params.patch_size_[2];
                             
 			     nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
 
@@ -386,7 +427,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
-                            mypatch->vecSpecies[ispec]->sortParticles( params , mypatch);
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                         }
                 } // end j loop
             } // End ithread loop
@@ -443,7 +484,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->configuration( params, mypatch );
-                            mypatch->vecSpecies[ispec]->sortParticles( params, mypatch );
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                             
                         }
                     }
@@ -485,7 +526,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         #pragma omp single nowait
 #endif
         {
-            x_moved += cell_length_x_*params.n_space[0];
+            x_moved += cell_length_x_*params.patch_size_[0];
             vecPatches.updateFieldList( smpi ) ;
             //update list fields for species diag too ??
             
@@ -603,25 +644,37 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 
 }
 
-void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual)
+void SimWindow::operate(Region& region,  VectorPatch&, SmileiMPI*, Params& params, double time_dual)
 {
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ex_, params.n_space[0] );
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ey_, params.n_space[0] );
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ez_, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ex_, params.patch_size_[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ey_, params.patch_size_[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ez_, params.patch_size_[0] );
     
     if (region.patch_->EMfields->Bx_->data_!= region.patch_->EMfields->Bx_m->data_) {
-        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_, params.n_space[0] );
-        region.patch_->exchangeField_movewin( region.patch_->EMfields->By_, params.n_space[0] );
-        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_, params.n_space[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_, params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->By_, params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_, params.patch_size_[0] );
     }
     
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_m, params.n_space[0] );
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->By_m, params.n_space[0] );
-    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_m, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_m, params.patch_size_[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->By_m, params.patch_size_[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_m, params.patch_size_[0] );
 
     if (params.is_spectral) {
-        region.patch_->exchangeField_movewin( region.patch_->EMfields->rho_, params.n_space[0] );
-        region.patch_->exchangeField_movewin( region.patch_->EMfields->rhoold_, params.n_space[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->rho_, params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->rhoold_, params.patch_size_[0] );
+    }
+
+    for( unsigned int bcId=2; bcId<2*params.nDim_field; bcId++ ){
+        if( (dynamic_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] ) || dynamic_cast<ElectroMagnBC3D_PML *>( region.patch_->EMfields->emBoundCond[bcId] )) ){
+            if( dynamic_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] );
+                exchangePML_movewin( region, embc, params.patch_size_[0] );
+            } else {
+                ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( region.patch_->EMfields->emBoundCond[bcId] );
+                exchangePML_movewin( region, embc, params.patch_size_[0] );
+            }
+        }
     }
 
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
@@ -645,28 +698,47 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 }
 
 
-void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int nmodes)
+void SimWindow::operate(Region& region,  VectorPatch&, SmileiMPI*, Params& params, double time_dual, unsigned int nmodes)
 {
     ElectroMagnAM * region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
    
     for (unsigned int imode = 0; imode < nmodes; imode++){
-        region.patch_->exchangeField_movewin( region_fields->El_[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->El_[imode], params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.patch_size_[0] );
         
         if (region_fields->Bl_[imode]->cdata_!= region_fields->Bl_m[imode]->cdata_) {
-            region.patch_->exchangeField_movewin( region_fields->Bl_[imode], params.n_space[0] );
-            region.patch_->exchangeField_movewin( region_fields->Br_[imode], params.n_space[0] );
-            region.patch_->exchangeField_movewin( region_fields->Bt_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->Bl_[imode], params.patch_size_[0] );
+            region.patch_->exchangeField_movewin( region_fields->Br_[imode], params.patch_size_[0] );
+            region.patch_->exchangeField_movewin( region_fields->Bt_[imode], params.patch_size_[0] );
         }
 
-        region.patch_->exchangeField_movewin( region_fields->Bl_m[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Br_m[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Bt_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Bl_m[imode], params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region_fields->Br_m[imode], params.patch_size_[0] );
+        region.patch_->exchangeField_movewin( region_fields->Bt_m[imode], params.patch_size_[0] );
 
         if (params.is_spectral) {
-            region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.n_space[0] );
-            region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.patch_size_[0] );
+            region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.patch_size_[0] );
+        }
+
+        if( dynamic_cast<ElectroMagnBCAM_PML *>( region.patch_->EMfields->emBoundCond[3] )){
+            ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( region_fields->emBoundCond[3] );
+            if (embc->Hl_[imode]) {
+                region.patch_->exchangeField_movewin( embc->Hl_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Hr_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Ht_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Bl_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Br_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Bt_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->El_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Er_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Et_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Dl_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Dr_[imode], params.patch_size_[0] );
+                region.patch_->exchangeField_movewin( embc->Dt_[imode], params.patch_size_[0] );
+            }
+
         }
     }
 
@@ -687,3 +759,22 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
     //    region.identify_missing_patches( smpi, vecPatches, params );
     //}
 }
+
+template <typename Tpml>
+void  SimWindow::exchangePML_movewin( Region& region, Tpml embc, int clrw ) {
+                if (embc->Hx_) {
+                    region.patch_->exchangeField_movewin( embc->Hx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Hy_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Hz_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Bx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->By_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Bz_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ex_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ey_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ez_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dy_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dz_, clrw );
+                }
+}
+

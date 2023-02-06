@@ -240,7 +240,7 @@ double RadiationTables::computePhotonProductionYield(
     if( ichipa < 0 ) {
         ichipa = 0;
         dNphdt = integfochi_.data_[ichipa];
-    } else if( ichipa >= integfochi_.size_-1 ) {
+    } else if( (unsigned int) ichipa >= integfochi_.size_-1 ) {
         ichipa = integfochi_.size_-2;
         dNphdt = integfochi_.data_[ichipa];
     } else {
@@ -389,7 +389,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Else we use the values at the boundaries
     if( ichipa < 0 ) {
         ichipa = 0;
-    } else if( ichipa > xi_.dim_size_[0]-2 ) {
+    } else if( (unsigned int) ichipa > xi_.dim_size_[0]-2 ) {
         // xi_.size_particle_chi_-2 for interpolation
         ichipa = xi_.dim_size_[0]-2;
     }
