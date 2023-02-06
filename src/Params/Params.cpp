@@ -1605,7 +1605,7 @@ void Params::multiple_decompose()
     // Compute the oversize of the region
     if( is_spectral ) {
         for( unsigned int i=0; i<nDim_field; i++ ){
-            region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            region_oversize[i]  = std::max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
         }
     } else {
         for( unsigned int i=0; i<nDim_field; i++ ){
@@ -1614,7 +1614,7 @@ void Params::multiple_decompose()
     }
     PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+        region_oversize[i] = std::max( region_oversize[i], region_ghost_cells );
     }
     if( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
