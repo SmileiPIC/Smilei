@@ -43,6 +43,7 @@ SimWindow::SimWindow( Params &params )
 #else
     max_threads = 1;
 #endif
+
     patch_to_be_created.resize( max_threads );
     patch_particle_created.resize( max_threads );
     
@@ -109,12 +110,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     
     std::vector<Patch *> delete_patches_, update_patches_, send_patches_;
     
-#ifdef _OPENMP
-    int my_thread = omp_get_thread_num();
-#else
-    int my_thread = 0;
-#endif
-    
+    // Get thread number, put to 0 if no OpenMP
+    const int my_thread = Tools::getOMPThreadNum();
+
 #ifdef _NO_MPI_TM
     #pragma omp master
     {

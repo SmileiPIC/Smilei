@@ -4250,6 +4250,37 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Moving window
+// ---------------------------------------------------------------------------------------------------------------------
+
+//! Move the window
+void VectorPatch::moveWindow(
+    Params    &params,
+    SmileiMPI *smpi,
+    Region    &region,
+    SimWindow *simWindow,
+    double    time_dual, 
+    Timers    &timers,
+    int       itime
+    )
+{
+    timers.movWindow.restart();
+    simWindow->shift( (*this), smpi, params, itime, time_dual, region );
+
+    if (itime == simWindow->getAdditionalShiftsIteration() ) {
+        int adjust = simWindow->isMoving(time_dual)?0:1;
+        for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
+            simWindow->shift( (*this), smpi, params, itime, time_dual, region );
+    }
+    timers.movWindow.update();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Envelopp
+// ---------------------------------------------------------------------------------------------------------------------
+
+
 void VectorPatch::runEnvelopeModule( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,

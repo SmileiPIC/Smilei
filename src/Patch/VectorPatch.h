@@ -284,6 +284,20 @@ public :
     //! Init new envelope from input namelist
     void initNewEnvelope( Params &params );
 
+    // Moving Window
+    // ------------------
+
+    //! Move the window
+    void moveWindow(
+        Params    &params,
+        SmileiMPI *smpi,
+        Region    &region,
+        SimWindow *simWindow,
+        double    time_dual, 
+        Timers    &timers,
+        int       itime
+    );
+
 #ifdef _OMPTASKS
     //! macro-particle operations with tasks
     void dynamicsWithTasks( Params &params,
