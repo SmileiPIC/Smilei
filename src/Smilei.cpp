@@ -659,15 +659,15 @@ int main( int argc, char *argv[] )
                 }
             }
 
-            // call the various diagnostics
+            // Call the various diagnostics
 #ifdef _OMPTASKS
             vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
 #else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 #endif
 
-            // Clean GPU temporary buffers
 
+            // Move the window
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
 

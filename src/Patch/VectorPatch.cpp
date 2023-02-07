@@ -4789,7 +4789,7 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 //! This function updates the data on the host from the data located on the device
 void VectorPatch::copyEMFieldsFromHostToDevice()
 {
-#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
