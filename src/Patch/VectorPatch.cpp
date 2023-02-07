@@ -4934,10 +4934,10 @@ VectorPatch::copyDeviceStateToHost(
 
         if (copy_fields) {
 
-            patches_[ipatch]->EMfields->Jx_->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Jx_->copyFromDeviceToHost();
             patches_[ipatch]->EMfields->Jy_->copyFromDeviceToHost();
             patches_[ipatch]->EMfields->Jz_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Rho_->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->rho_->copyFromDeviceToHost();
 
             // double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
             // double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
@@ -4949,9 +4949,9 @@ VectorPatch::copyDeviceStateToHost(
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
-            patches_[ipatch]->EMfields->Ex->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Ey->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Ez->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->Ex_->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->Ey_->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->Ez_->copyFromDeviceToHost();
 
             // double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
             // double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
@@ -4973,9 +4973,9 @@ VectorPatch::copyDeviceStateToHost(
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
 
-            patches_[ipatch]->EMfields->Bx->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->By->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Bz->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->Bx_->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->By_->copyFromDeviceToHost();
+            patches_[ipatch]->EMfields->Bz_->copyFromDeviceToHost();
 
             // double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
             // double *const By = patches_[ipatch]->EMfields->By_->data();
