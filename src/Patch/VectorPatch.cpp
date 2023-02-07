@@ -4655,7 +4655,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 1, 4);
 
 #ifdef  __DETAILED_TIMERS
-        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
         } // end task on reduction of patch densities
@@ -4679,7 +4679,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
 
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new electrons from ionization
         } // end if Ionize
@@ -4704,7 +4704,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,9);
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new photons from radiation
         } // end if Radiate
@@ -4727,7 +4727,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,10);
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new photons from Multiphoton Breit Wheeler
         } // end if Multiphoton Breit Wheeler
@@ -4849,7 +4849,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,4);
 
             #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
             #endif
             } // end task on reduction of patch densities
 
@@ -4872,7 +4872,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,8);
 
                 #ifdef  __DETAILED_TIMERS
-                ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+                ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
                 #endif
                 } // end task on reduction of new electrons from ionization
             } // end if Ionize
@@ -4963,7 +4963,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,4);
 
             #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
             #endif
             } // end task on reduction of patch densities
 

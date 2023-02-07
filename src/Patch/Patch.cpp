@@ -68,13 +68,13 @@ Patch::Patch( Params &params, SmileiMPI *, DomainDecomposition *domain_decomposi
 #ifdef  __DETAILED_TIMERS
 
     #ifdef _OPENMP
-        thread_number_ = omp_get_num_threads();
+        number_of_threads_ = omp_get_num_threads();
     #else
-        thread_number_= 1;
+        number_of_threads_= 1;
     #endif
 
-    patch_timers_.resize( 15 * thread_number_, 0. );
-    patch_tmp_timers_.resize( 15 * thread_number_, 0. );
+    patch_timers_.resize( 15 * number_of_threads_, 0. );
+    patch_tmp_timers_.resize( 15 * number_of_threads_, 0. );
 #endif
 
 } // END Patch::Patch
@@ -97,14 +97,14 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *, unsigned int ipatch )
 #ifdef  __DETAILED_TIMERS
 
 #ifdef _OPENMP
-    thread_number_ = omp_get_num_threads();
+    number_of_threads_ = omp_get_num_threads();
 #else
-    thread_number_= 1;
+    number_of_threads_ = 1;
 #endif
 
     // Initialize timers
-    patch_timers_.resize( 15 * thread_number_, 0. );
-    patch_tmp_timers_.resize( 15 * thread_number_, 0. );
+    patch_timers_.resize( 15 * number_of_threads_, 0. );
+    patch_tmp_timers_.resize( 15 * number_of_threads_, 0. );
 #endif
 
 }

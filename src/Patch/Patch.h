@@ -15,6 +15,16 @@
 #include "Interpolator.h"
 #include "Projector.h"
 
+// Fine timer ids
+#define interpolation_timer_id_     0
+#define push_timer_id_              1
+#define projection_timer_id_        2
+#define cell_keys_timer_id_         3
+#define ionization_timer_id_        4
+#define radiation_timer_id_         5
+#define mBW_timer_id_               6
+#define interp_fields_env_timer_id_ 7
+
 class DomainDecomposition;
 class Diagnostic;
 class SimWindow;
@@ -94,8 +104,6 @@ public:
     // Detailed timers (at the patch level)
     // -----------------------
 
-#ifdef  __DETAILED_TIMERS
-
     // Initialize timers
     // 0 - Interpolation
     // 1 - Pusher
@@ -112,18 +120,12 @@ public:
     // 12 - Push Pos
     // 13 - Sorting
 
-    const int interpolation_timer_id_ = 0;
-    const int push_timer_id_          = 1;
-    const int projection_timer_id_    = 2;
-    const int cell_keys_timer_id_     = 3;
-    const int ionization_timer_id_    = 4;
-    const int radiation_timer_id_     = 5;
-    const int mBW_timer_id_           = 6;
+#ifdef  __DETAILED_TIMERS
 
     // OpenMP properties
     // -----------------------
     
-    int thread_number_;
+    int number_of_threads_;
     
     // Detailed timers
     // -----------------------
@@ -137,14 +139,24 @@ public:
 #endif
 
     inline void __attribute__((always_inline)) startFineTimer(unsigned int index) {
-#ifdef  __DETAILED_TIMERS
+#ifdef __DETAILED_TIMERS
+#ifdef _OMPTASKS
+        const int ithread = Tools::getOMPThreadNum();
+        patch_tmp_timers_[index * number_of_threads_ + ithread] = MPI_Wtime();
+#else
         patch_tmp_timers_[index] = MPI_Wtime();
+#endif
 #endif
     }
     
     inline void __attribute__((always_inline)) stopFineTimer(unsigned int index) {
 #ifdef  __DETAILED_TIMERS
+#ifdef _OMPTASKS
+        const int ithread = Tools::getOMPThreadNum();   
+        patch_timers_[index * number_of_threads_ + ithread] += MPI_Wtime() - patch_tmp_timers_[index * number_of_threads_ + ithread];
+#else
         patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
+#endif
 #endif
     }
 
