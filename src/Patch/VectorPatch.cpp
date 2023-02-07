@@ -4402,7 +4402,9 @@ void VectorPatch::moveWindow(
 
     // Bring all particles and field grids to the Host (except species grids)
 #if defined( SMILEI_ACCELERATOR_MODE)
-    copyDeviceStateToHost(true,true,false);
+    if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
+        copyDeviceStateToHost(true,true,false);
+    }
 #endif
 
     simWindow->shift( (*this), smpi, params, itime, time_dual, region );
@@ -4415,8 +4417,10 @@ void VectorPatch::moveWindow(
 
     // Copy all Fields and Particles to the device
 #if defined( SMILEI_ACCELERATOR_MODE)
-    copyEMFieldsFromHostToDevice();
-    copySpeciesParticlesFromHostToDevice();
+    if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
+        copyEMFieldsFromHostToDevice();
+        copySpeciesParticlesFromHostToDevice();
+    }
 #endif
 
     timers.movWindow.update();
