@@ -48,6 +48,7 @@ runQuick:
   stage: run_quick
   only:
     - develop
+    - adaptation_for_gpu
 
   script:
     # Move in test dir

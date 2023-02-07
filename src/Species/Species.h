@@ -378,6 +378,13 @@ public:
     }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
+
+    //! Copy particles from host to device
+    void
+    copyParticlesFromHostToDevice(
+
+    );
+
     //! Prepare the species Current and Rho grids on Device
     void
     prepareSpeciesCurrentAndChargeOnDevice( 

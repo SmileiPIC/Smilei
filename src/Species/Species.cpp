@@ -654,6 +654,13 @@ Species::deleteSpeciesCurrentAndChargeOnDevice(
     }
 }
 
+//! Copy particles from host to device
+void
+Species::copyParticlesFromHostToDevice()
+{
+    particles->syncGPU();
+}
+
 #endif // end if SMILEI_ACCELERATOR_MODE
 
 // ---------------------------------------------------------------------------------------------------------------------

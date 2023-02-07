@@ -283,6 +283,20 @@ public :
     //! Init new envelope from input namelist
     void initNewEnvelope( Params &params );
 
+    // Moving Window
+    // ------------------
+
+    //! Move the window
+    void moveWindow(
+        Params    &params,
+        SmileiMPI *smpi,
+        Region    &region,
+        SimWindow *simWindow,
+        double    time_dual, 
+        Timers    &timers,
+        int       itime
+    );
+
 #ifdef _OMPTASKS
     //! macro-particle operations with tasks
     void dynamicsWithTasks( Params &params,
@@ -485,6 +499,13 @@ public :
     //! This function updates the data on the host from the data located on the device
     void copyEMFieldsFromHostToDevice();
     
+#if defined( SMILEI_ACCELERATOR_MODE)
+
+    //! Copy all species particles from  Host to devices
+    void copySpeciesParticlesFromHostToDevice()
+    
+#endif
+
     //! Data synchronization from device (GPU) to host (CPU)
     void copyDeviceStateToHost(
             bool copy_fields = true,

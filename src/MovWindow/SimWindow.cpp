@@ -43,6 +43,7 @@ SimWindow::SimWindow( Params &params )
 #else
     max_threads = 1;
 #endif
+
     patch_to_be_created.resize( max_threads );
     patch_particle_created.resize( max_threads );
     
@@ -109,12 +110,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     
     std::vector<Patch *> delete_patches_, update_patches_, send_patches_;
     
-#ifdef _OPENMP
-    int my_thread = omp_get_thread_num();
-#else
-    int my_thread = 0;
-#endif
-    
+    // Get thread number, put to 0 if no OpenMP
+    const int my_thread = Tools::getOMPThreadNum();
+
 #ifdef _NO_MPI_TM
     #pragma omp master
     {
@@ -211,7 +209,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #ifndef _NO_MPI_TM
             #pragma omp critical
 #endif
-                mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
+            mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
             
             // Do not receive Xmin condition
             if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
@@ -377,7 +375,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.box_size_[1]   = params.patch_size_[1];
                             init_space.box_size_[2]   = params.patch_size_[2];
                             
-			     nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
+			                nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
 
                         } // end loop nSpecies
 
