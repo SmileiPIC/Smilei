@@ -4910,18 +4910,18 @@ VectorPatch::copyDeviceStateToHost(
 
     const int npatches = this->size();
 
-    const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
-    const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
-    const int sizeofJz  = patches_[0]->EMfields->Jz_->size();
-    const int sizeofRho = patches_[0]->EMfields->rho_->size();
+    // const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
+    // const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
+    // const int sizeofJz  = patches_[0]->EMfields->Jz_->size();
+    // const int sizeofRho = patches_[0]->EMfields->rho_->size();
 
-    const int sizeofEx = patches_[0]->EMfields->Ex_->size();
-    const int sizeofEy = patches_[0]->EMfields->Ey_->size();
-    const int sizeofEz = patches_[0]->EMfields->Ez_->size();
+    // const int sizeofEx = patches_[0]->EMfields->Ex_->size();
+    // const int sizeofEy = patches_[0]->EMfields->Ey_->size();
+    // const int sizeofEz = patches_[0]->EMfields->Ez_->size();
 
-    const int sizeofBx = patches_[0]->EMfields->Bx_->size();
-    const int sizeofBy = patches_[0]->EMfields->By_->size();
-    const int sizeofBz = patches_[0]->EMfields->Bz_->size();
+    // const int sizeofBx = patches_[0]->EMfields->Bx_->size();
+    // const int sizeofBy = patches_[0]->EMfields->By_->size();
+    // const int sizeofBz = patches_[0]->EMfields->Bz_->size();
 
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
 
@@ -4934,39 +4934,56 @@ VectorPatch::copyDeviceStateToHost(
 
         if (copy_fields) {
 
-            double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
-            double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
-            double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-            double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+            patches_[ipatch]->EMfields->Jx_->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Jy_->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Jz_->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Rho_->copyFromDevicetoHost();
 
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
+            // double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+            // double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+            // double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+            // double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
-            double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-            double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-            double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jx, sizeofJx );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jy, sizeofJy );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
-            double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-            double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-            double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+            patches_[ipatch]->EMfields->Ex->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Ey->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Ez->copyFromDevicetoHost();
 
-            double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-            double *const By = patches_[ipatch]->EMfields->By_->data();
-            double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+            // double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+            // double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+            // double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofJx );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofJy );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofJz );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ex, sizeofEx );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
 
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
+            patches_[ipatch]->EMfields->Bx_m->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->By_m->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Bz_m->copyFromDevicetoHost();
 
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bx, sizeofBx );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( By, sizeofBy );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bz, sizeofBz );
+            // double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+            // double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+            // double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmx, sizeofBx );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
+
+            patches_[ipatch]->EMfields->Bx->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->By->copyFromDevicetoHost();
+            patches_[ipatch]->EMfields->Bz->copyFromDevicetoHost();
+
+            // double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+            // double *const By = patches_[ipatch]->EMfields->By_->data();
+            // double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bx, sizeofBx );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( By, sizeofBy );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bz, sizeofBz );
         }
 
         // Current and Charge for each species

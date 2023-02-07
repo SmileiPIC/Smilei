@@ -27,7 +27,15 @@ void Field::put_to( double val )
 
 #if defined(SMILEI_ACCELERATOR_MODE)
     //! copy the field array from Host to Device
-    void Field::copyFromHostToDevice() {
+    void Field::copyFromHostToDevice()
+    {
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( data_, number_of_points_ );
     };
+
+    //! copy from Device to Host
+    void Field::copyFromDeviceToHost()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
+    };
+
 #endif

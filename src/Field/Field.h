@@ -258,8 +258,13 @@ public:
     virtual void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) = 0;
 
 #if defined(SMILEI_ACCELERATOR_MODE)
+
     //! copy the field from Host to Device
     void copyFromHostToDevice();
+
+    //! copy from Device to Host
+    void copyFromDeviceToHost();
+
 #endif
 
 protected:
