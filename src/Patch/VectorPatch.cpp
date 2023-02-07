@@ -4882,7 +4882,7 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 void VectorPatch::copySpeciesParticlesFromHostToDevice()
 {
 
-    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
+    for( int ipatch = 0; ipatch < this->size(); ipatch++ ) {
         for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
             species( ipatch, ispec )->copyParticlesFromHostToDevice();
         }

@@ -502,7 +502,7 @@ public :
 #if defined( SMILEI_ACCELERATOR_MODE)
 
     //! Copy all species particles from  Host to devices
-    void copySpeciesParticlesFromHostToDevice()
+    void copySpeciesParticlesFromHostToDevice();
     
 #endif
 
