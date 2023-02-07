@@ -418,8 +418,8 @@ public:
     //! bin discovery.
     //!
     virtual void initializeDataOnDevice();
-    virtual void syncGPU();
-    virtual void syncCPU();
+    virtual void copyFromHostToDevice();
+    virtual void copyFromDeviceToHost();
 
     //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {

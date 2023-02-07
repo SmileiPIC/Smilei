@@ -381,9 +381,7 @@ public:
 
     //! Copy particles from host to device
     void
-    copyParticlesFromHostToDevice(
-
-    );
+    copyParticlesFromHostToDevice();
 
     //! Prepare the species Current and Rho grids on Device
     void

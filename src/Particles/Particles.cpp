@@ -1149,11 +1149,11 @@ void Particles::initializeDataOnDevice()
 {
     ERROR( "Device only feature, should not have come here!" );
 }
-void Particles::syncGPU()
+void Particles::copyFromHostToDevice()
 {
     ERROR( "Device only feature, should not have come here!" );
 }
-void Particles::syncCPU()
+void Particles::copyFromDeviceToHost()
 {
     ERROR( "Device only feature, should not have come here!" );
 }

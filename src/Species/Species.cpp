@@ -658,7 +658,7 @@ Species::deleteSpeciesCurrentAndChargeOnDevice(
 void
 Species::copyParticlesFromHostToDevice()
 {
-    particles->syncGPU();
+    particles->copyFromHostToDevice();
 }
 
 #endif // end if SMILEI_ACCELERATOR_MODE
@@ -1822,7 +1822,7 @@ void Species::sortParticles( Params &params )
         }
     }
 
-    particles_to_move->syncGPU();
+    particles_to_move->copyFromHostToDevice();
 
     // // Erase particles that leaves this patch
     // particles->last_index[0] = particles->eraseLeavingParticles();

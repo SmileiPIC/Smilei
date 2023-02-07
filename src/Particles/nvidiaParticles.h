@@ -72,10 +72,10 @@ public:
     void initializeDataOnDevice() override;
 
     //! Send the particles from host to device
-    void syncGPU() override;
+    void copyFromHostToDevice() override;
     
     //! Update the particles from device to host
-    void syncCPU() override;
+    void copyFromDeviceToHost() override;
 
     unsigned int deviceCapacity() const override;
 
