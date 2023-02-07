@@ -893,7 +893,7 @@ void nvidiaParticles::initializeDataOnDevice()
         // Should we reserve some space ?
         // reserve( 100 );
     } else {
-        syncGPU();
+        copyFromHostToDevice();
     }
 
     if( prepareBinIndex() < 0 ) {
@@ -924,7 +924,7 @@ void nvidiaParticles::initializeDataOnDevice()
 // -------------------------------------------------------------------------------------------------
 //! Copy the particles from host to device
 // -------------------------------------------------------------------------------------------------
-void nvidiaParticles::syncGPU()
+void nvidiaParticles::copyFromHostToDevice()
 {
     resize( Position[0].size() );
 
@@ -952,7 +952,7 @@ void nvidiaParticles::syncGPU()
 // -------------------------------------------------------------------------------------------------
 //! Copy device to host
 // -------------------------------------------------------------------------------------------------
-void nvidiaParticles::syncCPU()
+void nvidiaParticles::copyFromDeviceToHost()
 {
     for (int idim=0;idim<Position.size();idim++) {
         Position[idim].resize( gpu_nparts_ );
@@ -1062,7 +1062,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          count_if_out() );
     }
 
-    particles_to_move->syncCPU();
+    particles_to_move->copyFromDeviceToHost();
 }
 
 
