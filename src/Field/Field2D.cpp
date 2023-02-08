@@ -330,7 +330,7 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
     }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) &&
+    const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) || ( name[0] == 'R' ) ) &&
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( data() );
     if( should_manipulate_gpu_memory ) {
         // At initialization, data() is NOT on the GPU so we dont map the
@@ -378,7 +378,6 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
     SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) ==
                    smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub ) );
-
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
@@ -416,7 +415,6 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     const bool should_manipulate_gpu_memory = name[0] == 'B' &&
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
     // SMILEI_ASSERT( /*iteration == 0 && */!smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
-
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
@@ -453,10 +451,9 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
-    const bool should_manipulate_gpu_memory = name[0] == 'J' &&
+    const bool should_manipulate_gpu_memory = (name[0] == 'J' || name[0] == 'R') &&
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
     // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
-
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
@@ -493,10 +490,9 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     // At initialization, this data is NOT on the GPU
-    const bool should_manipulate_gpu_memory = name[0] == 'J' &&
+    const bool should_manipulate_gpu_memory = (name[0] == 'J' || name[0] == 'R') &&
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub );
     // SMILEI_ASSERT( iteration == 0 && !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( field ) );
-
     const unsigned field_first = ix * dimY + iy;
     const unsigned field_last  = ( ix + NX - 1 ) * dimY + iy + NY;
 
