@@ -1323,11 +1323,11 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
         }
     }
 
+    // Copy device to host for diags not implemented on GPU
+    // At initilisation, data is still on the host
     if (itime > 0) {
         #pragma omp single
         {
-	    //std::cout << need_fields << " " << need_particles 
-	    //	      << std::endl;
             copyDeviceStateToHost(need_fields, need_particles, diag_flag);
         }
     }
