@@ -845,8 +845,6 @@ void nvidiaParticles::resetCellKeys(void)
     thrust::fill(nvidia_cell_keys_.begin(), nvidia_cell_keys_.begin() + gpu_nparts_, -1);
 }
 
-void nvidia
-
 // -----------------------------------------------------------------------------
 //! Initialize the particle properties on device as a mirror of the host definition
 // -----------------------------------------------------------------------------
