@@ -265,6 +265,9 @@ public:
     //! copy from Device to Host
     void copyFromDeviceToHost();
 
+    //! copy from Device to Host
+    void allocateAndCopyFromHostToDevice();
+
 #endif
 
 protected:

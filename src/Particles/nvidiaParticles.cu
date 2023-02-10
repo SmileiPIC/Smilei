@@ -845,6 +845,8 @@ void nvidiaParticles::resetCellKeys(void)
     thrust::fill(nvidia_cell_keys_.begin(), nvidia_cell_keys_.begin() + gpu_nparts_, -1);
 }
 
+void nvidia
+
 // -----------------------------------------------------------------------------
 //! Initialize the particle properties on device as a mirror of the host definition
 // -----------------------------------------------------------------------------
@@ -915,7 +917,7 @@ void nvidiaParticles::initializeDataOnDevice()
         // device and we know we support the space dimension.
 
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
-        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
+        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not correctly sorted when created.
         detail::Cluster::computeBinIndex( *this );
         setHostBinIndex();
     }

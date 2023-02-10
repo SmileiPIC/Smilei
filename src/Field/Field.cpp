@@ -38,4 +38,10 @@ void Field::put_to( double val )
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
     };
 
+    //! allocate and copy from Device to Host
+    void Field::allocateAndCopyFromHostToDevice()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( data_, number_of_points_ );
+    };
+
 #endif

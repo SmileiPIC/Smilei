@@ -104,6 +104,7 @@ std::string Tools::printBytes( uint64_t nbytes )
     return t.str();
 }
 
+//! Wrapper to get the thread number
 int Tools::getOMPThreadNum()
 {
 #ifdef _OPENMP

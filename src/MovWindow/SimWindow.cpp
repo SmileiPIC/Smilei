@@ -401,7 +401,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 
 #if defined ( SMILEI_ACCELERATOR_MODE )
                     if ( params.gpu_computing ) {
-                      mypatch->initializeDataOnDevice(); // Initializes only field data structures, particle data structure are initialized separately
+                        // Initializes only field data structures, particle data structure are initialized separately
+                        mypatch->allocateAndCopyFieldsOnDevice();
                     }
 #endif
                 } // end j loop

@@ -450,7 +450,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 Patch::~Patch()
 {
 
-    deleteDataOnDevice();
+#ifdef SMILEI_ACCELERATOR_MODE
+    deleteFieldsOnDevice();
+#endif
 
     if (probesInterp) delete probesInterp;
 
@@ -1259,69 +1261,90 @@ void Patch::computePoynting() {
     }
 }
 
+#ifdef SMILEI_ACCELERATOR_MODE
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize data on device (needed by moving window)
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::initializeDataOnDevice()
+void Patch::allocateAndCopyFieldsOnDevice()
 {
-    int nspecies =  vecSpecies.size();
+    // int nspecies =  vecSpecies.size();
 
-    int sizeofJx = EMfields->Jx_->number_of_points_;
-    int sizeofJy = EMfields->Jy_->number_of_points_;
-    int sizeofJz = EMfields->Jz_->number_of_points_;
-    int sizeofRho = EMfields->rho_->number_of_points_;
+    // Currents -----------------------------
 
-    int sizeofBx = EMfields->Bx_m->number_of_points_;
-    int sizeofBy = EMfields->By_m->number_of_points_;
-    int sizeofBz = EMfields->Bz_m->number_of_points_;
+    EMfields->Jx_->allocateAndCopyFromHostToDevice();
+    EMfields->Jy_->allocateAndCopyFromHostToDevice();
+    EMfields->Jz_->allocateAndCopyFromHostToDevice();
 
+    // int sizeofJx = EMfields->Jx_->number_of_points_;
+    // int sizeofJy = EMfields->Jy_->number_of_points_;
+    // int sizeofJz = EMfields->Jz_->number_of_points_;
+    // double* Jx = &(EMfields->Jx_->data_[0]);
+    // double* Jy = &(EMfields->Jy_->data_[0]);
+    // double* Jz = &(EMfields->Jz_->data_[0]);
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
 
-        // Initialize  particles data structures on GPU, and synchronize it
-//        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-//            Species *spec = species( ipatch, ispec );
-//            spec->particles->initializeDataOnDevice();
-//            spec->particles_to_move->initializeDataOnDevice();
-//            //#pragma acc enter data copyin(spec->nrj_radiation)
-//        }
+    // Rho (charge density) ----------------
 
-    // Initialize field data strucures on GPU and synchronize it
-    double* Jx = &(EMfields->Jx_->data_[0]);
-    double* Jy = &(EMfields->Jy_->data_[0]);
-    double* Jz = &(EMfields->Jz_->data_[0]);
-    double* rho = &(EMfields->rho_->data_[0]);
-    double* Ex = &(EMfields->Ex_->data_[0]);
-    double* Ey = &(EMfields->Ey_->data_[0]);
-    double* Ez = &(EMfields->Ez_->data_[0]);
-    double* Bxm = &(EMfields->Bx_m->data_[0]);
-    double* Bym = &(EMfields->By_m->data_[0]);
-    double* Bzm = &(EMfields->Bz_m->data_[0]);
+    EMfields->rho_->allocateAndCopyFromHostToDevice();
+
+    // int sizeofRho = EMfields->rho_->number_of_points_;
+    // double* rho = &(EMfields->rho_->data_[0]);
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( rho, sizeofRho );
+
+    // Electric field ----------------------
+
+    EMfields->Ex_->allocateAndCopyFromHostToDevice();
+    EMfields->Ey_->allocateAndCopyFromHostToDevice();
+    EMfields->Ez_->allocateAndCopyFromHostToDevice();
+
+    // double* Ex = &(EMfields->Ex_->data_[0]);
+    // double* Ey = &(EMfields->Ey_->data_[0]);
+    // double* Ez = &(EMfields->Ez_->data_[0]);
+
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
+
+    // Magnetic field ----------------------
+
+    EMfields->Bx_->allocateAndCopyFromHostToDevice();
+    EMfields->By_->allocateAndCopyFromHostToDevice();
+    EMfields->Bz_->allocateAndCopyFromHostToDevice();
+
+    EMfields->Bx_m->allocateAndCopyFromHostToDevice();
+    EMfields->By_m->allocateAndCopyFromHostToDevice();
+    EMfields->Bz_m->allocateAndCopyFromHostToDevice();
+
+    // int sizeofBx = EMfields->Bx_m->number_of_points_;
+    // int sizeofBy = EMfields->By_m->number_of_points_;
+    // int sizeofBz = EMfields->Bz_m->number_of_points_;
+
+    // double* Bxm = &(EMfields->Bx_m->data_[0]);
+    // double* Bym = &(EMfields->By_m->data_[0]);
+    // double* Bzm = &(EMfields->Bz_m->data_[0]);
     
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( rho, sizeofRho );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bxm, sizeofBx );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bym, sizeofBy );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bzm, sizeofBz );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bxm, sizeofBx );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bym, sizeofBy );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bzm, sizeofBz );
 
-    double* Bx = &(EMfields->Bx_->data_[0]);
-    double* By = &(EMfields->By_->data_[0]);
-    double* Bz = &(EMfields->Bz_->data_[0]);
+    // double* Bx = &(EMfields->Bx_->data_[0]);
+    // double* By = &(EMfields->By_->data_[0]);
+    // double* Bz = &(EMfields->Bz_->data_[0]);
 
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
+    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
 
-} // END initializeDataOnDevice
+} // END allocateAndCopyFieldsOnDevice
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Delete data on device (needed by moving window)
+// Delete field gris on device (needed by moving window)
 // ---------------------------------------------------------------------------------------------------------------------
-//void Patch::deleteDataOnDevice( Params &params)
-void Patch::deleteDataOnDevice()
+//void Patch::deleteFieldsOnDevice( Params &params)
+void Patch::deleteFieldsOnDevice()
 {
     int nspecies =  vecSpecies.size();
 
@@ -1394,4 +1417,6 @@ void Patch::deleteDataOnDevice()
 //        }
 
 
-} // END deleteDataOnDevice
+} // END deleteFieldsOnDevice
+
+#endif
