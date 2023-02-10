@@ -1990,11 +1990,18 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
 void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 {
 
-    double * field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->sendFields_[iDim*2+iNeighbor]->data_);
+#if defined (SMILEI_ACCELERATOR_MODE)
+
+    double * field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->data());
 
     //This version of isend(Field) sends the whole array
     MPI_Isend( field_ptr, field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
-    // MPI_Isend( &( ( *field )( 0 ) ), field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+
+#else
+
+    MPI_Isend( &( ( *field )( 0 ) ), field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+
+#endif
 
 } // End isend ( Field )
 
@@ -2045,9 +2052,16 @@ void SmileiMPI::send(Field* field, int to, int tag)
 
 void SmileiMPI::recv( Field *field, int from, int tag)
 {
+
     MPI_Status status;
+
+#if defined (SMILEI_ACCELERATOR_MODE)
+    double* field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->data());
+    MPI_Recv( field_ptr, field->size(), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+#else
     //origin shifts the reception position in the array and reduces the received buffer size.
     MPI_Recv( &( ( *field )( 0 ) ), field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+#endif
 
 } // End recv ( Field )
 
