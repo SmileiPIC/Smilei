@@ -1238,6 +1238,11 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // For all patch, Compute and Write all diags
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
+//! param[in] params object containing all constant simulation parameters
+//! param[in] smpi object containing MPI functions for Smilei
+//! param[in] itime the current time step
+//! param[in] timers object to manage the code timers
+//! param[in] simWindow object to manage the moving window
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
