@@ -266,9 +266,7 @@ int main( int argc, char *argv[] )
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-
+    // No restart, we initialize a new simulation
     } else {
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
@@ -407,27 +405,29 @@ int main( int argc, char *argv[] )
                 }
             }
         }
+    }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-        TITLE( "GPU allocation and copy of the fields and particles" );
-        // Because most of the initialization "needs" (for now) to be done on
-        // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, 
-                                         &radiation_tables_, 
-                                         &multiphoton_Breit_Wheeler_tables_ );
-        vecPatches.copyEMFieldsFromHostToDevice();
-        // The initial particle binning is done in initializeDataOnDevice.
+    TITLE( "GPU allocation and copy of the fields and particles" );
+    // Allocate particle and field arrays
+    // Also copy particle array content on device
+    vecPatches.allocateDataOnDevice( params, &smpi, 
+                                        &radiation_tables_, 
+                                        &multiphoton_Breit_Wheeler_tables_ );
+    // Copy field array content on device
+    vecPatches.copyEMFieldsFromHostToDevice();
 #endif
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
+    TITLE( "Open files & initialize diagnostics" );
+    vecPatches.initAllDiags( params, &smpi );
 
+    if( !params.restart ) {
         TITLE( "Running diags at time t = 0" );
-        #ifdef _OMPTASKS
-                    vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
-        #else
-                    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-        #endif
+#ifdef _OMPTASKS
+        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+#else
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+#endif
         
     }
 
