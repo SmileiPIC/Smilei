@@ -1144,28 +1144,28 @@ void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &ire
 void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc )
 {
 
-#if defined (SMILEI_ACCELERATOR_MODE)
+// #if defined (SMILEI_ACCELERATOR_MODE)
 
-    isendOnDevice( EM->Ex_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Ey_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Ez_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Bx_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->By_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Bz_, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Bx_m, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->By_m, to, tag+irequest, requests[irequest] );
-    irequest++;
-    isendOnDevice( EM->Bz_m, to, tag+irequest, requests[irequest] );
-    irequest++;
+//     isendOnDevice( EM->Ex_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Ey_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Ez_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Bx_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->By_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Bz_, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Bx_m, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->By_m, to, tag+irequest, requests[irequest] );
+//     irequest++;
+//     isendOnDevice( EM->Bz_m, to, tag+irequest, requests[irequest] );
+//     irequest++;
 
-#else
+// #else
 
     isend( EM->Ex_, to, tag+irequest, requests[irequest] );
     irequest++;
@@ -1186,7 +1186,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
     isend( EM->Bz_m, to, tag+irequest, requests[irequest] );
     irequest++;
 
-#endif
+// #endif
 
     // if laser envelope is present, send it
     // send also Phi, Phi_m, GradPhi, GradPhi_m
@@ -1676,28 +1676,28 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
 void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, bool recv_xmin_bc )
 {
 
-#if defined (SMILEI_ACCELERATOR_MODE)
+// #if defined (SMILEI_ACCELERATOR_MODE)
 
-    recvOnDevice( EM->Ex_, from, tag );
-    tag++;
-    recvOnDevice( EM->Ey_, from, tag );
-    tag++;
-    recvOnDevice( EM->Ez_, from, tag );
-    tag++;
-    recvOnDevice( EM->Bx_, from, tag );
-    tag++;
-    recvOnDevice( EM->By_, from, tag );
-    tag++;
-    recvOnDevice( EM->Bz_, from, tag );
-    tag++;
-    recvOnDevice( EM->Bx_m, from, tag );
-    tag++;
-    recvOnDevice( EM->By_m, from, tag );
-    tag++;
-    recvOnDevice( EM->Bz_m, from, tag );
-    tag++;
+//     recvOnDevice( EM->Ex_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Ey_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Ez_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Bx_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->By_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Bz_, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Bx_m, from, tag );
+//     tag++;
+//     recvOnDevice( EM->By_m, from, tag );
+//     tag++;
+//     recvOnDevice( EM->Bz_m, from, tag );
+//     tag++;
 
-#else
+// #else
 
     recv( EM->Ex_, from, tag );
     tag++;
@@ -1718,7 +1718,7 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, bool recv_xmin_bc )
     recv( EM->Bz_m, from, tag );
     tag++;
 
-#endif
+// #endif
 
     if( EM->envelope!=NULL ) {
         recvComplex( EM->envelope->A_, from, tag );

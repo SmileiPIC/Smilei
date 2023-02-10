@@ -146,7 +146,7 @@ namespace smilei {
 
                 // NOTE: OpenMP 5.1 offers ::omp_get_mapped_ptr to the the 
                 // operation below
-    #pragma omp target data use_device_ptr( a_host_pointer )
+                #pragma omp target data use_device_ptr( a_host_pointer )
                 {
                     a_device_pointer = a_host_pointer;
                 }
