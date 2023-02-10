@@ -168,7 +168,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
                         int Href_receiver = 0;
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
-                        // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                        // The tag is the patch number in the receiver vector of patches 
+                        // in order to avoid too large tags not supported by some MPI versions.
                         smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params, false );
                     }
                 }
