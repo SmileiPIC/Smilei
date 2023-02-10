@@ -1144,6 +1144,29 @@ void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &ire
 void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc )
 {
 
+#if defined (SMILEI_ACCELERATOR_MODE)
+
+    isendOnDevice( EM->Ex_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Ey_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Ez_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bx_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->By_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bz_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bx_m, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->By_m, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bz_m, to, tag+irequest, requests[irequest] );
+    irequest++;
+
+#else
+
     isend( EM->Ex_, to, tag+irequest, requests[irequest] );
     irequest++;
     isend( EM->Ey_, to, tag+irequest, requests[irequest] );
@@ -1162,6 +1185,8 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
     irequest++;
     isend( EM->Bz_m, to, tag+irequest, requests[irequest] );
     irequest++;
+
+#endif
 
     // if laser envelope is present, send it
     // send also Phi, Phi_m, GradPhi, GradPhi_m
@@ -1990,20 +2015,28 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
 void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 {
 
+    MPI_Isend( &( ( *field )( 0 ) ), field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+
+} // End isend ( Field )
+
+
 #if defined (SMILEI_ACCELERATOR_MODE)
+//! Sends the whole Field Device to Device (assuming MPI enables it)
+void SmileiMPI::isendOnDevice( Field *field, int to, int tag, MPI_Request &request )
+{
+
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->data() );
 
     double * field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->data());
 
-    //This version of isend(Field) sends the whole array
+    // if (field_ptr == nullptr) {
+    //     ERROR("Field " << field->name << " not allocated on Device")
+    // }
+
     MPI_Isend( field_ptr, field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
-#else
-
-    MPI_Isend( &( ( *field )( 0 ) ), field->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
-
-#endif
-
 } // End isend ( Field )
+#endif
 
 void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request, int x_first )
 {
@@ -2050,20 +2083,34 @@ void SmileiMPI::send(Field* field, int to, int tag)
 } // End isend ( Field )
 
 
-void SmileiMPI::recv( Field *field, int from, int tag)
+void SmileiMPI::recv( Field *field, int from, int tag )
 {
 
     MPI_Status status;
 
-#if defined (SMILEI_ACCELERATOR_MODE)
-    double* field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->data());
-    MPI_Recv( field_ptr, field->size(), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
-#else
     //origin shifts the reception position in the array and reduces the received buffer size.
     MPI_Recv( &( ( *field )( 0 ) ), field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
-#endif
 
 } // End recv ( Field )
+
+#if defined (SMILEI_ACCELERATOR_MODE) 
+void SmileiMPI::recvOnDevice( Field *field, int from, int tag )
+{
+
+    MPI_Status status;
+
+    SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( field->data() );
+
+    double* field_ptr = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer(field->data());
+    
+    // if (field_ptr == nullptr) {
+    //     ERROR("Field " << field->name << " not allocated on Device")
+    // }
+
+    MPI_Recv( field_ptr, field->size(), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+#endif
 
 void SmileiMPI::recvShifted( Field *field, int from, int tag, int xshift )
 {
