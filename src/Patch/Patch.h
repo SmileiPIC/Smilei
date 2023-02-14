@@ -139,6 +139,9 @@ public:
     //! Allocate and copy all the field grids on device
     void allocateAndCopyFieldsOnDevice();
 
+    //! Allocate all field grids on device
+    void allocateFieldsOnDevice();
+
     //! Deallocate field grids on device
     void deleteFieldsOnDevice();
 #endif

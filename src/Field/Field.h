@@ -268,6 +268,9 @@ public:
     //! copy from Device to Host
     void allocateAndCopyFromHostToDevice();
 
+    //! Allocate only on device (without copy ore init)
+    void allocateOnDevice();
+
 #endif
 
 protected:

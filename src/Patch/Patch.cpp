@@ -1264,6 +1264,32 @@ void Patch::computePoynting() {
 #ifdef SMILEI_ACCELERATOR_MODE
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Allocate data on device
+// ---------------------------------------------------------------------------------------------------------------------
+
+void Patch::allocateFieldsOnDevice()
+{
+    EMfields->Jx_->allocateOnDevice();
+    EMfields->Jy_->allocateOnDevice();
+    EMfields->Jz_->allocateOnDevice();
+
+    EMfields->rho_->allocateOnDevice();
+
+    EMfields->Ex_->allocateOnDevice();
+    EMfields->Ey_->allocateOnDevice();
+    EMfields->Ez_->allocateOnDevice();
+
+    EMfields->Bx_->allocateOnDevice();
+    EMfields->By_->allocateOnDevice();
+    EMfields->Bz_->allocateOnDevice();
+
+    EMfields->Bx_m->allocateOnDevice();
+    EMfields->By_m->allocateOnDevice();
+    EMfields->Bz_m->allocateOnDevice();
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Initialize data on device (needed by moving window)
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::allocateAndCopyFieldsOnDevice()

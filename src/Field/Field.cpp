@@ -38,6 +38,12 @@ void Field::put_to( double val )
         smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
     };
 
+     //! Allocate only on device (without copy ore init)
+    void Field::allocateOnDevice()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( data_, number_of_points_ );
+    };
+
     //! allocate and copy from Device to Host
     void Field::allocateAndCopyFromHostToDevice()
     {

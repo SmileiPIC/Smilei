@@ -216,7 +216,12 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
                 mypatch->EMfields->emBoundCond[0]->disableExternalFields();
             }
-            
+
+#if defined ( SMILEI_ACCELERATOR_MODE ) 
+            // Manage field grids on GPU
+            mypatch->allocateFieldsOnDevice();
+#endif
+
             mypatch->finalizeMPIenvironment( params );
             //Position new patch
             vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
@@ -400,12 +405,13 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         
                     } // end test patch_particle_created[ithread][j]
 
-#if defined ( SMILEI_ACCELERATOR_MODE )
-                    if ( params.gpu_computing ) {
-                        // Initializes only field data structures, particle data structure are initialized separately
-                        mypatch->allocateAndCopyFieldsOnDevice();
-                    }
-#endif
+// #if defined ( SMILEI_ACCELERATOR_MODE )
+//                     if ( params.gpu_computing ) {
+//                         // Initializes only field data structures, particle data structure are initialized separately
+//                         mypatch->allocateAndCopyFieldsOnDevice();
+//                     }
+// #endif
+
                 } // end j loop
             } // End ithread loop
         } // End omp master region

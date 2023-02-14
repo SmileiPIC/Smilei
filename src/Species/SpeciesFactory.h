@@ -1240,7 +1240,7 @@ public:
         new_species->merge_min_momentum_cell_length_[2]       = species->merge_min_momentum_cell_length_[2];
 
 
-        new_species->charge_profile_                            = new Profile( species->charge_profile_ );
+        new_species->charge_profile_                          = new Profile( species->charge_profile_ );
         if( species->density_profile_ ) {
             new_species->density_profile_                     = new Profile( species->density_profile_ );
             new_species->particles_per_cell_profile_          = new Profile( species->particles_per_cell_profile_ );
