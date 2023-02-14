@@ -100,11 +100,24 @@ public:
 
 
     //Sending and reveiving Fields and cFields
-    void isend( Field *field, int to, int tag, MPI_Request &request );                 // Sends the whole Field
+    //! Sends the whole Field
+    void isend( Field *field, int to, int tag, MPI_Request &request );
+    //! Sends the whole Field Device to Device (assuming MPI enables it)
+#if defined (SMILEI_ACCELERATOR_MODE)
+    void isendOnDevice( Field *field, int to, int tag, MPI_Request &request );
+#endif
+
     void isend( Field *field, int to, int tag, MPI_Request &request, int x_first );       // Sends the first "x_first" columns of the Field
     void isendComplex( Field *field, int to, int tag, MPI_Request &request );          // Sends the whole cField
     void isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first );// Sends only the first x_first columns of the cField
-    void recv( Field *field, int from, int tag);                     //Receives the whole Field
+
+    //! Receives the whole Field
+    void recv( Field *field, int from, int tag);     
+    //! Receives the whole Field Device to Device (assuming MPI enables it)
+#if defined (SMILEI_ACCELERATOR_MODE)
+    void recvOnDevice( Field *field, int from, int tag);     
+#endif
+
     void recvShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size
     void recvComplex( Field *field, int from, int tag);              //Receives the whole cField
     void recvComplexShifted( Field *field, int from, int tag, int xshift ); //Shifts the reception adress by xshift columns and reduces the reception buffer size

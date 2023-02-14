@@ -266,9 +266,7 @@ int main( int argc, char *argv[] )
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-
+    // No restart, we initialize a new simulation
     } else {
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
@@ -407,27 +405,29 @@ int main( int argc, char *argv[] )
                 }
             }
         }
+    }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-        TITLE( "GPU allocation and copy of the fields and particles" );
-        // Because most of the initialization "needs" (for now) to be done on
-        // the host, we introduce the GPU only at it's end.
-        vecPatches.allocateDataOnDevice( params, &smpi, 
-                                         &radiation_tables_, 
-                                         &multiphoton_Breit_Wheeler_tables_ );
-        vecPatches.copyEMFieldsFromHostToDevice();
-        // The initial particle binning is done in initializeDataOnDevice.
+    TITLE( "GPU allocation and copy of the fields and particles" );
+    // Allocate particle and field arrays
+    // Also copy particle array content on device
+    vecPatches.allocateDataOnDevice( params, &smpi, 
+                                        &radiation_tables_, 
+                                        &multiphoton_Breit_Wheeler_tables_ );
+    // Copy field array content on device
+    vecPatches.copyEMFieldsFromHostToDevice();
 #endif
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
+    TITLE( "Open files & initialize diagnostics" );
+    vecPatches.initAllDiags( params, &smpi );
 
+    if( !params.restart ) {
         TITLE( "Running diags at time t = 0" );
-        #ifdef _OMPTASKS
-                    vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
-        #else
-                    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-        #endif
+#ifdef _OMPTASKS
+        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+#else
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+#endif
         
     }
 
@@ -659,24 +659,25 @@ int main( int argc, char *argv[] )
                 }
             }
 
-            // call the various diagnostics
+            // Call the various diagnostics
 #ifdef _OMPTASKS
             vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
 #else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 #endif
 
-            // Clean GPU temporary buffers
+            // Move window
+            vecPatches.moveWindow( params, &smpi, region, simWindow, time_dual, timers, itime );
 
-            timers.movWindow.restart();
-            simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
+            // timers.movWindow.restart();
+            // simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
 
-            if (itime == simWindow->getAdditionalShiftsIteration() ) {
-                int adjust = simWindow->isMoving(time_dual)?0:1;
-                for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
-                    simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
-            }
-            timers.movWindow.update();
+            // if (itime == simWindow->getAdditionalShiftsIteration() ) {
+            //     int adjust = simWindow->isMoving(time_dual)?0:1;
+            //     for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
+            //         simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
+            // }
+            // timers.movWindow.update();
 
             // Checkpointing: dump data
             #pragma omp master
@@ -687,9 +688,9 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
 
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-#if defined( SMILEI_ACCELERATOR_MODE )
-            ERROR( "Load balancing not tested on GPU !" );
-#endif
+// #if defined( SMILEI_ACCELERATOR_MODE )
+//             ERROR( "Load balancing not tested on GPU !" );
+// #endif
             count_dlb++;
             if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {

@@ -29,6 +29,8 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
         Species *spec = vecPatches.species( ipatch, ispec );
+        // Leaving particles are put in a buffer called particle_to_move
+        // On GPU, particle_to_move is built and bring back to the CPU here
         spec->extractParticles();
         vecPatches( ipatch )->initExchParticles( ispec, params );
     }

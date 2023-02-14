@@ -1,5 +1,4 @@
 #include "Field.h"
-
 #include "gpu.h"
 
 void Field::put_to( double val )
@@ -25,3 +24,24 @@ void Field::put_to( double val )
         an_other_data_pointer[i] = val;
     }
 }
+
+#if defined(SMILEI_ACCELERATOR_MODE)
+    //! copy the field array from Host to Device
+    void Field::copyFromHostToDevice()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( data_, number_of_points_ );
+    };
+
+    //! copy from Device to Host
+    void Field::copyFromDeviceToHost()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
+    };
+
+    //! allocate and copy from Device to Host
+    void Field::allocateAndCopyFromHostToDevice()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( data_, number_of_points_ );
+    };
+
+#endif

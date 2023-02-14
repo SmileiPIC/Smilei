@@ -188,8 +188,9 @@ public:
     //! Compute the norm2 of the field
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
 
-    //! Compute the norm2OnDevice of the field
+
 #if defined(SMILEI_ACCELERATOR_MODE)
+    //! Compute the norm2OnDevice of the field
     virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
 #endif
 
@@ -256,6 +257,18 @@ public:
     virtual void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) = 0;
     virtual void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) = 0;
 
+#if defined(SMILEI_ACCELERATOR_MODE)
+
+    //! copy the field from Host to Device
+    void copyFromHostToDevice();
+
+    //! copy from Device to Host
+    void copyFromDeviceToHost();
+
+    //! copy from Device to Host
+    void allocateAndCopyFromHostToDevice();
+
+#endif
 
 protected:
 

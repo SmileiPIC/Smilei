@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#ifdef SMILEI_OPENACC_MODE
+#include <openacc.h>
+#endif
+
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
@@ -83,6 +87,7 @@ Field3D::~Field3D()
         }
     }
     if( data_!=NULL ) {
+        #pragma acc exit data delete (data_[0:number_of_points_]) if (acc_deviceptr(data_) != NULL)
         delete [] data_;
         for( unsigned int i=0; i<dims_[0]; i++ ) {
             delete [] this->data_3D[i];
