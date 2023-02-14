@@ -89,6 +89,11 @@ class TrackParticles(Diagnostic):
 				self._locationForTime.update( {int(t):[f,it] for it, t in enumerate(f["data"].keys())} )
 			self._lastfile = f
 			self._timesteps = self._np.array(sorted(self._locationForTime))
+			
+			# If specific timesteps requested, narrow the selection
+			if sorted_as and timesteps is not None:
+				self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
+		
 			self._alltimesteps = self._np.copy(self._timesteps)
 			
 			if not self._locationForTime:
@@ -130,18 +135,7 @@ class TrackParticles(Diagnostic):
 			raise Exception("No tracked particles found")
 		# If specific timesteps requested, narrow the selection
 		if timesteps is not None:
-			try:
-				ts = self._np.array(self._np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self._timesteps = self._timesteps[ self._np.nonzero((self._timesteps>=ts[0]) * (self._timesteps<=ts[1]))[0] ]
-				elif ts.size==1:
-					# get nearest time
-					self._timesteps = self._np.array(self._timesteps[ self._np.array([(self._np.abs(self._timesteps-ts)).argmin()]) ])
-				else:
-					raise
-			except:
-				raise Exception("Argument `timesteps` must be one or two non-negative integers")
+			self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
 		# Need at least one timestep
 		if self._timesteps.size < 1:
 			raise Exception("Timesteps not found")
@@ -259,7 +253,22 @@ class TrackParticles(Diagnostic):
 			finally:
 				f.close()
 		return False
-
+	
+	def _filterTimesteps( self, tlist, bounds ):
+		try:
+			ts = self._np.array(bounds, ndmin=1, dtype=float)
+			if ts.size==2:
+				# get all times in between bounds
+				tlist = tlist[(self._timesteps>=ts[0]) * (self._timesteps<=ts[1])]
+			elif ts.size==1:
+				# get nearest time
+				tlist = self._np.array(tlist[ self._np.array([(self._np.abs(tlist-ts)).argmin()]) ])
+			else:
+				raise
+		except:
+			raise Exception("Argument `timesteps` must be one or two non-negative integers")
+		return tlist
+	
 	def _selectParticles( self, select, already_sorted, chunksize ):
 		if type(select) is str:
 			# Parse the selector
@@ -389,8 +398,10 @@ class TrackParticles(Diagnostic):
 						selectionAtTimeT.append(properties["Id"][sel])
 					selectionAtTimeT = self._np.concatenate(selectionAtTimeT)
 					# Combine with selection of previous times
-					if   seltype[k] == "any(": selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
-					elif seltype[k] == "all(": selectedParticles = self._np.intersect1d(selectedParticles, selectionAtTimeT)
+					if   seltype[k] == "any(" or not selectedParticles.size:
+						selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
+					elif seltype[k] == "all(":
+						selectedParticles = self._np.intersect1d(selectedParticles, selectionAtTimeT)
 			selectedParticles.sort()
 			return selectedParticles
 
