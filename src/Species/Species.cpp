@@ -746,6 +746,9 @@ void Species::dynamics( double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
+
+std::cerr << "begin interp" << std::endl;
+
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
@@ -754,6 +757,7 @@ void Species::dynamics( double time_dual,
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
 
+std::cerr << "end interp" << std::endl;
             // Ionization
             if( Ionize ) {
 
@@ -893,6 +897,7 @@ void Species::dynamics( double time_dual,
         ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread );
         //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
+std::cerr << "end pusher" << std::endl;
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
@@ -941,6 +946,7 @@ void Species::dynamics( double time_dual,
                 timer = MPI_Wtime();
 #endif
 
+std::cerr << "being project" << std::endl;
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
                 // Project currents if not a Test species and charges as well if a diag is needed.
                 // Do not project if a photon
@@ -952,6 +958,7 @@ void Species::dynamics( double time_dual,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[2] += MPI_Wtime() - timer;
 #endif
+std::cerr << "end project" << std::endl;
                 if(params.is_spectral && mass_>0){
                     partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += mass_ * energy_lost;

@@ -513,12 +513,15 @@ int main( int argc, char *argv[] )
             if ( params.geometry == "AMcylindrical" && params.is_spectral )
                 vecPatches.computeCharge(true);
 
+std::cerr << "begin dynamics" << std::endl;
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
             vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
                                  multiphoton_Breit_Wheeler_tables_,
                                  time_dual, timers, itime );
+
+std::cerr << "end dynamics" << std::endl;
 
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {
@@ -668,6 +671,8 @@ int main( int argc, char *argv[] )
 
             // Move window
             vecPatches.moveWindow( params, &smpi, region, simWindow, time_dual, timers, itime );
+
+            std::cerr << "end moving window" << std::endl;
 
             // timers.movWindow.restart();
             // simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );

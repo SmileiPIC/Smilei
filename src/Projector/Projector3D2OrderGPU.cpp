@@ -124,6 +124,8 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
     double *const __restrict__ DSz  = host_device_DSz.data();
     double *const __restrict__ sumX = host_device_sumX.data();
 
+std::cerr << "start coeff" << std::endl;
+
     for (int ipack=0 ; ipack<npack ; ipack++) {
         const int istart_pack       = istart + ipack * packsize;
         const int iend_pack         = std::min( iend - istart,
@@ -258,6 +260,8 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             iold[ipart+2*packsize] -= 2;
         }
 
+std::cerr << "sumX" << std::endl;
+
         // Jx^(d,p,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
@@ -281,6 +285,8 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
         const int    z_size0                  = nprimz;
         const int    yz_size0                 = nprimz * nprimy;
         const double dx_ov_dt_inv_cell_volume = dx_ov_dt * inv_cell_volume;
+
+std::cerr << "start Jx proj" << std::endl;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                     \
@@ -334,6 +340,8 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
                 }
             }//i
         }
+
+std::cerr << "start Jy proj" << std::endl;
 
         // Jy^(p,d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -954,6 +962,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
 
+std::cerr << "project without diag" << std::endl;
         double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
         double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
@@ -983,6 +992,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         }
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
+
+std::cerr << "project with diag" << std::endl;
 
         double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
         unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
@@ -1019,6 +1030,9 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
                                 &( *iold )[0], 
                                 &( *delta )[0],
                                 true);
+
+
+std::cerr << "end project with diag" << std::endl;
 
         //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jx, Jx_size );
         //smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( b_Jy, Jy_size );

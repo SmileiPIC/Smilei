@@ -217,9 +217,12 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 mypatch->EMfields->emBoundCond[0]->disableExternalFields();
             }
 
+
 #if defined ( SMILEI_ACCELERATOR_MODE ) 
-            // Manage field grids on GPU
-            mypatch->allocateFieldsOnDevice();
+std::cerr << "before allocate" << std::endl;
+                    // Manage field grids on GPU
+                    mypatch->allocateFieldsOnDevice();
+std::cerr << "after allocate" << std::endl;
 #endif
 
             mypatch->finalizeMPIenvironment( params );
@@ -234,6 +237,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
             }
             
+std::cerr << "after recv" << std::endl;
+
             // Create Xmin condition which could not be received
             if( mypatch->isXmin() ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {
