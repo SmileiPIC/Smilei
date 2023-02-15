@@ -271,6 +271,9 @@ public:
     //! Allocate only on device (without copy ore init)
     void allocateOnDevice();
 
+    //! Return if the grid is mapped on device
+    bool IsOnDevice();
+
 #endif
 
 protected:

@@ -229,7 +229,11 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
                     // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params, false );
+                    smpi->recv( mypatch,
+                                mypatch->MPI_neighbor_[0][1], 
+                                ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, 
+                                params,
+                                false );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
