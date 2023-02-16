@@ -495,6 +495,8 @@ public:
         return 0;
     }
 
+    virtual void setHostBinIndex();
+
     // ---------------------------------------------------------------------------------------
     // Parameters
     // partiles properties, respect type order : all double, all short, all unsigned int

@@ -185,7 +185,7 @@ protected:
     //! Set last_index.back() and last_index[0] to match the number of GPU
     //! particle (deviceSize()).
     //!
-    void setHostBinIndex();
+    void setHostBinIndex() override;
 
     //! Memcpy of the particle at the end. No sorting or binning.
     //!

@@ -1229,6 +1229,12 @@ unsigned int Particles::deviceCapacity() const
     return 0;
 }
 
+void Particles::setHostBinIndex()
+{
+    ERROR( "setHostBinIndex is a feature only available for accelerator device" );
+}
+
+
 #ifdef __DEBUG
 bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 {
