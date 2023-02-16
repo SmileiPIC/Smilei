@@ -324,7 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: number_of_pml_cells
 
   :type: List of lists of integers
-  :default: ``[[6,6],[6,6],[6,6]]``
+  :default: ``[[10,10],[10,10],[10,10]]``
 
   Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
