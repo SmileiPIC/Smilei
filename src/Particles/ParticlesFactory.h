@@ -23,9 +23,9 @@ public:
         Particles *particles = NULL;
         
         // CPU version
-        if( !params.gpu_computing ) {
+        // if( !params.gpu_computing ) {
             particles = new Particles();
-        }
+        // }
         
         // GPU version
 // #ifdef _GPU
