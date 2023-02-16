@@ -41,7 +41,9 @@ void Field::put_to( double val )
      //! Allocate only on device (without copy ore init)
     void Field::allocateOnDevice()
     {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( data_, number_of_points_ );
+        if (!isOnDevice()) {
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( data_, number_of_points_ );
+        }
     };
 
     //! allocate and copy from Device to Host
@@ -51,9 +53,15 @@ void Field::put_to( double val )
     };
 
     //! Return if the field grid is mapped on device
-    bool Field::IsOnDevice()
+    bool Field::isOnDevice()
     {
         return smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( data_ );
     };
+
+    //! Delete memory on device
+    void Field::deleteOnDevice()
+    {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( data_, number_of_points_ );
+    }
 
 #endif

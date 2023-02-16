@@ -218,12 +218,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             }
 
 
-#if defined ( SMILEI_ACCELERATOR_MODE ) 
-std::cerr << "before allocate" << std::endl;
-                    // Manage field grids on GPU
-                    mypatch->allocateFieldsOnDevice();
-std::cerr << "after allocate" << std::endl;
-#endif
+// #if defined ( SMILEI_ACCELERATOR_MODE ) 
+//             // Manage field grids on GPU
+//             mypatch->allocateFieldsOnDevice();
+// #endif
 
             mypatch->finalizeMPIenvironment( params );
             //Position new patch
@@ -240,8 +238,6 @@ std::cerr << "after allocate" << std::endl;
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
-            
-std::cerr << "after recv" << std::endl;
 
             // Create Xmin condition which could not be received
             if( mypatch->isXmin() ) {
@@ -414,12 +410,12 @@ std::cerr << "after recv" << std::endl;
                         
                     } // end test patch_particle_created[ithread][j]
 
-// #if defined ( SMILEI_ACCELERATOR_MODE )
-//                     if ( params.gpu_computing ) {
-//                         // Initializes only field data structures, particle data structure are initialized separately
-//                         mypatch->allocateAndCopyFieldsOnDevice();
-//                     }
-// #endif
+#if defined ( SMILEI_ACCELERATOR_MODE )
+                    // if ( params.gpu_computing ) {
+                        // Initializes only field data structures, particle data structure are initialized separately
+                        mypatch->allocateAndCopyFieldsOnDevice();
+                    // }
+#endif
 
                 } // end j loop
             } // End ithread loop

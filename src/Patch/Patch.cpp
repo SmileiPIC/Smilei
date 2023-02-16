@@ -1372,16 +1372,16 @@ void Patch::allocateAndCopyFieldsOnDevice()
 //void Patch::deleteFieldsOnDevice( Params &params)
 void Patch::deleteFieldsOnDevice()
 {
-    int nspecies =  vecSpecies.size();
+    // int nspecies =  vecSpecies.size();
 
-    int sizeofJx = EMfields->Jx_->number_of_points_;
-    int sizeofJy = EMfields->Jy_->number_of_points_;
-    int sizeofJz = EMfields->Jz_->number_of_points_;
-    int sizeofRho = EMfields->rho_->number_of_points_;
+    // int sizeofJx = EMfields->Jx_->number_of_points_;
+    // int sizeofJy = EMfields->Jy_->number_of_points_;
+    // int sizeofJz = EMfields->Jz_->number_of_points_;
+    // int sizeofRho = EMfields->rho_->number_of_points_;
 
-    int sizeofBx = EMfields->Bx_m->number_of_points_;
-    int sizeofBy = EMfields->By_m->number_of_points_;
-    int sizeofBz = EMfields->Bz_m->number_of_points_;
+    // int sizeofBx = EMfields->Bx_m->number_of_points_;
+    // int sizeofBy = EMfields->By_m->number_of_points_;
+    // int sizeofBz = EMfields->Bz_m->number_of_points_;
 
 
 //        // Initialize  particles data structures on GPU, and synchronize it
@@ -1393,35 +1393,56 @@ void Patch::deleteFieldsOnDevice()
 //        }
 
         // Initialize field data strucures on GPU and synchronize it
-        double* Jx = &(EMfields->Jx_->data_[0]);
-        double* Jy = &(EMfields->Jy_->data_[0]);
-        double* Jz = &(EMfields->Jz_->data_[0]);
-        double* rho = &(EMfields->rho_->data_[0]);
-        double* Ex = &(EMfields->Ex_->data_[0]);
-        double* Ey = &(EMfields->Ey_->data_[0]);
-        double* Ez = &(EMfields->Ez_->data_[0]);
-        double* Bxm = &(EMfields->Bx_m->data_[0]);
-        double* Bym = &(EMfields->By_m->data_[0]);
-        double* Bzm = &(EMfields->Bz_m->data_[0]);
+        // double* Jx = &(EMfields->Jx_->data_[0]);
+        // double* Jy = &(EMfields->Jy_->data_[0]);
+        // double* Jz = &(EMfields->Jz_->data_[0]);
+        // double* rho = &(EMfields->rho_->data_[0]);
+        // double* Ex = &(EMfields->Ex_->data_[0]);
+        // double* Ey = &(EMfields->Ey_->data_[0]);
+        // double* Ez = &(EMfields->Ez_->data_[0]);
+
+        // double* Bxm = &(EMfields->Bx_m->data_[0]);
+        // double* Bym = &(EMfields->By_m->data_[0]);
+        // double* Bzm = &(EMfields->Bz_m->data_[0]);
         
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( rho, sizeofRho );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ez, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bxm, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bym, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bzm, sizeofBz );
+        // double* Bx = &(EMfields->Bx_->data_[0]);
+        // double* By = &(EMfields->By_->data_[0]);
+        // double* Bz = &(EMfields->Bz_->data_[0]);
 
-        double* Bx = &(EMfields->Bx_->data_[0]);
-        double* By = &(EMfields->By_->data_[0]);
-        double* Bz = &(EMfields->Bz_->data_[0]);
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bz, sizeofBz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ex, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ey, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ez, sizeofJz );
+
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bxm, sizeofBx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bym, sizeofBy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bzm, sizeofBz );
+
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bx, sizeofBx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( By, sizeofBy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bz, sizeofBz );
+
+        EMfields->Jx_->deleteOnDevice();
+        EMfields->Jy_->deleteOnDevice();
+        EMfields->Jz_->deleteOnDevice();
+        EMfields->rho_->deleteOnDevice();
+
+        EMfields->Ex_->deleteOnDevice();
+        EMfields->Ey_->deleteOnDevice();
+        EMfields->Ez_->deleteOnDevice();
+
+        EMfields->Bx_->deleteOnDevice();
+        EMfields->By_->deleteOnDevice();
+        EMfields->Bz_->deleteOnDevice();
+
+        EMfields->Bx_m->deleteOnDevice();
+        EMfields->By_m->deleteOnDevice();
+        EMfields->Bz_m->deleteOnDevice();
+
 
 //        if ( params.hasNielRadiation ) {
 //

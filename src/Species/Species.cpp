@@ -633,24 +633,28 @@ Species::deleteSpeciesCurrentAndChargeOnDevice(
     ElectroMagn * EMfields)
 {
     if (EMfields->Jx_s[ispec]) {
-        double *const __restrict__ pointer  = EMfields->Jx_s[ispec]->data() ;
-        const int size                      = EMfields->Jx_s[ispec]->size();
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        // double *const __restrict__ pointer  = EMfields->Jx_s[ispec]->data() ;
+        // const int size                      = EMfields->Jx_s[ispec]->size();
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        EMfields->Jx_s[ispec]->deleteOnDevice();
     }
     if (EMfields->Jy_s[ispec]) {
-        double *const __restrict__ pointer  = EMfields->Jy_s[ispec]->data() ;
-        const int size                      = EMfields->Jy_s[ispec]->size();
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        // double *const __restrict__ pointer  = EMfields->Jy_s[ispec]->data() ;
+        // const int size                      = EMfields->Jy_s[ispec]->size();
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        EMfields->Jy_s[ispec]->deleteOnDevice();
     }
     if (EMfields->Jz_s[ispec]) {
-        double *const __restrict__ pointer  = EMfields->Jz_s[ispec]->data() ;
-        const int size                      = EMfields->Jz_s[ispec]->size();
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        // double *const __restrict__ pointer  = EMfields->Jz_s[ispec]->data() ;
+        // const int size                      = EMfields->Jz_s[ispec]->size();
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        EMfields->Jz_s[ispec]->deleteOnDevice();
     }
     if (EMfields->rho_s[ispec]) {
-        double *const __restrict__ pointer  = EMfields->rho_s[ispec]->data();
-        const int size                      = EMfields->rho_s[ispec]->size();
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        // double *const __restrict__ pointer  = EMfields->rho_s[ispec]->data();
+        // const int size                      = EMfields->rho_s[ispec]->size();
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( pointer, size );
+        EMfields->rho_s[ispec]->deleteOnDevice();
     }
 }
 
@@ -747,8 +751,6 @@ void Species::dynamics( double time_dual,
             timer = MPI_Wtime();
 #endif
 
-std::cerr << "begin interp" << std::endl;
-
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
@@ -757,7 +759,6 @@ std::cerr << "begin interp" << std::endl;
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
 
-std::cerr << "end interp" << std::endl;
             // Ionization
             if( Ionize ) {
 
@@ -897,7 +898,6 @@ std::cerr << "end interp" << std::endl;
         ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread );
         //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
-std::cerr << "end pusher" << std::endl;
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
@@ -946,7 +946,6 @@ std::cerr << "end pusher" << std::endl;
                 timer = MPI_Wtime();
 #endif
 
-std::cerr << "being project" << std::endl;
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
                 // Project currents if not a Test species and charges as well if a diag is needed.
                 // Do not project if a photon
@@ -958,7 +957,7 @@ std::cerr << "being project" << std::endl;
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[2] += MPI_Wtime() - timer;
 #endif
-std::cerr << "end project" << std::endl;
+
                 if(params.is_spectral && mass_>0){
                     partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += mass_ * energy_lost;

@@ -4739,50 +4739,67 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 
     const int npatches = this->size();
 
-    const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
-    const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
-    const int sizeofJz  = patches_[0]->EMfields->Jz_->size();
-    const int sizeofRho = patches_[0]->EMfields->rho_->size();
+    // const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
+    // const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
+    // const int sizeofJz  = patches_[0]->EMfields->Jz_->size();
+    // const int sizeofRho = patches_[0]->EMfields->rho_->size();
 
-    const int sizeofBx = patches_[0]->EMfields->Bx_m->size();
-    const int sizeofBy = patches_[0]->EMfields->By_m->size();
-    const int sizeofBz = patches_[0]->EMfields->Bz_m->size();
+    // const int sizeofBx = patches_[0]->EMfields->Bx_m->size();
+    // const int sizeofBy = patches_[0]->EMfields->By_m->size();
+    // const int sizeofBz = patches_[0]->EMfields->Bz_m->size();
 
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
-        double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
-        double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
-        double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-        double *const Rho = patches_[ipatch]->EMfields->rho_->data();
+        // double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
+        // double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
+        // double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
+        // double *const Rho = patches_[ipatch]->EMfields->rho_->data();
 
-        double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+        // double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
+        // double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
+        // double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
 
-        double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+        // double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
+        // double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
+        // double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
 
-        double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        double *const By = patches_[ipatch]->EMfields->By_->data();
-        double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
+        // double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
+        // double *const By = patches_[ipatch]->EMfields->By_->data();
+        // double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Rho, sizeofRho );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jx, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jy, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Jz, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ez, sizeofJz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ex, sizeofJx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ey, sizeofJy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmz, sizeofBz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmx, sizeofBx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmy, sizeofBy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bz, sizeofBz );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bx, sizeofBx );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( By, sizeofBy );
+        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( Bz, sizeofBz );
+
+        patches_[ipatch]->EMfields->Jx_->deleteOnDevice();
+        patches_[ipatch]->EMfields->Jy_->deleteOnDevice();
+        patches_[ipatch]->EMfields->Jz_->deleteOnDevice();
+        patches_[ipatch]->EMfields->rho_->deleteOnDevice();
+
+        patches_[ipatch]->EMfields->Ex_->deleteOnDevice();
+        patches_[ipatch]->EMfields->Ey_->deleteOnDevice();
+        patches_[ipatch]->EMfields->Ez_->deleteOnDevice();
+
+        patches_[ipatch]->EMfields->Bx_->deleteOnDevice();
+        patches_[ipatch]->EMfields->By_->deleteOnDevice();
+        patches_[ipatch]->EMfields->Bz_->deleteOnDevice();
+
+        patches_[ipatch]->EMfields->Bx_m->deleteOnDevice();
+        patches_[ipatch]->EMfields->By_m->deleteOnDevice();
+        patches_[ipatch]->EMfields->Bz_m->deleteOnDevice();
 
     }
 

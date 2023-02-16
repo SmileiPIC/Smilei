@@ -272,7 +272,10 @@ public:
     void allocateOnDevice();
 
     //! Return if the grid is mapped on device
-    bool IsOnDevice();
+    bool isOnDevice();
+
+    //! Delete memory on device
+    void deleteOnDevice();
 
 #endif
 
