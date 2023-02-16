@@ -502,14 +502,16 @@ public :
 #if defined( SMILEI_ACCELERATOR_MODE)
 
     //! Copy all species particles from  Host to devices
-    void copySpeciesParticlesFromHostToDevice();
+    void copyParticlesFromHostToDevice();
     
+    //! Copy all species particles from  device to host
+    void copyParticlesFromDeviceToHost();
+
 #endif
 
     //! Data synchronization from device (GPU) to host (CPU)
     void copyDeviceStateToHost(
             bool copy_fields = true,
-            bool copy_particles = true,
             bool copy_species_J_and_rho = false
         );
     

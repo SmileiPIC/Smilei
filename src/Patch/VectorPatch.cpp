@@ -1328,7 +1328,10 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     if (itime > 0) {
         #pragma omp single
         {
-            copyDeviceStateToHost(need_fields, need_particles, diag_flag);
+            if (need_particles) {
+                copyParticlesFromDeviceToHost();
+            }
+            copyDeviceStateToHost(need_fields, diag_flag);
         }
     }
 #endif
@@ -4403,7 +4406,8 @@ void VectorPatch::moveWindow(
     // Bring all particles and field grids to the Host (except species grids)
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        copyDeviceStateToHost(true,true,false);
+        copyParticlesFromDeviceToHost();
+        copyDeviceStateToHost(true,false);
     }
 #endif
 
@@ -4419,7 +4423,7 @@ void VectorPatch::moveWindow(
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
         //copyEMFieldsFromHostToDevice();
-        copySpeciesParticlesFromHostToDevice();
+        copyParticlesFromHostToDevice();
     }
 #endif
 
@@ -4913,7 +4917,7 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 #if defined( SMILEI_ACCELERATOR_MODE)
 
 //! Copy all species particles from  Host to devices
-void VectorPatch::copySpeciesParticlesFromHostToDevice()
+void VectorPatch::copyParticlesFromHostToDevice()
 {
 
     for( int ipatch = 0; ipatch < this->size(); ipatch++ ) {
@@ -4925,11 +4929,28 @@ void VectorPatch::copySpeciesParticlesFromHostToDevice()
 
 #endif
 
+#if defined( SMILEI_ACCELERATOR_MODE)
+
+//! copy all patch Particles from device to Host
+void
+VectorPatch::copyParticlesFromDeviceToHost()
+{
+    for( int ipatch = 0; ipatch < this->size(); ipatch++ ) {
+            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
+                species( ipatch, ispec )->particles->copyFromDeviceToHost();
+#if defined ( SMILEI_ACCELERATOR_GPU_OMP )
+                species( ipatch, ispec )->particles->setHostBinIndex();
+#endif
+            }
+    }
+}
+
+#endif
+
 //! Sync all data (fields and particles) from device to host
 void
 VectorPatch::copyDeviceStateToHost(
     bool copy_fields,
-    bool copy_particles,
     bool copy_species_J_and_rho)
 {
 #if defined( SMILEI_ACCELERATOR_MODE)
@@ -4940,13 +4961,6 @@ VectorPatch::copyDeviceStateToHost(
     const int npatches = this->size();
 
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
-
-        if (copy_particles) {
-            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
-                Species *spec = species( ipatch, ispec );
-                spec->particles->copyFromDeviceToHost();
-            }
-        }
 
         if (copy_fields) {
 

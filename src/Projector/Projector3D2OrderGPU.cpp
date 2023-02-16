@@ -955,7 +955,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
 
-        double *const __restrict__ Jx  = &( *EMfields->Jx_ )( 0 ) ;
+        double *const __restrict__ Jx  = EMfields->Jx_->data() ;
         double *const __restrict__ Jy  = &( *EMfields->Jy_ )( 0 ) ;
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
         double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
