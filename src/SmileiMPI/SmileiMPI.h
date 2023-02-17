@@ -135,6 +135,8 @@ public:
     void send( Field* field, int to  , int tag );
     void irecv( Field* field, int from, int tag, MPI_Request& request );
 
+    void recv( int data, int from, int tag); 
+
     // DIAGS MPI SYNC
     // --------------
 
