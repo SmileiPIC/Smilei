@@ -241,7 +241,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                          PartWalls *partWalls,
                          Patch *patch, SmileiMPI *smpi,
                          RadiationTables &RadiationTables,
-                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables )
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id )
 {
 
     const int ithread = Tools::getOMPThreadNum();

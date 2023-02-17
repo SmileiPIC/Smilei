@@ -34,7 +34,8 @@ public:
                    Params &params, bool diag_flag,
                    PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                    RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables ) override;
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   int buffer_id ) override;
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, 

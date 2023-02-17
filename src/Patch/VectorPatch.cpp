@@ -4449,7 +4449,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                                         params, diag_flag, partwalls( ipatch ),
                                         ( *this )( ipatch ), smpi,
                                         RadiationTables,
-                                        MultiphotonBreitWheelerTables );
+                                        MultiphotonBreitWheelerTables, 0 );
                     }
                     // Dynamics with scalar operators
                     else {
@@ -4466,7 +4466,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                                                      params, diag_flag, partwalls( ipatch ),
                                                      ( *this )( ipatch ), smpi,
                                                      RadiationTables,
-                                                     MultiphotonBreitWheelerTables );
+                                                     MultiphotonBreitWheelerTables, 0 );
                         }
                     } // end if condition on vectorization
                 } // end if condition on species

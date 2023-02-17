@@ -15,7 +15,7 @@ install:
   stage: install
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Force workdir cleaning in case of retried
@@ -34,7 +34,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -46,7 +46,7 @@ runQuick:
   stage: run_quick
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -58,7 +58,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -71,7 +71,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -86,7 +86,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -102,7 +102,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
@@ -114,7 +114,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
+    - unified_species
 
   script:
     # Move in test dir
