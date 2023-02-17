@@ -687,12 +687,7 @@ def multiSlide(*Diags, **kwargs):
 class VTKfile:
 
 	def __init__(self):
-		try:
-			import vtk
-		except Exception as e:
-			print("Python module 'vtk' not found. Could not export to VTK format")
-			return
-		
+		import vtk
 		self.vtk = vtk
 	
 	def Array(self, data, name):

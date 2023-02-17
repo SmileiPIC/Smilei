@@ -840,14 +840,7 @@ class TrackParticles(Diagnostic):
 	
 	# Convert data to VTK format
 	def toVTK(self, rendering="trajectory", data_format="xml"):
-		"""
-		Export the data to Vtk
-		"""
 		if not self._validate(): return
-
-		if not self._sort:
-			print("Cannot export non-sorted data")
-			return
 
 		if self._ndim_particles != 3:
 			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")
@@ -887,21 +880,23 @@ class TrackParticles(Diagnostic):
 		
 		# Cloud mode: each time step is a separated cloud of particles
 		# If there is only one timestep, the trajectory mode becomes a cloud
-		if (ntimes == 1)or(rendering == "cloud"):
+		if ntimes == 1 or rendering == "cloud":
 
 			data = self.getData()
-
+			
 			for istep,step in enumerate(self._timesteps):
 				
-				data_clean_step = {}
+				if self._sort:
+					data_clean_step = {ax:data[ax][istep] for ax in self.axes}
+				else:
+					data_clean_step = {ax:data[step][ax] for ax in self.axes}
 				
-				# Clean data at istep: remove NaN
-				mask = self._np.ones(len(data[self.axes[0]][istep]), dtype=bool)
+				# Remove NaNs
+				mask = self._np.ones_like(data_clean_step[self.axes[0]], dtype=bool)
 				for ax in self.axes:
-					mask = self._np.logical_and(mask,self._np.logical_not(self._np.isnan(self._np.asarray(data[ax][istep]))))
+					mask *= ~self._np.isnan(data_clean_step[ax])
 				for ax in self.axes:
-					#print(ax,data[ax][istep])
-					data_clean_step[ax] = self._np.asarray(data[ax][istep])[mask]
+					data_clean_step[ax] = data_clean_step[ax][mask]
 				
 				pcoords_step = self._np.stack((data_clean_step[xaxis],data_clean_step["y"],data_clean_step["z"])).transpose()
 				pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
@@ -924,8 +919,12 @@ class TrackParticles(Diagnostic):
 			print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
 
 		# Trajectory mode
-		elif (rendering == "trajectory"):
-
+		elif rendering == "trajectory":
+			
+			if not self._sort:
+				print("Cannot export trajectories with non-sorted data")
+				return
+			
 			data = self.getData()
 			pcoords = self._np.stack((data[xaxis],data["y"],data["z"])).transpose()
 			npoints, nt, nd = pcoords.shape
