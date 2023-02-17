@@ -38,8 +38,8 @@ Particles::Particles():
     Momentum.resize( 0 );
     cell_keys.resize( 0 );
     is_test = false;
-    isQuantumParameter = false;
-    isMonteCarlo = false;
+    has_quantum_parameter = false;
+    has_Monte_Carlo_process = false;
 
     double_prop_.resize( 0 );
     short_prop_.resize( 0 );
@@ -98,14 +98,14 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         // Quantum parameter (for QED effects):
         // - if radiation reaction (continuous or discontinuous)
         // - if multiphoton-Breit-Wheeler if photons
-        if( isQuantumParameter ) {
+        if( has_quantum_parameter ) {
             double_prop_.push_back( &Chi );
         }
 
         // Optical Depth for Monte-Carlo processes:
         // - if the discontinuous (Monte-Carlo) radiation reaction
         // are activated, tau is the incremental optical depth to emission
-        if( isMonteCarlo ) {
+        if( has_Monte_Carlo_process ) {
             double_prop_.push_back( &Tau );
         }
 
@@ -122,9 +122,9 @@ void Particles::initialize( unsigned int nParticles, Particles &part )
 
     tracked=part.tracked;
 
-    isQuantumParameter=part.isQuantumParameter;
+    has_quantum_parameter=part.has_quantum_parameter;
 
-    isMonteCarlo=part.isMonteCarlo;
+    has_Monte_Carlo_process=part.has_Monte_Carlo_process;
 
     initialize( nParticles, part.Position.size(), part.Position_old.size() > 0 );
 }
@@ -164,11 +164,11 @@ void Particles::reserve( unsigned int reserved_particles,
         Id.reserve( reserved_particles );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.reserve( reserved_particles );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.reserve( reserved_particles );
     }
 
@@ -221,11 +221,11 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
         Id.resize( nParticles, 0 );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.resize( nParticles, 0. );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.resize( nParticles, 0. );
     }
 
@@ -414,11 +414,11 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
         Id.push_back( 0 );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.push_back( 0. );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.push_back( 0. );
     }
 }
@@ -514,11 +514,11 @@ void Particles::print( unsigned int iPart )
         cout << Id[iPart] << endl;
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         cout << Chi[iPart] << endl;
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         cout << Tau[iPart] << endl;
     }
 }
@@ -545,11 +545,11 @@ ostream &operator << ( ostream &out, const Particles &particles )
             out << particles.Id[iPart] << endl;
         }
 
-        if( particles.isQuantumParameter ) {
+        if( particles.has_quantum_parameter ) {
             out << particles.Chi[iPart] << endl;
         }
 
-        if( particles.isMonteCarlo ) {
+        if( particles.has_Monte_Carlo_process ) {
             out << particles.Tau[iPart] << endl;
         }
     }
@@ -1101,7 +1101,7 @@ void Particles::moveParticles( int iPart, int new_pos )
 //    if (tracked)
 //        Id.resize(nParticles+nAdditionalParticles,0);
 //
-//    if (isQuantumParameter)
+//    if (has_quantum_parameter)
 //        Chi.resize(nParticles+nAdditionalParticles,0.);
 //
 //}

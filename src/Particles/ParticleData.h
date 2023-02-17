@@ -139,7 +139,7 @@ public:
         setVectorAttr( p->Weight, "weight" );
         setVectorAttr( p->Charge, "charge" );
         setVectorAttr( p->Id, "id" );
-        if( p->isQuantumParameter ) {
+        if( p->has_quantum_parameter ) {
             setVectorAttr( p->Chi, "chi" );
         }
     };

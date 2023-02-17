@@ -530,7 +530,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             }
 
             // Monte-Carlo process
-            if (spec->particles->isMonteCarlo) {
+            if (spec->particles->has_Monte_Carlo_process) {
                 s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
             }
 
@@ -947,7 +947,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
             }
 
-            if (spec->particles->isMonteCarlo) {
+            if (spec->particles->has_Monte_Carlo_process) {
                 s.vect( "Tau", spec->particles->Tau );
             }
 

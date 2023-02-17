@@ -127,18 +127,18 @@ public:
             // Radiation model of the species
             // Species with a Monte-Carlo process for the radiation loss
             if( radiation_model=="mc" ) {
-                this_species->particles->isQuantumParameter = true;
-                this_species->particles->isMonteCarlo = true;
+                this_species->particles->has_quantum_parameter = true;
+                this_species->particles->has_Monte_Carlo_process = true;
                 this_species->radiating_ = true;
             }
             // Species with another radiation loss model
             else if( ( radiation_model=="ll" )
                      || ( radiation_model=="cll" )
                      || ( radiation_model=="niel" ) ) {
-                this_species->particles->isQuantumParameter = true;
+                this_species->particles->has_quantum_parameter = true;
                 this_species->radiating_ = true;
             } else if( radiation_model=="diagradiationspectrum" ) {
-                    this_species->particles->isQuantumParameter = true;
+                    this_species->particles->has_quantum_parameter = true;
                     this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
                 ERROR_NAMELIST( "For species `" << species_name
@@ -300,8 +300,8 @@ public:
                             LINK_NAMELIST + std::string("#multiphoton_Breit_Wheeler"));
                 } else {
                     // Activation of the additional variables
-                    this_species->particles->isQuantumParameter = true;
-                    this_species->particles->isMonteCarlo = true;
+                    this_species->particles->has_quantum_parameter = true;
+                    this_species->particles->has_Monte_Carlo_process = true;
 
                     MESSAGE( 2, "> Decay into pair via the multiphoton Breit-Wheeler activated" );
                     MESSAGE( 3, "| Generated electrons and positrons go to species: "
@@ -1270,8 +1270,8 @@ public:
 
         new_species->particles->is_test                       = species->particles->is_test;
         new_species->particles->tracked                       = species->particles->tracked;
-        new_species->particles->isQuantumParameter            = species->particles->isQuantumParameter;
-        new_species->particles->isMonteCarlo                  = species->particles->isMonteCarlo;
+        new_species->particles->has_quantum_parameter            = species->particles->has_quantum_parameter;
+        new_species->particles->has_Monte_Carlo_process                  = species->particles->has_Monte_Carlo_process;
 
         return new_species;
     } // End Species* clone()
@@ -1500,15 +1500,15 @@ public:
                 patch->vecSpecies[i]->electron_species_index = vector_species[i]->electron_species_index;
                 patch->vecSpecies[i]->electron_species = patch->vecSpecies[patch->vecSpecies[i]->electron_species_index];
                 patch->vecSpecies[i]->Ionize->new_electrons.tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
-                patch->vecSpecies[i]->Ionize->new_electrons.isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
-                patch->vecSpecies[i]->Ionize->new_electrons.isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
+                patch->vecSpecies[i]->Ionize->new_electrons.has_quantum_parameter = patch->vecSpecies[i]->electron_species->particles->has_quantum_parameter;
+                patch->vecSpecies[i]->Ionize->new_electrons.has_Monte_Carlo_process = patch->vecSpecies[i]->electron_species->particles->has_Monte_Carlo_process;
                 patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle, params.keep_position_old );
 #ifdef _OMPTASKS
                 unsigned int Nbins = patch->vecSpecies[i]->Nbins;
                 for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                     patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
+                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].has_quantum_parameter = patch->vecSpecies[i]->electron_species->particles->has_quantum_parameter;
+                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].has_Monte_Carlo_process = patch->vecSpecies[i]->electron_species->particles->has_Monte_Carlo_process;
                     patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
                 }
 #endif
@@ -1527,15 +1527,15 @@ public:
                     //                                               params.nDim_particle );
                     patch->vecSpecies[i]->radiated_photons_ = ParticlesFactory::create( params );
                     patch->vecSpecies[i]->radiated_photons_->tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
-                    patch->vecSpecies[i]->radiated_photons_->isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
-                    patch->vecSpecies[i]->radiated_photons_->isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
+                    patch->vecSpecies[i]->radiated_photons_->has_quantum_parameter = patch->vecSpecies[i]->photon_species_->particles->has_quantum_parameter;
+                    patch->vecSpecies[i]->radiated_photons_->has_Monte_Carlo_process = patch->vecSpecies[i]->photon_species_->particles->has_Monte_Carlo_process;
                     patch->vecSpecies[i]->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old );
 #ifdef _OMPTASKS
                     unsigned int Nbins = patch->vecSpecies[i]->Nbins;
                     for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                         patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
+                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].has_quantum_parameter = patch->vecSpecies[i]->photon_species_->particles->has_quantum_parameter;
+                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].has_Monte_Carlo_process = patch->vecSpecies[i]->photon_species_->particles->has_Monte_Carlo_process;
                         patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
                     }
 #endif
@@ -1557,16 +1557,16 @@ public:
                     patch->vecSpecies[i]->mBW_pair_particles_[k] = ParticlesFactory::create( params );
 
                     patch->vecSpecies[i]->mBW_pair_particles_[k]->tracked = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->tracked;
-                    patch->vecSpecies[i]->mBW_pair_particles_[k]->isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isQuantumParameter;
-                    patch->vecSpecies[i]->mBW_pair_particles_[k]->isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isMonteCarlo;
+                    patch->vecSpecies[i]->mBW_pair_particles_[k]->has_quantum_parameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_quantum_parameter;
+                    patch->vecSpecies[i]->mBW_pair_particles_[k]->has_Monte_Carlo_process = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_Monte_Carlo_process;
                     patch->vecSpecies[i]->mBW_pair_particles_[k]->initialize(
                         0, params.nDim_particle, params.keep_position_old );
 #ifdef _OMPTASKS
                     unsigned int Nbins = patch->vecSpecies[i]->Nbins;
                     for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                         patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].tracked = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->tracked;
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isQuantumParameter;
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->isMonteCarlo;
+                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].has_quantum_parameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_quantum_parameter;
+                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].has_Monte_Carlo_process = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_Monte_Carlo_process;
                         patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initialize(
                             0, params.nDim_particle, params.keep_position_old );
                     }

@@ -570,6 +570,7 @@ void Species::dynamics( double time_dual,
 # ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
 # endif
+
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------

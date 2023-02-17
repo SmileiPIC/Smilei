@@ -130,7 +130,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
     write_any_momentum = write_momentum[0] || write_momentum[1] || write_momentum[2];
     write_any_E = write_E[0] || write_E[1] || write_E[2];
     write_any_B = write_B[0] || write_B[1] || write_B[2];
-    if( write_chi && ! vecPatches( 0 )->vecSpecies[speciesId_]->particles->isQuantumParameter ) {
+    if( write_chi && ! vecPatches( 0 )->vecSpecies[speciesId_]->particles->has_quantum_parameter ) {
         ERROR( "DiagTrackParticles #" << iDiagTrackParticles << ": attribute `chi` not available for this species" );
     }
     

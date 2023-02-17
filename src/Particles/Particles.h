@@ -434,7 +434,7 @@ public:
         return &(Weight[0]);
     };
     virtual double* getPtrChi() {
-        return (isQuantumParameter ? Chi.data() : nullptr);
+        return (has_quantum_parameter ? Chi.data() : nullptr);
     };
     virtual short* getPtrCharge() {
         return &(Charge[0]);
@@ -443,7 +443,7 @@ public:
         return &(Id[0]);
     };
     virtual double* getPtrTau() {
-        return (isMonteCarlo ? Tau.data() : nullptr);
+        return (has_Monte_Carlo_process ? Tau.data() : nullptr);
     };
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);
@@ -494,12 +494,12 @@ public:
 
     //! Quantum parameter for particles that are submitted
     //! to a radiation reaction force (CED or QED)
-    bool isQuantumParameter;
+    bool has_quantum_parameter;
 
     //! Parameters for particles that are submitted to a
     //! Monte-Carlo process such as:
     //! - discontinuous radiation reaction force
-    bool isMonteCarlo;
+    bool has_Monte_Carlo_process;
 
 
 private:
