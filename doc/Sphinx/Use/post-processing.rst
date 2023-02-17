@@ -359,7 +359,8 @@ Open a TrackParticles diagnostic
       If it does, sorted particles are directly read from the sorted file.
     * A string for selecting particles (same syntax as ``select``): only selected
       particles are sorted in a new file. The file name must be defined
-      in the argument ``sorted_as``.
+      in the argument ``sorted_as``. If ``timesteps`` is used, only selected timesteps
+      will be included in the created file. 
     
   * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
     selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
@@ -652,7 +653,9 @@ Export 2D or 3D data to VTK
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
+      This rendering requires the particles to be sorted.
     * ``"cloud"``: show a cloud of particles. One file is generated for each iteration.
+      This rendering can be used without sorting the particles.
 
   * ``data_format``: the data formatting in the case of :py:meth:`TrackParticles`,
     either ``"vtk"`` or ``"xml"``. The format ``"vtk"`` results in ascii.
