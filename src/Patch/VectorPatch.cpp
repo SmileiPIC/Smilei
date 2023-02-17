@@ -4947,11 +4947,11 @@ VectorPatch::copyParticlesFromDeviceToHost()
 #endif
                 std::cerr 
                 << "ipatch: " << ipatch
-                << "ispec: "  << ispec
-                << "last_index" << species( ipatch, ispec )->particles->numberOfParticles()
-                << "size" << species( ipatch, ispec )->particles->size()
-                << "device size" << species( ipatch, ispec )->particles->deviceSize()
-                << "number of bins" << species( ipatch, ispec )->particles->last_index.size()
+                << " ispec: "  << ispec
+                << " last_index: " << species( ipatch, ispec )->particles->numberOfParticles()
+                << " size: " << species( ipatch, ispec )->particles->size()
+                << " device size: " << species( ipatch, ispec )->particles->deviceSize()
+                << " number of bins: " << species( ipatch, ispec )->particles->last_index->size()
                 << std::endl;
         }
     }

@@ -753,6 +753,21 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
         irequest ++;
     }
 
+#if defined( SMILEI_ACCELERATOR_MODE) 
+
+    // For the particles
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+        const int number_of_particles = patch->vecSpecies[ispec]->particles->deviceSize();
+        isend( &number_of_particles, to, tag+irequest+2*ispec+1, patch->requests_[irequest+2*ispec] );
+        if( number_of_particles > 0 ) {
+            patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+irequest+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[irequest+2*ispec+1] );
+        }
+    }
+    irequest += 2*nspec;
+
+#else
+
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+irequest+2*ispec+1, patch->requests_[irequest+2*ispec] );
@@ -762,6 +777,8 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
         }
     }
     irequest += 2*nspec;
+
+#endif
 
     // Send some scalars
     unsigned int nscalars = 4 + ( params.has_MC_radiation_ || params.has_LL_radiation_ || params.has_Niel_radiation_ );
@@ -868,13 +885,41 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         }
     }
 
+#if defined( SMILEI_ACCELERATOR_MODE) 
+
+    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
+
+        int number_of_received_particles;
+
+        //Receive last_index
+	std::cerr << ispec << std::endl; 
+	std::cerr << "after" << std::endl;
+        recv( &number_of_received_particles, from, tag+2*ispec+1 );
+        patch->vecSpecies[ispec]->particles->first_index[0]=0;
+        //Prepare patch for receiving particles
+        patch->vecSpecies[ispec]->particles->initialize( number_of_received_particles, params.nDim_particle, params.keep_position_old );
+        //Receive particles
+        if( number_of_received_particles > 0 ) {
+            recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
+            patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
+            patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();    
+            MPI_Type_free( &( recvParts ) );
+        }
+        /*std::cerr << "Species: " << ispec
+                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
+                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
+    }
+
+#else
+
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         //Receive last_index
-	    std::cerr << ispec << std::endl; 
         recv( &patch->vecSpecies[ispec]->particles->last_index, from, tag+2*ispec+1 );
-	std::cerr << "after" << std::endl;
         //Reconstruct first_index from last_index
-        memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
+        memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), 
+                &( patch->vecSpecies[ispec]->particles->last_index[0] ), 
+                ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->numberOfParticles();
@@ -882,17 +927,13 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
-#if defined( SMILEI_ACCELERATOR_MODE )
-            patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
-            patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
-#endif            
+            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );    
             MPI_Type_free( &( recvParts ) );
         }
-        /*std::cerr << "Species: " << ispec
-                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
-                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
+
+#endif
+
     tag += 2*nspec;
 
     // Receive some scalars
