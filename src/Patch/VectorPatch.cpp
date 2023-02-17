@@ -4935,12 +4935,23 @@ void VectorPatch::copyParticlesFromHostToDevice()
 void
 VectorPatch::copyParticlesFromDeviceToHost()
 {
+
+	std::cerr << "copyParticle" << std::endl;
+
     for( int ipatch = 0; ipatch < this->size(); ipatch++ ) {
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 species( ipatch, ispec )->particles->copyFromDeviceToHost();
 #if defined ( SMILEI_ACCELERATOR_GPU_OMP )
                 species( ipatch, ispec )->particles->setHostBinIndex();
 #endif
+                std::cerr 
+                << "ipatch: " << ipatch
+                << "ispec: "  << ispec
+                << "last_index" << species( ipatch, ispec )->particles->numberOfParticles()
+                << "size" << species( ipatch, ispec )->particles->size()
+                << "device size" << species( ipatch, ispec )->particles->deviceSize()
+                << "number of bins" << species( ipatch, ispec )->particles->last_index.size()
+                << std::endl;
             }
     }
 }
