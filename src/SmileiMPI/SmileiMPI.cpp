@@ -758,8 +758,8 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         const int number_of_particles = patch->vecSpecies[ispec]->particles->deviceSize();
-        // isend( number_of_particles, to, tag+irequest+2*ispec+1, patch->requests_[irequest+2*ispec] );
-        MPI_Isend( &number_of_particles, 1, MPI_INT, to, tag+irequest+2*ispec+1, MPI_COMM_WORLD, &patch->requests_[irequest+2*ispec] );
+        isend( &number_of_particles, to, tag+irequest+2*ispec+1, patch->requests_[irequest+2*ispec] );
+        //MPI_Isend( &number_of_particles, 1, MPI_INT, to, tag+irequest+2*ispec+1, MPI_COMM_WORLD, &patch->requests_[irequest+2*ispec] );
         if( number_of_particles > 0 ) {
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+irequest+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[irequest+2*ispec+1] );
@@ -2160,14 +2160,6 @@ void SmileiMPI::recv( Field *field, int from, int tag )
 
     //origin shifts the reception position in the array and reduces the received buffer size.
     MPI_Recv( &( ( *field )( 0 ) ), field->number_of_points_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
-
-} // End recv ( Field )
-
-void SmileiMPI::recv( int data, int from, int tag )
-{
-    MPI_Status status;
-    //origin shifts the reception position in the array and reduces the received buffer size.
-    MPI_Recv( &data, 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
