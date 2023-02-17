@@ -893,6 +893,8 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         int number_of_received_particles;
 
         //Receive last_index
+	std::cerr << ispec << std::endl; 
+	std::cerr << "after" << std::endl;
         recv( &number_of_received_particles, from, tag+2*ispec+1 );
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
