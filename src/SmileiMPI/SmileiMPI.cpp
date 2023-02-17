@@ -870,7 +870,9 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         //Receive last_index
+	    std::cerr << ispec << std::endl; 
         recv( &patch->vecSpecies[ispec]->particles->last_index, from, tag+2*ispec+1 );
+	std::cerr << "after" << std::endl;
         //Reconstruct first_index from last_index
         memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
         patch->vecSpecies[ispec]->particles->first_index[0]=0;

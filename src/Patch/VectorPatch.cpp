@@ -4938,8 +4938,9 @@ VectorPatch::copyParticlesFromDeviceToHost()
 
 	std::cerr << "copyParticle" << std::endl;
 
-    for( int ipatch = 0; ipatch < this->size(); ipatch++ ) {
-            for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
+    const int npatches = this->size();
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
+        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 species( ipatch, ispec )->particles->copyFromDeviceToHost();
 #if defined ( SMILEI_ACCELERATOR_GPU_OMP )
                 species( ipatch, ispec )->particles->setHostBinIndex();
@@ -4952,7 +4953,7 @@ VectorPatch::copyParticlesFromDeviceToHost()
                 << "device size" << species( ipatch, ispec )->particles->deviceSize()
                 << "number of bins" << species( ipatch, ispec )->particles->last_index.size()
                 << std::endl;
-            }
+        }
     }
 }
 
