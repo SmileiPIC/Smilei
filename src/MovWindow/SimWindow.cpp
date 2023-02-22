@@ -43,6 +43,7 @@ SimWindow::SimWindow( Params &params )
 #else
     max_threads = 1;
 #endif
+
     patch_to_be_created.resize( max_threads );
     patch_particle_created.resize( max_threads );
     
@@ -109,12 +110,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     
     std::vector<Patch *> delete_patches_, update_patches_, send_patches_;
     
-#ifdef _OPENMP
-    int my_thread = omp_get_thread_num();
-#else
-    int my_thread = 0;
-#endif
-    
+    // Get thread number, put to 0 if no OpenMP
+    const int my_thread = Tools::getOMPThreadNum();
+
 #ifdef _NO_MPI_TM
     #pragma omp master
     {
@@ -170,7 +168,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
                         int Href_receiver = 0;
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
-                        // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                        // The tag is the patch number in the receiver vector of patches 
+                        // in order to avoid too large tags not supported by some MPI versions.
                         smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params, false );
                     }
                 }
@@ -211,7 +210,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #ifndef _NO_MPI_TM
             #pragma omp critical
 #endif
-                mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
+            mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
             
             // Do not receive Xmin condition
             if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
@@ -363,6 +362,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
+                        vector<int> nbr_new_particles( nSpecies, 0 );
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             ParticleCreator particle_creator;
                             particle_creator.associate(mypatch->vecSpecies[ispec]);
@@ -376,16 +376,36 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.box_size_[1]   = params.patch_size_[1];
                             init_space.box_size_[2]   = params.patch_size_[2];
                             
-                            particle_creator.create( init_space, params, mypatch, 0 );
-                            
+			                nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
+
+                        } // end loop nSpecies
+
+#if defined ( SMILEI_ACCELERATOR_MODE )
+                        if ( params.gpu_computing ) {
+                            // ADD NEW PARTS ON GPU
+                            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                              mypatch->vecSpecies[ispec]->particles_to_move->clear();
+                            //   mypatch->vecSpecies[ispec]->particles->copyParticles( 0, mypatch->vecSpecies[ispec]->getNbrOfParticles(),
+                            //                                                         *mypatch->vecSpecies[ispec]->particles_to_move, 0 );
+                              mypatch->vecSpecies[ispec]->particles->initializeDataOnDevice();
+                              mypatch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
+                            }
                         }
-                        
+#endif
+
                         mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {
                             mypatch->EMfields->saveExternalFields( mypatch );
                         }
                         
                     } // end test patch_particle_created[ithread][j]
+
+#if defined ( SMILEI_ACCELERATOR_MODE )
+                    if ( params.gpu_computing ) {
+                        // Initializes only field data structures, particle data structure are initialized separately
+                        mypatch->allocateAndCopyFieldsOnDevice();
+                    }
+#endif
                 } // end j loop
             } // End ithread loop
         } // End omp master region

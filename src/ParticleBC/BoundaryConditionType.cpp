@@ -192,21 +192,27 @@ void remove_particle_inf( Species* species,
                           Random* rand, 
                           double& energy_change )
 {
+
     double change_in_energy = 0.0;
 
-    double* position   = species->particles->getPtrPosition( direction );
-    double* momentum_x = species->particles->getPtrMomentum( 0 );
-    double* momentum_y = species->particles->getPtrMomentum( 1 );
-    double* momentum_z = species->particles->getPtrMomentum( 2 );
-    short*  charge     = species->particles->getPtrCharge();
-    double* weight     = species->particles->getPtrWeight();
-    int*    cell_keys  = species->particles->getPtrCellKeys();
+    const double *const position   = species->particles->getPtrPosition( direction );
+    const double *const momentum_x = species->particles->getPtrMomentum( 0 );
+    const double *const momentum_y = species->particles->getPtrMomentum( 1 );
+    const double *const momentum_z = species->particles->getPtrMomentum( 2 );
+    short  *const charge     = species->particles->getPtrCharge();
+    const double *const weight     = species->particles->getPtrWeight();
+    int    *const cell_keys  = species->particles->getPtrCellKeys();
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector reduction(+ : change_in_energy)
+#else
+    #pragma omp simd reduction(+ : change_in_energy)
 #endif
     for( int ipart = imin; ipart < imax; ++ipart ) {
         if( position[ipart] < limit_inf ) {
@@ -232,21 +238,27 @@ void remove_particle_sup( Species* species,
                           Random* rand, 
                           double& energy_change )
 {
+
     double change_in_energy = 0.0;
 
-    double* position   = species->particles->getPtrPosition( direction );
-    double* momentum_x = species->particles->getPtrMomentum( 0 );
-    double* momentum_y = species->particles->getPtrMomentum( 1 );
-    double* momentum_z = species->particles->getPtrMomentum( 2 );
-    short*  charge     = species->particles->getPtrCharge();
-    double* weight     = species->particles->getPtrWeight();
-    int*    cell_keys  = species->particles->getPtrCellKeys();
+    const double *const position   = species->particles->getPtrPosition( direction );
+    const double *const momentum_x = species->particles->getPtrMomentum( 0 );
+    const double *const momentum_y = species->particles->getPtrMomentum( 1 );
+    const double *const momentum_z = species->particles->getPtrMomentum( 2 );
+    short  *const charge     = species->particles->getPtrCharge();
+    const double *const weight     = species->particles->getPtrWeight();
+    int    *const cell_keys  = species->particles->getPtrCellKeys();
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target           is_device_ptr( position, momentum_x, momentum_y, momentum_z, charge, weight, cell_keys ) map( tofrom \
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
+    #pragma acc loop gang worker vector reduction(+ : change_in_energy)
+#else
+    #pragma omp simd reduction(+ : change_in_energy)
 #endif
     for( int ipart = imin; ipart < imax; ++ipart ) {
         if( position[ipart] >= limit_sup ) {

@@ -1163,7 +1163,7 @@ void nvidiaParticles::initializeDataOnDevice()
         // Should we reserve some space ?
         // reserve( 100 );
     } else {
-        syncGPU();
+        copyFromHostToDevice();
     }
 
     if( prepareBinIndex() < 0 ) {
@@ -1185,7 +1185,7 @@ void nvidiaParticles::initializeDataOnDevice()
         // device and we know we support the space dimension.
 
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
-        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not be correctly sorted when created.
+        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not correctly sorted when created.
         detail::Cluster::computeBinIndex( *this );
         setHostBinIndex();
     }
@@ -1194,7 +1194,7 @@ void nvidiaParticles::initializeDataOnDevice()
 // -------------------------------------------------------------------------------------------------
 //! Copy the particles from host to device
 // -------------------------------------------------------------------------------------------------
-void nvidiaParticles::syncGPU()
+void nvidiaParticles::copyFromHostToDevice()
 {
     resize( Position[0].size() );
 
@@ -1222,7 +1222,7 @@ void nvidiaParticles::syncGPU()
 // -------------------------------------------------------------------------------------------------
 //! Copy device to host
 // -------------------------------------------------------------------------------------------------
-void nvidiaParticles::syncCPU()
+void nvidiaParticles::copyFromDeviceToHost()
 {
     for (int idim=0;idim<Position.size();idim++) {
         Position[idim].resize( gpu_nparts_ );
@@ -1332,7 +1332,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          count_if_out() );
     }
 
-    particles_to_move->syncCPU();
+    particles_to_move->copyFromDeviceToHost();
 }
 
 
