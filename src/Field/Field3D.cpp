@@ -80,6 +80,21 @@ Field3D::~Field3D()
 {
     for( unsigned int iside=0 ; iside<sendFields_.size() ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
+
+#if defined ( SMILEI_ACCELERATOR_MODE )
+
+            if ( sendFields_[iside]->isOnDevice() )
+            {
+                sendFields_[iside]->deleteOnDevice();
+            }
+            
+            if ( recvFields_[iside]->isOnDevice() )
+            {
+                recvFields_[iside]->deleteOnDevice();
+            }
+
+#endif
+
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
             delete recvFields_[iside];
@@ -389,20 +404,22 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 
         sendFields_[iDim*2+iNeighbor] = new Field3D(size);
         recvFields_[iDim*2+iNeighbor] = new Field3D(size);
+
 #if defined( SMILEI_ACCELERATOR_MODE )
         if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
-            const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
-            const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
-            const int           dSize = sendFields_[iDim*2+iNeighbor]->size();
+
+            sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
+            recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
+
+            // const double *const dsend = sendFields_[iDim*2+iNeighbor]->data();
+            // const double *const drecv = recvFields_[iDim*2+iNeighbor]->data();
+            // const int           dSize = sendFields_[iDim*2+iNeighbor]->size();
 
             // TODO(Etienne M): DIAGS. Apply the same fix done for the 2D to the
             // 3D mode.
 
-            // TODO(Etienne M): FREE. If we have load balancing or other patch
-            // creation/destruction available (which is not the case on GPU ATM),
-            // we should be taking care of freeing this GPU memory.
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+            // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         }
 #endif
 

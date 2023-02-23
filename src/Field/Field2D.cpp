@@ -71,6 +71,8 @@ Field2D::~Field2D()
     for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
 
+#if defined ( SMILEI_ACCELERATOR_MODE )
+
             if ( sendFields_[iside]->isOnDevice() )
             {
                 sendFields_[iside]->deleteOnDevice();
@@ -80,6 +82,8 @@ Field2D::~Field2D()
             {
                 recvFields_[iside]->deleteOnDevice();
             }
+
+#endif
 
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -349,18 +353,15 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         // exchange buffers to the GPU.
         // On the other hand, later in the pic loop, data() will be on GPU and
         // we need to map the exchange buffers.
-        const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data();
-        const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
-        const int           dSize = sendFields_[iDim * 2 + iNeighbor]->number_of_points_;
+        // const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data();
+        // const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
+        // const int           dSize = sendFields_[iDim * 2 + iNeighbor]->number_of_points_;
 
         sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
         recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
 
         // const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
         // if( !is_already_mapped_on_gpu ) {
-        //     // TODO(Etienne M): FREE. If we have load balancing or other patch
-        //     // creation/destruction available (which is not the case on GPU ATM),
-        //     // we should be taking care of freeing this GPU memory.
         //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
         //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
         // }

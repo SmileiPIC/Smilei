@@ -276,7 +276,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         #pragma omp for schedule(static)
 #endif
         for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
-            if( vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
+            if( vecPatches_old[ipatch]->MPI_neighbor_[0][0] != vecPatches_old[ipatch]->MPI_me_ && 
+                vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
                 smpi->waitall( vecPatches_old[ipatch] );
             }
         }

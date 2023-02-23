@@ -905,7 +905,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         //recv( &number_of_received_particles, from, tag+2*ispec+1 );
         MPI_Status status;
         MPI_Recv( &number_of_received_particles, 1, MPI_INT, from, tag+2*ispec+1, MPI_COMM_WORLD, &status );
-	std::cerr << " Rank: " << smilei_rk << " Patch: " << patch->Pcoordinates[0] << " " << patch->Pcoordinates[1]
+	    std::cerr << " Rank: " << smilei_rk << " Patch: " << patch->Pcoordinates[0] << " " << patch->Pcoordinates[1]
 		  << " Species: " << ispec
 		  << " recv " << number_of_received_particles
 		  << " from " << from
