@@ -664,7 +664,7 @@ nvidiaParticles::nvidiaParticles( const Params& parameters,
     // EMPTY
 }
 
-nvidiaParticles::~nvidiaParticles(
+nvidiaParticles::~nvidiaParticles() {
     // Manage last_index if allocated on GPU
     if (smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( last_index.data() )) {
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( last_index );

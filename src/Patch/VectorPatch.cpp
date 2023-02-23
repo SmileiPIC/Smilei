@@ -4403,6 +4403,8 @@ void VectorPatch::moveWindow(
 {
     timers.movWindow.restart();
 
+    std::cerr << "begin moving window" << std::endl;
+
     // Bring all particles and field grids to the Host (except species grids)
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
@@ -4422,10 +4424,12 @@ void VectorPatch::moveWindow(
     // Copy all Fields and Particles to the device
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        //copyEMFieldsFromHostToDevice();
-        copyParticlesFromHostToDevice();
+        copyEMFieldsFromHostToDevice();
+//        copyParticlesFromHostToDevice();
     }
 #endif
+
+    std::cerr << "end moving window" << std::endl;
 
     timers.movWindow.update();
 }
@@ -4674,10 +4678,14 @@ void VectorPatch::allocateDataOnDevice(Params &params,
         const double *const By = patches_[ipatch]->EMfields->By_->data();
         const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
-        
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
+
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bz, sizeofBz );
+
     } // end patch loop
 
     // TODO(Etienne M): We should create a function that does the copy of the radiation table.

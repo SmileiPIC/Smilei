@@ -549,6 +549,8 @@ public:
     //! - discontinuous radiation reaction force
     bool isMonteCarlo;
 
+    unsigned int host_nparts_;
+
 private:
 };
 
