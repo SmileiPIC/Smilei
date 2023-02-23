@@ -70,6 +70,17 @@ Field2D::~Field2D()
 {
     for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
+
+            if ( sendFields_[iside]->isOnDevice() )
+            {
+                sendFields_[iside]->deleteOnDevice();
+            }
+            
+            if ( recvFields_[iside]->isOnDevice() )
+            {
+                recvFields_[iside]->deleteOnDevice();
+            }
+
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
             delete recvFields_[iside];
@@ -79,12 +90,6 @@ Field2D::~Field2D()
     if( data_!=NULL ) {
         delete [] data_;
         delete [] data_2D;
-    }
-
-    const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
-    if( is_already_mapped_on_gpu ) {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dsend, dSize );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( drecv, dSize );
     }
 
 }
@@ -348,14 +353,17 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
         const int           dSize = sendFields_[iDim * 2 + iNeighbor]->number_of_points_;
 
-        const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
-        if( !is_already_mapped_on_gpu ) {
-            // TODO(Etienne M): FREE. If we have load balancing or other patch
-            // creation/destruction available (which is not the case on GPU ATM),
-            // we should be taking care of freeing this GPU memory.
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
-        }
+        sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyHostToDevice();
+        recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyHostToDevice();
+
+        // const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
+        // if( !is_already_mapped_on_gpu ) {
+        //     // TODO(Etienne M): FREE. If we have load balancing or other patch
+        //     // creation/destruction available (which is not the case on GPU ATM),
+        //     // we should be taking care of freeing this GPU memory.
+        //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
+        //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+        // }
     }
 #endif
 }

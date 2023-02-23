@@ -49,7 +49,11 @@ void Field::put_to( double val )
     //! allocate and copy from Device to Host
     void Field::allocateAndCopyFromHostToDevice()
     {
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( data_, number_of_points_ );
+        if (!isOnDevice()) {
+            smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( data_, number_of_points_ );
+        } else {
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
+        }
     };
 
     //! Return if the field grid is mapped on device
