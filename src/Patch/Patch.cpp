@@ -1302,37 +1302,16 @@ void Patch::allocateAndCopyFieldsOnDevice()
     EMfields->Jy_->allocateAndCopyFromHostToDevice();
     EMfields->Jz_->allocateAndCopyFromHostToDevice();
 
-    // int sizeofJx = EMfields->Jx_->number_of_points_;
-    // int sizeofJy = EMfields->Jy_->number_of_points_;
-    // int sizeofJz = EMfields->Jz_->number_of_points_;
-    // double* Jx = &(EMfields->Jx_->data_[0]);
-    // double* Jy = &(EMfields->Jy_->data_[0]);
-    // double* Jz = &(EMfields->Jz_->data_[0]);
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
-
     // Rho (charge density) ----------------
 
     EMfields->rho_->allocateAndCopyFromHostToDevice();
 
-    // int sizeofRho = EMfields->rho_->number_of_points_;
-    // double* rho = &(EMfields->rho_->data_[0]);
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( rho, sizeofRho );
 
     // Electric field ----------------------
 
     EMfields->Ex_->allocateAndCopyFromHostToDevice();
     EMfields->Ey_->allocateAndCopyFromHostToDevice();
     EMfields->Ez_->allocateAndCopyFromHostToDevice();
-
-    // double* Ex = &(EMfields->Ex_->data_[0]);
-    // double* Ey = &(EMfields->Ey_->data_[0]);
-    // double* Ez = &(EMfields->Ez_->data_[0]);
-
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
 
     // Magnetic field ----------------------
 
@@ -1343,26 +1322,6 @@ void Patch::allocateAndCopyFieldsOnDevice()
     EMfields->Bx_m->allocateAndCopyFromHostToDevice();
     EMfields->By_m->allocateAndCopyFromHostToDevice();
     EMfields->Bz_m->allocateAndCopyFromHostToDevice();
-
-    // int sizeofBx = EMfields->Bx_m->number_of_points_;
-    // int sizeofBy = EMfields->By_m->number_of_points_;
-    // int sizeofBz = EMfields->Bz_m->number_of_points_;
-
-    // double* Bxm = &(EMfields->Bx_m->data_[0]);
-    // double* Bym = &(EMfields->By_m->data_[0]);
-    // double* Bzm = &(EMfields->Bz_m->data_[0]);
-    
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bxm, sizeofBx );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bym, sizeofBy );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bzm, sizeofBz );
-
-    // double* Bx = &(EMfields->Bx_->data_[0]);
-    // double* By = &(EMfields->By_->data_[0]);
-    // double* Bz = &(EMfields->Bz_->data_[0]);
-
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-    // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
 
 } // END allocateAndCopyFieldsOnDevice
 
