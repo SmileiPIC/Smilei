@@ -664,6 +664,13 @@ nvidiaParticles::nvidiaParticles( const Params& parameters,
     // EMPTY
 }
 
+nvidiaParticles::~nvidiaParticles(
+    // Manage last_index if allocated on GPU
+    if (smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( last_index.data() )) {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( last_index );
+    }
+}
+
 void nvidiaParticles::resizeDimensions( unsigned int nDim )
 {
     nvidia_position_.resize( nDim );
@@ -915,7 +922,10 @@ void nvidiaParticles::initializeDataOnDevice()
         // device and we know we support the space dimension.
 
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
-        detail::Cluster::sortParticleByKey( *this, *parameters_ ); // The particles are not correctly sorted when created.
+
+        // The particles are not correctly sorted when created.
+        detail::Cluster::sortParticleByKey( *this, *parameters_ );
+
         detail::Cluster::computeBinIndex( *this );
         setHostBinIndex();
     }

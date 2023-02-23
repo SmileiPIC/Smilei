@@ -32,7 +32,7 @@ public:
     nvidiaParticles( const Params& parameters, const Patch& a_parent_patch );
 
     //! Destructor for nvidiaParticles
-    virtual ~nvidiaParticles(){};
+    void ~nvidiaParticles();
 
     //! Allocate the right amount of position and momentum dimensions
     void resizeDimensions( unsigned int nDim );
