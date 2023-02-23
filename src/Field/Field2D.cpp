@@ -353,8 +353,8 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
         const int           dSize = sendFields_[iDim * 2 + iNeighbor]->number_of_points_;
 
-        sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyHostToDevice();
-        recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyHostToDevice();
+        sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
+        recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
 
         // const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
         // if( !is_already_mapped_on_gpu ) {
