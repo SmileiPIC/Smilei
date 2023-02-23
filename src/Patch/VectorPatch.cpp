@@ -4403,6 +4403,8 @@ void VectorPatch::moveWindow(
 {
     timers.movWindow.restart();
 
+    std::cerr << "begin moving window" << std::endl;
+
     // Bring all particles and field grids to the Host (except species grids)
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
@@ -4422,10 +4424,12 @@ void VectorPatch::moveWindow(
     // Copy all Fields and Particles to the device
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        //copyEMFieldsFromHostToDevice();
-        copyParticlesFromHostToDevice();
+        copyEMFieldsFromHostToDevice();
+//        copyParticlesFromHostToDevice();
     }
 #endif
+
+    std::cerr << "end moving window" << std::endl;
 
     timers.movWindow.update();
 }
@@ -4643,9 +4647,9 @@ void VectorPatch::allocateDataOnDevice(Params &params,
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
+        // Allocate field data structures on GPU
         patches_[ipatch]->allocateFieldsOnDevice();
 
-        // Allocate field data structures on GPU
         // const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
         // const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
         // const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
