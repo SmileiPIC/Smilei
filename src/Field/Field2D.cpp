@@ -80,6 +80,13 @@ Field2D::~Field2D()
         delete [] data_;
         delete [] data_2D;
     }
+
+    const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
+    if( is_already_mapped_on_gpu ) {
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( dsend, dSize );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( drecv, dSize );
+    }
+
 }
 
 
