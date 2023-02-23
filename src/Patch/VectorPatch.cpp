@@ -4424,7 +4424,7 @@ void VectorPatch::moveWindow(
     // Copy all Fields and Particles to the device
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        copyEMFieldsFromHostToDevice();
+//        copyEMFieldsFromHostToDevice();
 //        copyParticlesFromHostToDevice();
     }
 #endif
