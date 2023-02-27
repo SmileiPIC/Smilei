@@ -495,11 +495,15 @@ public :
                             RadiationTables * radiation_tables,
                             MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
-    //! Field Synchronization from the GPU (Device) to the host (CPU)
-    //! This function updates the data on the host from the data located on the device
-    void copyEMFieldsFromHostToDevice();
-    
 #if defined( SMILEI_ACCELERATOR_MODE)
+
+    //! Field Synchronization from the GPU (Device) to the host (CPU)
+
+    //! This function updates the data on the host from the data located on the device
+    void copyFieldsFromHostToDevice();
+
+    //! This function updates the data on the device from the data located on the host
+    void copyFieldsFromDeviceToHost();
 
     //! Copy all species particles from  Host to devices
     void copyParticlesFromHostToDevice();

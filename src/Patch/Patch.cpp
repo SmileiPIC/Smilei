@@ -1326,6 +1326,78 @@ void Patch::allocateAndCopyFieldsOnDevice()
 } // END allocateAndCopyFieldsOnDevice
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Copy fields from device to host
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::copyFieldsFromDeviceToHost()
+{
+    // int nspecies =  vecSpecies.size();
+
+    // Currents -----------------------------
+
+    EMfields->Jx_->copyFromDeviceToHost();
+    EMfields->Jy_->copyFromDeviceToHost();
+    EMfields->Jz_->copyFromDeviceToHost();
+
+    // Rho (charge density) ----------------
+
+    EMfields->rho_->copyFromDeviceToHost();
+
+
+    // Electric field ----------------------
+
+    EMfields->Ex_->copyFromDeviceToHost();
+    EMfields->Ey_->copyFromDeviceToHost();
+    EMfields->Ez_->copyFromDeviceToHost();
+
+    // Magnetic field ----------------------
+
+    EMfields->Bx_->copyFromDeviceToHost();
+    EMfields->By_->copyFromDeviceToHost();
+    EMfields->Bz_->copyFromDeviceToHost();
+
+    EMfields->Bx_m->copyFromDeviceToHost();
+    EMfields->By_m->copyFromDeviceToHost();
+    EMfields->Bz_m->copyFromDeviceToHost();
+
+} // END allocateAndCopyFieldsOnDevice
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Copy fields from host to device
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::copyFieldsFromHostToDevice()
+{
+    // int nspecies =  vecSpecies.size();
+
+    // Currents -----------------------------
+
+    EMfields->Jx_->copyFromHostToDevice();
+    EMfields->Jy_->copyFromHostToDevice();
+    EMfields->Jz_->copyFromHostToDevice();
+
+    // Rho (charge density) ----------------
+
+    EMfields->rho_->copyFromHostToDevice();
+
+
+    // Electric field ----------------------
+
+    EMfields->Ex_->copyFromHostToDevice();
+    EMfields->Ey_->copyFromHostToDevice();
+    EMfields->Ez_->copyFromHostToDevice();
+
+    // Magnetic field ----------------------
+
+    EMfields->Bx_->copyFromHostToDevice();
+    EMfields->By_->copyFromHostToDevice();
+    EMfields->Bz_->copyFromHostToDevice();
+
+    EMfields->Bx_m->copyFromHostToDevice();
+    EMfields->By_m->copyFromHostToDevice();
+    EMfields->Bz_m->copyFromHostToDevice();
+
+} // END allocateAndCopyFieldsOnDevice
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Delete field gris on device (needed by moving window)
 // ---------------------------------------------------------------------------------------------------------------------
 //void Patch::deleteFieldsOnDevice( Params &params)

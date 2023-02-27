@@ -1331,6 +1331,9 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
             if (need_particles) {
                 copyParticlesFromDeviceToHost();
             }
+            if (need_fields) {
+                copyFieldsFromDeviceToHost();
+            }
             copyDeviceStateToHost(need_fields, diag_flag);
         }
     }
@@ -4409,7 +4412,8 @@ void VectorPatch::moveWindow(
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
         copyParticlesFromDeviceToHost();
-        copyDeviceStateToHost(true,false);
+        copyFieldsFromDeviceToHost();
+        //copyDeviceStateToHost(true,false);
     }
 #endif
 
@@ -4860,11 +4864,12 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
 #endif
 }
 
+#if defined( SMILEI_ACCELERATOR_MODE )
+
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
-void VectorPatch::copyEMFieldsFromHostToDevice()
+void VectorPatch::copyFieldsFromHostToDevice()
 {
-#if defined( SMILEI_ACCELERATOR_MODE )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
@@ -4879,46 +4884,43 @@ void VectorPatch::copyEMFieldsFromHostToDevice()
 
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
 
-        patches_[ipatch]->EMfields->Ex_->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->Ey_->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->Ez_->copyFromHostToDevice();
+        patches_[ipatch]->copyFieldsFromHostToDevice();
 
-        // const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        // const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        // const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
+        // patches_[ipatch]->EMfields->Ex_->copyFromHostToDevice();
 
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ex, sizeofEx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ey, sizeofEy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Ez, sizeofEz );
+        // patches_[ipatch]->EMfields->Ex_->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->Ey_->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->Ez_->copyFromHostToDevice();
 
-        patches_[ipatch]->EMfields->Bx_m->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->By_m->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->Bz_m->copyFromHostToDevice();
 
-        // const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        // const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        // const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
+        // patches_[ipatch]->EMfields->Bx_m->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->By_m->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->Bz_m->copyFromHostToDevice();
+ 
 
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmx, sizeofBx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmy, sizeofBy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bmz, sizeofBz );
+        // patches_[ipatch]->EMfields->Bx_->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->By_->copyFromHostToDevice();
+        // patches_[ipatch]->EMfields->Bz_->copyFromHostToDevice();
 
-        patches_[ipatch]->EMfields->Bx_->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->By_->copyFromHostToDevice();
-        patches_[ipatch]->EMfields->Bz_->copyFromHostToDevice();
-
-        // const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        // const double *const By = patches_[ipatch]->EMfields->By_->data();
-        // const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
-
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bx, sizeofBx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( By, sizeofBy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( Bz, sizeofBz );
     }
-#else
-    ERROR( "GPU related code should not be reached in CPU mode!" );
-#endif
 }
+#endif
+
+#if defined( SMILEI_ACCELERATOR_MODE)
+//! Sync all fields from device to host
+void
+VectorPatch::copyFieldsFromDeviceToHost()
+{
+    const int npatches = this->size();
+    
+    for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
+
+        patches_[ipatch]->copyFieldsFromDeviceToHost();
+
+    }
+}
+#endif
+
 
 #if defined( SMILEI_ACCELERATOR_MODE)
 
@@ -4932,7 +4934,6 @@ void VectorPatch::copyParticlesFromHostToDevice()
         }
     }
 }
-
 #endif
 
 #if defined( SMILEI_ACCELERATOR_MODE)
@@ -4942,7 +4943,7 @@ void
 VectorPatch::copyParticlesFromDeviceToHost()
 {
 
-	std::cerr << "copyParticle" << std::endl;
+	// std::cerr << "copyParticle" << std::endl;
 
     const int npatches = this->size();
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
@@ -4951,21 +4952,21 @@ VectorPatch::copyParticlesFromDeviceToHost()
 #if defined ( SMILEI_ACCELERATOR_GPU_OMP )
                 species( ipatch, ispec )->particles->setHostBinIndex();
 #endif
-                std::cerr 
-                << "ipatch: " << ipatch
-                << " ispec: "  << ispec
-                << " last_index: " << species( ipatch, ispec )->particles->numberOfParticles()
-                << " size: " << species( ipatch, ispec )->particles->size()
-                << " device size: " << species( ipatch, ispec )->particles->deviceSize()
-                << " number of bins: " << species( ipatch, ispec )->particles->last_index.size()
-                << std::endl;
+                // std::cerr 
+                // << "ipatch: " << ipatch
+                // << " ispec: "  << ispec
+                // << " last_index: " << species( ipatch, ispec )->particles->numberOfParticles()
+                // << " size: " << species( ipatch, ispec )->particles->size()
+                // << " device size: " << species( ipatch, ispec )->particles->deviceSize()
+                // << " number of bins: " << species( ipatch, ispec )->particles->last_index.size()
+                // << std::endl;
         }
     }
 }
 
 #endif
 
-//! Sync all data (fields and particles) from device to host
+//! Sync all fields from device to host
 void
 VectorPatch::copyDeviceStateToHost(
     bool copy_fields,
@@ -4982,10 +4983,10 @@ VectorPatch::copyDeviceStateToHost(
 
         if (copy_fields) {
 
-            patches_[ipatch]->EMfields->Jx_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Jy_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Jz_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->rho_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Jx_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Jy_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Jz_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->rho_->copyFromDeviceToHost();
 
             // const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
             // const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
@@ -5002,9 +5003,9 @@ VectorPatch::copyDeviceStateToHost(
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Jz, sizeofJz );
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Rho, sizeofRho );
 
-            patches_[ipatch]->EMfields->Ex_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Ey_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Ez_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Ex_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Ey_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Ez_->copyFromDeviceToHost();
 
             // const int sizeofEx = patches_[0]->EMfields->Ex_->size();
             // const int sizeofEy = patches_[0]->EMfields->Ey_->size();
@@ -5018,9 +5019,9 @@ VectorPatch::copyDeviceStateToHost(
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ey, sizeofEy );
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Ez, sizeofEz );
 
-            patches_[ipatch]->EMfields->Bx_m->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->By_m->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Bz_m->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Bx_m->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->By_m->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Bz_m->copyFromDeviceToHost();
 
             // double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
             // double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
@@ -5030,9 +5031,9 @@ VectorPatch::copyDeviceStateToHost(
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmy, sizeofBy );
             // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( Bmz, sizeofBz );
 
-            patches_[ipatch]->EMfields->Bx_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->By_->copyFromDeviceToHost();
-            patches_[ipatch]->EMfields->Bz_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Bx_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->By_->copyFromDeviceToHost();
+            // patches_[ipatch]->EMfields->Bz_->copyFromDeviceToHost();
 
             // const int sizeofBx = patches_[0]->EMfields->Bx_->size();
             // const int sizeofBy = patches_[0]->EMfields->By_->size();

@@ -415,7 +415,7 @@ int main( int argc, char *argv[] )
                                         &radiation_tables_, 
                                         &multiphoton_Breit_Wheeler_tables_ );
     // Copy field array content on device
-    vecPatches.copyEMFieldsFromHostToDevice();
+    vecPatches.copyFieldsFromHostToDevice();
 #endif
 
     TITLE( "Open files & initialize diagnostics" );

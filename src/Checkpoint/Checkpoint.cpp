@@ -255,7 +255,9 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     // the main memory every time we do even the smallest diagnostic.
     // if( !vecPatches.diag_flag ) could be used (?) to avoid copying everything
     // a second time.
-    vecPatches.copyDeviceStateToHost();
+    vecPatches.copyParticlesFromDeviceToHost();
+    vecPatches.copyFieldsFromDeviceToHost();
+    //vecPatches.copyDeviceStateToHost();
 #endif
 
     // Write basic attributes

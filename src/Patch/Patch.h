@@ -142,6 +142,12 @@ public:
     //! Allocate all field grids on device
     void allocateFieldsOnDevice();
 
+    //! Copy All field grids from device to host
+    void copyFieldsFromDeviceToHost();
+
+    //! Copy All fields from host to device
+    void copyFieldsFromHostToDevice();
+
     //! Deallocate field grids on device
     void deleteFieldsOnDevice();
 #endif
