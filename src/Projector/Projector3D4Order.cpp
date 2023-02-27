@@ -18,15 +18,15 @@ using namespace std;
 Projector3D4Order::Projector3D4Order( Params &params, Patch *patch ) : Projector3D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
+    dx_ov_dt_  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
+    dy_ov_dt_  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
-    dz_ov_dt  = params.cell_length[2] / params.timestep;
+    dz_ov_dt_  = params.cell_length[2] / params.timestep;
     
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
-    k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
+    k_domain_begin_ = patch->getCellStartingGlobalIndex( 2 );
     
     nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
     nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
@@ -56,9 +56,9 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*dz_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
+    double crz_p = charge_weight*dz_ov_dt_;
     
     // variable declaration
     double xpn, ypn, zpn;
@@ -130,7 +130,7 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -144,7 +144,7 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -158,7 +158,7 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     zpn = particles.position( 2, ipart ) * dz_inv_;
     int kp = round( zpn );
     int kpo = iold[2*nparts];
-    int kp_m_kpo = kp-kpo-k_domain_begin;
+    int kp_m_kpo = kp-kpo-k_domain_begin_;
     delta  = zpn - ( double )kp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -181,7 +181,7 @@ void Projector3D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     // ---------------------------
     
     ipo -= 3 + bin_shift ;   //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
     jpo -= 3;
     kpo -= 3;
     
@@ -246,9 +246,9 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*dz_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
+    double crz_p = charge_weight*dz_ov_dt_;
     
     // variable declaration
     double xpn, ypn, zpn;
@@ -320,7 +320,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -334,7 +334,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -348,7 +348,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     zpn = particles.position( 2, ipart ) * dz_inv_;
     int kp = round( zpn );
     int kpo = iold[2*nparts];
-    int kp_m_kpo = kp-kpo-k_domain_begin;
+    int kp_m_kpo = kp-kpo-k_domain_begin_;
     delta  = zpn - ( double )kp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -371,7 +371,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     // ---------------------------
     
     ipo -= 3 + bin_shift ;   //This minus 3 come from the order 3 scheme, based on a 7 points stencil from -3 to +3.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
     jpo -= 3;
     kpo -= 3;
     
@@ -527,9 +527,9 @@ void Projector3D4Order::basic( double *rhoj, Particles &particles, unsigned int 
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 3 + bin_shift;
-    jp -= j_domain_begin + 3;
-    kp -= k_domain_begin + 3;
+    ip -= i_domain_begin_ + 3 + bin_shift;
+    jp -= j_domain_begin_ + 3;
+    kp -= k_domain_begin_ + 3;
     
     for( unsigned int i=0 ; i<7 ; i++ ) {
         iloc = ( i+ip )*nyz;
@@ -649,12 +649,12 @@ void Projector3D4Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     Szd[3] = dble_19_ov_96   + dble_11_ov_24 * zpmzkd  + dble_1_ov_4  * zpmzkd2 - dble_1_ov_6  * zpmzkd3 - dble_1_ov_6  * zpmzkd4;
     Szd[4] = dble_1_ov_384   + dble_1_ov_48  * zpmzkd  + dble_1_ov_16 * zpmzkd2 + dble_1_ov_12 * zpmzkd3 + dble_1_ov_24 * zpmzkd4;
     
-    ip  -= i_domain_begin;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    kd  -= k_domain_begin;
+    ip  -= i_domain_begin_;
+    id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    kd  -= k_domain_begin_;
     
     for( unsigned int i=0 ; i<5 ; i++ ) {
         int iploc=ip+i-2;
@@ -780,12 +780,12 @@ void Projector3D4Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
     Szd[3] = dble_19_ov_96   + dble_11_ov_24 * zpmzkd  + dble_1_ov_4  * zpmzkd2 - dble_1_ov_6  * zpmzkd3 - dble_1_ov_6  * zpmzkd4;
     Szd[4] = dble_1_ov_384   + dble_1_ov_48  * zpmzkd  + dble_1_ov_16 * zpmzkd2 + dble_1_ov_12 * zpmzkd3 + dble_1_ov_24 * zpmzkd4;
     
-    ip  -= i_domain_begin + bin_shift;
-    // id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    // jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    // kd  -= k_domain_begin;
+    ip  -= i_domain_begin_ + bin_shift;
+    // id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    // jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    // kd  -= k_domain_begin_;
     
     // for( unsigned int i=0 ; i<5 ; i++ ) {
     //     int iploc=ip+i-2;

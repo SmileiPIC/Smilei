@@ -406,7 +406,8 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         recvFields_[iDim*2+iNeighbor] = new Field3D(size);
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-        if( ( name[0] == 'B' ) || ( name[0] == 'J' ) ) {
+
+        if( ( name[0] == 'B' ) || ( name[0] == 'J' || name[0] == 'R' ) ) {
 
             sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
             recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
@@ -420,6 +421,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 
             // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
             // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
+
         }
 #endif
 
@@ -558,7 +560,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const int  fSize              = number_of_points_;
-    const bool is_the_right_field = name[0] == 'J';
+    const bool is_the_right_field = name[0] == 'J' || name[0] == 'R';
 
     #pragma omp target if( is_the_right_field ) \
         map( to                                 \
@@ -567,7 +569,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 #elif defined( SMILEI_OPENACC_MODE )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
-    bool fieldName( (name.substr(0,1) == "J") );
+    bool fieldName( (name.substr(0,1) == "J") || name.substr(0,1) == "R"));
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
@@ -610,7 +612,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     double *const       field = data_;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     const int  fSize              = number_of_points_;
-    const bool is_the_right_field = name[0] == 'J';
+    const bool is_the_right_field = name[0] == 'J' || name[0] == 'R';
 
     #pragma omp target if( is_the_right_field ) \
         map( tofrom                             \
@@ -619,7 +621,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 #elif defined( SMILEI_OPENACC_MODE )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
     int fSize = number_of_points_;
-    bool fieldName( name.substr(0,1) == "J" );
+    bool fieldName( name.substr(0,1) == "J" || name.substr(0,1) == "R");
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang

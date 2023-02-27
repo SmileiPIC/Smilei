@@ -1,62 +1,87 @@
-#ifndef PROJECTOR3D2ORDERGPU_H
-#define PROJECTOR3D2ORDERGPU_H
+#ifndef SMILEI_PROJECTOR_PROJECTOR3D2ORDERGPU_H
+#define SMILEI_PROJECTOR_PROJECTOR3D2ORDERGPU_H
 
 #include "Projector3D.h"
 
-
+/// Particle to grid projector (~~dual to the grid to particle the interpolator
+/// does)
+///
+/// NOTE: we could have inherited from Projector2D2Order but the interface is final for most of the member functions
+///
 class Projector3D2OrderGPU : public Projector3D
 {
 public:
-    Projector3D2OrderGPU( Params &, Patch *patch );
+    Projector3D2OrderGPU( Params &parameters, Patch *a_patch );
     ~Projector3D2OrderGPU();
 
-    //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currentsAndDensityGPU(
-        double *const __restrict__ Jx, 
-        double *const __restrict__ Jy, 
-        double *const __restrict__ Jz, 
-        double *const __restrict__ rho, 
-        unsigned int Jx_size,
-        unsigned int Jy_size,
-        unsigned int Jz_size,
-        unsigned int rho_size,
-        Particles &particles,
-        int istart,
-        int iend, 
-        double *invgf, 
-        int *iold, 
-        double *deltaold, 
-        bool diag_flag = false );
+    /// For initialization and diags, doesn't use the standard scheme
+    ///
+    void basic( double      *rhoj,
+                Particles   &particles,
+                unsigned int ipart,
+                unsigned int type,
+                int bin_shift = 0 ) override;
 
-    //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity(
-        double *Jx, 
-        double *Jy,
-        double *Jz, 
-        double *rho,
-        Particles &particles,
-        unsigned int ipart,
-        double invgf,
-        int *iold,
-        double *deltaold );
+    /// Project global current densities (ionize)
+    ///
+    void ionizationCurrents( Field      *Jx,
+                             Field      *Jy,
+                             Field      *Jz,
+                             Particles  &particles,
+                             int         ipart,
+                             LocalFields Jion ) override;
 
-    //! Project global current charge (EMfields->rho_ , J), for initialization and diags
-    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;
-    
-    //! Project global current densities if Ionization in Species::dynamics,
-    void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;
+    /// Projection wrapper
+    ///
+    void currentsAndDensityWrapper( ElectroMagn *EMfields,
+                                    Particles   &particles,
+                                    SmileiMPI   *smpi,
+                                    int          istart,
+                                    int          iend,
+                                    int          ithread,
+                                    bool         diag_flag,
+                                    bool         is_spectral,
+                                    int          ispec,
+                                    int          icell     = 0,
+                                    int          ipart_ref = 0 ) override;
 
-    //! Wrapper
-    void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) override final;
-    
-    //!Wrapper for projection on buffers
-    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int, Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
+    //!Wrapper for task-based implementation of Smilei
+    void currentsAndDensityWrapperOnBuffers( double *b_Jx,
+                                             double *b_Jy,
+                                             double *b_Jz,
+                                             double *b_rho,
+                                             int bin_width,
+                                             Particles &particles,
+                                             SmileiMPI *smpi,
+                                             int istart,
+                                             int iend,
+                                             int ithread,
+                                             bool diag_flag,
+                                             bool is_spectral,
+                                             int ispec,
+                                             int icell = 0,
+                                             int ipart_ref = 0 ) override {};
 
-    void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
-    
-private:
-    int    pxr;
-    double dt, dts2, dts4;
+    /// Project susceptibility, used as source term in envelope equation
+    ///
+    void susceptibility( ElectroMagn *EMfields,
+                         Particles   &particles,
+                         double       species_mass,
+                         SmileiMPI   *smpi,
+                         int          istart,
+                         int          iend,
+                         int          ithread,
+                         int          icell     = 0,
+                         int          ipart_ref = 0 ) override;
+
+protected:
+    double dt;
+    double dts2;
+    double dts4;
+    int    not_spectral;
+    unsigned int x_dimension_bin_count_;
+    unsigned int y_dimension_bin_count_;
+    unsigned int z_dimension_bin_count_;
 };
 
 #endif

@@ -18,15 +18,15 @@ using namespace std;
 Projector3D2OrderV::Projector3D2OrderV( Params &params, Patch *patch ) : Projector3D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
+    dx_ov_dt_  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
+    dy_ov_dt_  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
-    dz_ov_dt  = params.cell_length[2] / params.timestep;
+    dz_ov_dt_  = params.cell_length[2] / params.timestep;
 
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
-    k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
+    k_domain_begin_ = patch->getCellStartingGlobalIndex( 2 );
 
     nscelly = params.patch_size_[1] + 1;
     nscellz = params.patch_size_[2] + 1;
@@ -241,9 +241,9 @@ void Projector3D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2 + bin_shift;
-    jp -= j_domain_begin + 2;
-    kp -= k_domain_begin + 2;
+    ip -= i_domain_begin_ + 2 + bin_shift;
+    jp -= j_domain_begin_ + 2;
+    kp -= k_domain_begin_ + 2;
 
     for( unsigned int i=0 ; i<5 ; i++ ) {
         iloc = ( i+ip ) * nyz;
@@ -340,12 +340,12 @@ void Projector3D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     Szd[1] = ( 0.75-zpmzkd2 );
     Szd[2] = 0.5 * ( zpmzkd2+zpmzkd+0.25 );
 
-    ip  -= i_domain_begin;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    kd  -= k_domain_begin;
+    ip  -= i_domain_begin_;
+    id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    kd  -= k_domain_begin_;
 
     for( unsigned int i=0 ; i<3 ; i++ ) {
         int iploc=ip+i-1;
@@ -446,12 +446,12 @@ void Projector3D2OrderV::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy,
     Szd[1] = ( 0.75-zpmzkd2 );
     Szd[2] = 0.5 * ( zpmzkd2+zpmzkd+0.25 );
     
-    ip  -= i_domain_begin+bin_shift;
-    //id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    //jd  -= j_domain_begin;
-    kp  -= k_domain_begin;
-    //kd  -= k_domain_begin;
+    ip  -= i_domain_begin_+bin_shift;
+    //id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    //jd  -= j_domain_begin_;
+    kp  -= k_domain_begin_;
+    //kd  -= k_domain_begin_;
     
     // for( unsigned int i=0 ; i<3 ; i++ ) {
     //     int iploc=ip+i-1;
@@ -577,17 +577,17 @@ void Projector3D2OrderV::currents( double * __restrict__ Jx,
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSx, DSy, DSz, Sy0_buff_vect, Sz0_buff_vect, bJx, dx_ov_dt, 25, 5, 1 );
+            computeJ( ipart, charge_weight, DSx, DSy, DSz, Sy0_buff_vect, Sz0_buff_vect, bJx, dx_ov_dt_, 25, 5, 1 );
         } // END ipart (compute coeffs)
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJy, dy_ov_dt, 5, 25, 1 );
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJy, dy_ov_dt_, 5, 25, 1 );
         } // END ipart (compute coeffs)
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJz, dz_ov_dt, 1, 25, 5 );
+            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJz, dz_ov_dt_, 1, 25, 5 );
         } // END ipart (compute coeffs)
 
     } // END ivect

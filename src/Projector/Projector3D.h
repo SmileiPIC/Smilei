@@ -19,11 +19,11 @@ public:
     
     virtual void mv_win( unsigned int shift )
     {
-        i_domain_begin+=shift;
+        i_domain_begin_+=shift;
     }
     virtual void setMvWinLimits( unsigned int shift )
     {
-        i_domain_begin = shift;
+        i_domain_begin_ = shift;
     }
     
 protected:
@@ -31,12 +31,12 @@ protected:
     double dx_inv_;
     double dy_inv_;
     double dz_inv_;
-    double dx_ov_dt;
-    double dy_ov_dt;
-    double dz_ov_dt;
-    int i_domain_begin;
-    int j_domain_begin;
-    int k_domain_begin;
+    double dx_ov_dt_;
+    double dy_ov_dt_;
+    double dz_ov_dt_;
+    int i_domain_begin_;
+    int j_domain_begin_;
+    int k_domain_begin_;
     int nscelly;
     int nscellz;
     int nprimy;

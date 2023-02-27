@@ -43,7 +43,7 @@ Projector2D2OrderGPU::~Projector2D2OrderGPU()
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
 extern "C" void
-currentDepositionKernel( double *__restrict__ Jx,
+currentDepositionKernel2D( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,
                          int Jx_size,
@@ -132,7 +132,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int pxr )
     {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        currentDepositionKernel( Jx,
+        currentDepositionKernel2D( Jx,
                                  Jy,
                                  Jz,
                                  Jx_size,

@@ -384,7 +384,7 @@ public:
     //! Given dimension_id in [0, 3), return for dimension_id == :
     //! 1: the 1D value (not implemented)
     //! 2: the 2D value
-    //! 3: the 3D value (not implemented)
+    //! 3: the 3D value 
     //!
     //! returns -1 if not implemented, this'll disable the sorting/binning
     //!
@@ -393,10 +393,12 @@ public:
     {
     #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
+            case 1:
+                return -1;
             case 2:
                 return 4;
-            case 1:
             case 3:
+                return 4;
             default:
                 return -1;
         }
