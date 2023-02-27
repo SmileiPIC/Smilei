@@ -511,13 +511,11 @@ public :
     //! Copy all species particles from  device to host
     void copyParticlesFromDeviceToHost();
 
+    //! Copy Species Fields (current and density) from Device to Host
+    void copySpeciesFieldsFromDeviceToHost();
+
 #endif
 
-    //! Data synchronization from device (GPU) to host (CPU)
-    void copyDeviceStateToHost(
-            bool copy_fields = true,
-            bool copy_species_J_and_rho = false
-        );
     
 private :
 

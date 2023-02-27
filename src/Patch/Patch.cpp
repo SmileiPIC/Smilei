@@ -1474,27 +1474,6 @@ void Patch::deleteFieldsOnDevice()
         EMfields->By_m->deleteOnDevice();
         EMfields->Bz_m->deleteOnDevice();
 
-
-//        if ( params.hasNielRadiation ) {
-//
-//            double * table = &(radiation_tables_->niel_.table_[0]);
-//            #pragma acc enter data copyin(table[0:size_of_Table_Niel])
-//
-//        }
-//        if (params.hasMCRadiation ) {
-//
-//            double * table_integfochi = &(radiation_tables_->integfochi_.table_[0]);
-//            #pragma acc enter data copyin(table_integfochi[0:size_of_Table_integfochi])
-//
-//            double * table_min_photon_chi = &(radiation_tables_->xi_.min_photon_chi_table_[0]);
-//            #pragma acc enter data copyin(table_min_photon_chi[0:size_of_Table_min_photon_chi])
-//
-//            double * table_xi = &(radiation_tables_->xi_.table_[0]);
-//            #pragma acc enter data copyin(table_xi[0:size_of_Table_xi])
-//
-//        }
-
-
 } // END deleteFieldsOnDevice
 
 #endif
