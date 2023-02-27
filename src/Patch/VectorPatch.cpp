@@ -4403,9 +4403,9 @@ void VectorPatch::moveWindow(
 {
     timers.movWindow.restart();
 
-    std::cerr << "begin moving window" << std::endl;
-
     // Bring all particles and field grids to the Host (except species grids)
+    // This part can be optimized by copying only the patch to be destructed
+
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
         copyParticlesFromDeviceToHost();
@@ -4422,14 +4422,14 @@ void VectorPatch::moveWindow(
     }
 
     // Copy all Fields and Particles to the device
-#if defined( SMILEI_ACCELERATOR_MODE)
-    if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
+    // This step is not necessary if the things are done correctly in simWindow->shift
+
+// #if defined( SMILEI_ACCELERATOR_MODE)
+//     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
 //        copyEMFieldsFromHostToDevice();
 //        copyParticlesFromHostToDevice();
-    }
-#endif
-
-    std::cerr << "end moving window" << std::endl;
+//     }
+// #endif
 
     timers.movWindow.update();
 }

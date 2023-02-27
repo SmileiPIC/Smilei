@@ -901,17 +901,12 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         int number_of_received_particles;
 
         //Receive last_index
-	//std::cerr << ispec << std::endl; 
-        //recv( &number_of_received_particles, from, tag+2*ispec+1 );
-        MPI_Status status;
-        MPI_Recv( &number_of_received_particles, 1, MPI_INT, from, tag+2*ispec+1, MPI_COMM_WORLD, &status );
-	    std::cerr << " Rank: " << smilei_rk << " Patch: " << patch->Pcoordinates[0] << " " << patch->Pcoordinates[1]
-		  << " Species: " << ispec
-		  << " recv " << number_of_received_particles
-		  << " from " << from
-		  <<  std::endl;
 
-	//std::cerr << "after: " << number_of_received_particles << std::endl;
+        // MPI_Status status;
+        // MPI_Recv( &number_of_received_particles, 1, MPI_INT, from, tag+2*ispec+1, MPI_COMM_WORLD, &status );
+
+        recv( &number_of_received_particles, from, tag+2*ispec+1 );
+
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //patch->vecSpecies[ispec]->particles->last_index[0]=number_of_received_particles;
         //Prepare patch for receiving particles
@@ -919,16 +914,9 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         //Receive particles
         if( number_of_received_particles > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
-	    std::cerr << "Recv particles" << std::endl;
-            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
-            patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
-            patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();    
-	    std::cerr  << "init on device" << std::endl;
             MPI_Type_free( &( recvParts ) );
         }
-        /*std::cerr << "Species: " << ispec
-                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
-                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
+
     }
 
 #else
