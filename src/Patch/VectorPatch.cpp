@@ -1273,6 +1273,8 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     bool data_on_cpu_updated = false;
 #endif
 
+    bool Species_Rho_and_J = needsRhoJsNow( itime );
+
     // Global diags: scalars + particles
     timers.diags.restart();
 
@@ -1315,7 +1317,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
             } else if (dynamic_cast<DiagnosticFields*>(localDiags[idiag])) {   
                 need_fields    = true;
             } else if (dynamic_cast<DiagnosticPerformances*>(localDiags[idiag])) {   
-		 // Nothing to be done
+		        // Nothing to be done
             } else {
                 need_particles = true;
                 need_fields    = true; 
@@ -1334,7 +1336,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
             if (need_fields) {
                 copyFieldsFromDeviceToHost();
             }
-            if (diag_flag) {
+            if (Species_Rho_and_J) {
                 copySpeciesFieldsFromDeviceToHost();
             }
         }
@@ -1483,7 +1485,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     }
 
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
-    if( diag_flag ) {
+    if( Species_Rho_and_J ) {
         #pragma omp barrier
         #pragma omp single
         diag_flag = false;

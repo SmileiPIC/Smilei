@@ -759,12 +759,12 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         patch->vecSpecies[ispec]->particles->host_nparts_ = patch->vecSpecies[ispec]->particles->deviceSize();
 	
-	std::cerr << "Rank " << smilei_rk
-		  << " Patch " << patch->Pcoordinates[0] << " " << patch->Pcoordinates[1]	
-		  << " Species " << ispec
-		  << " send " << patch->vecSpecies[ispec]->particles->host_nparts_
-		  << " to " << to
-		  << std::endl;
+	// std::cerr << "Rank " << smilei_rk
+	// 	  << " Patch " << patch->Pcoordinates[0] << " " << patch->Pcoordinates[1]	
+	// 	  << " Species " << ispec
+	// 	  << " send " << patch->vecSpecies[ispec]->particles->host_nparts_
+	// 	  << " to " << to
+	// 	  << std::endl;
 	
         //isend( &number_of_particles, to, tag+irequest+2*ispec+1, &(patch->requests_[irequest+2*ispec]) );
         MPI_Isend( &patch->vecSpecies[ispec]->particles->host_nparts_, 1, MPI_INT, to, tag+irequest+2*ispec+1, MPI_COMM_WORLD, &patch->requests_[irequest+2*ispec] );
