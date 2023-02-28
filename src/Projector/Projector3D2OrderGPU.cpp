@@ -429,6 +429,11 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
 
         // Does not compute Rho !
 
+        //std::cerr << 
+	//	" number of bins: " << particles.last_index.size()
+	//	<< " number of bins: " << particles.deviceSize()
+	//	<< std::endl;
+
         currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
                   Jx_size, Jy_size, Jz_size, rho_size,
                   particles, x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
@@ -440,6 +445,12 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   nprimy, nprimz,
                   one_third,
                   not_spectral );
+
+       //double sum = EMfields->rho_s[ispec]->normOnDevice();
+       //double sum_Jxs = EMfields->Jx_s[ispec]->normOnDevice();
+       //double sum_Jx = EMfields->Jx_->normOnDevice();
+       //double sum2 = EMfields->rho_s[ispec]->norm();
+       //std::cerr << sum << " " << sum2 << " " << sum_Jxs << " " << sum_Jx << std::endl;
 
     } else {
         // If no field diagnostics this timestep, then the projection is done directly on the total arrays

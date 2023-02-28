@@ -5013,12 +5013,7 @@ VectorPatch::copySpeciesFieldsFromDeviceToHost()
                 // double *const __restrict__ pointer  = patches_[ipatch]->EMfields->rho_s[ispec]->data() ;
                 // smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( pointer, size );
 
-                double norm_device = patches_[ipatch]->EMfields->rho_s[ispec]->normOnDevice();
-
                 patches_[ipatch]->EMfields->rho_s[ispec]->copyFromDeviceToHost();
-
-                double norm = patches_[ipatch]->EMfields->rho_s[ispec]->norm();
-                std::cerr << norm " " << norm_device << std::endl;
 
             }
         }
