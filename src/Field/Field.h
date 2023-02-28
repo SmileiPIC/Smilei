@@ -235,6 +235,29 @@ public:
         return sum;
     }
 
+#if defined( SMILEI_ACCELERATOR_MODE )
+
+    inline long double __attribute__((always_inline)) normOnDevice()
+    {
+        long double sum( 0. );
+        const double *const __restrict__ field = data();
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target teams distribute parallel for \
+		      map(tofrom: sum)  map(to: number_of_points_) \
+		      reduction(+:sum) 
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present(field) //deviceptr( data_ )
+    #pragma acc loop gang worker vector reduction(+:sum)
+#endif
+
+        for( unsigned int i=0; i<number_of_points_; i++ ) {
+            sum+= field[i]*field[i];
+        }
+        return sum;
+    }
+#endif
+
     virtual void copyFrom( Field *from_field )
     {
         DEBUGEXEC( if( number_of_points_!=from_field->number_of_points_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
