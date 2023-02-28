@@ -902,10 +902,11 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 
         //Receive last_index
 
-        // MPI_Status status;
-        // MPI_Recv( &number_of_received_particles, 1, MPI_INT, from, tag+2*ispec+1, MPI_COMM_WORLD, &status );
+        MPI_Status status;
+        MPI_Recv( &number_of_received_particles, 1, MPI_INT, from, tag+2*ispec+1, MPI_COMM_WORLD, &status );
 
-        recv( &number_of_received_particles, from, tag+2*ispec+1 );
+	// for some reasons the use of this method that should be the same as the code above trigger a deadlock
+        //recv( &number_of_received_particles, from, tag+2*ispec+1 );
 
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //patch->vecSpecies[ispec]->particles->last_index[0]=number_of_received_particles;
@@ -914,6 +915,9 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         //Receive particles
         if( number_of_received_particles > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
+            patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
+            patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
             MPI_Type_free( &( recvParts ) );
         }
 
