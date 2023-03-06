@@ -569,7 +569,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 #elif defined( SMILEI_OPENACC_MODE )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
-    bool fieldName( (name.substr(0,1) == "J") || name.substr(0,1) == "R"));
+    bool fieldName( (name.substr(0,1) == "J") || (name.substr(0,1) == "R"));
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
