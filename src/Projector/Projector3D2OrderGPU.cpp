@@ -36,6 +36,10 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
     z_dimension_bin_count_ = parameters.getGPUBinCount( 3 );
+#elif defined( SMILEI_OPENACC_MODE )
+    x_dimension_bin_count_ = 1;
+    y_dimension_bin_count_ = 1;
+    z_dimension_bin_count_ = 1;
 #else
     ERROR( "Only usable in GPU mode! " );
 #endif
