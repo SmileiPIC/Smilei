@@ -909,7 +909,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         //recv( &number_of_received_particles, from, tag+2*ispec+1 );
 
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
-	patch->vecSpecies[ispec]->particles->last_index.resize(1);
+	    patch->vecSpecies[ispec]->particles->last_index.resize(1);
         patch->vecSpecies[ispec]->particles->last_index[0]=number_of_received_particles;
         //Prepare patch for receiving particles
         patch->vecSpecies[ispec]->particles->initialize( number_of_received_particles, params.nDim_particle, params.keep_position_old );

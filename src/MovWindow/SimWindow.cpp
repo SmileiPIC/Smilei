@@ -210,7 +210,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #ifndef _NO_MPI_TM
             #pragma omp critical
 #endif
-            mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
+            mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, 
+                                             vecPatches.domain_decomposition_, 
+                                             h0 + patch_to_be_created[my_thread][j], 
+                                             n_moved, false );
             
             // Do not receive Xmin condition
             if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
