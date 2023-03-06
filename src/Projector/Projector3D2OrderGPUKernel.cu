@@ -4,7 +4,7 @@
 // includes, you must `touch` this file. IF you dont do that you'll have ABI/ODR
 // issues (!).
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
 
     //! Simple switch to jump between the reference (omp) implementation and the
     //! hip one.
@@ -12,7 +12,7 @@
     //! .cpp instead of .cu for the HIP. The preprocessor and the Smilei
     //! makefile will take care of the rest.
     //!
-    #if defined( __HIP__ )
+    #if defined( __HIP__ ) // || defined (__CUDACC__)
     // HIP compiler support enabled (for .cu files)
     #else
         #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
@@ -22,7 +22,10 @@
         #include <cmath>
 
         #include "Tools.h"
-    #else
+    #elif defined( __CUDACC__ ) 
+        #include "Params.h"
+        #include "gpu.h"
+    #elif defined( __HIP__ )
         #include <hip/hip_runtime.h>
 
         #include "Params.h"
