@@ -46,7 +46,7 @@ namespace naive {
                                const double *__restrict__ device_particle_position_x,
                                const double *__restrict__ device_particle_position_y,
                                const double *__restrict__ device_particle_position_z,
-                               const short *__restrict__ device_particle_charge,
+                               const short  *__restrict__ device_particle_charge,
                                const double *__restrict__ device_particle_weight,
                                const int *__restrict__ host_bin_index,
                                unsigned int x_dimension_bin_count,
@@ -71,20 +71,15 @@ namespace naive {
     {
 
     const unsigned int bin_count      = 1;
-    const int          particle_count = host_bin_index[bin_count - 1];
+    const int          nparts = host_bin_index[bin_count - 1];
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
-    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
-    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
-    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
-    const short  *const __restrict__ charge     = particles.getPtrCharge();
-    const double *const __restrict__ weight     = particles.getPtrWeight();
-
-    const int nparts = particles.last_index.back();
-
-    const int packsize = nparts;
-    const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.
+    const double *const __restrict__ position_x = device_particle_position_x;
+    const double *const __restrict__ position_y = device_particle_position_y;
+    const double *const __restrict__ position_z = device_particle_position_z;
+    const short  *const __restrict__ charge     = device_particle_charge;
+    const double *const __restrict__ weight     = device_particle_weight;
 
     static constexpr bool kAutoDeviceFree = true;
     const std::size_t     kTmpArraySize   = 5 * packsize;
@@ -522,17 +517,15 @@ namespace naive {
     {
 
     const unsigned int bin_count      = 1;
-    const int          particle_count = host_bin_index[bin_count - 1];
+    const int          nparts = host_bin_index[bin_count - 1];
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
-    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
-    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
-    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
-    const short  *const __restrict__ charge     = particles.getPtrCharge();
-    const double *const __restrict__ weight     = particles.getPtrWeight();
-
-    const int nparts = particles.last_index.back();
+    const double *const __restrict__ position_x = device_particle_position_x;
+    const double *const __restrict__ position_y = device_particle_position_y;
+    const double *const __restrict__ position_z = device_particle_position_z;
+    const short  *const __restrict__ charge     = device_particle_charge;
+    const double *const __restrict__ weight     = device_particle_weight;
 
     const int packsize = nparts;
     const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.

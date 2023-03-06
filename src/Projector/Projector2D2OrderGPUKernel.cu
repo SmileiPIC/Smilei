@@ -34,18 +34,18 @@
 namespace naive {
 
     static inline void
-    currentDepositionKernel2D( double *__restrict__ Jx,
-                             double *__restrict__ Jy,
-                             double *__restrict__ Jz,
+    currentDepositionKernel2D( double     *__restrict__ Jx,
+                             double       *__restrict__ Jy,
+                             double       *__restrict__ Jz,
                              int Jx_size,
                              int Jy_size,
                              int Jz_size,
                              const double *__restrict__ device_particle_position_x,
                              const double *__restrict__ device_particle_position_y,
                              const double *__restrict__ device_particle_momentum_z,
-                             const short *__restrict__ device_particle_charge,
+                             const short  *__restrict__ device_particle_charge,
                              const double *__restrict__ device_particle_weight,
-                             const int *__restrict__ host_bin_index,
+                             const int    *__restrict__ host_bin_index,
                              unsigned int x_dimension_bin_count,
                              unsigned int y_dimension_bin_count,
                              const double *__restrict__ invgf_,
