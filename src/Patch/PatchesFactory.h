@@ -32,7 +32,13 @@ public:
     }
     
     // Clone one patch (avoid reading again the namelist)
-    static Patch *clone( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved=0, bool with_particles = true )
+    static Patch *clone( Patch *patch, 
+                         Params &params, 
+                         SmileiMPI *smpi, 
+                         DomainDecomposition *domain_decomposition, 
+                         unsigned int ipatch, 
+                         unsigned int n_moved=0, 
+                         bool with_particles = true )
     {
         if( params.geometry == "1Dcartesian" ) {
             return new Patch1D( static_cast<Patch1D *>( patch ), params, smpi, domain_decomposition, ipatch, n_moved, with_particles );
