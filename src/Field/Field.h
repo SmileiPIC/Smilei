@@ -237,9 +237,9 @@ public:
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 
-    inline long double __attribute__((always_inline)) normOnDevice()
+    inline double __attribute__((always_inline)) normOnDevice()
     {
-        long double sum( 0. );
+        double sum = 0.;
         const double *const __restrict__ field = data();
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
