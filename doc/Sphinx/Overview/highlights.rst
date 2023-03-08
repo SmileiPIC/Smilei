@@ -306,3 +306,115 @@ and appears to follow a :math:`\gamma^{-2.5}` power law.
 This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads
 for a total of 18800 CPU-hours for 49780 timesteps.
 The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics).
+
+----
+
+Azimuthal Fourier decomposition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In Laser Wakefield Acceleration (LWFA) a plasma wave is generated behind an intense laser pulse
+propagating in an underdense plasma.
+The physics in this phenomenon cannot be accurately simulated through 2D Cartesian 
+simulations. Nonetheless, 3D Cartesian simulations can be computationally demanding,
+hence preliminary studies for LWFA experiments, typically consisting of many PIC simulations, 
+cannot be realissically be carried with 3D Cartesian simulations.
+
+The azimuthal Fourier decomposition addresses this issue by using a cylindrical grid, hence
+a 2D grid, decomposing the fields in azimuthal harmonics to take into account a third dimension in space
+and treating macro-particles in the 6D phase space.
+
+This technique can yield thus simulations with a computational cost comparable to that of 2D simulations, but 
+at the same time with an accuracy comparable to that of a full 3D Cartesian simulation.
+
+Following is the image of a LWFA simulation using azimuthal Fourier decomposition, which has made it 
+feasible in a medium-scale laboratory cluster. An equivalent 3D Cartesian simulation would have required
+an amount of resources greater by at least an order of magnitude.
+
+.. image:: /_static/LWFA_Plas@Par.jpg
+    :width: 13cm
+    :align: center
+
+The laser (in red) propagates through a low density plasma and drives a nonlinear Langmuir wave (in blue) that 
+propagates at a velocity close to that of light in its wake. In this simulation, a moving window is used 
+so we can follow the laser as it propagates through the plasma. We see electrons (in white) being self-injected i
+n this wakefield where they see a strong electric field that accelerates them up to ultra-relativistic (GeV) energy level.
+
+An animation generated from the simulation data can be found `here <https://www.youtube.com/watch?v=-LX_yT29nAU>`_ 
+
+
+
+Field initialization of a relativistic particle beam
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In Plasma Wakefield Acceleration (PWFA) a plasma wave is generated behind a relativistic particle 
+beam propagating in a plasma.
+
+To simulate this phenomenon, it is necessary to self-consistently initialize the electromagnetic fields
+of a relativistic particle beam in vacuum, before its entrance into the plasma.
+
+Following is the image of a PWFA simulation which used this technique at its start.
+
+.. image:: /_static/PWFA.jpg
+    :width: 14cm
+    :align: center
+
+The "driver" relativistic electron beam (in yellow) propagates through a plasma and drives a nonlinear Langmuir wave (in blue) that 
+propagates at a velocity close to that of light in its wake. A "witness" relativistic electron bunch injected in this wave
+can be accelerated with electric fields orders of magnitude higher than those sustainable by metallic radio-frequency 
+accelerating cavities.
+
+
+
+Laser Envelope model and averaged tunnel ionization model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Laser-plasma interaction in underdense plasmas can be accurately simulated under certain conditions through a 
+laser envelope model, where the high frequency oscillations of the laser pulse do not need to be resolved.
+In this model the laser effect on the plasma is described through the ponderomotive force and the effect of the precence of the
+plasma on the laser pulse is described through the plasma susceptibility. These terms in the laser plasma interaction
+can be expressed only as function of the laser complex envelope.
+
+This technique relaxes the constraint on the minimum spatial and temporal scales to be resolved and can yield 
+speed-ups of some orders of magnitude, expecially if coupled with a purely cylindrical geometry 
+(where only one azimuthal mode is taken into account). 
+
+The envelope model is particularly used for Laser Wakefield Acceleration, where often the laser pulse envelope is at least ten 
+times longer than the laser carrier wavelength. Recently an new averaged tunnel ionization model has been developed for the envelope model,
+allowing the simulation of Laser Wakefield Acceleration with ionization injection with this efficient technique.
+
+Following is the comparison of the electron density from two LWFA simulations, one using the laser envelope model and the averaged
+tunnel ionization module (a) and one without the envelope model (b).
+
+.. image:: /_static/Rho2D_simIJC.jpg
+    :width: 14cm
+    :align: center
+
+
+In these simulations an intense laser pulse is propagating in a plasma composed of helium and partially ionized nitrogen.
+The laser field near the pulse's center is intense enough to further ionize the nitrogen ions, releasing electrons that can be trapped and 
+accelerated in the relativistic plasma wave behind the laser pulse. 
+
+Previous averaged tunnel ionization models did not allow to accurately describe this LWFA scheme at relativistic regimes.
+In this new model also the longitudinal momentum of the electrons obtained through ionization is initialized following analytical derivations.
+Including this longitudinal momentum initialization allows to accurately describe the dynamics of these electrons.
+
+Following is a comparison of the accelerated electron spectra at the end of these simulations.
+
+.. image:: /_static/Energy_spectrum_laser_vs_envelope.jpg
+    :width: 14cm
+    :align: center
+
+In the green line it is shown the result of the previously known averaged ionization model. Without the longitudinal
+momentum initialization, few electrons obtained through ionization are trapped and accelerated in the plasma wave.
+The red line shows the result with the new averaged ionization model implemented in :program:`Smilei`, which accurately reproduces 
+the spectrum obtained with the simulation without an envelope model (blue line). 
+
+
+The envelope simulation required an amount of computing resources orders of magnitude smaller than those required by the simulation without a 
+laser envelope model.
+
+More details on the envelope model and the averaged tunnel ionization model in :program:`Smilei` can be found `here <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.102.033204>`_ 
+
+
+
+
+
+
+
