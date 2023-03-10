@@ -223,7 +223,6 @@ namespace naive {
             int kpo = iold[ipart+2*packsize] - 2;
 
             const int    yz_size0                 = nprimz * nprimy;
-            const int    yz_size1                 = nprimz * ( nprimy + 1 );
 
             // Jx^(d,p,p)
 
@@ -258,6 +257,8 @@ namespace naive {
             for( int k=1 ; k<5 ; k++ ) {
                 sumX[k] = sumX[k-1]-DSy[ k-1 ];
             }
+
+            const int    yz_size1                 = nprimz * ( nprimy + 1 );
 
             const double cry_p = dy_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
