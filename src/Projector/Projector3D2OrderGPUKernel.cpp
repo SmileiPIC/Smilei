@@ -100,10 +100,14 @@ namespace naive {
     #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  deltaold [0:3 * nparts]) \
+                                  deltaold [0:3 * nparts], \
+                                  Jx[0:Jx_size], \
+                                  Jy[0:Jy_size], \
+                                  Jz[0:Jz_size] \
+                                  ) \
         deviceptr( position_x,                             \
                    position_y,                             \
-                   position_z )
+                   position_z, charge, weight )
 
     // #pragma acc parallel present( iold [0:3 * nparts],      \
     //                               deltaold_ [0:3 * nparts] ) \
@@ -135,6 +139,8 @@ namespace naive {
             double DSx[5];
             double DSy[5];
             double DSz[5];
+
+            double sumX[5];
 
             // arrays used for the Esirkepov projection method
             for( unsigned int i=0; i<5; i++ ) {
@@ -175,8 +181,7 @@ namespace naive {
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             const double xpn = position_x[ ipart ] * dx_inv;
             const int ip = std::round( xpn );
-            const int ipo = iold[0*packsize+ipart];
-            const int ip_m_ipo = ip-ipo-i_domain_begin;
+            const int ip_m_ipo = ip-iold[0*packsize+ipart]-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
             Sx1[(ip_m_ipo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -185,8 +190,7 @@ namespace naive {
 
             const double ypn = position_y[ ipart ] * dy_inv;
             const int jp = std::round( ypn );
-            const int jpo = iold[1*packsize+ipart];
-            const int jp_m_jpo = jp-jpo-j_domain_begin;
+            const int jp_m_jpo = jp-iold[1*packsize+ipart]-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
             Sy1[(jp_m_jpo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -195,8 +199,7 @@ namespace naive {
 
             const double zpn = position_z[ ipart ] * dz_inv;
             const int kp = std::round( zpn );
-            const int kpo = iold[2*packsize+ipart];
-            const int kp_m_kpo = kp-kpo-k_domain_begin;
+            const int kp_m_kpo = kp-iold[2*packsize+ipart]-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
             Sz1[(kp_m_kpo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -239,7 +242,7 @@ namespace naive {
                                                  0.5*DSy[j]*Sz0[k] +
                                                  0.5*DSz[k]*Sy0[j] +
                                                  one_third*DSy[j]*DSz[k] );
-                    const int idx = linindex0 + j*z_size0 + k;
+                    const int idx = linindex0 + j*nprimz + k;
                     for( int i=1 ; i<5 ; i++ ) {
                         const double val = sumX[i] * tmp;
                         const int    jdx = idx + i * yz_size0;
