@@ -86,42 +86,6 @@ namespace naive {
 
     const int packsize = nparts;
 
-    static constexpr bool kAutoDeviceFree = true;
-    const std::size_t     kTmpArraySize   = 5 * packsize;
-
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx0{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy0{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sz0{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx1{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy1{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sz1{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSx{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSy{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_DSz{ kTmpArraySize };
-    smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_sumX{ kTmpArraySize };
-
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx0 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy0 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz0 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sx1 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sy1 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_Sz1 );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSx );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSy );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_DSz );
-    smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( host_device_sumX );
-
-    double *const __restrict__ Sx0  = host_device_Sx0.data();
-    double *const __restrict__ Sy0  = host_device_Sy0.data();
-    double *const __restrict__ Sz0  = host_device_Sz0.data();
-    double *const __restrict__ Sx1  = host_device_Sx1.data();
-    double *const __restrict__ Sy1  = host_device_Sy1.data();
-    double *const __restrict__ Sz1  = host_device_Sz1.data();
-    double *const __restrict__ DSx  = host_device_DSx.data();
-    double *const __restrict__ DSy  = host_device_DSy.data();
-    double *const __restrict__ DSz  = host_device_DSz.data();
-    double *const __restrict__ sumX = host_device_sumX.data();
-
         // const int current_pack_size = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -133,15 +97,6 @@ namespace naive {
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
                                   deltaold [0:3 * nparts], \
-                                  Sx0 [0:kTmpArraySize],   \
-                                  Sy0 [0:kTmpArraySize],   \
-                                  Sz0 [0:kTmpArraySize],   \
-                                  Sx1 [0:kTmpArraySize],   \
-                                  Sy1 [0:kTmpArraySize],   \
-                                  Sz1 [0:kTmpArraySize],   \
-                                  DSx [0:kTmpArraySize],   \
-                                  DSy [0:kTmpArraySize],   \
-                                  DSz [0:kTmpArraySize] )  \
         deviceptr( position_x,                             \
                    position_y,                             \
                    position_z )
@@ -166,11 +121,22 @@ namespace naive {
             // Variable declaration & initialization
             // -------------------------------------
 
+            double Sx0[5];
+            double Sx1[5];
+            double Sy0[5];
+            double Sy1[5];
+            double Sz0[5];
+            double Sz1[5];
+
+            double DSx[5];
+            double DSy[5];
+            double DSz[5];
+
             // arrays used for the Esirkepov projection method
             for( unsigned int i=0; i<5; i++ ) {
-                Sx1[ipart+0*packsize] = 0.;
-                Sy1[ipart+0*packsize] = 0.;
-                Sz1[ipart+0*packsize] = 0.;
+                Sx1[i] = 0.;
+                Sy1[i] = 0.;
+                Sz1[i] = 0.;
             }
 
             // --------------------------------------------------------
@@ -180,27 +146,27 @@ namespace naive {
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             double delta = deltaold[0*packsize+ipart];
             double delta2 = delta*delta;
-            Sx0[ipart+0*packsize] = 0.;
-            Sx0[ipart+1*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sx0[ipart+2*packsize] = 0.75-delta2;
-            Sx0[ipart+3*packsize] = 0.5 * ( delta2+delta+0.25 );
-            Sx0[ipart+4*packsize] = 0.;
+            Sx0[0] = 0.;
+            Sx0[1] = 0.5 * ( delta2-delta+0.25 );
+            Sx0[2] = 0.75-delta2;
+            Sx0[3] = 0.5 * ( delta2+delta+0.25 );
+            Sx0[4] = 0.;
 
             delta = deltaold[1*packsize+ipart];
             delta2 = delta*delta;
-            Sy0[ipart+0*packsize] = 0.;
-            Sy0[ipart+1*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sy0[ipart+2*packsize] = 0.75-delta2;
-            Sy0[ipart+3*packsize] = 0.5 * ( delta2+delta+0.25 );
-            Sy0[ipart+4*packsize] = 0.;
+            Sy0[0] = 0.;
+            Sy0[1] = 0.5 * ( delta2-delta+0.25 );
+            Sy0[2] = 0.75-delta2;
+            Sy0[3] = 0.5 * ( delta2+delta+0.25 );
+            Sy0[4] = 0.;
 
             delta = deltaold[2*packsize+ipart];
             delta2 = delta*delta;
-            Sz0[ipart+0*packsize] = 0.;
-            Sz0[ipart+1*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sz0[ipart+2*packsize] = 0.75-delta2;
-            Sz0[ipart+3*packsize] = 0.5 * ( delta2+delta+0.25 );
-            Sz0[ipart+4*packsize] = 0.;
+            Sz0[0] = 0.;
+            Sz0[1] = 0.5 * ( delta2-delta+0.25 );
+            Sz0[2] = 0.75-delta2;
+            Sz0[3] = 0.5 * ( delta2+delta+0.25 );
+            Sz0[4] = 0.;
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             const double xpn = position_x[ ipart ] * dx_inv;
@@ -209,9 +175,9 @@ namespace naive {
             const int ip_m_ipo = ip-ipo-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
-            Sx1[ipart+(ip_m_ipo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sx1[ipart+(ip_m_ipo+2)*packsize] = 0.75-delta2;
-            Sx1[ipart+(ip_m_ipo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sx1[(ip_m_ipo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sx1[(ip_m_ipo+2)] = 0.75-delta2;
+            Sx1[(ip_m_ipo+3)] = 0.5 * ( delta2+delta+0.25 );
 
             const double ypn = position_y[ ipart ] * dy_inv;
             const int jp = std::round( ypn );
@@ -219,9 +185,9 @@ namespace naive {
             const int jp_m_jpo = jp-jpo-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
-            Sy1[ipart+(jp_m_jpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sy1[ipart+(jp_m_jpo+2)*packsize] = 0.75-delta2;
-            Sy1[ipart+(jp_m_jpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sy1[(jp_m_jpo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sy1[(jp_m_jpo+2)] = 0.75-delta2;
+            Sy1[(jp_m_jpo+3)] = 0.5 * ( delta2+delta+0.25 );
 
             const double zpn = position_z[ ipart ] * dz_inv;
             const int kp = std::round( zpn );
@@ -229,89 +195,49 @@ namespace naive {
             const int kp_m_kpo = kp-kpo-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
-            Sz1[ipart+(kp_m_kpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
-            Sz1[ipart+(kp_m_kpo+2)*packsize] = 0.75-delta2;
-            Sz1[ipart+(kp_m_kpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
+            Sz1[(kp_m_kpo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sz1[(kp_m_kpo+2)] = 0.75-delta2;
+            Sz1[(kp_m_kpo+3)] = 0.5 * ( delta2+delta+0.25 );
 
             // computes Esirkepov coefficients
             for( int i=0; i < 5; i++ ) {
-                DSx[ipart+i*packsize] = Sx1[ipart+i*packsize] - Sx0[ipart+i*packsize];
-                DSy[ipart+i*packsize] = Sy1[ipart+i*packsize] - Sy0[ipart+i*packsize];
-                DSz[ipart+i*packsize] = Sz1[ipart+i*packsize] - Sz0[ipart+i*packsize];
+                DSx[i] = Sx1[i] - Sx0[i];
+                DSy[i] = Sy1[i] - Sy0[i];
+                DSz[i] = Sz1[i] - Sz0[i];
             }
 
             // ---------------------------
             // Calculate the total current
             // ---------------------------
 
-            iold[ipart+0*packsize] -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+            int ipo = iold[ipart+0*packsize] - 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
             // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
-            iold[ipart+1*packsize] -= 2;
-            iold[ipart+2*packsize] -= 2;
-        }
+            int jpo = iold[ipart+1*packsize] - 2;
+            int kpo = iold[ipart+2*packsize] - 2;
 
-        // Jx^(d,p,p)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( DSx [0:kTmpArraySize], sumX [0:kTmpArraySize] )
+            const int    yz_size0                 = nprimz * nprimy;
+            const int    yz_size1                 = nprimz * ( nprimy + 1 );
 
-    // #pragma acc parallel deviceptr( DSx, sumX )
+            // Jx^(d,p,p)
 
-    #pragma acc loop gang worker vector
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
-
-            sumX[ipart+0*packsize] = 0.;
+            sumX[0] = 0.;
             for( int k=1 ; k<5 ; k++ ) {
-                sumX[ipart+k*packsize] = sumX[ipart+(k-1)*packsize]-DSx[ ipart+(k-1)*packsize ];
+                sumX[k] = sumX[(k-1)]-DSx[ (k-1) ];
             }
-        }
+                    
+            const double crx_p = dx_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-        const int    z_size0                  = nprimz;
-        const int    yz_size0                 = nprimz * nprimy;
-        const double dx_ov_dt_inv_cell_volume = dx_ov_dt * inv_cell_volume;
+            const int linindex0 = ipo*yz_size0 + jpo*nprimz + kpo;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr( /* to: */                                     \
-                                      charge /* [istart_pack:current_pack_size] */, \
-                                      weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jx [0:Jx_size],         \
-                                  Sy0 [0:kTmpArraySize],   \
-                                  Sz0 [0:kTmpArraySize],   \
-                                  DSy [0:kTmpArraySize],   \
-                                  DSz [0:kTmpArraySize],   \
-                                  sumX [0:kTmpArraySize] ) \
-        deviceptr( charge, weight ) vector_length( 8 )
-
-    // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jx [0:Jx_size] )    \
-    //     deviceptr( charge, weight, Sy0,                \
-    //                Sz0, DSy, DSz, sumX ) vector_length( 8 )
-
-    #pragma acc loop gang worker
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
-
-            const double crx_p = dx_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
-
-            const int linindex0 = iold[ipart+0*packsize]*yz_size0+iold[ipart+1*packsize]*z_size0+iold[ipart+2*packsize];
-#ifdef SMILEI_OPENACC_MODE
-            #pragma acc loop vector
-#endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int j=0 ; j<5 ; j++ ) {
-                    const double tmp = crx_p * ( Sy0[ipart+j*packsize]*Sz0[ipart+k*packsize] +
-                                                 0.5*DSy[ipart+j*packsize]*Sz0[ipart+k*packsize] +
-                                                 0.5*DSz[ipart+k*packsize]*Sy0[ipart+j*packsize] +
-                                                 one_third*DSy[ipart+j*packsize]*DSz[ipart+k*packsize] );
+                    const double tmp = crx_p * ( Sy0[j]*Sz0[k] +
+                                                 0.5*DSy[j]*Sz0[k] +
+                                                 0.5*DSz[k]*Sy0[j] +
+                                                 one_third*DSy[j]*DSz[k] );
                     const int idx = linindex0 + j*z_size0 + k;
                     for( int i=1 ; i<5 ; i++ ) {
-                        const double val = sumX[ipart+(i)*packsize] * tmp;
+                        const double val = sumX[i] * tmp;
                         const int    jdx = idx + i * yz_size0;
 
                         SMILEI_ACCELERATOR_ATOMIC
@@ -319,154 +245,66 @@ namespace naive {
                     }
                 }
             }//i
-        }
 
-        // Jy^(p,d,p)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( DSy [0:kTmpArraySize], \
-                                  sumX [0:kTmpArraySize] )
-
-    // #pragma acc parallel deviceptr( DSy, sumX )
-
-    #pragma acc loop gang worker vector
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
-
-            sumX[ipart+0*packsize] = 0.;
+            // Jy^(p,d,p)
+            sumX[0] = 0.;
             for( int k=1 ; k<5 ; k++ ) {
-                sumX[ipart+k*packsize] = sumX[ipart+(k-1)*packsize]-DSy[ ipart+(k-1)*packsize ];
+                sumX[k] = sumX[k-1]-DSy[ k-1 ];
             }
-        }
 
-        const int    z_size1                  = nprimz;
-        const int    yz_size1                 = nprimz * ( nprimy + 1 );
-        const double dy_ov_dt_inv_cell_volume = dy_ov_dt * inv_cell_volume;
+            const double cry_p = dy_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr( /* to: */                                     \
-                                      charge /* [istart_pack:current_pack_size] */, \
-                                      weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jy [0:Jy_size],         \
-                                  Sx0 [0:kTmpArraySize],   \
-                                  Sz0 [0:kTmpArraySize],   \
-                                  DSx [0:kTmpArraySize],   \
-                                  DSz [0:kTmpArraySize],   \
-                                  sumX [0:kTmpArraySize] ) \
-        deviceptr( charge, weight ) vector_length( 8 )
+            const int linindex1 = iold[0]* (nprimz * ( nprimy + 1 )) +iold[1]*nprimz+iold[2];
 
-    // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jy [0:Jy_size] )    \
-    //     deviceptr( charge, weight, Sx0,                \
-    //                Sz0, DSx, DSz, sumX ) vector_length( 8 )
-
-    #pragma acc loop gang worker
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
-
-            const double cry_p = dy_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
-
-            const int linindex1 = iold[ipart+0*packsize]*yz_size1+iold[ipart+1*packsize]*z_size1+iold[ipart+2*packsize];
-#ifdef SMILEI_OPENACC_MODE
-            #pragma acc loop vector
-#endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
-                    const double tmp = cry_p * ( Sz0[ipart+k*packsize]*Sx0[ipart+i*packsize] +
-                                                 0.5*DSz[ipart+k*packsize]*Sx0[ipart+i*packsize] +
-                                                 0.5*DSx[ipart+i*packsize]*Sz0[ipart+k*packsize] +
-                                                 one_third*DSz[ipart+k*packsize]*DSx[ipart+i*packsize] );
-                    const int idx = linindex1 + i*yz_size1 + k;
+                    const double tmp = cry_p * ( Sz0[k]*Sx0[i] +
+                                                 0.5*DSz[k]*Sx0[i] +
+                                                 0.5*DSx[i]*Sz0[k] +
+                                                 one_third*DSz[k]*DSx[i] );
+                    const int idx = linindex1 + i* (nprimz * ( nprimy + 1 )) + k;
                     for( int j=1 ; j<5 ; j++ ) {
-                        const double val = sumX[ipart+(j)*packsize] * tmp;
-                        const int    jdx = idx + j * z_size1;
+                        const double val = sumX[j] * tmp;
+                        const int    jdx = idx + j * nprimz;
 
                         SMILEI_ACCELERATOR_ATOMIC
                         Jy [ jdx ] += val;
                     }
                 }
-            }//i
-        }
-
-        // Jz^(p,p,d)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( DSz [0:kTmpArraySize], \
-                                  sumX [0:kTmpArraySize] )
-
-    // #pragma acc parallel deviceptr( DSz, sumX )
-
-    #pragma acc loop gang worker vector
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
-
-            sumX[ipart+0*packsize] = 0.;
-            for( int k=1 ; k<5 ; k++ ) {
-                sumX[ipart+k*packsize] = sumX[ipart+(k-1)*packsize]-DSz[ ipart+(k-1)*packsize ];
             }
-        }
 
-        const int    z_size2                  = nprimz + 1;
-        const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
-        const double dz_ov_dt_inv_cell_volume = dz_ov_dt * inv_cell_volume;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr( /* to: */                                     \
-                                      charge /* [istart_pack:current_pack_size] */, \
-                                      weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  Jz [0:Jz_size],         \
-                                  Sx0 [0:kTmpArraySize],   \
-                                  Sy0 [0:kTmpArraySize],   \
-                                  DSx [0:kTmpArraySize],   \
-                                  DSy [0:kTmpArraySize],   \
-                                  sumX [0:kTmpArraySize] ) \
-        deviceptr( charge, weight )
+            // Jz^(p,p,d)
+            const int    z_size2                  = nprimz + 1;
+            const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
 
-    // #pragma acc parallel present( iold [0:3 * nparts], \
-    //                               Jz [0:Jz_size] )    \
-    //     deviceptr( charge, weight, Sx0,                \
-    //                Sy0, DSx, DSy, sumX ) vector_length( 8 )
+            sumX[0] = 0.;
+            for( int k=1 ; k<5 ; k++ ) {
+                sumX[k] = sumX[(k-1)]-DSz[ (k-1) ];
+            }
 
-    #pragma acc loop gang worker
-#endif
-        for( int ipart=0 ; ipart<nparts; ipart++ ) {
+            const double crz_p = dz_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-            const double crz_p = dz_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
+            const int linindex2 = iold[0]*yz_size2+iold[1]*z_size2+iold[2];
 
-            const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
-#ifdef SMILEI_OPENACC_MODE
-            #pragma acc loop vector
-#endif
             for( int k=1 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
                     for( int j=0 ; j<5 ; j++ ) {
-                        const double tmp = crz_p * ( Sx0[ipart+i*packsize]*Sy0[ipart+j*packsize] +
-                                                     0.5*DSx[ipart+i*packsize]*Sy0[ipart+j*packsize] +
-                                                     0.5*DSy[ipart+j*packsize]*Sx0[ipart+i*packsize] +
-                                                     one_third*DSx[ipart+i*packsize]*DSy[ipart+j*packsize] );
+                        const double tmp = crz_p * ( Sx0[i]*Sy0[j] +
+                                                     0.5*DSx[i]*Sy0[j] +
+                                                     0.5*DSy[j]*Sx0[i] +
+                                                     one_third*DSx[i]*DSy[j] );
                         const int idx = linindex2 + j*z_size2 + i*yz_size2;
-                        const double val = sumX[ipart+(k)*packsize] * tmp;
+                        const double val = sumX[(k)] * tmp;
                         const int    jdx = idx + k;
 
                         SMILEI_ACCELERATOR_ATOMIC
                         Jz[ jdx ] += val;
                     }
                 }
-            }//i
+            }
 
-        } // End for ipart
-
-    } // End for ipack
+        }
 
     } // end currentDepositionKernel
 
