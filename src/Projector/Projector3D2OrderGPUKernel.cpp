@@ -90,13 +90,17 @@ namespace naive {
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                         \
+    #pragma omp target is_device_ptr( /* to: */                                         \
+    #pragma omp target is_device_ptr( /* to: */                                         \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */, \
                                       position_x /* [istart_pack:current_pack_size] */, \
                                       position_y /* [istart_pack:current_pack_size] */, \
                                       position_z /* [istart_pack:current_pack_size] */ )
     #pragma omp teams distribute parallel for
 #elif defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( iold [0:3 * nparts],     \
-                                  deltaold [0:3 * nparts], \
+                                  deltaold [0:3 * nparts]) \
         deviceptr( position_x,                             \
                    position_y,                             \
                    position_z )
