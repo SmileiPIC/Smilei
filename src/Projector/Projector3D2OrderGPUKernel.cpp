@@ -90,8 +90,6 @@ namespace naive {
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                         \
-    #pragma omp target is_device_ptr( /* to: */                                         \
-    #pragma omp target is_device_ptr( /* to: */                                         \
                                       charge /* [istart_pack:current_pack_size] */, \
                                       weight /* [istart_pack:current_pack_size] */, \
                                       position_x /* [istart_pack:current_pack_size] */, \

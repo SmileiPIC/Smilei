@@ -1844,7 +1844,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) //|| defined( SMILEI_OPENACC_MODE )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
