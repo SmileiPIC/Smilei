@@ -786,5 +786,6 @@ namespace acc {
     } // End for ipack
     } // end currentDepositionKernel
 
-
 } // namespace naive
+
+#endif
