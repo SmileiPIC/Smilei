@@ -56,8 +56,6 @@ namespace acc {
 
     const double one_third = 1./3.;
 
-    const int packsize = nparts;
-
         // const int current_pack_size = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -124,7 +122,7 @@ namespace acc {
             // --------------------------------------------------------
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            double delta = deltaold[0*packsize+ipart];
+            double delta = deltaold[0*nparts+ipart];
             double delta2 = delta*delta;
             Sx0[0] = 0.;
             Sx0[1] = 0.5 * ( delta2-delta+0.25 );
@@ -132,7 +130,7 @@ namespace acc {
             Sx0[3] = 0.5 * ( delta2+delta+0.25 );
             Sx0[4] = 0.;
 
-            delta = deltaold[1*packsize+ipart];
+            delta = deltaold[1*nparts+ipart];
             delta2 = delta*delta;
             Sy0[0] = 0.;
             Sy0[1] = 0.5 * ( delta2-delta+0.25 );
@@ -140,7 +138,7 @@ namespace acc {
             Sy0[3] = 0.5 * ( delta2+delta+0.25 );
             Sy0[4] = 0.;
 
-            delta = deltaold[2*packsize+ipart];
+            delta = deltaold[2*nparts+ipart];
             delta2 = delta*delta;
             Sz0[0] = 0.;
             Sz0[1] = 0.5 * ( delta2-delta+0.25 );
@@ -151,7 +149,7 @@ namespace acc {
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             const double xpn = position_x[ ipart ] * dx_inv;
             const int ip = std::round( xpn );
-            const int ip_m_ipo = ip-iold[0*packsize+ipart]-i_domain_begin;
+            const int ip_m_ipo = ip-iold[0*nparts+ipart]-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
             Sx1[(ip_m_ipo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -160,7 +158,7 @@ namespace acc {
 
             const double ypn = position_y[ ipart ] * dy_inv;
             const int jp = std::round( ypn );
-            const int jp_m_jpo = jp-iold[1*packsize+ipart]-j_domain_begin;
+            const int jp_m_jpo = jp-iold[1*nparts+ipart]-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
             Sy1[(jp_m_jpo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -169,7 +167,7 @@ namespace acc {
 
             const double zpn = position_z[ ipart ] * dz_inv;
             const int kp = std::round( zpn );
-            const int kp_m_kpo = kp-iold[2*packsize+ipart]-k_domain_begin;
+            const int kp_m_kpo = kp-iold[2*nparts+ipart]-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
             Sz1[(kp_m_kpo+1)] = 0.5 * ( delta2-delta+0.25 );
@@ -287,9 +285,171 @@ namespace acc {
                 }
             }
 
-        }
+        } // end particle loop
 
     } // end currentDepositionKernel
+
+    static inline void
+    densityDepositionKernel3D( 
+                                         double *__restrict__ rho,
+                                         int rho_size,
+                                         const double *__restrict__ device_particle_position_x,
+                                         const double *__restrict__ device_particle_position_y,
+                                         const double *__restrict__ device_particle_position_z,
+                                         const short *__restrict__ device_particle_charge,
+                                         const double *__restrict__ device_particle_weight,
+                                         const int *__restrict__ host_bin_index,
+                                         unsigned int,
+                                         unsigned int,
+                                         unsigned int,
+                                         const double *__restrict__ invgf,
+                                         int *__restrict__ iold,
+                                         const double *__restrict__ deltaold,
+                                         const unsigned int    number_of_particles,
+                                         double inv_cell_volume,
+                                         double dx_inv,
+                                         double dy_inv,
+                                         double dz_inv,
+                                         double dx_ov_dt,
+                                         double dy_ov_dt,
+                                         double dz_ov_dt,
+                                         int    i_domain_begin,
+                                         int    j_domain_begin,
+                                         int    k_domain_begin,
+                                         int    nprimy,
+                                         int    nprimz,
+                                         int    not_spectral )
+    {
+
+    const unsigned int bin_count      = 1;
+    const int          nparts = host_bin_index[bin_count - 1];
+
+    // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
+
+    const double *const __restrict__ position_x = device_particle_position_x;
+    const double *const __restrict__ position_y = device_particle_position_y;
+    const double *const __restrict__ position_z = device_particle_position_z;
+    const short  *const __restrict__ charge     = device_particle_charge;
+    const double *const __restrict__ weight     = device_particle_weight;
+
+    const double one_third = 1./3.;
+
+        // const int current_pack_size = iend_pack - istart_pack;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr( /* to: */                                         \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */, \
+                                      position_x /* [istart_pack:current_pack_size] */, \
+                                      position_y /* [istart_pack:current_pack_size] */, \
+                                      position_z /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams distribute parallel for
+#elif defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present( iold [0:3 * nparts],     \
+                                  deltaold [0:3 * nparts], \
+                                  rho[0:rho_size] \
+                                  ) \
+        deviceptr( position_x,                             \
+                   position_y,                             \
+                   position_z, charge, weight )
+
+    // #pragma acc parallel present( iold [0:3 * nparts],      \
+    //                               deltaold_ [0:3 * nparts] ) \
+    //     deviceptr( position_x,                              \
+    //                position_y,                              \
+    //                position_z,                              \
+    //                Sx0,                                     \
+    //                Sy0,                                     \
+    //                Sz0,                                     \
+    //                DSx,                                     \
+    //                DSy,                                     \
+    //                DSz )
+
+    #pragma acc loop gang worker vector
+#endif
+        for( int ipart=0 ; ipart<nparts; ipart++ ) {
+
+            // -------------------------------------
+            // Variable declaration & initialization
+            // -------------------------------------
+
+            double Sx1[5];
+            double Sy1[5];
+            double Sz1[5];
+
+            // arrays used for the Esirkepov projection method
+            for( unsigned int i=0; i<5; i++ ) {
+                Sx1[i] = 0.;
+                Sy1[i] = 0.;
+                Sz1[i] = 0.;
+            }
+
+            // --------------------------------------------------------
+            // Locate particles & Calculate Esirkepov coef. S, DS and W
+            // --------------------------------------------------------
+
+            // locate the particle on the primal grid at former time-step & calculate coeff. S0
+            double delta;
+            double delta2;
+
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            const double xpn = position_x[ ipart ] * dx_inv;
+            const int ip = std::round( xpn );
+            const int ip_m_ipo = ip-iold[0*nparts+ipart]-i_domain_begin;
+            delta  = xpn - ( double )ip;
+            delta2 = delta*delta;
+            Sx1[(ip_m_ipo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sx1[(ip_m_ipo+2)] = 0.75-delta2;
+            Sx1[(ip_m_ipo+3)] = 0.5 * ( delta2+delta+0.25 );
+
+            const double ypn = position_y[ ipart ] * dy_inv;
+            const int jp = std::round( ypn );
+            const int jp_m_jpo = jp-iold[1*nparts+ipart]-j_domain_begin;
+            delta  = ypn - ( double )jp;
+            delta2 = delta*delta;
+            Sy1[(jp_m_jpo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sy1[(jp_m_jpo+2)] = 0.75-delta2;
+            Sy1[(jp_m_jpo+3)] = 0.5 * ( delta2+delta+0.25 );
+
+            const double zpn = position_z[ ipart ] * dz_inv;
+            const int kp = std::round( zpn );
+            const int kp_m_kpo = kp-iold[2*nparts+ipart]-k_domain_begin;
+            delta  = zpn - ( double )kp;
+            delta2 = delta*delta;
+            Sz1[(kp_m_kpo+1)] = 0.5 * ( delta2-delta+0.25 );
+            Sz1[(kp_m_kpo+2)] = 0.75-delta2;
+            Sz1[(kp_m_kpo+3)] = 0.5 * ( delta2+delta+0.25 );
+
+            // ---------------------------
+            // Calculate the total current
+            // ---------------------------
+
+            int ipo = iold[ipart+0*nparts] - 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+            // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
+            int jpo = iold[ipart+1*nparts] - 2;
+            int kpo = iold[ipart+2*nparts] - 2;
+
+            // Rho
+
+            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            int z_size2 =  nprimz;
+            int yz_size2 =  nprimz*nprimy;
+            int linindex2 = ipo*yz_size2+jpo*z_size2+kpo;
+
+            for( int k=1 ; k<5 ; k++ ) {
+                for( int i=0 ; i<5 ; i++ ) {
+                    for( int j=0 ; j<5 ; j++ ) {
+                        int idx = linindex2 + j*z_size2 + i*yz_size2;
+                        int jdx = idx + k;
+                        SMILEI_ACCELERATOR_ATOMIC
+                        rho[ jdx ] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+                    } //j
+                } //i
+            } //k
+
+        } // End for ipart
+
+    } // end densityDepositionKernel
 
     static inline void
     currentAndDensityDepositionKernel3D( double *__restrict__ Jx,
@@ -656,6 +816,7 @@ namespace acc {
                     for( int j=1 ; j<5 ; j++ ) {
                         const double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         const int    jdx = idx + j * z_size1;
+
                         SMILEI_ACCELERATOR_ATOMIC
                         Jy [ jdx ] += val;
                     }
@@ -730,11 +891,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         const int    jdx = idx + k;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jz[ jdx ] += val;
                     }
                 }
@@ -771,11 +928,8 @@ namespace acc {
                        for( int j=0 ; j<5 ; j++ ) {
                            int idx = linindex2 + j*z_size2 + i*yz_size2;
                            int jdx = idx + k;
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                           #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-                           #pragma acc atomic
-#endif
+
+                           SMILEI_ACCELERATOR_ATOMIC
                            rho[ jdx ] += charge_weight * Sx1[ipart_pack+i*packsize]*Sy1[ipart_pack+j*packsize]*Sz1[ipart_pack+k*packsize];
                        }//j
                    }//i
@@ -786,5 +940,4 @@ namespace acc {
     } // End for ipack
     } // end currentDepositionKernel
 
-
-} // namespace naive
+} // namespace acc

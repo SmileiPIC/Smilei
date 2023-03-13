@@ -120,9 +120,41 @@ currentAndDensityDepositionKernel3D( double *__restrict__ Jx,
                          int    nprimy, 
                          int    nprimz,
                          int    not_spectral );
-
-
-
+extern "C" void
+densityDepositionKernel3D( double *__restrict__ Jx,
+                         double *__restrict__ Jy,
+                         double *__restrict__ Jz,
+                         double *__restrict__ rho,
+                         int Jx_size,
+                         int Jy_size,
+                         int Jz_size,
+                         int rho_size,
+                         const double *__restrict__ particle_position_x,
+                         const double *__restrict__ particle_position_y,
+                         const double *__restrict__ particle_position_z,
+                         const short *__restrict__ particle_charge,
+                         const double *__restrict__ particle_weight,
+                         const int *__restrict__ host_bin_index,
+                         unsigned int x_dimension_bin_count,
+                         unsigned int y_dimension_bin_count,
+                         unsigned int z_dimension_bin_count,
+                         const double *__restrict__ invgf_,
+                         const int *__restrict__ iold_,
+                         const double *__restrict__ deltaold_,
+                         const unsigned int number_of_particles,
+                         double inv_cell_volume,
+                         double dx_inv,
+                         double dy_inv,
+                         double dz_inv,
+                         double dx_ov_dt,
+                         double dy_ov_dt,
+                         double dz_ov_dt,
+                         int    i_domain_begin,
+                         int    j_domain_begin,
+                         int    k_domain_begin,
+                         int    nprimy, 
+                         int    nprimz,
+                         int    not_spectral );
 #endif
 
 namespace { // Unnamed namespace == static == internal linkage == no exported symbols
@@ -237,6 +269,67 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  Jx_size,
                                  Jy_size,
                                  Jz_size,
+                                 rho_size,
+                                 particles.getPtrPosition( 0 ),
+                                 particles.getPtrPosition( 1 ),
+                                 particles.getPtrPosition( 2 ),
+                                 particles.getPtrCharge(),
+                                 particles.getPtrWeight(),
+                                 particles.last_index.data(),
+                                 x_dimension_bin_count,
+                                 y_dimension_bin_count,
+                                 z_dimension_bin_count,
+                                 invgf_,
+                                 iold_,
+                                 deltaold_,
+                                 particles.deviceSize(),
+                                 inv_cell_volume,
+                                 dx_inv,
+                                 dy_inv,
+                                 dz_inv,
+                                 dx_ov_dt,
+                                 dy_ov_dt,
+                                 dz_ov_dt,
+                                 i_domain_begin,
+                                 j_domain_begin,
+                                 k_domain_begin,
+                                 nprimy, nprimz,
+                                 not_spectral );
+#else
+        SMILEI_ASSERT( false );
+#endif
+    }
+
+    //! Project density
+    /* inline */ void
+    density( 
+                        double *__restrict__ rho,
+                        int rho_size,
+                        Particles   &particles,
+                        unsigned int x_dimension_bin_count,
+                        unsigned int y_dimension_bin_count,
+                        unsigned int z_dimension_bin_count,
+                        const double *__restrict__ invgf_,
+                        const int *__restrict__ iold_,
+                        const double *__restrict__ deltaold_,
+                        double inv_cell_volume,
+                        double dx_inv,
+                        double dy_inv,
+                        double dz_inv,
+                        double dx_ov_dt,
+                        double dy_ov_dt,
+                        double dz_ov_dt,
+                        int    i_domain_begin,
+                        int    j_domain_begin,
+                        int    k_domain_begin,
+                        int    nprimy,
+                        int    nprimz,
+                        double,
+                        int not_spectral )
+    {
+#if defined( SMILEI_ACCELERATOR_MODE )
+        densityDepositionKernel3D( 
+                                 rho,
                                  rho_size,
                                  particles.getPtrPosition( 0 ),
                                  particles.getPtrPosition( 1 ),
