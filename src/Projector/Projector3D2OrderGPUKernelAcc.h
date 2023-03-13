@@ -298,7 +298,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(i)*packsize] * tmp;
                         const int    jdx = idx + i * yz_size0;
 
-SMILEI_ACCELERATOR_ATOMIC
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jx [ jdx ] += val;
                     }
                 }
@@ -946,7 +946,6 @@ SMILEI_ACCELERATOR_ATOMIC
 
     } // End for ipack
     } // end currentDepositionKernel
-
 
 } // namespace acc
 
