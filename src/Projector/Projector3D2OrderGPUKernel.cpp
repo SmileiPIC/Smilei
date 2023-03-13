@@ -288,8 +288,6 @@ namespace naive {
 
 
             // Jz^(p,p,d)
-            const int    z_size2                  = nprimz + 1;
-            const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
 
             sumX[0] = 0.;
             for( int k=1 ; k<5 ; k++ ) {
