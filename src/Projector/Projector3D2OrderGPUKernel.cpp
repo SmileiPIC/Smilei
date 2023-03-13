@@ -33,9 +33,10 @@
         #include "gpu.h"
     #endif
 
-    #include "Projector3D2OrderGPUKernelAcc.h"
 
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+
+    #include "Projector3D2OrderGPUKernelAcc.h"
 
 namespace naive {
 
