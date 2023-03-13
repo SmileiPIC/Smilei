@@ -261,7 +261,7 @@ namespace naive {
 
             const double cry_p = dy_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-            const int linindex1 = iold[0]* (nprimz * ( nprimy + 1 )) +iold[1]*nprimz+iold[2];
+            const int linindex1 = ipo * (nprimz * ( nprimy + 1 )) + jpo*nprimz + kpo;
 
             for( int k=0 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
@@ -280,7 +280,6 @@ namespace naive {
                 }
             }
 
-
             // Jz^(p,p,d)
             const int    z_size2                  = nprimz + 1;
             const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
@@ -292,7 +291,7 @@ namespace naive {
 
             const double crz_p = dz_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-            const int linindex2 = iold[0]*yz_size2+iold[1]*z_size2+iold[2];
+            const int linindex2 = ipo * yz_size2+ jpo *z_size2 + kpo;
 
             for( int k=1 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
