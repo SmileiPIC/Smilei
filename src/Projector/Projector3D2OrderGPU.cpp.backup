@@ -19,18 +19,18 @@
 Projector3D2OrderGPU::Projector3D2OrderGPU( Params &params, Patch *patch ) : Projector3D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt_  = params.cell_length[0] / params.timestep;
+    dx_ov_dt  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt_  = params.cell_length[1] / params.timestep;
+    dy_ov_dt  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
-    dz_ov_dt_  = params.cell_length[2] / params.timestep;
+    dz_ov_dt  = params.cell_length[2] / params.timestep;
 
-    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
-    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
-
-    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
-    k_domain_begin_ = patch->getCellStartingGlobalIndex( 2 );
+    nprimz = params.patch_size_[2] + 2*params.oversize[2] + 1;
+    nprimy = params.patch_size_[1] + 2*params.oversize[1] + 1;
+    
+    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
+    k_domain_begin = patch->getCellStartingGlobalIndex( 2 );
 
     DEBUG( "cell_length "<< params.cell_length[0] );
 
@@ -214,7 +214,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             const double xpn = position_x[ ipart ] * dx_inv_;
             const int ip = std::round( xpn );
             const int ipo = iold[0*packsize+ipart];
-            const int ip_m_ipo = ip-ipo-i_domain_begin_;
+            const int ip_m_ipo = ip-ipo-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
             Sx1[ipart_pack+(ip_m_ipo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
@@ -224,7 +224,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             const double ypn = position_y[ ipart ] * dy_inv_;
             const int jp = std::round( ypn );
             const int jpo = iold[1*packsize+ipart];
-            const int jp_m_jpo = jp-jpo-j_domain_begin_;
+            const int jp_m_jpo = jp-jpo-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
             Sy1[ipart_pack+(jp_m_jpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
@@ -234,7 +234,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             const double zpn = position_z[ ipart ] * dz_inv_;
             const int kp = std::round( zpn );
             const int kpo = iold[2*packsize+ipart];
-            const int kp_m_kpo = kp-kpo-k_domain_begin_;
+            const int kp_m_kpo = kp-kpo-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
             Sz1[ipart_pack+(kp_m_kpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
@@ -253,7 +253,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             // ---------------------------
 
             iold[ipart+0*packsize] -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-            // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
+            // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
             iold[ipart+1*packsize] -= 2;
             iold[ipart+2*packsize] -= 2;
         }
@@ -280,7 +280,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
 
         const int    z_size0                  = nprimz;
         const int    yz_size0                 = nprimz * nprimy;
-        const double dx_ov_dt_inv_cell_volume = dx_ov_dt_ * inv_cell_volume;
+        const double dx_ov_dt_inv_cell_volume = dx_ov_dt * inv_cell_volume;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                     \
@@ -358,7 +358,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
 
         const int    z_size1                  = nprimz;
         const int    yz_size1                 = nprimz * ( nprimy + 1 );
-        const double dy_ov_dt_inv_cell_volume = dy_ov_dt_ * inv_cell_volume;
+        const double dy_ov_dt_inv_cell_volume = dy_ov_dt * inv_cell_volume;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                     \
@@ -436,7 +436,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
 
         const int    z_size2                  = nprimz + 1;
         const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
-        const double dz_ov_dt_inv_cell_volume = dz_ov_dt_ * inv_cell_volume;
+        const double dz_ov_dt_inv_cell_volume = dz_ov_dt * inv_cell_volume;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( /* to: */                                     \
@@ -559,9 +559,9 @@ Projector3D2OrderGPU::currentsAndDensity(
 
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt_;
-    double cry_p = charge_weight*dy_ov_dt_;
-    double crz_p = charge_weight*dz_ov_dt_;
+    double crx_p = charge_weight*dx_ov_dt;
+    double cry_p = charge_weight*dy_ov_dt;
+    double crz_p = charge_weight*dz_ov_dt;
 
     // variable declaration
     double xpn, ypn, zpn;
@@ -621,7 +621,7 @@ Projector3D2OrderGPU::currentsAndDensity(
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin_;
+    int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -631,7 +631,7 @@ Projector3D2OrderGPU::currentsAndDensity(
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin_;
+    int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -641,7 +641,7 @@ Projector3D2OrderGPU::currentsAndDensity(
     zpn = particles.position( 2, ipart ) * dz_inv_;
     int kp = round( zpn );
     int kpo = iold[2*nparts];
-    int kp_m_kpo = kp-kpo-k_domain_begin_;
+    int kp_m_kpo = kp-kpo-k_domain_begin;
     delta  = zpn - ( double )kp;
     delta2 = delta*delta;
     Sz1[kp_m_kpo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -660,7 +660,7 @@ Projector3D2OrderGPU::currentsAndDensity(
     // ---------------------------
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     kpo -= 2;
 
@@ -805,9 +805,9 @@ void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned i
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin_ + 2 + bin_shift;
-    jp -= j_domain_begin_ + 2;
-    kp -= k_domain_begin_ + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
+    jp -= j_domain_begin + 2;
+    kp -= k_domain_begin + 2;
 
     for( unsigned int i=0 ; i<5 ; i++ ) {
         iloc = ( i+ip ) * nyz;
@@ -903,12 +903,12 @@ void Projector3D2OrderGPU::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, 
     Szd[1] = ( 0.75-zpmzkd2 );
     Szd[2] = 0.5 * ( zpmzkd2+zpmzkd+0.25 );
 
-    ip  -= i_domain_begin_;
-    id  -= i_domain_begin_;
-    jp  -= j_domain_begin_;
-    jd  -= j_domain_begin_;
-    kp  -= k_domain_begin_;
-    kd  -= k_domain_begin_;
+    ip  -= i_domain_begin;
+    id  -= i_domain_begin;
+    jp  -= j_domain_begin;
+    jd  -= j_domain_begin;
+    kp  -= k_domain_begin;
+    kd  -= k_domain_begin;
 
     for( unsigned int i=0 ; i<3 ; i++ ) {
         int iploc=ip+i-1;
@@ -959,10 +959,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         double *const __restrict__ Jz  = &( *EMfields->Jz_ )( 0 ) ;
         double *const __restrict__ rho = &( *EMfields->rho_ )( 0 ) ;
 
-        unsigned int Jx_size  = EMfields->Jx_->globalDims_ ;
-        unsigned int Jy_size  = EMfields->Jy_->globalDims_ ;
-        unsigned int Jz_size  = EMfields->Jz_->globalDims_ ;
-        unsigned int rho_size = EMfields->rho_->globalDims_ ;
+        unsigned int Jx_size  = EMfields->Jx_->size() ;
+        unsigned int Jy_size  = EMfields->Jy_->size() ;
+        unsigned int Jz_size  = EMfields->Jz_->size() ;
+        unsigned int rho_size = EMfields->rho_->size() ;
 
         if( !is_spectral ) {
             currentsAndDensityGPU( Jx, Jy, Jz, rho, 
@@ -973,7 +973,12 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
                                    &( *delta )[0] );
         } else {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currentsAndDensity( Jx, Jy, Jz, rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+                currentsAndDensity( Jx, Jy, Jz, rho, 
+                                    particles,  
+                                    ipart, 
+                                    ( *invgf )[ipart], 
+                                    &( *iold )[ipart], 
+                                    &( *delta )[ipart] );
             }
         }
         // Otherwise, the projection may apply to the species-specific arrays
@@ -991,9 +996,9 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
 
-        //int Jy_size = EMfields->Jy_->globalDims_ ;
-        //int Jz_size = EMfields->Jz_->globalDims_ ;
-        //int rho_size = EMfields->rho_->globalDims_ ;
+        //int Jy_size = EMfields->Jy_->size() ;
+        //int Jz_size = EMfields->Jz_->size() ;
+        //int rho_size = EMfields->rho_->size() ;
 
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
         // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
@@ -1028,8 +1033,18 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper(
     }
 }
 
-// Projector for susceptibility used as source term in envelope equation
-void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+//! Projector for susceptibility used as source term in envelope equation
+void Projector3D2OrderGPU::susceptibility(
+    ElectroMagn *EMfields, 
+    Particles &particles, 
+    double species_mass, 
+    SmileiMPI *smpi, 
+    int istart, 
+    int iend, 
+    int ithread,
+    int /*icell*/,
+    int /*ipart_ref*/ )
+
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
 
@@ -1131,9 +1146,9 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         // ---------------------------
         // Calculate the total susceptibility
         // ---------------------------
-        ip -= i_domain_begin_ + 2;
-        jp -= j_domain_begin_ + 2;
-        kp -= k_domain_begin_ + 2;
+        ip -= i_domain_begin + 2;
+        jp -= j_domain_begin + 2;
+        kp -= k_domain_begin + 2;
 
         for( unsigned int i=0 ; i<5 ; i++ ) { // i loop
             iloc = ( i+ip )*nprimz*nprimy;
