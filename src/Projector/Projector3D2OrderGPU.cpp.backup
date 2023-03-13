@@ -464,7 +464,7 @@ Projector3D2OrderGPU::currentsAndDensityGPU(
             const int ipart_pack = ipart - istart_pack;
 
             const double crz_p = dz_ov_dt_inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
-
+            
             const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
 #ifdef SMILEI_OPENACC_MODE
             #pragma acc loop vector

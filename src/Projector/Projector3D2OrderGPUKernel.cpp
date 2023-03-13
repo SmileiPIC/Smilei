@@ -23,9 +23,9 @@
 
         #include "Tools.h"
         #include "gpu.h"
-//    #elif defined( __CUDACC__ ) 
-//        #include "Params.h"
-//        #include "gpu.h"
+    #elif defined( __CUDACC__ ) 
+        #include "Params.h"
+        #include "gpu.h"
     #elif defined( __HIP__ )
         #include <hip/hip_runtime.h>
 
@@ -72,10 +72,8 @@ namespace naive {
                                int    not_spectral )
     {
 
-    //const unsigned int bin_count      = 1;
-    //const int          nparts = host_bin_index[bin_count - 1];
-
-    const unsigned int          nparts = number_of_particles;
+    const unsigned int bin_count      = 1;
+    const int          nparts = host_bin_index[bin_count - 1];
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
@@ -218,12 +216,19 @@ namespace naive {
             // Calculate the total current
             // ---------------------------
 
-            int ipo = iold[ipart+0*packsize] - 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+            int ipo = iold[ipart+0*nparts] - 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
             // i/j/kpo stored with - i/j/k_domain_begin_ in Interpolator
-            int jpo = iold[ipart+1*packsize] - 2;
-            int kpo = iold[ipart+2*packsize] - 2;
+            int jpo = iold[ipart+1*nparts] - 2;
+            int kpo = iold[ipart+2*nparts] - 2;
 
+            const int    z_size0                  = nprimz;
             const int    yz_size0                 = nprimz * nprimy;
+
+            const int    z_size1                  = nprimz;
+            const int    yz_size1                 = nprimz * ( nprimy + 1 );
+
+            const int    z_size2                  = nprimz + 1;
+            const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
 
             // Jx^(d,p,p)
 
@@ -259,11 +264,10 @@ namespace naive {
                 sumX[k] = sumX[k-1]-DSy[ k-1 ];
             }
 
-            const int    yz_size1                 = nprimz * ( nprimy + 1 );
-
             const double cry_p = dy_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-            const int linindex1 = ipo * (nprimz * ( nprimy + 1 )) + jpo*nprimz + kpo;
+            //const int linindex1 = iold[0]* (nprimz * ( nprimy + 1 )) +iold[1]*nprimz+iold[2];
+            const int linindex1 = ipo * yz_size1+ jpo * z_size1 + kpo;
 
             for( int k=0 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
@@ -282,6 +286,7 @@ namespace naive {
                 }
             }
 
+
             // Jz^(p,p,d)
             const int    z_size2                  = nprimz + 1;
             const int    yz_size2                 = ( nprimz + 1 ) * nprimy;
@@ -293,7 +298,8 @@ namespace naive {
 
             const double crz_p = dz_ov_dt * inv_cell_volume * static_cast<double>( charge[ipart] ) * weight[ipart];
 
-            const int linindex2 = ipo * yz_size2+ jpo *z_size2 + kpo;
+            const int linindex2 = ipo * yz_size2 + jpo * z_size2 + kpo;
+//            const int linindex2 = iold[0]*yz_size2+iold[1]*z_size2+iold[2];
 
             for( int k=1 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
@@ -353,9 +359,8 @@ namespace naive {
                                          int    not_spectral )
     {
 
-    //const unsigned int bin_count      = 1;
-    //const int          nparts = host_bin_index[bin_count - 1];
-    const unsigned int          nparts = number_of_particles;
+    const unsigned int bin_count      = 1;
+    const int          nparts = host_bin_index[bin_count - 1];
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
