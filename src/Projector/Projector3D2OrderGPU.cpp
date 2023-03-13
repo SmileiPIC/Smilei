@@ -487,21 +487,17 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
     std::vector<double> &invgf = smpi->dynamics_invgf[ithread];
 
-    // Jx_                        = EMfields->Jx_->data();
-    // Jy_                        = EMfields->Jy_->data();
-    // Jz_                        = EMfields->Jz_->data();
-    // rho_                       = EMfields->rho_->data();
+    if (diag_flag) {
+        double *const __restrict__ Jx_  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
+        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
 
-    double *const __restrict__ Jx_  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
-    unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
+        double *const __restrict__ Jy_  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
+        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
 
-    double *const __restrict__ Jy_  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
-    unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
+        double *const __restrict__ Jz_  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
+        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
 
-    double *const __restrict__ Jz_  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
-    unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
-
-    currents( Jx_, Jy_, Jz_,
+        currents( Jx_, Jy_, Jz_,
               Jx_size, Jy_size, Jz_size,
                 particles, 
                 x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
@@ -514,25 +510,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 one_third,
                 not_spectral );
 
-    // If requested performs then the charge density deposition
-
-    if( diag_flag ) {
-        // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
-        // - Pull everything we need from the GPU and compute on the host
-        // - Implement currentsAndDensity on GPU which means:
-        //      - The J<x>_s/Rho_s, if required by the diags must be on the GPU
-        //          -
-        //      - Rho_ must be on the GPU if species specific charge/current densities are not diagnosed
-        //
-
-
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
-
-        //std::cerr << 
-        //	" number of bins: " << particles.last_index.size()
-        //	<< " number of bins: " << particles.deviceSize()
-        //	<< std::endl;
 
         density( b_rho,
                   rho_size,
@@ -546,12 +525,49 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   one_third,
                   not_spectral );
 
+    // If requested performs then the charge density deposition
+    } else {
+        double *const __restrict__ Jx_  = EMfields->Jx_->data();
+        unsigned int Jx_size            = EMfields->Jx_->size();
+
+        double *const __restrict__ Jy_  = EMfields->Jy_->data();
+        unsigned int Jy_size            = EMfields->Jy_->size();
+
+        double *const __restrict__ Jz_  = EMfields->Jz_->data();
+        unsigned int Jz_size            = EMfields->Jz_->size();
+        
+        currents( Jx_, Jy_, Jz_,
+              Jx_size, Jy_size, Jz_size,
+                particles, 
+                x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
+                invgf.data(), iold.data(), delta.data(),
+                inv_cell_volume,
+                dx_inv_, dy_inv_, dz_inv_,
+                dx_ov_dt_, dy_ov_dt_, dz_ov_dt_,
+                i_domain_begin_, j_domain_begin_, k_domain_begin_,
+                nprimy, nprimz,
+                one_third,
+                not_spectral );
+    }
+
+        // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
+        // - Pull everything we need from the GPU and compute on the host
+        // - Implement currentsAndDensity on GPU which means:
+        //      - The J<x>_s/Rho_s, if required by the diags must be on the GPU
+        //          -
+        //      - Rho_ must be on the GPU if species specific charge/current densities are not diagnosed
+        //
+
+        //std::cerr << 
+        //	" number of bins: " << particles.last_index.size()
+        //	<< " number of bins: " << particles.deviceSize()
+        //	<< std::endl;
+
        //double sum = EMfields->rho_s[ispec]->normOnDevice();
        //double sum_Jxs = EMfields->Jx_s[ispec]->normOnDevice();
        //double sum_Jx = EMfields->Jx_->normOnDevice();
        //double sum2 = EMfields->rho_s[ispec]->norm();
        //std::cerr << sum << " " << sum2 << " " << sum_Jxs << " " << sum_Jx << std::endl;
-    }
 }
 
 void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields,
