@@ -378,13 +378,8 @@ namespace hip {
                   std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
-        DepositCurrentAndDensity_3D_Order2( double *__restrict__ device_Jx,
-                                            double *__restrict__ device_Jy,
-                                            double *__restrict__ device_Jz,
+        DepositDensity_3D_Order2( 
                                             double *__restrict__ device_rho,
-                                            int Jx_size,
-                                            int Jy_size,
-                                            int Jz_size,
                                             int rho_size,
                                             const double *__restrict__ device_particle_position_x,
                                             const double *__restrict__ device_particle_position_y,
@@ -444,9 +439,6 @@ namespace hip {
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
             // possible but cost more bandwidth. The speedup was ~x0.92.
-            __shared__ ReductionFloat Jx_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jy_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jz_scratch_space[kFieldScratchSpaceSize];
             __shared__ ReductionFloat rho_scratch_space[kFieldScratchSpaceSize];
 
             // Init the shared memory
@@ -454,9 +446,6 @@ namespace hip {
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                Jx_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
-                Jy_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
-                Jz_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
                 rho_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
             }
 
@@ -477,49 +466,14 @@ namespace hip {
                 const int *const __restrict__ iold        = &device_iold[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
 
-                ComputeFloat Sx0[5];
+
                 ComputeFloat Sx1[5];
-                ComputeFloat Sy0[5];
                 ComputeFloat Sy1[5];
-                ComputeFloat Sz0[5];
                 ComputeFloat Sz1[5];
                 // double DSx[5];
                 // double DSy[5];
 
                 // Variable declaration & initialization
-                // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
-
-                // Locate the particle on the primal grid at former time-step & calculate coeff. S0
-                {
-                    const ComputeFloat delta  = deltaold[0 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
-
-                    Sx0[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sx0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sx0[3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx0[4] = static_cast<ComputeFloat>( 0.0 );
-                }
-                {
-                    const ComputeFloat delta  = deltaold[1 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
-
-                    Sy0[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sy0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sy0[3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy0[4] = static_cast<ComputeFloat>( 0.0 );
-                }
-                {
-                    const ComputeFloat delta  = deltaold[2 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
-
-                    Sz0[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sz0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sz0[3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz0[4] = static_cast<ComputeFloat>( 0.0 );
-                }
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
                 {
@@ -582,9 +536,9 @@ namespace hip {
 
                 // (x,y,z) components of the current density for the macro-particle
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
-                const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
-                const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
-                const ComputeFloat crz_p         = charge_weight * dz_ov_dt;
+                // const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
+                // const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
+                // const ComputeFloat crz_p         = charge_weight * dz_ov_dt;
 
                 // This is the particle position as grid index
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
@@ -597,58 +551,6 @@ namespace hip {
                 const int kpo = iold[2 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
-
-                // Jx
-
-                for( unsigned int j = 0; j < 5; ++j ) {
-                    for( unsigned int k = 0; k < 5; ++k ) {
-                        ComputeFloat tmp = crx_p * (   Sy0[j]*Sz0[k] 
-                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
-                                                     +                           one_third  *   ( Sy1[j] - Sy0[j] )    *     ( Sz1[k] - Sz0[k] ) );
-                        ComputeFloat tmp_reduction{};
-                        const int jk_loc = ( ipo  * GPUClusterWithGCWidth + jpo + j ) * GPUClusterWithGCWidth + kpo + k;
-                        for( unsigned int i = 1; i < 5; ++i ) {
-                            tmp_reduction -= ( Sx1[i-1] - Sx0[i-1] ) * tmp;
-                            const int loc = i*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
-                            atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
-                        }
-                    }
-                }
-
-                // Jy
-
-                for( unsigned int i = 0; i < 5; ++i ) {
-                    for( unsigned int k = 0; k < 5; ++k ) {
-                        ComputeFloat tmp = cry_p * (   Sx0[i]*Sz0[k] 
-                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sx0[i] ) 
-                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sz1[k] - Sz0[k] ) );
-                        ComputeFloat tmp_reduction{};
-                        const int ik_loc = (( i + ipo ) * GPUClusterWithGCWidth + jpo ) * GPUClusterWithGCWidth + kpo + k;
-                        for( unsigned int j = 1; j < 5; ++j ) {
-                            tmp_reduction -= ( Sy1[j-1] - Sy0[j-1] ) * tmp;
-                            const int loc = j*GPUClusterWithGCWidth + ik_loc;
-                            atomic::LDS::AddNoReturn( &Jy_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
-                        }
-                    }
-                }
-
-                // Jz
-
-                for( unsigned int i = 0; i < 5; ++i ) {
-                    for( unsigned int j = 0; j < 5; ++j ) {
-                        ComputeFloat tmp = crz_p * (   Sx0[i]*Sy0[j] 
-                                                     + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i] ) 
-                                                     +                           one_third  *   ( Sx1[i] - Sx0[i] )    *     ( Sy1[j] - Sy0[j] ) );
-                        ComputeFloat tmp_reduction{};
-                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + jpo + j) * GPUClusterWithGCWidth + kpo;
-                        for( unsigned int k = 1; k < 5; ++k ) {
-                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
-                            const int loc =  ij_loc + k;
-                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
-                        }
-                    }
-                }
-
 
                 // Rho
 
@@ -683,9 +585,6 @@ namespace hip {
                 const unsigned int global_memory_index = ( global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate ) * nprimz + global_z_scratch_space_coordinate;
 
                 // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * ( global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate )], static_cast<double>( Jz_scratch_space[field_index] ) );
                 atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[field_index] ) );
             }
         }
@@ -776,7 +675,7 @@ static inline void
     }
 
     static inline void
-    currentAndDensityDepositionKernel3D( double *__restrict__ host_Jx,
+    densityDepositionKernel3D( double *__restrict__ host_Jx,
                                          double *__restrict__ host_Jy,
                                          double *__restrict__ host_Jz,
                                          double *__restrict__ host_rho,
@@ -831,7 +730,7 @@ static inline void
         using ComputeFloat   = double;
         using ReductionFloat = double;
 
-        auto KernelFunction = kernel::DepositCurrentAndDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
