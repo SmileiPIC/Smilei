@@ -54,7 +54,7 @@ namespace acc {
                                unsigned int y_dimension_bin_count,
                                unsigned int z_dimension_bin_count,
                                const double *__restrict__ invgf,
-                               const int    *__restrict__ iold,
+                               int    *__restrict__ iold,
                                const double *__restrict__ deltaold,
                                const unsigned int    number_of_particles,
                                double inv_cell_volume,
@@ -327,11 +327,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(i)*packsize] * tmp;
                         const int    jdx = idx + i * yz_size0;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+SMILEI_ACCELERATOR_ATOMIC
                         Jx [ jdx ] += val;
                     }
                 }
@@ -405,11 +401,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         const int    jdx = idx + j * z_size1;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jy [ jdx ] += val;
                     }
                 }
@@ -483,17 +475,15 @@ namespace acc {
                         const double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         const int    jdx = idx + k;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jz[ jdx ] += val;
                     }
                 }
             }//i
 
         } // End for ipart
+
+    } // End for ipack
 
     } // end currentDepositionKernel
 
@@ -863,11 +853,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         const int    jdx = idx + j * z_size1;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jy [ jdx ] += val;
                     }
                 }
@@ -941,11 +927,7 @@ namespace acc {
                         const double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         const int    jdx = idx + k;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jz[ jdx ] += val;
                     }
                 }
@@ -982,11 +964,8 @@ namespace acc {
                        for( int j=0 ; j<5 ; j++ ) {
                            int idx = linindex2 + j*z_size2 + i*yz_size2;
                            int jdx = idx + k;
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-                           #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-                           #pragma acc atomic
-#endif
+
+                           SMILEI_ACCELERATOR_ATOMIC
                            rho[ jdx ] += charge_weight * Sx1[ipart_pack+i*packsize]*Sy1[ipart_pack+j*packsize]*Sz1[ipart_pack+k*packsize];
                        }//j
                    }//i
@@ -1020,7 +999,7 @@ namespace naive {
                                unsigned int y_dimension_bin_count,
                                unsigned int z_dimension_bin_count,
                                const double *__restrict__ invgf,
-                               const int    *__restrict__ iold,
+                               int    *__restrict__ iold,
                                const double *__restrict__ deltaold,
                                const unsigned int    number_of_particles,
                                double inv_cell_volume,
@@ -1651,12 +1630,7 @@ namespace naive {
                     for( int j=1 ; j<5 ; j++ ) {
                         const double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         const int    jdx = idx + j * z_size1;
-
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp atomic update
-#elif defined( SMILEI_OPENACC_MODE )
-    #pragma acc atomic
-#endif
+                        SMILEI_ACCELERATOR_ATOMIC
                         Jy [ jdx ] += val;
                     }
                 }
@@ -2177,7 +2151,7 @@ namespace hip {
                                             const double *__restrict__ device_particle_weight,
                                             const int *__restrict__ device_bin_index,
                                             const double *__restrict__ device_invgf_,
-                                            const int *__restrict__ device_iold,
+                                            int *__restrict__ device_iold,
                                             const double *__restrict__ device_deltaold_,
                                             ComputeFloat inv_cell_volume,
                                             ComputeFloat dx_inv,
@@ -2493,7 +2467,7 @@ namespace hip {
                                unsigned int y_dimension_bin_count,
                                unsigned int z_dimension_bin_count,
                                const double *__restrict__ host_invgf_,
-                               const int *__restrict__ host_iold,
+                               int *__restrict__ host_iold,
                                const double *__restrict__ host_deltaold_,
                                const unsigned int number_of_particles,
                                double inv_cell_volume,
@@ -2672,7 +2646,7 @@ currentDepositionKernel3D( double *__restrict__ host_Jx,
                            unsigned int y_dimension_bin_count,
                            unsigned int z_dimension_bin_count,
                            const double *__restrict__ host_invgf_,
-                           const int    *__restrict__ host_iold,
+                           int    *__restrict__ host_iold,
                            const double *__restrict__ host_deltaold_,
                            const unsigned int number_of_particles,
                            double inv_cell_volume,

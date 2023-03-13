@@ -22,7 +22,7 @@ namespace smilei {
 #elif defined( SMILEI_OPENACC_MODE )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
-    #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "omp atomic" )
+    #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "acc atomic" )
 #else
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
