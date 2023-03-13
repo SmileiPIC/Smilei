@@ -23,9 +23,9 @@
 
         #include "Tools.h"
         #include "gpu.h"
-    #elif defined( __CUDACC__ ) 
-        #include "Params.h"
-        #include "gpu.h"
+//    #elif defined( __CUDACC__ ) 
+//        #include "Params.h"
+//        #include "gpu.h"
     #elif defined( __HIP__ )
         #include <hip/hip_runtime.h>
 
@@ -72,8 +72,10 @@ namespace naive {
                                int    not_spectral )
     {
 
-    const unsigned int bin_count      = 1;
-    const int          nparts = host_bin_index[bin_count - 1];
+    //const unsigned int bin_count      = 1;
+    //const int          nparts = host_bin_index[bin_count - 1];
+
+    const unsigned int          nparts = number_of_particles;
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
@@ -352,8 +354,9 @@ namespace naive {
                                          int    not_spectral )
     {
 
-    const unsigned int bin_count      = 1;
-    const int          nparts = host_bin_index[bin_count - 1];
+    //const unsigned int bin_count      = 1;
+    //const int          nparts = host_bin_index[bin_count - 1];
+    const unsigned int          nparts = number_of_particles;
 
     // TODO(Etienne M): Implement a cuda/hip kernel and enable particle 3D sorting/binning
 
