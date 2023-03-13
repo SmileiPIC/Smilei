@@ -70,6 +70,7 @@ currentDepositionKernel3D( double *__restrict__ Jx,
                          const double *__restrict__ invgf_,
                          const int *__restrict__ iold_,
                          const double *__restrict__ deltaold_,
+                         const unsigned int number_of_particles,
                          double inv_cell_volume,
                          double dx_inv,
                          double dy_inv,
@@ -105,6 +106,7 @@ currentAndDensityDepositionKernel3D( double *__restrict__ Jx,
                          const double *__restrict__ invgf_,
                          const int *__restrict__ iold_,
                          const double *__restrict__ deltaold_,
+                         const unsigned int number_of_particles,
                          double inv_cell_volume,
                          double dx_inv,
                          double dy_inv,
@@ -169,13 +171,13 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  particles.getPtrCharge(),
                                  particles.getPtrWeight(),
                                  particles.last_index.data(),
-                                 particles.deviceSize(),
                                  x_dimension_bin_count,
                                  y_dimension_bin_count,
                                  z_dimension_bin_count,
                                  invgf_,
                                  iold_,
                                  deltaold_,
+                                 particles.deviceSize(),
                                  inv_cell_volume,
                                  dx_inv,
                                  dy_inv,
@@ -242,13 +244,13 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  particles.getPtrCharge(),
                                  particles.getPtrWeight(),
                                  particles.last_index.data(),
-                                 particles.deviceSize(),
                                  x_dimension_bin_count,
                                  y_dimension_bin_count,
                                  z_dimension_bin_count,
                                  invgf_,
                                  iold_,
                                  deltaold_,
+                                 particles.deviceSize(),
                                  inv_cell_volume,
                                  dx_inv,
                                  dy_inv,
@@ -394,71 +396,52 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     Jz_                        = EMfields->Jz_->data();
     rho_                       = EMfields->rho_->data();
 
-    if( diag_flag ) {
-        // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
-        // - Pull everything we need from the GPU and compute on the host
-        // - Implement currentsAndDensity on GPU which means:
-        //      - The J<x>_s/Rho_s, if required by the diags must be on the GPU
-        //          -
-        //      - Rho_ must be on the GPU if species specific charge/current densities are not diagnosed
-        //
+    //if( diag_flag ) {
+    //    // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
+    //    // - Pull everything we need from the GPU and compute on the host
+    //    // - Implement currentsAndDensity on GPU which means:
+    //    //      - The J<x>_s/Rho_s, if required by the diags must be on the GPU
+    //    //          -
+    //    //      - Rho_ must be on the GPU if species specific charge/current densities are not diagnosed
+    //    //
 
-        // double *const b_Jx  = EMfields->Jx_s[ispec] ? &( *EMfields->Jx_s[ispec] )( 0 ) : Jx_;
-        // double *const b_Jy  = EMfields->Jy_s[ispec] ? &( *EMfields->Jy_s[ispec] )( 0 ) : Jy_;
-        // double *const b_Jz  = EMfields->Jz_s[ispec] ? &( *EMfields->Jz_s[ispec] )( 0 ) : Jz_;
-        // double *const b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : rho_;
 
-        double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
-        unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
+    //    double *const __restrict__ b_Jx  = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
+    //    unsigned int Jx_size             = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
 
-        double *const __restrict__ b_Jy  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
-        unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
+    //    double *const __restrict__ b_Jy  = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
+    //    unsigned int Jy_size             = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
 
-        double *const __restrict__ b_Jz  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
-        unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
+    //    double *const __restrict__ b_Jz  = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
+    //    unsigned int Jz_size             = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
 
-        double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
-        unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
+    //    double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
+    //    unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
 
-        // for( int ipart = istart; ipart < iend; ipart++ ) {
-        //     currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
-        //                         particles, ipart,
-        //                         invgf[ipart], &iold[ipart], &delta[ipart],
-        //                         inv_cell_volume,
-        //                         dx_inv_, dy_inv_,
-        //                         dx_ov_dt_, dy_ov_dt_,
-        //                         i_domain_begin_, j_domain_begin_,
-        //                         nprimy,
-        //                         one_third,
-        //                         pxr );
-        // }
+    //    //std::cerr << 
+    //    //	" number of bins: " << particles.last_index.size()
+    //    //	<< " number of bins: " << particles.deviceSize()
+    //    //	<< std::endl;
 
-        // Does not compute Rho !
+    //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
+    //              Jx_size, Jy_size, Jz_size, rho_size,
+    //              particles, x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
+    //              invgf.data(), iold.data(), delta.data(),
+    //              inv_cell_volume,
+    //              dx_inv_, dy_inv_, dz_inv_,
+    //              dx_ov_dt_, dy_ov_dt_, dz_ov_dt_,
+    //              i_domain_begin_, j_domain_begin_, k_domain_begin_,
+    //              nprimy, nprimz,
+    //              one_third,
+    //              not_spectral );
 
-        //std::cerr << 
-	//	" number of bins: " << particles.last_index.size()
-	//	<< " number of bins: " << particles.deviceSize()
-	//	<< std::endl;
+    //   //double sum = EMfields->rho_s[ispec]->normOnDevice();
+    //   //double sum_Jxs = EMfields->Jx_s[ispec]->normOnDevice();
+    //   //double sum_Jx = EMfields->Jx_->normOnDevice();
+    //   //double sum2 = EMfields->rho_s[ispec]->norm();
+    //   //std::cerr << sum << " " << sum2 << " " << sum_Jxs << " " << sum_Jx << std::endl;
 
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
-                  Jx_size, Jy_size, Jz_size, rho_size,
-                  particles, x_dimension_bin_count_, y_dimension_bin_count_, z_dimension_bin_count_,
-                  invgf.data(), iold.data(), delta.data(),
-                  inv_cell_volume,
-                  dx_inv_, dy_inv_, dz_inv_,
-                  dx_ov_dt_, dy_ov_dt_, dz_ov_dt_,
-                  i_domain_begin_, j_domain_begin_, k_domain_begin_,
-                  nprimy, nprimz,
-                  one_third,
-                  not_spectral );
-
-       //double sum = EMfields->rho_s[ispec]->normOnDevice();
-       //double sum_Jxs = EMfields->Jx_s[ispec]->normOnDevice();
-       //double sum_Jx = EMfields->Jx_->normOnDevice();
-       //double sum2 = EMfields->rho_s[ispec]->norm();
-       //std::cerr << sum << " " << sum2 << " " << sum_Jxs << " " << sum_Jx << std::endl;
-
-    } else {
+    //} else {
         // If no field diagnostics this timestep, then the projection is done directly on the total arrays
         if( is_spectral ) {
             ERROR( "Not implemented on GPU" );
@@ -487,7 +470,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                       one_third,
                       not_spectral );
         }
-    }
+    //}
 }
 
 void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields,
