@@ -1816,32 +1816,32 @@ void ElectroMagnAM::compute_B_m_fromEB()
                 }
             }
             
-            //else if( imode==1 ) {
-            //    for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-            //        ( *Bl_m[imode] )( i, j )= -( *Bl_m[imode] )( i, j+1 );
-            //    }
-            //    
-            //    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
-            //        ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
-            //                           +			dt_ov_dl*( ( *Et )( i, j )-( *Et )( i-1, j ) );
-            //        ( *Br )( i, 1 )=( *Br )( i, 3 );
-            //    }
-            //    for( unsigned int i=0; i<nl_d ; i++ ) {
-            //        ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
-            //    }
-            //    
-            //} else { // modes > 1
-            //    for( unsigned int  i=0 ; i<nl_p; i++ ) {
-            //        ( *Bl )( i, j )= -( *Bl )( i, j+1 );
-            //    }
-            //    for( unsigned int i=0 ; i<nl_d; i++ ) {
-            //        ( *Br )( i, j )= 0;
-            //        ( *Br )( i, 1 )=-( *Br )( i, 3 );
-            //    }
-            //    for( unsigned int  i=0 ; i<nl_d ; i++ ) {
-            //        ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
-            //    }
-            //}
+            else if( imode==1 ) {
+                for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                    ( *Bl_m[imode] )( i, j )= -( *Bl_m[imode] )( i, j+1 );
+                }
+                
+                //for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+                //    ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
+                //                       +			dt_ov_dl*( ( *Et )( i, j )-( *Et )( i-1, j ) );
+                //    ( *Br )( i, 1 )=( *Br )( i, 3 );
+                //}
+                //for( unsigned int i=0; i<nl_d ; i++ ) {
+                //    ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
+                //}
+                
+            } else { // modes > 1
+                for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                    ( *Bl_m[imode] )( i, j )= -( *Bl_m[imode] )( i, j+1 );
+                }
+                //for( unsigned int i=0 ; i<nl_d; i++ ) {
+                //    ( *Br )( i, j )= 0;
+                //    ( *Br )( i, 1 )=-( *Br )( i, 3 );
+                //}
+                //for( unsigned int  i=0 ; i<nl_d ; i++ ) {
+                //    ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
+                //}
+            }
         }
 
     }
