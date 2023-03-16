@@ -1747,7 +1747,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     int Nmodes = El_.size();
     
     Field *field;
-    
+ 
     for( int imode=0; imode<Nmodes; imode++ ) {
         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
             string name = LowerCase( extfield->field );
@@ -1763,6 +1763,12 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = Br_[imode];
             } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
                 field = Bt_[imode];
+            } else if( Bl_m[imode] && name==LowerCase( Bl_m[imode]->name ) ) {
+                field = Bl_m[imode];
+            } else if( Br_m[imode] && name==LowerCase( Br_m[imode]->name ) ) {
+                field = Br_m[imode];
+            } else if( Bt_m[imode] && name==LowerCase( Bt_m[imode]->name ) ) {
+                field = Bt_m[imode];
             } else {
                 field = NULL;
             }
@@ -1771,12 +1777,78 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 applyExternalField( field, extfield->profile, patch );
             };
         }
-        Bl_m[imode]->copyFrom( Bl_[imode] );
-        Br_m[imode]->copyFrom( Br_[imode] );
-        Bt_m[imode]->copyFrom( Bt_[imode] );
     }
-    
+    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
+    //emAM->compute_B_m_fromEB();
 }
+
+//Computes B_m (at t = n) from E (at t= n) and B (at t = n+1/2) using the standard Maxwell-Faraday Stencil and boundary conditions
+void ElectroMagnAM::compute_B_m_fromEB()
+{
+    const unsigned int nl_p = dimPrim[0];
+    const unsigned int nl_d = dimDual[0];
+    const unsigned int nr_p = dimPrim[1];
+    const unsigned int nr_d = dimDual[1];
+    const unsigned int Nmodes = El_.size();
+
+    for( unsigned int imode=0 ; imode<Nmodes ; imode++ ) {
+        for( unsigned int i=0 ; i<nl_p;  i++ ) {
+            #pragma omp simd
+            for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
+                (*Bl_m[imode])( i, j ) = 0.5 * ( 2.*(*Bl_[imode])( i, j ) + dt_ov_dr/( j_glob_+j-0.5) * ( ( double )( j+j_glob_ )*(*Et_[imode])( i, j ) - ( double )( j+j_glob_-1. )* (*Et_[imode])( i, j-1 ) + Icpx*( double )imode*(*Er_[imode])( i, j ) ) );
+            }
+        }
+
+        // On axis conditions
+        if( isYmin ) {
+            unsigned int j=2;
+            if( imode==0 ) {
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                    ( *Br_m[imode] )( i, j )=0;
+                    ( *Br_m[imode] )( i, 1 )=-( *Br_m[imode] )( i, 3 );
+                }
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                    //( *Bt )( i, j+1 )= ( *Bt )( i, j+2 )/9.;
+                    ( *Bt_m[imode] )( i, j )= -( *Bt_m[imode] )( i, j+1 );
+                }
+                for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                    ( *Bl_m[imode] )( i, j )= ( *Bl_m[imode] )( i, j+1 );
+                }
+            }
+            
+            //else if( imode==1 ) {
+            //    for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+            //        ( *Bl_m[imode] )( i, j )= -( *Bl_m[imode] )( i, j+1 );
+            //    }
+            //    
+            //    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+            //        ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
+            //                           +			dt_ov_dl*( ( *Et )( i, j )-( *Et )( i-1, j ) );
+            //        ( *Br )( i, 1 )=( *Br )( i, 3 );
+            //    }
+            //    for( unsigned int i=0; i<nl_d ; i++ ) {
+            //        ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
+            //    }
+            //    
+            //} else { // modes > 1
+            //    for( unsigned int  i=0 ; i<nl_p; i++ ) {
+            //        ( *Bl )( i, j )= -( *Bl )( i, j+1 );
+            //    }
+            //    for( unsigned int i=0 ; i<nl_d; i++ ) {
+            //        ( *Br )( i, j )= 0;
+            //        ( *Br )( i, 1 )=-( *Br )( i, 3 );
+            //    }
+            //    for( unsigned int  i=0 ; i<nl_d ; i++ ) {
+            //        ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
+            //    }
+            //}
+        }
+
+    }
+
+}
+
+
 
 void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
 {
@@ -1810,9 +1882,6 @@ void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
 				applyPrescribedField( field, extfield->profile, patch, time );
 			}
         }
-        Bl_m[imode]->copyFrom( Bl_[imode] );
-        Br_m[imode]->copyFrom( Br_[imode] );
-        Bt_m[imode]->copyFrom( Bt_[imode] );
     }
 
 }

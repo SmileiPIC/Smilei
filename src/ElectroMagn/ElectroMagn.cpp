@@ -471,9 +471,6 @@ void ElectroMagn::applyExternalFields( Patch *patch )
             applyExternalField( allFields[extfield->index], extfield->profile, patch );
         }
     }
-    Bx_m->copyFrom( Bx_ );
-    By_m->copyFrom( By_ );
-    Bz_m->copyFrom( Bz_ );
 }
 
 void ElectroMagn::saveExternalFields( Patch *patch )
