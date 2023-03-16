@@ -131,7 +131,7 @@ ExternalField(
     profile = constant(B*field_vector[2])
 )
 ExternalField(
-    field = "Bx_",
+    field = "Bx_m",
     profile = constant(B*field_vector[0])
 )
 
