@@ -18,7 +18,7 @@
 class ParticlesFactory
 {
 public:
-    static Particles *create( Params &params )
+    static Particles *create( Params &/* params */ )
     {
         Particles *particles = NULL;
         
