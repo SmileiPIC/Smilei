@@ -2,7 +2,9 @@
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 
+#if defined(__HIP__)
 #include <hip/hip_runtime.h>
+#endif
 
 #include "Params.h"
 #include "gpu.h"
