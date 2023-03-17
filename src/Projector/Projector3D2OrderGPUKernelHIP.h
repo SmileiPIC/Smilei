@@ -591,6 +591,9 @@ namespace hip {
             }
         }
 
+
+   } // namespace kernel
+
 static inline void
     currentDepositionKernel3D( double *__restrict__ host_Jx,
                                double *__restrict__ host_Jy,
@@ -677,13 +680,8 @@ static inline void
     }
 
     static inline void
-    densityDepositionKernel3D( double *__restrict__ host_Jx,
-                                         double *__restrict__ host_Jy,
-                                         double *__restrict__ host_Jz,
+    densityDepositionKernel3D( 
                                          double *__restrict__ host_rho,
-                                         int Jx_size,
-                                         int Jy_size,
-                                         int Jz_size,
                                          int rho_size,
                                          const double *__restrict__ device_particle_position_x,
                                          const double *__restrict__ device_particle_position_y,
@@ -740,11 +738,8 @@ static inline void
                             0, // Shared memory
                             0, // Stream
                             // Kernel arguments
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_rho ),
-                            Jx_size, Jy_size, Jz_size, rho_size,
+                            rho_size,
                             device_particle_position_x,
                             device_particle_position_y,
                             device_particle_position_z,
@@ -763,6 +758,7 @@ static inline void
 
         checkHIPErrors( ::hipDeviceSynchronize() );
     }
+
 
 } // namespace hip
 
