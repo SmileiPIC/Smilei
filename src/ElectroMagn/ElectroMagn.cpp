@@ -466,11 +466,25 @@ double ElectroMagn::computeEnergy()
 
 void ElectroMagn::applyExternalFields( Patch *patch )
 {
+    std::vector<bool> input, copy;
+    input = {false, false, false};
+    copy = {true, true, true};
     for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
             applyExternalField( allFields[extfield->index], extfield->profile, patch );
         }
+        string name = LowerCase( extfield->field );
+        if( name==LowerCase( Bx_->name ) ) input[0] = true; 
+        if( name==LowerCase( By_->name ) ) input[1] = true; 
+        if( name==LowerCase( Bz_->name ) ) input[2] = true; 
+        if( name==LowerCase( Bx_m->name ) ) copy[0] = false; 
+        if( name==LowerCase( By_m->name ) ) copy[1] = false; 
+        if( name==LowerCase( Bz_m->name ) ) copy[2] = false; 
     }
+    // These should be additions and not copies. In case B is given but not B_m, B is assumed constant over time and B_m=B.
+    if (input[0] && copy[0]) Bx_m->copyFrom( Bx_ );
+    if (input[1] && copy[1]) By_m->copyFrom( By_ );
+    if (input[2] && copy[2]) Bz_m->copyFrom( Bz_ );
 }
 
 void ElectroMagn::saveExternalFields( Patch *patch )

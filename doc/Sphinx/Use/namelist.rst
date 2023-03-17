@@ -1934,8 +1934,8 @@ the evolution of the laser), the polarization of the laser plays no role in the 
 External fields
 ^^^^^^^^^^^^^^^
 
-An constant external field can be applied over the whole box
-(at the beginning of the simulation) using an ``ExternalField`` block::
+An initial field can be applied over the whole box
+at the beginning of the simulation using the ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1955,7 +1955,8 @@ An constant external field can be applied over the whole box
   Refer to :doc:`/Understand/units` to understand the units of this field.
 
   Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
-  It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation..
+  It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation.
+  If ``B_m`` is omited, it is assumed that the magnetic field is constant and that ``B_m=B``.
 
 
 ----

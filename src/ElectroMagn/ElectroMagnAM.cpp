@@ -1745,10 +1745,13 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
 #ifdef _TODO_AM
 #endif
     int Nmodes = El_.size();
+    std::vector<bool> input, copy;
     
     Field *field;
  
     for( int imode=0; imode<Nmodes; imode++ ) {
+        input = {false, false, false};
+        copy = {true, true, true};
         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
             string name = LowerCase( extfield->field );
             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
@@ -1759,16 +1762,22 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = Et_[imode];
             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
                 field = Bl_[imode];
+                input[0] = true;
             } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
                 field = Br_[imode];
+                input[1] = true;
             } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
                 field = Bt_[imode];
+                input[2] = true;
             } else if( Bl_m[imode] && name==LowerCase( Bl_m[imode]->name ) ) {
                 field = Bl_m[imode];
+                copy[0] = false;
             } else if( Br_m[imode] && name==LowerCase( Br_m[imode]->name ) ) {
                 field = Br_m[imode];
+                copy[1] = false;
             } else if( Bt_m[imode] && name==LowerCase( Bt_m[imode]->name ) ) {
                 field = Bt_m[imode];
+                copy[2] = false;
             } else {
                 field = NULL;
             }
@@ -1777,6 +1786,10 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 applyExternalField( field, extfield->profile, patch );
             };
         }
+        // These should be additions and not copies. In case B is given but not B_m, B is assumed constant over time and B_m=B.
+        if (input[0] && copy[0]) Bl_m[imode]->copyFrom( Bl_[imode] );
+        if (input[1] && copy[1]) Br_m[imode]->copyFrom( Br_[imode] );
+        if (input[2] && copy[2]) Bt_m[imode]->copyFrom( Bt_[imode] );
     }
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
     //emAM->compute_B_m_fromEB();
