@@ -1944,7 +1944,8 @@ An constant external field can be applied over the whole box
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``, ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"`` .
+  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
+  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"`` .
 
 .. py:data:: profile
 
@@ -1952,6 +1953,7 @@ An constant external field can be applied over the whole box
 
   The initial spatial profile of the applied field.
   Refer to :doc:`/Understand/units` to understand the units of this field.
+
   Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
   It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation..
 

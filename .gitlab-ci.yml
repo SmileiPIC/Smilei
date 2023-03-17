@@ -15,7 +15,6 @@ install:
   stage: install
   only:
     - develop
-    - proper_external_Bm
 
   script:
     # Force workdir cleaning in case of retried
@@ -34,7 +33,6 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -46,7 +44,6 @@ runQuick:
   stage: run_quick
   only:
     - develop
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -58,8 +55,6 @@ run1D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -72,8 +67,6 @@ run2D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -88,8 +81,6 @@ run3D:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -105,8 +96,6 @@ runAM:
   stage: run_default
   only:
     - develop
-    - proper_external_Bm
-    - detailed_timers_update
 
   script:
     # Move in test dir
@@ -118,8 +107,6 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     # Move in test dir
@@ -131,8 +118,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -143,8 +128,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -154,8 +137,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -166,8 +147,6 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -178,8 +157,6 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -190,8 +167,6 @@ compile_omptasks:
   stage: compile_omptasks
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -202,8 +177,6 @@ run_omptasks:
   stage: run_omptasks
   only:
     - develop
-    - detailed_timers_update
-    - proper_external_Bm
     
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
