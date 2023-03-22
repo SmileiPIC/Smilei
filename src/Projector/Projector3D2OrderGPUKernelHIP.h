@@ -2,7 +2,7 @@
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 
-#if defined(__HIP__)
+#if defined( __HIP__ )
 #include <hip/hip_runtime.h>
 #endif
 
@@ -11,6 +11,9 @@
 
 namespace hip {
     namespace detail {
+
+// For HIP compiler
+#if defined( __HIP__ )
         static inline void
         checkErrors( ::hipError_t an_error_code,
                      const char  *file_name,
@@ -28,6 +31,27 @@ namespace hip {
         do {                                                          \
             detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
         } while( 0 )
+
+// For NVIDIA compiler
+#elif defined( __CUDA_ARCH__ )
+        static inline void
+        checkErrors( ::cudaError_t an_error_code,
+                     const char  *file_name,
+                     int          line )
+        {
+            if( an_error_code != ::cudaError_t::cudaSuccess ) {
+                std::cout << "HIP error at " << file_name << ":" << line
+                          << " -> " << ::cudaGetErrorString( an_error_code ) << std::endl;
+                std::exit( EXIT_FAILURE );
+            }
+        }
+    } // namespace detail
+
+    #define checkHIPErrors( an_expression )                           \
+        do {                                                          \
+            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
+        } while( 0 )
+#endif
 
     namespace kernel {
         namespace atomic {
@@ -650,7 +674,9 @@ static inline void
 
         auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
-        hipLaunchKernelGGL( KernelFunction,
+#if defined ( __HIP__ )
+        hipLaunchKernelGGL
+                          ( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
                             0, // Shared memory
@@ -677,6 +703,36 @@ static inline void
                             not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
+
+#elif defined ( __CUDA_ARCH__ )
+        KernelFunction <<< 
+                            kGridDimension,
+                            kBlockDimension
+                       //     0, // Shared memory
+                       //     0, // Stream
+                       >>>
+                       (
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
+                            Jx_size, Jy_size, Jz_size,
+                            device_particle_position_x,
+                            device_particle_position_y,
+                            device_particle_position_z,
+                            device_particle_charge,
+                            device_particle_weight,
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
+                            inv_cell_volume,
+                            dx_inv, dy_inv, dz_inv,
+                            dx_ov_dt, dy_ov_dt, dz_ov_dt,
+                            i_domain_begin, j_domain_begin, k_domain_begin,
+                            nprimy, nprimz,
+                            not_spectral
+                       );
+#endif
     }
 
     static inline void
@@ -732,6 +788,7 @@ static inline void
 
         auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 
+#if defined ( __HIP__ )
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
@@ -757,6 +814,33 @@ static inline void
                             not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
+#elif defined ( __CUDA_ARCH__ )
+        KernelFunction <<<
+                            kGridDimension,
+                            kBlockDimension,
+                            0, // Shared memory
+                            0 // Stream
+                       >>>
+                       (
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_rho ),
+                            rho_size,
+                            device_particle_position_x,
+                            device_particle_position_y,
+                            device_particle_position_z,
+                            device_particle_charge,
+                            device_particle_weight,
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
+                            inv_cell_volume,
+                            dx_inv, dy_inv, dz_inv,
+                            dx_ov_dt, dy_ov_dt, dz_ov_dt,
+                            i_domain_begin, j_domain_begin, k_domain_begin,
+                            nprimy, nprimz,
+                            not_spectral
+                       );
+#endif
     }
 
 

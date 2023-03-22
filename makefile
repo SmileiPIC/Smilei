@@ -250,6 +250,7 @@ ifneq (,$(call parse_config,gpu_nvidia))
     # endif
 
 	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_MODE
+        #ACCELERATOR_GPU_KERNEL_FLAGS += --define-macro SMILEI_ACCELERATOR_MODE
         ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_MODE
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
