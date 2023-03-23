@@ -388,10 +388,16 @@ public:
     //!
     //! returns -1 if not implemented, this'll disable the sorting/binning
     //!
+
+#if defined ( __CUDA_ARCH__ )
+    __device__ static constexpr int
+#else
     static constexpr int
+#endif
+
     getGPUClusterWidth( int dimension_id )
     {
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    //#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
             case 1:
                 return -1;
@@ -402,16 +408,20 @@ public:
             default:
                 return -1;
         }
-    #else
-        return -1;
-    #endif
+    //#else
+    //    return -1;
+    //#endif
     }
 
     //! Computes:
     //! getGPUClusterWidth( dimension_id ) +
     //! 2 * getGPUClusterGhostCellBorderWidth( interpolation_order )
     //!
+#if defined ( __CUDA_ARCH__ )
+    __device__ static constexpr int
+#else
     static constexpr int
+#endif
     getGPUClusterWithGhostCellWidth( int dimension_id, int interpolation_order )
     {
         return getGPUClusterWidth( dimension_id ) +
@@ -430,7 +440,7 @@ public:
     static constexpr int
     getGPUClusterGhostCellBorderWidth( int interpolation_order )
     {
-    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    //#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         constexpr int kGPUClusterGhostCellCount[3]{ -1,
                                                     // Order 2 ghost cells on each "sides" of the dimension
                                                     2 * 2 +
@@ -446,9 +456,9 @@ public:
                                                         1,
                                                     -1 };
         return kGPUClusterGhostCellCount[interpolation_order - 1];
-    #else
-        return -1;
-    #endif
+    //#else
+    //    return -1;
+    //#endif
     }
 
     //! Calls getGPUClusterGhostCellBorderWidth( interpolation_order )
@@ -461,7 +471,11 @@ public:
     //!
     int getGPUClusterCellVolume() const;
 
+#if defined ( __CUDA_ARCH__ )
+    __device__ static constexpr int
+#else
     static constexpr int
+#endif
     getGPUInterpolationClusterCellVolume( int dimension_id, int interpolation_order )
     {
         const int kClusterWidth = getGPUClusterWithGhostCellWidth( dimension_id, interpolation_order );

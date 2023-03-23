@@ -9,7 +9,7 @@
 #include "Params.h"
 #include "gpu.h"
 
-namespace hip {
+//namespace hip {
     namespace detail {
 
 // For HIP compiler
@@ -25,13 +25,6 @@ namespace hip {
                 std::exit( EXIT_FAILURE );
             }
         }
-    } // namespace detail
-
-    #define checkHIPErrors( an_expression )                           \
-        do {                                                          \
-            detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
-        } while( 0 )
-
 // For NVIDIA compiler
 #elif defined( __CUDA_ARCH__ )
         static inline void
@@ -45,13 +38,14 @@ namespace hip {
                 std::exit( EXIT_FAILURE );
             }
         }
+#endif
+
     } // namespace detail
 
     #define checkHIPErrors( an_expression )                           \
         do {                                                          \
             detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
         } while( 0 )
-#endif
 
     namespace kernel {
         namespace atomic {
@@ -149,16 +143,23 @@ namespace hip {
             const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y * gridDim.z + y_cluster_coordinate * gridDim.z + z_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
             const unsigned int thread_index_offset           = threadIdx.x;
 
+#if defined ( __CUDA_ARCH__ )
+// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
+// because it causes a compilation issue : nvcc error   : 'ptxas' died due to signal 8 (Floating point exception)
+// Ideally, we should have here the same implementation between CUDA and HIP 
+            // The unit is the cell
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * 4;
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * 4;
+            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * 4;
+
+            const int    GPUClusterWithGCWidth = 4 /* GPUClusterWidth */ + 5 /* GPUClusterGhostCellBorderWidth  */ ;
+#else
             // The unit is the cell
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
-#if defined ( __HIP__ ) 
-
             const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-#elif defined ( __ CUDA_ARCH__ ) 
-            const int    GPUClusterWithGCWidth = 0;
 #endif
             ComputeFloat one_third             = 1. / 3.;
 
@@ -169,7 +170,11 @@ namespace hip {
             // NOTE: We use a bit to much LDS. For Jx, the first row could be
             // discarded, for Jy we could remove the first column.
 
+#if defined ( __CUDA_ARCH__ )
+            static constexpr unsigned int kFieldScratchSpaceSize = 9*9*9;
+#else
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+#endif
 
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
@@ -376,7 +381,7 @@ namespace hip {
                         }
                     }
                 }
-            }
+            } //end particule loop
 
             __syncthreads();
 
@@ -595,7 +600,7 @@ namespace hip {
                         }
                     }
                 }
-            }
+            } //end loop particule
 
             __syncthreads();
 
@@ -849,6 +854,6 @@ static inline void
     }
 
 
-} // namespace hip
+//} // namespace hip
 
 #endif

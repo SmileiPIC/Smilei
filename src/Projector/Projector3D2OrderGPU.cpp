@@ -52,7 +52,7 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 extern "C" void
-currentDepositionKernel3D( double *__restrict__ Jx,
+currentDeposition3DOnDevice( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,
                          int Jx_size,
@@ -86,7 +86,7 @@ currentDepositionKernel3D( double *__restrict__ Jx,
                          int    not_spectral );
 
 extern "C" void
-densityDepositionKernel3D( 
+densityDeposition3DOnDevice( 
                          double *__restrict__ rho,
                          int rho_size,
                          const double *__restrict__ particle_position_x,
@@ -151,7 +151,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int not_spectral )
     {
 #if defined( SMILEI_ACCELERATOR_MODE )
-        currentDepositionKernel3D( Jx,
+        currentDeposition3DOnDevice( Jx,
                                  Jy,
                                  Jz,
                                  Jx_size,
@@ -216,7 +216,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int not_spectral )
     {
 #if defined( SMILEI_ACCELERATOR_MODE )
-        densityDepositionKernel3D( 
+        densityDeposition3DOnDevice( 
                                  rho,
                                  rho_size,
                                  particles.getPtrPosition( 0 ),
