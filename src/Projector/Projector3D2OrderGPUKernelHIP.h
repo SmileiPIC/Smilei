@@ -3,7 +3,7 @@
 #if defined( SMILEI_ACCELERATOR_MODE )
 
 #if defined( __HIP__ )
-#include <hip/hip_runtime.h>
+    #include <hip/hip_runtime.h>
 #endif
 
 #include "Params.h"
@@ -143,24 +143,24 @@
             const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y * gridDim.z + y_cluster_coordinate * gridDim.z + z_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
             const unsigned int thread_index_offset           = threadIdx.x;
 
-#if defined ( __CUDA_ARCH__ )
-// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
-// because it causes a compilation issue : nvcc error   : 'ptxas' died due to signal 8 (Floating point exception)
-// Ideally, we should have here the same implementation between CUDA and HIP 
-            // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * 4;
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * 4;
-            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * 4;
-
-            const int    GPUClusterWithGCWidth = 4 /* GPUClusterWidth */ + 5 /* GPUClusterGhostCellBorderWidth  */ ;
-#else
+//#if defined ( __CUDA_ARCH__ )
+//// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
+//// because it causes a compilation issue : nvcc error   : 'ptxas' died due to signal 8 (Floating point exception)
+//// Ideally, we should have here the same implementation between CUDA and HIP 
+//            // The unit is the cell
+//            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * 4;
+//            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * 4;
+//            const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * 4;
+//
+//            const int    GPUClusterWithGCWidth = 4 /* GPUClusterWidth */ + 5 /* GPUClusterGhostCellBorderWidth  */ ;
+//#else
             // The unit is the cell
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
             const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-#endif
+//#endif
             ComputeFloat one_third             = 1. / 3.;
 
             // NOTE: We gain from the particles not being sorted inside a
@@ -170,11 +170,11 @@
             // NOTE: We use a bit to much LDS. For Jx, the first row could be
             // discarded, for Jy we could remove the first column.
 
-#if defined ( __CUDA_ARCH__ )
-            static constexpr unsigned int kFieldScratchSpaceSize = 9*9*9;
-#else
+//#if defined ( __CUDA_ARCH__ )
+//            static constexpr unsigned int kFieldScratchSpaceSize = 9*9*9;
+//#else
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-#endif
+//#endif
 
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
@@ -742,6 +742,7 @@ static inline void
                             nprimy, nprimz,
                             not_spectral
                        );
+        checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
     }
 
@@ -850,6 +851,7 @@ static inline void
                             nprimy, nprimz,
                             not_spectral
                        );
+        checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
     }
 

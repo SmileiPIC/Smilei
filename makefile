@@ -368,6 +368,10 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS0) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
+$(BUILD_DIR)/src/Projector/Projector3D2OrderGPUKernel.o : src/Projector/Projector3D2OrderGPUKernel.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(THRUSTCXX) $(ACCELERATOR_GPU_KERNEL_FLAGS) -x cu -c $< -o $@
+
 #$(BUILD_DIR)src/Radiation/RadiationNiel.o: src/Radiation/RadiationNiel.cpp
 #	@echo "SPECIAL COMPILATION FOR $<"
 #	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@

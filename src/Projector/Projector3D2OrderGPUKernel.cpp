@@ -13,6 +13,7 @@
     //! .cpp instead of .cu for the HIP. The preprocessor and the Smilei
     //! makefile will take care of the rest.
     //!
+
     #if defined( __HIP__ ) || defined (__CUDA_ARCH__)
     // HIP compiler support enabled (for .cu files)
     #else
@@ -34,18 +35,14 @@
     //     #include "gpu.h"
     // #endif
 
-    #if defined( __HIP__ )
+    #if defined( __HIP__ ) || defined( __CUDA_ARCH__ )
 
-    #include "Projector3D2OrderGPUKernelHIP.h"
-
-    #elif defined( __CUDA_ARCH__ )
-
-    #include "Projector3D2OrderGPUKernelHIP.h"
+        #include "Projector3D2OrderGPUKernelHIP.h"
 
     #else
 
-    // #include "Projector3D2OrderGPUKernelAcc.h"
-    #include "Projector3D2OrderGPUKernelNaive.h"
+        // #include "Projector3D2OrderGPUKernelAcc.h"
+        #include "Projector3D2OrderGPUKernelNaive.h"
 
     #endif
 
@@ -85,11 +82,11 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                            int    nprimz,
                            int    not_spectral )
 {
-    //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    //acc:: // the naive, OMP version serves as a reference along with the CPU version
-    //#else
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+    acc:: // the naive, OMP version serves as a reference along with the CPU version
+    #else
     //hip::
-    //#endif
+    #endif
         currentDepositionKernel3D( host_Jx, host_Jy, host_Jz,
                                    Jx_size, Jy_size, Jz_size,
                                    device_particle_position_x, 
@@ -147,11 +144,11 @@ densityDeposition3DOnDevice(
                                      int    nprimz,
                                      int    not_spectral )
 {
-    //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    //acc:: // the naive, OMP version serves as a reference along with the CPU version
-    //#else
+    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+    acc:: // the naive, OMP version serves as a reference along with the CPU version
+    #else
     //hip::
-    //#endif
+    #endif
         densityDepositionKernel3D( host_rho,
                                     rho_size,
                                     device_particle_position_x, 
