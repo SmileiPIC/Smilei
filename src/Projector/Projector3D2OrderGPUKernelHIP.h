@@ -47,7 +47,7 @@
             detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
         } while( 0 )
 
-    namespace kernel {
+    //namespace kernel {
         namespace atomic {
             namespace LDS {
                 __device__ void
@@ -626,7 +626,7 @@
         }
 
 
-   } // namespace kernel
+   //} // namespace kernel
 
 static inline void
     currentDepositionKernel3D( double *__restrict__ host_Jx,
@@ -683,7 +683,7 @@ static inline void
         // using ReductionFloat = double;
 
         // auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-        auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2;
+        auto KernelFunction = /*kernel::*/ DepositCurrentDensity_3D_Order2;
 
 #if defined ( __HIP__ )
         hipLaunchKernelGGL
@@ -716,7 +716,7 @@ static inline void
         checkHIPErrors( ::hipDeviceSynchronize() );
 
 #elif defined ( __CUDA_ARCH__ )
-        KernelFunction <<< 
+        DepositCurrentDensity_3D_Order2 <<< 
                             kGridDimension,
                             kBlockDimension
                        //     0, // Shared memory
@@ -799,7 +799,7 @@ static inline void
         // using ReductionFloat = double;
 
         // auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-        auto KernelFunction = kernel::DepositDensity_3D_Order2;
+        auto KernelFunction = /*kernel::*/DepositDensity_3D_Order2;
 
 #if defined ( __HIP__ )
         hipLaunchKernelGGL( KernelFunction,
@@ -828,7 +828,7 @@ static inline void
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined ( __CUDA_ARCH__ )
-        KernelFunction <<<
+        DepositDensity_3D_Order2 <<<
                             kGridDimension,
                             kBlockDimension,
                             0, // Shared memory
