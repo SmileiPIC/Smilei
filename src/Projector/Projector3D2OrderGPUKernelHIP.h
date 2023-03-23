@@ -154,7 +154,12 @@ namespace hip {
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
+#if defined ( __HIP__ ) 
+
             const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+#elif defined ( __ CUDA_ARCH__ ) 
+            const int    GPUClusterWithGCWidth = 0;
+#endif
             ComputeFloat one_third             = 1. / 3.;
 
             // NOTE: We gain from the particles not being sorted inside a

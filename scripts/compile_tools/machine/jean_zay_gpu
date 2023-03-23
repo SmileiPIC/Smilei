@@ -14,7 +14,8 @@ ACCELERATOR_GPU_FLAGS += -w
 ACCELERATOR_GPU_FLAGS += -ta=tesla:cc70 -std=c++14  -lcurand 
 # ACCELERATOR_GPU_FLAGS += --expt-relaxed-constexpr
 
-ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 --expt-relaxed-constexpr $(DIRS:%=-I%)
+ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+ACCELERATOR_GPU_KERNEL_FLAGS += --expt-relaxed-constexpr
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
 ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_70
 ACCELERATOR_GPU_FLAGS        += -Minfo=accel # what is offloaded/copied
