@@ -28,7 +28,7 @@
     //     #include "gpu.h"
     // #endif
 
-//    #if defined( __HIP__ ) || defined( __CUDA_ARCH__ )
+//    #if defined( __HIP__ ) || defined(  __NVCC__ )
 
         #include "Projector3D2OrderGPUKernelHIP.h"
 

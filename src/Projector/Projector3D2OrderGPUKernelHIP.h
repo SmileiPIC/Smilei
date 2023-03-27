@@ -26,7 +26,7 @@
             }
         }
 // For NVIDIA compiler
-#elif defined( __CUDA_ARCH__ )
+#elif defined(  __NVCC__ )
         static inline void
         checkErrors( ::cudaError_t an_error_code,
                      const char  *file_name,
@@ -143,7 +143,7 @@
             const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y * gridDim.z + y_cluster_coordinate * gridDim.z + z_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
             const unsigned int thread_index_offset           = threadIdx.x;
 
-//#if defined ( __CUDA_ARCH__ )
+//#if defined (  __NVCC__ )
 //// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
 //// because it causes a compilation issue : nvcc error   : 'ptxas' died due to signal 8 (Floating point exception)
 //// Ideally, we should have here the same implementation between CUDA and HIP 
@@ -170,7 +170,7 @@
             // NOTE: We use a bit to much LDS. For Jx, the first row could be
             // discarded, for Jy we could remove the first column.
 
-//#if defined ( __CUDA_ARCH__ )
+//#if defined (  __NVCC__ )
 //            static constexpr unsigned int kFieldScratchSpaceSize = 9*9*9;
 //#else
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 3 /* 3D */, 2 /* 2nd order interpolation */ );
@@ -715,7 +715,7 @@ static inline void
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 
-#elif defined ( __CUDA_ARCH__ )
+#elif defined ( __NVCC__ )
         DepositCurrentDensity_3D_Order2 <<< 
                             kGridDimension,
                             kBlockDimension
@@ -829,7 +829,7 @@ static inline void
                             not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
-#elif defined ( __CUDA_ARCH__ )
+#elif defined (  __NVCC__ )
         DepositDensity_3D_Order2 <<<
                             kGridDimension,
                             kBlockDimension,
