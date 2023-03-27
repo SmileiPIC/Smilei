@@ -9,7 +9,7 @@
 #include "Params.h"
 #include "gpu.h"
 
-//namespace hip {
+namespace cuda {
     namespace detail {
 
 // For HIP compiler
@@ -47,7 +47,7 @@
             detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
         } while( 0 )
 
-    //namespace kernel {
+    namespace kernel {
         namespace atomic {
             namespace LDS {
                 __device__ void
@@ -94,9 +94,9 @@
             } // namespace GDS
         }     // namespace atomic
 
-        // template <typename ComputeFloat,
-        //           typename ReductionFloat,
-        //           std::size_t kWorkgroupSize>
+        template <typename ComputeFloat,
+                  typename ReductionFloat,
+                  std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
         DepositCurrentDensity_3D_Order2( double *__restrict__ device_Jx,
@@ -114,7 +114,7 @@
                                          const double *__restrict__ device_invgf_,
                                          int *__restrict__ device_iold,
                                          const double *__restrict__ device_deltaold_,
-                                         /*ComputeFloat*/ double inv_cell_volume,
+                                         ComputeFloat inv_cell_volume,
                                          /*ComputeFloat*/ double dx_inv,
                                          /*ComputeFloat*/ double dy_inv,
                                          /*ComputeFloat*/ double dz_inv,
@@ -409,9 +409,9 @@
         } // end DepositCurrent
 
 
-        // template <typename ComputeFloat,
-        //           typename ReductionFloat,
-        //           std::size_t kWorkgroupSize>
+        template <typename ComputeFloat,
+                  typename ReductionFloat,
+                  std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
         DepositDensity_3D_Order2( 
@@ -426,13 +426,13 @@
                                             const double *__restrict__ device_invgf_,
                                             int *__restrict__ device_iold,
                                             const double *__restrict__ device_deltaold_,
-                                            /*ComputeFloat*/ double inv_cell_volume,
-                                            /*ComputeFloat*/ double dx_inv,
-                                            /*ComputeFloat*/ double dy_inv,
-                                            /*ComputeFloat*/ double dz_inv,
-                                            /*ComputeFloat*/ double dx_ov_dt,
-                                            /*ComputeFloat*/ double dy_ov_dt,
-                                            /*ComputeFloat*/ double dz_ov_dt,
+                                            ComputeFloat inv_cell_volume,
+                                            ComputeFloat dx_inv,
+                                            ComputeFloat dy_inv,
+                                            ComputeFloat dz_inv,
+                                            ComputeFloat dx_ov_dt,
+                                            ComputeFloat dy_ov_dt,
+                                            ComputeFloat dz_ov_dt,
                                             int          i_domain_begin,
                                             int          j_domain_begin,
                                             int          k_domain_begin,
@@ -461,7 +461,7 @@
             const unsigned int global_z_scratch_space_coordinate_offset = z_cluster_coordinate * Params::getGPUClusterWidth( 3 /* 3D */ );
 
             const int    GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
-            /*ComputeFloat*/ double one_third             = 1. / 3.;
+            ComputeFloat one_third             = 1. / 3.;
 
             // NOTE: We gain from the particles not being sorted inside a
             // cluster because it reduces the bank conflicts one gets when
@@ -482,7 +482,7 @@
             for( unsigned int field_index = thread_index_offset;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
-                rho_scratch_space[field_index] = static_cast</*ReductionFloat*/ double>( 0.0 );
+                rho_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
             }
 
             __syncthreads();
@@ -498,7 +498,7 @@
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {
-                const /*ComputeFloat*/ double invgf                  = static_cast</*ComputeFloat*/ double>( device_invgf_[particle_index] );
+                const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
 
@@ -626,7 +626,7 @@
         }
 
 
-   //} // namespace kernel
+   } // namespace kernel
 
 static inline void
     currentDepositionKernel3D( double *__restrict__ host_Jx,
@@ -679,8 +679,8 @@ static inline void
         // operations) can lead to drastic performance improvement.
         // One just need to assign 'float' to ReductionFloat.
         //
-        // using ComputeFloat   = double;
-        // using ReductionFloat = double;
+        using ComputeFloat   = double;
+        using ReductionFloat = double;
 
 
 #if defined ( __HIP__ )
@@ -716,7 +716,8 @@ static inline void
         checkHIPErrors( ::hipDeviceSynchronize() );
 
 #elif defined ( __NVCC__ )
-        DepositCurrentDensity_3D_Order2 <<< 
+        auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        KernelFunction <<< 
                             kGridDimension,
                             kBlockDimension
                        //     0, // Shared memory
@@ -795,8 +796,8 @@ static inline void
         // operations) can lead to drastic performance improvement.
         // One just need to assign 'float' to ReductionFloat.
         //
-        // using ComputeFloat   = double;
-        // using ReductionFloat = double;
+        using ComputeFloat   = double;
+        using ReductionFloat = double;
 
 
 #if defined ( __HIP__ )
@@ -830,7 +831,8 @@ static inline void
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-        DepositDensity_3D_Order2 <<<
+        auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        KernelFunction <<<
                             kGridDimension,
                             kBlockDimension,
                             0, // Shared memory
@@ -860,6 +862,6 @@ static inline void
     }
 
 
-//} // namespace hip
+} // namespace cuda
 
 #endif

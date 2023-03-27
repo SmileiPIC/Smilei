@@ -16,29 +16,24 @@
 
     // #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //     #include <cmath>
-
     //     #include "Tools.h"
-    //     #include "gpu.h"
-    // // #elif defined( __CUDACC__ ) 
-    // //     #include "gpu.h"
-    // #elif defined( __HIP__ )
-    //     #include <hip/hip_runtime.h>
-
-    //     #include "Params.h"
     //     #include "gpu.h"
     // #endif
 
-//    #if defined( __HIP__ ) || defined(  __NVCC__ )
+    #if defined( __HIP__ ) || defined(  __NVCC__ )
 
         #include "Projector3D2OrderGPUKernelHIP.h"
 
-//    #else
+    #else
 
-//        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
-//        // #include "Projector3D2OrderGPUKernelAcc.h"
+        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
+        // #include "Projector3D2OrderGPUKernelAcc.h"
 //        #include "Projector3D2OrderGPUKernelNaive.h"
+        #include <cmath>
+        #include "Tools.h"
+        #include "gpu.h"
 
-//    #endif
+    #endif
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
@@ -77,9 +72,9 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                            int    not_spectral )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    acc:: // the naive, OMP version serves as a reference along with the CPU version
+    acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
     #else
-    //hip::
+    cuda:: // CUDA (HIP or NVIDIA) version
     #endif
         currentDepositionKernel3D( host_Jx, host_Jy, host_Jz,
                                    Jx_size, Jy_size, Jz_size,
@@ -139,9 +134,9 @@ densityDeposition3DOnDevice(
                                      int    not_spectral )
 {
     #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    acc:: // the naive, OMP version serves as a reference along with the CPU version
+    acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
     #else
-    //hip::
+    cuda:: // CUDA (HIP or NVIDIA) verison
     #endif
         densityDepositionKernel3D( host_rho,
                                     rho_size,
