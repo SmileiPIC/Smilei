@@ -14,19 +14,12 @@
     //! makefile will take care of the rest.
     //!
 
-    #if defined( __HIP__ ) || defined (__CUDA_ARCH__)
-    // HIP compiler support enabled (for .cu files)
-    #else
-        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
-    #endif
-
     // #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //     #include <cmath>
 
     //     #include "Tools.h"
     //     #include "gpu.h"
     // // #elif defined( __CUDACC__ ) 
-    // //     #include "Params.h"
     // //     #include "gpu.h"
     // #elif defined( __HIP__ )
     //     #include <hip/hip_runtime.h>
@@ -35,16 +28,17 @@
     //     #include "gpu.h"
     // #endif
 
-    #if defined( __HIP__ ) || defined( __CUDA_ARCH__ )
+//    #if defined( __HIP__ ) || defined( __CUDA_ARCH__ )
 
         #include "Projector3D2OrderGPUKernelHIP.h"
 
-    #else
+//    #else
 
-        // #include "Projector3D2OrderGPUKernelAcc.h"
-        #include "Projector3D2OrderGPUKernelNaive.h"
+//        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
+//        // #include "Projector3D2OrderGPUKernelAcc.h"
+//        #include "Projector3D2OrderGPUKernelNaive.h"
 
-    #endif
+//    #endif
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
