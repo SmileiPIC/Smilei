@@ -18,5 +18,5 @@ set -x
 export CICCFLAG="--c++14"
 
 #export PSM2_CUDA=0
-
+make clean
 make -j 10 machine="jean_zay_gpu" config="gpu_nvidia noopenmp detailed_timers"
