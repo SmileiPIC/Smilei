@@ -682,10 +682,10 @@ static inline void
         // using ComputeFloat   = double;
         // using ReductionFloat = double;
 
-        // auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-        auto KernelFunction = /*kernel::*/ DepositCurrentDensity_3D_Order2;
 
 #if defined ( __HIP__ )
+        auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        //auto KernelFunction = /*kernel::*/ DepositCurrentDensity_3D_Order2;
         hipLaunchKernelGGL
                           ( KernelFunction,
                             kGridDimension,
@@ -798,10 +798,12 @@ static inline void
         // using ComputeFloat   = double;
         // using ReductionFloat = double;
 
-        // auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-        auto KernelFunction = /*kernel::*/DepositDensity_3D_Order2;
 
 #if defined ( __HIP__ )
+
+        auto KernelFunction = kernel::DepositDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        //auto KernelFunction = /*kernel::*/DepositDensity_3D_Order2;
+        
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
