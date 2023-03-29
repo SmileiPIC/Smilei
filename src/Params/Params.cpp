@@ -1234,7 +1234,7 @@ void Params::compute()
 
 
     // Verify that cluster_width_ divides patch_size_[0] or patch_size_[n] in GPU mode
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     const int kClusterWidth = getGPUClusterWidth();
 
     if( kClusterWidth < 0 ) {
@@ -1844,7 +1844,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) //|| defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
 
 bool Params::isGPUParticleBinningAvailable() const
 {

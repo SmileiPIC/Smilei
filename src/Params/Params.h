@@ -389,7 +389,7 @@ public:
     //! returns -1 if not implemented, this'll disable the sorting/binning
     //!
 
-#if defined ( __CUDA_ARCH__ )
+#if defined (  __NVCC__ )
     __device__ static constexpr int
 #else
     static constexpr int
@@ -417,7 +417,7 @@ public:
     //! getGPUClusterWidth( dimension_id ) +
     //! 2 * getGPUClusterGhostCellBorderWidth( interpolation_order )
     //!
-#if defined ( __CUDA_ARCH__ )
+#if defined (  __NVCC__ )
     __device__ static constexpr int
 #else
     static constexpr int
@@ -471,7 +471,7 @@ public:
     //!
     int getGPUClusterCellVolume() const;
 
-#if defined ( __CUDA_ARCH__ )
+#if defined (  __NVCC__ )
     __device__ static constexpr int
 #else
     static constexpr int
