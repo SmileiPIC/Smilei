@@ -155,7 +155,8 @@ namespace smilei {
 
                 return const_cast<void*>( a_device_pointer );
 #elif defined( SMILEI_OPENACC_MODE )
-                return const_cast<void*>( ::acc_deviceptr( a_host_pointer ) );
+                //return const_cast<void*>( ::acc_deviceptr( a_host_pointer ) );
+                return ::acc_deviceptr( const_cast<void*>(a_host_pointer) ) ;
 #else
                 return const_cast<void*>( a_host_pointer );
 #endif
