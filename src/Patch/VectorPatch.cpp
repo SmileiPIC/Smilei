@@ -301,7 +301,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::initialParticleSorting( Params &params )
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE)
     // Initially I wanted to control the GPU particle sorting/bin initialization
     // here. In the end it was put in initializeDataOnDevice which is more
     // meaningful.
@@ -4953,7 +4953,7 @@ VectorPatch::copyParticlesFromDeviceToHost()
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
         for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 species( ipatch, ispec )->particles->copyFromDeviceToHost();
-#if defined ( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined ( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_ACCELERATOR_MODE )
                 species( ipatch, ispec )->particles->setHostBinIndex();
 #endif
                 // std::cerr 
