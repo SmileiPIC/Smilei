@@ -33,7 +33,7 @@ namespace cuda {
                      int          line )
         {
             if( an_error_code != ::cudaError_t::cudaSuccess ) {
-                std::cout << "HIP error at " << file_name << ":" << line
+                std::cout << "CUDA error at " << file_name << ":" << line
                           << " -> " << ::cudaGetErrorString( an_error_code ) << std::endl;
                 std::exit( EXIT_FAILURE );
             }
@@ -719,9 +719,9 @@ static inline void
         auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
         KernelFunction <<< 
                             kGridDimension,
-                            kBlockDimension
-                       //     0, // Shared memory
-                       //     0, // Stream
+                            kBlockDimension,
+                            0, // Shared memory
+                            0 // Stream
                        >>>
                        (
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
