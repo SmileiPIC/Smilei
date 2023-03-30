@@ -11,7 +11,7 @@ THRUSTCXX = nvcc
 
 ACCELERATOR_GPU_FLAGS += -w
 # IDRIS config for curand
-ACCELERATOR_GPU_FLAGS += -tp=zen3 -ta=tesla:cc80 -std=c++14  -lcurand 
+ACCELERATOR_GPU_FLAGS += -tp=zen3 -ta=tesla:cc80 -std=c++14  -lcurand -Mcudalib=curand
 # ACCELERATOR_GPU_FLAGS += --expt-relaxed-constexpr
 
 ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
@@ -30,5 +30,5 @@ ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_OPENACC_MODE
 # ACCELERATOR_GPU_KERNEL_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
 # LDFLAGS                      += -mp=gpu
 
-LDFLAGS += -ta=tesla:cc80 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
+LDFLAGS += -ta=tesla:cc80 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda -L/gpfslocalsys/cuda/11.2/lib64/
 CXXFLAGS +=  -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
