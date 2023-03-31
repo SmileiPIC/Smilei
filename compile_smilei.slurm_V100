@@ -10,7 +10,7 @@
 #SBATCH --error=error         # Name of the error file
 
 # Smilei specific env
-source /gpfswork/rech/raf/commun/hackathon_nvidia_idris_2023/scripts/smilei_gpu_env.sh
+source /gpfswork/rech/raf/commun/hackathon_nvidia_idris_2023/scripts/smilei_gpu_env_23.1.sh
 
 # echo des commandes lancees
 set -x

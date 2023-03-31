@@ -197,9 +197,8 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
 #elif defined(SMILEI_OPENACC_MODE)
-    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
-
-const int RD = sizeof(this);
+    size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
+    size_t copy_size = sizeof(this);
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
                                  BLoc [first_index:interpolation_range_size],  \
                                  iold [first_index:interpolation_range_size],  \
@@ -213,22 +212,8 @@ const int RD = sizeof(this);
         deviceptr(position_x,                                                  \
                   position_y,                                                  \
                   position_z)                                                  \
-        copy(this[0:RD])
+        copy(this[0:copy_size])
 
-    //#pragma acc parallel present(ELoc [0:buffer_size],  \
-    //                             BLoc [0:buffer_size],  \
-    //                             iold [0:buffer_size],  \
-    //                             delta [0:buffer_size], \
-    //                             Ex3D [0:sizeofEx],                            \
-    //                             Ey3D [0:sizeofEy],                            \
-    //                             Ez3D [0:sizeofEz],                            \
-    //                             Bx3D [0:sizeofBx],                            \
-    //                             By3D [0:sizeofBy],                            \
-    //                             Bz3D [0:sizeofBz])                            \
-    //    copyin(d_inv_[0:3]) \
-    //    deviceptr(position_x,                                                  \
-    //              position_y,                                                  \
-    //              position_z)
     #pragma acc loop gang worker vector
 #endif
     for( int ipart=first_index ; ipart<last_index; ipart++ ) {
