@@ -197,8 +197,9 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
 #elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc enter data create(this)
+    #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
-    size_t copy_size = sizeof(this);
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
                                  BLoc [first_index:interpolation_range_size],  \
                                  iold [first_index:interpolation_range_size],  \
@@ -212,7 +213,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         deviceptr(position_x,                                                  \
                   position_y,                                                  \
                   position_z)                                                  \
-        copy(this[0:copy_size])
+        copyin(d_inv_[0:3])
 
     #pragma acc loop gang worker vector
 #endif
@@ -254,6 +255,9 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         delta[1*nparts+ipart] = delta_p[1];
         delta[2*nparts+ipart] = delta_p[2];
     }
+    #if defined(SMILEI_OPENACC_MODE)
+        #pragma acc exit data delete(this)
+    #endif
 }
 
 
