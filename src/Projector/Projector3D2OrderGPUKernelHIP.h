@@ -330,8 +330,26 @@ namespace cuda {
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
                 // Jx
+                    //j=0
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = crx_p * (                 
+                                                       static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[0]          )*Sz0[k]                              ) 
+                                                     +                           one_third  *   ( Sy1[0]          )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int jk_loc = ( ipo * GPUClusterWithGCWidth + jpo     ) * GPUClusterWithGCWidth + kpo + k;
+                        //i=1
+                        tmp_reduction -= ( Sx1[0]  ) * tmp;
+                        int loc = GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                        atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
 
-                for( unsigned int j = 0; j < 5; ++j ) {
+                        for( unsigned int i = 2; i < 5; ++i ) {
+                            tmp_reduction -= ( Sx1[i-1] - Sx0[i-2] ) * tmp;
+                            loc = i*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                            atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
+
+                for( unsigned int j = 1; j < 4; ++j ) {
                     for( unsigned int k = 0; k < 5; ++k ) {
                         ComputeFloat tmp = crx_p * (   Sy0[j]*Sz0[k] 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[j] - Sy0[j] )*Sz0[k] + ( Sz1[k] - Sz0[k] )*Sy0[j] ) 
@@ -350,6 +368,24 @@ namespace cuda {
                         }
                     }
                 }
+                    //j=4
+                    for( unsigned int k = 0; k < 5; ++k ) {
+                        ComputeFloat tmp = crx_p * (                 
+                                                       static_cast<ComputeFloat>( 0.5 )     * ( ( Sy1[4]          )*Sz0[k]                              ) 
+                                                     +                           one_third  *   ( Sy1[4]          )    *     ( Sz1[k] - Sz0[k] ) );
+                        ComputeFloat tmp_reduction{};
+                        const int jk_loc = ( ipo * GPUClusterWithGCWidth + jpo + 4 ) * GPUClusterWithGCWidth + kpo + k;
+                        //i=1
+                        tmp_reduction -= ( Sx1[0]  ) * tmp;
+                        int loc = GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                        atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+
+                        for( unsigned int i = 2; i < 5; ++i ) {
+                            tmp_reduction -= ( Sx1[i-1] - Sx0[i-2] ) * tmp;
+                            loc = i*GPUClusterWithGCWidth*GPUClusterWithGCWidth + jk_loc;
+                            atomic::LDS::AddNoReturn( &Jx_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
 
                 // Jy
                 //i=0
