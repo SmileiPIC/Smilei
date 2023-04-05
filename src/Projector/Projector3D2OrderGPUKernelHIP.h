@@ -445,7 +445,19 @@ namespace cuda {
                 // Jz
 
                 //i=0
-                    for( unsigned int j = 0; j < 5; ++j ) {
+                        //j=0
+                    for( unsigned int j = 0; j < 1; ++j ) {
+                        ComputeFloat tmp = crz_p * one_third  *  Sx1[0]   * Sy1[0];
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = ((     ipo ) * GPUClusterWithGCWidth + (jpo    )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
+
+                    for( unsigned int j = 1; j < 4; ++j ) {
                         ComputeFloat tmp = crz_p * (                 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[0]          )*Sy0[j]                              ) 
                                                      +                           one_third  *   ( Sx1[0]          )    *     ( Sy1[j] - Sy0[j] ) );
@@ -457,10 +469,34 @@ namespace cuda {
                             atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
+                        //j=4
+                    for( unsigned int j = 4; j < 5; ++j ) {
+                        ComputeFloat tmp = crz_p * one_third  *  Sx1[0]   * Sy1[4];
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = ((     ipo ) * GPUClusterWithGCWidth + (jpo + 4 )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                     }
 
                 for( unsigned int i = 1; i < 4; ++i ) {
-                //for( unsigned int i = 0; i < 5; ++i ) {
-                    for( unsigned int j = 0; j < 5; ++j ) {
+                        //j=0
+                    for( unsigned int j = 0; j < 1; ++j ) {
+                        ComputeFloat tmp = crz_p * (                      
+                                                     + static_cast<ComputeFloat>( 0.5 )     * (                                ( Sy1[0]          )*Sx0[i-1] ) 
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i-1] )    *     ( Sy1[0]          ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo    )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
+
+                    for( unsigned int j = 1; j < 4; ++j ) {
                         ComputeFloat tmp = crz_p * (   Sx0[i-1]*Sy0[j] 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[i] - Sx0[i-1] )*Sy0[j] + ( Sy1[j] - Sy0[j] )*Sx0[i-1] ) 
                                                      +                           one_third  *   ( Sx1[i] - Sx0[i-1] )    *     ( Sy1[j] - Sy0[j] ) );
@@ -472,9 +508,34 @@ namespace cuda {
                             atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
+                        //j=4
+                    for( unsigned int j = 4; j < 5; ++j ) {
+                        ComputeFloat tmp = crz_p * (                      
+                                                     + static_cast<ComputeFloat>( 0.5 )     * (                                ( Sy1[4]          )*Sx0[i-1] ) 
+                                                     +                           one_third  *   ( Sx1[i] - Sx0[i-1] )    *     ( Sy1[4]          ) );
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = (( i + ipo ) * GPUClusterWithGCWidth + (jpo + 4 )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
+ 
                 }
                 //i=4
-                    for( unsigned int j = 0; j < 5; ++j ) {
+                    //j=0
+                    for( unsigned int j = 0; j < 1; ++j ) {
+                        ComputeFloat tmp = crz_p *  one_third  * Sx1[4] *  Sy1[0] ;
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = ((  4 + ipo ) * GPUClusterWithGCWidth + (jpo    )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
+                    for( unsigned int j = 1; j < 4; ++j ) {
                         ComputeFloat tmp = crz_p * (                 
                                                      + static_cast<ComputeFloat>( 0.5 )     * ( ( Sx1[4]          )*Sy0[j]                              ) 
                                                      +                           one_third  *   ( Sx1[4]          )    *     ( Sy1[j] - Sy0[j] ) );
@@ -486,7 +547,17 @@ namespace cuda {
                             atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
                         }
                     }
-
+                    //j=4
+                    for( unsigned int j = 4; j < 5; ++j ) {
+                        ComputeFloat tmp = crz_p *  one_third  * Sx1[4] *  Sy1[4] ;
+                        ComputeFloat tmp_reduction{};
+                        const int ij_loc = ((  4 + ipo ) * GPUClusterWithGCWidth + (jpo + 4 )) * GPUClusterWithGCWidth + kpo;
+                        for( unsigned int k = 1; k < 5; ++k ) {
+                            tmp_reduction -= ( Sz1[k-1] - Sz0[k-1] ) * tmp;
+                            const int loc =  k  + ij_loc;
+                            atomic::LDS::AddNoReturn( &Jz_scratch_space[loc], static_cast<ReductionFloat>( tmp_reduction ) );
+                        }
+                    }
             } //end particule loop
 
             __syncthreads();
