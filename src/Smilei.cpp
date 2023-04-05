@@ -453,7 +453,7 @@ int main( int argc, char *argv[] )
 
             }
         }
-        else { //if ( params.multiple_decomposition ) {
+        else { //if ( params.multiple_decomposition ) 
             if( time_dual > params.time_fields_frozen ) {
                 if ( params.geometry != "AMcylindrical" )
                     DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers );

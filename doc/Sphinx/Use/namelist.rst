@@ -1934,8 +1934,8 @@ the evolution of the laser), the polarization of the laser plays no role in the 
 External fields
 ^^^^^^^^^^^^^^^
 
-An constant external field can be applied over the whole box
-(at the beginning of the simulation) using an ``ExternalField`` block::
+An initial field can be applied over the whole box
+at the beginning of the simulation using the ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1944,7 +1944,8 @@ An constant external field can be applied over the whole box
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
+  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"`` .
 
 .. py:data:: profile
 
@@ -1952,6 +1953,10 @@ An constant external field can be applied over the whole box
 
   The initial spatial profile of the applied field.
   Refer to :doc:`/Understand/units` to understand the units of this field.
+
+  Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
+  It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation.
+  If ``B_m`` is omited, it is assumed that the magnetic field is constant and that ``B_m=B``.
 
 
 ----

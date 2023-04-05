@@ -193,6 +193,8 @@ public:
     void applyExternalField( Field *, Profile *, Patch * ) override;
     //! Method used to impose one external time field
     void applyPrescribedField( Field *, Profile *, Patch *, double time ) override;
+    //! Method used to compute time centered B_m from E and B
+    void compute_B_m_fromEB();
     
     void initAntennas( Patch *patch, Params& params ) override;
     
