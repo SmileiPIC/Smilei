@@ -13,6 +13,10 @@ Partners
   :width: 6em
   :align: middle
 
+.. |lpgp| image:: /_static/labs/lpgp.png
+  :width: 6em
+  :align: middle
+
 .. |idris| image:: /_static/labs/idris.png
   :width: 6em
   :align: middle
@@ -51,7 +55,6 @@ Partners
 |            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
 |            |   * `Haithem Kallala <haithem.kallala@cea.fr>`_                                                         |
 |            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_                                                             |
-|            |   * `Francesco Massimo <francesco.massimo@cea.fr>`_                                                     |
 |            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
 
@@ -82,6 +85,16 @@ Partners
 |            |   * `Imen Zemzemi <zemzemi@llr.in2p3.fr>`_                                                              |
 |            |   * `Guillaume Bouchard <bouchard@llr.in2p3.fr>`_                                                       |
 +------------+---------------------------------------------------------------------------------------------------------+
+
+.. rst-class:: noborder
+
++------------+----------------------------------------------------------------------------------------------------------------------+
+| |lpgp|     |                                                                                                                      |
+|            |   `Laboratoire de Physique des Gaz et des Plasmas <https://www.lpgp.universite-paris-saclay.fr>`_ (LPGP), UMR 8578   |
++            +----------------------------------------------------------------------------------------------------------------------+
+|            |                                                                                                                      |
+|            |   * `Francesco Massimo <francesco.massimo@universite-paris-saclay.fr>`_                                              |
++------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. rst-class:: noborder
 
