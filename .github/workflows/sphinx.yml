@@ -2,8 +2,9 @@ name: docs
 
 on:
   push:
-    branches:    
-      - master
+    branches: [ master, develop, CI ]
+  pull_request:
+    branches: [ master, develop, CI ]
 
 jobs:
   build:
