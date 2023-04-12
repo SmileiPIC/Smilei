@@ -486,7 +486,7 @@ class Field(Diagnostic):
 		for prefix in [
 			"Bl_m_","Br_m_","Bt_m_","Bl_","Br_","Bt_","El_","Er_","Et_",
 			"Rho_","RhoOld_","Jl_","Jr_","Jt_",
-			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_","A_"
+			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_","A_","Aold_"
 		]:
 			if field.startswith(prefix):
 				fname = prefix[:-1]
