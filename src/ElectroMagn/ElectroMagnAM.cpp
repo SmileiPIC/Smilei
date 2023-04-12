@@ -18,6 +18,7 @@
 #include "Profile.h"
 
 #include "ElectroMagnBC.h"
+#include "LaserEnvelope.h"
 
 using namespace std;
 
@@ -287,6 +288,7 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch * )
             allFields.push_back( Env_Chi_ );
             allFields.push_back( Env_E_abs_ );
             allFields.push_back( Env_Ex_abs_ );
+            allFields.push_back( static_cast<LaserEnvelopeAM *>( envelope )->A_);
         }
     }
     

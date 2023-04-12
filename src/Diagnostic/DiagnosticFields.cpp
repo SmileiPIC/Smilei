@@ -191,7 +191,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
         string first_char = fields_names[ifield].substr( 0, 1 );
-        if( first_char == "E" ) {
+        if( first_char == "E" || first_char == "A" ) {
             field_type[ifield] = SMILEI_UNIT_EFIELD;
         } else if( first_char == "B" ) {
             field_type[ifield] = SMILEI_UNIT_BFIELD;
