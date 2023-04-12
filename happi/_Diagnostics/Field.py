@@ -274,7 +274,7 @@ class Field(Diagnostic):
 		# Build units
 		units = {}
 		for f in self._fieldname:
-			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r"}[f[0]] })
+			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r", "A":"E_r"}[f[0]] })
 		# Make total units and title
 		self._vunits = self.operation
 		self._title  = self.operation
@@ -486,7 +486,7 @@ class Field(Diagnostic):
 		for prefix in [
 			"Bl_m_","Br_m_","Bt_m_","Bl_","Br_","Bt_","El_","Er_","Et_",
 			"Rho_","RhoOld_","Jl_","Jr_","Jt_",
-			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_"
+			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_","A_"
 		]:
 			if field.startswith(prefix):
 				fname = prefix[:-1]
