@@ -37,7 +37,7 @@ LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch )
     
     
     A_  = new cField2D( dimPrim, "A_mode_1" );   //It's actually a mode 0 but the name is just a trick to fool Happi.
-    A0_ = new cField2D( dimPrim, "Aold_mode_0" );
+    A0_ = new cField2D( dimPrim, "Aold_mode_1" );
     
     Phi_         = new Field2D( dimPrim, "Phi_mode_0" );
     Phi_m        = new Field2D( dimPrim, "Phi_m_mode_0" );
@@ -58,7 +58,7 @@ LaserEnvelopeAM::LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, Params 
     : LaserEnvelope( envelope, patch, params, n_moved )
 {
     A_           = new cField2D( envelope->A_->dims_, "A_mode_1" );//It's actually a mode 0 but the name is just a trick to fool Happi.
-    A0_          = new cField2D( envelope->A0_->dims_, "Aold_mode_0" );
+    A0_          = new cField2D( envelope->A0_->dims_, "Aold_mode_1" );
     
     Phi_         = new Field2D( envelope->Phi_->dims_ );
     Phi_m        = new Field2D( envelope->Phi_m->dims_ );
