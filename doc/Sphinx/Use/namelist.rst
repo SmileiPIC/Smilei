@@ -2572,8 +2572,8 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
 
 
-.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
-          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
+.. Note:: In a given `DiagFields`, all fields must be of the same kind: either real or complex. Therefore To write these last three envelope real fields in ``"AMcylindrical"`` geometry,
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs", "Env_Chi"]``.
 
 .. py:data:: subgrid
 
