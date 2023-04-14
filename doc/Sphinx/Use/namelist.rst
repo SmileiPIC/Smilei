@@ -1945,7 +1945,7 @@ at the beginning of the simulation using the ``ExternalField`` block::
 .. py:data:: field
 
   Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
-  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"`` .
+  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
 
 .. py:data:: profile
 
@@ -1957,6 +1957,10 @@ at the beginning of the simulation using the ``ExternalField`` block::
   Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
   It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation.
   If ``B_m`` is omited, it is assumed that the magnetic field is constant and that ``B_m=B``.
+
+  Note that in AM geometry all field names must be followed by the number ``"i"`` of the mode that is currently passed with the string ``"_mode_i"``. For instance ``"Er_mode_1"``.
+  In this geometry, an external envelope field can also be used. It needs to be initialized at times ``"t=0"`` in ``"A_mode_1"`` and ``"t=-dt"`` in ``"A0_mode_1"``.
+  The user must use the ``"_mode_1"`` suffix for these two fields because there is no other possible mode for them.
 
 
 ----
