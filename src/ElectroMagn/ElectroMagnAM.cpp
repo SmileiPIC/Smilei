@@ -1763,6 +1763,10 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = Er_[imode];
             } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
                 field = Et_[imode];
+            } else if( imode == 0 && static_cast<LaserEnvelopeAM *>( envelope )->A_ && name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A_->name ) ) {
+                field = static_cast<LaserEnvelopeAM *>( envelope )->A_ ;
+            } else if( imode == 0 && static_cast<LaserEnvelopeAM *>( envelope )->A0_ && name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A0_->name ) ) {
+                field = static_cast<LaserEnvelopeAM *>( envelope )->A0_ ;
             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
                 field = Bl_[imode];
                 input[0] = true;
