@@ -34,6 +34,14 @@ class Particle;
 class Params;
 class Patch;
 
+struct InterpolatedFields {
+    //! Tells whether interpolated fields are kept
+    std::vector<bool> keep_;
+    //! arrays of fields interpolated on the particle positions. The order is Ex, Ey, Ez, Bx, By, Bz
+    std::vector<std::vector<double>> F_;
+};
+
+
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
 //----------------------------------------------------------------------------------------------------------------------
@@ -123,7 +131,7 @@ public:
     //! Tells if old positions are kept (true) or not
     inline bool keepOldPositions() const
     {
-        return (Position_old.size() > 0);
+        return Position_old.size() > 0;
     }
 
     //! Copy particle iPart at the end of dest_parts
@@ -399,6 +407,8 @@ public:
 #endif
 
     Particle operator()( unsigned int iPart );
+    
+    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, size_t start, size_t n, size_t buffer_size );
 
     //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
     void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
@@ -453,31 +463,34 @@ public:
     // Parameters
     // partiles properties, respect type order : all double, all short, all unsigned int
 
-    //! array containing the particle position
+    //! array of particle positions
     std::vector< std::vector<double> > Position;
 
-    //! array containing the particle former (old) positions
+    //! array of particle former (old) positions
     std::vector< std::vector<double> >Position_old;
 
-    //! array containing the particle moments
+    //! array of particle momenta
     std::vector< std::vector<double> >  Momentum;
 
-    //! containing the particle weight: equivalent to a charge density
+    //! array of particle weights: equivalent to a density normalized to the number of macro-particles per cell
     std::vector<double> Weight;
 
-    //! containing the particle quantum parameter
+    //! array of particle quantum parameters
     std::vector<double> Chi;
 
-    //! Incremental optical depth for the Monte-Carlo process
+    //! array of optical depths for the Monte-Carlo process
     std::vector<double> Tau;
 
-    //! charge state of the particle (multiples of e>0)
+    //! array of particle charges
     std::vector<short> Charge;
 
-    //! Id of the particle
+    //! array of particle IDs
     std::vector<uint64_t> Id;
-
-    //! cell_keys of the particle
+    
+    //! arrays of fields interpolated at particle positions
+    InterpolatedFields * interpolated_fields_;
+    
+    //! array of particle cell keys (for sorting per cell)
     std::vector<int> cell_keys;
 
     // TEST PARTICLE PARAMETERS

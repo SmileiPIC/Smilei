@@ -45,3 +45,8 @@ precision = [2e-3, 0.01, 0.01, 1e-7, 1e-7, 1e-7, 2e-12, 2e-7, 1e-7, 1e-7, 1e-7, 
 for j, deposited_quantity in enumerate(S.namelist.quantities):
 	name = deposited_quantity if type(deposited_quantity) is str else "user_function"
 	Validate("Particle binning deposited_quantity "+name, S.ParticleBinning(i+j+1, timesteps=40).getData()[-1], precision[j])
+
+# CHECK THE RESULT OF keep_interpolated_fields
+Validate("keep_interpolated_fields Ex", S.ParticleBinning(34, timesteps=45).getData()[0], 0.001)
+Validate("keep_interpolated_fields Ey", S.ParticleBinning(35, timesteps=45).getData()[0], 0.001)
+Validate("keep_interpolated_fields Ez", S.ParticleBinning(36, timesteps=45).getData()[0], 0.001)

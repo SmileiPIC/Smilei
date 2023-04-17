@@ -110,6 +110,14 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 0, 0);
         // Interpolate the fields at the particle position
         Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread, particles->first_index[0] );
+        
+        // Copy interpolated fields to persistent buffers if requested
+        if( particles->interpolated_fields_ ) {
+            size_t start = particles->first_index[0];
+            size_t n = particles->last_index[particles->last_index.size()-1] - start;
+            particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, particles->last_index.back() );
+        }
+        
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 1, 0);
 
 #ifdef  __DETAILED_TIMERS
@@ -458,6 +466,14 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ),
                                    &( particles->last_index[last_cell_of_bin[ibin]] ),
                                    buffer_id, particles->first_index[0] );
+            
+            // Copy interpolated fields to persistent buffers if requested
+            if( particles->interpolated_fields_ ) {
+                size_t start = particles->first_index[first_cell_of_bin[ibin]];
+                size_t n = particles->last_index[last_cell_of_bin[ibin]] - start;
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, nparts_in_pack );
+            }
+            
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
 
 #ifdef  __DETAILED_TIMERS
