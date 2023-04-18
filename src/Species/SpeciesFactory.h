@@ -124,14 +124,14 @@ public:
                     LINK_NAMELIST + std::string("#radiation_model") );
             }
             // Simplify names & output
-            if( radiation_model == "monte-carlo" ) {
+            if( radiation_model == "monte-carlo" || radiation_model == "mc" ) {
                 radiation_model = "mc";
                 this_species->particles->has_Monte_Carlo_process = true;
                 MESSAGE( 2, "> Radiating species with the stochastic Monte-Carlo model" );
-            } else if( radiation_model == "landau-lifshitz" ) {
+            } else if( radiation_model == "landau-lifshitz" || radiation_model == "ll" ) {
                 radiation_model = "ll";
                 MESSAGE( 2, "> Radiating species with the classical Landau-Lifshitz radiating model" );
-            } else if( radiation_model == "corrected-landau-lifshitz" ) {
+            } else if( radiation_model == "corrected-landau-lifshitz" || radiation_model == "cll" ) {
                 radiation_model = "cll";
                 MESSAGE( 2, "> Radiating species with the quantum corrected Landau-Lifshitz radiating model" );
             } else if( radiation_model == "niel" ) {
