@@ -471,7 +471,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             if( particles->interpolated_fields_ ) {
                 size_t start = particles->first_index[first_cell_of_bin[ibin]];
                 size_t n = particles->last_index[last_cell_of_bin[ibin]] - start;
-                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, nparts_in_pack );
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), start, n, nparts_in_pack );
             }
             
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
