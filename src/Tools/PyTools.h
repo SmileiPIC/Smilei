@@ -461,7 +461,11 @@ public:
         }
         PyObject *inspect = PyImport_ImportModule( "inspect" );
         checkPyError();
+#if PY_MAJOR_VERSION < 3
         PyObject *tuple = PyObject_CallMethod( inspect, const_cast<char *>( "getargspec" ), const_cast<char *>( "(O)" ), obj );
+#else
+        PyObject *tuple = PyObject_CallMethod( inspect, const_cast<char *>( "getfullargspec" ), const_cast<char *>( "(O)" ), obj );
+#endif
         PyObject *arglist = PyTuple_GetItem( tuple, 0 ); // list of function arguments
         PyObject *vararg = PyTuple_GetItem( tuple, 1 ); // name of *args
         int nargs = PyObject_Size( arglist );
