@@ -1756,6 +1756,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
         input = {false, false, false};
         copy = {true, true, true};
         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+            field = NULL;
             string name = LowerCase( extfield->field );
             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
                 field = El_[imode];
@@ -1763,10 +1764,6 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = Er_[imode];
             } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
                 field = Et_[imode];
-            } else if( imode == 0 && static_cast<LaserEnvelopeAM *>( envelope )->A_ && name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A_->name ) ) {
-                field = static_cast<LaserEnvelopeAM *>( envelope )->A_ ;
-            } else if( imode == 0 && static_cast<LaserEnvelopeAM *>( envelope )->A0_ && name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A0_->name ) ) {
-                field = static_cast<LaserEnvelopeAM *>( envelope )->A0_ ;
             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
                 field = Bl_[imode];
                 input[0] = true;
@@ -1786,7 +1783,13 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = Bt_m[imode];
                 copy[2] = false;
             } else {
-                field = NULL;
+                if( imode == 0 && static_cast<LaserEnvelopeAM *>( envelope )){
+                    if( name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A_->name ) ) {
+                        field = static_cast<LaserEnvelopeAM *>( envelope )->A_ ;
+                    } else if( name==LowerCase(static_cast<LaserEnvelopeAM *>( envelope )->A0_->name ) ) {
+                        field = static_cast<LaserEnvelopeAM *>( envelope )->A0_ ;
+                    }
+                }
             }
             
             if( field ) {
