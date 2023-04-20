@@ -195,7 +195,8 @@ class Diagnostic(object):
 			The name of the requested axis.
 		timestep: int
 			The timestep at which the axis is obtained. Only matters in ParticleBinning,
-			Screen and RadiationSpectrum when `auto` axis limits are requested.
+			Screen and RadiationSpectrum when `auto` axis limits are requested; or in
+			Field when `moving=True`.
 
 		Returns:
 		--------
