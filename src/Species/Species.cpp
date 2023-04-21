@@ -602,14 +602,6 @@ void Species::dynamics( double time_dual,
 
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
-            
-            // Copy interpolated fields to persistent buffers if requested
-            if( particles->interpolated_fields_ ) {
-                size_t start = particles->first_index[ibin];
-                size_t n = particles->last_index[ibin] - start;
-                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, particles->numberOfParticles() );
-            }
-            
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
             patch->stopFineTimer(interpolation_timer_id_);
 
@@ -725,7 +717,14 @@ void Species::dynamics( double time_dual,
         // Push the particles and the photons
         ( *Push )( *particles, smpi, 0, particles->size(), ithread );
         //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
-
+        
+        // Copy interpolated fields to persistent buffers if requested
+        if( particles->interpolated_fields_ ) {
+            size_t start = 0;
+            size_t n = particles->size();
+            particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, particles->numberOfParticles() );
+        }
+        
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
         patch->stopFineTimer(1);
@@ -908,14 +907,6 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
-            
-            // Copy interpolated fields to persistent buffers if requested
-            if( particles->interpolated_fields_ ) {
-                size_t start = particles->first_index[ibin];
-                size_t n = particles->last_index[ibin] - start;
-                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), start, n, particles->last_index.back() );
-            }
-            
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
 
 #ifdef  __DETAILED_TIMERS
@@ -1102,6 +1093,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     // Push the particles and the photons
                     ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
                     //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+                    
+                    // Copy interpolated fields to persistent buffers if requested
+                    if( particles->interpolated_fields_ ) {
+                        size_t start = particles->first_index[ibin];
+                        size_t n = particles->last_index[ibin] - start;
+                        particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), start, n, particles->last_index.back() );
+                    }
+                    
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
