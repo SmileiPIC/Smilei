@@ -226,7 +226,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             if( particles->interpolated_fields_ ) {
                 size_t start = 0;
                 size_t n = particles->last_index.back();
-                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), start, n, n);
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), &( smpi->dynamics_invgf[ithread][start] ), start, n, n, params.timestep);
             }
             
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 1, 1);
@@ -681,6 +681,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 size_t start = particles->first_index[first_cell_of_bin[ibin]];
                 size_t n = particles->last_index[last_cell_of_bin[ibin]] - start;
                 size_t buffer_size = smpi->dynamics_invgf[buffer_id].size();
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), &( smpi->dynamics_invgf[buffer_id][start] ), start, n, buffer_size, params.timestep );
             }
             
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);

@@ -117,8 +117,8 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         }
         
         if( interpolated_fields_ ) {
-            for( size_t i = 0; i < interpolated_fields_->keep_.size(); i++ ) {
-                if( interpolated_fields_->keep_[i] ) {
+            for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+                if( interpolated_fields_->mode_[i] > 0 ) {
                     double_prop_.push_back( &(interpolated_fields_->F_[i]) );
                 }
             }
@@ -142,7 +142,7 @@ void Particles::initialize( unsigned int nParticles, Particles &part )
     
     if( part.interpolated_fields_ && ! interpolated_fields_ ) {
         interpolated_fields_ = new InterpolatedFields();
-        interpolated_fields_->keep_ = part.interpolated_fields_->keep_;
+        interpolated_fields_->mode_ = part.interpolated_fields_->mode_;
     }
     
     initialize( nParticles, part.Position.size(), part.Position_old.size() > 0 );
@@ -194,8 +194,8 @@ void Particles::reserve( unsigned int reserved_particles,
     cell_keys.reserve( reserved_particles );
     
     if( interpolated_fields_ ) {
-        for( size_t i = 0; i < interpolated_fields_->keep_.size(); i++ ) {
-            if( interpolated_fields_->keep_[i] ) {
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
                 interpolated_fields_->F_[i].reserve( reserved_particles );
             }
         }
@@ -259,9 +259,9 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
     cell_keys.resize( nParticles, 0. );
 
     if( interpolated_fields_ ) {
-        interpolated_fields_->F_.resize( interpolated_fields_->keep_.size() );
-        for( size_t i = 0; i < interpolated_fields_->keep_.size(); i++ ) {
-            if( interpolated_fields_->keep_[i] ) {
+        interpolated_fields_->F_.resize( interpolated_fields_->mode_.size() );
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
                 interpolated_fields_->F_[i].resize( nParticles, 0. );
             }
         }
@@ -458,8 +458,8 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
     }
     
     if( interpolated_fields_ ) {
-        for( size_t i = 0; i < interpolated_fields_->keep_.size(); i++ ) {
-            if( interpolated_fields_->keep_[i] ) {
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
                 interpolated_fields_->F_[i].push_back( 0. );
             }
         }
@@ -1247,15 +1247,24 @@ Particle Particles::operator()( unsigned int iPart )
     return  Particle( *this, iPart );
 }
 
-void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, size_t start, size_t n, size_t buffer_size ) {
+void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double *invgfbuffer, size_t start, size_t n, size_t buffer_size, double dt ) {
     vector<double*> buffers = { 
         Ebuffer, Ebuffer + buffer_size, Ebuffer + 2*buffer_size, // Ex, Ey, Ez
         Bbuffer, Bbuffer + buffer_size, Bbuffer + 2*buffer_size  // Bx, By, Bz
     };
-    for( size_t i = 0; i < interpolated_fields_->keep_.size(); i++ ) {
-        if( interpolated_fields_->keep_[i] ) {
-            interpolated_fields_->F_[i].resize( numberOfParticles() );
-            copy( buffers[i], buffers[i] + n,  &( interpolated_fields_->F_[i][start] ) );
+    for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+        if( interpolated_fields_->mode_[i] > 0 ) {
+            interpolated_fields_->F_[i].resize( numberOfParticles(), 0. );
+            if( i < 6 ) { // E or B fields
+                copy( buffers[i], buffers[i] + n,  &( interpolated_fields_->F_[i][start] ) );
+            } else { // work Wx, Wy or Wz (accumulated over time)
+                short  * q = Charge.data();
+                double * p = Momentum[i-6].data();
+                double * E = buffers[i-6];
+                for( size_t ip = 0; ip < n; ip++ ) {
+                    interpolated_fields_->F_[i][start+ip] += dt * invgfbuffer[ip] * p[ip] * q[ip] * E[ip];
+                }
+            }
         }
     }
 }

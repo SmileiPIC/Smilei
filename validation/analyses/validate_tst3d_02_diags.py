@@ -50,3 +50,6 @@ for j, deposited_quantity in enumerate(S.namelist.quantities):
 Validate("keep_interpolated_fields Ex", S.ParticleBinning(34, timesteps=45).getData()[0], 0.001)
 Validate("keep_interpolated_fields Ey", S.ParticleBinning(35, timesteps=45).getData()[0], 0.001)
 Validate("keep_interpolated_fields Ez", S.ParticleBinning(36, timesteps=45).getData()[0], 0.001)
+Validate("keep_interpolated_fields Wx", S.ParticleBinning(37, timesteps=45).getData()[0], 1e-8)
+Validate("keep_interpolated_fields Wy", S.ParticleBinning(38, timesteps=45).getData()[0], 1e-8)
+Validate("keep_interpolated_fields Wz", S.ParticleBinning(39, timesteps=45).getData()[0], 1e-8)

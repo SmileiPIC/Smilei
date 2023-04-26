@@ -935,9 +935,9 @@ public:
         // Get the list of interpolated fields that are kept
         std::vector<std::string> keep_interpolated_fields;
         if( PyTools::extractV( "keep_interpolated_fields", keep_interpolated_fields, "Species", ispec ) ) {
-            std::vector<std::string> list = {"Ex", "Ey", "Ez", "Bx", "By", "Bz"};
+            std::vector<std::string> list = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"};
             this_species->particles->interpolated_fields_ = new InterpolatedFields();
-            this_species->particles->interpolated_fields_->keep_.resize( list.size(), false );
+            this_species->particles->interpolated_fields_->mode_.resize( list.size(), 0 );
             this_species->particles->interpolated_fields_->F_.resize( list.size() );
             for( auto s : keep_interpolated_fields ) {
                 auto it = std::find( list.begin(), list.end(), s );
@@ -946,7 +946,7 @@ public:
                     LINK_NAMELIST + std::string("#species") );
                 }
                 size_t i = std::distance( list.begin(), it );
-                this_species->particles->interpolated_fields_->keep_[i] = true;
+                this_species->particles->interpolated_fields_->mode_[i] = ( s.at(0) == 'W' ) ? 2 : 1;
             }
         }
         
@@ -1086,7 +1086,7 @@ public:
         
         if( species->particles->interpolated_fields_ ) {
             new_species->particles->interpolated_fields_ = new InterpolatedFields();
-            new_species->particles->interpolated_fields_->keep_ = species->particles->interpolated_fields_->keep_;
+            new_species->particles->interpolated_fields_->mode_ = species->particles->interpolated_fields_->mode_;
         }
         
         return new_species;

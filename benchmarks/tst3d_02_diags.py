@@ -95,15 +95,15 @@ Species(
 	position_initialization = "centered",
 	momentum_initialization = "cold",
 	particles_per_cell = 1,
-	mass = 1.0,
-	charge = 0.,
+	mass = 100000.0,
+	charge = 1.,
 	number_density = lambda x,y,z: 0.001 * ((abs(y-L0/2)<L0/200) * (abs(z-L0/2)<L0/200)),
 	boundary_conditions = [
 		["periodic", "periodic"],
 		["periodic", "periodic"],
 		["periodic", "periodic"],
 	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez"],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
 )
 
 
@@ -199,6 +199,27 @@ DiagParticleBinning(
 
 DiagParticleBinning(
 	deposited_quantity = lambda particles: particles.Ez,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wx,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wy,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wz,
 	every = 45,
 	species = ["test2"],
 	axes = [["x" , 0., Main.grid_length[0], 100]]

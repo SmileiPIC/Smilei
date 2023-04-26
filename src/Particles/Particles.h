@@ -35,9 +35,9 @@ class Params;
 class Patch;
 
 struct InterpolatedFields {
-    //! Tells whether interpolated fields are kept
-    std::vector<bool> keep_;
-    //! arrays of fields interpolated on the particle positions. The order is Ex, Ey, Ez, Bx, By, Bz
+    //! Tells the way each interpolated field is treated: 0 = not kept, 1 = kept, 2 = accumulated
+    std::vector<int> mode_;
+    //! arrays of fields interpolated on the particle positions. The order is Ex, Ey, Ez, Bx, By, Bz, Wx, Wy, Wz
     std::vector<std::vector<double>> F_;
 };
 
@@ -408,7 +408,7 @@ public:
 
     Particle operator()( unsigned int iPart );
     
-    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, size_t start, size_t n, size_t buffer_size );
+    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double *invgfbuffer, size_t start, size_t n, size_t buffer_size, double dt );
 
     //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
     void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )

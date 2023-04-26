@@ -1104,11 +1104,15 @@ Each species has to be defined in a ``Species`` block::
   
   :default: ``[]``
   
-  A list of fields that should be stored in memory for all particles of this species for the
-  duration of the timestep, instead of being located in temporary buffers. These fields can then
+  A list of interpolated fields that should be stored in memory for all particles of this species,
+  instead of being located in temporary buffers. These fields can then
   be accessed in some diagnostics such as :ref:`particle binning <DiagParticleBinning>` or
   :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
   ``"Bx"``, ``"By"`` and ``"Bz"``.
+  
+  Additionally, the work done by each component of the electric field is available as
+  ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
+  are accumulated over time.
 
 ----
 
