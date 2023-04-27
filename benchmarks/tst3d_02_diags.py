@@ -224,3 +224,9 @@ DiagParticleBinning(
 	species = ["test2"],
 	axes = [["x" , 0., Main.grid_length[0], 100]]
 )
+
+DiagTrackParticles(
+	species = "test2",
+	every = 5,
+	attributes = ["x", "Ex", "Ey", "Ez", "Wx", "Wy", "Wz"]
+)

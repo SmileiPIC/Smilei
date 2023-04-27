@@ -46,10 +46,19 @@ for j, deposited_quantity in enumerate(S.namelist.quantities):
 	name = deposited_quantity if type(deposited_quantity) is str else "user_function"
 	Validate("Particle binning deposited_quantity "+name, S.ParticleBinning(i+j+1, timesteps=40).getData()[-1], precision[j])
 
-# CHECK THE RESULT OF keep_interpolated_fields
+# CHECK THE RESULT OF keep_interpolated_fields in ParticleBinning
 Validate("keep_interpolated_fields Ex", S.ParticleBinning(34, timesteps=45).getData()[0], 0.001)
 Validate("keep_interpolated_fields Ey", S.ParticleBinning(35, timesteps=45).getData()[0], 0.001)
 Validate("keep_interpolated_fields Ez", S.ParticleBinning(36, timesteps=45).getData()[0], 0.001)
 Validate("keep_interpolated_fields Wx", S.ParticleBinning(37, timesteps=45).getData()[0], 1e-8)
 Validate("keep_interpolated_fields Wy", S.ParticleBinning(38, timesteps=45).getData()[0], 1e-8)
 Validate("keep_interpolated_fields Wz", S.ParticleBinning(39, timesteps=45).getData()[0], 1e-8)
+
+# CHECK THE RESULT OF keep_interpolated_fields in ParticleBinning
+d = S.TrackParticles("test2", axes=["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"], timesteps=45).getData()
+Validate("Tracked interpolated fields Ex", d["Ex"].squeeze(), 0.001)
+Validate("Tracked interpolated fields Ey", d["Ey"].squeeze(), 0.001)
+Validate("Tracked interpolated fields Ez", d["Ez"].squeeze(), 0.001)
+Validate("Tracked interpolated fields Wx", d["Wx"].squeeze(), 1e-8)
+Validate("Tracked interpolated fields Wy", d["Wy"].squeeze(), 1e-8)
+Validate("Tracked interpolated fields Wz", d["Wz"].squeeze(), 1e-8)
