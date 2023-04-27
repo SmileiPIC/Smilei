@@ -522,7 +522,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         }
         
     // If field interpolation not necessary, it means fields have been stored using `keep_interpolated_fields`
-    } else {
+    } else if( write_any_E || write_any_B ) {
         
         #pragma omp master
         if( write_any_E ) {
@@ -567,24 +567,24 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         }
     }
     
-    #pragma omp master
     if( write_any_W ) {
-        W_group = new H5Write( species_group, "W" );
-        openPMD_->writeRecordAttributes( *W_group, SMILEI_UNIT_ENERGY );
-    }
-    for( unsigned int idim=0; idim<3; idim++ ) {
-        if( write_W[idim] ) {
-            #pragma omp barrier
-            fill_buffer( vecPatches, iprop, data_double );
-            #pragma omp master
-            write_component( W_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, SMILEI_UNIT_ENERGY );
+        #pragma omp master
+        {
+            W_group = new H5Write( species_group, "W" );
+            openPMD_->writeRecordAttributes( *W_group, SMILEI_UNIT_ENERGY );
         }
-        if( vecPatches( 0 )->vecSpecies[speciesId_]->particles->interpolated_fields_->mode_[6+idim] > 0 ) {
-            iprop++;
+        for( unsigned int idim=0; idim<3; idim++ ) {
+            if( write_W[idim] ) {
+                #pragma omp barrier
+                fill_buffer( vecPatches, iprop, data_double );
+                #pragma omp master
+                write_component( W_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, SMILEI_UNIT_ENERGY );
+            }
+            if( vecPatches( 0 )->vecSpecies[speciesId_]->particles->interpolated_fields_->mode_[6+idim] > 0 ) {
+                iprop++;
+            }
         }
-    }
-    #pragma omp master
-    if( write_any_W ) {
+        #pragma omp master
         delete W_group;
     }
     
