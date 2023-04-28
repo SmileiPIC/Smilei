@@ -23,14 +23,18 @@ You can find older, unsupported versions here <https://github.com/SmileiPIC/Smil
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
-* ``PML`` can now be used as a bounday condition for the envelope model too.
-* It is no longer necessary to use ``PML`` on all boundaries anymore. It is still required to use PML on both sides of a given boundary. 
+* ``LaserEnvelope`` model:
+
+  * Now compatible with ``PML`` boundaries
+  * In ``AMcylindrical`` geometry, the number of modes can be greater than 1 (only affects electromagnetic
+    fields and the densities, not envelope or susceptibility)
+
 * Much faster ``DiagFields`` (speedup ~ x3)
-* ``DiagFields`` and ``DiagProbe`` accept a new parameter ``datatype``
-* Collisions: new parameter ``time_frozen``
-* Performances diagnostic: new parameter ``cumulative``
+* ``DiagFields`` and ``DiagProbe``: new parameter ``datatype``
+* ``DiagPerformances``: new parameter ``cumulative``
+* ``Collisions``: new parameter ``time_frozen``
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
+* Happi: ``Probe`` has a new method ``changeField``
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Bugfixes:
 
@@ -42,8 +46,10 @@ Changes made in the repository (not released)
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
 
-* Experimental: :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP is now available.
-* Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.
+* Experimental
+
+  * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
+  * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
 
 ----
 
@@ -59,9 +65,8 @@ Projects
 
 * In preparation:
 
-  * Perfectly-matched layers for the envelope model
-  * More spectral solvers
   * GPU support
+  * More spectral solvers
 
 
 ----

@@ -320,20 +320,6 @@ class SmileiSimulation(object):
 		probeNumber = diag_numbers[i]
 		probeName = diag_names[i]
 		
-		raw_fields = set()
-		for path in self._results_path:
-			file = path+self._os.sep+'Fields'+str(probeNumber)+'.h5'
-			try:
-				f = self._h5py.File(file, 'r')
-			except Exception as e:
-				continue
-			values = f["data"].values()
-			if len(values)==0:
-				continue
-			these_fields =  set(next(iter(values)).keys())
-			raw_fields = (raw_fields & these_fields) or these_fields
-			f.close()
-		
 		fields = []
 		for path in self._results_path:
 			file = path+self._os.sep+"Probes"+str(probeNumber)+".h5"

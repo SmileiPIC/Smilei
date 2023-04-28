@@ -74,14 +74,9 @@ class Diagnostic(object):
 			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
 			return
 		
-		# Prepare units for axes
 		self.dim = len(self._shape)
 		if self.valid:
-			xunits = None
-			yunits = None
-			if self.dim > 0: xunits = self._units[0]
-			if self.dim > 1: yunits = self._units[1]
-			self.units.convertAxes(xunits, yunits, self._vunits)
+			self._prepareUnits()
 		
 		# Prepare data_log output
 		self._dataAtTime = self._dataLogAtTime if self._data_log else self._dataLinAtTime
@@ -103,6 +98,12 @@ class Diagnostic(object):
 			print("\n".join(self._error))
 			return False
 		return True
+	
+	# Prepare units for axes
+	def _prepareUnits(self):
+		xunits = self._units[0] if len(self._shape) > 0 else None 
+		yunits = self._units[1] if len(self._shape) > 1 else None
+		self.units.convertAxes(xunits, yunits, self._vunits)
 
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):

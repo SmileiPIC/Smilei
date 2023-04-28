@@ -33,7 +33,7 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
 
   * ``verbose``: if ``False``, less information is printed while post-processing.
 
-  * ``scan``: if ``False``, HDF5 output files are not scanned initially.
+  * ``scan``: if ``False``, HDF5 output files are not scanned initially, and the namelist is not read.
 
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
@@ -241,6 +241,11 @@ Open a Probe diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.Probe(0, "Ex")
 
+
+.. py:method:: Probe.changeField(field)
+
+  In cases where happi's performance is an issue, it is possible to switch between different fields
+  of an open ``Probe`` diagnostic using this method. The ``field`` argument is the same as in ``Probe(...)`` above.
 
 ----
 
