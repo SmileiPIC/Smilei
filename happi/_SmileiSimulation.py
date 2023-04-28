@@ -75,15 +75,28 @@ class SmileiSimulation(object):
 
 
 	def _openNamelist(self, path):
+		# empty class to store the namelist variables
+		class Namelist: pass
+		namelist = Namelist()
+		
 		# Fetch the python namelist
-		namespace={}
-		exec(open(path+self._os.sep+'smilei.py').read(), namespace) # execute the namelist into an empty namespace
-		class Namelist: pass # empty class to store the namelist variables
-		namelist = Namelist() # create new empty object
-		for key, value in namespace.items(): # transfer all variables to this object
-			if key[0]=="_": continue # skip builtins
-			setattr(namelist, key, value)
-
+		if self._scan:
+			namespace={}
+			with open(path+self._os.sep+'smilei.py') as f:
+				exec(f.read(), namespace) # execute the namelist into an empty namespace
+			for key, value in namespace.items(): # transfer all variables to this object
+				if key[0]=="_": continue # skip builtins
+				setattr(namelist, key, value)
+		else:
+			import pickle
+			class Block: pass
+			with open(path+self._os.sep+'info.pickle', 'rb') as f:
+				for blockName, blockDict in pickle.load(f).items():
+					block = Block()
+					for k,v in blockDict.items():
+						setattr(block, k, v)
+					setattr(Namelist, blockName, block)
+		
 		# Get some info on the simulation
 		try:
 			# get number of dimensions

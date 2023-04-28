@@ -1073,7 +1073,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     check_consistency();
-
+    
+    
+    // Run the _writeInfo function that creates a small pickle file with basic info
+    if( ! smpi->test_mode ) {
+        PyTools::runPyFunction( "_writeInfo" );
+        PyTools::checkPyError();
+    }
 }
 
 Params::~Params()

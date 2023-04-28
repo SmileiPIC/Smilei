@@ -187,3 +187,23 @@ def _noNewComponents(cls, *args, **kwargs):
     print("Please do not create a new "+cls.__name__)
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
+
+# Writes some information in a pickle file for post-processing
+def _writeInfo():
+    def pickable(var):
+        if var is None or type(var) in [float, int, complex, str, bytes, bool]:
+            return True
+        elif type(var) in [list, tuple]:
+            for v in var:
+                if not pickable(v):
+                    break
+            else:
+                return True
+        return False
+    
+    d = {}
+    for block in [Main, LoadBalancing, MultipleDecomposition, Vectorization, MovingWindow, Checkpoints]:
+        d.update({block.__name__:{k:v for k,v in block.__dict__.items() if not k.startswith("_") and pickable(v)}})
+    import pickle
+    with open("info.pickle", 'wb') as f:
+        pickle.dump(d, f)
