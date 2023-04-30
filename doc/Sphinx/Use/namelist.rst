@@ -424,6 +424,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
+  .. py:data:: use_BTIS3_interpolation
+
+    :default: ``False``
+
+    If ``True``, the B-translated interpolation scheme 3 (or B-TIS3) described in :doc:`/Understand/algorithms` is used.
+
 .. py:data:: custom_oversize
 
    :type: integer
@@ -1007,7 +1013,10 @@ Each species has to be defined in a ``Species`` block::
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
   * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species interacting with the laser envelope model. Valid only if the species has non-zero mass
-
+  * ``"borisBTIS3"``: as ``"boris"``, but using B fields interpolated with the B-TIS3 scheme.
+  * ``"ponderomotive_borisBTIS3"``: as ``"ponderomotive_boris"``, but using B fields interpolated with the B-TIS3 scheme.
+  **WARNING**: ``"borisBTIS3"`` and ``"ponderomotive_borisBTIS3"`` can be used only when ``use_BTIS3_interpolation=True`` in the ``Main`` block.
+  
 .. py:data:: radiation_model
 
   :default: ``"none"``
