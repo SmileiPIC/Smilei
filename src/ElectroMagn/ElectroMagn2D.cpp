@@ -104,6 +104,13 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     By_m = FieldFactory::create2D( dimPrim, 1, true,  "By_m", params );
     Bz_m = FieldFactory::create2D( dimPrim, 2, true,  "Bz_m", params );
     
+    if(use_BTIS3){
+        // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
+        By_mBTIS3 = FieldFactory::create2D( dimPrim, 2, false, "BymBTIS3", params );
+        Bz_mBTIS3 = FieldFactory::create2D( dimPrim, 1, false, "BzmBTIS3", params );
+
+    }
+    
     if( params.Laser_Envelope_model ) {
         Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs" );
         Env_Chi_    = new Field2D( dimPrim, "Env_Chi" );
@@ -899,6 +906,25 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
         //for (unsigned int j=0 ; j<ny_d ; j++) {
         //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
         //}
+        
+        if(use_BTIS3){  // for BTIS3 interpolation
+            // Static-cast of the fields
+            Field2D *By_oldBTIS3 = static_cast<Field2D *>( By_mBTIS3 );
+            Field2D *Bz_oldBTIS3 = static_cast<Field2D *>( Bz_mBTIS3 );
+            
+            for( unsigned int i=0 ; i<nx_p ; i++ ) {
+                // Magnetic field By^(p,p) for BTIS3 interpolation
+                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+                    ( *By_oldBTIS3 )( i, j ) = ( *By2D_m )( i, j ) ;
+                }
+                // Magnetic field Bz^(p,d) for BTIS3 interpolation
+                for( unsigned int j=0 ; j<ny_d ; j++ ) {
+                    ( *Bz_oldBTIS3 )( i, j ) = ( *Bz2D_m )( i, j );
+                }
+            }
+
+        } // end if use_BTIS3
+        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -1233,6 +1259,25 @@ void ElectroMagn2D::centerMagneticFields()
         ( *Bz2D_m )( nx_p, j ) = ( ( *Bz2D )( nx_p, j ) + ( *Bz2D_m )( nx_p, j ) )*0.5;
     } // end for j
     
+    
+    if (use_BTIS3){
+        // Static-cast of the fields
+        Field2D *By_oldBTIS3 = static_cast<Field2D *>( By_mBTIS3 );
+        Field2D *Bz_oldBTIS3 = static_cast<Field2D *>( Bz_mBTIS3 );
+    
+        for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
+            #pragma omp simd
+            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+                // Magnetic field By^(p,p) for BTIS3 interpolation
+                ( *By_oldBTIS3 )( i, j ) = ( ( *By2D )( i+1, j ) + ( *By_oldBTIS3 )( i, j ) )*0.5;
+            }
+            #pragma omp simd
+            for( unsigned int j=0 ; j<ny_d ; j++ ) {
+                // Magnetic field Bz^(p,d) for BTIS3 interpolation
+                ( *Bz_oldBTIS3 )( i, j ) = ( ( *Bz2D )( i+1, j ) + ( *Bz_oldBTIS3 )( i, j ) )*0.5;
+            }
+        }
+    }
     
 }//END centerMagneticFields
 

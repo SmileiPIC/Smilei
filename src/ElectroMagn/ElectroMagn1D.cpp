@@ -107,6 +107,13 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     Jz_   = new Field1D( dimPrim, 2, false, "Jz" );
     rho_  = new Field1D( dimPrim, "Rho" );
     
+    if(use_BTIS3){
+        // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
+        By_mBTIS3 = new Field1D( dimPrim, 2, false, "BymBTIS3" );
+        Bz_mBTIS3 = new Field1D( dimPrim, 1, false, "BzmBTIS3" );
+
+    }
+    
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
@@ -470,6 +477,21 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
             ( *By1D_m )( i ) = ( *By1D )( i );
             ( *Bz1D_m )( i ) = ( *Bz1D )( i );
         }
+        
+        if(use_BTIS3){  // for BTIS3 interpolation
+            // Static-cast of the fields
+            Field1D *By_mBTIS3 = static_cast<Field1D *>( By_mBTIS3 );
+            Field1D *Bz_mBTIS3 = static_cast<Field1D *>( Bz_mBTIS3 );
+
+            for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
+                // Magnetic field By^(p) for BTIS3 interpolation
+                ( *By_mBTIS3 )( i ) = ( *By1D_m )( i ) ;
+                // Magnetic field Bz^(p) for BTIS3 interpolation
+                ( *Bz_mBTIS3 )( i ) = ( *Bz1D_m )( i );
+            }
+
+        } // end if use_BTIS3
+        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -535,6 +557,19 @@ void ElectroMagn1D::centerMagneticFields()
     for( unsigned int i=0 ; i<dimDual[0] ; i++ ) {
         ( *By1D_m )( i )= ( ( *By1D )( i )+( *By1D_m )( i ) )*0.5 ;
         ( *Bz1D_m )( i )= ( ( *Bz1D )( i )+( *Bz1D_m )( i ) )*0.5 ;
+    }
+    
+    if (use_BTIS3){
+        // Static-cast of the fields
+        Field1D *By_oldBTIS3 = static_cast<Field1D *>( By_mBTIS3 );
+        Field1D *Bz_oldBTIS3 = static_cast<Field1D *>( Bz_mBTIS3 );
+
+        for( unsigned int i=0 ; i<dimPrim[0]-1 ; i++ ) {
+            // Magnetic field By^(p) for BTIS3 interpolation
+            ( *By_oldBTIS3 )( i ) = ( ( *By1D )( i+1 ) + ( *By_oldBTIS3 )( i ) )*0.5;
+            // Magnetic field Bz^(p) for BTIS3 interpolation
+            ( *Bz_oldBTIS3 )( i ) = ( ( *Bz1D )( i+1 ) + ( *Bz_oldBTIS3 )( i ) )*0.5;
+        }
     }
     
 }//END centerMagneticFields
