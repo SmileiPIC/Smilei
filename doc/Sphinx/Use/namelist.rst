@@ -2722,6 +2722,9 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   They are respectively the susceptibility, the envelope of the laser transverse vector potential,
   the envelope of the laser transverse electric field and the envelope of the laser longitudinal
   electric field.
+  
+  If the B-TIS3 interpolation scheme is activated (see :doc:`/Understand/algorithms`),
+  the following fields are also available: ``"ByBTIS3"``, ``"BzBTIS3"``.
 
 .. py:data:: time_integral
 
