@@ -107,6 +107,12 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+    double *BLocyBTIS3;
+    double *BLoczBTIS3;
+    if (smpi->use_BTIS3){
+        BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][ipart] );
+        BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][ipart] );
+    }
 
     // Interpolate E, B
     cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
@@ -119,6 +125,12 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     cField2D *Jr = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jr_[0];
     cField2D *Jt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jt_[0];
     cField2D *Rho= ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_AM_[0];
+    cField2D *Br_BTIS3;
+    cField2D *Bt_BTIS3;
+    if (smpi->use_BTIS3){
+        Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[0];
+        Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[0];
+    }
 
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * D_inv_[0];
@@ -151,6 +163,14 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     JLoc->z = std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_ ) );
     // Interpolation of Rho^(p,p,p)
     ( *RhoLoc ) = std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ ) );
+    
+    if (smpi->use_BTIS3){
+        // BTIS fields, in the x direction they are centered as Ey and Ez
+        // Interpolation of Br^(p,p) for BTIS
+        *( BLocyBTIS3+0*nparts ) = std::real( compute( &coeffxp_[1], &coeffyp_[1], Br_BTIS3, ip_, jp_ ) );
+        // Interpolation of Bt^(p,d) for BTIS
+        *( BLoczBTIS3+0*nparts ) = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bt_BTIS3, ip_, jd_ ) );
+    }
 
     if (r > 0){
         exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
@@ -168,6 +188,11 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
         Jr = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jr_[imode];
         Jt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jt_[imode];
         Rho= ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_AM_[imode];
+        
+        if (smpi->use_BTIS3){
+            Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[imode];
+            Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[imode];
+        }
 
         exp_mm_theta *= exp_m_theta_ ;
 
@@ -181,6 +206,12 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
         JLoc->y += std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_ ) * exp_mm_theta ) ;
         JLoc->z += std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_ ) * exp_mm_theta ) ;
         ( *RhoLoc ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ )* exp_mm_theta ) ;
+        
+        if (smpi->use_BTIS3){
+            // BTIS fields, in the x direction they are centered as Ey and Ez
+            *( BLocyBTIS3+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Br_BTIS3, ip_, jp_ )* exp_mm_theta );
+            *( BLoczBTIS3+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bt_BTIS3, ip_, jd_ )* exp_mm_theta );
+        }
     }
     double delta2 = std::real( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( ELoc+2*nparts );
     *( ELoc+2*nparts ) = -std::imag( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::real( exp_m_theta_ ) * *( ELoc+2*nparts );
@@ -191,6 +222,11 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     delta2 = std::real( exp_m_theta_ ) * JLoc->y + std::imag( exp_m_theta_ ) * JLoc->z;
     JLoc->z = -std::imag( exp_m_theta_ ) * JLoc->y + std::real( exp_m_theta_ ) * JLoc->z;
     JLoc->y = delta2 ;
+    if (smpi->use_BTIS3){
+    delta2 = std::real( exp_m_theta_ ) * *( BLocyBTIS3+0*nparts ) + std::imag( exp_m_theta_ ) * *( BLoczBTIS3+0*nparts );
+        *( BLoczBTIS3+0*nparts ) = -std::imag( exp_m_theta_ ) * *( BLocyBTIS3+0*nparts ) + std::real( exp_m_theta_ ) * *( BLoczBTIS3+0*nparts );
+        *( BLocyBTIS3+0*nparts ) = delta2 ;
+    }
 
 }
 

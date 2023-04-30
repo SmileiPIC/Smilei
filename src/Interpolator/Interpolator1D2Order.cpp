@@ -53,6 +53,12 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+    double *BLocyBTIS3;
+    double *BLoczBTIS3;
+    if(smpi->use_BTIS3){
+        BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][ipart] );
+        BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][ipart] );
+    }
 
     // Static cast of the electromagnetic fields
     Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
@@ -65,6 +71,12 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field1D *Jy1D     = static_cast<Field1D *>( EMfields->Jy_ );
     Field1D *Jz1D     = static_cast<Field1D *>( EMfields->Jz_ );
     Field1D *Rho1D    = static_cast<Field1D *>( EMfields->rho_ );
+    Field1D *By1DBTIS3;
+    Field1D *Bz1DBTIS3;
+    if (smpi->use_BTIS3){
+        By1DBTIS3 = static_cast<Field1D *>( EMfields->By_mBTIS3 );
+        Bz1DBTIS3 = static_cast<Field1D *>( EMfields->Bz_mBTIS3 );
+    }
 
     // Particle position (in units of the spatial-step)
     double xjn = particles.position( 0, ipart )*dx_inv_;
@@ -90,6 +102,11 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     // Interpolate the fields from the Dual grid : Jx
     JLoc->x = compute( coeffd_, Jx1D,  id_ );
+    
+    if (smpi->use_BTIS3){
+        *( BLocyBTIS3+0*nparts ) = compute( coeffp_, By1DBTIS3, ip_ );
+        *( BLoczBTIS3+0*nparts ) = compute( coeffp_, Bz1DBTIS3, ip_ );
+    }
 
 }
 

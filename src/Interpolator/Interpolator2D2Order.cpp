@@ -62,6 +62,12 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+    double *BLocyBTIS3;
+    double *BLoczBTIS3;
+    if(smpi->use_BTIS3){
+        BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][ipart] );
+        BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][ipart] );
+    }
 
     // Interpolate E, B
     // Compute coefficient for ipart position
@@ -76,6 +82,12 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field2D *Jy2D = static_cast<Field2D *>( EMfields->Jy_ );
     Field2D *Jz2D = static_cast<Field2D *>( EMfields->Jz_ );
     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
+    Field2D *By2DBTIS3;
+    Field2D *Bz2DBTIS3;
+    if (smpi->use_BTIS3){
+        By2DBTIS3 = static_cast<Field2D *>( EMfields->By_mBTIS3 );
+        Bz2DBTIS3 = static_cast<Field2D *>( EMfields->Bz_mBTIS3 );
+    }
 
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*d_inv_[0];
@@ -105,6 +117,13 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     JLoc->z = compute( &coeffxp_[1], &coeffyp_[1], Jz2D, ip_, jp_ );
     // Interpolation of Rho^(p,p)
     ( *RhoLoc ) = compute( &coeffxp_[1], &coeffyp_[1], Rho2D, ip_, jp_ );
+    
+    if (smpi->use_BTIS3){
+        // Interpolation of ByBTIS3^(p,p)
+        *( BLocyBTIS3+0*nparts ) = compute( &coeffxp_[1], &coeffyp_[1], By2DBTIS3, ip_, jp_ );
+        // Interpolation of BzBTIS3^(p,d)
+        *( BLoczBTIS3+0*nparts ) = compute( &coeffxp_[1], &coeffyd_[1], Bz2DBTIS3, ip_, jd_ );
+    }
 }
 
 //! Interpolator on another field than the basic ones
