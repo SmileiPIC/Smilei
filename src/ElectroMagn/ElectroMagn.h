@@ -181,6 +181,12 @@ public:
     Field *rho_;
     Field *rhoold_;
     
+    //B Fields for BTIS-3    
+    Field *By_mBTIS3;
+    Field *Bz_mBTIS3;
+    
+    bool use_BTIS3;
+    
     // Fields for relativistic Initialization
     Field *Ex_rel_;
     Field *Ey_rel_;
