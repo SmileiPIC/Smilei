@@ -142,37 +142,83 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
     //Loop on bin particles
     int nparts = particles.numberOfParticles();
+    
+    if (!smpi->use_BTIS3){ // without BTIS-3 interpolation
+        for (int ipart=*istart; ipart < *iend; ipart++){
 
-    for (int ipart=*istart; ipart < *iend; ipart++){
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart )*dx_inv_;
 
-        // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
+            // Calculate coeffs
+            int idx_p[1], idx_d[1];
+            double delta_p[1];
+            double coeffxp[3];
+            double coeffxd[3];
 
-        // Calculate coeffs
-        int idx_p[1], idx_d[1];
-        double delta_p[1];
-        double coeffxp[3];
-        double coeffxd[3];
+            coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
-        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+            // Interpolation of Ex^(d)
+            *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
+            // Interpolation of Ey^(p)
+            *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
+            // Interpolation of Ez^(p)
+            *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
+            // Interpolation of Bx^(p)
+            *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
+            // Interpolation of By^(d)
+            *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
+            // Interpolation of Bz^(d)
+            *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
 
-        // Interpolation of Ex^(d)
-        *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
-        // Interpolation of Ey^(p)
-        *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
-        // Interpolation of Ez^(p)
-        *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
-        // Interpolation of Bx^(p)
-        *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
-        // Interpolation of By^(d)
-        *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
-        // Interpolation of Bz^(d)
-        *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
+            //Buffering of iol and delta
+            *( iold+0*nparts+ipart)   = idx_p[0];
+            *( delta+0*nparts+ipart)  = delta_p[0];
 
-        //Buffering of iol and delta
-        *( iold+0*nparts+ipart)  = idx_p[0];
-        *( delta+0*nparts+ipart) = delta_p[0];
+        } // end ipart loop
+    } else { // with B-TIS3 interpolation
+      
+      Field1D *By1D_mBTIS3 = static_cast<Field1D *>( EMfields->By_mBTIS3 );
+      Field1D *Bz1D_mBTIS3 = static_cast<Field1D *>( EMfields->Bz_mBTIS3 );
+      double  *BypartBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][0]  );
+      double  *BzpartBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][0]  );
+      
+      for (int ipart=*istart; ipart < *iend; ipart++){
 
+          // Normalized particle position
+          double xpn = particles.position( 0, ipart )*dx_inv_;
+
+          // Calculate coeffs
+          int idx_p[1], idx_d[1];
+          double delta_p[1];
+          double coeffxp[3];
+          double coeffxd[3];
+
+          coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+
+          // Interpolation of Ex^(d)
+          *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
+          // Interpolation of Ey^(p)
+          *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
+          // Interpolation of Ez^(p)
+          *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
+          // Interpolation of Bx^(p)
+          *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
+          // Interpolation of By^(d)
+          *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
+          // Interpolation of Bz^(d)
+          *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
+          // Interpolation of ByBTIS3^(p)
+          *( BypartBTIS3+0*nparts )  = compute( coeffxp, By1D_mBTIS3, idx_p[0] );
+          // Interpolation of BzBTIS3^(p)
+          *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
+          
+
+          //Buffering of iol and delta
+          *( iold+0*nparts+ipart)   = idx_p[0];
+          *( delta+0*nparts+ipart)  = delta_p[0];
+
+      } // end ipart loop
+      
     }
 }
 
@@ -223,44 +269,94 @@ void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
     //Loop on bin particles
     int nparts( particles.numberOfParticles() );
 
-    for (int ipart=*istart; ipart < *iend; ipart++){
+    if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
+        for (int ipart=*istart; ipart < *iend; ipart++){
 
-        // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart )*dx_inv_;
 
-        // Calculate coeffs
-        int idx_p[1], idx_d[1];
-        double delta_p[1];
-        double coeffxp[3];
-        double coeffxd[3];
+            // Calculate coeffs
+            int idx_p[1], idx_d[1];
+            double delta_p[1];
+            double coeffxp[3];
+            double coeffxd[3];
 
-        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+            coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
-        // Interpolation of Ex^(d)
-        *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
-        // Interpolation of Ey^(p)
-        *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
-        // Interpolation of Ez^(p)
-        *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
-        // Interpolation of Bx^(p)
-        *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
-        // Interpolation of By^(d)
-        *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
-        // Interpolation of Bz^(d)
-        *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
-        // Interpolation of Phi^(p)
-        *( PHIpart+0*nparts+ipart ) = compute( coeffxp, Phi1D, idx_d[0] );
-        // Interpolation of GradPhix^(p)
-        *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_d[0] );
-        // Interpolation of GradPhiy^(p)
-        *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_d[0] );
-        // Interpolation of GradPhiz^(p)
-        *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_d[0] );
+            // Interpolation of Ex^(d)
+            *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
+            // Interpolation of Ey^(p)
+            *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
+            // Interpolation of Ez^(p)
+            *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
+            // Interpolation of Bx^(p)
+            *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
+            // Interpolation of By^(d)
+            *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
+            // Interpolation of Bz^(d)
+            *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
+            // Interpolation of Phi^(p)
+            *( PHIpart+0*nparts+ipart ) = compute( coeffxp, Phi1D, idx_d[0] );
+            // Interpolation of GradPhix^(p)
+            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_d[0] );
+            // Interpolation of GradPhiy^(p)
+            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_d[0] );
+            // Interpolation of GradPhiz^(p)
+            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_d[0] );
 
-        //Buffering of iol and delta
-        *( iold+0*nparts+ipart)  = idx_p[0];
-        *( delta+0*nparts+ipart) = delta_p[0];
+            //Buffering of iol and delta
+            *( iold+0*nparts+ipart)  = idx_p[0];
+            *( delta+0*nparts+ipart) = delta_p[0];
 
+        } // end ipart loop
+    } else { // with B-TIS3 interpolation
+        Field1D *By1D_mBTIS3 = static_cast<Field1D *>( EMfields->By_mBTIS3 );
+        Field1D *Bz1D_mBTIS3 = static_cast<Field1D *>( EMfields->Bz_mBTIS3 );
+        double  *BypartBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][0]  );
+        double  *BzpartBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][0]  );
+        for (int ipart=*istart; ipart < *iend; ipart++){
+
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart )*dx_inv_;
+
+            // Calculate coeffs
+            int idx_p[1], idx_d[1];
+            double delta_p[1];
+            double coeffxp[3];
+            double coeffxd[3];
+
+            coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+
+            // Interpolation of Ex^(d)
+            *( Epart+0*nparts+ipart ) = compute( coeffxd, Ex1D, idx_d[0] );
+            // Interpolation of Ey^(p)
+            *( Epart+1*nparts+ipart ) = compute( coeffxp, Ey1D, idx_p[0] );
+            // Interpolation of Ez^(p)
+            *( Epart+2*nparts+ipart ) = compute( coeffxp, Ez1D, idx_p[0] );
+            // Interpolation of Bx^(p)
+            *( Bpart+0*nparts+ipart ) = compute( coeffxp, Bx1D, idx_p[0] );
+            // Interpolation of By^(d)
+            *( Bpart+1*nparts+ipart ) = compute( coeffxd, By1D, idx_d[0] );
+            // Interpolation of Bz^(d)
+            *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
+            // Interpolation of ByBTIS3^(p)
+            *( BypartBTIS3+0*nparts )  = compute( coeffxp, By1D_mBTIS3, idx_p[0] );
+            // Interpolation of BzBTIS3^(p)
+            *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
+            // Interpolation of Phi^(p)
+            *( PHIpart+0*nparts+ipart ) = compute( coeffxp, Phi1D, idx_d[0] );
+            // Interpolation of GradPhix^(p)
+            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_d[0] );
+            // Interpolation of GradPhiy^(p)
+            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_d[0] );
+            // Interpolation of GradPhiz^(p)
+            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_d[0] );
+
+            //Buffering of iol and delta
+            *( iold+0*nparts+ipart)  = idx_p[0];
+            *( delta+0*nparts+ipart) = delta_p[0];
+
+        } // end ipart loop
     }
 
 } // END Interpolator1D2Order
