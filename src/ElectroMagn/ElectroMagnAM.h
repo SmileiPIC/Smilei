@@ -29,6 +29,8 @@ public:
     std::vector<cField2D *> Bl_m;
     std::vector<cField2D *> Br_m;
     std::vector<cField2D *> Bt_m;
+    std::vector<cField2D *> Br_mBTIS3;
+    std::vector<cField2D *> Bt_mBTIS3;
     std::vector<cField2D *> Jl_;
     std::vector<cField2D *> Jr_;
     std::vector<cField2D *> Jt_;

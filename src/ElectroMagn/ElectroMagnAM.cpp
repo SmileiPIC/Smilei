@@ -93,6 +93,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
 {
 
     nmodes = params.nmodes;
+    use_BTIS3 = params.use_BTIS3;
 
     PatchAM *patchAM = static_cast<PatchAM *>( patch );
     invR = &(patchAM->invR[0]);
@@ -161,6 +162,10 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     Bl_m.resize( nmodes );
     Br_m.resize( nmodes );
     Bt_m.resize( nmodes );
+    if(use_BTIS3){
+        Br_mBTIS3.resize( nmodes );
+        Bt_mBTIS3.resize( nmodes );
+    }
     
     // Total charge currents and densities
     Jl_.resize( nmodes );
@@ -182,6 +187,11 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Bl_m[imode] = FieldFactory::createAM( dimPrim, 0, true, ( "Bl_m"+mode_id.str() ).c_str(), params );
         Br_m[imode] = FieldFactory::createAM( dimPrim, 1, true, ( "Br_m"+mode_id.str() ).c_str(), params );
         Bt_m[imode] = FieldFactory::createAM( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str(), params );
+        if(use_BTIS3){
+            // BTIS fields must be centered as E in the x direction: Br as Ez, Bt as Er 
+            Br_mBTIS3[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "BrmBTIS"+mode_id.str() ).c_str(), params );
+            Bt_mBTIS3[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "BtmBTIS"+mode_id.str() ).c_str(), params );
+        }
         
         // Total charge currents and densities
         Jl_[imode]   = FieldFactory::createAM( dimPrim, 0, false, ( "Jl"+mode_id.str() ).c_str(), params );
@@ -276,6 +286,10 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch * )
         allFields.push_back( Bl_m[imode] );
         allFields.push_back( Br_m[imode] );
         allFields.push_back( Bt_m[imode] );
+        if(use_BTIS3){
+            allFields.push_back( Br_mBTIS3[imode] );
+            allFields.push_back( Bt_mBTIS3[imode] );
+        }
         allFields.push_back( Jl_[imode] );
         allFields.push_back( Jr_[imode] );
         allFields.push_back( Jt_[imode] );
@@ -330,6 +344,10 @@ ElectroMagnAM::~ElectroMagnAM()
         delete Bl_m[imode];
         delete Br_m[imode];
         delete Bt_m[imode];
+        if(use_BTIS3){
+            delete Br_mBTIS3[imode];
+            delete Bt_mBTIS3[imode];
+        }
         if (is_pxr) {
             delete rho_old_AM_[imode];
         }
@@ -1303,7 +1321,28 @@ void ElectroMagnAM::saveMagneticFields( bool is_spectral )
             
             // Magnetic field Bt^(d,d)
             memcpy( &( ( *Bt_old )( 0, 0 ) ), &( ( *Bt )( 0, 0 ) ), nl_d*nr_d*sizeof( complex<double> ) );
+            
+            if(use_BTIS3){  // for BTIS3 interpolation
+                    // Static-cast of the fields
+                    cField2D *Br_oldBTIS3 = Br_mBTIS3[imode];
+                    cField2D *Bt_oldBTIS3 = Bt_mBTIS3[imode];
+                
+                    // Magnetic field Br^(d,p) for BTIS3 interpolation
+                    for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                        for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                            ( *Br_oldBTIS3 )( i, j ) = ( *Br_old )( i, j ) ;
+                        }
+                    }
+                    // Magnetic field Bt^(d,d) for BTIS3 interpolation
+                    for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                        for( unsigned int j=0 ; j<nr_d ; j++ ) {
+                            ( *Bt_oldBTIS3 )( i, j ) = ( *Bt_old )( i, j );
+                        }
+                    }
+
+            } // end if use_BTIS3
         }
+    
     }
     
 }//END saveMagneticFields
@@ -1386,6 +1425,25 @@ void ElectroMagnAM::centerMagneticFields()
                 ( *Bt_old )( i, j ) = ( ( *Bt )( i, j ) + ( *Bt_old )( i, j ) )*0.5;
             } // end for j
         } // end for i
+        
+        if(use_BTIS3){  // for BTIS3 interpolation
+            // Static-cast of the fields
+            cField2D *Br_oldBTIS3 = Br_mBTIS3[imode];
+            cField2D *Bt_oldBTIS3 = Bt_mBTIS3[imode];
+        
+            // Magnetic field Br^(d,p) for BTIS3 interpolation
+            for( unsigned int i=0 ; i<nl_p-1 ; i++ ) {
+                for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *Br_oldBTIS3 )( i, j ) = ( ( *Br )( i+1, j ) + ( *Br_oldBTIS3 )( i, j ) )*0.5;
+                }
+            }
+            // Magnetic field Bt^(d,d) for BTIS3 interpolation
+            for( unsigned int i=0 ; i<nl_p-1 ; i++ ) {
+                for( unsigned int j=0 ; j<nr_d ; j++ ) {
+                    ( *Bt_oldBTIS3 )( i, j ) = ( ( *Bt )( i+1, j ) + ( *Bt_oldBTIS3 )( i, j ) )*0.5;
+                }
+            }
+        } // end if use_BTIS3
         
     }
     
