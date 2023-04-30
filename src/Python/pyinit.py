@@ -192,6 +192,9 @@ class Main(SmileiSingleton):
     solve_relativistic_poisson = False
     relativistic_poisson_max_iteration = 50000
     relativistic_poisson_max_error = 1.e-22
+    
+    # BTIS3 interpolator
+    use_BTIS3_interpolation = False
 
     # Default fields
     maxwell_solver = 'Yee'

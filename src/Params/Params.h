@@ -141,6 +141,9 @@ public:
 
     //! Define if the ponderomotive force is computed (default = false)
     //bool ponderomotive_force;
+    
+    // Use BTIS3 interpolation method to reduce the effects of numerical Cherenkov radiation
+    bool use_BTIS3;
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;

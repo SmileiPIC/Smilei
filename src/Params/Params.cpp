@@ -546,6 +546,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main"   );
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
 
+    // Use BTIS3 interpolation method to reduce the effects of numerical Cherenkov radiation
+    use_BTIS3 = false;
+    PyTools::extract( "use_BTIS3_interpolation", use_BTIS3, "Main"   );
+    
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
