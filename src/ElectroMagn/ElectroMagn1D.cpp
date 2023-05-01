@@ -109,8 +109,8 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     
     if(use_BTIS3){
         // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
-        By_mBTIS3 = new Field1D( dimPrim, 2, false, "BymBTIS3" );
-        Bz_mBTIS3 = new Field1D( dimPrim, 1, false, "BzmBTIS3" );
+        By_mBTIS3 = new Field1D( dimPrim, 2, false, "By_mBTIS3" );
+        Bz_mBTIS3 = new Field1D( dimPrim, 1, false, "Bz_mBTIS3" );
 
     }
     

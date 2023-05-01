@@ -169,6 +169,10 @@ void ElectroMagn::finishInitialization( int nspecies, Patch * )
         allFields.push_back( Env_E_abs_ );
         allFields.push_back( Env_Ex_abs_ );
     }
+    if ( By_mBTIS3 != NULL ){
+        allFields.push_back( By_mBTIS3 );
+        allFields.push_back( Bz_mBTIS3 );
+    }
     
     // For species-related fields
     // The order is necessary in DiagnosticProbes - DO NOT CHANGE -

@@ -106,8 +106,8 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     
     if(use_BTIS3){
         // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
-        By_mBTIS3 = FieldFactory::create2D( dimPrim, 2, false, "BymBTIS3", params );
-        Bz_mBTIS3 = FieldFactory::create2D( dimPrim, 1, false, "BzmBTIS3", params );
+        By_mBTIS3 = FieldFactory::create2D( dimPrim, 2, false, "By_mBTIS3", params );
+        Bz_mBTIS3 = FieldFactory::create2D( dimPrim, 1, false, "Bz_mBTIS3", params );
 
     }
     
