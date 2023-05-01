@@ -2584,6 +2584,21 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
+  In the case the B-TIS3 interpolation is activated (see :doc:`/Understand/algorithms`),
+  the following fields are also available:
+
+  .. rst-class:: fancy
+       
+  +--------------------------------------------+-----------------------------------------------+
+  | | By_mBTIS3                                | | Components of the magnetic field            |
+  | | By_mBTIS3                                | | for the B-TIS3 interpolation                |
+  | |                                          | | (time-centered)                             |
+  +--------------------------------------------+-----------------------------------------------+
+  | | Br_mBTIS3_mode_0, Br_mBTIS3_mode_1, etc. | | Components of the magnetic field            |
+  | | Bt_mBTIS3_mode_0, Bt+mBTIS3_mode_1, etc. | | for the B-TIS3 interpolation                |
+  | |                                          | | (``AMcylindrical`` geometry, time-centered) |
+  +--------------------------------------------+-----------------------------------------------+
+
 
 .. Note:: In a given `DiagFields`, all fields must be of the same kind: either real or complex. Therefore To write these last three envelope real fields in ``"AMcylindrical"`` geometry,
           a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs", "Env_Chi"]``.
