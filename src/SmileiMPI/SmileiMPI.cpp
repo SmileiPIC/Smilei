@@ -1313,12 +1313,12 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
         isendComplex( EMAM->Bt_m[imode], to, tag+irequest, requests[irequest] );
         irequest++;
         
-        // if (use_BTIS3){
-        //         isendComplex( EMAM->Br_mBTIS3[imode], to, tag+irequest, requests[irequest] );
-        //         irequest++;
-        //         isendComplex( EMAM->Bt_mBTIS3[imode], to, tag+irequest, requests[irequest] );
-        //         irequest++;
-        // }
+        if (use_BTIS3){
+                isendComplex( EMAM->Br_mBTIS3[imode], to, tag+irequest, requests[irequest] );
+                irequest++;
+                isendComplex( EMAM->Bt_mBTIS3[imode], to, tag+irequest, requests[irequest] );
+                irequest++;
+        }
     }
 
     // if laser envelope is present, send it
@@ -1824,12 +1824,12 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
         tag++;
         recvComplex( EMAM->Bt_m[imode], from, tag );
         tag++;
-        // if (use_BTIS3){
-        //     recvComplex( EMAM->Br_mBTIS3[imode], from, tag );
-        //     tag++;
-        //     recvComplex( EMAM->Bt_mBTIS3[imode], from, tag );
-        //     tag++;
-        // }
+        if (use_BTIS3){
+            recvComplex( EMAM->Br_mBTIS3[imode], from, tag );
+            tag++;
+            recvComplex( EMAM->Bt_mBTIS3[imode], from, tag );
+            tag++;
+        }
     }
 
     if( EM->envelope!=NULL ) {
