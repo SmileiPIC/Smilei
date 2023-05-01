@@ -1058,8 +1058,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
-        if( params.geometry != "AMcylindrical" )
+        if( params.geometry != "AMcylindrical" ){
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
+            // if (params.use_BTIS3){
+            //     SyncVectorPatch::finalizeexchangeBmBTIS3( params, ( *this ) );
+            // }
+        }
         timers.syncField.update( params.printNow( itime ) );
 
         #pragma omp for schedule(static)
