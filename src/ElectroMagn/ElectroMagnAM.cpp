@@ -189,7 +189,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Bt_m[imode] = FieldFactory::createAM( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str(), params );
         if(use_BTIS3){
             // BTIS fields must be centered as E in the x direction: Br as Ez, Bt as Er 
-            Ir_mBTIS3[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Br_mBTIS3"+mode_id.str() ).c_str(), params );
+            Br_mBTIS3[imode] = FieldFactory::createAM( dimPrim, 2, false, ( "Br_mBTIS3"+mode_id.str() ).c_str(), params );
             Bt_mBTIS3[imode] = FieldFactory::createAM( dimPrim, 1, false, ( "Bt_mBTIS3"+mode_id.str() ).c_str(), params );
         }
         
