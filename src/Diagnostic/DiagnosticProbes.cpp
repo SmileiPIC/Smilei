@@ -234,9 +234,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     species_field_index.resize( nspec );
     species_field_location.resize( nspec );
     bool has_poynting = false;
-    for( unsigned int i=0; i<nFields; i++ ) {
+    for( unsigned int i=0; i<nFields; i++ ) {cout<<i<<","<<fieldname[i]<<","<< fieldname[14]<<endl;
         for( unsigned int j=0; j<i; j++ ) {
-            if( fieldname[i]==fieldname[j] ) {
+            if( fieldname[i]==fieldname[j] && fieldname[i]!="") {
                 ERROR( "Probe #"<<n_probe<<": field "<<fieldname[i]<<" appears twice" );
             }
             if(!params.use_BTIS3 & ((fieldname[i]=="ByBTIS3") || (fieldname[i]=="BzBTIS3")) ){
@@ -288,6 +288,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             fieldlocation[17] = i;
         } else if( fieldname[i]=="BzBTIS3" ) {
             fieldlocation[18] = i;
+        } else if( fieldname[i]=="" ) {
+            continue;
         } else {
             // Species-related field
             
