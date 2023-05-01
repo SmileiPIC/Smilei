@@ -229,7 +229,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     }
     nFields = fieldname.size();
     nBuffers = nFields + 1; // +1 for garbage
-    fieldlocation.resize( 17, nFields );
+    fieldlocation.resize( 19, nFields );
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     species_field_index.resize( nspec );
     species_field_location.resize( nspec );
