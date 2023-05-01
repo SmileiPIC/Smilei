@@ -208,7 +208,7 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
         ( *RhoLoc ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ )* exp_mm_theta ) ;
         
         if (smpi->use_BTIS3){
-            // BTIS fields, in the x direction they are centered as Ey and Ez
+            // BTIS3 fields, in the x direction they are centered as Ey and Ez
             *( BLocyBTIS3+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Br_BTIS3, ip_, jp_ )* exp_mm_theta );
             *( BLoczBTIS3+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bt_BTIS3, ip_, jd_ )* exp_mm_theta );
         }
@@ -224,8 +224,8 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     JLoc->y = delta2 ;
     if (smpi->use_BTIS3){
     delta2 = std::real( exp_m_theta_ ) * *( BLocyBTIS3+0*nparts ) + std::imag( exp_m_theta_ ) * *( BLoczBTIS3+0*nparts );
-        *( BLoczBTIS3+0*nparts ) = -std::imag( exp_m_theta_ ) * *( BLocyBTIS3+0*nparts ) + std::real( exp_m_theta_ ) * *( BLoczBTIS3+0*nparts );
-        *( BLocyBTIS3+0*nparts ) = delta2 ;
+    *( BLoczBTIS3+0*nparts ) = -std::imag( exp_m_theta_ ) * *( BLocyBTIS3+0*nparts ) + std::real( exp_m_theta_ ) * *( BLoczBTIS3+0*nparts );
+    *( BLocyBTIS3+0*nparts ) = delta2 ;
     }
 
 }
@@ -288,82 +288,185 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
 
     //Loop on bin particles
     int nparts( particles.numberOfParticles() );
+    
+    if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+            complex<double> exp_m_theta_local ;
+            complex<double> exp_mm_theta_local = 1. ;
 
-        complex<double> exp_m_theta_local ;
-        complex<double> exp_mm_theta_local = 1. ;
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart ) * D_inv_[0];
+            double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+            double rpn = r * D_inv_[1];
+            exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
+                                                                   //exp(-i m theta)
 
-        // Normalized particle position
-        double xpn = particles.position( 0, ipart ) * D_inv_[0];
-        double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        double rpn = r * D_inv_[1];
-        exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
-                                                                 //exp(-i m theta)
+            int idx_p[2], idx_d[2];
+            double delta_p[2];
+            double coeffxp[3], coeffyp[3];
+            double coeffxd[3], coeffyd[3];
 
-        int idx_p[2], idx_d[2];
-        double delta_p[2];
-        double coeffxp[3], coeffyp[3];
-        double coeffxd[3], coeffyd[3];
+            coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
-        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+            // Static cast of the electromagnetic fields, mode 0
+            cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+            cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+            cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+            cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+            cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+            cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
 
-        // Static cast of the electromagnetic fields, mode 0
-        cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
-        cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
-        cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
-        cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
-        cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
-        cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+            //Here we assume that mode 0 is real !!
+            // Interpolation of El^(d,p)
+            *( Epart+0*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
+            // Interpolation of Er^(p,d)
+            *( Epart+1*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
+            // Interpolation of Et^(p,p)
+            *( Epart+2*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bl^(p,d)
+            *( Bpart+0*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
+            // Interpolation of Br^(d,p)
+            *( Bpart+1*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
+            // Interpolation of Bt^(d,d)
+            *( Bpart+2*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
 
-        //Here we assume that mode 0 is real !!
-        // Interpolation of El^(d,p)
-        *( Epart+0*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
-        // Interpolation of Er^(p,d)
-        *( Epart+1*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
-        // Interpolation of Et^(p,p)
-        *( Epart+2*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
-        // Interpolation of Bl^(p,d)
-        *( Bpart+0*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
-        // Interpolation of Br^(d,p)
-        *( Bpart+1*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
-        // Interpolation of Bt^(d,d)
-        *( Bpart+2*nparts+ipart ) = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
+            for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+                El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+                Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+                Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+                Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+                Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+                Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
 
-        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
-            El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
-            Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
-            Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+                exp_mm_theta_local *= exp_m_theta_local ;
 
-            exp_mm_theta_local *= exp_m_theta_local ;
+                *( Epart+0*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Epart+1*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                *( Epart+2*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Bpart+0*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                *( Bpart+1*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Bpart+2*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+            }
 
-            *( Epart+0*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            *( Epart+1*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            *( Epart+2*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
-            *( Bpart+0*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            *( Bpart+1*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            *( Bpart+2*nparts+ipart ) += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
-        }
+            //Translate field into the cartesian y,z coordinates
+            double delta2 = std::real( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+            *( Epart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+            *( Epart+1*nparts+ipart ) = delta2 ;
+            delta2 = std::real( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+            *( Bpart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+            *( Bpart+1*nparts+ipart ) = delta2 ;
 
-        //Translate field into the cartesian y,z coordinates
-        double delta2 = std::real( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
-        *( Epart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
-        *( Epart+1*nparts+ipart ) = delta2 ;
-        delta2 = std::real( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
-        *( Bpart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
-        *( Bpart+1*nparts+ipart ) = delta2 ;
+            // store indices and delta
+            *( iold+0*nparts+ipart)  = idx_p[0];
+            *( iold+1*nparts+ipart)  = idx_p[1];
+            *( delta+0*nparts+ipart) = delta_p[0];
+            *( delta+1*nparts+ipart) = delta_p[1];
+            *( eitheta_old+ipart )     = 2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
 
-        // store indices and delta
-        *( iold+0*nparts+ipart)  = idx_p[0];
-        *( iold+1*nparts+ipart)  = idx_p[1];
-        *( delta+0*nparts+ipart) = delta_p[0];
-        *( delta+1*nparts+ipart) = delta_p[1];
-        *( eitheta_old+ipart )     = 2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+        } // end ipart loop
+      
+    } else { // with B-TIS3 interpolation
+      
+        double *BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][0] );
+        double *BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][0] );
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-    }
+            complex<double> exp_m_theta_local ;
+            complex<double> exp_mm_theta_local = 1. ;
+
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart ) * D_inv_[0];
+            double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+            double rpn = r * D_inv_[1];
+            exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
+                                                                   //exp(-i m theta)
+
+            int idx_p[2], idx_d[2];
+            double delta_p[2];
+            double coeffxp[3], coeffyp[3];
+            double coeffxd[3], coeffyd[3];
+
+            coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+
+            // Static cast of the electromagnetic fields, mode 0
+            cField2D *El       = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+            cField2D *Er       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+            cField2D *Et       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+            cField2D *Bl       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+            cField2D *Br       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+            cField2D *Bt       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+            cField2D *Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[0];
+            cField2D *Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[0];
+
+            //Here we assume that mode 0 is real !!
+            // Interpolation of El^(d,p)
+            *( Epart+0*nparts+ipart )      = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
+            // Interpolation of Er^(p,d)
+            *( Epart+1*nparts+ipart )      = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
+            // Interpolation of Et^(p,p)
+            *( Epart+2*nparts+ipart )      = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bl^(p,d)
+            *( Bpart+0*nparts+ipart )      = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
+            // Interpolation of Br^(d,p)
+            *( Bpart+1*nparts+ipart )      = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
+            // Interpolation of Bt^(d,d)
+            *( Bpart+2*nparts+ipart )      = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
+            
+            // BTIS3 fields, in the x direction they are centered as Ey and Ez
+            // Interpolation of Br^(p,p) for BTIS
+            *( BLocyBTIS3+0*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyp[1], Br_BTIS3, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bt^(p,d) for BTIS
+            *( BLoczBTIS3+0*nparts+ipart ) = std::real( compute( &coeffxp[1], &coeffyd[1], Bt_BTIS3, idx_p[0], idx_d[1] ) );
+
+            for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+                El       = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+                Er       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+                Et       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+                Bl       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+                Br       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+                Bt       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+                Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[imode];
+                Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[imode];
+
+                exp_mm_theta_local *= exp_m_theta_local ;
+
+                *( Epart+0*nparts+ipart )      += std::real( compute( &coeffxd[1], &coeffyp[1], El      , idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Epart+1*nparts+ipart )      += std::real( compute( &coeffxp[1], &coeffyd[1], Er      , idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                *( Epart+2*nparts+ipart )      += std::real( compute( &coeffxp[1], &coeffyp[1], Et      , idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Bpart+0*nparts+ipart )      += std::real( compute( &coeffxp[1], &coeffyd[1], Bl      , idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                *( Bpart+1*nparts+ipart )      += std::real( compute( &coeffxd[1], &coeffyp[1], Br      , idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                *( Bpart+2*nparts+ipart )      += std::real( compute( &coeffxd[1], &coeffyd[1], Bt      , idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+                // BTIS3 fields, in the x direction they are centered as Ey and Ez
+                *( BLocyBTIS3+0*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyp[1], Br_BTIS3, idx_p[0], idx_p[1] )* exp_mm_theta_local );
+                *( BLoczBTIS3+0*nparts+ipart ) += std::real( compute( &coeffxp[1], &coeffyd[1], Bt_BTIS3, idx_p[0], idx_d[1] )* exp_mm_theta_local );
+            }
+
+            //Translate field into the cartesian y,z coordinates
+            double delta2 = std::real( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+            *( Epart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Epart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Epart+2*nparts+ipart );
+            *( Epart+1*nparts+ipart ) = delta2 ;
+            delta2 = std::real( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+            *( Bpart+2*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( Bpart+1*nparts+ipart ) + std::real( exp_m_theta_local ) * *( Bpart+2*nparts+ipart );
+            *( Bpart+1*nparts+ipart ) = delta2 ;
+            delta2 = std::real( exp_m_theta_local ) * *( BLocyBTIS3+0*nparts+ipart ) + std::imag( exp_m_theta_local ) * *( BLoczBTIS3+0*nparts+ipart );
+            *( BLoczBTIS3+0*nparts+ipart ) = -std::imag( exp_m_theta_local ) * *( BLocyBTIS3+0*nparts+ipart ) + std::real( exp_m_theta_local ) * *( BLoczBTIS3+0*nparts+ipart );
+            *( BLocyBTIS3+0*nparts+ipart ) = delta2 ;
+
+            // store indices and delta
+            *( iold+0*nparts+ipart)  = idx_p[0];
+            *( iold+1*nparts+ipart)  = idx_p[1];
+            *( delta+0*nparts+ipart) = delta_p[0];
+            *( delta+1*nparts+ipart) = delta_p[1];
+            *( eitheta_old+ipart )     = 2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+
+        } // end ipart loop
+      
+    } // end with B-TIS3 interpolation
+
+    
 
 }
 
@@ -408,98 +511,215 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
     double delta2, xpn, r, rpn;
     int nparts = particles.numberOfParticles() ;
 
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-        int idx_p[2], idx_d[2];
-        double delta_p[2];
-        double coeffxp[3], coeffyp[3];
-        double coeffxd[3], coeffyd[3];
-        complex<double> exp_m_theta_local ;
-        complex<double> exp_mm_theta_local = 1. ;
+            int idx_p[2], idx_d[2];
+            double delta_p[2];
+            double coeffxp[3], coeffyp[3];
+            double coeffxd[3], coeffyd[3];
+            complex<double> exp_m_theta_local ;
+            complex<double> exp_mm_theta_local = 1. ;
 
-        // Normalized particle position
-        xpn = particles.position( 0, ipart ) * D_inv_[0];
-        r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * D_inv_[1];
+            // Normalized particle position
+            xpn = particles.position( 0, ipart ) * D_inv_[0];
+            r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+            rpn = r * D_inv_[1];
 
-        // Compute coefficients
-        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+            // Compute coefficients
+            coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
+            // mode 0 is treated first
 
-        // mode 0 is treated first
+            // Interpolate E, B
+            cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+            cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+            cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+            cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+            cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+            cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
 
-        // Interpolate E, B
-        cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
-        cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
-        cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
-        cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
-        cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
-        cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+            // Interpolation of El^(d,p)
+            ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
+            // Interpolation of Er^(p,d)
+            ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
+            // Interpolation of Et^(p,p)
+            ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bl^(p,d)
+            ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
+            // Interpolation of Br^(d,p)
+            ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
+            // Interpolation of Bt^(d,d)
+            ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
+            // Interpolation of Phi^(p,p)
+            ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp[1], &coeffyp[1], Phi, idx_p[0], idx_p[1] ) ;
+            // Interpolation of GradPhil^(p,p)
+            ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhil, idx_p[0], idx_p[1] ) ;
+            // Interpolation of GradPhir^(p,p)
+            ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhir, idx_p[0], idx_p[1] ) ;
+            // GradPhit = 0 in cylindrical symmetry
+            ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
 
-        // Interpolation of El^(d,p)
-        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
-        // Interpolation of Er^(p,d)
-        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
-        // Interpolation of Et^(p,p)
-        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
-        // Interpolation of Bl^(p,d)
-        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
-        // Interpolation of Br^(d,p)
-        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
-        // Interpolation of Bt^(d,d)
-        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
-        // Interpolation of Phi^(p,p)
-        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp[1], &coeffyp[1], Phi, idx_p[0], idx_p[1] ) ;
-        // Interpolation of GradPhil^(p,p)
-        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhil, idx_p[0], idx_p[1] ) ;
-        // Interpolation of GradPhir^(p,p)
-        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhir, idx_p[0], idx_p[1] ) ;
-        // GradPhit = 0 in cylindrical symmetry
-        ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
+            if (r > 0){
+                exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+            } else {
+                exp_m_theta_local = 1. ;
+            }
+            for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+                El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+                Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+                Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+                Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+                Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+                Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
 
-        if (r > 0){
-            exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
-        } else {
-            exp_m_theta_local = 1. ;
-        }
-        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
-            El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
-            Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
-            Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+                exp_mm_theta_local *= exp_m_theta_local ;
+                
+                ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+            }
 
-            exp_mm_theta_local *= exp_m_theta_local ;
+            // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
+            delta2 = std::real( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
+            ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
+            ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
+            delta2 = std::real( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) *  ( *Bpart ) [ 2*nparts+ipart ];
+            ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Bpart ) [ 2*nparts+ipart ];
+            ( *Bpart ) [ 1*nparts+ipart ] = delta2 ;
 
-            ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            ( *Epart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
-            ( *Bpart ) [ 2*nparts+ipart ] += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
-        }
+            delta2 = std::real( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+            ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+            ( *GradPHIpart ) [ 1*nparts+ipart ] = delta2 ;
 
-        // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
-        delta2 = std::real( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
-        ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
-        ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
-        delta2 = std::real( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) *  ( *Bpart ) [ 2*nparts+ipart ];
-        ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Bpart ) [ 2*nparts+ipart ];
-        ( *Bpart ) [ 1*nparts+ipart ] = delta2 ;
+            //Buffering of iold and delta
+            ( *iold )[ipart+0*nparts]  = idx_p[0];
+            ( *iold )[ipart+1*nparts]  = idx_p[1];
+            ( *delta )[ipart+0*nparts] = delta_p[0];
+            ( *delta )[ipart+1*nparts] = delta_p[1];
+            ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
 
-        delta2 = std::real( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
-        ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
-        ( *GradPHIpart ) [ 1*nparts+ipart ] = delta2 ;
+        } // end ipart loop
+      
+    } else { // with B-TIS3 interpolation
 
-        //Buffering of iold and delta
-        ( *iold )[ipart+0*nparts]  = idx_p[0];
-        ( *iold )[ipart+1*nparts]  = idx_p[1];
-        ( *delta )[ipart+0*nparts] = delta_p[0];
-        ( *delta )[ipart+1*nparts] = delta_p[1];
-        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+        std::vector<double> *BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread] );
+        std::vector<double> *BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread] );
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-    }
+            int idx_p[2], idx_d[2];
+            double delta_p[2];
+            double coeffxp[3], coeffyp[3];
+            double coeffxd[3], coeffyd[3];
+            complex<double> exp_m_theta_local ;
+            complex<double> exp_mm_theta_local = 1. ;
+
+            // Normalized particle position
+            xpn = particles.position( 0, ipart ) * D_inv_[0];
+            r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+            rpn = r * D_inv_[1];
+
+            // Compute coefficients
+            coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+
+            // mode 0 is treated first
+
+            // Interpolate E, B
+            cField2D *El       = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+            cField2D *Er       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+            cField2D *Et       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+            cField2D *Bl       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+            cField2D *Br       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+            cField2D *Bt       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+            cField2D *Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[0];
+            cField2D *Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[0];
+
+            // Interpolation of El^(d,p)
+            ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] ) );
+            // Interpolation of Er^(p,d)
+            ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] ) );
+            // Interpolation of Et^(p,p)
+            ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bl^(p,d)
+            ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] ) );
+            // Interpolation of Br^(d,p)
+            ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] ) );
+            // Interpolation of Bt^(d,d)
+            ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
+            // Interpolation of Phi^(p,p)
+            ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp[1], &coeffyp[1], Phi, idx_p[0], idx_p[1] ) ;
+            // Interpolation of GradPhil^(p,p)
+            ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhil, idx_p[0], idx_p[1] ) ;
+            // Interpolation of GradPhir^(p,p)
+            ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp[1], &coeffyp[1], GradPhir, idx_p[0], idx_p[1] ) ;
+            // GradPhit = 0 in cylindrical symmetry
+            ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
+            // BTIS3 fields, in the x direction they are centered as Ey and Ez
+            // Interpolation of Br^(p,p) for BTIS
+            ( *BLocyBTIS3)[ 0*nparts+ipart ]    = std::real( compute( &coeffxp[1], &coeffyp[1], Br_BTIS3, idx_p[0], idx_p[1] ) );
+            // Interpolation of Bt^(p,d) for BTIS
+            ( *BLoczBTIS3)[ 0*nparts+ipart ]    = std::real( compute( &coeffxp[1], &coeffyd[1], Bt_BTIS3, idx_p[0], idx_d[1] ) );
+
+            if (r > 0){
+                exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+            } else {
+                exp_m_theta_local = 1. ;
+            }
+            for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+                El       = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+                Er       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+                Et       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+                Bl       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+                Br       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+                Bt       = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+                Br_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_mBTIS3[imode];
+                Bt_BTIS3 = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_mBTIS3[imode];
+
+                exp_mm_theta_local *= exp_m_theta_local ;
+              
+                ( *Epart ) [ 0*nparts+ipart ]    += std::real( compute( &coeffxd[1], &coeffyp[1], El      , idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Epart ) [ 1*nparts+ipart ]    += std::real( compute( &coeffxp[1], &coeffyd[1], Er      , idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                ( *Epart ) [ 2*nparts+ipart ]    += std::real( compute( &coeffxp[1], &coeffyp[1], Et      , idx_p[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 0*nparts+ipart ]    += std::real( compute( &coeffxp[1], &coeffyd[1], Bl      , idx_p[0], idx_d[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 1*nparts+ipart ]    += std::real( compute( &coeffxd[1], &coeffyp[1], Br      , idx_d[0], idx_p[1] )* exp_mm_theta_local ) ;
+                ( *Bpart ) [ 2*nparts+ipart ]    += std::real( compute( &coeffxd[1], &coeffyd[1], Bt      , idx_d[0], idx_d[1] )* exp_mm_theta_local ) ;
+                // BTIS3 fields, in the x direction they are centered as Ey and Ez
+                ( *BLocyBTIS3)[ 0*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyp[1], Br_BTIS3, idx_p[0], idx_p[1] )* exp_mm_theta_local );
+                ( *BLoczBTIS3)[ 0*nparts+ipart ] += std::real( compute( &coeffxp[1], &coeffyd[1], Bt_BTIS3, idx_p[0], idx_d[1] )* exp_mm_theta_local );
+            }
+
+            // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
+            delta2 = std::real( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
+            ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Epart ) [ 2*nparts+ipart ];
+            ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
+            delta2 = std::real( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta_local ) *  ( *Bpart ) [ 2*nparts+ipart ];
+            ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *Bpart ) [ 2*nparts+ipart ];
+            ( *Bpart ) [ 1*nparts+ipart ] = delta2 ;
+
+            delta2 = std::real( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+            ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+            ( *GradPHIpart ) [ 1*nparts+ipart ] = delta2 ;
+            
+            delta2 = std::real( exp_m_theta_local ) * ( *BLocyBTIS3) [ 0*nparts+ipart ] + std::imag( exp_m_theta_local ) * ( *BLoczBTIS3) [ 0*nparts+ipart ];
+            ( *BLoczBTIS3) [0*nparts+ipart ] = -std::imag( exp_m_theta_local ) * ( *BLocyBTIS3)[ 0*nparts+ipart ] + std::real( exp_m_theta_local ) * ( *BLoczBTIS3) [ 0*nparts+ipart ];
+            ( *BLocyBTIS3) [0*nparts+ipart ] = delta2 ;
+
+            //Buffering of iold and delta
+            ( *iold )[ipart+0*nparts]  = idx_p[0];
+            ( *iold )[ipart+1*nparts]  = idx_p[1];
+            ( *delta )[ipart+0*nparts] = delta_p[0];
+            ( *delta )[ipart+1*nparts] = delta_p[1];
+            ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+
+        } // end ipart loop
+      
+    } // end with B-TIS3 interpolation
+    
 
 } // END InterpolatorAM2Order
 
