@@ -59,9 +59,11 @@ class TrackParticles(Diagnostic):
 		self._XmovedForTime = {}
 		for file in disorderedfiles:
 			with self._h5py.File(file, "r") as f:
-				for t in f["data"]:
-					if "x_moved" in f["data"][t].attrs:
-						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+				data = f["data"]
+				for t in data:
+					attrs = data[t].attrs
+					if "x_moved" in attrs:
+						self._XmovedForTime[int(t)] = attrs["x_moved"]
 		extra_properties = ["moving_x"] if self._XmovedForTime else []
 		
 		# If sorting allowed, find out if ordering needed
