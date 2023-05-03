@@ -314,6 +314,15 @@ class Field(Diagnostic):
 		except Exception as e: times = []
 		return self._np.double(times)
 	
+	def _getCenters(self, axis_index, timestep, h5item = None):
+		xoffset = 0
+		if self.moving and 'x' in self._type and axis_index == 0:
+			if h5item is None:
+				h5item = self._h5items[self._data[timestep]]
+			if "x_moved" in h5item.attrs:
+				xoffset = h5item.attrs["x_moved"]
+		return  xoffset + self._np.array(self._centers[axis_index])
+	
 	# get the value of x_moved for a requested timestep
 	def getXmoved(self, t):
 		if not self._validate(): return

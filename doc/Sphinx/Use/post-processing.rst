@@ -591,10 +591,10 @@ Obtain the data
 
 
 .. py:method:: Scalar.getAxis( axis )
-               Field.getAxis( axis )
+               Field.getAxis( axis, timestep )
                Probe.getAxis( axis )
-               ParticleBinning.getAxis( axis )
-               Screen.getAxis( axis )
+               ParticleBinning.getAxis( axis, timestep )
+               Screen.getAxis( axis, timestep )
 
   Returns the list of positions of the diagnostic data along the requested axis.
   If the axis is not available, returns an empty list.
@@ -607,6 +607,10 @@ Obtain the data
     * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
       defined in the namelist
+
+  * ``timestep``: The timestep at which the axis is obtained. Only matters in
+    ``ParticleBinning``, ``Screen`` and ``RadiationSpectrum`` when ``auto`` axis
+    limits are requested; or in ``Field`` when ``moving=True``.
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)

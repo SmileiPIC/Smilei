@@ -45,6 +45,7 @@ Changes made in the repository (not released)
   * ``PML`` are now compatible with dynamic load balancing.
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
+  * ``Field.getAxis`` was not accounting for the ``timestep``
 
 * Experimental
 
