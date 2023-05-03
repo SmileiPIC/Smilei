@@ -233,7 +233,6 @@ class Options(object):
 			self.image['cmap'] = self.explicit_cmap
 		return kwargs
 
-PintWarningIssued = False
 
 class Units(object):
 	""" Units()
@@ -262,22 +261,13 @@ class Units(object):
 				elif kwa == "y": self.requestedY = val
 				elif kwa == "v": self.requestedV = val
 				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
-
-		# We try to import the pint package
-		self.UnitRegistry = None
-		try:
-			from pint import UnitRegistry
-			self.UnitRegistry = UnitRegistry
-		except Exception as e:
-			global PintWarningIssued
-			if self.verbose and not PintWarningIssued:
-				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-				print("       : The results will stay in code units.")
-				PintWarningIssued = True
-			return
+		self.ureg = None
+		
+	def _initRegistry(self, ureg):
+		self.ureg = ureg
 	
 	def _getUnits(self, units):
-		if self.UnitRegistry:
+		if self.ureg:
 			u = self.ureg(units)
 			try: u = u.units.format_babel(locale="en")
 			except Exception as e: u = ""
@@ -315,29 +305,8 @@ class Units(object):
 			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
 
-	def prepare(self, reference_angular_frequency_SI=None):
-		if self.UnitRegistry:
-			self.ureg = self.UnitRegistry()
-			if reference_angular_frequency_SI:
-				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-			else:
-				self.ureg.define("W_r = [reference_frequency]"                 ) # frequency
-			self.ureg.define("V_r = speed_of_light"                   ) # velocity
-			self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-			self.ureg.define("M_r = electron_mass"                    ) # mass
-			self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
-			self.ureg.define("L_r = V_r / W_r"                        ) # length
-			self.ureg.define("T_r = 1   / W_r"                        ) # time
-			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
-			self.ureg.define("K_r = M_r * V_r**2"                     ) # energy
-			self.ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
-			self.ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
-			self.ureg.define("B_r = M_r * W_r / Q_r"                  ) # magnetic field
-			self.ureg.define("E_r = B_r * V_r"                        ) # electric field
-			self.ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
-	
 	def convertAxes(self, xunits="", yunits="", vunits="", tunits=""):
-		if self.UnitRegistry:
+		if self.ureg:
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
 			self.vcoeff, self.vname = self._convert(vunits, self.requestedV)
