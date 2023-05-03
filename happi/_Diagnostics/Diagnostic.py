@@ -96,7 +96,6 @@ class Diagnostic(object):
 				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
 				print("       : The results will stay in code units.")
 				PintWarningIssued = True
-			return
 		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
