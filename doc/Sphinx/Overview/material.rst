@@ -116,7 +116,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
   A. Beth, H. Gunell, C. Simon Wedlund, C. Goetz, H. Nilsson and M. Hamrin,
   `First investigation of the diamagnetic cavity boundary layer with a 1D3V PIC simulation`,
-  `A&amp;A 667, A143 (2022) <http://dx.doi.org/10.1051/0004-6361/202243209 >`_
+  `A&amp;A 667, A143 (2022) <http://dx.doi.org/10.1051/0004-6361/202243209>`_
 
 .. [Guo2022]
 
@@ -235,7 +235,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. [Umstadter2022]
    D. Umstadter
    `Controlled Injection of Electrons for Improved Performance of Laser-Wakefield Acceleration`,
-   ` United States: N. p., (2022) <http://dx.doi.org/10.2172/1838680>`_
+   `United States: N. p., (2022) <http://dx.doi.org/10.2172/1838680>`_
 
 .. [Yoon2023]
 
