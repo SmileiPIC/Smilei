@@ -90,9 +90,9 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Miloshevsky2022]
 
-   and G. Miloshevsky,
+  G. Miloshevsky,
   `Pic Modeling of Omega Experiments on Ablation of Plasmas`,
-  `2022 IEEE International Conference on Plasma Science (ICOPS) ???, ICOPS45751.2022.9813047 (2022) <http://dx.doi.org/10.1109/ICOPS45751.2022.9813047>`_
+  `2022 IEEE International Conference on Plasma Science (ICOPS), ICOPS45751.2022.9813047 (2022) <http://dx.doi.org/10.1109/ICOPS45751.2022.9813047>`_
 
 .. [Zhang2022b]
 
