@@ -12,7 +12,7 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	simulation_time  = .24 * L0,
+	simulation_time  = .28 * L0,
 	
 	cell_length = [0.01 * L0]*3,
 	grid_length  = [1. * L0]*3,
@@ -23,7 +23,6 @@ Main(
 	print_every = 10,
 	
 )
-
 
 nportion = 5
 portion_width = Main.grid_length[0]/nportion
@@ -91,8 +90,26 @@ Species(
 	],
 )
 
+Species(
+	name = "test2",
+	position_initialization = "centered",
+	momentum_initialization = "cold",
+	particles_per_cell = 1,
+	mass = 100000.0,
+	charge = 1.,
+	number_density = lambda x,y,z: 0.001 * ((abs(y-L0/2)<L0/200) * (abs(z-L0/2)<L0/200)),
+	boundary_conditions = [
+		["periodic", "periodic"],
+		["periodic", "periodic"],
+		["periodic", "periodic"],
+	],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+)
+
+
+
 DiagScalar(
-    every = 10,
+    every = 40,
 )
 DiagFields(
     every = 45,
@@ -153,7 +170,7 @@ quantities = [
 	"weight_vx_pz"    ,
 	"weight_vy_pz"    ,
 	"weight_ekin_vx"  ,
-	lambda particles: particles.weight
+	lambda particles: particles.weight,
 ]
 
 for quantity in quantities:
@@ -163,3 +180,53 @@ for quantity in quantities:
 		species = ["test0"],
 		axes = [["x" , 0., Main.grid_length[0], 10]]
 	)
+
+
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Ex,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Ey,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Ez,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wx,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wy,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagParticleBinning(
+	deposited_quantity = lambda particles: particles.Wz,
+	every = 45,
+	species = ["test2"],
+	axes = [["x" , 0., Main.grid_length[0], 100]]
+)
+
+DiagTrackParticles(
+	species = "test2",
+	every = 5,
+	attributes = ["x", "Ex", "Ey", "Ez", "Wx", "Wy", "Wz"]
+)

@@ -56,7 +56,9 @@ public:
         setVectorAttr( test_value, "weight" );
         setVectorAttr( test_charge, "charge" );
         setVectorAttr( test_id, "id" );
-        setVectorAttr( test_chi, "chi" );
+        for( auto name :  {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"} ) {
+            setVectorAttr( test_value, name );
+        }
         // Verify the return value of the function
         PyObject *ret( nullptr );
         ret = PyObject_CallFunctionObjArgs( function, particles, NULL );
@@ -141,6 +143,14 @@ public:
         setVectorAttr( p->Id, "id" );
         if( p->has_quantum_parameter ) {
             setVectorAttr( p->Chi, "chi" );
+        }
+        if( p->interpolated_fields_ ) {
+            std::vector<std::string> list = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"};
+            for( size_t i = 0; i < p->interpolated_fields_->mode_.size(); i++ ) {
+                if( p->interpolated_fields_->mode_[i] > 0 ) {
+                    setVectorAttr( p->interpolated_fields_->F_[i], list[i] );
+                }
+            }
         }
     };
 

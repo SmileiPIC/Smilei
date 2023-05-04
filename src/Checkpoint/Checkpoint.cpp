@@ -534,6 +534,19 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
             }
 
+            // Copy interpolated fields that must be accumulated over time
+            if( spec->particles->interpolated_fields_ ) {
+                if( spec->particles->interpolated_fields_->mode_[6] == 2 ) {
+                    s.vect( "Wx", spec->particles->interpolated_fields_->F_[6] );
+                }
+                if( spec->particles->interpolated_fields_->mode_[7] == 2 ) {
+                    s.vect( "Wy", spec->particles->interpolated_fields_->F_[7] );
+                }
+                if( spec->particles->interpolated_fields_->mode_[8] == 2 ) {
+                    s.vect( "Wz", spec->particles->interpolated_fields_->F_[8] );
+                }
+            }
+
             s.vect( "first_index", spec->particles->first_index );
             s.vect( "last_index", spec->particles->last_index );
 
@@ -951,6 +964,19 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 s.vect( "Tau", spec->particles->Tau );
             }
 
+            // Retrieve interpolated fields that must be accumulated over time
+            if( spec->particles->interpolated_fields_ ) {
+                if( spec->particles->interpolated_fields_->mode_[6] == 2 ) {
+                    s.vect( "Wx", spec->particles->interpolated_fields_->F_[6] );
+                }
+                if( spec->particles->interpolated_fields_->mode_[7] == 2 ) {
+                    s.vect( "Wy", spec->particles->interpolated_fields_->F_[7] );
+                }
+                if( spec->particles->interpolated_fields_->mode_[8] == 2 ) {
+                    s.vect( "Wz", spec->particles->interpolated_fields_->F_[8] );
+                }
+            }
+            
             if( ! params.cell_sorting_ ) {
                 s.vect( "first_index", spec->particles->first_index, true );
                 s.vect( "last_index", spec->particles->last_index, true );

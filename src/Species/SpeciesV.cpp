@@ -480,7 +480,13 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
                        particles->last_index[ipack*packsize_+packsize_-1],
                        ithread, particles->first_index[ipack*packsize_] );
-
+            
+            // Copy interpolated fields to persistent buffers if requested
+            if( particles->interpolated_fields_ ) {
+                size_t start = particles->first_index[ipack*packsize_];
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][0] ), &( smpi->dynamics_Bpart[ithread][0] ), &( smpi->dynamics_invgf[ithread][0] ), start, nparts_in_pack, nparts_in_pack, params.timestep );
+            }
+            
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,1);
 
             // }
@@ -968,6 +974,15 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]],
                         particles->last_index[last_cell_of_bin[ibin]],
                         buffer_id, particles->first_index[0] );
+                        
+            // Copy interpolated fields to persistent buffers if requested
+            if( particles->interpolated_fields_ ) {
+                size_t start = particles->first_index[first_cell_of_bin[ibin]];
+                size_t n = particles->last_index[last_cell_of_bin[ibin]] - start;
+                size_t buffer_size = smpi->dynamics_invgf[buffer_id].size();
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), &( smpi->dynamics_invgf[buffer_id][start] ), start, n, buffer_size, params.timestep );
+            }
+            
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
