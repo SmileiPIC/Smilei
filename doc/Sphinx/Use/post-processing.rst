@@ -18,7 +18,7 @@ In a *python* command line (or script), call the following function to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:method:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:method:: happi.Open(results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True, pint=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -34,6 +34,8 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``verbose``: if ``False``, less information is printed while post-processing.
 
   * ``scan``: if ``False``, HDF5 output files are not scanned initially, and the namelist is not read.
+
+  * ``pint``: if ``True``, *happi* attempts to load the *Pint* package and to use it for managing units.
 
 
 **Returns:** An object containing various methods to extract and manipulate the simulation

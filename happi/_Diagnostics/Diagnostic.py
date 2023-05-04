@@ -1,7 +1,5 @@
 from .._Utils import *
 
-PintWarningIssued = False
-
 class Diagnostic(object):
 	"""Mother class for all Diagnostics.
 	To create a diagnostic, refer to the doc of the SmileiSimulation class.
@@ -55,6 +53,7 @@ class Diagnostic(object):
 		self._cell_length    = self.simulation._cell_length
 		self._ncels          = self.simulation._ncels
 		self.timestep        = self.simulation._timestep
+		self._ureg           = self.simulation._ureg
 		
 		# Make the Options object
 		self.options = Options()
@@ -67,35 +66,7 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			self._error += ["Could not understand the 'units' argument"]
 			return
-		
-		# We try to import the pint package
-		self._ureg = None
-		try:
-			from pint import UnitRegistry
-			self._ureg = UnitRegistry()
-			if self.simulation._reference_angular_frequency_SI:
-				self._ureg.define("W_r = "+str(self.simulation._reference_angular_frequency_SI)+"*hertz") # frequency
-			else:
-				self._ureg.define("W_r = [reference_frequency]"                 ) # frequency
-			self._ureg.define("V_r = speed_of_light"                   ) # velocity
-			self._ureg.define("M_r = electron_mass"                    ) # mass
-			self._ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
-			self._ureg.define("L_r = V_r / W_r"                        ) # length
-			self._ureg.define("T_r = 1   / W_r"                        ) # time
-			self._ureg.define("P_r = M_r * V_r"                        ) # momentum
-			self._ureg.define("K_r = M_r * V_r**2"                     ) # energy
-			self._ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
-			self._ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
-			self._ureg.define("B_r = M_r * W_r / Q_r"                  ) # magnetic field
-			self._ureg.define("E_r = B_r * V_r"                        ) # electric field
-			self._ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
-			self.units._initRegistry(self._ureg)
-		except Exception as e:
-			global PintWarningIssued
-			if self._verbose and not PintWarningIssued:
-				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-				print("       : The results will stay in code units.")
-				PintWarningIssued = True
+		self.units._initRegistry(self._ureg)
 		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)

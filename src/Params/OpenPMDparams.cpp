@@ -86,6 +86,11 @@ OpenPMDparams::OpenPMDparams( Params &p ):
         } else if( unit_type == SMILEI_UNIT_TIME ) {
             unitDimension[unit_type][2] = 1.;
             unitSI[unit_type] = 1. / Wr; // 1 / Wr
+        } else if( unit_type == SMILEI_UNIT_ENERGY ) {
+            unitDimension[unit_type][0] = 2.;
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -2.;
+            unitSI[unit_type] = 8.187104382e-14; // me * c^2
         }
     }
     

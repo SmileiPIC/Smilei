@@ -116,7 +116,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
   A. Beth, H. Gunell, C. Simon Wedlund, C. Goetz, H. Nilsson and M. Hamrin,
   `First investigation of the diamagnetic cavity boundary layer with a 1D3V PIC simulation`,
-  `A&amp;A 667, A143 (2022) <http://dx.doi.org/10.1051/0004-6361/202243209>`_
+  `A&A 667, A143 (2022) <http://dx.doi.org/10.1051/0004-6361/202243209>`_
 
 .. [Guo2022]
 
@@ -158,7 +158,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
   A. Fazzini, W. Yao, K. Burdonov, J. Béard, S. N. Chen, A. Ciardi, E. d’Humières, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, S. Orlando, S. Pikuz, X. Ribeyre, M. Starodubtsev, R. Zemskov and J. Fuchs,
   `Particle energization in colliding subcritical collisionless shocks investigated in the laboratory`,
-  `A&amp;A 665, A87 (2022) <http://dx.doi.org/10.1051/0004-6361/202243277>`_
+  `A&A 665, A87 (2022) <http://dx.doi.org/10.1051/0004-6361/202243277>`_
 
 .. [Sakai2023]
 
@@ -236,12 +236,6 @@ As of November 2021, 90 papers have been published covering a broad range of top
    D. Umstadter
    `Controlled Injection of Electrons for Improved Performance of Laser-Wakefield Acceleration`,
    `United States: N. p., (2022) <http://dx.doi.org/10.2172/1838680>`_
-
-.. [Yoon2023]
-
-  Y. D. Yoon, D. E. Wendel, G. S. Yun,
-  `Equilibrium selection via current sheet relaxation and guide field amplification`,
-  `Nat Commun 14, 139 (2023) <http://dx.doi.org/10.1038/s41467-023-35821-9>`_
 
 .. [Massimo2022]
 
