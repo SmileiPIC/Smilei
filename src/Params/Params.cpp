@@ -219,7 +219,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // communication pattern initialized as partial B exchange
     full_B_exchange = false;
     // communication pattern initialized as partial A, Phi exchange for envelope simulations
-    full_Envelope_exchange = false;
+    full_Envelope_exchange = true;
 
     // --------------
     // Stop & Restart
