@@ -447,8 +447,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ",
                            LINK_NAMELIST + std::string("#laser-envelope-model"));
         }
-        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
-            full_Envelope_exchange = true;
+        if (geometry=="1Dcartesian"){
+            full_Envelope_exchange = false;
         }
 
         PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
