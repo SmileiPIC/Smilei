@@ -213,18 +213,24 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         fieldname[7] = "Jy";
         fieldname[8] = "Jz";
         fieldname[9] = "Rho";
-        if( params.Laser_Envelope_model ) {
+        if( params.Laser_Envelope_model && !params.use_BTIS3) {
             fieldname.resize( 14 );
             fieldname[10] = "Env_A_abs";
             fieldname[11] = "Env_Chi";
             fieldname[12] = "Env_E_abs";
             fieldname[13] = "Env_Ex_abs";
-        }
-        if (params.use_BTIS3){
+        } else if (!params.Laser_Envelope_model && params.use_BTIS3){
+            fieldname.resize( 11 );
+            fieldname[10] = "ByBTIS3";
+            fieldname[11] = "BzBTIS3";
+        } else if (params.Laser_Envelope_model && params.use_BTIS3){
             fieldname.resize( 16 );
+            fieldname[10] = "Env_A_abs";
+            fieldname[11] = "Env_Chi";
+            fieldname[12] = "Env_E_abs";
+            fieldname[13] = "Env_Ex_abs";
             fieldname[14] = "ByBTIS3";
             fieldname[15] = "BzBTIS3";
-
         }
     }
     nFields = fieldname.size();
@@ -234,14 +240,14 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     species_field_index.resize( nspec );
     species_field_location.resize( nspec );
     bool has_poynting = false;
-    for( unsigned int i=0; i<nFields; i++ ) {cout<<i<<","<<fieldname[i]<<","<< fieldname[14]<<endl;
+    for( unsigned int i=0; i<nFields; i++ ) {
         for( unsigned int j=0; j<i; j++ ) {
-            if( fieldname[i]==fieldname[j] && fieldname[i]!="") {
+            if( fieldname[i]==fieldname[j] ) {
                 ERROR( "Probe #"<<n_probe<<": field "<<fieldname[i]<<" appears twice" );
             }
-            if(!params.use_BTIS3 & ((fieldname[i]=="ByBTIS3") || (fieldname[i]=="BzBTIS3")) ){
-                ERROR( "Probe #"<<n_probe<<": asks for a B-TIS3 field, but B-TIS3 interpolation is not activated");
-            }
+        }
+        if(!params.use_BTIS3 & ((fieldname[i]=="ByBTIS3") || (fieldname[i]=="BzBTIS3")) ){
+            ERROR( "Probe #"<<n_probe<<": asks for a B-TIS3 field, but B-TIS3 interpolation is not activated");
         }
         if( fieldname[i]=="Ex" ) {
             fieldlocation[0] = i;
@@ -288,8 +294,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             fieldlocation[17] = i;
         } else if( fieldname[i]=="BzBTIS3" ) {
             fieldlocation[18] = i;
-        } else if( fieldname[i]=="" ) {
-            continue;
         } else {
             // Species-related field
             
