@@ -100,11 +100,13 @@ private :
     bool write_chi   ;
     std::vector<bool> write_E;
     std::vector<bool> write_B;
+    std::vector<bool> write_W;
     bool interpolate;
     bool write_any_position;
     bool write_any_momentum;
     bool write_any_E;
     bool write_any_B;
+    bool write_any_W;
     
 };
 

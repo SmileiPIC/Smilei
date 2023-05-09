@@ -18,7 +18,7 @@ In a *python* command line (or script), call the following function to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:method:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:method:: happi.Open(results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True, pint=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -34,6 +34,8 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``verbose``: if ``False``, less information is printed while post-processing.
 
   * ``scan``: if ``False``, HDF5 output files are not scanned initially, and the namelist is not read.
+
+  * ``pint``: if ``True``, *happi* attempts to load the *Pint* package and to use it for managing units.
 
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
@@ -591,10 +593,10 @@ Obtain the data
 
 
 .. py:method:: Scalar.getAxis( axis )
-               Field.getAxis( axis )
+               Field.getAxis( axis, timestep )
                Probe.getAxis( axis )
-               ParticleBinning.getAxis( axis )
-               Screen.getAxis( axis )
+               ParticleBinning.getAxis( axis, timestep )
+               Screen.getAxis( axis, timestep )
 
   Returns the list of positions of the diagnostic data along the requested axis.
   If the axis is not available, returns an empty list.
@@ -607,6 +609,10 @@ Obtain the data
     * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
       defined in the namelist
+
+  * ``timestep``: The timestep at which the axis is obtained. Only matters in
+    ``ParticleBinning``, ``Screen`` and ``RadiationSpectrum`` when ``auto`` axis
+    limits are requested; or in ``Field`` when ``moving=True``.
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)

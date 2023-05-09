@@ -1109,6 +1109,20 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter can **only** be assigned to photons species (mass = 0).
 
+.. py:data:: keep_interpolated_fields
+  
+  :default: ``[]``
+  
+  A list of interpolated fields that should be stored in memory for all particles of this species,
+  instead of being located in temporary buffers. These fields can then
+  be accessed in some diagnostics such as :ref:`particle binning <DiagParticleBinning>` or
+  :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
+  ``"Bx"``, ``"By"`` and ``"Bz"``.
+  
+  Additionally, the work done by each component of the electric field is available as
+  ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
+  are accumulated over time.
+
 ----
 
 .. _Particle_injector:
@@ -2856,7 +2870,9 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id`` (additionally, it may also have the
+    attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+    Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
@@ -3270,7 +3286,9 @@ for instance::
 
   The function must have one argument, that you may call, for instance, ``particles``.
   This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
-  ``weight`` and ``id``. Each of these attributes
+  ``weight`` and ``id`` (additionally, it may also have the
+  attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+  Each of these attributes
   are provided as **numpy** arrays where each cell corresponds to one particle.
   The function must return a boolean **numpy** array of the same shape, containing ``True``
   for particles that should be tracked, and ``False`` otherwise.

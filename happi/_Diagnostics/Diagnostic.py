@@ -53,6 +53,7 @@ class Diagnostic(object):
 		self._cell_length    = self.simulation._cell_length
 		self._ncels          = self.simulation._ncels
 		self.timestep        = self.simulation._timestep
+		self._ureg           = self.simulation._ureg
 		
 		# Make the Options object
 		self.options = Options()
@@ -65,7 +66,7 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			self._error += ["Could not understand the 'units' argument"]
 			return
-		self.units.prepare(self.simulation._reference_angular_frequency_SI)
+		self.units._initRegistry(self._ureg)
 		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
@@ -196,7 +197,8 @@ class Diagnostic(object):
 			The name of the requested axis.
 		timestep: int
 			The timestep at which the axis is obtained. Only matters in ParticleBinning,
-			Screen and RadiationSpectrum when `auto` axis limits are requested.
+			Screen and RadiationSpectrum when `auto` axis limits are requested; or in
+			Field when `moving=True`.
 
 		Returns:
 		--------

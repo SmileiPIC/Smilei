@@ -46,12 +46,196 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
+.. [Kumar2022b]
+
+  Sonu Kumar, Rajat Dhawan, D.K. Singh and Hitendra K. Malik,
+  `Diagnostic of laser wakefield acceleration with ultra – Short laser pulse by using SMILEI PIC code`,
+  `Materials Today: Proceedings 62, 3203-3207 (2022) <http://dx.doi.org/10.1016/j.matpr.2022.04.028>`_
+
+.. [Kumar2022a]
+
+  Sonu Kumar, Dhananjay K Singh and Hitendra K Malik,
+  `Comparative study of ultrashort single-pulse and multi-pulse driven laser wakefield acceleration`,
+  `Laser Phys. Lett. 20, 026001 (2022) <http://dx.doi.org/10.1088/1612-202X/aca978>`_
+
+.. [Yao2023]
+
+  W. Yao, A. Fazzini, S.N. Chen, K. Burdonov, J. Béard, M. Borghesi, A. Ciardi, M. Miceli, S. Orlando, X. Ribeyre, E. d'Humières and J. Fuchs,
+  `Investigating particle acceleration dynamics in interpenetrating magnetized collisionless super-critical shocks`,
+  `J. Plasma Phys. 89, 915890101 (2023) <http://dx.doi.org/10.1017/S002237782300003X>`_
+
+.. [Tomassini2021]
+
+  Paolo Tomassini, Francesco Massimo, Luca Labate and Leonida A. Gizzi,
+  `Accurate electron beam phase-space theory for ionization-injection schemes driven by laser pulses`,
+  `High Pow Laser Sci Eng 10, e15 (2021) <http://dx.doi.org/10.1017/hpl.2021.56>`_
+
+.. [Pak2023]
+
+  Taegyu Pak, Mohammad Rezaei-Pandari, Sang Beom Kim, Geonwoo Lee, Dae Hee Wi, Calin Ioan Hojbota, Mohammad Mirzaie, Hyeongmun Kim, Jae Hee Sung, Seong Ku Lee, Chul Kang and Ki-Yong Kim,
+  `Multi-millijoule terahertz emission from laser-wakefield-accelerated electrons`,
+  `Light Sci Appl 12, 37 (2023) <http://dx.doi.org/10.1038/s41377-022-01068-0>`_
+
+.. [Istokskaia2023]
+
+  Valeriia Istokskaia, Marco Tosca, Lorenzo Giuffrida, Jan Psikal, Filip Grepl, Vasiliki Kantarelou, Stanislav Stancek, Sabrina Di Siena, Arsenios Hadjikyriacou, Aodhan McIlvenny, Yoann Levy, Jaroslav Huynh, Martin Cimrman, Pavel Pleskunov, Daniil Nikitin, Andrei Choukourov, Fabio Belloni, Antonino Picciotto, Satyabrata Kar, Marco Borghesi, Antonio Lucianetti, Tomas Mocek and Daniele Margarone,
+  `A multi-MeV alpha particle source via proton-boron fusion driven by a 10-GW tabletop laser`,
+  `Commun Phys 6, 27 (2023) <http://dx.doi.org/10.1038/s42005-023-01135-x>`_
 
 .. [Yoon2023]
 
-  Y. D. Yoon, D. E. Wendel, G. S. Yun,
+  Young Dae Yoon, Deirdre E. Wendel and Gunsu S. Yun,
   `Equilibrium selection via current sheet relaxation and guide field amplification`,
   `Nat Commun 14, 139 (2023) <http://dx.doi.org/10.1038/s41467-023-35821-9>`_
+
+.. [Miloshevsky2022]
+
+  G. Miloshevsky,
+  `Pic Modeling of Omega Experiments on Ablation of Plasmas`,
+  `2022 IEEE International Conference on Plasma Science (ICOPS), ICOPS45751.2022.9813047 (2022) <http://dx.doi.org/10.1109/ICOPS45751.2022.9813047>`_
+
+.. [Zhang2022b]
+
+  Yue Zhang, Feng Wang, Jianyong Liu and Jizhong Sun,
+  `Simulation of the inverse bremsstrahlung absorption by plasma plume in laser penetration welding`,
+  `Chemical Physics Letters 793, 139434 (2022) <http://dx.doi.org/10.1016/j.cplett.2022.139434>`_
+
+.. [Vladisavlevici2022]
+
+  Iuliana-Mariana Vladisavlevici, Daniel Vizman and Emmanuel d’Humières,
+  `Laser Driven Electron Acceleration from Near-Critical Density Targets towards the Generation of High Energy γ-Photons`,
+  `Photonics 9, 953 (2022) <http://dx.doi.org/10.3390/photonics9120953>`_
+
+.. [Ouatu2022]
+
+  I. Ouatu, B. T. Spiers, R. Aboushelbaya, Q. Feng, M. W. von der Leyen, R. W. Paddock, R. Timmis, C. Ticos, K. M. Krushelnick and P. A. Norreys,
+  `Ionization states for the multipetawatt laser-QED regime`,
+  `Phys. Rev. E 106, 015205 (2022) <http://dx.doi.org/10.1103/PhysRevE.106.015205>`_
+
+.. [Beth2022]
+
+  A. Beth, H. Gunell, C. Simon Wedlund, C. Goetz, H. Nilsson and M. Hamrin,
+  `First investigation of the diamagnetic cavity boundary layer with a 1D3V PIC simulation`,
+  `A&A 667, A143 (2022) <http://dx.doi.org/10.1051/0004-6361/202243209>`_
+
+.. [Guo2022]
+
+  Yinlong Guo, Xuesong Geng, Liangliang Ji, Baifei Shen and Ruxin Li,
+  `Improving the accuracy of hard photon emission by sigmoid sampling of the quantum-electrodynamic table in particle-in-cell Monte Carlo simulations`,
+  `Phys. Rev. E 105, 025309 (2022) <http://dx.doi.org/10.1103/PhysRevE.105.025309>`_
+
+.. [Pae2022]
+
+  Ki Hong Pae, Chul Min Kim, Vishwa Bandhu Pathak, Chang-Mo Ryu and Chang Hee Nam,
+  `Direct laser acceleration of electrons from a plasma mirror by an intense few-cycle Laguerre–Gaussian laser and its dependence on the carrier-envelope phase`,
+  `Plasma Phys. Control. Fusion 64, 055013 (2022) <http://dx.doi.org/10.1088/1361-6587/ac5a0a>`_
+
+.. [Galbiati2023]
+
+  Marta Galbiati, Arianna Formenti, Mickael Grech and Matteo Passoni,
+  `Numerical investigation of non-linear inverse Compton scattering in double-layer targets`,
+  `Front. Phys. 11, fphy.2023.1117543 (2023) <http://dx.doi.org/10.3389/fphy.2023.1117543>`_
+
+.. [Zhang2022a]
+
+  Cui-Wen Zhang, Yi-Xuan Zhu, Jian-Feng Lv and Bai-Song Xie,
+  `Simulation Study of a Bright Attosecond γ-ray Source Generation by Irradiating an Intense Laser on a Cone Target`,
+  `Applied Sciences 12, 4361 (2022) <http://dx.doi.org/10.3390/app12094361>`_
+
+.. [Han2022]
+
+  Qianqian Han, Xuesong Geng, Baifei Shen, Zhizhan Xu and Liangliang Ji,
+  `Ultra-fast polarization of a thin electron layer in the rotational standing-wave field driven by double ultra-intense laser pulses`,
+  `New J. Phys. 24, 063013 (2022) <http://dx.doi.org/10.1088/1367-2630/ac740f>`_
+
+.. [Gothel2022]
+
+  Ilja Göthel, Constantin Bernert, Michael Bussmann, Marco Garten, Thomas Miethlinger, Martin Rehwald, Karl Zeil, Tim Ziegler, Thomas E Cowan, Ulrich Schramm and Thomas Kluge,
+  `Optimized laser ion acceleration at the relativistic critical density surface`,
+  `Plasma Phys. Control. Fusion 64, 044010 (2022) <http://dx.doi.org/10.1088/1361-6587/ac4e9f>`_
+
+.. [Fazzini2022]
+
+  A. Fazzini, W. Yao, K. Burdonov, J. Béard, S. N. Chen, A. Ciardi, E. d’Humières, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, S. Orlando, S. Pikuz, X. Ribeyre, M. Starodubtsev, R. Zemskov and J. Fuchs,
+  `Particle energization in colliding subcritical collisionless shocks investigated in the laboratory`,
+  `A&A 665, A87 (2022) <http://dx.doi.org/10.1051/0004-6361/202243277>`_
+
+.. [Sakai2023]
+
+  K. Sakai, T. Nishimoto, S. Isayama, S. Matsukiyo and Y. Kuramitsu,
+  `Ion-acoustic feature of collective Thomson scattering in non-equilibrium two-stream plasmas`,
+  `Physics of Plasmas 30, 012105 (2023) <http://dx.doi.org/10.1063/5.0117812>`_
+
+.. [Bykov2022]
+
+  A. M. Bykov, S. M. Osipov and V. I. Romanskii,
+  `Acceleration of Cosmic Rays to Energies above 1015 eV by Transrelativistic Shocks`,
+  `J. Exp. Theor. Phys. 134, 487-497 (2022) <http://dx.doi.org/10.1134/S1063776122040161>`_
+
+.. [Sundstrom2022]
+
+  Andréas Sundström, Mickael Grech, István Pusztai and Caterina Riconda,
+  `Stimulated-Raman-scattering amplification of attosecond XUV pulses with pulse-train pumps and application to local in-depth plasma-density measurement`,
+  `Phys. Rev. E 106, 045208 (2022) <http://dx.doi.org/10.1103/PhysRevE.106.045208>`_
+
+.. [Marini2023]
+
+  S. Marini, M. Grech, P. S. Kleij, M. Raynaud and C. Riconda,
+  `Electron acceleration by laser plasma wedge interaction`,
+  `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
+
+.. [Krafft2022b]
+
+  C. Krafft and P. Savoini,
+  `Third and Fourth Harmonics of Electromagnetic Emissions by a Weak Beam in a Solar Wind Plasma with Random Density Fluctuations`,
+  `ApJL 934, L28 (2022) <http://dx.doi.org/10.3847/2041-8213/ac7f28>`_
+
+.. [Krafft2022a]
+
+  C. Krafft and P. Savoini,
+  `Fundamental Electromagnetic Emissions by a Weak Electron Beam in Solar Wind Plasmas with Density Fluctuations`,
+  `ApJL 924, L24 (2022) <http://dx.doi.org/10.3847/2041-8213/ac46a7>`_
+
+.. [Kong2022]
+
+  Defeng Kong, Guoqiang Zhang, Yinren Shou, Shirui Xu, Zhusong Mei, Zhengxuan Cao, Zhuo Pan, Pengjie Wang, Guijun Qi, Yao Lou, Zhiguo Ma, Haoyang Lan, Wenzhao Wang, Yunhui Li, Peter Rubovic, Martin Veselsky, Aldo Bonasera, Jiarui Zhao, Yixing Geng, Yanying Zhao, Changbo Fu, Wen Luo, Yugang Ma, Xueqing Yan and Wenjun Ma,
+  `High-energy-density plasma in femtosecond-laser-irradiated nanowire-array targets for nuclear reactions`,
+  `Matter and Radiation at Extremes 7, 064403 (2022) <http://dx.doi.org/10.1063/5.0120845>`_
+
+.. [Davidson2022]
+
+  Conor Davidson, Zheng-Ming Sheng, Thomas Wilson and Paul McKenna,
+  `Theoretical and computational studies of the Weibel instability in several beam–plasma interaction configurations`,
+  `J. Plasma Phys. 88, 905880206 (2022) <http://dx.doi.org/10.1017/S0022377822000253>`_
+
+.. [Golovanov2023]
+
+  A. Golovanov, I. Yu. Kostyukov, A. Pukhov and V. Malka,
+  `Energy-Conserving Theory of the Blowout Regime of Plasma Wakefield`,
+  `Phys. Rev. Lett. 130, 105001 (2023) <http://dx.doi.org/10.1103/PhysRevLett.130.105001>`_
+
+.. [Miethlinger2023]
+
+  Thomas Miethlinger, Nico Hoffmann and Thomas Kluge,
+  `Acceptance Rates of Invertible Neural Networks on Electron Spectra from Near-Critical Laser-Plasmas: A Comparison`,
+  `Parallel Processing and Applied Mathematics, 273-284 (2023) <http://dx.doi.org/10.1007/978-3-031-30445-3_23>`_
+
+.. [Glek2022]
+
+  P. B. Glek and A. M. Zheltikov,
+  `Subcycle terahertz field waveforms clocked by attosecond high-harmonic pulses from relativistic laser plasmas`,
+  `Journal of Applied Physics 131, 103104 (2022) <http://dx.doi.org/10.1063/5.0070670>`_
+
+.. [Zepter2023]
+
+  C. Zepter, A. Seidel, M. Zepf, M. C. Kaluza and A. Sävert,
+  `Role of spatiotemporal couplings in stimulated Raman side scattering`,
+  `Phys. Rev. Research 5, L012023 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.L012023>`_
+
+.. [Umstadter2022]
+   D. Umstadter
+   `Controlled Injection of Electrons for Improved Performance of Laser-Wakefield Acceleration`,
+   `United States: N. p., (2022) <http://dx.doi.org/10.2172/1838680>`_
 
 .. [Massimo2022]
 

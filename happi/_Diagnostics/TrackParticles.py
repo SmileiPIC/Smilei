@@ -52,16 +52,18 @@ class TrackParticles(Diagnostic):
 			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
 			"charge":"q", "weight":"w", "chi":"chi",
-			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz"
+			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz",
+			"W/x":"Wx", "W/y":"Wy", "W/z":"Wz"
 		}
 		
 		# Get x_moved and add moving_x in the list of properties
 		self._XmovedForTime = {}
 		for file in disorderedfiles:
 			with self._h5py.File(file, "r") as f:
-				for t in f["data"]:
-					if "x_moved" in f["data"][t].attrs:
-						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+				for t, val in f["data"].items():
+					x_moved = val.attrs.get("x_moved")
+					if x_moved is not None:
+						self._XmovedForTime[int(t)] = x_moved
 		extra_properties = ["moving_x"] if self._XmovedForTime else []
 		
 		# If sorting allowed, find out if ordering needed
@@ -120,7 +122,7 @@ class TrackParticles(Diagnostic):
 			# Create arrays to store h5 items
 			self._lastfile = self._h5py.File(orderedfile, "r")
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
-			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+			             "Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"]:
 				if prop in self._lastfile:
 					self._h5items[prop] = self._lastfile[prop]
 			self.available_properties = list(self._h5items.keys()) + extra_properties
@@ -212,6 +214,9 @@ class TrackParticles(Diagnostic):
 			elif axis[0] == "B":
 				axisunits = "B_r"
 				self._centers.append( [-1., 1.] )
+			elif axis[0] == "W":
+				axisunits = "K_r"
+				self._centers.append( [0., 1.] )
 			self._log += [False]
 			self._label += [axis]
 			self._units += [axisunits]

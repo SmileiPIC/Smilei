@@ -34,7 +34,11 @@ Changes made in the repository (not released)
 * ``DiagPerformances``: new parameter ``cumulative``
 * ``Collisions``: new parameter ``time_frozen``
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
-* Happi: ``Probe`` has a new method ``changeField``
+* Happi:
+
+  * ``Probe`` has a new method ``changeField``
+  * ``Open`` has a new argument ``pint`` to disable the *Pint* package
+
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
 * Bugfixes:
 
@@ -45,6 +49,7 @@ Changes made in the repository (not released)
   * ``PML`` are now compatible with dynamic load balancing.
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
+  * ``Field.getAxis`` was not accounting for the ``timestep``
 
 * Experimental
 

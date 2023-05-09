@@ -738,7 +738,7 @@ void SyncVectorPatch::exchangeA( Params &params, VectorPatch &vecPatches, Smilei
 // 
 // }
 
-void SyncVectorPatch::exchangeEnvEx( Params &, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     // current envelope |Ex| value
     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
@@ -797,33 +797,49 @@ void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, 
 void SyncVectorPatch::exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     if (  params.geometry != "AMcylindrical" ) {
-        // current Gradient value
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz_, vecPatches );
+        if( !params.full_Envelope_exchange ) {
+            // current Gradient value
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz_, vecPatches );
 
-        // value of Gradient at previous timestep
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix0_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy0_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz0_, vecPatches );
+            // value of Gradient at previous timestep
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix0_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy0_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz0_, vecPatches );
+        } else {
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
+        }
     } else {
-        // current Gradient value
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir_, vecPatches );
+        if( !params.full_Envelope_exchange ) {
+            // current Gradient value
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir_, vecPatches );
 
-        // value of Gradient at previous timestep
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil0_, vecPatches );
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir0_, vecPatches );
+            // value of Gradient at previous timestep
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil0_, vecPatches );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir0_, vecPatches );
+        } else {
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
+        }
     }
 }
 
