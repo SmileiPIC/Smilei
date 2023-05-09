@@ -188,22 +188,28 @@ def _noNewComponents(cls, *args, **kwargs):
     return None
 SmileiComponent.__new__ = staticmethod(_noNewComponents)
 
-# Writes some information in a pickle file for post-processing
-def _writeInfo():
+# Writes some information in a pickle file for fast post-processing (set scan=False in happi)
+def writeInfo():
     def pickable(var):
         if var is None or type(var) in [float, int, complex, str, bytes, bool]:
             return True
         elif type(var) in [list, tuple]:
-            for v in var:
-                if not pickable(v):
-                    break
-            else:
-                return True
-        return False
+            return all([pickable(v) for v in var])
+        elif type(var) is dict:
+            return all([pickable(var[k]) for k in var])
+        else:
+            return False
     
-    d = {}
-    for block in [Main, LoadBalancing, MultipleDecomposition, Vectorization, MovingWindow, Checkpoints]:
-        d.update({block.__name__:{k:v for k,v in block.__dict__.items() if not k.startswith("_") and pickable(v)}})
-    import pickle
-    with open("info.pickle", 'wb') as f:
-        pickle.dump(d, f)
+    import shelve
+    singletons = {}
+    components = {}
+    with shelve.open("info.shelf") as f:
+        for name,var in globals().items():
+            if type(var) is type(Main):
+                singletons[name] = {k:v for k,v in var.__dict__.items() if not k.startswith("_") and pickable(v)}
+            elif type(var) is type(Species):
+                components[name] = [{k:v for k,v in component.__dict__.items() if not k.startswith("_") and pickable(v)} for component in var]
+            elif not name.startswith("_") and pickable(var):
+                f[name] = var
+        f["_singletons"] = singletons
+        f["_components"] = components
