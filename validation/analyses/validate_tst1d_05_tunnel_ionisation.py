@@ -91,6 +91,7 @@ Validate("Scalar Zavg_carbon"  , S.Scalar.Zavg_carbon  ().getData(), 0.2)
 # # TRACKING DIAGNOSTIC
 d = S.TrackParticles("electron", axes=["Id","x","Wx"], timesteps=150).getData()
 keep = d["Id"] > 0
-Validate("Track electron x", d["x"][keep], 1e-4)
-Validate("Track electron Wx", d["Wx"][keep], 1e-11)
+order = np.argsort(d["x"][keep])
+Validate("Track electron x", d["x"][keep][order], 1e-4)
+Validate("Track electron Wx", d["Wx"][keep][order], 1e-11)
 
