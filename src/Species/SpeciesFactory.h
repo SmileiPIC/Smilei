@@ -1319,7 +1319,7 @@ public:
 #ifdef _OMPTASKS
                 unsigned int Nbins = patch->vecSpecies[i]->Nbins;
                 for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, patch->vecSpecies[i]->electron_species->particles );
+                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, *patch->vecSpecies[i]->electron_species->particles );
                 }
 #endif
             }
