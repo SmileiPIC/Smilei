@@ -1315,17 +1315,11 @@ public:
             if( patch->vecSpecies[i]->Ionize ) {
                 patch->vecSpecies[i]->electron_species_index = vector_species[i]->electron_species_index;
                 patch->vecSpecies[i]->electron_species = patch->vecSpecies[patch->vecSpecies[i]->electron_species_index];
-                patch->vecSpecies[i]->Ionize->new_electrons.tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
-                patch->vecSpecies[i]->Ionize->new_electrons.has_quantum_parameter = patch->vecSpecies[i]->electron_species->particles->has_quantum_parameter;
-                patch->vecSpecies[i]->Ionize->new_electrons.has_Monte_Carlo_process = patch->vecSpecies[i]->electron_species->particles->has_Monte_Carlo_process;
-                patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle, params.keep_position_old );
+                patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, *patch->vecSpecies[i]->electron_species->particles );
 #ifdef _OMPTASKS
                 unsigned int Nbins = patch->vecSpecies[i]->Nbins;
                 for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].has_quantum_parameter = patch->vecSpecies[i]->electron_species->particles->has_quantum_parameter;
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].has_Monte_Carlo_process = patch->vecSpecies[i]->electron_species->particles->has_Monte_Carlo_process;
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
+                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, patch->vecSpecies[i]->electron_species->particles );
                 }
 #endif
             }
