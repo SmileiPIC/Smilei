@@ -124,14 +124,21 @@ class SmileiSimulation(object):
 				if key[0]=="_": continue # skip builtins
 				setattr(namelist, key, value)
 		else:
-			import pickle
-			class Block: pass
-			with open(path+self._os.sep+'info.pickle', 'rb') as f:
-				for blockName, blockDict in pickle.load(f).items():
-					block = Block()
-					for k,v in blockDict.items():
-						setattr(block, k, v)
-					setattr(Namelist, blockName, block)
+			import shelve
+			class Block(object):
+				def __init__(self, **kwargs):
+					for k,v in kwargs.items():
+						setattr(self, k, v)
+			with shelve.open(path+self._os.sep+'info.shelf') as f:
+				for k in f:
+					if k == "_singletons":
+						for singletonName, singletonDict in f[k].items():
+							setattr(Namelist, singletonName, Block(**singletonDict))
+					elif k == "_components":
+						for componentName, componentList in f[k].items():
+							setattr(Namelist, componentName, [Block(**component) for component in componentList])
+					else:
+						setattr(Namelist, k, f[k])
 		
 		# Get some info on the simulation
 		try:

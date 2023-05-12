@@ -741,8 +741,12 @@ void SyncVectorPatch::exchangeA( Params &params, VectorPatch &vecPatches, Smilei
 void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     // current envelope |Ex| value
-    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvEx_, vecPatches );
+    if( !params.full_Envelope_exchange ) {
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvEx_, vecPatches );
+    } else {
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
+    }
 }
 
 void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )

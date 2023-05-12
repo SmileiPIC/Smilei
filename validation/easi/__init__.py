@@ -561,7 +561,7 @@ class Validation(object):
             from os.path import getsize
             from os import remove
             with open(self.reference_file, "wb") as f:
-                pickle.dump(self.data, f, protocol=2)
+                pickle.dump(self.data, f)
             size = getsize(self.reference_file)
             if size > 1000000:
                 print("Reference file is too large ("+str(size)+"B) - suppressing ...")
