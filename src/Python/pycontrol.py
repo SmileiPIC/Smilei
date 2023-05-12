@@ -198,6 +198,12 @@ def writeInfo():
         elif type(var) is dict:
             return all([pickable(var[k]) for k in var])
         else:
+            try:
+                import numpy
+                if type(var) is numpy.ndarray and var.size < 10000:
+                    return True
+            except Exception:
+                pass
             return False
     
     import shelve
