@@ -4,7 +4,7 @@
 #include "Params.h"
 #include "H5.h"
 
-#define SMILEI_NUNITS 9
+#define SMILEI_NUNITS 10
 #define SMILEI_UNIT_NONE     0
 #define SMILEI_UNIT_EFIELD   1
 #define SMILEI_UNIT_BFIELD   2
@@ -14,6 +14,7 @@
 #define SMILEI_UNIT_MOMENTUM 6
 #define SMILEI_UNIT_CHARGE   7
 #define SMILEI_UNIT_TIME     8
+#define SMILEI_UNIT_ENERGY   9
 
 class OpenPMDparams
 {

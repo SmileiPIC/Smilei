@@ -92,7 +92,6 @@ ExternalField(
     field = "Bx",
     profile = constant(B_field_vector[0])
 )
-
 ExternalField(
     field = "By",
     profile = constant(B_field_vector[1])
@@ -100,6 +99,19 @@ ExternalField(
 
 ExternalField(
     field = "Bz",
+    profile = constant(B_field_vector[2])
+)
+ExternalField(
+    field = "Bx_m",
+    profile = constant(B_field_vector[0])
+)
+ExternalField(
+    field = "By_m",
+    profile = constant(B_field_vector[1])
+)
+
+ExternalField(
+    field = "Bz_m",
     profile = constant(B_field_vector[2])
 )
 

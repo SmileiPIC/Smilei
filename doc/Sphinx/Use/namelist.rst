@@ -324,7 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: number_of_pml_cells
 
   :type: List of lists of integers
-  :default: ``[[6,6],[6,6],[6,6]]``
+  :default: ``[[10,10],[10,10],[10,10]]``
 
   Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
@@ -1100,6 +1100,20 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter can **only** be assigned to photons species (mass = 0).
 
+.. py:data:: keep_interpolated_fields
+  
+  :default: ``[]``
+  
+  A list of interpolated fields that should be stored in memory for all particles of this species,
+  instead of being located in temporary buffers. These fields can then
+  be accessed in some diagnostics such as :ref:`particle binning <DiagParticleBinning>` or
+  :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
+  ``"Bx"``, ``"By"`` and ``"Bz"``.
+  
+  Additionally, the work done by each component of the electric field is available as
+  ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
+  are accumulated over time.
+
 ----
 
 .. _Particle_injector:
@@ -1796,7 +1810,9 @@ Following is the generic laser envelope creator ::
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
   * ``"explicit_reduced_dispersion"``: the finite difference derivatives along ``x`` in the ``"explicit"`` solver are substituted by
-    optimized derivatives to reduce numerical dispersion.
+    optimized derivatives to reduce numerical dispersion. For more accurate results over long distances, the use of this solver is recommended.
+    Please note that the CFL limit of this solver is lower than the one of the ``"explicit"`` solver. Thus, a smaller integration 
+    timestep may be necessary.
 
 .. py:data:: Envelope_boundary_conditions
 
@@ -1932,8 +1948,8 @@ the evolution of the laser), the polarization of the laser plays no role in the 
 External fields
 ^^^^^^^^^^^^^^^
 
-An constant external field can be applied over the whole box
-(at the beginning of the simulation) using an ``ExternalField`` block::
+An initial field can be applied over the whole box
+at the beginning of the simulation using the ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1942,7 +1958,8 @@ An constant external field can be applied over the whole box
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
+  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
 
 .. py:data:: profile
 
@@ -1950,6 +1967,14 @@ An constant external field can be applied over the whole box
 
   The initial spatial profile of the applied field.
   Refer to :doc:`/Understand/units` to understand the units of this field.
+
+  Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
+  It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation.
+  If ``B_m`` is omited, it is assumed that the magnetic field is constant and that ``B_m=B``.
+
+  Note that in AM geometry all field names must be followed by the number ``"i"`` of the mode that is currently passed with the string ``"_mode_i"``. For instance ``"Er_mode_1"``.
+  In this geometry, an external envelope field can also be used. It needs to be initialized at times ``"t=0"`` in ``"A_mode_1"`` and ``"t=-dt"`` in ``"A0_mode_1"``.
+  The user must use the ``"_mode_1"`` suffix for these two fields because there is no other possible mode for them.
 
 
 ----
@@ -2565,8 +2590,8 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
 
 
-.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
-          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
+.. Note:: In a given `DiagFields`, all fields must be of the same kind: either real or complex. Therefore To write these last three envelope real fields in ``"AMcylindrical"`` geometry,
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs", "Env_Chi"]``.
 
 .. py:data:: subgrid
 
@@ -2595,6 +2620,12 @@ This is done by including a block ``DiagFields``::
 
     	subgrid = s_[100:300, 300:500, 300:600]
 
+
+.. py:data:: datatype
+
+  :default: ``"double"``
+  
+  The data type when written to the HDF5 file. Accepts ``"double"`` (8 bytes) or ``"float"`` (4 bytes).
 
 
 ----
@@ -2704,6 +2735,12 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   If ``True``, the output is integrated over time. As this option forces field interpolation
   at every timestep, it is recommended to use few probe points.
 
+.. py:data:: datatype
+
+  :default: ``"double"``
+  
+  The data type when written to the HDF5 file. Accepts ``"double"`` (8 bytes) or ``"float"`` (4 bytes).
+
 
 **Examples of probe diagnostics**
 
@@ -2806,7 +2843,9 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id`` (additionally, it may also have the
+    attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+    Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
@@ -3220,7 +3259,9 @@ for instance::
 
   The function must have one argument, that you may call, for instance, ``particles``.
   This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
-  ``weight`` and ``id``. Each of these attributes
+  ``weight`` and ``id`` (additionally, it may also have the
+  attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+  Each of these attributes
   are provided as **numpy** arrays where each cell corresponds to one particle.
   The function must return a boolean **numpy** array of the same shape, containing ``True``
   for particles that should be tracked, and ``False`` otherwise.

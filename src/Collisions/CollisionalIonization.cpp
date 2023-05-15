@@ -241,7 +241,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
              // New electron has ion position
             new_electrons.makeParticleAt( *pi, ii, Wi, pe->charge( ie ), newpx, newpy, newpz );
             // If quantum parameter exists for new electron, then calculate it
-            if( new_electrons.isQuantumParameter ) {
+            if( new_electrons.has_quantum_parameter ) {
                 new_electrons.Chi.back() = pe->chi( ie ) * (w+1.) / gammae;
             }
         }

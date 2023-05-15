@@ -18,14 +18,14 @@
 class ParticlesFactory
 {
 public:
-    static Particles *create( Params &params )
+    static Particles *create( Params &/* params */ )
     {
         Particles *particles = NULL;
         
         // CPU version
-        if( !params.gpu_computing ) {
+        // if( !params.gpu_computing ) {
             particles = new Particles();
-        }
+        // }
         
         // GPU version
 // #ifdef _GPU

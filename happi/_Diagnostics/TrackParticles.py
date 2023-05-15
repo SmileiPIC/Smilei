@@ -52,16 +52,18 @@ class TrackParticles(Diagnostic):
 			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
 			"charge":"q", "weight":"w", "chi":"chi",
-			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz"
+			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz",
+			"W/x":"Wx", "W/y":"Wy", "W/z":"Wz"
 		}
 		
 		# Get x_moved and add moving_x in the list of properties
 		self._XmovedForTime = {}
 		for file in disorderedfiles:
 			with self._h5py.File(file, "r") as f:
-				for t in f["data"]:
-					if "x_moved" in f["data"][t].attrs:
-						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+				for t, val in f["data"].items():
+					x_moved = val.attrs.get("x_moved")
+					if x_moved is not None:
+						self._XmovedForTime[int(t)] = x_moved
 		extra_properties = ["moving_x"] if self._XmovedForTime else []
 		
 		# If sorting allowed, find out if ordering needed
@@ -89,6 +91,11 @@ class TrackParticles(Diagnostic):
 				self._locationForTime.update( {int(t):[f,it] for it, t in enumerate(f["data"].keys())} )
 			self._lastfile = f
 			self._timesteps = self._np.array(sorted(self._locationForTime))
+			
+			# If specific timesteps requested, narrow the selection
+			if sorted_as and timesteps is not None:
+				self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
+		
 			self._alltimesteps = self._np.copy(self._timesteps)
 			
 			if not self._locationForTime:
@@ -115,7 +122,7 @@ class TrackParticles(Diagnostic):
 			# Create arrays to store h5 items
 			self._lastfile = self._h5py.File(orderedfile, "r")
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
-			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+			             "Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"]:
 				if prop in self._lastfile:
 					self._h5items[prop] = self._lastfile[prop]
 			self.available_properties = list(self._h5items.keys()) + extra_properties
@@ -130,18 +137,7 @@ class TrackParticles(Diagnostic):
 			raise Exception("No tracked particles found")
 		# If specific timesteps requested, narrow the selection
 		if timesteps is not None:
-			try:
-				ts = self._np.array(self._np.double(timesteps),ndmin=1)
-				if ts.size==2:
-					# get all times in between bounds
-					self._timesteps = self._timesteps[ self._np.nonzero((self._timesteps>=ts[0]) * (self._timesteps<=ts[1]))[0] ]
-				elif ts.size==1:
-					# get nearest time
-					self._timesteps = self._np.array(self._timesteps[ self._np.array([(self._np.abs(self._timesteps-ts)).argmin()]) ])
-				else:
-					raise
-			except:
-				raise Exception("Argument `timesteps` must be one or two non-negative integers")
+			self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
 		# Need at least one timestep
 		if self._timesteps.size < 1:
 			raise Exception("Timesteps not found")
@@ -218,6 +214,9 @@ class TrackParticles(Diagnostic):
 			elif axis[0] == "B":
 				axisunits = "B_r"
 				self._centers.append( [-1., 1.] )
+			elif axis[0] == "W":
+				axisunits = "K_r"
+				self._centers.append( [0., 1.] )
 			self._log += [False]
 			self._label += [axis]
 			self._units += [axisunits]
@@ -259,7 +258,22 @@ class TrackParticles(Diagnostic):
 			finally:
 				f.close()
 		return False
-
+	
+	def _filterTimesteps( self, tlist, bounds ):
+		try:
+			ts = self._np.array(bounds, ndmin=1, dtype=float)
+			if ts.size==2:
+				# get all times in between bounds
+				tlist = tlist[(self._timesteps>=ts[0]) * (self._timesteps<=ts[1])]
+			elif ts.size==1:
+				# get nearest time
+				tlist = self._np.array(tlist[ self._np.array([(self._np.abs(tlist-ts)).argmin()]) ])
+			else:
+				raise
+		except:
+			raise Exception("Argument `timesteps` must be one or two non-negative integers")
+		return tlist
+	
 	def _selectParticles( self, select, already_sorted, chunksize ):
 		if type(select) is str:
 			# Parse the selector
@@ -389,8 +403,10 @@ class TrackParticles(Diagnostic):
 						selectionAtTimeT.append(properties["Id"][sel])
 					selectionAtTimeT = self._np.concatenate(selectionAtTimeT)
 					# Combine with selection of previous times
-					if   seltype[k] == "any(": selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
-					elif seltype[k] == "all(": selectedParticles = self._np.intersect1d(selectedParticles, selectionAtTimeT)
+					if   seltype[k] == "any(" or not selectedParticles.size:
+						selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
+					elif seltype[k] == "all(":
+						selectedParticles = self._np.intersect1d(selectedParticles, selectionAtTimeT)
 			selectedParticles.sort()
 			return selectedParticles
 
@@ -829,14 +845,7 @@ class TrackParticles(Diagnostic):
 	
 	# Convert data to VTK format
 	def toVTK(self, rendering="trajectory", data_format="xml"):
-		"""
-		Export the data to Vtk
-		"""
 		if not self._validate(): return
-
-		if not self._sort:
-			print("Cannot export non-sorted data")
-			return
 
 		if self._ndim_particles != 3:
 			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")
@@ -876,21 +885,23 @@ class TrackParticles(Diagnostic):
 		
 		# Cloud mode: each time step is a separated cloud of particles
 		# If there is only one timestep, the trajectory mode becomes a cloud
-		if (ntimes == 1)or(rendering == "cloud"):
+		if ntimes == 1 or rendering == "cloud":
 
 			data = self.getData()
-
+			
 			for istep,step in enumerate(self._timesteps):
 				
-				data_clean_step = {}
+				if self._sort:
+					data_clean_step = {ax:data[ax][istep] for ax in self.axes}
+				else:
+					data_clean_step = {ax:data[step][ax] for ax in self.axes}
 				
-				# Clean data at istep: remove NaN
-				mask = self._np.ones(len(data[self.axes[0]][istep]), dtype=bool)
+				# Remove NaNs
+				mask = self._np.ones_like(data_clean_step[self.axes[0]], dtype=bool)
 				for ax in self.axes:
-					mask = self._np.logical_and(mask,self._np.logical_not(self._np.isnan(self._np.asarray(data[ax][istep]))))
+					mask *= ~self._np.isnan(data_clean_step[ax])
 				for ax in self.axes:
-					#print(ax,data[ax][istep])
-					data_clean_step[ax] = self._np.asarray(data[ax][istep])[mask]
+					data_clean_step[ax] = data_clean_step[ax][mask]
 				
 				pcoords_step = self._np.stack((data_clean_step[xaxis],data_clean_step["y"],data_clean_step["z"])).transpose()
 				pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
@@ -913,8 +924,12 @@ class TrackParticles(Diagnostic):
 			print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
 
 		# Trajectory mode
-		elif (rendering == "trajectory"):
-
+		elif rendering == "trajectory":
+			
+			if not self._sort:
+				print("Cannot export trajectories with non-sorted data")
+				return
+			
 			data = self.getData()
 			pcoords = self._np.stack((data[xaxis],data["y"],data["z"])).transpose()
 			npoints, nt, nd = pcoords.shape

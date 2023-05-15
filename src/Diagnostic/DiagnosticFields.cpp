@@ -173,6 +173,17 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     // Extract the flush time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py( "flush_every", "DiagFields", ndiag ), "DiagFields flush_every" );
     
+    // Extract the datatype
+    string datatype = "";
+    PyTools::extract( "datatype", datatype, "DiagFields", ndiag );
+    if( datatype == "double" ) {
+        file_datatype_ = H5T_NATIVE_DOUBLE;
+    } else if( datatype == "float" ) {
+        file_datatype_ = H5T_NATIVE_FLOAT;
+    } else {
+        ERROR( "Diagnostic Fields #"<<ndiag<<" has an unknown datatype `"<<datatype<<"`" );
+    }
+    
     // Copy the total number of patches
     tot_number_of_patches = params.tot_number_of_patches;
     
@@ -180,7 +191,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
         string first_char = fields_names[ifield].substr( 0, 1 );
-        if( first_char == "E" ) {
+        if( first_char == "E" || first_char == "A" ) {
             field_type[ifield] = SMILEI_UNIT_EFIELD;
         } else if( first_char == "B" ) {
             field_type[ifield] = SMILEI_UNIT_BFIELD;
@@ -369,7 +380,7 @@ uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch * )
     footprint += ndumps * nfields * 1200;
     
     // Add size of each field
-    footprint += ndumps * nfields * ( uint64_t )( total_dataset_size * 8 );
+    footprint += ndumps * nfields * ( uint64_t )( total_dataset_size * (file_datatype_==H5T_NATIVE_DOUBLE?8:4) );
     
     return footprint;
 }

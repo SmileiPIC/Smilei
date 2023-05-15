@@ -217,8 +217,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair0_weight = new_pair[0]->getPtrWeight();
     short *const __restrict__ pair0_charge = new_pair[0]->getPtrCharge();
 
-    double *const __restrict__ pair0_chi = new_pair[0]->isQuantumParameter ? new_pair[0]->getPtrChi() : nullptr;
-    double *const __restrict__ pair0_tau = new_pair[0]->isMonteCarlo ? new_pair[0]->getPtrTau() : nullptr;
+    double *const __restrict__ pair0_chi = new_pair[0]->has_quantum_parameter ? new_pair[0]->getPtrChi() : nullptr;
+    double *const __restrict__ pair0_tau = new_pair[0]->has_Monte_Carlo_process ? new_pair[0]->getPtrTau() : nullptr;
 
     double *const __restrict__ pair1_position_x = new_pair[1]->getPtrPosition( 0 );
     double *const __restrict__ pair1_position_y = (n_dimensions_ > 1 ? new_pair[1]->getPtrPosition( 1 ) : nullptr);
@@ -235,8 +235,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *const __restrict__ pair1_weight = new_pair[1]->getPtrWeight();
     short *const __restrict__ pair1_charge = new_pair[1]->getPtrCharge();
 
-    double *const __restrict__ pair1_chi = new_pair[1]->isQuantumParameter ? new_pair[1]->getPtrChi() : nullptr;
-    double *const __restrict__ pair1_tau = new_pair[1]->isMonteCarlo ? new_pair[1]->getPtrTau() : nullptr;
+    double *const __restrict__ pair1_chi = new_pair[1]->has_quantum_parameter ? new_pair[1]->getPtrChi() : nullptr;
+    double *const __restrict__ pair1_tau = new_pair[1]->has_Monte_Carlo_process ? new_pair[1]->getPtrTau() : nullptr;
 
     // _______________________________________________________________
     // Computation
@@ -375,11 +375,11 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         pair0_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[0];
                         pair0_charge[ipair]=new_pair_species[0]->max_charge_;
 
-                        if( new_pair[0]->isQuantumParameter ) {
+                        if( new_pair[0]->has_quantum_parameter ) {
                             pair0_chi[ipair] = pair_chi[0];
                         }
 
-                        if( new_pair[0]->isMonteCarlo ) {
+                        if( new_pair[0]->has_Monte_Carlo_process ) {
                             pair0_tau[ipair] = -1.;
                         }
                     }
@@ -431,11 +431,11 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         pair1_weight[ipair]=weight[ipart]*mBW_pair_creation_inv_sampling_[1];
                         pair1_charge[ipair]=new_pair_species[1]->max_charge_;
 
-                        if( new_pair[1]->isQuantumParameter ) {
+                        if( new_pair[1]->has_quantum_parameter ) {
                             pair1_chi[ipair] = pair_chi[1];
                         }
 
-                        if( new_pair[1]->isMonteCarlo ) {
+                        if( new_pair[1]->has_Monte_Carlo_process ) {
                             pair1_tau[ipair] = -1.;
                         }
                     }
@@ -488,11 +488,11 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                             new_pair_per_bin[ibin][k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling_[k];
                             new_pair_per_bin[ibin][k].charge( idNew )= new_pair_species[k]->max_charge_;
 
-                            if( new_pair_per_bin[ibin][k].isQuantumParameter ) {
+                            if( new_pair_per_bin[ibin][k].has_quantum_parameter ) {
                                 new_pair_per_bin[ibin][k].chi( idNew ) = pair_chi[k];
                             }
 
-                            if( new_pair_per_bin[ibin][k].isMonteCarlo ) {
+                            if( new_pair_per_bin[ibin][k].has_Monte_Carlo_process ) {
                                 new_pair_per_bin[ibin][k].tau( idNew ) = -1.;
                             }
                         } // end loop on new particles of a given species
@@ -750,12 +750,12 @@ void MultiphotonBreitWheeler::joinNewElectronPositronPairs(Particles **new_pair,
               new_pair[k]->charge( idNew ) = new_pair_per_bin[ibin][k].charge( ipart );
 
               // chi
-              if( new_pair[k]->isQuantumParameter ) {
+              if( new_pair[k]->has_quantum_parameter ) {
                   new_pair[k]->chi( idNew ) = new_pair_per_bin[ibin][k].chi( ipart );
               }
 
               //tau
-              if( new_pair[k]->isMonteCarlo ) {
+              if( new_pair[k]->has_Monte_Carlo_process ) {
                   new_pair[k]->tau( idNew ) = new_pair_per_bin[ibin][k].tau( ipart );
               }
            } // end ipart

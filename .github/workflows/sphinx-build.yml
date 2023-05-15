@@ -1,9 +1,8 @@
-name: docs
+name: check_docs
 
 on:
-  push:
-    branches:    
-      - master
+  pull_request:
+    branches: [ master, develop, CI ]
 
 jobs:
   build:
@@ -17,10 +16,3 @@ jobs:
         sudo apt-get --allow-releaseinfo-change update -y 
         sudo apt-get install -y git make sphinx
         make -C doc/Sphinx html
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: doc/Sphinx/_build/html
-        enable_jekyll: false
-        force_orphan: true

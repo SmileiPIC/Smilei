@@ -1,6 +1,7 @@
 stages:
     - install
     - compile_default
+    - run_quick
     - run_default
     - compile_picsar
     - run_picsar
@@ -14,7 +15,6 @@ install:
   stage: install
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -34,7 +34,6 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -44,9 +43,10 @@ compile_default:
     - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
 runQuick:
-  stage: run_default
+  stage: run_quick
   only:
     - develop
+    - keep_interpolated_fields
 
   script:
     # Move in test dir
@@ -58,7 +58,6 @@ run1D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -72,7 +71,6 @@ run2D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -88,7 +86,6 @@ run3D:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -105,7 +102,6 @@ runAM:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -118,7 +114,6 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -131,7 +126,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -143,7 +137,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -154,7 +147,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -166,7 +158,6 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -178,7 +169,6 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -190,7 +180,6 @@ compile_omptasks:
   stage: compile_omptasks
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
 
   script:
@@ -202,7 +191,6 @@ run_omptasks:
   stage: run_omptasks
   only:
     - develop
-    - adaptation_for_gpu
     - Friedman_filter_all_geometries
     
   script:

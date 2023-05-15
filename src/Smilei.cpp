@@ -193,9 +193,7 @@ int main( int argc, char *argv[] )
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-
+    // No restart, we initialize a new simulation
     } else {
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
@@ -324,16 +322,17 @@ int main( int argc, char *argv[] )
                 }
             }
         }
+    }
 
+    TITLE( "Open files & initialize diagnostics" );
+    vecPatches.initAllDiags( params, &smpi );
 
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
+    if ( !params.restart ) {
         TITLE( "Running diags at time t = 0" );
-
 #ifdef _OMPTASKS
-            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
 #else
-            vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 #endif
     }
 
@@ -454,7 +453,7 @@ int main( int argc, char *argv[] )
 
             }
         }
-        else { //if ( params.multiple_decomposition ) {
+        else { //if ( params.multiple_decomposition ) 
             if( time_dual > params.time_fields_frozen ) {
                 if ( params.geometry != "AMcylindrical" )
                     DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers );

@@ -38,9 +38,11 @@ Particles::Particles():
     Momentum.resize( 0 );
     cell_keys.resize( 0 );
     is_test = false;
-    isQuantumParameter = false;
-    isMonteCarlo = false;
-
+    has_quantum_parameter = false;
+    has_Monte_Carlo_process = false;
+    
+    interpolated_fields_ = nullptr;
+    
     double_prop_.resize( 0 );
     short_prop_.resize( 0 );
     uint64_prop_.resize( 0 );
@@ -50,6 +52,11 @@ Particles::~Particles()
 {
     clear();
     shrinkToFit();
+    
+    if( interpolated_fields_ ) {
+        delete interpolated_fields_;
+        interpolated_fields_ = nullptr;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -66,7 +73,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         //float c_part_max = params.species_param[0].c_part_max;
         //reserve( round( c_part_max * nParticles ), nDim );
     //}
-
+    
     resize( nParticles, nDim, keep_position_old );
     //cell_keys.resize( nParticles );
 
@@ -98,17 +105,24 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         // Quantum parameter (for QED effects):
         // - if radiation reaction (continuous or discontinuous)
         // - if multiphoton-Breit-Wheeler if photons
-        if( isQuantumParameter ) {
+        if( has_quantum_parameter ) {
             double_prop_.push_back( &Chi );
         }
 
         // Optical Depth for Monte-Carlo processes:
         // - if the discontinuous (Monte-Carlo) radiation reaction
         // are activated, tau is the incremental optical depth to emission
-        if( isMonteCarlo ) {
+        if( has_Monte_Carlo_process ) {
             double_prop_.push_back( &Tau );
         }
-
+        
+        if( interpolated_fields_ ) {
+            for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+                if( interpolated_fields_->mode_[i] > 0 ) {
+                    double_prop_.push_back( &(interpolated_fields_->F_[i]) );
+                }
+            }
+        }
     }
 
 }
@@ -118,14 +132,19 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::initialize( unsigned int nParticles, Particles &part )
 {
-    is_test=part.is_test;
+    is_test = part.is_test;
 
-    tracked=part.tracked;
+    tracked = part.tracked;
 
-    isQuantumParameter=part.isQuantumParameter;
+    has_quantum_parameter = part.has_quantum_parameter;
 
-    isMonteCarlo=part.isMonteCarlo;
-
+    has_Monte_Carlo_process = part.has_Monte_Carlo_process;
+    
+    if( part.interpolated_fields_ && ! interpolated_fields_ ) {
+        interpolated_fields_ = new InterpolatedFields();
+        interpolated_fields_->mode_ = part.interpolated_fields_->mode_;
+    }
+    
     initialize( nParticles, part.Position.size(), part.Position_old.size() > 0 );
 }
 
@@ -164,15 +183,23 @@ void Particles::reserve( unsigned int reserved_particles,
         Id.reserve( reserved_particles );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.reserve( reserved_particles );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.reserve( reserved_particles );
     }
 
     cell_keys.reserve( reserved_particles );
+    
+    if( interpolated_fields_ ) {
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
+                interpolated_fields_->F_[i].reserve( reserved_particles );
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -221,16 +248,24 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
         Id.resize( nParticles, 0 );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.resize( nParticles, 0. );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.resize( nParticles, 0. );
     }
 
     cell_keys.resize( nParticles, 0. );
 
+    if( interpolated_fields_ ) {
+        interpolated_fields_->F_.resize( interpolated_fields_->mode_.size() );
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
+                interpolated_fields_->F_[i].resize( nParticles, 0. );
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -414,12 +449,20 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
         Id.push_back( 0 );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         Chi.push_back( 0. );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         Tau.push_back( 0. );
+    }
+    
+    if( interpolated_fields_ ) {
+        for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+            if( interpolated_fields_->mode_[i] > 0 ) {
+                interpolated_fields_->F_[i].push_back( 0. );
+            }
+        }
     }
 }
 
@@ -514,11 +557,11 @@ void Particles::print( unsigned int iPart )
         cout << Id[iPart] << endl;
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         cout << Chi[iPart] << endl;
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         cout << Tau[iPart] << endl;
     }
 }
@@ -545,11 +588,11 @@ ostream &operator << ( ostream &out, const Particles &particles )
             out << particles.Id[iPart] << endl;
         }
 
-        if( particles.isQuantumParameter ) {
+        if( particles.has_quantum_parameter ) {
             out << particles.Chi[iPart] << endl;
         }
 
-        if( particles.isMonteCarlo ) {
+        if( particles.has_Monte_Carlo_process ) {
             out << particles.Tau[iPart] << endl;
         }
     }
@@ -1101,7 +1144,7 @@ void Particles::moveParticles( int iPart, int new_pos )
 //    if (tracked)
 //        Id.resize(nParticles+nAdditionalParticles,0);
 //
-//    if (isQuantumParameter)
+//    if (has_quantum_parameter)
 //        Chi.resize(nParticles+nAdditionalParticles,0.);
 //
 //}
@@ -1202,4 +1245,26 @@ bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 Particle Particles::operator()( unsigned int iPart )
 {
     return  Particle( *this, iPart );
+}
+
+void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double *invgfbuffer, size_t start, size_t n, size_t buffer_size, double dt ) {
+    vector<double*> buffers = { 
+        Ebuffer, Ebuffer + buffer_size, Ebuffer + 2*buffer_size, // Ex, Ey, Ez
+        Bbuffer, Bbuffer + buffer_size, Bbuffer + 2*buffer_size  // Bx, By, Bz
+    };
+    for( size_t i = 0; i < interpolated_fields_->mode_.size(); i++ ) {
+        if( interpolated_fields_->mode_[i] > 0 ) {
+            interpolated_fields_->F_[i].resize( numberOfParticles(), 0. );
+            if( i < 6 ) { // E or B fields
+                copy( buffers[i], buffers[i] + n,  &( interpolated_fields_->F_[i][start] ) );
+            } else { // work Wx, Wy or Wz (accumulated over time)
+                short  * q = Charge.data();
+                double * p = Momentum[i-6].data();
+                double * E = buffers[i-6];
+                for( size_t ip = 0; ip < n; ip++ ) {
+                    interpolated_fields_->F_[i][start+ip] += dt * invgfbuffer[ip] * p[ip] * q[ip] * E[ip];
+                }
+            }
+        }
+    }
 }

@@ -84,7 +84,6 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         // -----------------------------
         if( k_times!=0 ) {
             new_electrons.createParticle();
-            //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew )=particles->position( i, ipart );

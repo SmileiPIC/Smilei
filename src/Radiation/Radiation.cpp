@@ -144,11 +144,11 @@ void Radiation::joinNewPhotons(Particles * photons,unsigned int Nbins)
             photons->weight( idNew ) = (new_photons_per_bin_[ibin]).weight( ipart );
             photons->charge( idNew ) = (new_photons_per_bin_[ibin]).charge( ipart );
 
-            if( photons->isQuantumParameter ) {
+            if( photons->has_quantum_parameter ) {
                 photons->chi( idNew ) = (new_photons_per_bin_[ibin]).chi( ipart );
             }
 
-            if( photons->isMonteCarlo ) {
+            if( photons->has_Monte_Carlo_process ) {
                 photons->tau( idNew ) = (new_photons_per_bin_[ibin]).tau( ipart );
             }
        

@@ -225,7 +225,18 @@ public :
     void solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
+    //! param[in] params object containing all constant simulation parameters
+    //! param[in] smpi object containing MPI functions for Smilei
+    //! param[in] itime the current time step
+    //! param[in] timers object to manage the code timers
+    //! param[in] simWindow object to manage the moving window
+    void runAllDiags( 
+        Params &params, 
+        SmileiMPI *smpi, 
+        unsigned int itime, 
+        Timers &timers, 
+        SimWindow *simWindow );
+        
     void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );

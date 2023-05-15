@@ -423,6 +423,7 @@ class Species(SmileiComponent):
     maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
+    keep_interpolated_fields = []
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
@@ -495,6 +496,7 @@ class DiagProbe(SmileiComponent):
     fields = []
     flush_every = 1
     time_integral = False
+    datatype = "double"
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""
@@ -544,6 +546,7 @@ class DiagFields(SmileiComponent):
     time_average = 1
     subgrid = None
     flush_every = 1
+    datatype = "double"
 
 class DiagTrackParticles(SmileiComponent):
     """Track diagnostic"""

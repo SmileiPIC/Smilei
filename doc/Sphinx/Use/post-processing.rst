@@ -18,7 +18,7 @@ In a *python* command line (or script), call the following function to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:method:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:method:: happi.Open(results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True, pint=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -33,7 +33,9 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
 
   * ``verbose``: if ``False``, less information is printed while post-processing.
 
-  * ``scan``: if ``False``, HDF5 output files are not scanned initially.
+  * ``scan``: if ``False``, HDF5 output files are not scanned initially, and the namelist is not read.
+
+  * ``pint``: if ``True``, *happi* attempts to load the *Pint* package and to use it for managing units.
 
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
@@ -242,6 +244,11 @@ Open a Probe diagnostic
   Diag = S.Probe(0, "Ex")
 
 
+.. py:method:: Probe.changeField(field)
+
+  In cases where happi's performance is an issue, it is possible to switch between different fields
+  of an open ``Probe`` diagnostic using this method. The ``field`` argument is the same as in ``Probe(...)`` above.
+
 ----
 
 Open a ParticleBinning diagnostic
@@ -359,7 +366,8 @@ Open a TrackParticles diagnostic
       If it does, sorted particles are directly read from the sorted file.
     * A string for selecting particles (same syntax as ``select``): only selected
       particles are sorted in a new file. The file name must be defined
-      in the argument ``sorted_as``.
+      in the argument ``sorted_as``. If ``timesteps`` is used, only selected timesteps
+      will be included in the created file. 
     
   * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
     selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
@@ -585,10 +593,10 @@ Obtain the data
 
 
 .. py:method:: Scalar.getAxis( axis )
-               Field.getAxis( axis )
+               Field.getAxis( axis, timestep )
                Probe.getAxis( axis )
-               ParticleBinning.getAxis( axis )
-               Screen.getAxis( axis )
+               ParticleBinning.getAxis( axis, timestep )
+               Screen.getAxis( axis, timestep )
 
   Returns the list of positions of the diagnostic data along the requested axis.
   If the axis is not available, returns an empty list.
@@ -601,6 +609,10 @@ Obtain the data
     * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
       defined in the namelist
+
+  * ``timestep``: The timestep at which the axis is obtained. Only matters in
+    ``ParticleBinning``, ``Screen`` and ``RadiationSpectrum`` when ``auto`` axis
+    limits are requested; or in ``Field`` when ``moving=True``.
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)
@@ -652,7 +664,9 @@ Export 2D or 3D data to VTK
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
+      This rendering requires the particles to be sorted.
     * ``"cloud"``: show a cloud of particles. One file is generated for each iteration.
+      This rendering can be used without sorting the particles.
 
   * ``data_format``: the data formatting in the case of :py:meth:`TrackParticles`,
     either ``"vtk"`` or ``"xml"``. The format ``"vtk"`` results in ascii.
@@ -683,7 +697,7 @@ at one given timestep.
 
   All these methods have the same arguments described below.
 
-.. py:function:: plot(timestep=None, saveAs=None, axes=None, **kwargs)
+.. py:function:: plot(timestep=None, saveAs=None, axes=None, dpi=200, **kwargs)
 
   | If the data is 1D, it is plotted as a **curve**.
   | If the data is 2D, it is plotted as a **map**.
@@ -695,6 +709,7 @@ at one given timestep.
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``,
     etc.
   * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
+  * ``dpi``: the number of dots per inch for ``saveAs``.
 
   You may also have keyword-arguments (``kwargs``) described in :ref:`otherkwargs`.
 
@@ -752,7 +767,7 @@ This third plotting method animates the data over time.
   * ``movie``: name of a file to create a movie, such as ``"movie.avi"`` or  ``"movie.gif"``.
     If ``movie=""`` no movie is created.
   * ``fps``: number of frames per second (only if movie requested).
-  * ``dpi``: number of dots per inch (only if movie requested).
+  * ``dpi``: number of dots per inch for both ``movie`` and ``saveAs``
 
 **Example**::
 
@@ -805,7 +820,7 @@ Simultaneous plotting of multiple diagnostics
     If absent, stacks plots vertically.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
-  * ``dpi`` : resolution of the movie.
+  * ``dpi`` : resolution of the ``movie`` or ``saveAs``.
   * ``saveAs``: name of a directory where to save each frame as figures.
     You can even specify a filename such as ``mydir/prefix.png`` and it will automatically
     make successive files showing the timestep: ``mydir/prefix0.png``, ``mydir/prefix1.png``, etc.

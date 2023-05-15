@@ -283,7 +283,7 @@ public:
             } else if( type == "chi" ) {
                 // The requested species must be radiating
                 for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
-                    if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter ) {
+                    if( ! patch->vecSpecies[species[ispec]]->particles->has_quantum_parameter ) {
                         ERROR( errorPrefix << " 'chi' requires all species to be 'radiating'" );
                     }
                 }

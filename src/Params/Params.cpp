@@ -219,7 +219,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // communication pattern initialized as partial B exchange
     full_B_exchange = false;
     // communication pattern initialized as partial A, Phi exchange for envelope simulations
-    full_Envelope_exchange = false;
+    full_Envelope_exchange = true;
 
     // --------------
     // Stop & Restart
@@ -447,8 +447,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ",
                            LINK_NAMELIST + std::string("#laser-envelope-model"));
         }
-        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
-            full_Envelope_exchange = true;
+        if (geometry=="1Dcartesian"){
+            full_Envelope_exchange = false;
         }
 
         PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
@@ -589,7 +589,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         Friedman_filter = true;
         PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );
         if( Friedman_filter && ( Friedman_theta==0. ) ) {
-            WARNING( "Friedman filter is applied but parameter theta is set to zero" );
+            CAREFUL(0, "Friedman filter is applied but parameter theta is set to zero" );
         }
         if( ( Friedman_theta<0. ) || ( Friedman_theta>1. ) ) {
             ERROR_NAMELIST( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1",  LINK_NAMELIST + std::string("#field-filtering") );
@@ -609,7 +609,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         } else {
             res_space2 = max(res_space[0], res_space[1]) * max(res_space[0], res_space[1]);
             if( timestep != min(cell_length[0], cell_length[1]) ) {
-                WARNING( " timestep=" << timestep << " is not equal to optimal timestep for this solver = " << min(cell_length[0], cell_length[1])  );
+                CAREFUL( 0," timestep=" << timestep << " is not equal to optimal timestep for this solver = " << min(cell_length[0], cell_length[1])  );
             }
         }
     }
@@ -666,12 +666,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     if( is_spectral && geometry == "AMcylindrical" ) {
         PyTools::extract( "initial_rotational_cleaning", initial_rotational_cleaning, "Main" );
         if( initial_rotational_cleaning && smpi->getSize() > 1 ) {
-            WARNING("Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
+            CAREFUL(0,"Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
         }
     }
 
     PyTools::extract( "patch_arrangement", patch_arrangement, "Main"  );
-    WARNING( "Patches distribution: " << patch_arrangement );
+    CAREFUL( 0,"Patches distribution: " << patch_arrangement );
 
     int total_number_of_hilbert_patches = 1;
     if( patch_arrangement == "hilbertian" ) {
@@ -1070,7 +1070,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     check_consistency();
-
+    
+    
+    // Run the _writeInfo function that creates a small pickle file with basic info
+    if( ! smpi->test_mode && smpi->isMaster() ) {
+        PyTools::runPyFunction( "writeInfo" );
+        PyTools::checkPyError();
+    }
 }
 
 Params::~Params()
@@ -1406,7 +1412,7 @@ void Params::print_timestep_headers( SmileiMPI *smpi )
     if( timestep_width<3 ) {
         timestep_width = 3;
     }
-    WARNING( "The following `push time` assumes a global number of "<<smpi->getGlobalNumCores()<<" cores (hyperthreading is unknown)" );
+    CAREFUL(0,"The following `push time` assumes a global number of "<<smpi->getGlobalNumCores()<<" cores (hyperthreading is unknown)" );
     MESSAGE(
         setw( timestep_width*2+4 ) << " timestep "
         << setw( 15 ) << "sim time "

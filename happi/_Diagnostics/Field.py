@@ -274,7 +274,7 @@ class Field(Diagnostic):
 		# Build units
 		units = {}
 		for f in self._fieldname:
-			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r"}[f[0]] })
+			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r", "A":"E_r"}[f[0]] })
 		# Make total units and title
 		self._vunits = self.operation
 		self._title  = self.operation
@@ -313,6 +313,15 @@ class Field(Diagnostic):
 		try:    times = [float(a.name[6:]) for a in self._h5items]
 		except Exception as e: times = []
 		return self._np.double(times)
+	
+	def _getCenters(self, axis_index, timestep, h5item = None):
+		xoffset = 0
+		if self.moving and 'x' in self._type and axis_index == 0:
+			if h5item is None:
+				h5item = self._h5items[self._data[timestep]]
+			if "x_moved" in h5item.attrs:
+				xoffset = h5item.attrs["x_moved"]
+		return  xoffset + self._np.array(self._centers[axis_index])
 	
 	# get the value of x_moved for a requested timestep
 	def getXmoved(self, t):
@@ -382,6 +391,14 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		
+		# Handle moving window
+		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
+			self._xoffset = h5item.attrs["x_moved"]
+			if self.dim>1 and hasattr(self,"_extent"):
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
+		
 		for field in self._fieldname: # for each field in operation
 			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
@@ -431,6 +448,14 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		
+		# Handle moving window
+		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
+			self._xoffset = h5item.attrs["x_moved"]
+			if self.dim>1 and hasattr(self,"_extent"):
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
+		
 		step = 2 if self._is_complex else 1
 		for field in self._fieldname: # for each field in operation
 			available_modes = self._fields[field]
@@ -470,7 +495,7 @@ class Field(Diagnostic):
 		for prefix in [
 			"Bl_m_","Br_m_","Bt_m_","Bl_","Br_","Bt_","El_","Er_","Et_",
 			"Rho_","RhoOld_","Jl_","Jr_","Jt_",
-			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_"
+			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_","A_","Aold_"
 		]:
 			if field.startswith(prefix):
 				fname = prefix[:-1]
