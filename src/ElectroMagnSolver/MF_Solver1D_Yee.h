@@ -14,13 +14,14 @@ public:
     //! Creator for MF_Solver1D_Yee
     MF_Solver1D_Yee( Params &params );
     virtual ~MF_Solver1D_Yee();
-    
+
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields );
-    
+
 protected:
+    // Check if time filter is applied or not
+    bool isEFilterApplied;
 
 };//END class
 
 #endif
-

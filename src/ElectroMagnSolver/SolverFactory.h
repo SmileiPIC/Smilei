@@ -2,10 +2,13 @@
 #define SOLVERFACTORY_H
 
 #include "MA_Solver1D_norm.h"
+#include "MA_Solver1D_Friedman.h"
 #include "MA_Solver2D_norm.h"
 #include "MA_Solver2D_Friedman.h"
 #include "MA_Solver3D_norm.h"
+#include "MA_Solver3D_Friedman.h"
 #include "MA_SolverAM_norm.h"
+#include "MA_SolverAM_Friedman.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
@@ -17,6 +20,7 @@
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
+
 #include "MF_Solver1D_M4.h"
 #include "MF_Solver2D_M4.h"
 #include "MF_Solver3D_M4.h"
@@ -49,23 +53,31 @@ public:
     static Solver *createMA( Params &params )
     {
         Solver *solver = NULL;
-        
+
         if( params.geometry == "1Dcartesian" ) {
-            
-            solver = new MA_Solver1D_norm( params );
-            
+
+            if( params.Friedman_filter ) {
+                if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in 1Dcartesian geometry" );
+                solver = new MA_Solver1D_Friedman( params );
+            } else {
+                solver = new MA_Solver1D_norm( params );
+            }
+
         } else if( params.geometry == "2Dcartesian" ) {
-            
+
             if( params.is_spectral ) {
                 solver = new PXR_Solver2D_GPSTD( params );
             } else if( params.Friedman_filter ) {
+                if ( (params.maxwell_sol != "Yee") && (params.maxwell_sol != "Bouchard") && (params.maxwell_sol != "Grassi") && (params.maxwell_sol != "GrassiSpL") ){
+                    ERROR( "Only Yee, Bouchard, Grassi and GrassiSpL Maxwell solvers are compatible with Friedman filter in 2Dcartesian geometry" );
+                }
                 solver = new MA_Solver2D_Friedman( params );
             } else {
                 solver = new MA_Solver2D_norm( params );
             }
-            
+
         } else if( params.geometry == "3Dcartesian" ) {
-            
+
             if( params.is_spectral ) {
                 if( params.is_pxr ) {
                     solver = new PXR_Solver3D_GPSTD( params );
@@ -76,45 +88,57 @@ public:
                 if( params.is_pxr ) {
                     solver = new PXR_Solver3D_FDTD( params );
                 } else {
-                    solver = new MA_Solver3D_norm( params );
+                    if( params.Friedman_filter ) {
+                      if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in 3Dcartesian geometry" );
+                      solver = new MA_Solver3D_Friedman( params );
+                    } else {
+                      solver = new MA_Solver3D_norm( params );
+                    }
+
                 }
             }
-            
+
         } else if( params.geometry == "AMcylindrical" ) {
-            
+
             if( params.is_pxr ) {
                 solver = new PXR_SolverAM_GPSTD( params );
             } else {
-                solver = new MA_SolverAM_norm( params );
+                if( params.Friedman_filter ) {
+                    if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in AMcylindrical geometry" );
+                    solver = new MA_SolverAM_Friedman( params );
+                } else {
+                    solver = new MA_SolverAM_norm( params );
+                }
+
             }
-            
+
         }
-        
+
         if( !solver ) {
             ERROR( "Unknwon Maxwell-Ampere solver " );
         }
-        
+
         return solver;
     };
-    
+
     // Create Maxwell-Faraday solver
     // -----------------------------
     static Solver *createMF( Params &params )
     {
         Solver *solver = NULL;
-        
+
         // Create the required solver for Faraday's Equation
         // -------------------------------------------------
         if( params.geometry == "1Dcartesian" ) {
-            
+
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_Solver1D_Yee( params );
             } else if( params.maxwell_sol == "M4" ) {
                 solver = new MF_Solver1D_M4( params );
             }
-            
+
         } else if( params.geometry == "2Dcartesian" ) {
-            
+
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_Solver2D_Yee( params );
             } else if( params.maxwell_sol == "Grassi" ) {
@@ -132,9 +156,9 @@ public:
             } else if( params.is_spectral ) {
                 solver = new NullSolver();
             }
-            
+
         } else if( params.geometry == "3Dcartesian" ) {
-            
+
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_Solver3D_Yee( params );
             } else if( params.maxwell_sol == "Lehe" ) {
@@ -146,21 +170,21 @@ public:
             } else if( params.is_pxr ) {
                 solver = new NullSolver();
             }
-            
+
         } else if( params.geometry == "AMcylindrical" ) {
-            
+
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_SolverAM_Yee( params );
             } else if( params.is_pxr ) {
                 solver = new NullSolver();
             }
-            
+
         }
-        
+
         if( !solver ) {
             ERROR( "Unknwon solver '" << params.maxwell_sol << "' for geometry '" << params.geometry <<"'" );
         }
-        
+
         return solver;
     };
 
@@ -216,7 +240,7 @@ public:
         }
         else if( params.geometry == "3Dcartesian" ) {
             if (params.Laser_Envelope_model) {
-                if (params.envelope_solver == "explicit") {         
+                if (params.envelope_solver == "explicit") {
                     solver = new PML_Solver3D_Envelope( params );
                 }
                 else if (params.envelope_solver == "explicit_reduced_dispersion") {
@@ -229,7 +253,7 @@ public:
         }
         else if( params.geometry == "AMcylindrical" ) {
             if (params.Laser_Envelope_model){
-                if (params.envelope_solver == "explicit") { 
+                if (params.envelope_solver == "explicit") {
                     solver = new PML_SolverAM_Envelope( params );
                 }
                 else if (params.envelope_solver == "explicit_reduced_dispersion") {

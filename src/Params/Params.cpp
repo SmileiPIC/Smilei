@@ -93,7 +93,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::openPython();
     // Print python version
     MESSAGE( "Python version "<<PyTools::python_version() );
-    
+
 #ifdef SMILEI_USE_NUMPY
     smilei_import_array();
     // Workaround some numpy multithreading bug
@@ -289,10 +289,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Interpolation scheme
     PyTools::extract( "interpolator", interpolator_, "Main"  );
-    
+
     // Cancelation of the letter case
     std::transform( interpolator_.begin(), interpolator_.end(), interpolator_.begin(), ::tolower );
-    
+
     if (interpolator_ != "wt" && interpolator_ != "momentum-conserving") {
         ERROR_NAMELIST( "Parameter `Main.interpolator` should be `momentum-conserving` or `wt`.",
         LINK_NAMELIST + std::string("#main-variables"));
@@ -586,9 +586,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( model != "Friedman" ) {
             ERROR_NAMELIST( "Currently, only the `Friedman` model is available in FieldFilter()",  LINK_NAMELIST + std::string("#field-filtering"));
         }
-        if( geometry != "2Dcartesian" ) {
-            ERROR_NAMELIST( "Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry",  LINK_NAMELIST + std::string("#field-filtering") );
-        }
         Friedman_filter = true;
         PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );
         if( Friedman_filter && ( Friedman_theta==0. ) ) {
@@ -793,7 +790,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
     }
-    
+
     // Not used, just for compatibility with the GPU branch
     PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
 
@@ -807,7 +804,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // Force cell sorting and later the adaptive vectorization mode in scalar mode
         cell_sorting_ = true;
-        
+
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
@@ -859,13 +856,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
             // Force cell sorting and later the adaptive vectorization mode in scalar mode
             cell_sorting_ = true;
-            
+
         }
     }
 
     // Force adaptive vectorization in scalar mode if cell_sorting requested
     if ( cell_sorting_ ) {
-        
+
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR_NAMELIST( "Cell sorting (required by Collision or Merging) is incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#vectorization") );
         } else if ( vectorization_mode == "off" ) {
@@ -1167,7 +1164,7 @@ void Params::compute()
         patch_dimensions[i] = patch_size_[i] * cell_length[i];
         n_cell_per_patch *= patch_size_[i];
     }
-    
+
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
 
@@ -1446,7 +1443,7 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 #endif
 #ifdef _OMPTASKS
         MESSAGE( 1, "OpenMP task parallelization activated");
-#else 
+#else
         MESSAGE( 1, "OpenMP task parallelization not activated");
 #endif
         MESSAGE( "" );
@@ -1584,10 +1581,10 @@ void Params::multiple_decompose()
     }
 
     number_of_region.resize( 3, 1 );
-    
+
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    
+
     if( nDim_field==1 ) {
         multiple_decompose_1D();
     } else if( nDim_field==2 ) {
@@ -1595,7 +1592,7 @@ void Params::multiple_decompose()
     } else if( nDim_field==3 ) {
         multiple_decompose_3D();
     }
-    
+
     map_rank.resize( number_of_region[0] );
     for( unsigned int ix = 0 ; ix < number_of_region[0] ; ix++ ) {
         map_rank[ix].resize( number_of_region[1] );
@@ -1603,13 +1600,13 @@ void Params::multiple_decompose()
             map_rank[ix][iy].resize( number_of_region[2] );
         }
     }
-    
+
     int new_rk(0);
     unsigned int ijk[3];
     region_coordinates.resize( nDim_field );
     // - Build the map of MPI ranks in 3D
     // - Set the coordinates of the current region
-    
+
     for(ijk[0] = 0 ; ijk[0] < number_of_region[0] ; ijk[0]++ ) {
         for( ijk[1] = 0 ; ijk[1] < number_of_region[1] ; ijk[1]++ ) {
             for( ijk[2] = 0 ; ijk[2] < number_of_region[2] ; ijk[2]++ ) {
@@ -1623,7 +1620,7 @@ void Params::multiple_decompose()
             }
         }
     }
-    
+
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
     for( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
@@ -1779,7 +1776,7 @@ void Params::multiple_decompose_3D()
                 << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2]
                 << " != " << sz << ")" );
     }
-    
+
 }
 
 string Params::speciesField( string field_name )

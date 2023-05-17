@@ -46,6 +46,11 @@ LoadBalancing(
     frozen_particle_load = 0.1
 )
 
+FieldFilter(
+    model = "Friedman",
+    theta = 0.1,
+)
+
 Species(
     name = "electron",
     position_initialization = "regular",

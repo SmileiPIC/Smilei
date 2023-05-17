@@ -7,6 +7,7 @@
 MF_Solver3D_Yee::MF_Solver3D_Yee( Params &params )
     : Solver3D( params )
 {
+    isEFilterApplied = params.Friedman_filter;
 }
 
 MF_Solver3D_Yee::~MF_Solver3D_Yee()
@@ -22,13 +23,22 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     const unsigned int nz_p = fields->dimPrim[2];
     const unsigned int nz_d = fields->dimDual[2];
     // Static-cast of the fields
-    double *Ex3D = &(fields->Ex_->data_[0]);
-    double *Ey3D = &(fields->Ey_->data_[0]);
-    double *Ez3D = &(fields->Ez_->data_[0]);
+    double *Ex3D ;
+    double *Ey3D ;
+    double *Ez3D ;
+    if (isEFilterApplied) {
+        Ex3D = &(fields->filter_->Ex_[0]->data_[0]);
+        Ey3D = &(fields->filter_->Ey_[0]->data_[0]);
+        Ez3D = &(fields->filter_->Ez_[0]->data_[0]);
+    } else {
+        Ex3D = &(fields->Ex_->data_[0]);
+        Ey3D = &(fields->Ey_->data_[0]);
+        Ez3D = &(fields->Ez_->data_[0]);
+    }
     double *Bx3D = &(fields->Bx_->data_[0]);
     double *By3D = &(fields->By_->data_[0]);
     double *Bz3D = &(fields->Bz_->data_[0]);
-    
+
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -38,7 +48,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
@@ -48,7 +58,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     // Magnetic field Bz^(d,d,p)
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -58,6 +68,5 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
-}
 
+}

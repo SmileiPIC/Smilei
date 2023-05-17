@@ -61,6 +61,11 @@ LaserEnvelopeGaussianAM(
 )
 
 
+FieldFilter(
+    model = "Friedman",
+    theta = 0.3,
+)
+
 n0 = 0.0017
 Radius_plasma = 300.
 longitudinal_profile = polygonal(xpoints=[3.*laser_fwhm,3.5*laser_fwhm,24.5*laser_fwhm,25.*laser_fwhm],xvalues=[0.,n0,n0,0.])

@@ -40,6 +40,7 @@ Changes made in the repository (not released)
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
 
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
+* Friedman filter: now available in all geometries (previously available only in ``2Dcartesian``)
 * Bugfixes:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
@@ -83,7 +84,7 @@ Release 4.7
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Lasers can be injected from all boundaries
-* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present
 * Option to create neutrons for D-D fusion
 * Collisions can be done less often
 * Lasers can be injected from all boundaries
