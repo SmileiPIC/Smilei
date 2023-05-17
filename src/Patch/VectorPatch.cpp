@@ -590,7 +590,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // Creation of the particles in local_particles_vector
             particle_creator.create( init_space, params, patch, itime );
 
-
             // suppress all particles in the thermalized region
             //int * mask = new int[injector_species->particles->size()];
             // std::vector<int> mask(injector_species->particles->size());
@@ -618,10 +617,11 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //delete [] mask;
 
             // Update positions from momentum
-            // Particle not created at the same position of another species
+            // Particle not created at the same position of another injector
             if( !particle_injector->position_initialization_on_injector_ ) {
 
-                unsigned int number_of_particles = local_particles_vector[i_injector].size();
+                Particles* particles = &local_particles_vector[i_injector];
+                unsigned int number_of_particles = particles->size();
 
                 // Shift to update the positions
                 double position_shift[3] = {0., 0., 0.};
@@ -631,13 +631,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     position_shift[axis] = params.cell_length[axis];
                 }
 
-                double * __restrict__ position_x = local_particles_vector[i_injector].getPtrPosition( 0 );
-                double * __restrict__ position_y = local_particles_vector[i_injector].getPtrPosition( 1 );
-                double * __restrict__ position_z = local_particles_vector[i_injector].getPtrPosition( 2 );
+                double * __restrict__ position_x = particles->getPtrPosition( 0 );
+                double * __restrict__ position_y = particles->getPtrPosition( 1 );
+                double * __restrict__ position_z = particles->getPtrPosition( 2 );
 
-                double * __restrict__ momentum_x = local_particles_vector[i_injector].getPtrMomentum( 0 );
-                double * __restrict__ momentum_y = local_particles_vector[i_injector].getPtrMomentum( 1 );
-                double * __restrict__ momentum_z = local_particles_vector[i_injector].getPtrMomentum( 2 );
+                double * __restrict__ momentum_x = particles->getPtrMomentum( 0 );
+                double * __restrict__ momentum_y = particles->getPtrMomentum( 1 );
+                double * __restrict__ momentum_z = particles->getPtrMomentum( 2 );
 
                 if (params.nDim_particle == 1) {
 
@@ -674,10 +674,49 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     }
 
                 } // end if nDim_particle
-            } // end if new particle positions
+                
+                // Filter out particles to keep only the ones that are in the simulation domain
+                if( particles->size() > 0 ) {
+                
+                    int new_particle_number = particles->size() - 1;
+                    
+                    // Suppr not interesting parts ...
+                    for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
+                        for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
+                            if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] >= params.cell_length[axis]*params.global_size_[axis]  ) {
+                                if( new_particle_number > ip ) {
+                                    particles->overwriteParticle( new_particle_number, ip );
+                                }
+                                new_particle_number--;
+                                break;
+                            }
+                        }
+                    }
+                    new_particle_number += 1;
+
+                    // New energy from particles
+                    double energy = 0.;
+                    // Matter particle case
+                    if( injector_species->mass_ > 0 ) {
+                        for( int ip = 0; ip<new_particle_number; ip++ ) {
+                            energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
+                        }
+                        injector_species->nrj_new_part_ += injector_species->mass_ * energy;
+                    }
+                    // Photon case
+                    else if( injector_species->mass_ == 0 ) {
+                        for( int ip=0; ip<new_particle_number; ip++ ) {
+                            energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
+                        }
+                        injector_species->nrj_new_part_ += energy;
+                    }
+                    // Insertion of the particles as a group in the vector of species
+                    particles->eraseParticleTrail( new_particle_number );
+                } // if particles > 0
+            }
         } // end loop injector
 
-        // Update positions with copy from another species
+        // Update positions with copy from another injector
         for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
 
             // Pointer to the current particle injector
@@ -685,15 +724,15 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             
             if( !patch->isBoundary( particle_injector->axis(), particle_injector->min_max() ) ) continue;
             
-            // Particle created at the same position of another species
+            // Particle created at the same position of another injector
             if (particle_injector->position_initialization_on_injector_) {
 
-                // We first get the species id associated to this injector
+                // We first get the associated injector
                 unsigned int i_injector_2 = particle_injector->position_initialization_on_injector_index_;
                 // Resize position vectors
-                const unsigned int particle_number = local_particles_vector[i_injector].size();
+                const unsigned int particle_number = local_particles_vector[i_injector_2].size();
                 for( unsigned int i = 0; i < params.nDim_particle; i++ ) {
-                    local_particles_vector[i_injector_2].Position[i].resize( particle_number );
+                    local_particles_vector[i_injector].resize( particle_number );
                 }
                 // Pointers injector 1
                 double *const __restrict__ px         = local_particles_vector[i_injector].getPtrPosition(0);
@@ -724,59 +763,17 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         px[ip] = lpvx[ip];
                     }
                 } // if nDim_particle
-            } // if particle positions
-
-            // Filter particles when initialized on different position
-            if( local_particles_vector[i_injector].size() > 0 ) {
-
-                // We first get the species id associated to this injector
-                unsigned int i_species = particle_injector->getSpeciesNumber();
-                Species * injector_species = species( ipatch, i_species );
-                Particles* particles = &local_particles_vector[i_injector];
-
-                // Then the new number of particles in species
-                int new_particle_number = particles->size() - 1;
-
-                // Suppr not interesting parts ...
-                for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
-                    for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
-                        if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] >= params.cell_length[axis]*params.global_size_[axis]  ) {
-                            if( new_particle_number > ip ) {
-                                particles->overwriteParticle( new_particle_number, ip );
-                            }
-                            new_particle_number--;
-                        }
-                    }
-                }
-
-                new_particle_number += 1;
-
-                // New energy from particles
-                double energy = 0.;
-                // Matter particle case
-                if( injector_species->mass_ > 0 ) {
-                    for( int ip = 0; ip<new_particle_number; ip++ ) {
-                        energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
-                    }
-                    injector_species->nrj_new_part_ += injector_species->mass_ * energy;
-                }
-                // Photon case
-                else if( injector_species->mass_ == 0 ) {
-                    for( int ip=0; ip<new_particle_number; ip++ ) {
-                        energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
-                    }
-                    injector_species->nrj_new_part_ += energy;
-                }
-
-                // Insertion of the particles as a group in the vector of species
-                if( new_particle_number > 0 ) {
-
-                    particles->eraseParticleTrail( new_particle_number );
-                    injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
-
-                }
-            } // if particles > 0
+            }
         } // end for i_injector
+        
+        
+        // Move injected particles to the arrays
+        for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+            ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
+            Species * injector_species = species( ipatch, particle_injector->getSpeciesNumber() );
+            injector_species->importParticles( params, patches_[ipatch], local_particles_vector[i_injector], localDiags );
+        }
+        
     } // end for ipatch
 
     timers.particleInjection.update( params.printNow( itime ) );
