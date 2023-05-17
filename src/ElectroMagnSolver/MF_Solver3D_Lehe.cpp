@@ -13,15 +13,14 @@ MF_Solver3D_Lehe::MF_Solver3D_Lehe( Params &params )
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     dz = params.cell_length[2];
-    
+
     beta_yx = 1./8.; // = beta_zx as well but we define and use only 1 variable
     beta_xy = pow( dx/dy, 2 )/8.;
     beta_xz = pow( dx/dz, 2 )/8.;
     delta_x = ( 1./4. )*( 1.-pow( sin( M_PI*dt_ov_dx/2. )/dt_ov_dx, 2 ) );
-    
+
     alpha_y =  1. - 2.*beta_yx; // = alpha_z as well but we define and use only 1 variable
     alpha_x =  1. - 2.*beta_xy - 2.*beta_xz - 3.*delta_x ;
-    
     
 }
 
@@ -45,8 +44,8 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
     Field3D *By3D = static_cast<Field3D *>( fields->By_ );
     Field3D *Bz3D = static_cast<Field3D *>( fields->Bz_ );
     ElectroMagn3D *EM3D = static_cast<ElectroMagn3D *>( fields );
-    
-    
+
+
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=1 ; i<nx_p-1;  i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -60,7 +59,7 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
     for( unsigned int i=2 ; i<nx_d-2 ; i++ ) {
         for( unsigned int j=1 ; j<ny_p-1 ; j++ ) {
@@ -75,8 +74,8 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
-    
+
+
     // Magnetic field Bz^(d,d,p)
     for( unsigned int i=2 ; i<nx_d-2 ; i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
@@ -90,9 +89,9 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     //Additional boundaries treatment on the primal direction of each B field
-    
+
     // Magnetic field Bx^(p,d,d)
     if( EM3D->isXmin ) {
         // At Xmin
@@ -116,7 +115,7 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
                                         +  dt_ov_dy * ( ( *Ex3D )( 1, j, k ) - ( *Ex3D )( 1, j-1, k ) );
             }
         }
-        
+
     }
     if( EM3D->isXmax ) {
         // At Xmax
@@ -139,9 +138,9 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
                                              +  dt_ov_dy * ( ( *Ex3D )( nx_d-2, j, k ) - ( *Ex3D )( nx_d-2, j-1, k ) );
             }
         }
-        
+
     }
-    
+
     if( EM3D->isYmin ) {
         //At Ymin
         for( unsigned int i=2 ; i<nx_d-2 ; i++ ) { //Cases i=1 and i=nx_d-2 are treated later for all required j and k.
@@ -151,7 +150,7 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     if( EM3D->isYmax ) {
         //At Ymax
         for( unsigned int i=2 ; i<nx_d-2 ; i++ ) { //Cases i=1 and i=nx_d-2 are treated later for all required j and k
@@ -161,7 +160,7 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     if( EM3D->isZmin ) {
         //At Zmin
         // Magnetic field Bz^(d,d,p)
@@ -172,7 +171,7 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     if( EM3D->isZmax ) {
         //At Zmax
         // Magnetic field Bz^(d,d,p)
@@ -183,15 +182,12 @@ void MF_Solver3D_Lehe::operator()( ElectroMagn *fields )
             }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
 }//END solveMaxwellFaraday
-
-
-
