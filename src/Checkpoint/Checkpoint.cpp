@@ -410,7 +410,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 
     // filtered Electric fields
     if( EMfields->filter_ ) {
-        if (!(params.geometry=="AMcylindrical")){
+        if (params.geometry!="AMcylindrical"){
             for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
                 dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
             }
@@ -837,7 +837,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     }
 
     if( EMfields->filter_ ) {
-        if (!(params.geometry=="AMcylindrical")){
+        if (params.geometry!="AMcylindrical"){
             // filtered Electric fields
             for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
                 restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
