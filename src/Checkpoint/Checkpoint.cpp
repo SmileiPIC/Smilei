@@ -444,8 +444,6 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         } // end if condition on geometry
       
     }
-
-    if (params.use_BTIS3) ERROR("Checkpoints of B-TIS3 fields fields are not implemented yet");
     
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
