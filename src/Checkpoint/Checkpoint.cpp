@@ -349,6 +349,10 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         dumpFieldsPerProc( g, EMfields->Bx_m );
         dumpFieldsPerProc( g, EMfields->By_m );
         dumpFieldsPerProc( g, EMfields->Bz_m );
+        if (params.use_BTIS3){
+            dumpFieldsPerProc( g, EMfields->By_mBTIS3 );
+            dumpFieldsPerProc( g, EMfields->Bz_mBTIS3 );  
+        }
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
@@ -371,6 +375,10 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             dump_cFieldsPerProc( g, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
+            if (params.use_BTIS3){
+                dump_cFieldsPerProc( g, emAM->Br_mBTIS3[imode] );
+                dump_cFieldsPerProc( g, emAM->Bt_mBTIS3[imode] );
+            }
             if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
@@ -770,6 +778,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         restartFieldsPerProc( g, EMfields->Bx_m );
         restartFieldsPerProc( g, EMfields->By_m );
         restartFieldsPerProc( g, EMfields->Bz_m );
+        if (params.use_BTIS3){
+            restartFieldsPerProc( g, EMfields->By_mBTIS3 );
+            restartFieldsPerProc( g, EMfields->Bz_mBTIS3 );  
+        }
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
@@ -794,6 +806,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
 
+            if (params.use_BTIS3){
+                restart_cFieldsPerProc( g, emAM->Br_mBTIS3[imode] );
+                restart_cFieldsPerProc( g, emAM->Bt_mBTIS3[imode] );  
+            }
             if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
