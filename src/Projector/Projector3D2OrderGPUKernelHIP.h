@@ -93,6 +93,39 @@ namespace cuda {
                 }
             } // namespace GDS
         }     // namespace atomic
+        
+        template <typename ComputeFloat>
+        __device__ void inline __attribute__((always_inline)) init_S0(const ComputeFloat delta, ComputeFloat *__restrict__ S0)
+        {
+            const ComputeFloat delta2 = delta * delta;
+            S0[0] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
+            S0[1] = static_cast<ComputeFloat>( 0.75 ) - delta2;
+            S0[2] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
+            S0[3] = static_cast<ComputeFloat>( 0.0 ) ;
+        }
+
+        template <typename ComputeFloat>
+        __device__ void inline __attribute__((always_inline)) init_S1(const ComputeFloat xpn, const int ipo,  const int i_domain_begin,
+                                                                      ComputeFloat *__restrict__ S1)
+        {
+            // const int    ip        = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
+            /*const ComputeFloat xpn  = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
+            const int          ipo    = iold[0 * particle_count];*/
+            const int          ip       = std::round( xpn );
+            const int          ip_m_ipo = ip - ipo - i_domain_begin;
+            const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
+            const ComputeFloat delta2   = delta * delta;
+
+            S1[0] = static_cast<ComputeFloat>( 0.0 );
+            S1[1] = static_cast<ComputeFloat>( 0.0 );
+            // S1[2] = 0.0; // Always set below
+            S1[3] = static_cast<ComputeFloat>( 0.0 );
+            S1[4] = static_cast<ComputeFloat>( 0.0 );
+
+            S1[ip_m_ipo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
+            S1[ip_m_ipo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
+            S1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
+        }
 
         template <typename ComputeFloat,
                   typename ReductionFloat,
@@ -220,96 +253,19 @@ namespace cuda {
                 // Variable declaration & initialization
                 // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
 
-                // why is this not 3 function calls ? init_S(Sx0, deltaold[0 * particle_count]), init_S(Sy0,..),init_S(Sz0,..) ?
+                // Locate the particle on the primal grid at former time-step & calculate coeff. 
 
-                // Locate the particle on the primal grid at former time-step & calculate coeff. S0
-                {
-                    const ComputeFloat delta  = deltaold[0 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
+                init_S0(deltaold[0 * particle_count], Sx0);
+                init_S0(deltaold[1 * particle_count], Sy0);
+                init_S0(deltaold[2 * particle_count], Sz0);
 
-                    Sx0[0] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx0[1] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sx0[2] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx0[3] = static_cast<ComputeFloat>( 0.0 ) ;
-                }
-                {
-                    const ComputeFloat delta  = deltaold[1 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
-
-                    Sy0[0] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy0[1] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sy0[2] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy0[3] = static_cast<ComputeFloat>( 0.0 ) ;
-                }
-                {
-                    const ComputeFloat delta  = deltaold[2 * particle_count];
-                    const ComputeFloat delta2 = delta * delta;
-
-                    Sz0[0] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz0[1] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sz0[2] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz0[3] = static_cast<ComputeFloat>( 0.0 ) ;
-                }
-
-		        // again: why no function calls here to init Sx1, Sy1, Sz1
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-                {
-                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip       = std::round( xpn );
-                    const int          ipo      = iold[0 * particle_count];
-                    const int          ip_m_ipo = ip - ipo - i_domain_begin;
-                    const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sx1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sx1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sx1[2] = 0.0; // Always set below
-                    Sx1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sx1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sx1[ip_m_ipo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx1[ip_m_ipo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
-                {
-                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp       = std::round( ypn );
-                    const int          jpo      = iold[1 * particle_count];
-                    const int          jp_m_jpo = jp - jpo - j_domain_begin;
-                    const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sy1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sy1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sy1[2] = 0.0; // Always set below
-                    Sy1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sy1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sy1[jp_m_jpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy1[jp_m_jpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
-                {
-                    // const int    kp             = static_cast<int>( zpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat zpn      = static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv;
-                    const int          kp       = std::round( zpn );
-                    const int          kpo      = iold[2 * particle_count];
-                    const int          kp_m_kpo = kp - kpo - k_domain_begin;
-                    const ComputeFloat delta    = zpn - static_cast<ComputeFloat>( kp );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sz1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sz1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sz1[2] = 0.0; // Always set below
-                    Sz1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sz1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sz1[kp_m_kpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz1[kp_m_kpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sz1[kp_m_kpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
+                init_S1( static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv, 
+                         iold[0 * particle_count], i_domain_begin, Sx1);
+                init_S1( static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv, 
+                         iold[1 * particle_count], j_domain_begin, Sy1);
+                init_S1( static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv, 
+                         iold[2 * particle_count], k_domain_begin, Sz1);
 
                 // (x,y,z) components of the current density for the macro-particle
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
@@ -329,10 +285,7 @@ namespace cuda {
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
 
-                //const unsigned int GPUClusterWithGCWidth2 = GPUClusterWithGCWidth * GPUClusterWithGCWidth; negleagible
-
                 // Jx
-
                 //j=0
                 //k=0
                 {
@@ -460,7 +413,6 @@ namespace cuda {
                 }
 
                 // Jz
-
                 //i=0
                 //j=0
                 {
@@ -491,7 +443,6 @@ namespace cuda {
                     }
                 }
                 for( unsigned int i = 1; i < 4; ++i ) {
-
                     //j=0
                     {
                         ComputeFloat tmp = crz_p * Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i-1]
@@ -654,66 +605,17 @@ namespace cuda {
                 // Variable declaration & initialization
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-                {
-                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip       = std::round( xpn );
-                    const int          ipo      = iold[0 * particle_count];
-                    const int          ip_m_ipo = ip - ipo - i_domain_begin;
-                    const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sx1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sx1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sx1[2] = 0.0; // Always set below
-                    Sx1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sx1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sx1[ip_m_ipo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sx1[ip_m_ipo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
-                {
-                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp       = std::round( ypn );
-                    const int          jpo      = iold[1 * particle_count];
-                    const int          jp_m_jpo = jp - jpo - j_domain_begin;
-                    const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sy1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sy1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sy1[2] = 0.0; // Always set below
-                    Sy1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sy1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sy1[jp_m_jpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sy1[jp_m_jpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
-                {
-                    // const int    kp             = static_cast<int>( zpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat zpn      = static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv;
-                    const int          kp       = std::round( zpn );
-                    const int          kpo      = iold[2 * particle_count];
-                    const int          kp_m_kpo = kp - kpo - k_domain_begin;
-                    const ComputeFloat delta    = zpn - static_cast<ComputeFloat>( kp );
-                    const ComputeFloat delta2   = delta * delta;
-
-                    Sz1[0] = static_cast<ComputeFloat>( 0.0 );
-                    Sz1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sz1[2] = 0.0; // Always set below
-                    Sz1[3] = static_cast<ComputeFloat>( 0.0 );
-                    Sz1[4] = static_cast<ComputeFloat>( 0.0 );
-
-                    Sz1[kp_m_kpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
-                    Sz1[kp_m_kpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
-                    Sz1[kp_m_kpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }
+                init_S1( static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv, 
+                         iold[0 * particle_count], i_domain_begin, Sx1);
+                init_S1( static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv, 
+                         iold[1 * particle_count], j_domain_begin, Sy1);
+                init_S1( static_cast<ComputeFloat>( device_particle_position_z[particle_index] ) * dz_inv, 
+                         iold[2 * particle_count], k_domain_begin, Sz1);
 
                 // (x,y,z) components of the current density for the macro-particle
-                const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
+                const ComputeFloat charge_weight = inv_cell_volume * 
+                                                   static_cast<ComputeFloat>( device_particle_charge[particle_index] ) *
+                                                   static_cast<ComputeFloat>( device_particle_weight[particle_index] );
                 // const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
                 // const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
                 // const ComputeFloat crz_p         = charge_weight * dz_ov_dt;
@@ -834,7 +736,7 @@ static inline void
         auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
         //auto KernelFunction = /*kernel::*/ DepositCurrentDensity_3D_Order2;
         hipLaunchKernelGGL
-                          ( KernelFunction,
+                        (   KernelFunction,
                             kGridDimension,
                             kBlockDimension,
                             0, // Shared memory
@@ -858,7 +760,8 @@ static inline void
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral );
+                            not_spectral 
+                        );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 
@@ -897,34 +800,34 @@ static inline void
 
     static inline void
     densityDepositionKernel3D( 
-                                         double *__restrict__ host_rho,
-                                         int rho_size,
-                                         const double *__restrict__ device_particle_position_x,
-                                         const double *__restrict__ device_particle_position_y,
-                                         const double *__restrict__ device_particle_position_z,
-                                         const short *__restrict__ device_particle_charge,
-                                         const double *__restrict__ device_particle_weight,
-                                         const int *__restrict__ host_bin_index,
-                                         unsigned int x_dimension_bin_count,
-                                         unsigned int y_dimension_bin_count,
-                                         unsigned int z_dimension_bin_count,
-                                         const double *__restrict__ host_invgf_,
-                                         int *__restrict__ host_iold,
-                                         const double *__restrict__ host_deltaold_,
-                                         const unsigned int number_of_particles,
-                                         double inv_cell_volume,
-                                         double dx_inv,
-                                         double dy_inv,
-                                         double dz_inv,
-                                         double dx_ov_dt,
-                                         double dy_ov_dt,
-                                         double dz_ov_dt,
-                                         int    i_domain_begin,
-                                         int    j_domain_begin,
-                                         int    k_domain_begin,
-                                         int    nprimy,
-                                         int    nprimz,
-                                         int    not_spectral )
+                                double *__restrict__ host_rho,
+                                int rho_size,
+                                const double *__restrict__ device_particle_position_x,
+                                const double *__restrict__ device_particle_position_y,
+                                const double *__restrict__ device_particle_position_z,
+                                const short *__restrict__ device_particle_charge,
+                                const double *__restrict__ device_particle_weight,
+                                const int *__restrict__ host_bin_index,
+                                unsigned int x_dimension_bin_count,
+                                unsigned int y_dimension_bin_count,
+                                unsigned int z_dimension_bin_count,
+                                const double *__restrict__ host_invgf_,
+                                int *__restrict__ host_iold,
+                                const double *__restrict__ host_deltaold_,
+                                const unsigned int number_of_particles,
+                                double inv_cell_volume,
+                                double dx_inv,
+                                double dy_inv,
+                                double dz_inv,
+                                double dx_ov_dt,
+                                double dy_ov_dt,
+                                double dz_ov_dt,
+                                int    i_domain_begin,
+                                int    j_domain_begin,
+                                int    k_domain_begin,
+                                int    nprimy,
+                                int    nprimz,
+                                int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1007,7 +910,6 @@ static inline void
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
     }
-
 
 } // namespace cuda
 
