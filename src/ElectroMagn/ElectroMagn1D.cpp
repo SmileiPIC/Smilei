@@ -498,14 +498,14 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
         
         if(use_BTIS3){  // for BTIS3 interpolation
             // Static-cast of the fields
-            Field1D *By_mBTIS3 = static_cast<Field1D *>( By_mBTIS3 );
-            Field1D *Bz_mBTIS3 = static_cast<Field1D *>( Bz_mBTIS3 );
+            Field1D *BymBTIS3 = static_cast<Field1D *>( By_mBTIS3 );
+            Field1D *BzmBTIS3 = static_cast<Field1D *>( Bz_mBTIS3 );
 
             for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
                 // Magnetic field By^(p) for BTIS3 interpolation
-                ( *By_mBTIS3 )( i ) = ( *By1D_m )( i ) ;
+                ( *BymBTIS3 )( i ) = ( *By1D_m )( i ) ;
                 // Magnetic field Bz^(p) for BTIS3 interpolation
-                ( *Bz_mBTIS3 )( i ) = ( *Bz1D_m )( i );
+                ( *BzmBTIS3 )( i ) = ( *Bz1D_m )( i );
             }
 
         } // end if use_BTIS3
