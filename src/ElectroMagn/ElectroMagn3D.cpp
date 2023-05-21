@@ -1069,22 +1069,20 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         
         if(use_BTIS3){  // for BTIS3 interpolation
             // Static-cast of the fields
-            Field3D *By_mBTIS3 = static_cast<Field3D *>( By_mBTIS3 );
-            Field3D *Bz_mBTIS3 = static_cast<Field3D *>( Bz_mBTIS3 );
-            Field3D *By3Dm     = static_cast<Field3D *>( By_m );
-            Field3D *Bz3Dm     = static_cast<Field3D *>( Bz_m );
+            double *const BymBTIS3 = By_mBTIS3->data();
+            double *const BzmBTIS3 = Bz_mBTIS3->data();
 
             for( unsigned int i=0 ; i<nx_p ; i++ ) {
                 for( unsigned int j=0 ; j<ny_p ; j++ ) {
                     for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                        // Magnetic field By^(d,p) for BTIS3 interpolation
-                        ( *By_mBTIS3 )( i, j, k ) = ( *By3Dm )( i, j, k ) ;
+                        // Magnetic field ByBTIS3^(p,p,d) for BTIS3 interpolation
+                        BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] =  By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ];
                     }
                 }
                 for( unsigned int j=0 ; j<ny_d ; j++ ) {
                     for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                        // Magnetic field Bz^(d,d) for BTIS3 interpolation
-                        ( *Bz_mBTIS3 )( i, j, k ) = ( *Bz3Dm )( i, j, k );
+                        // Magnetic field BzBTIS3^(p,d,p) for BTIS3 interpolation
+                        BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] = Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ];
                     }
                 }
             }
