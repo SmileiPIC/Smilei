@@ -35,7 +35,7 @@ Main(
         ["silver-muller","silver-muller"],
         ["buneman","buneman"],
     ],
-
+    maxwell_solver = "Lehe",
     solve_poisson = False,
     print_every = 100,
 
