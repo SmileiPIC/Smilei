@@ -115,5 +115,5 @@ DiagParticleBinning(
 DiagTrackParticles(
 	species = "electron",
 	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wx"]
+	attributes = ["x","px","py","pz","w","Wy"]
 )
