@@ -602,6 +602,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( ( Friedman_theta<0. ) || ( Friedman_theta>1. ) ) {
             ERROR_NAMELIST( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1",  LINK_NAMELIST + std::string("#field-filtering") );
         }
+        if (geometry=="3Dcartesian"){
+            ERROR("Friedman filter is not yet supported for `3Dcartesian geometry`");
+        }
     }
 
 

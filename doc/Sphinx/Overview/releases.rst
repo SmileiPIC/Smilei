@@ -40,7 +40,7 @@ Changes made in the repository (not released)
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
 
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
-* Friedman filter: now available in all geometries (previously available only in ``2Dcartesian``)
+* Friedman filter: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
 * Bugfixes:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
