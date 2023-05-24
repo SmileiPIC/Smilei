@@ -20,6 +20,7 @@
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
+#include "MF_SolverAM_Lehe.h"
 
 #include "MF_Solver1D_M4.h"
 #include "MF_Solver2D_M4.h"
@@ -175,6 +176,8 @@ public:
 
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_SolverAM_Yee( params );
+            } if( params.maxwell_sol == "Lehe" ) {
+                solver = new MF_SolverAM_Lehe( params );
             } else if( params.is_pxr ) {
                 solver = new NullSolver();
             }
