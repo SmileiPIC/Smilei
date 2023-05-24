@@ -107,22 +107,22 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
             write_chi         = true;
         } else if( attributes[i] == "Ex" ) {
             write_E[0]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[0] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[0] > 0 );
         } else if( attributes[i] == "Ey" ) {
             write_E[1]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[1] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[1] > 0 );
         } else if( attributes[i] == "Ez" ) {
             write_E[2]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[2] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[2] > 0 );
         } else if( attributes[i] == "Bx" ) {
             write_B[0]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[3] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[3] > 0 );
         } else if( attributes[i] == "By" ) {
             write_B[1]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[4] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[4] > 0 );
         } else if( attributes[i] == "Bz" ) {
             write_B[2]        = true;
-            interpolate = !( interpolated_fields && interpolated_fields->mode_[5] > 0 );
+            interpolate = interpolate || !( interpolated_fields && interpolated_fields->mode_[5] > 0 );
         } else if( attributes[i] == "Wx" ) {
             write_W[0]        = true;
             if( ! interpolated_fields || interpolated_fields->mode_[6] == 0 ) {
@@ -564,6 +564,13 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         #pragma omp master
         if( write_any_B ) {
             delete B_group;
+        }
+        
+    } else {
+        
+        InterpolatedFields * interpolated_fields = vecPatches( 0 )->vecSpecies[speciesId_]->particles->interpolated_fields_;
+        if( interpolated_fields ) {
+            iprop += count( interpolated_fields->mode_.begin(), interpolated_fields->mode_.end(), 1 );
         }
     }
     
