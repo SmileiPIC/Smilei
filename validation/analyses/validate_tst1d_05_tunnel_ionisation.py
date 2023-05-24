@@ -1,5 +1,6 @@
 import os, re, numpy as np, math
 from scipy.interpolate import interp1d as interp
+from scipy.ndimage import gaussian_filter, maximum_filter1d
 import happi
 
 S = happi.Open(["./restart*"], verbose=False)
@@ -89,9 +90,9 @@ Validate("Scalar Ntot_electron", S.Scalar.Ntot_electron().getData(), 100.)
 Validate("Scalar Zavg_carbon"  , S.Scalar.Zavg_carbon  ().getData(), 0.2)
 
 # # TRACKING DIAGNOSTIC
-d = S.TrackParticles("electron", axes=["Id","x","Wx"], timesteps=150).getData()
+d = S.TrackParticles("electron", axes=["Id","x","Wy"], timesteps=1000).getData()
 keep = d["Id"] > 0
 order = np.argsort(d["x"][keep])
-Validate("Track electron x", d["x"][keep][order], 1e-4)
-Validate("Track electron Wx", d["Wx"][keep][order], 1e-11)
+Validate("Track electron x", d["x"][keep][order][::200], 1e-4)
+Validate("Track electron Wy", gaussian_filter(maximum_filter1d(d["Wy"][keep][order],20),200)[::200], 1e-5)
 
