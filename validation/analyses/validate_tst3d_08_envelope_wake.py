@@ -25,6 +25,9 @@ Validate("1-D probe Ex at iteration 350", Ex, 0.01)
 Env_Chi = S.Probe.Probe0.Env_Chi(timesteps=350).getData()[0]
 Validate("1-D probe Env_Chi at iteration 350", Ex, 0.01)
 
+BzBTIS3 = S.Probe.Probe0.BzBTIS3(timesteps=350).getData()[0]
+Validate("1-D probe BzBTIS3 at iteration 350", Ex, 0.01)
+
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5", "r") as f:
 	dt = f["data/0000000000"].attrs["dt"]
