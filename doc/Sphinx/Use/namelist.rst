@@ -229,7 +229,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The solver for Maxwell's equations.
   Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
-  ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  ``"Lehe"`` and ``"Bouchard"`` are available for ``3DCartesian``.
+  ``"Lehe"`` is available for ``AMcylindrical``.
   The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
