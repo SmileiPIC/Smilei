@@ -148,6 +148,8 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     //     - so 1 buffer per thread
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
+    
+    use_BTIS3 = params.use_BTIS3;
 
 #ifdef _OPENMP
     dynamics_Epart.resize( omp_get_max_threads() );
@@ -155,6 +157,10 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     dynamics_invgf.resize( omp_get_max_threads() );
     dynamics_iold.resize( omp_get_max_threads() );
     dynamics_deltaold.resize( omp_get_max_threads() );
+    if (use_BTIS3){
+        dynamics_Bpart_yBTIS3.resize( omp_get_max_threads() );
+        dynamics_Bpart_zBTIS3.resize( omp_get_max_threads() );
+    }
     if( params.geometry == "AMcylindrical" ) {
         dynamics_eithetaold.resize( omp_get_max_threads() );
     }
@@ -179,6 +185,10 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     dynamics_invgf.resize( 1 );
     dynamics_iold.resize( 1 );
     dynamics_deltaold.resize( 1 );
+    if (use_BTIS3){
+        dynamics_Bpart_yBTIS3.resize( 1 );
+        dynamics_Bpart_zBTIS3.resize( 1 );
+    }
     if( params.geometry == "AMcylindrical" ) {
         dynamics_eithetaold.resize( 1 );
     }
@@ -1158,7 +1168,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
     irequest++;
     isend( EM->Bz_m, to, tag+irequest, requests[irequest] );
     irequest++;
-
+    
     // if laser envelope is present, send it
     // send also Phi, Phi_m, GradPhi, GradPhi_m
     if( EM->envelope!=NULL ) {
@@ -1302,6 +1312,13 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
         irequest++;
         isendComplex( EMAM->Bt_m[imode], to, tag+irequest, requests[irequest] );
         irequest++;
+        
+        if (use_BTIS3){
+                isendComplex( EMAM->Br_mBTIS3[imode], to, tag+irequest, requests[irequest] );
+                irequest++;
+                isendComplex( EMAM->Bt_mBTIS3[imode], to, tag+irequest, requests[irequest] );
+                irequest++;
+        }
     }
 
     // if laser envelope is present, send it
@@ -1807,6 +1824,12 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
         tag++;
         recvComplex( EMAM->Bt_m[imode], from, tag );
         tag++;
+        if (use_BTIS3){
+            recvComplex( EMAM->Br_mBTIS3[imode], from, tag );
+            tag++;
+            recvComplex( EMAM->Bt_mBTIS3[imode], from, tag );
+            tag++;
+        }
     }
 
     if( EM->envelope!=NULL ) {

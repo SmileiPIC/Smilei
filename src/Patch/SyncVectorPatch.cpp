@@ -665,6 +665,14 @@ void SyncVectorPatch::exchangeE( Params &, VectorPatch &vecPatches, int imode, S
     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEt_[imode], vecPatches );
 }
 
+void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
+{
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBr_mBTIS3[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBr_mBTIS3[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBt_mBTIS3[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBt_mBTIS3[imode], vecPatches );
+}
+
 // void SyncVectorPatch::finalizeexchangeB( Params &, VectorPatch &, int )
 // {
 // }
@@ -740,6 +748,23 @@ void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, Sm
         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
     }
 }
+
+void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+{   // exchange BmBTIS3 in Cartesian geometries
+
+    // exchange ByBTIS3 
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listBy_mBTIS3, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBy_mBTIS3, vecPatches );
+
+    // exchange BzBTIS3 
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listBz_mBTIS3, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBz_mBTIS3, vecPatches );
+}
+
+// void SyncVectorPatch::finalizeexchangeBmBTIS3( Params &params, VectorPatch &vecPatches )
+// {
+// 
+// }
 
 // void SyncVectorPatch::finalizeexchangeEnvEx( Params &, VectorPatch &vecPatches )
 // {

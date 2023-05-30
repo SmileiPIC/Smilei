@@ -35,7 +35,8 @@ ElectroMagn::ElectroMagn( Params &params, vector<Species *> &vecSpecies, Patch *
     is_pxr( params.is_pxr ),
     nrj_mw_out( 0. ),
     nrj_mw_inj( 0. ),
-    filter_( NULL )
+    filter_( NULL ),
+    use_BTIS3(params.use_BTIS3)
 {
     size_ = patch->size_;
     oversize = patch->oversize;
@@ -73,7 +74,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     is_pxr( emFields->is_pxr ),
     nrj_mw_out( 0. ),
     nrj_mw_inj( 0. ),
-    filter_( NULL )
+    filter_( NULL ),
+    use_BTIS3(emFields->use_BTIS3)
 {
     dimPrim = emFields->dimPrim;
     dimDual = emFields->dimDual;
@@ -108,6 +110,8 @@ void ElectroMagn::initElectroMagnQuantities()
     Bx_m=NULL;
     By_m=NULL;
     Bz_m=NULL;
+    By_mBTIS3=NULL;
+    Bz_mBTIS3=NULL;
     Jx_=NULL;
     Jy_=NULL;
     Jz_=NULL;
@@ -164,6 +168,10 @@ void ElectroMagn::finishInitialization( int nspecies, Patch * )
         allFields.push_back( Env_Chi_ );
         allFields.push_back( Env_E_abs_ );
         allFields.push_back( Env_Ex_abs_ );
+    }
+    if ( By_mBTIS3 != NULL ){
+        allFields.push_back( By_mBTIS3 );
+        allFields.push_back( Bz_mBTIS3 );
     }
     
     // For species-related fields
@@ -288,6 +296,16 @@ ElectroMagn::~ElectroMagn()
     for( vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->field;
         antenna->field=NULL;
+    }
+    
+    if (use_BTIS3){
+        if(By_mBTIS3 != NULL){
+            delete By_mBTIS3;
+        }
+    
+        if(Bz_mBTIS3 != NULL){
+            delete Bz_mBTIS3;
+        }
     }
 
 //     for ( unsigned int iExt = 0 ; iExt < prescribedFields.size() ; iExt++ ) {

@@ -349,6 +349,10 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         dumpFieldsPerProc( g, EMfields->Bx_m );
         dumpFieldsPerProc( g, EMfields->By_m );
         dumpFieldsPerProc( g, EMfields->Bz_m );
+        if (params.use_BTIS3){
+            dumpFieldsPerProc( g, EMfields->By_mBTIS3 );
+            dumpFieldsPerProc( g, EMfields->Bz_mBTIS3 );  
+        }
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
@@ -371,6 +375,10 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             dump_cFieldsPerProc( g, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
+            if (params.use_BTIS3){
+                dump_cFieldsPerProc( g, emAM->Br_mBTIS3[imode] );
+                dump_cFieldsPerProc( g, emAM->Bt_mBTIS3[imode] );
+            }
             if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
@@ -410,18 +418,33 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 
     // filtered Electric fields
     if( EMfields->filter_ ) {
-        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
-            dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
-        }
-        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
-            dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
-        }
-        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
-            dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
-        }
-        if (params.geometry=="AMcylindrical") ERROR("Checkpoints of Friedman-filtered fields is not implemented in AMcylindrical geometry");
+        if (params.geometry!="AMcylindrical"){
+            for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+                dumpFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+            }
+            for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+                dumpFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+            }
+            for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+                dumpFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+            }
+        } else{
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                for( unsigned int i=0; i<EMfields->filter_->El_[imode].size(); i++ ) {
+                    dumpFieldsPerProc( g, emAM->filter_->El_[imode][i] );
+                }
+                for( unsigned int i=0; i<EMfields->filter_->Er_[imode].size(); i++ ) {
+                    dumpFieldsPerProc( g, emAM->filter_->Er_[imode][i] );
+                }
+                for( unsigned int i=0; i<EMfields->filter_->Et_[imode].size(); i++ ) {
+                    dumpFieldsPerProc( g, emAM->filter_->Et_[imode][i] );
+                }
+            } // end loop on modes        
+        } // end if condition on geometry
+      
     }
-
+    
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
@@ -753,6 +776,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         restartFieldsPerProc( g, EMfields->Bx_m );
         restartFieldsPerProc( g, EMfields->By_m );
         restartFieldsPerProc( g, EMfields->Bz_m );
+        if (params.use_BTIS3){
+            restartFieldsPerProc( g, EMfields->By_mBTIS3 );
+            restartFieldsPerProc( g, EMfields->Bz_mBTIS3 );  
+        }
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] );
@@ -777,6 +804,10 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
 
+            if (params.use_BTIS3){
+                restart_cFieldsPerProc( g, emAM->Br_mBTIS3[imode] );
+                restart_cFieldsPerProc( g, emAM->Bt_mBTIS3[imode] );  
+            }
             if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
@@ -820,16 +851,31 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     }
 
     if( EMfields->filter_ ) {
-        // filtered Electric fields
-        for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
-            restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
-        }
-        for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
-            restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
-        }
-        for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
-            restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
-        }
+        if (params.geometry!="AMcylindrical"){
+            // filtered Electric fields
+            for( unsigned int i=0; i<EMfields->filter_->Ex_.size(); i++ ) {
+                restartFieldsPerProc( g, EMfields->filter_->Ex_[i] );
+            }
+            for( unsigned int i=0; i<EMfields->filter_->Ey_.size(); i++ ) {
+                restartFieldsPerProc( g, EMfields->filter_->Ey_[i] );
+            }
+            for( unsigned int i=0; i<EMfields->filter_->Ez_.size(); i++ ) {
+                restartFieldsPerProc( g, EMfields->filter_->Ez_[i] );
+            }
+       } else {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {    
+                for( unsigned int i=0; i<EMfields->filter_->El_[imode].size(); i++ ) {
+                    restart_cFieldsPerProc( g, emAM->filter_->El_[imode][i] );
+                }
+                for( unsigned int i=0; i<EMfields->filter_->Er_[imode].size(); i++ ) {
+                    restart_cFieldsPerProc( g, emAM->filter_->Er_[imode][i] );
+                }
+                for( unsigned int i=0; i<EMfields->filter_->Et_[imode].size(); i++ ) {
+                    restart_cFieldsPerProc( g, emAM->filter_->Et_[imode][i] );
+                }
+            } // end imode loop  
+        } // end if condition on geometry
     }
 
     // Fields required for DiagFields

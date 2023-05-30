@@ -494,7 +494,7 @@ class Field(Diagnostic):
 		# Separate field name from mode or species
 		for prefix in [
 			"Bl_m_","Br_m_","Bt_m_","Bl_","Br_","Bt_","El_","Er_","Et_",
-			"Rho_","RhoOld_","Jl_","Jr_","Jt_",
+			"Rho_","RhoOld_","Jl_","Jr_","Jt_","Br_mBTIS3_","Bt_mBTIS3_",
 			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_","A_","Aold_"
 		]:
 			if field.startswith(prefix):

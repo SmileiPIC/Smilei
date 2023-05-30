@@ -40,8 +40,9 @@ Changes made in the repository (not released)
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
 
 * For developers: new table management for Monte-Carlo physical processes (transparent to users)
-* Friedman filter: now available in all geometries (previously available only in ``2Dcartesian``)
+* Friedman filter: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
 * ``Lehe`` solver for Maxwell equations now available in ``AMcylindrical`` geometry
+
 * Bugfixes:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
@@ -57,6 +58,7 @@ Changes made in the repository (not released)
 
   * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
   * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
+  * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
 
 ----
 

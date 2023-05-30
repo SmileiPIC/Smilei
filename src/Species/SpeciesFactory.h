@@ -41,7 +41,7 @@ public:
     static Species *create( Params &params, int ispec, Patch *patch )
     {
         unsigned int tot_species_number = PyTools::nComponents( "Species" );
-        
+
         // Create species object
         Species *this_species = NULL;
         if( params.vectorization_mode == "off" ) {
@@ -57,10 +57,10 @@ public:
             this_species = new SpeciesVAdaptive( params, patch );
             this_species->vectorized_operators = true;
         }
-        
+
         // Set number
         this_species->species_number_ = ispec;
-        
+
         // Get name
         std::string species_name;
         if( ! PyTools::extractOrNone( "name", species_name, "Species", ispec ) ) {
@@ -79,12 +79,12 @@ public:
             LINK_NAMELIST + std::string("#name"));
         }
         this_species->name_ = species_name;
-        
+
         // Get mass
         double mass;
         PyTools::extract( "mass", mass, "Species", ispec );
         this_species->mass_ = mass;
-        
+
         // Get pusher
         std::string pusher = "boris"; // default value
         PyTools::extract( "pusher", pusher, "Species", ispec );
@@ -93,9 +93,11 @@ public:
                 || pusher == "borisnr" // nonrelativistic Boris pusher
                 || pusher == "vay" // J.L. Vay pusher
                 || pusher == "higueracary" // Higuary Cary pusher
-                || pusher == "ponderomotive_boris" ) {
+                || pusher == "ponderomotive_boris"  // relativistic Boris pusher with a laser envelope model
+                || pusher == "borisBTIS3" // relativistic Boris pusher with B-TIS3 interpolation
+                || pusher == "ponderomotive_borisBTIS3" ){
             } else {
-                ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'",
+                ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris','borisBTIS3', 'ponderomotive_borisBTIS3'",
                 LINK_NAMELIST + std::string("#pusher") );
             }
             this_species->pusher_name_ = pusher;
@@ -105,7 +107,7 @@ public:
             MESSAGE( 2, "> " <<species_name <<" is a photon species (mass==0)." );
             MESSAGE( 2, "> Pusher set to norm." );
         }
-        
+
         // Get radiation model
         std::string radiation_model = "none"; // default value
         PyTools::extract( "radiation_model", radiation_model, "Species", ispec );
@@ -180,7 +182,7 @@ public:
                 this_species->photon_species_   = nullptr;
             }
         }
-        
+
         // Multiphoton Breit-Wheeler
         if( PyTools::extractV( "multiphoton_Breit_Wheeler", this_species->mBW_pair_species_names_, "Species", ispec ) ) {
             // Only for photons
@@ -209,7 +211,7 @@ public:
             MESSAGE( 3, "| Number of emitted macro-particles per MC event: "
                         << this_species->mBW_pair_creation_sampling_[0] << " & " << this_species->mBW_pair_creation_sampling_[1] );
         }
-        
+
         // Particle Merging
         this_species->merging_method_ = "none"; // default value
         this_species->has_merging_ = false; // default value
@@ -331,7 +333,7 @@ public:
             MESSAGE( 3, "| Minimum particle packet size: " << this_species->merge_min_packet_size_ );
             MESSAGE( 3, "| Maximum particle packet size: " << this_species->merge_max_packet_size_ );
         }
-        
+
         // Position initialization
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
         if( PyTools::py2scalar( py_pos_init, this_species->position_initialization_ ) ) {
@@ -931,7 +933,7 @@ public:
                 this_species->particles->tracked  = true;
             }
         }
-        
+
         // Get the list of interpolated fields that are kept
         std::vector<std::string> keep_interpolated_fields;
         if( PyTools::extractV( "keep_interpolated_fields", keep_interpolated_fields, "Species", ispec ) ) {
@@ -949,7 +951,7 @@ public:
                 this_species->particles->interpolated_fields_->mode_[i] = ( s.at(0) == 'W' ) ? 2 : 1;
             }
         }
-        
+
         // Extract test Species flag
         PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec );
 
@@ -958,7 +960,7 @@ public:
             ERROR_NAMELIST( "For species '" << species_name << "' test & ionized is currently impossible",
             LINK_NAMELIST + std::string("#species") );
         }
-        
+
         return this_species;
     } // End Species* create()
 
@@ -1083,12 +1085,12 @@ public:
         new_species->particles->tracked                 = species->particles->tracked;
         new_species->particles->has_quantum_parameter   = species->particles->has_quantum_parameter;
         new_species->particles->has_Monte_Carlo_process = species->particles->has_Monte_Carlo_process;
-        
+
         if( species->particles->interpolated_fields_ ) {
             new_species->particles->interpolated_fields_ = new InterpolatedFields();
             new_species->particles->interpolated_fields_->mode_ = species->particles->interpolated_fields_->mode_;
         }
-        
+
         return new_species;
     } // End Species* clone()
 

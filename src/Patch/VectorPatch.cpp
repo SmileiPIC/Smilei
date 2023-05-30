@@ -1041,6 +1041,9 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             //SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
             //SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+            // if (params.use_BTIS3){
+            //     SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
+            // }
         }
     }
     timers.syncField.update( params.printNow( itime ) );
@@ -1052,8 +1055,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
-        if( params.geometry != "AMcylindrical" )
+        if( params.geometry != "AMcylindrical" ){
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
+            // if (params.use_BTIS3){
+            //     SyncVectorPatch::finalizeexchangeBmBTIS3( params, ( *this ) );
+            // }
+        }
         timers.syncField.update( params.printNow( itime ) );
 
         #pragma omp for schedule(static)
@@ -1072,6 +1079,16 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         }
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             saveOldRho( params );
+        }
+        
+        if ( (!params.is_spectral) && (params.geometry== "AMcylindrical") && (params.use_BTIS3) ){
+            if (params.geometry== "AMcylindrical"){ 
+                for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+                    SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
+                }
+            } else { // Cartesian geometries
+                SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), smpi );
+            }
         }
     }
 
@@ -3185,6 +3202,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listBx_.resize( size() ) ;
         listBy_.resize( size() ) ;
         listBz_.resize( size() ) ;
+        if (smpi->use_BTIS3){
+            listBy_mBTIS3.resize( size() ) ;
+            listBz_mBTIS3.resize( size() ) ;
+        }
 
         if( patches_[0]->EMfields->envelope != NULL ) {
             listA_.resize( size() ) ;
@@ -3214,6 +3235,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
             listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
             listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+            if (smpi->use_BTIS3){
+                listBy_mBTIS3[ipatch] = patches_[ipatch]->EMfields->By_mBTIS3 ;
+                listBz_mBTIS3[ipatch] = patches_[ipatch]->EMfields->Bz_mBTIS3 ;
+            }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -3253,6 +3278,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listBl_.resize( nmodes ) ;
         listBr_.resize( nmodes ) ;
         listBt_.resize( nmodes ) ;
+        if (smpi->use_BTIS3){
+            listBr_mBTIS3.resize( nmodes ) ;
+            listBt_mBTIS3.resize( nmodes ) ;
+        }
 
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
             listJl_[imode].resize( size() );
@@ -3267,6 +3296,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBl_[imode].resize( size() );
             listBr_[imode].resize( size() );
             listBt_[imode].resize( size() );
+            if (smpi->use_BTIS3){
+                listBr_mBTIS3[imode].resize( size() );
+                listBt_mBTIS3[imode].resize( size() );
+            }
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
                 listJl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jl_[imode] ;
                 listJr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jr_[imode] ;
@@ -3280,6 +3313,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listBl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bl_[imode] ;
                 listBr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Br_[imode] ;
                 listBt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_[imode] ;
+                if (smpi->use_BTIS3){
+                    listBr_mBTIS3[imode][ipatch]    = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Br_mBTIS3[imode] ;
+                    listBt_mBTIS3[imode][ipatch]    = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_mBTIS3[imode] ;
+                }
             }
         }
 
@@ -3468,6 +3505,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 7 );
             listBz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 8 );
             listrho_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 4 );
+            if (smpi->use_BTIS3){
+                listBy_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listBz_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+            }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
             for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
@@ -3498,6 +3539,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                if (smpi->use_BTIS3){
+                    listBr_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBt_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
                 listEl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
