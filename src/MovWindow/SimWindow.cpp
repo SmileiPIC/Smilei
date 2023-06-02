@@ -596,9 +596,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             }
         }
 
-//#ifdef _NO_MPI_TM
-//    } // end omp master
-//#endif
+#ifdef _NO_MPI_TM
+    } // end omp master
+#endif
 
     #pragma omp barrier
     #pragma omp master
