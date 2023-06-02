@@ -45,6 +45,7 @@ SimWindow::SimWindow( Params &params )
 #endif
     patch_to_be_created.resize( max_threads );
     patch_particle_created.resize( max_threads );
+    patch_to_be_updated.resize( max_threads );
     
     if( PyTools::nComponents( "MovingWindow" ) ) {
         active = true;
@@ -107,7 +108,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     unsigned int nSpecies( vecPatches( 0 )->vecSpecies.size() );
     int nmessage( vecPatches.nrequests );
     
-    std::vector<Patch *> delete_patches_, update_patches_, send_patches_;
+    std::vector<Patch *> delete_patches_, send_patches_;
     
 #ifdef _OPENMP
     int my_thread = omp_get_thread_num();
@@ -121,6 +122,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #endif
     
         ( patch_to_be_created[my_thread] ).clear();
+        ( patch_to_be_updated[my_thread] ).clear();
         ( patch_particle_created[my_thread] ).clear();
         
 #ifndef _NO_MPI_TM
@@ -195,7 +197,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     mypatch->tmp_MPI_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][0];
                     mypatch->tmp_MPI_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][1];
                 }
-                update_patches_.push_back( mypatch ); // Stores pointers to patches that will need to update some neighbors from tmp_neighbors.
+                ( patch_to_be_updated[my_thread] ).push_back( mypatch );
                 
                 //And finally put the patch at the correct rank in vecPatches.
                 vecPatches.patches_[mypatch->hindex - h0 ] = mypatch ;
@@ -206,65 +208,67 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         // The lists of patches to create and patches to update is also complete.
         
         //Creation of new Patches
-        for( unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++ ) {
-            //create patch without particle.
 #ifndef _NO_MPI_TM
-            #pragma omp critical
+    #pragma omp master
+    {
 #endif
-                mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
-            
-            // Do not receive Xmin condition
-            if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
-                mypatch->EMfields->emBoundCond[0]->disableExternalFields();
-            }
-            
-            mypatch->finalizeMPIenvironment( params );
-            //Position new patch
-            vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
-            //Receive Patch if necessary
-            if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
-                if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
-                    // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params, false );
-                    patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+        for( unsigned int thread = 0; thread < patch_to_be_created.size();  thread++ ) {
+            for( unsigned int j = 0; j < patch_to_be_created[thread].size();  j++ ) {
+                //create patch without particle.
+                mypatch = PatchesFactory::clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[thread][j], n_moved, false );
+                
+                // Do not receive Xmin condition
+                if( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] ) {
+                    mypatch->EMfields->emBoundCond[0]->disableExternalFields();
                 }
-            }
-            
-            // Create Xmin condition which could not be received
-            if( mypatch->isXmin() ) {
-                for( auto &embc:mypatch->EMfields->emBoundCond ) {
-                    if( embc ) {
-                        delete embc;
+                
+                mypatch->finalizeMPIenvironment( params );
+                //Position new patch
+                vecPatches.patches_[patch_to_be_created[thread][j]] = mypatch ;
+                //Receive Patch if necessary
+                if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
+                    if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
+                        // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                        smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params, false );
+                        patch_particle_created[thread][j] = false ; //Mark no needs of particles
                     }
                 }
-#ifndef _NO_MPI_TM
-                #pragma omp critical
-#endif
-                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
-                if (mypatch->EMfields->envelope){
-                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                
+                // Create Xmin condition which could not be received
+                if( mypatch->isXmin() ) {
+                    for( auto &embc:mypatch->EMfields->emBoundCond ) {
                         if( embc ) {
                             delete embc;
                         }
                     }
-                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
-                }
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                    if (mypatch->EMfields->envelope){
+                        for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                            if( embc ) {
+                                delete embc;
+                            }
+                        }
+                        mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                    }
 
-                mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition){
-                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
-                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                    mypatch->EMfields->laserDisabled();
+                    if (!params.multiple_decomposition){
+                        mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                        if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                    }
                 }
+                
+                mypatch->EMfields->laserDisabled();
+                mypatch->EMfields->updateGridSize( params, mypatch );
             }
-            
-            mypatch->EMfields->laserDisabled();
-            mypatch->EMfields->updateGridSize( params, mypatch );
         }
         
         //Wait for sends to be completed
         
 #ifndef _NO_MPI_TM
-        #pragma omp for schedule(static)
+    }
+    #pragma omp barrier
+    #pragma omp for schedule(static)
 #endif
         for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
             if( vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
@@ -273,73 +277,77 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         }
         
         //Update the correct neighbor values
-        for( unsigned int j=0; j < update_patches_.size(); j++ ) {
-            mypatch = update_patches_[j];
-            mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
-            mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
-            for( unsigned int idim = 1; idim < params.nDim_field ; idim++ ) {
-                mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
-                mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
-                mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
-                mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
-            }
-            
-            if( mypatch->isXmin() ) {
-                for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
-                }
-            }
-            
-            if( mypatch->isXmin() ) {
-                for( auto &embc:mypatch->EMfields->emBoundCond ) {
-                    if( embc ) {
-                        delete embc;
-                    }
-                }
 #ifndef _NO_MPI_TM
-                #pragma omp critical
+    #pragma omp master
+    {
 #endif
-                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
-                if (mypatch->EMfields->envelope){
-                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
-                        if( embc ) {
-                            delete embc;
-                        }
-                    }
-                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+        for( unsigned int thread = 0; thread < patch_to_be_updated.size();  thread++ ) {
+            for( unsigned int j=0; j < patch_to_be_updated[thread].size(); j++ ) {
+                mypatch = patch_to_be_updated[thread][j];
+                mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
+                mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
+                for( unsigned int idim = 1; idim < params.nDim_field ; idim++ ) {
+                    mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
+                    mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
+                    mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
+                    mypatch->neighbor_[idim][1] = mypatch->tmp_neighbor_[idim][1];
                 }
-
-                mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition){
-                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
-                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
-                }
-            }
-            if( mypatch->wasXmax( params ) ) {
-                for( auto &embc:mypatch->EMfields->emBoundCond ) {
-                    if( embc ) {
-                        delete embc;
-                    }
-                }
-#ifndef _NO_MPI_TM
-                #pragma omp critical
-#endif
-                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
-
-                if (mypatch->EMfields->envelope){
-                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
-                        if( embc ) {
-                            delete embc;
-                        }
-                    }
-                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
-                }
-
-                mypatch->EMfields->laserDisabled();
-                mypatch->EMfields->updateGridSize( params, mypatch );
                 
+                if( mypatch->isXmin() ) {
+                    for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                        mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
+                    }
+                }
+                
+                if( mypatch->isXmin() ) {
+                    for( auto &embc:mypatch->EMfields->emBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                    if (mypatch->EMfields->envelope){
+                        for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                            if( embc ) {
+                                delete embc;
+                            }
+                        }
+                        mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                    }
+
+                    mypatch->EMfields->laserDisabled();
+                    if (!params.multiple_decomposition){
+                        mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                        if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                    }
+                }
+                if( mypatch->wasXmax( params ) ) {
+                    for( auto &embc:mypatch->EMfields->emBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+
+                    if (mypatch->EMfields->envelope){
+                        for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                            if( embc ) {
+                                delete embc;
+                            }
+                        }
+                        mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                    }
+
+                    mypatch->EMfields->laserDisabled();
+                    mypatch->EMfields->updateGridSize( params, mypatch );
+                    
+                }
             }
         }
+#ifndef _NO_MPI_TM
+    } // end of master region
+    #pragma omp barrier
+#endif
         
         //Wait for sends to be completed
         for( unsigned int j=0; j < send_patches_.size(); j++ ) {
@@ -588,9 +596,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             }
         }
 
-#ifdef _NO_MPI_TM
-    } // end omp master
-#endif
+//#ifdef _NO_MPI_TM
+//    } // end omp master
+//#endif
 
     #pragma omp barrier
     #pragma omp master

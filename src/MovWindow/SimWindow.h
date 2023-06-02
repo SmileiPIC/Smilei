@@ -104,6 +104,8 @@ private:
     std::vector<Patch *> vecPatches_old;
     //! Keep track of patches to create
     std::vector< std::vector<unsigned int>> patch_to_be_created;
+    //! Keep track of patches to update
+    std::vector< std::vector<Patch *>> patch_to_be_updated;
     //! Keep track of patches that receive particles
     std::vector< std::vector<bool>> patch_particle_created;
     //! Max number of threads
