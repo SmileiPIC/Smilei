@@ -546,6 +546,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main"   );
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
 
+    // Use BTIS3 interpolation method to reduce the effects of numerical Cherenkov radiation
+    // This method is detailed in P.-L. Bourgeois and X. Davoine (2023) https://doi.org/10.1017/S0022377823000223
+    use_BTIS3 = false;
+    PyTools::extract( "use_BTIS3_interpolation", use_BTIS3, "Main"   );
+    if (use_BTIS3 && interpolation_order != 2 ){
+        ERROR("B-TIS3 interpolation implemented only at order 2.");
+    }
+    
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
@@ -593,6 +601,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         if( ( Friedman_theta<0. ) || ( Friedman_theta>1. ) ) {
             ERROR_NAMELIST( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1",  LINK_NAMELIST + std::string("#field-filtering") );
+        }
+        if (geometry=="3Dcartesian"){
+            ERROR("Friedman filter is not yet supported for `3Dcartesian geometry`");
         }
     }
 
@@ -751,6 +762,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             WARNING("In 1D, the vectorization block does not apply. `vectorization back to `off`.")
         }
 
+        if (use_BTIS3 && vectorization_mode != "off") {
+            ERROR("B-TIS3 interpolator not yet implemented in vectorized mode.")
+        }
+        
         // Cell sorting not defined by the user
         if (!defined_cell_sort) {
             if (vectorization_mode == "off") {

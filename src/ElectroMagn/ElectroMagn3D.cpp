@@ -117,6 +117,13 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
     Bx_m = FieldFactory::create3D( dimPrim, 0, true,  "Bx_m", params );
     By_m = FieldFactory::create3D( dimPrim, 1, true,  "By_m", params );
     Bz_m = FieldFactory::create3D( dimPrim, 2, true,  "Bz_m", params );
+    
+    if(use_BTIS3){
+        // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
+        By_mBTIS3 = FieldFactory::create3D( dimPrim, 2, false, "By_mBTIS3", params );
+        Bz_mBTIS3 = FieldFactory::create3D( dimPrim, 1, false, "Bz_mBTIS3", params );
+    }
+    
     if( params.Laser_Envelope_model ) {
         Env_A_abs_ = new Field3D( dimPrim, "Env_A_abs" );
         Env_Chi_   = new Field3D( dimPrim, "Env_Chi" );
@@ -1059,7 +1066,29 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 
         // Magnetic field Bz^(d,d,p)
         memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
+        
+        if(use_BTIS3){  // for BTIS3 interpolation
+            // Static-cast of the fields
+            double *const BymBTIS3 = By_mBTIS3->data();
+            double *const BzmBTIS3 = Bz_mBTIS3->data();
 
+            for( unsigned int i=0 ; i<nx_p ; i++ ) {
+                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+                    for( unsigned int k=0 ; k<nz_d ; k++ ) {
+                        // Magnetic field ByBTIS3^(p,p,d) for BTIS3 interpolation
+                        BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] =  By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ];
+                    }
+                }
+                for( unsigned int j=0 ; j<ny_d ; j++ ) {
+                    for( unsigned int k=0 ; k<nz_p ; k++ ) {
+                        // Magnetic field BzBTIS3^(p,d,p) for BTIS3 interpolation
+                        BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] = Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ];
+                    }
+                }
+            }
+
+        } // end if use_BTIS3
+        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -1185,6 +1214,29 @@ void ElectroMagn3D::centerMagneticFields()
             } // end for k
         } // end for j
     } // end for i
+    
+    if (use_BTIS3){
+        // Static-cast of the fields
+        double *const __restrict__ BymBTIS3 = By_mBTIS3->data();
+        double *const __restrict__ BzmBTIS3 = Bz_mBTIS3->data();
+    
+        for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
+            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+                for( unsigned int k=0 ; k<nz_d ; k++ ) {
+                    // Magnetic field By^(p,p,d) for BTIS3 interpolation
+                    BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] = ( By3D[ (i+1)*(ny_p*nz_d) + j*nz_d + k ] + BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] )*0.5;  
+                    //( *By_oldBTIS3 )( i, j, k ) = ( ( *By3D )( i+1, j, k ) + ( *By_oldBTIS3 )( i, j, k ) )*0.5;
+                }
+            }
+            for( unsigned int j=0 ; j<ny_d ; j++ ) {
+                for( unsigned int k=0 ; k<nz_p ; k++ ) {
+                    // Magnetic field Bz^(p,d,p) for BTIS3 interpolation
+                    BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] = ( Bz3D[ (i+1)*(ny_d*nz_p) + j*nz_p + k ] + BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] )*0.5;
+                    //( *Bz_oldBTIS3 )( i, j, k ) = ( ( *Bz3D )( i+1, j, k ) + ( *Bz_oldBTIS3 )( i, j, k ) )*0.5;
+                }
+            }
+        }
+    }
 
 
 }//END centerMagneticFields

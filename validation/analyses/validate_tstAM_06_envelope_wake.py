@@ -30,3 +30,7 @@ Validate("1-D probe Env_Chi at iteration 1700", Env_Chi, 0.01)
 Jx = S.Probe.Probe0.Jx_electron(timesteps=1700).getData()[0][::2]
 Validate("1-D probe Jx_electron at iteration 1700", Jx, 1e-9)
 
+# 2-D PROBE IN AM
+BzBTIS3 = S.Probe.Probe1.BzBTIS3(timesteps=1700).getData()[0][::][::2,::2]
+Validate("2-D probe BzBTIS3 at iteration 1700", Ex, 0.01)
+

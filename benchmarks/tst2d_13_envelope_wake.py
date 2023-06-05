@@ -33,6 +33,8 @@ Main(
     solve_poisson = False,
     print_every = 100,
 
+    use_BTIS3_interpolation = True,
+
 )
 
 MovingWindow(
@@ -58,7 +60,7 @@ Species(
     charge_density = polygonal(xpoints=[center_laser+2.*laser_fwhm,center_laser+2.1*laser_fwhm,15000,20000],xvalues=[0.,0.0045,0.0045,0.]),
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    pusher = "ponderomotive_boris", # pusher to interact with envelope
+    pusher = "ponderomotive_borisBTIS3", # pusher to interact with envelope
     #pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
@@ -84,7 +86,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi']
+list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Bz_mBTIS3']
 
 DiagFields(
    every = 50,
@@ -98,7 +100,7 @@ DiagProbe(
             [Main.grid_length[0], Main.grid_length[1]/2.]
         ],
         number = [nx],
-        fields = ['Ex','Ey','Rho','Env_A_abs','Env_Chi','Env_E_abs']
+        fields = ['Ex','Ey','Rho','Env_A_abs','Env_Chi','Env_E_abs','BzBTIS3']
 )
 
 

@@ -223,6 +223,9 @@ void Patch::finalizeMPIenvironment( Params &params )
 
     if( params.geometry == "AMcylindrical" ) {
         nb_comms += 9*( params.nmodes - 1 );
+        if (params.use_BTIS3){ // add BrBTIS3 and BtBTIS3 for each mode
+            nb_comms += 2*params.nmodes;
+        }
     }
     // if envelope is present,
     // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)

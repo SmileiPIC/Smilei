@@ -1331,9 +1331,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
                     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
 #ifdef  __DETAILED_TIMERS
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_projected)
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_projected[ibin])
 #else
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_projected)
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_projected[ibin])
 #endif
                         {
                         for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i]   = 0.0;
