@@ -60,6 +60,7 @@ Species(
         ["remove", "remove"],
         ["remove", "remove"],
     ],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
 )
 
 LaserGaussian2D(
@@ -110,6 +111,22 @@ DiagParticleBinning(
         ["moving_x", 0, Lx, 300],
         ["px", -1, 4., 100]
     ]
+)
+
+def filt(p):
+    if Main.iteration == 1000:
+        import numpy
+        r = numpy.zeros_like(p.id, dtype=bool)
+        r[::1000] = True
+        return r
+    else:
+        return p.id > 0
+
+DiagTrackParticles(
+    species = "electron",
+    every = [600,1300,4],
+    filter = filt,
+    attributes = ["px","py","pz","Wx","Wy","Wz"]
 )
 
 DiagPerformances(
