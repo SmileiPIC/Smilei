@@ -1247,7 +1247,16 @@ Particle Particles::operator()( unsigned int iPart )
     return  Particle( *this, iPart );
 }
 
-void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double *invgfbuffer, size_t start, size_t n, size_t buffer_size, double dt ) {
+void Particles::prepareInterpolatedFields( vector<vector<double>> &pold, size_t start, size_t n ) {
+    if( interpolated_fields_ && find( interpolated_fields_->mode_.begin()+6, interpolated_fields_->mode_.end(), 2 ) < interpolated_fields_->mode_.end() ) {
+        pold.resize( 3 );
+        pold[0].resize( n ); copy( Momentum[0].data() + start, Momentum[0].data() + start + n,  pold[0].data() );
+        pold[1].resize( n ); copy( Momentum[1].data() + start, Momentum[1].data() + start + n,  pold[1].data() );
+        pold[2].resize( n ); copy( Momentum[2].data() + start, Momentum[2].data() + start + n,  pold[2].data() );
+    }
+}
+
+void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, vector<vector<double>> &pold, size_t start, size_t n, size_t buffer_size, double mass ) {
     vector<double*> buffers = { 
         Ebuffer, Ebuffer + buffer_size, Ebuffer + 2*buffer_size, // Ex, Ey, Ez
         Bbuffer, Bbuffer + buffer_size, Bbuffer + 2*buffer_size  // Bx, By, Bz
@@ -1258,11 +1267,14 @@ void Particles::copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double
             if( i < 6 ) { // E or B fields
                 copy( buffers[i], buffers[i] + n,  &( interpolated_fields_->F_[i][start] ) );
             } else { // work Wx, Wy or Wz (accumulated over time)
-                short  * q = Charge.data();
+                double *px = Momentum[0].data(), *py = Momentum[1].data(), *pz = Momentum[2].data();
+                double *px_old = pold[0].data(), *py_old = pold[1].data(), *pz_old = pold[2].data();
                 double * p = Momentum[i-6].data();
-                double * E = buffers[i-6];
+                double * p_old = pold[i-6].data();
                 for( size_t ip = 0; ip < n; ip++ ) {
-                    interpolated_fields_->F_[i][start+ip] += dt * invgfbuffer[ip] * p[ip] * q[ip] * E[ip];
+                    const double g = sqrt( 1.0 + px[ip]*px[ip] + py[ip]*py[ip] + pz[ip]*pz[ip] );
+                    const double g_old = sqrt( 1.0 + px_old[ip]*px_old[ip] + py_old[ip]*py_old[ip] + pz_old[ip]*pz_old[ip] );
+                    interpolated_fields_->F_[i][start+ip] += mass * ( p[ip] - p_old[ip] ) * ( p[ip] + p_old[ip] ) / ( g + g_old );
                 }
             }
         }

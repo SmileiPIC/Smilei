@@ -408,7 +408,8 @@ public:
 
     Particle operator()( unsigned int iPart );
     
-    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, double *invgfbuffer, size_t start, size_t n, size_t buffer_size, double dt );
+    void prepareInterpolatedFields( std::vector<std::vector<double>> &pold, size_t start, size_t n );
+    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, std::vector<std::vector<double>> &pold, size_t start, size_t n, size_t buffer_size, double mass_ );
 
     //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
     void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
