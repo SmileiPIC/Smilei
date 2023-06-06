@@ -1103,7 +1103,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     
                     // Copy interpolated fields to persistent buffers if requested
                     if( particles->interpolated_fields_ ) {
-                        particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), pold, start, n, smpi->getBufferSize(ithread), mass_ );
+                        particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), pold, start, n, smpi->getBufferSize(buffer_id), mass_ );
                     }
                     
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
