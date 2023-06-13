@@ -1016,6 +1016,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species interacting with the laser envelope model. Valid only if the species has non-zero mass
   * ``"borisBTIS3"``: as ``"boris"``, but using B fields interpolated with the B-TIS3 scheme.
   * ``"ponderomotive_borisBTIS3"``: as ``"ponderomotive_boris"``, but using B fields interpolated with the B-TIS3 scheme.
+
   **WARNING**: ``"borisBTIS3"`` and ``"ponderomotive_borisBTIS3"`` can be used only when ``use_BTIS3_interpolation=True`` in the ``Main`` block.
   
 .. py:data:: radiation_model

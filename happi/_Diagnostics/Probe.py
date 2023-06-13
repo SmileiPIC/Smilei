@@ -315,7 +315,7 @@ class Probe(Diagnostic):
 		def fieldTranslator(f):
 			i = self._fields.index(f)
 			if self.time_integral:
-				return which_units[f[0]] + "*T_r", "C[%d]"%f, "Time-integrated "+f
+				return which_units[f[0]] + "*T_r", "C[%d]"%i, "Time-integrated "+f
 			else:
 				return which_units[f[0]], "C[%d]"%i, f
 		self._operation = Operation(self.operation, fieldTranslator, self._ureg)

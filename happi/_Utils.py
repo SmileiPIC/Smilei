@@ -339,11 +339,13 @@ class Operation(object):
 	
 	def __init__(self, operation, QuantityTranslator, ureg):
 		import re
+		import numpy as np
 		self.ureg = ureg
 		self.constants = []
 		self.variables = []
+		self.imports = {}
 		
-		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b)(?![\[\('])", operation)
+		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b)(?![\['])", operation)
 		title = full_op.copy()
 		
 		# Special case: only 1 variable and nothing else
@@ -377,18 +379,22 @@ class Operation(object):
 						units, replacement, name = QuantityTranslator(q)
 						self.constants += [ureg(units)]
 						self.variables += [q]
-						full_op[2*i+1] = "(%s*self.constants[%d])" % (replacement, i)
-						basic_op[2*i+1] = "(%s)"%units
+						full_op[2*i+1] = "(%s*self.constants[%d])" % (replacement, len(self.constants)-1)
+						basic_op[2*i+1] = "(self.constants[%d])" % (len(self.constants)-1)
 						title[2*i+1] = name
 				except Exception: # constant
 					try:
 						self.constants += [ureg(q)]
-					except Exception:
-						raise Exception("Quantity "+q+" not understood")
-					full_op[2*i+1] = "(self.constants[%d])" % i
-					basic_op[2*i+1] = "(%s)" % q
+						full_op[2*i+1] = "(self.constants[%d])" % (len(self.constants)-1)
+						basic_op[2*i+1] = full_op[2*i+1]
+					except Exception: # numpy function
+						try:
+							self.imports[q] = getattr(np,q)
+						except Exception:
+							raise Exception("Quantity "+q+" not understood")
 			# Calculate the total units and its inverse
-			units = ureg("".join(basic_op)).units
+			locals().update(self.imports)
+			units = eval("".join(basic_op)).units
 			self.translated_units = units.format_babel(locale="en")
 			# Make the operation string
 			self.translated_operation = "".join(full_op)
@@ -414,8 +420,11 @@ class Operation(object):
 						self.variables += [q]
 						full_op[2*i+1] = "(%s)" % replacement
 						title[2*i+1] = name
-					except Exception: # constant
-						raise Exception("Quantity "+q+" unknown")
+					except Exception: # numpy function
+						try:
+							self.imports[q] = getattr(np,q)
+						except Exception: # constant
+							raise Exception("Quantity "+q+" unknown")
 			self.translated_units = "1"
 			# Make the operation string
 			self.translated_operation = "".join(full_op)
@@ -425,9 +434,11 @@ class Operation(object):
 			self.eval = self.evalWithoutPint
 	
 	def evalWithPint(self, l):
+		l.update(self.imports)
 		return eval(self.translated_operation, l, locals()).magnitude
 	
 	def evalWithoutPint(self, l):
+		l.update(self.imports)
 		return eval(self.translated_operation, l, locals())
 
 

@@ -14,7 +14,7 @@ Get Smilei
 *Learn about Git* `here <https://git-scm.com/doc>`_.
 
 
-You can find older, unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>
+You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>`_
 
 ----
 
@@ -36,7 +36,8 @@ Changes made in the repository (not released)
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
 * Happi:
 
-  * operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants or units
+  * operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,
+    or basic functions such as ``exp()`` or ``sin()``
   * ``Probe`` has a new method ``changeField``
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
 
