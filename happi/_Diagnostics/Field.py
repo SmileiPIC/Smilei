@@ -76,14 +76,16 @@ class Field(Diagnostic):
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
-		# Parse the `field` argument
+		# Parse the `field` argument and its units
+		
 		self.operation = field
-		self._operation = self.operation
-		self._fieldname = []
-		for f in sortedfields:
-			if self._re.search(r"\b"+f+r"\b",self._operation):
-				self._operation = self._re.sub(r"(?<!')"+f+r"\b","C['"+f+"']",self._operation)
-				self._fieldname.append(f)
+		which_units = {"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r", "A":"E_r"}
+		def fieldTranslator(f):
+			return which_units[f[0]], "C['%s']"%f, f
+		self._operation = Operation(self.operation, fieldTranslator, self._ureg)
+		self._fieldname = self._operation.variables
+		self._vunits = self._operation.translated_units
+		self._title  = self._operation.title
 		if not self._fieldname:
 			raise Exception("String "+self.operation+" does not seem to include any field")
 		
@@ -271,17 +273,6 @@ class Field(Diagnostic):
 				self._xr = self._np.stack((x3, r3), axis=-1)
 				del x3, r3, r2
 		
-		# Build units
-		units = {}
-		for f in self._fieldname:
-			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r", "A":"E_r"}[f[0]] })
-		# Make total units and title
-		self._vunits = self.operation
-		self._title  = self.operation
-		for f in self._fieldname:
-			self._vunits = self._vunits.replace(f, units[f])
-		self._vunits = self.units._getUnits(self._vunits)
-		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Field"+str(self.diagNumber)+"_"+"".join(self._fieldname)
 		self._exportDir = self._setExportDir(self._exportPrefix)
@@ -368,7 +359,7 @@ class Field(Diagnostic):
 			C.update({ field:B })
 		
 		# Calculate the operation
-		A = eval(self._operation)
+		A = self._operation.eval(locals())
 		# Apply the averaging
 		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):
@@ -426,7 +417,7 @@ class Field(Diagnostic):
 			C.update({ field:F })
 		
 		# Calculate the operation
-		A = eval(self._operation)
+		A = self._operation.eval(locals())
 		# Apply the averaging
 		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):
@@ -479,7 +470,7 @@ class Field(Diagnostic):
 			C.update({ field:F })
 		
 		# Calculate the operation
-		A = eval(self._operation)
+		A = self._operation.eval(locals())
 		# Apply the averaging
 		A = self._np.reshape(A,self._finalShape)
 		for iaxis in range(self._naxes):

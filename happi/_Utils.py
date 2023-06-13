@@ -6,6 +6,7 @@ __all__ = [
 	"openNamelist",
 	"Options",
 	"Units",
+	"Operation",
 	"Movie",
 	"SaveAs",
 	"multiPlot",
@@ -262,7 +263,7 @@ class Units(object):
 				elif kwa == "v": self.requestedV = val
 				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
 		self.ureg = None
-		
+	
 	def _initRegistry(self, ureg):
 		self.ureg = ureg
 	
@@ -304,7 +305,7 @@ class Units(object):
 		elif requestedUnits:
 			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
-
+	
 	def convertAxes(self, xunits="", yunits="", vunits="", tunits=""):
 		if self.ureg:
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
@@ -318,7 +319,116 @@ class Units(object):
 			self.tcoeff, self.tname = 1., "code units"
 
 
-
+class Operation(object):
+	""" Operation(operation, QuantityTranslator, ureg)
+	
+	Convert the user's requested operation in a units-aware, data-aware expression
+	
+	Parameters:
+	-----------
+	operation: the user's requested operation
+	pattern: the regexp pattern to find the variables in the operation
+	QuantityTranslator: function that takes a string as argument (a quantity name)
+		and outputs its units + its replacement string + its displayed name
+	ureg: Pint's unit registry or None for no unit awareness
+	
+	Methods:
+	--------
+	eval(locals): evaluates the operation including variables in the `locals` namespace
+	"""
+	
+	def __init__(self, operation, QuantityTranslator, ureg):
+		import re
+		self.ureg = ureg
+		self.constants = []
+		self.variables = []
+		
+		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b)(?![\[\('])", operation)
+		title = full_op.copy()
+		
+		# Special case: only 1 variable and nothing else
+		if len(full_op) == 3 and full_op[0] == full_op[-1] == "":
+			try:
+				units, replacement, name = QuantityTranslator(full_op[1])
+				self.variables += [full_op[1]]
+			except Exception:
+				raise Exception("Quantity "+full_op[1]+" unknown")
+			# Same units
+			self.translated_units = units
+			# Make the operation string
+			self.translated_operation = "(%s)" % replacement
+			# Make the title
+			self.title = name
+			# Define the eval function
+			self.eval = self.evalWithoutPint
+		
+		# With Pint
+		elif ureg:
+			basic_op = full_op.copy()
+			# Loop names encountered, and translate either as a known variable or as a known constant
+			for i,q in enumerate(full_op[1::2]):
+				try: # variable
+					if q in self.variables: # if previously found
+						j = self.variables.index(q)
+						full_op[2*i+1] = full_op[2*j+1]
+						basic_op[2*i+1] = basic_op[2*j+1]
+						title[2*j+1] = name
+					else:
+						units, replacement, name = QuantityTranslator(q)
+						self.constants += [ureg(units)]
+						self.variables += [q]
+						full_op[2*i+1] = "(%s*self.constants[%d])" % (replacement, i)
+						basic_op[2*i+1] = "(%s)"%units
+						title[2*i+1] = name
+				except Exception: # constant
+					try:
+						self.constants += [ureg(q)]
+					except Exception:
+						raise Exception("Quantity "+q+" not understood")
+					full_op[2*i+1] = "(self.constants[%d])" % i
+					basic_op[2*i+1] = "(%s)" % q
+			# Calculate the total units and its inverse
+			units = ureg("".join(basic_op)).units
+			self.translated_units = units.format_babel(locale="en")
+			# Make the operation string
+			self.translated_operation = "".join(full_op)
+			# Divide the operation by final units
+			self.constants += [1/units]
+			self.translated_operation = "(%s) * self.constants[-1]"%self.translated_operation
+			# Make the title
+			self.title = "".join(title)
+			# Define the eval function
+			self.eval = self.evalWithPint
+			
+		# Without Pint
+		else:
+			# Loop names encountered, and translate as a known variable
+			for i,q in enumerate(full_op[1::2]):
+				if q in self.variables: # if previously found
+					j = self.variables.index(q)
+					full_op[2*i+1] = full_op[2*j+1]
+					title[2*i+1] = title[2*j+1]
+				else:
+					try: # variable
+						units, replacement, name = QuantityTranslator(q)
+						self.variables += [q]
+						full_op[2*i+1] = "(%s)" % replacement
+						title[2*i+1] = name
+					except Exception: # constant
+						raise Exception("Quantity "+q+" unknown")
+			self.translated_units = "1"
+			# Make the operation string
+			self.translated_operation = "".join(full_op)
+			# Make the title
+			self.title = "".join(title)
+			# Define the eval function
+			self.eval = self.evalWithoutPint
+	
+	def evalWithPint(self, l):
+		return eval(self.translated_operation, l, locals()).magnitude
+	
+	def evalWithoutPint(self, l):
+		return eval(self.translated_operation, l, locals())
 
 
 class Movie:

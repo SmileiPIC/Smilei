@@ -308,38 +308,21 @@ class Probe(Diagnostic):
 	
 	# Parse the `field` argument
 	def _loadField(self, field):
-		sortedfields = reversed(sorted(self._fields, key = len))
 		self.operation = field
-		for f in sortedfields:
-			i = self._fields.index(f)
-			self.operation = self.operation.replace(f,"#"+str(i))
-		requested_fields = self._re.findall("#\d+",self.operation)
-		if len(requested_fields) == 0:
-			raise Exception("Could not find any existing field in `"+field+"`")
-		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
-		self._fieldn = list(set(self._fieldn))
-		self._fieldname = [ self._fields[i] for i in self._fieldn ] # names of the requested fields
-		
-		# Build units
-		titles = {}
-		fieldunits = {}
-		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"Q_r*N_r","P":"V_r*K_r*N_r"}
 		self.time_integral = self._myinfo["time_integral"]
-		for f in self._fieldname:
+		
+		which_units = {"B":"B_r","E":"E_r","J":"J_r","R":"Q_r*N_r","P":"V_r*K_r*N_r"}
+		def fieldTranslator(f):
 			i = self._fields.index(f)
 			if self.time_integral:
-				fieldunits.update({ i:unitsForField[f[0]] + "*T_r" })
-				titles    .update({ i:"Time-integrated "+f })
+				return which_units[f[0]] + "*T_r", "C[%d]"%f, "Time-integrated "+f
 			else:
-				fieldunits.update({ i:unitsForField[f[0]] })
-				titles    .update({ i:f })
-		# Make total units and title
-		self._title  = self.operation
-		self._vunits = self.operation
-		for n in self._fieldn:
-			self._title  = self._title .replace("#"+str(n), titles    [n])
-			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
-		self._vunits = self.units._getUnits(self._vunits)
+				return which_units[f[0]], "C[%d]"%i, f
+		self._operation = Operation(self.operation, fieldTranslator, self._ureg)
+		self._fieldname = self._operation.variables
+		self._fieldn = [self._fields.index(f) for f in self._fieldname]
+		self._vunits = self._operation.translated_units
+		self._title  = self._operation.title
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Probe"+str(self.requestedProbe)+"_"+"".join(self._fieldname)
@@ -381,7 +364,6 @@ class Probe(Diagnostic):
 		# Get arrays from requested field
 		# get data
 		C = {}
-		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
 			buffer = self._np.zeros((self._ordering.size,), dtype="double")
 			for first, last, npart in ChunkedRange(self.numpoints, self._chunksize):
@@ -390,9 +372,8 @@ class Probe(Diagnostic):
 				data = self._dataForTime[t][n,first:last]
 				buffer[keep] = data[o[keep]]
 			C.update({ n:buffer })
-			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
-		A = eval(op)
+		A = self._operation.eval(locals())
 		# Reshape array because it is flattened in the file
 		A = self._np.reshape(A, self._finalShape)
 		# Apply the averaging
