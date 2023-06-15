@@ -485,25 +485,6 @@ namespace hip {
             } // namespace GDS
         }     // namespace atomic
 
-        __global__ int
-        getGPUClusterWidth( int dimension_id )
-        {
-        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-            switch( dimension_id ) {
-                case 1:
-                    return -1;
-                case 2:
-                    return 4;
-                case 3:
-                    return 4;
-                default:
-                    return -1;
-            }
-        #else
-            return -1;
-        #endif
-        }
-
         template <typename ComputeFloat,
                   typename ReductionFloat,
                   std::size_t kWorkgroupSize>

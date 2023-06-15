@@ -2,14 +2,19 @@
 
 #if defined( SMILEI_ACCELERATOR_MODE )
 
+//#include "Projector3D2OrderGPUKernelCUDAHIP.h"
+
 #if defined( __HIP__ )
     #include <hip/hip_runtime.h>
+#elif defined( __NVCC__ )
+    #include <cuda_runtime.h>
+    #include <cuda.h>
 #endif
 
 #include "Params.h"
 #include "gpu.h"
 
-namespace cuda {
+namespace cudahip {
     namespace detail {
 
 // For HIP compiler
@@ -109,16 +114,13 @@ namespace cuda {
                                                                       ComputeFloat *__restrict__ S1)
         {
             // const int    ip        = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-            /*const ComputeFloat xpn  = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-            const int          ipo    = iold[0 * particle_count];*/
             const int          ip       = std::round( xpn );
             const int          ip_m_ipo = ip - ipo - i_domain_begin;
             const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
             const ComputeFloat delta2   = delta * delta;
 
             S1[0] = static_cast<ComputeFloat>( 0.0 );
-            S1[1] = static_cast<ComputeFloat>( 0.0 );
-            // S1[2] = 0.0; // Always set below
+            S1[1] = static_cast<ComputeFloat>( 0.0 ); // S1[2] = 0.0; // Always set below
             S1[3] = static_cast<ComputeFloat>( 0.0 );
             S1[4] = static_cast<ComputeFloat>( 0.0 );
 
@@ -161,12 +163,11 @@ namespace cuda {
                                          int          nprimz,
                                          int          not_spectral )
         {
-            // TODO(Etienne M): refactor this function. Break it into smaller
+            // Potential future work for optimization: Break the kernel into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
-            // TODO(Etienne M): __ldg could be used to slightly improve GDS load
-            // speed. This would only have an effect on Nvidia cards as this
-            // operation is a no op on AMD.
-            const unsigned int workgroup_size = 128 ;//kWorkgroupSize; // blockDim.x;
+            //  __ldg could be used to slightly improve GDS load
+            // speed. This would only have an effect on Nvidia cards as this operation is a no op on AMD. (not good)
+            const unsigned int workgroup_size = 128 ;// value confirmed by the nsight-cu with profiling //kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y * gridDim.z;
             const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
@@ -179,7 +180,7 @@ namespace cuda {
 //#if defined (  __NVCC__ )
 //// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
 //// because it causes a compilation issue : nvcc error   : 'ptxas' died due to signal 8 (Floating point exception)
-//// Ideally, we should have here the same implementation between CUDA and HIP 
+//// Ideally, we should have here the same implementation between CUDA and HIP   -> isn't it not the case now? 
 //            // The unit is the cell
 //            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * 4;
 //            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * 4;
@@ -677,7 +678,9 @@ namespace cuda {
 
    } // namespace kernel
 
-static inline void
+//static 
+    //inline 
+    void
     currentDepositionKernel3D( double *__restrict__ host_Jx,
                                double *__restrict__ host_Jy,
                                double *__restrict__ host_Jz,
@@ -798,7 +801,9 @@ static inline void
 #endif
     }
 
-    static inline void
+    //static
+    //inline 
+    void
     densityDepositionKernel3D( 
                                 double *__restrict__ host_rho,
                                 int rho_size,
