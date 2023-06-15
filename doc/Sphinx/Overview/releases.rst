@@ -55,6 +55,7 @@ Changes made in the repository (not released)
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
   * ``Field.getAxis`` was not accounting for the ``timestep``
+  * Bug correction in 1D relativistic Poisson solver
 
 * Experimental
 
