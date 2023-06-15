@@ -20,20 +20,20 @@
     //     #include "gpu.h"
     // #endif
 
-    #if defined( __HIP__ ) || defined(  __NVCC__ )
+    //#if defined( __HIP__ ) || defined(  __NVCC__ )
 
-        #include "Projector3D2OrderGPUKernelHIP.h"
+    #include "Projector3D2OrderGPUKernelCUDAHIP.h"
 
-    #else
+    /*#else
 
         #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
         // #include "Projector3D2OrderGPUKernelAcc.h"
-//        #include "Projector3D2OrderGPUKernelNaive.h"
+        //  #include "Projector3D2OrderGPUKernelNaive.h"
         #include <cmath>
         #include "Tools.h"
         #include "gpu.h"
 
-    #endif
+    #endif*/
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
@@ -71,11 +71,11 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                            int    nprimz,
                            int    not_spectral )
 {
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
-    #else
-    cuda:: // CUDA (HIP or NVIDIA) version
-    #endif
+    //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+    //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
+    //#else
+    cudahip:: // CUDA (HIP or NVIDIA) version
+    //#endif
         currentDepositionKernel3D( host_Jx, host_Jy, host_Jz,
                                    Jx_size, Jy_size, Jz_size,
                                    device_particle_position_x, 
@@ -133,11 +133,11 @@ densityDeposition3DOnDevice(
                                      int    nprimz,
                                      int    not_spectral )
 {
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
-    #else
-    cuda:: // CUDA (HIP or NVIDIA) verison
-    #endif
+    //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+    //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
+    //#else
+    cudahip:: // CUDA (HIP or NVIDIA) verson
+    //#endif
         densityDepositionKernel3D( host_rho,
                                     rho_size,
                                     device_particle_position_x, 

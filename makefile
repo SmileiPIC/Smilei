@@ -248,7 +248,7 @@ ifneq (,$(call parse_config,gpu_nvidia))
     #     ACCELERATOR_GPU_KERNEL_FLAGS += -O0 -G --std c++14 $(DIRS:%=-I%)
     #     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
     # endif
-
+	CUDAHIP_FLAG = -x cu 
 	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_MODE
         #ACCELERATOR_GPU_KERNEL_FLAGS += --define-macro SMILEI_ACCELERATOR_MODE
         ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_MODE
@@ -261,7 +261,7 @@ endif
 
 # AMD GPUs
 ifneq (,$(call parse_config,gpu_amd))
-
+	CUDAHIP_FLAG = -x hip
 	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_MODE
         ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_MODE
 
@@ -353,6 +353,8 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX.DEPS) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+# check if the special compilation below are actually needed
+
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
@@ -368,9 +370,11 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS0) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
-$(BUILD_DIR)/src/Projector/Projector3D2OrderGPUKernel.o : src/Projector/Projector3D2OrderGPUKernel.cpp
-	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(THRUSTCXX) $(ACCELERATOR_GPU_KERNEL_FLAGS) -x cu -c $< -o $@
+# not needed for hip, should be the same for CUDA
+#$(BUILD_DIR)/src/Projector/Projector3D2OrderGPUKernel.o : src/Projector/Projector3D2OrderGPUKernel.cpp
+#	@echo "SPECIAL COMPILATION FOR $<"
+#	$(Q) $(THRUSTCXX) $(ACCELERATOR_GPU_KERNEL_FLAGS) $(CUDAHIP_FLAG) -c $< -o $@
+
 
 #$(BUILD_DIR)src/Radiation/RadiationNiel.o: src/Radiation/RadiationNiel.cpp
 #	@echo "SPECIAL COMPILATION FOR $<"
@@ -389,7 +393,7 @@ $(BUILD_DIR)/%.o : %.cu
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) #-L/gpfslocalsys/cuda/11.2/lib64/stubs
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode
