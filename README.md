@@ -1,4 +1,5 @@
 <img src="doc/Sphinx/_static/smileiLogo.svg" width=300 />
+
 ![doc](https://github.com/SmileiPIC/Smilei/actions/workflows/sphinx.yml/badge.svg)
 ![compilation](https://github.com/SmileiPIC/Smilei/actions/workflows/make.yml/badge.svg)
 
