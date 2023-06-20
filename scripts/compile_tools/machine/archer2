@@ -6,21 +6,19 @@
 #
 # # Set up environment:
 #
-# module restore PrgEnv-gnu
+# module restore
+# module load PrgEnv-gnu
 # export CXX=CC
 # module load cray-python
 # module load cray-hdf5-parallel
-# export PYTHONHOME=/opt/cray/pe/python/3.8.5.0/
-# export LD_LIBRARY_PATH=/opt/cray/pe/python/3.8.5.0/lib:$LD_LIBRARY_PATH
-# export LIBRARY_PATH=$LIBRARY_PATH:/opt/cray/pe/python/3.8.5.0/lib
-# export PATH=/opt/cray/pe/python/3.8.5.0/lib:$PATH
+# export LIBRARY_PATH=$LD_LIBRARY_PATH
 #
 SMILEICXX=CC
 CXXFLAGS += -O3 -march=znver2 -fopenmp
 #
 # # Compile:
 #
-# make -j 32 machine=archer2
+# make -j 8 machine=archer2
 #
 # Example job script (replace items in <BRACKETS>):
 #
@@ -38,11 +36,11 @@ CXXFLAGS += -O3 -march=znver2 -fopenmp
 #module load epcc-job-env
 #module load cray-python
 #module load cray-hdf5-parallel
-#export LD_LIBRARY_PATH=/opt/cray/pe/python/3.8.5.0/lib:$LD_LIBRARY_PATH
 #
 #export OMP_NUM_THREADS=64
 #export OMP_PLACES=cores
 #export OMP_SCHEDULE=dynamic
+#export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 #
 #srun --hint=nomultithread --distribution=block:block </PATH/TO/SMILEI>/smilei <SMILEI_NAMELIST>.py
 #```
