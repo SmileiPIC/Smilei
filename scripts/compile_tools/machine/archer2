@@ -33,7 +33,6 @@ CXXFLAGS += -O3 -march=znver2 -fopenmp
 ##SBATCH --partition=standard
 ##SBATCH --qos=standard
 #
-#module load epcc-job-env
 #module load cray-python
 #module load cray-hdf5-parallel
 #
