@@ -794,9 +794,12 @@ void boostParticles( double vx, double vy, double vz, double v2, double g, Parti
             p->momentum( 2, i ) = vpz*gamma ;
         }//here ends the corrections by Zenitani
         
-        p->momentum( 0, i ) = -gamma*g*vx + Lxx * p->momentum( 0, i ) + Lxy * p->momentum( 1, i ) + Lxz * p->momentum( 2, i );
-        p->momentum( 1, i ) = -gamma*g*vy + Lxy * p->momentum( 0, i ) + Lyy * p->momentum( 1, i ) + Lyz * p->momentum( 2, i );
-        p->momentum( 2, i ) = -gamma*g*vz + Lxz * p->momentum( 0, i ) + Lyz * p->momentum( 1, i ) + Lzz * p->momentum( 2, i );
+        double px = -gamma*g*vx + Lxx * p->momentum( 0, i ) + Lxy * p->momentum( 1, i ) + Lxz * p->momentum( 2, i );
+        double py = -gamma*g*vy + Lxy * p->momentum( 0, i ) + Lyy * p->momentum( 1, i ) + Lyz * p->momentum( 2, i );
+        double pz = -gamma*g*vz + Lxz * p->momentum( 0, i ) + Lyz * p->momentum( 1, i ) + Lzz * p->momentum( 2, i );
+        p->momentum( 0, i ) = px;
+        p->momentum( 1, i ) = py;
+        p->momentum( 2, i ) = pz;
     }
 }
 

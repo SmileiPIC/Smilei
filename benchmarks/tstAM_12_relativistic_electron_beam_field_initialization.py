@@ -142,7 +142,7 @@ DiagParticleBinning(
     time_average = 1,
     species = ["bunch_electrons"],
     axes = [
-        ["py",-0.001, 0.001, 100],
+        ["py",-0.0005, 0.0005, 20],
     ]
 )
 
@@ -153,6 +153,6 @@ DiagParticleBinning(
     time_average = 1,
     species = ["bunch_electrons"],
     axes = [
-        ["pz",-0.001, 0.001, 100],
+        ["pz",-0.0005, 0.0005, 20],
     ]
 )
