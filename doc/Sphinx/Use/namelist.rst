@@ -770,6 +770,7 @@ Each species has to be defined in a ``Species`` block::
       # charge_density = None,
       charge = -1.,
       mean_velocity = [0.],
+      #mean_velocity_AM = [0.],
       temperature = [1e-10],
       boundary_conditions = [
           ["reflective", "reflective"],
@@ -896,9 +897,20 @@ Each species has to be defined in a ``Species`` block::
 
   :type: a list of 3 floats or :doc:`profiles <profiles>`
 
-  The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+  The initial drift velocity of the particles, in units of the speed of light :math:`c`, in the `x`, `y` and `z` directions.
 
   **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+  
+.. py:data:: mean_velocity_AM
+
+  :type: a list of 3 floats or :doc:`profiles <profiles>`
+
+  The initial drift velocity of the particles, in units of the speed of light :math:`c`, in the longitudinal, radial and azimuthal directions.
+  This entry is available only in ``AMcylindrical`` velocity and cannot be used if also ``mean_velocity`` is used in the same ``Species``: only one of the two can be chosen.
+
+  **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+  **WARNING**: The initial cylindrical drift velocity is applied to each particle, thus it can be computationally demanding. 
 
 .. py:data:: temperature
 

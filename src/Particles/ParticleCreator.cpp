@@ -94,14 +94,8 @@ void ParticleCreator::associate( Species * species)
     position_initialization_on_species_ = species->position_initialization_on_species_;
     disable_position_initialization_    = species->position_initialization_on_species_;
     momentum_initialization_ = species->momentum_initialization_;
-    velocity_profile_.resize(species->velocity_profile_.size());
-    for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
-        velocity_profile_[i] = species->velocity_profile_[i];
-    }
-    temperature_profile_.resize(species->temperature_profile_.size());
-    for (unsigned int i = 0 ; i < temperature_profile_.size() ; i++) {
-        temperature_profile_[i] = species->temperature_profile_[i];
-    }
+    velocity_profile_ = species->velocity_profile_;
+    temperature_profile_ = species->temperature_profile_;
     density_profile_ = species->density_profile_;
     density_profile_type_ = species->density_profile_type_;
     particles_per_cell_profile_ = species->particles_per_cell_profile_;
@@ -330,7 +324,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         temp[1] = temperature[1]( i, j, k );
                         temp[2] = temperature[2]( i, j, k );
 
-                        if( (! position_initialization_on_species_) && (! disable_position_initialization_) ) {
+                        if( ! disable_position_initialization_ ) {
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params, patch->rand_ );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0], patch->rand_ );
@@ -751,6 +745,61 @@ void ParticleCreator::createPosition( std::string position_initialization,
     }
 }
 
+
+//! Adds a velocity to particles with indices from start to stop
+//! v2 should be equal to vx^2 + vy^2 + vz^2
+//! g should be equal to 1 / sqrt(1-v2)
+        // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
+        // to ensure the correct properties of a boosted distribution function
+void boostParticles( double vx, double vy, double vz, double v2, double g, Particles *p, size_t start, size_t stop, Random * rand )
+{
+    const double gm1 = g - 1.;
+    
+    // compute the different component of the Matrix block of the Lorentz transformation
+    const double Lxx = 1.0 + gm1 * vx*vx/v2;
+    const double Lyy = 1.0 + gm1 * vy*vy/v2;
+    const double Lzz = 1.0 + gm1 * vz*vz/v2;
+    const double Lxy = gm1 * vx*vy/v2;
+    const double Lxz = gm1 * vx*vz/v2;
+    const double Lyz = gm1 * vy*vz/v2;
+    
+    const double Phi = atan2( sqrt( vx*vx +vy*vy ), vz );
+    const double Theta = atan2( vy, vx );
+    const double ctsp = cos( Theta )*sin( Phi );
+    const double stsp = sin( Theta )*sin( Phi );
+    const double cp = cos( Phi );
+    
+    // Lorentz transformation of the momentum
+    for( size_t i=start; i<stop; i++ ) {
+        double gamma = p->LorentzFactor( i );
+        double inverse_gamma = 1./gamma;
+        
+        // Volume transformation method (here is the correction by Zenitani)
+        double CheckVelocity = ( vx*p->momentum( 0, i ) + vy*p->momentum( 1, i ) + vz*p->momentum( 2, i ) ) * inverse_gamma;
+        double Volume_Acc = rand->uniform();
+        if( CheckVelocity > Volume_Acc ) {
+            double vpx = p->momentum( 0, i )*inverse_gamma ;
+            double vpy = p->momentum( 1, i )*inverse_gamma ;
+            double vpz = p->momentum( 2, i )*inverse_gamma ;
+            double vfl = vpx*ctsp + vpy*stsp + vpz*cp ;
+            double vflx = vfl*ctsp;
+            double vfly = vfl*stsp;
+            double vflz = vfl*cp ;
+            vpx -= 2.*vflx ;
+            vpy -= 2.*vfly ;
+            vpz -= 2.*vflz ;
+            gamma = 1 / sqrt( 1.0 - vpx*vpx - vpy*vpy - vpz*vpz );
+            p->momentum( 0, i ) = vpx*gamma ;
+            p->momentum( 1, i ) = vpy*gamma ;
+            p->momentum( 2, i ) = vpz*gamma ;
+        }//here ends the corrections by Zenitani
+        
+        p->momentum( 0, i ) = -gamma*g*vx + Lxx * p->momentum( 0, i ) + Lxy * p->momentum( 1, i ) + Lxz * p->momentum( 2, i );
+        p->momentum( 1, i ) = -gamma*g*vy + Lxy * p->momentum( 0, i ) + Lyy * p->momentum( 1, i ) + Lyz * p->momentum( 2, i );
+        p->momentum( 2, i ) = -gamma*g*vz + Lxz * p->momentum( 0, i ) + Lyz * p->momentum( 1, i ) + Lzz * p->momentum( 2, i );
+    }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Creation of the particle momentum
 //! For all (np) particles in a mesh initialize their momentum
@@ -817,80 +866,30 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
             }
         }
 
-        // Adding the mean velocity (using relativistic composition)
-        // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
-        // to ensure the correct properties of a boosted distribution function
-        // -------------------------------------------------------------------------------
-        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, px, py, pz;
-        double gamma, inverse_gamma;
         // mean-velocity
-        vx  = -vel[0];
-        vy  = -vel[1];
-        vz  = -vel[2];
-        v2  = vx*vx + vy*vy + vz*vz;
+        double vx  = -vel[0];
+        double vy  = -vel[1];
+        double vz  = -vel[2];
+        double v2  = vx*vx + vy*vy + vz*vz;
         if( v2>0. ) {
 
             if( v2>=1. ) {
                 ERROR("The mean velocity should not be higher than the speed of light");
             }
 
-            g   = 1.0/sqrt( 1.0-v2 );
-            gm1 = g - 1.0;
-
-            // compute the different component of the Matrix block of the Lorentz transformation
-            Lxx = 1.0 + gm1 * vx*vx/v2;
-            Lyy = 1.0 + gm1 * vy*vy/v2;
-            Lzz = 1.0 + gm1 * vz*vz/v2;
-            Lxy = gm1 * vx*vy/v2;
-            Lxz = gm1 * vx*vz/v2;
-            Lyz = gm1 * vy*vz/v2;
-
-            // Volume transformation method (here is the correction by Zenitani)
-            double Volume_Acc;
-            double CheckVelocity;
-
-            // Lorentz transformation of the momentum
-            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-                gamma = sqrt( 1.0 + particles->momentum( 0, p )*particles->momentum( 0, p )
-                           + particles->momentum( 1, p )*particles->momentum( 1, p )
-                           + particles->momentum( 2, p )*particles->momentum( 2, p ) );
-                inverse_gamma = 1./gamma;
-
-                CheckVelocity = ( vx*particles->momentum( 0, p )
-                              + vy*particles->momentum( 1, p )
-                              + vz*particles->momentum( 2, p ) ) * inverse_gamma;
-                Volume_Acc = rand->uniform();
-                if( CheckVelocity > Volume_Acc ) {
-
-                    double Phi, Theta, vfl, vflx, vfly, vflz, vpx, vpy, vpz ;
-                    Phi = atan2( sqrt( vx*vx +vy*vy ), vz );
-                    Theta = atan2( vy, vx );
-
-                    vpx = particles->momentum( 0, p )*inverse_gamma ;
-                    vpy = particles->momentum( 1, p )*inverse_gamma ;
-                    vpz = particles->momentum( 2, p )*inverse_gamma ;
-                    vfl = vpx*cos( Theta )*sin( Phi ) +vpy*sin( Theta )*sin( Phi ) + vpz*cos( Phi ) ;
-                    vflx = vfl*cos( Theta )*sin( Phi ) ;
-                    vfly = vfl*sin( Theta )*sin( Phi ) ;
-                    vflz = vfl*cos( Phi ) ;
-                    vpx -= 2.*vflx ;
-                    vpy -= 2.*vfly ;
-                    vpz -= 2.*vflz ;
-                    inverse_gamma = sqrt( 1.0 - vpx*vpx - vpy*vpy - vpz*vpz );
-                    gamma = 1./inverse_gamma;
-                    particles->momentum( 0, p ) = vpx*gamma ;
-                    particles->momentum( 1, p ) = vpy*gamma ;
-                    particles->momentum( 2, p ) = vpz*gamma ;
-
-                }//here ends the corrections by Zenitani
-
-                px = -gamma*g*vx + Lxx * particles->momentum( 0, p ) + Lxy * particles->momentum( 1, p ) + Lxz * particles->momentum( 2, p );
-                py = -gamma*g*vy + Lxy * particles->momentum( 0, p ) + Lyy * particles->momentum( 1, p ) + Lyz * particles->momentum( 2, p );
-                pz = -gamma*g*vz + Lxz * particles->momentum( 0, p ) + Lyz * particles->momentum( 1, p ) + Lzz * particles->momentum( 2, p );
-
-                particles->momentum( 0, p ) = px;
-                particles->momentum( 1, p ) = py;
-                particles->momentum( 2, p ) = pz;
+            double g   = 1.0/sqrt( 1.0-v2 );
+            
+            if( species->radial_velocity_profile_ ) {
+                // In the case of a radial velocity profile, we interpret vy as vr and vz as vt
+                for( size_t i = iPart; i < iPart+nPart; i++ ) {
+                    const double vr = vy, vt = vz;
+                    const double invr = 1 / sqrt( particles->position( 1, i ) * particles->position( 1, i ) + particles->position( 2, i ) * particles->position( 2, i ) );
+                    const double cost = particles->position( 1, i ) * invr;
+                    const double sint = particles->position( 2, i ) * invr;
+                    boostParticles( vx, vr*cost - vt*sint, vr*sint + vt*cost, v2, g, particles, i, i+1, rand );
+                }
+            } else {
+                boostParticles( vx, vy, vz, v2, g, particles, iPart, iPart+nPart, rand );
             }
 
         }//ENDif vel != 0
@@ -923,7 +922,6 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
         }
     }
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)

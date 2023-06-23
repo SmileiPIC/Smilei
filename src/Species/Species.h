@@ -123,6 +123,9 @@ public:
 
     //! vector of velocity profiles (vx, vy, vz)
     std::vector<Profile *> velocity_profile_;
+    
+    //! True if velocity profile is radial instead of cartesian
+    bool radial_velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperature_profile_;

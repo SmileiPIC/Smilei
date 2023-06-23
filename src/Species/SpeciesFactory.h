@@ -890,11 +890,21 @@ public:
         }
         this_species->charge_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), params, true, true );
 
-        std::vector<PyObject *> prof;
+        std::vector<PyObject *> prof, prof_AM;
         if( this_species->momentum_initialization_array_ == NULL
-         && this_species->file_momentum_npart_ == 0 ) {
+            && this_species->file_momentum_npart_ == 0 ) {
             // Mean velocity
-            if( PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof ) ) {
+            bool has_mean_velocity = PyTools::extract_1orNProfiles( 3, "mean_velocity", "Species", ispec, prof );
+            if( params.geometry == "AMcylindrical" && PyTools::extract_1orNProfiles( 3, "mean_velocity_AM", "Species", ispec, prof_AM ) ) {
+                if( has_mean_velocity ) {
+                    ERROR_NAMELIST( "For species '" << species_name << "', you may not use both mean_velocity and mean_velocity_AM",
+                    LINK_NAMELIST + std::string("#species") );
+                }
+                this_species->radial_velocity_profile_ = true;
+                this_species->velocity_profile_[0] = new Profile( prof_AM[0], params.nDim_field, Tools::merge( "mean_velocity_AM[0] ", species_name ), params, true, true );
+                this_species->velocity_profile_[1] = new Profile( prof_AM[1], params.nDim_field, Tools::merge( "mean_velocity_AM[1] ", species_name ), params, true, true );
+                this_species->velocity_profile_[2] = new Profile( prof_AM[2], params.nDim_field, Tools::merge( "mean_velocity_AM[2] ", species_name ), params, true, true );
+            } else if( has_mean_velocity ) {
                 this_species->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), params, true, true );
                 this_species->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), params, true, true );
                 this_species->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), params, true, true );
@@ -1066,6 +1076,7 @@ public:
             new_species->velocity_profile_[1]                 = new Profile( species->velocity_profile_[1] );
             new_species->velocity_profile_[2]                 = new Profile( species->velocity_profile_[2] );
         }
+        new_species->radial_velocity_profile_ = species->radial_velocity_profile_;
         if( species->temperature_profile_[0] ) {
             new_species->temperature_profile_[0]              = new Profile( species->temperature_profile_[0] );
             new_species->temperature_profile_[1]              = new Profile( species->temperature_profile_[1] );
