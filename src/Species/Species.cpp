@@ -68,6 +68,7 @@ Species::Species( Params &params, Patch *patch ) :
     charge_profile_( NULL ),
     density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
+    radial_velocity_profile_( false ),
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),

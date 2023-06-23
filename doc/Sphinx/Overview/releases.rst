@@ -34,6 +34,7 @@ Changes made in the repository (not released)
 * ``DiagPerformances``: new parameter ``cumulative``
 * ``Collisions``: new parameter ``time_frozen``
 * Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
+* ``Species`` block: in ``AMcylindrical`` geometry now it is possible to define initial drift velocity profiles either in the longitudinal, radial and azimuthal directions with ``mean_velocity_AM`` or in the cartesian directions as usual with ``mean_velocity``.
 * Happi:
 
   * operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,

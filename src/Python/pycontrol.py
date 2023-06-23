@@ -95,6 +95,7 @@ def _smilei_check():
         s.particles_per_cell = toSpaceProfile(s.particles_per_cell)
         s.charge          = toSpaceProfile(s.charge)
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
+        s.mean_velocity_AM = [ toSpaceProfile(p) for p in s.mean_velocity_AM ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
     for e in ExternalField:
         e.profile         = toSpaceProfile(e.profile)
@@ -140,7 +141,7 @@ def _keep_python_running():
                 if (bc == "PML"):
                     return True
         for s in Species:
-            profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
+            profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.mean_velocity_AM + s.temperature
     if len(MovingWindow)>0:
         profiles += [e.profile for e in ExternalField]
     for i in ParticleInjector:

@@ -387,6 +387,7 @@ class Species(SmileiComponent):
     charge_density = None
     number_density = None
     mean_velocity = []  # Default value is     0, set in ParticleCreator function in species.cpp
+    mean_velocity_AM = []
     temperature = []    # Default value is 1e-10, set in ParticleCreator function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
