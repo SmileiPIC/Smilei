@@ -1101,7 +1101,11 @@ public:
             new_species->particles->interpolated_fields_ = new InterpolatedFields();
             new_species->particles->interpolated_fields_->mode_ = species->particles->interpolated_fields_->mode_;
         }
-
+        
+        if( species->birth_records_ ) {
+            new_species->birth_records_ = new BirthRecords( *species->particles );
+        }
+        
         return new_species;
     } // End Species* clone()
 
@@ -1136,166 +1140,131 @@ public:
 
         // Loop species to find related species
         for( unsigned int ispec1 = 0; ispec1 < tot_species_number; ispec1++ ) {
-
+            Species &s1 = *patch->vecSpecies[ispec1];
+            
             // Ionizable species
-            if( patch->vecSpecies[ispec1]->Ionize ) {
-                // Loop all other species
-                for( unsigned int ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
-                    if( patch->vecSpecies[ispec1]->ionization_electrons == patch->vecSpecies[ispec2]->name_ ) {
-                        if( ispec1==ispec2 ) {
-                            ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a distinct species",
-                            LINK_NAMELIST + std::string("#species") );
-                        }
-                        if( patch->vecSpecies[ispec2]->mass_!=1 ) {
-                            ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_<<"' ionization_electrons must be a species with mass==1",
-                            LINK_NAMELIST + std::string("#species") );
-                        }
-                        patch->vecSpecies[ispec1]->electron_species_index = ispec2;
-                        patch->vecSpecies[ispec1]->electron_species = patch->vecSpecies[ispec2];
-
-                        // int max_eon_number =
-                        //     patch->vecSpecies[ispec1]->getNbrOfParticles()
-                        //     * ( patch->vecSpecies[ispec1]->atomic_number_ || patch->vecSpecies[ispec1]->maximum_charge_state_ );
-                        // patch->vecSpecies[ispec1]->Ionize->new_electrons.initializeReserve(
-                        //     max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles
-                        patch->vecSpecies[ispec1]->Ionize->new_electrons.initialize(
-                            0, *patch->vecSpecies[ispec1]->electron_species->particles
-                        );
+            if( s1.Ionize ) {
+                // Find electron species
+                auto s2 = std::find_if( patch->vecSpecies.begin(), patch->vecSpecies.end(), [&s1](Species *s) { return s->name_ == s1.ionization_electrons; } );
+                if( s2 == patch->vecSpecies.end() ) {
+                    ERROR_NAMELIST( "For species '"<<s1.name_ <<"' ionization_electrons '" << s1.ionization_electrons << " could not be found",
+                        LINK_NAMELIST + std::string("#species") );
+                }
+                s1.electron_species = *s2;
+                s1.electron_species_index = std::distance( patch->vecSpecies.begin(), s2 );
+                if( s1.name_ == s1.electron_species->name_ ) {
+                    ERROR_NAMELIST( "For species '"<<s1.name_<<"' ionization_electrons must be a distinct species",
+                        LINK_NAMELIST + std::string("#species") );
+                }
+                if( s1.electron_species->mass_!=1 ) {
+                    ERROR_NAMELIST( "For species '"<<s1.name_<<"' ionization_electrons must be a species with mass==1",
+                        LINK_NAMELIST + std::string("#species") );
+                }
+                
+                // int max_eon_number = s1.getNbrOfParticles() * ( s1.atomic_number_ || s1.maximum_charge_state_ );
+                // s1.Ionize->new_electrons.initializeReserve( max_eon_number, *s1.electron_species->particles
+                s1.Ionize->new_electrons.initialize( 0, *s1.electron_species->particles );
 #ifdef _OMPTASKS
-                        unsigned int Nbins = patch->vecSpecies[ispec1]->Nbins;
-                        for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                            patch->vecSpecies[ispec1]->Ionize->new_electrons_per_bin[ibin].initializeReserve(0, *patch->vecSpecies[ispec1]->electron_species->particles);
-                        }
+                for( unsigned int ibin = 0 ; ibin < s1.Nbins ; ibin++ ){
+                    s1.Ionize->new_electrons_per_bin[ibin].initializeReserve( 0, *s1.electron_species->particles );
+                }
 #endif
-                        break;
-                    }
-                }
-                if( patch->vecSpecies[ispec1]->electron_species_index==-1 ) {
-                    ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
-                    <<"' ionization_electrons named " << patch->vecSpecies[ispec1]->ionization_electrons
-                    << " could not be found",
-                    LINK_NAMELIST + std::string("#species") );
-                }
             }
 
             // Radiating species
-            if( patch->vecSpecies[ispec1]->Radiate ) {
+            if( s1.Radiate ) {
                 // No emission of discrete photon, only scalar diagnostics are updated
-                if( patch->vecSpecies[ispec1]->radiation_photon_species.empty() ) {
-                    patch->vecSpecies[ispec1]->photon_species_index = -1;
-                    patch->vecSpecies[ispec1]->photon_species_ = nullptr;
-                    patch->vecSpecies[ispec1]->radiated_photons_ = nullptr;
+                if( s1.radiation_photon_species.empty() ) {
+                    s1.photon_species_index = -1;
+                    s1.photon_species_ = nullptr;
+                    s1.radiated_photons_ = nullptr;
                 }
                 // Else, there will be emission of macro-photons.
                 else {
                     unsigned int ispec2 = 0;
                     for( ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
-                        if( patch->vecSpecies[ispec1]->radiation_photon_species == patch->vecSpecies[ispec2]->name_ ) {
+                        if( s1.radiation_photon_species == patch->vecSpecies[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
-                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
-                                <<"' radiation_photon_species must be a distinct photon species",
+                                ERROR_NAMELIST( "For species '"<<s1.name_ <<"' radiation_photon_species must be a distinct photon species",
                                 LINK_NAMELIST + std::string("#species") );
                             }
                             if( patch->vecSpecies[ispec2]->mass_!=0 ) {
-                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
-                                <<"' radiation_photon_species must be a photon species with mass==0",
+                                ERROR_NAMELIST( "For species '"<<s1.name_ <<"' radiation_photon_species must be a photon species with mass==0",
                                 LINK_NAMELIST + std::string("#species") );
                             }
-                            patch->vecSpecies[ispec1]->photon_species_index = ispec2;
-                            patch->vecSpecies[ispec1]->photon_species_ = patch->vecSpecies[ispec2];
-                            patch->vecSpecies[ispec1]->radiated_photons_ = ParticlesFactory::create( params );
-                            // patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
-                            //     patch->vecSpecies[ispec1]->getNbrOfParticles(),
-                            //     *patch->vecSpecies[ispec1]->photon_species_->particles
-                            // );
-                            patch->vecSpecies[ispec1]->radiated_photons_->initialize(
-                                0,
-                                *patch->vecSpecies[ispec1]->photon_species_->particles
-                            );
+                            s1.photon_species_index = ispec2;
+                            s1.photon_species_ = patch->vecSpecies[ispec2];
+                            s1.radiated_photons_ = ParticlesFactory::create( params );
+                            // s1.radiated_photons_->initializeReserve( s1.getNbrOfParticles(), *s1.photon_species_->particles );
+                            s1.radiated_photons_->initialize( 0, *s1.photon_species_->particles );
 #ifdef _OMPTASKS
-                            unsigned int Nbins = patch->vecSpecies[ispec1]->Nbins;
-                            for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                                patch->vecSpecies[ispec1]->Radiate->new_photons_per_bin_[ibin].initializeReserve(
-                                    patch->vecSpecies[ispec1]->getNbrOfParticles(),
-                                    *patch->vecSpecies[ispec1]->photon_species_->particles
-                                );
+                            for (unsigned int ibin = 0 ; ibin < s1.Nbins ; ibin++){
+                                s1.Radiate->new_photons_per_bin_[ibin].initializeReserve( s1.getNbrOfParticles(), *s1.photon_species_->particles );
                             }
 #endif
                             break;
                         }
                     }
                     if( ispec2 == patch->vecSpecies.size() ) {
-                        ERROR_NAMELIST( "Species '" << patch->vecSpecies[ispec1]->radiation_photon_species
-                        << "' does not exist.",
+                        ERROR_NAMELIST( "Species '" << s1.radiation_photon_species << "' does not exist.",
                         LINK_NAMELIST + std::string("#species") )
                     }
                 }
             }
 
             // Breit-Wheeler species
-            if( patch->vecSpecies[ispec1]->Multiphoton_Breit_Wheeler_process ) {
+            if( s1.Multiphoton_Breit_Wheeler_process ) {
                 unsigned int ispec2;
                 for( int k=0; k<2; k++ ) {
                     ispec2 = 0;
                     while( ispec2<patch->vecSpecies.size()) {
                         // We look for the pair species mBW_pair_species_names_[k]
-                        if( patch->vecSpecies[ispec1]->mBW_pair_species_names_[k] == patch->vecSpecies[ispec2]->name_ ) {
+                        if( s1.mBW_pair_species_names_[k] == patch->vecSpecies[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
-                                ERROR_NAMELIST( "For species '" << patch->vecSpecies[ispec1]->name_
+                                ERROR_NAMELIST( "For species '" << s1.name_
                                        << "' pair species must be a distinct particle species",
                                        LINK_NAMELIST + std::string("#species") );
                             }
                             if( patch->vecSpecies[ispec2]->mass_ != 1 ) {
-                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                                ERROR_NAMELIST( "For species '"<<s1.name_
                                   <<"' pair species must be an electron and positron species (mass = 1). The detected mass is not correct.",
                                   LINK_NAMELIST + std::string("#species") );
                             }
 
                             if (patch->vecSpecies[ispec2]->charge_profile_->getProfileName() != "constant") {
-                                ERROR_NAMELIST( "For species '"<<patch->vecSpecies[ispec1]->name_
+                                ERROR_NAMELIST( "For species '"<<s1.name_
                                   <<"' pair species must be an electron and positron species of constant charge profile. The detected charge profile is not `constant`.",
                                   LINK_NAMELIST + std::string("#species") );
                             }
 
                             if (std::abs(patch->vecSpecies[ispec2]->max_charge_) != 1) {
-                                ERROR_NAMELIST( "For species ``"<<patch->vecSpecies[ispec1]->name_
+                                ERROR_NAMELIST( "For species ``"<<s1.name_
                                   <<"`, pair species must be an electron (charge -1) and positron species (charge = 1). The detected charge (" << patch->vecSpecies[ispec2]->max_charge_
                                   << ") is not correct.",
                                   LINK_NAMELIST + std::string("#species") );
                             }
 
-                            patch->vecSpecies[ispec1]->mBW_pair_species_index_[k] = ispec2;
-                            patch->vecSpecies[ispec1]->mBW_pair_species_[k] = patch->vecSpecies[ispec2];
+                            s1.mBW_pair_species_index_[k] = ispec2;
+                            s1.mBW_pair_species_[k] = patch->vecSpecies[ispec2];
 
-                            patch->vecSpecies[ispec1]->mBW_pair_particles_[k] = ParticlesFactory::create( params );
+                            s1.mBW_pair_particles_[k] = ParticlesFactory::create( params );
 
 
-                            // patch->vecSpecies[ispec1]->mBW_pair_particles_[k]->initializeReserve(
-                            //     patch->vecSpecies[ispec1]->getNbrOfParticles(),
-                            //     *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
-                            // );
-                            patch->vecSpecies[ispec1]->mBW_pair_particles_[k]->initialize(
-                                0,
-                                *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
-                            );
+                            // s1.mBW_pair_particles_[k]->initializeReserve( s1.getNbrOfParticles(), *s1.mBW_pair_species_[k]->particles );
+                            s1.mBW_pair_particles_[k]->initialize( 0, *s1.mBW_pair_species_[k]->particles );
 #ifdef _OMPTASKS
-                            unsigned int Nbins = patch->vecSpecies[ispec1]->Nbins;
-                            for (unsigned int ibin = 0; ibin < Nbins; ibin++){
-                                patch->vecSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initializeReserve(
-                                        patch->vecSpecies[ispec1]->getNbrOfParticles(),
-                                        *patch->vecSpecies[ispec1]->mBW_pair_species_[k]->particles
-                                );
+                            for (unsigned int ibin = 0; ibin < s1.Nbins; ibin++){
+                                s1.Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initializeReserve( s1.getNbrOfParticles(), *s1.mBW_pair_species_[k]->particles );
                             }
 #endif
                             ispec2 = patch->vecSpecies.size() + 1;
-
                         }
                         ispec2++ ;
                     }
                     // This means that one of the pair species has not been found
                     if( ispec2 == patch->vecSpecies.size() ) {
-                        ERROR_NAMELIST( "In Species `" << patch->vecSpecies[ispec1]->name_ << "`,"
-                           << " the pair species `" << patch->vecSpecies[ispec1]->mBW_pair_species_names_[k]
+                        ERROR_NAMELIST( "In Species `" << s1.name_ << "`,"
+                           << " the pair species `" << s1.mBW_pair_species_names_[k]
                            << "` does not exist.",
                            LINK_NAMELIST + std::string("#species") )
                     }
@@ -1322,19 +1291,20 @@ public:
             patch->vecSpecies[i]->initParticles( params, patch, with_particles, vector_species[i]->particles );
             patch->vecSpecies[i]->initOperators( params, patch );
         }
-
+        
         // Ionization
         for( unsigned int i=0; i<patch->vecSpecies.size(); i++ ) {
-            if( patch->vecSpecies[i]->Ionize ) {
-                patch->vecSpecies[i]->electron_species_index = vector_species[i]->electron_species_index;
-                patch->vecSpecies[i]->electron_species = patch->vecSpecies[patch->vecSpecies[i]->electron_species_index];
-                patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, *patch->vecSpecies[i]->electron_species->particles );
+            Species &s = *patch->vecSpecies[i];
+            if( s.Ionize ) {
+                s.electron_species_index = vector_species[i]->electron_species_index;
+                s.electron_species = patch->vecSpecies[s.electron_species_index];
+                s.Ionize->new_electrons.initialize( 0, *s.electron_species->particles );
 #ifdef _OMPTASKS
-                unsigned int Nbins = patch->vecSpecies[i]->Nbins;
-                for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                    patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, *patch->vecSpecies[i]->electron_species->particles );
+                for (unsigned int ibin = 0 ; ibin < s->Nbins ; ibin++){
+                    s->Ionize->new_electrons_per_bin[ibin].initialize( 0, *s->electron_species->particles );
                 }
 #endif
+                s.Ionize->save_ion_charge_ = vector_species[i]->Ionize->save_ion_charge_;
             }
         }
 

@@ -323,7 +323,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
             ostringstream n( "" );
-            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name_;
+            n<< "latest_ID_" << track->species_name_;
             f.attr( n.str(), track->latest_Id, H5T_NATIVE_UINT64 );
         }
     }
@@ -533,49 +533,17 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         s.attr( "radiatedEnergy", spec->nrj_radiated_ );
 
         if( spec->getNbrOfParticles()>0 ) {
-
-            for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
-                ostringstream my_name( "" );
-                my_name << "Position-" << i;
-                s.vect( my_name.str(), spec->particles->Position[i] );//, dump_deflate );
-            }
-
-            for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
-                ostringstream my_name( "" );
-                my_name << "Momentum-" << i;
-                s.vect( my_name.str(),spec->particles->Momentum[i] );//, dump_deflate );
-            }
-
-            s.vect( "Weight", spec->particles->Weight );//, dump_deflate );
-            s.vect( "Charge", spec->particles->Charge );//, dump_deflate );
-
-            if( spec->particles->tracked ) {
-                s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
-            }
-
-            // Monte-Carlo process
-            if (spec->particles->has_Monte_Carlo_process) {
-                s.vect( "Tau", spec->particles->Tau );//, dump_deflate );
-            }
-
-            // Copy interpolated fields that must be accumulated over time
-            if( spec->particles->interpolated_fields_ ) {
-                if( spec->particles->interpolated_fields_->mode_[6] == 2 ) {
-                    s.vect( "Wx", spec->particles->interpolated_fields_->F_[6] );
-                }
-                if( spec->particles->interpolated_fields_->mode_[7] == 2 ) {
-                    s.vect( "Wy", spec->particles->interpolated_fields_->F_[7] );
-                }
-                if( spec->particles->interpolated_fields_->mode_[8] == 2 ) {
-                    s.vect( "Wz", spec->particles->interpolated_fields_->F_[8] );
-                }
-            }
-
+            dumpParticles( s, *spec->particles );
             s.vect( "first_index", spec->particles->first_index );
             s.vect( "last_index", spec->particles->last_index );
-
-        } // End if partSize
-
+        }
+        
+        // Copy birth records that haven't been written yet
+        if( spec->birth_records_ ) {
+            H5Write b = s.group( "birth_records" );
+            b.vect( "birth_time", spec->birth_records_->birth_time_ );
+            dumpParticles( b, spec->birth_records_->p_ );
+        }
     } // End for ispec
 
     // Save some scalars
@@ -722,7 +690,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
             ostringstream n( "" );
-            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name_;
+            n<< "latest_ID_" << track->species_name_;
             if( f.hasAttr( n.str() ) ) {
                 f.attr( n.str(), track->latest_Id, H5T_NATIVE_UINT64 );
             } else {
@@ -987,50 +955,23 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         s.attr( "radiatedEnergy", spec->nrj_radiated_ );
 
         if( partSize>0 ) {
-            for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
-                ostringstream namePos( "" );
-                namePos << "Position-" << i;
-                s.vect( namePos.str(), spec->particles->Position[i] );
-            }
-
-            for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
-                ostringstream namePos( "" );
-                namePos << "Momentum-" << i;
-                s.vect( namePos.str(), spec->particles->Momentum[i] );
-            }
-
-            s.vect( "Weight", spec->particles->Weight );
-
-            s.vect( "Charge", spec->particles->Charge );
-
-            if( spec->particles->tracked ) {
-                s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
-            }
-
-            if (spec->particles->has_Monte_Carlo_process) {
-                s.vect( "Tau", spec->particles->Tau );
-            }
-
-            // Retrieve interpolated fields that must be accumulated over time
-            if( spec->particles->interpolated_fields_ ) {
-                if( spec->particles->interpolated_fields_->mode_[6] == 2 ) {
-                    s.vect( "Wx", spec->particles->interpolated_fields_->F_[6] );
-                }
-                if( spec->particles->interpolated_fields_->mode_[7] == 2 ) {
-                    s.vect( "Wy", spec->particles->interpolated_fields_->F_[7] );
-                }
-                if( spec->particles->interpolated_fields_->mode_[8] == 2 ) {
-                    s.vect( "Wz", spec->particles->interpolated_fields_->F_[8] );
-                }
-            }
+            restartParticles( s, *spec->particles );
             
             if( ! params.cell_sorting_ ) {
                 s.vect( "first_index", spec->particles->first_index, true );
                 s.vect( "last_index", spec->particles->last_index, true );
             }
             // When cell sorting is activated, indexes are recomputed directly after the restart.
-
         }
+        
+        // Read birth records that haven't been written yet
+        if( spec->birth_records_ && s.has( "birth_records" ) ) {
+            H5Read b = s.group( "birth_records" );
+            b.vect( "birth_time", spec->birth_records_->birth_time_, true );
+            spec->birth_records_->p_.initialize( spec->birth_records_->birth_time_.size(), *spec->particles );
+            restartParticles( b, spec->birth_records_->p_ );
+        }
+        
     }
 
     // Load some scalars
@@ -1101,6 +1042,85 @@ void Checkpoint::restart_cFieldsPerProc( H5Read &g, Field *field )
 {
     cField *cfield = static_cast<cField *>( field );
     g.vect( field->name, *cfield->cdata_, H5T_NATIVE_DOUBLE );
+}
+
+void Checkpoint::dumpParticles( H5Write& s, Particles &p )
+{
+    for( unsigned int i=0; i<p.Position.size(); i++ ) {
+        ostringstream my_name( "" );
+        my_name << "Position-" << i;
+        s.vect( my_name.str(), p.Position[i] );//, dump_deflate );
+    }
+    
+    for( unsigned int i=0; i<p.Momentum.size(); i++ ) {
+        ostringstream my_name( "" );
+        my_name << "Momentum-" << i;
+        s.vect( my_name.str(),p.Momentum[i] );//, dump_deflate );
+    }
+    
+    s.vect( "Weight", p.Weight );//, dump_deflate );
+    s.vect( "Charge", p.Charge );//, dump_deflate );
+    
+    if( p.tracked ) {
+        s.vect( "Id", p.Id, H5T_NATIVE_UINT64 );//, dump_deflate );
+    }
+    
+    // Monte-Carlo process
+    if( p.has_Monte_Carlo_process ) {
+        s.vect( "Tau", p.Tau );//, dump_deflate );
+    }
+    
+    // Copy interpolated fields that must be accumulated over time
+    if( p.interpolated_fields_ ) {
+        if( p.interpolated_fields_->mode_[6] == 2 ) {
+            s.vect( "Wx", p.interpolated_fields_->F_[6] );
+        }
+        if( p.interpolated_fields_->mode_[7] == 2 ) {
+            s.vect( "Wy", p.interpolated_fields_->F_[7] );
+        }
+        if( p.interpolated_fields_->mode_[8] == 2 ) {
+            s.vect( "Wz", p.interpolated_fields_->F_[8] );
+        }
+    }
+}
+
+void Checkpoint::restartParticles( H5Read& s, Particles &p )
+{
+    for( unsigned int i=0; i<p.Position.size(); i++ ) {
+        ostringstream my_name( "" );
+        my_name << "Position-" << i;
+        s.vect( my_name.str(), p.Position[i] );
+    }
+    
+    for( unsigned int i=0; i<p.Momentum.size(); i++ ) {
+        ostringstream my_name( "" );
+        my_name << "Momentum-" << i;
+        s.vect( my_name.str(), p.Momentum[i] );
+    }
+    
+    s.vect( "Weight", p.Weight );
+    s.vect( "Charge", p.Charge );
+    
+    if( p.tracked ) {
+        s.vect( "Id", p.Id, H5T_NATIVE_UINT64 );
+    }
+    
+    if( p.has_Monte_Carlo_process ) {
+        s.vect( "Tau", p.Tau );
+    }
+    
+    // Retrieve interpolated fields that must be accumulated over time
+    if( p.interpolated_fields_ ) {
+        if( p.interpolated_fields_->mode_[6] == 2 ) {
+            s.vect( "Wx", p.interpolated_fields_->F_[6] );
+        }
+        if( p.interpolated_fields_->mode_[7] == 2 ) {
+            s.vect( "Wy", p.interpolated_fields_->F_[7] );
+        }
+        if( p.interpolated_fields_->mode_[8] == 2 ) {
+            s.vect( "Wz", p.interpolated_fields_->F_[8] );
+        }
+    }
 }
 
 void Checkpoint::dumpMovingWindow( H5Write &f, SimWindow *simWin )

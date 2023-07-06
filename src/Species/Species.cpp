@@ -81,7 +81,6 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_( false ),
     position_initialization_on_species_index_( -1 ),
     electron_species( NULL ),
-    electron_species_index( -1 ),
     photon_species_( nullptr ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
@@ -407,42 +406,21 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
-
     delete particles;
     delete particles_to_move;
-
+    
     delete Push;
     delete Interp;
     delete Proj;
-
-    if( Merge ) {
-        delete Merge;
-    }
-
-    if( Ionize ) {
-        delete Ionize;
-    }
-    if( Radiate ) {
-        delete Radiate;
-    }
-    if( part_comp_time_ ) {
-        delete part_comp_time_;
-    }
-    if( Multiphoton_Breit_Wheeler_process ) {
-        delete Multiphoton_Breit_Wheeler_process;
-    }
-    if( partBoundCond ) {
-        delete partBoundCond;
-    }
-    if( particles_per_cell_profile_ ) {
-        delete particles_per_cell_profile_;
-    }
-    if( charge_profile_ ) {
-        delete charge_profile_;
-    }
-    if( density_profile_ ) {
-        delete density_profile_;
-    }
+    delete Merge;
+    delete Ionize;
+    delete Radiate;
+    delete part_comp_time_;
+    delete Multiphoton_Breit_Wheeler_process;
+    delete partBoundCond;
+    delete particles_per_cell_profile_;
+    delete charge_profile_;
+    delete density_profile_;
     for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
         delete velocity_profile_[i];
     }
@@ -452,17 +430,13 @@ Species::~Species()
     if( ionization_rate_!=Py_None ) {
         Py_DECREF( ionization_rate_ );
     }
-
-    if (radiated_photons_) {
-        delete radiated_photons_;
-    }
-
+    delete radiated_photons_;
     for (int k=0 ; k<2 ; k++) {
-        if (mBW_pair_particles_[k]) {
-            delete mBW_pair_particles_[k];
-        }
+        delete mBW_pair_particles_[k];
     }
-
+    
+    delete birth_records_;
+    
 #ifdef _OMPTASKS
     if (nrj_lost_per_bin != NULL){
         delete[] nrj_lost_per_bin;
@@ -1496,34 +1470,25 @@ void Species::dynamicsImportParticles( double time_dual, Params &params, Patch *
 {
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
-        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags, time_dual, Ionize );
     }
 
     // if moving particle
-    if( time_dual>time_frozen_ ) { // moving particle
+    if( time_dual>time_frozen_ ) {
 
-        // Radiation losses
-        if( Radiate ) {
-            // If creation of macro-photon, we add them to photon_species
-            if( photon_species_ ) {
-                photon_species_->importParticles( params,
-                                                 patch,
-                                                 *radiated_photons_,
-                                                 localDiags );
-            }
+        // Radiation losses: If creation of macro-photon, we add them to photon_species
+        if( Radiate && photon_species_ ) {
+            photon_species_->importParticles( params, patch, *radiated_photons_, localDiags, time_dual );
         }
 
         // Multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
             // Addition of the electron-positron particles
             for( int k=0; k<2; k++ ) {
-                mBW_pair_species_[k]->importParticles( params,
-                                                      patch,
-                                                      *mBW_pair_particles_[k],
-                                                      localDiags );
+                mBW_pair_species_[k]->importParticles( params, patch, *mBW_pair_particles_[k], localDiags, time_dual );
             }
         }
-    }//END if time vs. time_frozen_
+    }
 }
 
 
@@ -1903,7 +1868,7 @@ void Species::countSortParticles( Params &params )
 }
 
 // Move all particles from another species to this one
-void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
+void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags, double time_dual, Ionization *I )
 {
     unsigned int npart = source_particles.size();
     unsigned int nbin  = particles->numberOfBins();
@@ -1913,7 +1878,12 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     if( particles->tracked ) {
         dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
     }
-
+    
+    // If there is a diagnostic for recording particle birth, then copy new particles to the buffer
+    if( birth_records_ ) {
+        birth_records_->update( source_particles, npart, time_dual, I );
+    }
+    
     // Move particles
     vector<int> src_bin_keys( npart, 0 );
     for( unsigned int i=0; i<npart; i++ ) {

@@ -242,6 +242,10 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             
                 }
 
+                if( save_ion_charge_ ) {
+                    ion_charge_.push_back( particles->charge( ipart ) );
+                }
+                
                 // weight and charge of the new electron
                 new_electrons.weight( idNew )= particles->weight( ipart );
                 new_electrons.charge( idNew )= -1;
@@ -302,6 +306,10 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             
                 }
 
+                if( save_ion_charge_ ) {
+                    ion_charge_per_bin_[ibin].push_back( particles->charge( ipart ) );
+                }
+                
                 // weight and charge of the new electron
                 new_electrons_per_bin[ibin].weight( idNew )=particles->weight( ipart );
                 new_electrons_per_bin[ibin].charge( idNew )=-1;

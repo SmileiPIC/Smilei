@@ -412,15 +412,15 @@ public:
     void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, std::vector<std::vector<double>> &pold, size_t start, size_t n, size_t buffer_size, double mass_ );
 
     //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
-    void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
+    void getProperty( size_t iprop, std::vector<uint64_t> *&prop )
     {
         prop = uint64_prop_[iprop];
     }
-    void getProperty( unsigned int iprop, std::vector<short> *&prop )
+    void getProperty( size_t iprop, std::vector<short> *&prop )
     {
         prop = short_prop_[iprop];
     }
-    void getProperty( unsigned int iprop, std::vector<double> *&prop )
+    void getProperty( size_t iprop, std::vector<double> *&prop )
     {
         prop = double_prop_[iprop];
     }

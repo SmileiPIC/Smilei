@@ -10,12 +10,8 @@
 
 void Tools::printMemFootPrint( std::string tag )
 {
-
-    int val[4];
-    
     char filename[80];
     char sbuf[1024];
-    char *S;
     //long lmem;
     pid_t numpro;
     
@@ -31,26 +27,19 @@ void Tools::printMemFootPrint( std::string tag )
     }
     
     // Peak resident set size
-    S=strstr( sbuf, "VmRSS:" )+6;
-    val[1] = ( int )atoi( S );
+    int VmRSS = atoi( strstr( sbuf, "VmRSS:" )+6 );
     // Peak virtual memory usage
-    S=strstr( sbuf, "VmSize:" )+6;
-    val[2] = atoi( S );
+    // int VmSize = atoi( strstr( sbuf, "VmSize:" )+7 );
     
     std::cout << "=== Mem usage === " <<  std::setw( 20 ) << tag << "\t=== " << std::setw( 6 )
-              << "\t VmRSS  << " << ( int )( ( double )val[1]/1024. ) << " Mb" << std::endl;
+              << "\t VmRSS  << " << ( int )( ( double )VmRSS/1024. ) << " Mb" << std::endl;
               
 }
 
 double Tools::getMemFootPrint(int type_of_memory)
 {
-
-    int val[4];
-    
     char filename[80];
     char sbuf[1024];
-    char *S;
-    //long lmem;
     pid_t numpro;
     
     numpro = getpid();
@@ -70,17 +59,15 @@ double Tools::getMemFootPrint(int type_of_memory)
     }
     
     // Peak resident set size
+    int Vm = 0;
     if (type_of_memory == 0){
-        S=strstr( sbuf, "VmRSS:" )+6;
+        Vm = atoi( strstr( sbuf, "VmRSS:" )+6 );
     } else if (type_of_memory == 1){
-        S=strstr( sbuf, "VmHWM:" )+6;
+        Vm = atoi( strstr( sbuf, "VmHWM:" )+6 );
     } 
-
-    val[1] = ( int )atoi( S );
     
     // Return RSS in GB
-    return ( double )val[1]/1024./1024.;
-    
+    return ( double )Vm/1024./1024.;
 }
 
 

@@ -43,7 +43,7 @@ public:
     
     //! 1D
     H5Space( hsize_t size );
-    H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk = 0 );
+    H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk = 0, bool extendable = false );
     
     //! ND
     H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset = {}, std::vector<hsize_t> npoints = {}, std::vector<hsize_t> chunk = {} );
@@ -376,6 +376,12 @@ public:
                 H5Dread( id_, type, memspace->sid_, filespace->sid_, dxpl_, &v );
             }
         }
+    }
+    
+    // extend an open dataset (1D only) if it is extendable
+    void extend( hsize_t size )
+    {
+        H5Dset_extent( id_, &size );
     }
     
     //! Write a multi-dimensional array of uints

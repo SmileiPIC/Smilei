@@ -561,6 +561,15 @@ class DiagTrackParticles(SmileiComponent):
     filter = None
     attributes = ["x", "y", "z", "px", "py", "pz", "w"]
 
+class DiagNewParticles(SmileiComponent):
+    """Track diagnostic"""
+    name = ""
+    species = None
+    every = 0
+    flush_every = 1
+    filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz", "w"]
+
 class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
     every = 0

@@ -51,13 +51,6 @@ public:
     void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, Params &params );
     void restartPatch( Patch *patch, Params &params, H5Read &g );
     
-    //! restart field per proc
-    void restartFieldsPerProc( H5Read &g, Field *field );
-    void restart_cFieldsPerProc( H5Read &g, Field *field );
-    
-    //! load moving window parameters
-    void restartMovingWindow( H5Read &f, SimWindow *simWindow );
-    
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
     void dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params );
@@ -108,12 +101,17 @@ private:
     //! initialize the time zero of the simulation
     void initDumpCases();
     
-    //! dump field per proc
+    //! dump/restart field per proc
     void dumpFieldsPerProc( H5Write &g, Field *field );
     void dump_cFieldsPerProc( H5Write &g, Field *field );
-    
-    //! dump moving window parameters
+    void restartFieldsPerProc( H5Read &g, Field *field );
+    void restart_cFieldsPerProc( H5Read &g, Field *field );
+    //! dump/restart a particles object
+    void dumpParticles( H5Write& s, Particles &p );
+    void restartParticles( H5Read& s, Particles &p );
+    //! dump/restart moving window parameters
     void dumpMovingWindow( H5Write &f, SimWindow *simWindow );
+    void restartMovingWindow( H5Read &f, SimWindow *simWindow );
     
     //! function that returns elapsed time from creator (uses private var time_reference)
     //double time_seconds();
