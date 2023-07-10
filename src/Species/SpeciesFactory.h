@@ -1300,8 +1300,8 @@ public:
                 s.electron_species = patch->vecSpecies[s.electron_species_index];
                 s.Ionize->new_electrons.initialize( 0, *s.electron_species->particles );
 #ifdef _OMPTASKS
-                for (unsigned int ibin = 0 ; ibin < s->Nbins ; ibin++){
-                    s->Ionize->new_electrons_per_bin[ibin].initialize( 0, *s->electron_species->particles );
+                for (unsigned int ibin = 0 ; ibin < s.Nbins ; ibin++){
+                    s.Ionize->new_electrons_per_bin[ibin].initialize( 0, *s.electron_species->particles );
                 }
 #endif
                 s.Ionize->save_ion_charge_ = vector_species[i]->Ionize->save_ion_charge_;

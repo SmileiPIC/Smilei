@@ -24,7 +24,7 @@ Ionization::Ionization( Params &params, Species *species )
     
 #ifdef _OMPTASKS
     new_electrons_per_bin = new Particles[species->Nbins];
-    ion_charge_per_bin_.resize( species->Nbins, 0 );
+    ion_charge_per_bin_.resize( species->Nbins );
 #endif
 }
 
