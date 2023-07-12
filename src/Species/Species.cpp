@@ -690,53 +690,54 @@ void Species::dynamics( double time_dual,
 
         } //ibin
         
-        // Compression of the bins if necessary
-        if( Multiphoton_Breit_Wheeler_process ) {
+        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
+            
+            // Compression of the bins if necessary
+            if( Multiphoton_Breit_Wheeler_process ) {
 
-            patch->startFineTimer(6);
+                patch->startFineTimer(6);
 
-            // Remove Particles while keeping the first index of each bin
-            // Concerns as well the smpi buffers
-            removeTaggedParticlesPerBin(smpi, ithread, false);
+                // Remove Particles while keeping the first index of each bin
+                // Concerns as well the smpi buffers
+                removeTaggedParticlesPerBin(smpi, ithread, false);
 
-            // Delete the gap between the bins
-            // Concerns as well the smpi buffers
-            compress(smpi, ithread, true);
+                // Delete the gap between the bins
+                // Concerns as well the smpi buffers
+                compress(smpi, ithread, true);
 
-            patch->stopFineTimer(6);
+                patch->stopFineTimer(6);
 
-        }
-        
-        
+            }
+            
+            
 // #ifdef  __DETAILED_TIMERS
 //             timer = MPI_Wtime();
 // #endif
-        patch->startFineTimer(1);
+            patch->startFineTimer(1);
 
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
 
-        size_t start = 0, stop = particles->size(), n = stop - start;
-        vector<vector<double>> pold;
-        particles->prepareInterpolatedFields( pold, start, n );
+            size_t start = 0, stop = particles->size(), n = stop - start;
+            vector<vector<double>> pold;
+            particles->prepareInterpolatedFields( pold, start, n );
 
-        // Push the particles and the photons
-        ( *Push )( *particles, smpi, start, stop, ithread );
-        //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
-        
-        // Copy interpolated fields to persistent buffers if requested
-        if( particles->interpolated_fields_ ) {
-            particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), pold, start, n, smpi->getBufferSize(ithread), mass_ );
-        }
-        
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, start, stop, ithread );
+            //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+            
+            // Copy interpolated fields to persistent buffers if requested
+            if( particles->interpolated_fields_ ) {
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), pold, start, n, smpi->getBufferSize(ithread), mass_ );
+            }
+            
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
-        patch->stopFineTimer(1);
+            patch->stopFineTimer(1);
 
 // #ifdef  __DETAILED_TIMERS
 //                 patch->patch_timers_[1] += MPI_Wtime() - timer;
 // #endif
 
-        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 double energy_lost( 0. );
 
