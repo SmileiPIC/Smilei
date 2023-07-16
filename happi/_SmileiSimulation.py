@@ -1,4 +1,4 @@
-from ._Factories import ScalarFactory, FieldFactory, ProbeFactory, ParticleBinningFactory, RadiationSpectrumFactory, PerformancesFactory, ScreenFactory, TrackParticlesFactory
+from ._Factories import ScalarFactory, FieldFactory, ProbeFactory, ParticleBinningFactory, RadiationSpectrumFactory, PerformancesFactory, ScreenFactory, TrackParticlesFactory, NewParticlesFactory
 from ._Utils import *
 
 
@@ -109,6 +109,7 @@ class SmileiSimulation(object):
 			self.Performances = PerformancesFactory(self)
 			self.Screen = ScreenFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
+			self.NewParticles = NewParticlesFactory(self)
 			
 	def _openNamelist(self, path):
 		# empty class to store the namelist variables
@@ -270,15 +271,23 @@ class SmileiSimulation(object):
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
 	
-	def getTrackSpecies(self):
-		""" List the available tracked species """
+	def _getParticleListSpecies(self, filePrefix):
+		""" List the available species in diagnostics of type ParticleList """
 		species = []
 		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"TrackParticles*.h5")
+			files = self._glob(path+self._os.sep+filePrefix+"*.h5")
 			for file in files:
-				s = self._re.search("^TrackParticlesDisordered_(.+).h5",self._os.path.basename(file))
+				s = self._re.search("^"+filePrefix+"_(.+).h5",self._os.path.basename(file))
 				if s: species += [ s.groups()[0] ]
 		return list(set(species)) # unique species
+	
+	def getTrackSpecies(self):
+		""" List the available tracked species """
+		return self._getParticleListSpecies("TrackParticlesDisordered")
+	
+	def getNewParticlesSpecies(self):
+		""" List the available NewParticles species """
+		return self._getParticleListSpecies("NewParticles")
 	
 	def fieldInfo(self, diag):
 		""" Information on a specific Field diagnostic

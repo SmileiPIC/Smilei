@@ -53,6 +53,12 @@ private :
     
     //! Number of particles previously written in the file
     hsize_t nParticles_written = 0;
+    
+    //! Number of times the file was previously written
+    hsize_t nTimes_written = 0;
+    
+    //! Storage for the number of particles at each output iteration
+    H5Write * iteration_npart_ = nullptr;
 };
 
 #endif

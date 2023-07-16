@@ -139,13 +139,21 @@ H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk, 
 }
 
 //! ND
-H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::vector<hsize_t> npoints, std::vector<hsize_t> chunk ) {
+H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::vector<hsize_t> npoints, std::vector<hsize_t> chunk, std::vector<bool> extendable ) {
     dims_ = size;
     global_ = 1;
     for( unsigned int i=0; i<size.size(); i++ ) {
         global_ *= size[i];
     }
-    sid_ = H5Screate_simple( size.size(), &size[0], NULL );
+    if( extendable.empty() ) {
+        sid_ = H5Screate_simple( size.size(), &size[0], NULL );
+    } else {
+        std::vector<hsize_t> maxsize( size.size() );
+        for( size_t i = 0; i < size.size(); i++ ) {
+            maxsize[i] = extendable[i] ? H5S_UNLIMITED : size[i];
+        }
+        sid_ = H5Screate_simple( size.size(), &size[0], &maxsize[0] );
+    }
     if( global_ <= 0 ) {
         H5Sselect_none( sid_ );
     } else if( ! offset.empty() || ! npoints.empty() ) {

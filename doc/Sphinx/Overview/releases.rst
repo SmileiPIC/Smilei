@@ -67,7 +67,7 @@ Changes made in the repository (not released)
   * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
   * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
   * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
-  * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization and other mechanisms
+  * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization or other mechanisms
 
 * **For developers**: new table management for Monte-Carlo physical processes (transparent to users)
 

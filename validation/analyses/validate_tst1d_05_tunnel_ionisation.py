@@ -97,14 +97,9 @@ Validate("Track electron x", d["x"][keep][order][::200], 1e-4)
 Validate("Track electron Wy", gaussian_filter(maximum_filter1d(d["Wy"][keep][order],20),200)[::200], 1e-5)
 
 # NEW PARTICLES DIAGNOSTIC
-t = []
-q = []
-for file in glob("./restart*/NewParticles_electron.h5"):
-	with File(file) as f:
-		t += [ f["data/0/particles/electron/birth_time"][()] ]
-		q += [ f["data/0/particles/electron/charge"][()] ]
-t = np.hstack( t )
-q = np.hstack( q )
+d = S.NewParticles.electron().get()
+t = d["t"]
+q = d["q"]
 Validate("DiagNewParticles: number of particles", t.size, 5. )
 tavg = [np.mean(t[q==i]) for i in [0,1,2,3]]
 Validate("DiagNewParticles: time vs ionization state", tavg, 0.01 )

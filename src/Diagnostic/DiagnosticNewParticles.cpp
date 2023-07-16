@@ -34,7 +34,7 @@ DiagnosticNewParticles::~DiagnosticNewParticles()
     closeFile();
 }
 
-void DiagnosticNewParticles::openFile( Params &, SmileiMPI *smpi )
+void DiagnosticNewParticles::openFile( Params &params, SmileiMPI *smpi )
 {
     // Create HDF5 file
     file_ = new H5Write( filename, &smpi->world() );
@@ -130,6 +130,11 @@ void DiagnosticNewParticles::openFile( Params &, SmileiMPI *smpi )
     loc_birth_time_ = newDataset( species_group, "birth_time", H5T_NATIVE_DOUBLE, file_space, SMILEI_UNIT_TIME );
     openPMD_->writeRecordAttributes( *loc_birth_time_, SMILEI_UNIT_TIME );
     
+    // Make a dataset supposed to contain the number of particles written at every output iteration
+    hsize_t ntimes = timeSelection->howManyTimesBefore( params.n_time ) + 1;
+    H5Space fs( {0, 2}, {0, 0}, {0, 2}, {ntimes, 2}, {true, false} );
+    iteration_npart_ = new H5Write( file_, "iteration_npart", H5T_NATIVE_INT64, &fs );
+    
     file_->flush();
 }
 
@@ -146,8 +151,9 @@ void DiagnosticNewParticles::closeFile()
         for( auto d : loc_B_ ) delete d;
         for( auto d : loc_W_ ) delete d;
         delete loc_birth_time_;
+        delete iteration_npart_;
         delete file_;
-        file_ = NULL;
+        file_ = nullptr;
     }
 }
 
@@ -158,7 +164,7 @@ void DiagnosticNewParticles::init( Params &params, SmileiMPI *smpi, VectorPatch 
 }
 
 
-H5Space * DiagnosticNewParticles::prepareH5( SimWindow *, SmileiMPI *, int /*itime*/, uint32_t nParticles_local, uint64_t nParticles_global, uint64_t offset )
+H5Space * DiagnosticNewParticles::prepareH5( SimWindow *, SmileiMPI *smpi, int itime, uint32_t nParticles_local, uint64_t nParticles_global, uint64_t offset )
 {
     // Resize datasets
     hsize_t new_size = nParticles_written + nParticles_global;
@@ -210,6 +216,15 @@ H5Space * DiagnosticNewParticles::prepareH5( SimWindow *, SmileiMPI *, int /*iti
             }
         }
     }
+    // update iteration_npart_
+    if( smpi->isMaster() ) {
+        iteration_npart_->extend( {nTimes_written+1, 2} );
+        H5Space filespace( {nTimes_written+1, 2}, {nTimes_written, 0}, {1, 2} );
+        H5Space memspace( 2 );
+        uint64_t i_n[2] = { (uint64_t) itime, new_size };
+        iteration_npart_->write( i_n[0], H5T_NATIVE_UINT64, &filespace, &memspace, true );
+    }
+    nTimes_written += 1;
     
     // Filespace
     hsize_t full_offset = nParticles_written + offset;
