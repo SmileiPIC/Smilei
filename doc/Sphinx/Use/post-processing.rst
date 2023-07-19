@@ -402,6 +402,8 @@ Open a TrackParticles diagnostic
 
 ----
 
+.. rst-class:: experimental
+
 Open a NewParticles diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
