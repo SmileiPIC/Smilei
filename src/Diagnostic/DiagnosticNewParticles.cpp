@@ -217,8 +217,8 @@ H5Space * DiagnosticNewParticles::prepareH5( SimWindow *, SmileiMPI *smpi, int i
         }
     }
     // update iteration_npart_
+    iteration_npart_->extend( {nTimes_written+1, 2} );
     if( smpi->isMaster() ) {
-        iteration_npart_->extend( {nTimes_written+1, 2} );
         H5Space filespace( {nTimes_written+1, 2}, {nTimes_written, 0}, {1, 2} );
         H5Space memspace( 2 );
         uint64_t i_n[2] = { (uint64_t) itime, new_size };
