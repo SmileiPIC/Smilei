@@ -81,7 +81,7 @@ public:
     }
 
     //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & )override;
+    void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> &, double, Ionization *I = nullptr )override;
 
     //! Method performing the merging of particles
     virtual void mergeParticles( double time_dual )override;

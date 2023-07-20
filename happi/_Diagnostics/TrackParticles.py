@@ -1,4 +1,5 @@
 from .Diagnostic import Diagnostic
+from .ParticleList import ParticleList
 from .._Utils import *
 
 # Define a function that finds the next closing character in a string
@@ -19,11 +20,13 @@ def findClosingCharacter(string, character, start=0):
 	raise Exception("Error in selector syntax: missing `"+character+"`")
 
 
-class TrackParticles(Diagnostic):
+class TrackParticles(ParticleList):
 	"""Class for loading a TrackParticles diagnostic"""
-
+	
+	_diagType = "TrackParticles"
+	
 	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, sorted_as="", length=None, chunksize=20000000, **kwargs):
-
+		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
 			species = self.simulation.getTrackSpecies()
@@ -47,14 +50,7 @@ class TrackParticles(Diagnostic):
 		# -------------------------------------------------------------------
 		self.species  = species
 		self._h5items = {}
-		disorderedfiles = self._findDisorderedFiles()
-		self._short_properties_from_raw = {
-			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
-			"charge":"q", "weight":"w", "chi":"chi",
-			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz",
-			"W/x":"Wx", "W/y":"Wy", "W/z":"Wz"
-		}
+		disorderedfiles = self._findFiles("TrackParticlesDisordered")
 		
 		# Get x_moved and add moving_x in the list of properties
 		self._XmovedForTime = {}
@@ -64,7 +60,7 @@ class TrackParticles(Diagnostic):
 					x_moved = val.attrs.get("x_moved")
 					if x_moved is not None:
 						self._XmovedForTime[int(t)] = x_moved
-		extra_properties = ["moving_x"] if self._XmovedForTime else []
+		extra_properties = {"moving_x"} if self._XmovedForTime else set()
 		
 		# If sorting allowed, find out if ordering needed
 		needsOrdering = False
@@ -110,7 +106,7 @@ class TrackParticles(Diagnostic):
 				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.items()}
 				f, _ = next(iter(self._locationForTime.values()))
 				T0 = next(iter(f["data"].values()))["particles/"+self.species]
-			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0] + extra_properties
+			self.available_properties = {v for k,v in self._short_properties_from_raw.items() if k in T0} | extra_properties
 		
 		# If sorting allowed, then do the sorting
 		if sort:
@@ -125,7 +121,7 @@ class TrackParticles(Diagnostic):
 			             "Ex", "Ey", "Ez", "Bx", "By", "Bz", "Wx", "Wy", "Wz"]:
 				if prop in self._lastfile:
 					self._h5items[prop] = self._lastfile[prop]
-			self.available_properties = list(self._h5items.keys()) + extra_properties
+			self.available_properties = set(self._h5items.keys()) | extra_properties
 			# Memorize the locations of timesteps in the files
 			self._locationForTime = {t:it for it, t in enumerate(self._lastfile["Times"])}
 			self._timesteps = self._np.array(sorted(self._lastfile["Times"]))
@@ -169,69 +165,7 @@ class TrackParticles(Diagnostic):
 			if self._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
 
 		# Manage axes
-		# -------------------------------------------------------------------
-		if type(axes) is not list:
-			raise Exception("Error: Argument 'axes' must be a list")
-		# if axes provided, verify them
-		if len(axes)>0:
-			self.axes = axes
-			for axis in axes:
-				if axis not in self.available_properties:
-					raise Exception(
-						"Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
-						+ "       Available axes are: "+(", ".join(sorted(self.available_properties)))
-					)
-		# otherwise use default
-		else:
-			self.axes = self.available_properties
-		
-		
-		# Then figure out axis units
-		self._type = self.axes
-		self._factors = []
-		for axis in self.axes:
-			axisunits = ""
-			if axis == "Id":
-				self._centers.append( [0, 281474976710655] )
-			elif axis in ["x" , "y" , "z", "moving_x"]:
-				axisunits = "L_r"
-				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":-1}[axis[-1]]]] )
-			elif axis in ["px", "py", "pz"]:
-				axisunits = "P_r"
-				self._centers.append( [-1., 1.] )
-			elif axis == "w":
-				axisunits = "N_r * L_r^%i" % self._ndim_particles
-				self._centers.append( [0., 1.] )
-			elif axis == "q":
-				axisunits = "Q_r"
-				self._centers.append( [-10., 10.] )
-			elif axis == "chi":
-				axisunits = "1"
-				self._centers.append( [0., 2.] )
-			elif axis[0] == "E":
-				axisunits = "E_r"
-				self._centers.append( [-1., 1.] )
-			elif axis[0] == "B":
-				axisunits = "B_r"
-				self._centers.append( [-1., 1.] )
-			elif axis[0] == "W":
-				axisunits = "K_r"
-				self._centers.append( [0., 1.] )
-			self._log += [False]
-			self._label += [axis]
-			self._units += [axisunits]
-			if axis == "Id":
-				self._factors += [1]
-			else:
-				factor, _ = self.units._convert(axisunits, None)
-				self._factors += [factor]
-		self._title = "Track particles '"+species+"'"
-		self._shape = [0]*len(self.axes)
-		self._centers = [self._np.array(c) for c in self._centers]
-
-		# Hack to work with 1 axis
-		if len(axes)==1: self._vunits = self._units[0]
-		else: self._vunits = ""
+		self._initAxes(axes)
 
 		# Set the directory in case of exporting
 		self._exportPrefix = "TrackParticles_"+self.species+"_"+"".join(self.axes)
@@ -451,17 +385,6 @@ class TrackParticles(Diagnostic):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		return self._alltimesteps
-
-	# Get a list of disordered files
-	def _findDisorderedFiles(self):
-		disorderedfiles = []
-		for path in self._results_path:
-			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
-			if self._os.path.isfile(file):
-				disorderedfiles += [file]
-		if not disorderedfiles:
-			raise Exception("No TrackParticles files")
-		return disorderedfiles
 
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, fileOrdered, chunksize, sort ):
@@ -704,9 +627,6 @@ class TrackParticles(Diagnostic):
 					data[t][axis] = self._rawData[t][axis] * factor
 		return data
 
-	def get(self):
-		return self.getData()
-
 	# Iterator on UNSORTED particles for a given timestep
 	def iterParticles(self, timestep, chunksize=1):
 		if not self._validate(): return
@@ -719,7 +639,7 @@ class TrackParticles(Diagnostic):
 		properties = {"moving_x":"x"}
 		properties.update( self._raw_properties_from_short )
 
-		disorderedfiles = self._findDisorderedFiles()
+		disorderedfiles = self._findFiles("TrackParticlesDisordered")
 		for file in disorderedfiles:
 			f = self._h5py.File(file, "r")
 			# This is the timestep for which we want to produce an iterator

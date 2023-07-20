@@ -135,13 +135,13 @@ void SpeciesVAdaptiveMixedSort::resizeCluster( Params &params )
 // 
 // }
 
-void SpeciesVAdaptiveMixedSort::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
+void SpeciesVAdaptiveMixedSort::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags, double time_dual, Ionization *I )
 {
 
     if( vectorized_operators ) {
-        importParticles( params, patch, source_particles, localDiags );
+        importParticles( params, patch, source_particles, localDiags, time_dual, I );
     } else {
-        Species::importParticles( params, patch, source_particles, localDiags );
+        Species::importParticles( params, patch, source_particles, localDiags, time_dual, I );
     }
 }
 

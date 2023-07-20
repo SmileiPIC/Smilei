@@ -170,6 +170,10 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
             
+            if( save_ion_charge_ ) {
+                ion_charge_.push_back( particles->charge( ipart ) );
+            }
+            
             // Increase the charge of the particle
             particles->charge( ipart ) += k_times;
         }
@@ -299,6 +303,10 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
             }
             new_electrons_per_bin[ibin].weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons_per_bin[ibin].charge( idNew )=-1;
+            
+            if( save_ion_charge_ ) {
+                ion_charge_per_bin_[ibin].push_back( particles->charge( ipart ) );
+            }
             
             // // Increase the charge of the particle
             particles->charge( ipart ) += k_times;

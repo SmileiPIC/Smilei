@@ -771,7 +771,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
             ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
             Species * injector_species = species( ipatch, particle_injector->getSpeciesNumber() );
-            injector_species->importParticles( params, patches_[ipatch], local_particles_vector[i_injector], localDiags );
+            injector_species->importParticles( params, patches_[ipatch], local_particles_vector[i_injector], localDiags, ( itime + 0.5 ) * params.timestep );
         }
         
     } // end for ipatch

@@ -148,11 +148,11 @@ void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
 // Finish the reaction
 void CollisionalNuclearReaction::finish(
     Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags,
-    bool intra_collisions, vector<unsigned int> sg1, vector<unsigned int> sg2, int
+    bool intra_collisions, vector<unsigned int> sg1, vector<unsigned int> sg2, int itime
 ) {
     // Move new particles in place
     for( unsigned int i=0; i<product_particles_.size(); i++ ) {
-        patch->vecSpecies[product_ispecies_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
+        patch->vecSpecies[product_ispecies_[i]]->importParticles( params, patch, *product_particles_[i], localDiags, ( itime + 0.5 ) * params.timestep );
     }
     
     // Remove reactants that have fully reacted (very rare)

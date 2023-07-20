@@ -1640,7 +1640,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 
 }
 
-void SpeciesV::importParticles( Params &params, Patch *, Particles &source_particles, vector<Diagnostic *> &localDiags )
+void SpeciesV::importParticles( Params &params, Patch *, Particles &source_particles, vector<Diagnostic *> &localDiags, double time_dual, Ionization *I )
 {
 
     unsigned int npart = source_particles.size(), ncells=particles->first_index.size();
@@ -1649,7 +1649,12 @@ void SpeciesV::importParticles( Params &params, Patch *, Particles &source_parti
     if( particles->tracked ) {
         dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
     }
-
+    
+    // If there is a diagnostic for recording particle birth, then copy new particles to the buffer
+    if( birth_records_ ) {
+        birth_records_->update( source_particles, npart, time_dual, I );
+    }
+    
     // compute cell keys of new parts
     vector<int> src_cell_keys( npart, 0 );
     vector<int> src_count( ncells, 0 );

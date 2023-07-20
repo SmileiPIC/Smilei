@@ -33,6 +33,12 @@ public:
     Particles new_electrons;
     Particles *new_electrons_per_bin;
     
+    //! Whether the initial charge (of the atom that was ionized) should be saved
+    bool save_ion_charge_ = false;
+    //! Temporarily contains the initial charge of the atom that was ionized
+    std::vector<short> ion_charge_;
+    std::vector<std::vector<short> > ion_charge_per_bin_;
+    
 protected:
 
     double eV_to_au;

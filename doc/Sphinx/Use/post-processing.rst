@@ -400,6 +400,28 @@ Open a TrackParticles diagnostic
   | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
 
 
+----
+
+.. rst-class:: experimental
+
+Open a NewParticles diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: NewParticles(species=None, select="", axes=[], units=[""], **kwargs)
+
+  * ``units``: same as before.
+  * ``species``: same as for ``TrackParticles``
+  * ``axes``: same as for ``TrackParticles``, with the addition of another axis ``t``
+    that represents the time when the particle was born.
+  * ``select``: Instructions for selecting particles among those available.
+    It must be a condition on particles properties ``axes``, for instance ``px>0``.
+    It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``~`` is *NOT*.
+    
+    | **Example:** ``select="(x>1)*(x<2)"``
+    
+    It is also possible to select directly a list of IDs.
+    
+    | **Example:** ``select=[ID1, ID2, ...]``
 
 ----
 

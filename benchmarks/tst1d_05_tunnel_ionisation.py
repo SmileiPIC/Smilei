@@ -117,3 +117,9 @@ DiagTrackParticles(
 	every = [1,1000,30],
 	attributes = ["x","px","py","pz","w","Wy"]
 )
+
+DiagNewParticles(
+	species = "electron",
+	every = 100,
+	attributes = ["x","py","w","q"],
+)

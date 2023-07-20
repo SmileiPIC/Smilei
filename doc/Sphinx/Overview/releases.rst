@@ -23,30 +23,34 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``LaserEnvelope`` model:
+* **LaserEnvelope model**:
 
   * Now compatible with ``PML`` boundaries
   * In ``AMcylindrical`` geometry, the number of modes can be greater than 1 (only affects electromagnetic
     fields and the densities, not envelope or susceptibility)
+  * multi-level tunnel ionization creates multiple electrons, improving the sampling
 
-* Much faster ``DiagFields`` (speedup ~ x3)
-* ``DiagFields`` and ``DiagProbe``: new parameter ``datatype``
-* ``DiagPerformances``: new parameter ``cumulative``
-* ``Collisions``: new parameter ``time_frozen``
-* Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
-* ``Species`` block: in ``AMcylindrical`` geometry now it is possible to define initial drift velocity profiles either in the longitudinal, radial and azimuthal directions with ``mean_velocity_AM`` or in the cartesian directions as usual with ``mean_velocity``.
-* Happi:
+* **Diagnostics**
+
+  * Much faster ``DiagFields`` (speedup ~ x3)
+  * ``DiagFields`` and ``DiagProbe``: new parameter ``datatype``
+  * ``DiagPerformances``: new parameter ``cumulative``
+
+* **Collisions**: new parameter ``time_frozen``
+* **Species**: in ``AMcylindrical`` geometry, the initial drift velocity profiles may be defined
+  either in the ``x,r,θ``  directions with ``mean_velocity_AM`` or in the ``x,y,z`` directions with ``mean_velocity``.
+
+* **Happi**:
 
   * operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,
     or basic functions such as ``exp()`` or ``sin()``
   * ``Probe`` has a new method ``changeField``
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
 
-* For developers: new table management for Monte-Carlo physical processes (transparent to users)
-* Friedman filter: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
-* ``Lehe`` solver for Maxwell equations now available in ``AMcylindrical`` geometry
+* **Friedman filter**: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
+* **Lehe solver** for Maxwell equations now available in ``AMcylindrical`` geometry
 
-* Bugfixes:
+* **Bugfixes**:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
@@ -58,11 +62,14 @@ Changes made in the repository (not released)
   * ``Field.getAxis`` was not accounting for the ``timestep``
   * Bug correction in 1D relativistic Poisson solver
 
-* Experimental
+* **Experimental**
 
   * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
   * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
   * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
+  * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization or other mechanisms
+
+* **For developers**: new table management for Monte-Carlo physical processes (transparent to users)
 
 ----
 

@@ -37,7 +37,8 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
-            "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
+            "DiagTrackParticles","DiagNewParticles","DiagPerformances",
+            "ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
             "Vectorization", "MultipleDecomposition"]:
@@ -159,9 +160,8 @@ def _keep_python_running():
     if len(LoadBalancing)>0 and len(MultipleDecomposition)>0:
         return True
     # Verify the tracked species that require a particle selection
-    for d in DiagTrackParticles:
-        if d.filter is not None:
-            return True
+    if any([d.filter for d in DiagTrackParticles]) or any([d.filter for d in DiagNewParticles]):
+        return True
     # Verify the particle binning having a function for deposited_quantity or axis type
     for d in DiagParticleBinning._list + DiagScreen._list:
         if type(d.deposited_quantity) is not str:
