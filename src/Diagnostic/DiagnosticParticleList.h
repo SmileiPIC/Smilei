@@ -52,8 +52,36 @@ public :
     virtual void writeOther( VectorPatch &, size_t, H5Space *, H5Space * ) {};
     
     //! Fills a buffer with the required particle property
-    template<typename T> void fill_buffer( VectorPatch &vecPatches, size_t iprop, std::vector<T> &buffer );
-    
+    template<typename T> void fill_buffer( VectorPatch &vecPatches, size_t iprop, std::vector<T> &buffer )
+    {
+        const size_t nPatches = vecPatches.size();
+        std::vector<T> *property = NULL;
+        
+        #pragma omp barrier
+        if( has_filter ) {
+            #pragma omp for schedule(runtime)
+            for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
+                const size_t patch_nParticles = patch_selection[ipatch].size();
+                getParticles( vecPatches( ipatch ) )->getProperty( iprop, property );
+                size_t i=0;
+                size_t j=patch_start[ipatch];
+                while( i < patch_nParticles ) {
+                    buffer[j] = ( *property )[patch_selection[ipatch][i]];
+                    i++;
+                    j++;
+                }
+            }
+        } else {
+            #pragma omp for schedule(runtime)
+            for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
+                Particles * p = getParticles( vecPatches( ipatch ) );
+                const size_t patch_nParticles = p->numberOfParticles();
+                p->getProperty( iprop, property );
+                std::copy( property->begin(), property->begin() + patch_nParticles, buffer.begin() + patch_start[ipatch] );
+            }
+        }
+    };   
+
     //! Write a dataset
     virtual void write_scalar_uint64( H5Write * location, std::string name, uint64_t &, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) = 0;
     virtual void write_scalar_short ( H5Write * location, std::string name, short    &, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) = 0;

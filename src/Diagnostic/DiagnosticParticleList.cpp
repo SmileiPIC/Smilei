@@ -449,33 +449,3 @@ void DiagnosticParticleList::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
     #pragma omp barrier
 }
 
-template<typename T>
-void DiagnosticParticleList::fill_buffer( VectorPatch &vecPatches, size_t iprop, vector<T> &buffer )
-{
-    unsigned int patch_nParticles, i, j, nPatches=vecPatches.size();
-    vector<T> *property = NULL;
-    
-    #pragma omp barrier
-    if( has_filter ) {
-        #pragma omp for schedule(runtime)
-        for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
-            patch_nParticles = patch_selection[ipatch].size();
-            getParticles( vecPatches( ipatch ) )->getProperty( iprop, property );
-            i=0;
-            j=patch_start[ipatch];
-            while( i<patch_nParticles ) {
-                buffer[j] = ( *property )[patch_selection[ipatch][i]];
-                i++;
-                j++;
-            }
-        }
-    } else {
-        #pragma omp for schedule(runtime)
-        for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
-            Particles * p = getParticles( vecPatches( ipatch ) );
-            patch_nParticles = p->numberOfParticles();
-            p->getProperty( iprop, property );
-            copy( property->begin(), property->begin() + patch_nParticles, buffer.begin() + patch_start[ipatch] );
-        }
-    }
-}
