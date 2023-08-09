@@ -258,7 +258,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: $(PYHEADERS) $(DEPS) $(EXEC) $(EXEC)_test
 
 #-----------------------------------------------------
 # Header
@@ -341,19 +341,9 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 	$(Q) $(SMILEICXX) $(OBJS:Smilei.o=Smilei_test.o) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
-# Avoid to check dependencies and to create .pyh if not necessary
-FILTER_RULES=clean distclean help env debug doc tar happi uninstall_happi
-ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
-    ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),)
-        # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
-        -include $(DEPS) pygenerator
-        # and pygenerator will create all the $(PYHEADERS) (which are files)
-        pygenerator : $(PYHEADERS)
-    endif
-endif
 
 # these are not file-related rules
-.PHONY: pygenerator $(FILTER_RULES)
+.PHONY: clean distclean help env debug doc tar happi uninstall_happi
 
 #-----------------------------------------------------
 # Doc rules
