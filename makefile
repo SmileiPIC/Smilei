@@ -258,7 +258,7 @@ endif
 
 EXEC = smilei
 
-default: $(PYHEADERS) $(DEPS) $(EXEC) $(EXEC)_test
+default: $(PYHEADERS) $(EXEC) $(EXEC)_test
 
 #-----------------------------------------------------
 # Header
@@ -298,10 +298,10 @@ $(BUILD_DIR)/%.pyh: %.py
 	$(Q) $(PYTHONEXE) scripts/compile_tools/hexdump.py "$<" "$@"
 
 # Calculate dependencies
-$(BUILD_DIR)/%.d: %.cpp
-	@echo "Checking dependencies for $<"
+$(BUILD_DIR)/%.d: $(PYHEADERS) %.cpp
+	@echo "Checking dependencies for $@"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $*.cpp
 
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
@@ -341,9 +341,15 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 	$(Q) $(SMILEICXX) $(OBJS:Smilei.o=Smilei_test.o) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
-
 # these are not file-related rules
-.PHONY: clean distclean help env debug doc tar happi uninstall_happi
+PHONY_RULES=clean distclean help env debug doc tar happi uninstall_happi
+.PHONY: $(PHONY_RULES)
+
+# Check dependencies only when necessary
+GOALS = $(if $(MAKECMDGOALS), $(MAKECMDGOALS), default)
+ifneq ($(filter-out $(PHONY_RULES) print-%, $(GOALS)),)
+    -include $(DEPS)
+endif
 
 #-----------------------------------------------------
 # Doc rules
