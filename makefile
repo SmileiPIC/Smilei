@@ -299,7 +299,7 @@ $(BUILD_DIR)/%.pyh: %.py
 
 # Calculate dependencies
 $(BUILD_DIR)/%.d: $(PYHEADERS) %.cpp
-	@echo "Checking dependencies for $@"
+	@echo "Checking dependencies for $*.cpp"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $*.cpp
 
