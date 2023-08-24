@@ -152,7 +152,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const double *const __restrict__ By2D = static_cast<Field2D *>( EMfields->By_m )->data();
     const double *const __restrict__ Bz2D = static_cast<Field2D *>( EMfields->Bz_m )->data();
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined(SMILEI_OPENACC_MODE)    //( SMILEI_ACCELERATOR_GPU_OMP )
     const int sizeofEx = EMfields->Ex_->size();
     const int sizeofEy = EMfields->Ey_->size();
     const int sizeofEz = EMfields->Ez_->size();
@@ -171,9 +171,9 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const int last_index  = *iend;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    const int npart_range_size            = last_index - first_index;
-    const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
-    const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
+    //const int npart_range_size            = last_index - first_index;
+    //const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
+    //const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
 
     #pragma omp target map( to                                                     \
                             : i_domain_begin, j_domain_begin )                     \
@@ -181,6 +181,23 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                   position_x /* [first_index:npart_range_size] */, \
                                   position_y /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc enter data create(this)
+    #pragma acc update device(this)
+    size_t interpolation_range_size = ( last_index + 1 * nparts ) - first_index;
+    #pragma acc parallel present(ELoc [first_index:interpolation_range_size],\
+                                 BLoc [first_index:interpolation_range_size],\
+                                 iold [first_index:interpolation_range_size],\
+                                 delta [first_index:interpolation_range_size],\
+                                 Ex2D [0:sizeofEx],\
+                                 Ey2D [0:sizeofEy],\
+                                 Ez2D [0:sizeofEz],\
+                                 Bx2D [0:sizeofBx],\
+                                 By2D [0:sizeofBy],\
+                                 Bz2D [0:sizeofBz])\
+    deviceptr(position_x, position_y)              \
+    copyin(d_inv_[0:2])
+    #pragma acc loop gang worker vector
 #endif
     for( int ipart = first_index; ipart < last_index; ipart++ ) {
         // Interpolation on current particle
@@ -217,6 +234,9 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         delta[1*nparts+ipart] = delta_p[1];
         
     }
+    #if defined(SMILEI_OPENACC_MODE)
+        #pragma acc exit data delete(this)
+    #endif
 }
 
 // -----------------------------------------------------------------------------

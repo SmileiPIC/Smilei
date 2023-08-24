@@ -78,7 +78,7 @@ protected:
     double dt;
     double dts2;
     double dts4;
-    int    pxr;
+    int    not_spectral;
     unsigned int x_dimension_bin_count_;
     unsigned int y_dimension_bin_count_;
 };

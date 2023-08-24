@@ -4,21 +4,27 @@
 // includes, you must `touch` this file. IF you dont do that you'll have ABI/ODR
 // issues (!).
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+//#if defined( SMILEI_ACCELERATOR_GPU_OMP )
 
-    //! Simple switch to jump between the reference (omp) implementation and the
-    //! hip one.
-    //! NOTE: If you wanna use the OMP version, you must rename this file to
-    //! .cpp instead of .cu for the HIP. The preprocessor and the Smilei
-    //! makefile will take care of the rest.
-    //!
-    #if defined( __HIP__ )
-    // HIP compiler support enabled (for .cu files)
+
+#if defined( __HIP__ ) 
+    #include <hip/hip_runtime.h>
+#elif defined( __NVCC__ )
+    #include <cuda_runtime.h>
+    #include <cuda.h>
+#endif
+
+#include "Params.h"
+#include "gpu.h"
+#include <iostream>
+
+#if defined( __HIP__ )
+  // HIP compiler support enabled (for .cu files)
     #else
         #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
     #endif
 
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+   #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
         #include <cmath>
 
         #include "Tools.h"
@@ -29,397 +35,399 @@
         #include "gpu.h"
     #endif
 
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 
-namespace naive {
+//namespace naive {
+//
+//    void //static inline void
+//    currentDepositionKernel2D( double     *__restrict__ Jx,
+//                             double       *__restrict__ Jy,
+//                             double       *__restrict__ Jz,
+//                             int Jx_size,
+//                             int Jy_size,
+//                             int Jz_size,
+//                             const double *__restrict__ device_particle_position_x,
+//                             const double *__restrict__ device_particle_position_y,
+//                             const double *__restrict__ device_particle_momentum_z,
+//                             const short  *__restrict__ device_particle_charge,
+//                             const double *__restrict__ device_particle_weight,
+//                             const int    *__restrict__ host_bin_index,
+//                             unsigned int x_dimension_bin_count,
+//                             unsigned int y_dimension_bin_count,
+//                             const double *__restrict__ invgf_,
+//                             const int *__restrict__ iold_,
+//                             const double *__restrict__ deltaold_,
+//                             double inv_cell_volume,
+//                             double dx_inv,
+//                             double dy_inv,
+//                             double dx_ov_dt,
+//                             double dy_ov_dt,
+//                             int    i_domain_begin,
+//                             int    j_domain_begin,
+//                             int    nprimy,
+//                             int    not_spectral )
+//    {
+//        // The OMP implementation is NOT bin aware. As per the precondition on
+//        // host_bin_index, index zero always contains the number of particles.
+//        // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
+//        const unsigned int bin_count      = 1;
+//        const int          particle_count = host_bin_index[bin_count - 1];
+//
+//        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+//            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
+//                                                         device_particle_position_x /* [0:particle_count] */, \
+//                                                         device_particle_position_y /* [0:particle_count] */, \
+//                                                         device_particle_momentum_z /* [0:particle_count] */, \
+//                                                         device_particle_charge /* [0:particle_count] */,     \
+//                                                         device_particle_weight /* [0:particle_count] */ )
+//            #pragma omp teams thread_limit( 64 ) distribute parallel for
+//        #elif defined( SMILEI_OPENACC_MODE )
+//            #pragma acc parallel                      \
+//            deviceptr( device_particle_position_x,    \
+//                       device_particle_position_y,    \
+//                       device_particle_momentum_z,    \
+//                       device_particle_charge,        \
+//                       device_particle_weight )       \
+//                present( iold [0:3 * particle_count], \
+//                         deltaold [0:3 * particle_count] )
+//            #pragma acc loop gang worker vector
+//        #endif
+//        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
+//            const double invgf                        = invgf_[particle_index];
+//            const int *const __restrict__ iold        = &iold_[particle_index];
+//            const double *const __restrict__ deltaold = &deltaold_[particle_index];
+//
+//            double Sx0[5];
+//            double Sx1[5];
+//            double Sy0[5];
+//            double Sy1[5];
+//
+//            // Variable declaration & initialization
+//            // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
+//
+//            // Locate the particle on the primal grid at former time-step & calculate coeff. S0
+//            {
+//                const double delta  = deltaold[0 * particle_count];
+//                const double delta2 = delta * delta;
+//                Sx0[0]              = 0.0;
+//                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+//                Sx0[2]              = 0.75 - delta2;
+//                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+//                Sx0[4]              = 0.0;
+//            }
+//            {
+//                const double delta  = deltaold[1 * particle_count];
+//                const double delta2 = delta * delta;
+//                Sy0[0]              = 0.0;
+//                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+//                Sy0[2]              = 0.75 - delta2;
+//                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+//                Sy0[4]              = 0.0;
+//            }
+//
+//            // Locate the particle on the primal grid at current time-step & calculate coeff. S1
+//            {
+//                const double xpn      = device_particle_position_x[particle_index] * dx_inv;
+//                const int    ip       = std::round( xpn );
+//                const int    ipo      = iold[0 * particle_count];
+//                const int    ip_m_ipo = ip - ipo - i_domain_begin;
+//                const double delta    = xpn - static_cast<double>( ip );
+//                const double delta2   = delta * delta;
+//
+//                Sx1[0] = 0.0;
+//                Sx1[1] = 0.0;
+//                // Sx1[2] = 0.0; // Always set below
+//                Sx1[3] = 0.0;
+//                Sx1[4] = 0.0;
+//
+//                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+//                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
+//                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+//            }
+//            {
+//                const double ypn      = device_particle_position_y[particle_index] * dy_inv;
+//                const int    jp       = std::round( ypn );
+//                const int    jpo      = iold[1 * particle_count];
+//                const int    jp_m_jpo = jp - jpo - j_domain_begin;
+//                const double delta    = ypn - static_cast<double>( jp );
+//                const double delta2   = delta * delta;
+//
+//                Sy1[0] = 0.0;
+//                Sy1[1] = 0.0;
+//                // Sy1[2] = 0.0; // Always set below
+//                Sy1[3] = 0.0;
+//                Sy1[4] = 0.0;
+//
+//                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+//                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
+//                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+//            }
+//
+//            // (x,y,z) components of the current density for the macro-particle
+//            const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
+//            const double crx_p         = charge_weight * dx_ov_dt;
+//            const double cry_p         = charge_weight * dy_ov_dt;
+//            const double crz_p         = charge_weight * ( 1.0 / 3.0 ) * device_particle_momentum_z[particle_index] * invgf;
+//
+//            // This is the particle position as grid index
+//            // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+//            const int ipo = iold[0 * particle_count] - 2;
+//            const int jpo = iold[1 * particle_count] - 2;
+//
+//            for( unsigned int i = 0; i < 1; ++i ) {
+//                const int iloc = ( i + ipo ) * nprimy + jpo;
+//                /* Jx[iloc] += tmpJx[0]; */
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+//                double tmp = 0.0;
+//                for( unsigned int j = 1; j < 5; j++ ) {
+//                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jy[iloc + j + not_spectral * ( /* i + */ ipo )] += tmp;
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+//                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+//                }
+//            }
+//
+//            double tmpJx[5]{};
+//
+//            for( unsigned int i = 1; i < 5; ++i ) {
+//                const int iloc = ( i + ipo ) * nprimy + jpo;
+//                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jx[iloc] += tmpJx[0];
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+//                double tmp = 0.0;
+//                for( unsigned int j = 1; j < 5; ++j ) {
+//                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jx[iloc + j] += tmpJx[j];
+//                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jy[iloc + j + not_spectral * ( i + ipo )] += tmp;
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
+//                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+//                }
+//            }
+//        }
+//    } // end currentDepositionKernel
+//
+//    //static inline
+//    void
+//    currentAndDensityDepositionKernel( double *__restrict__ Jx,
+//                                       double *__restrict__ Jy,
+//                                       double *__restrict__ Jz,
+//                                       double *__restrict__ rho,
+//                                       int Jx_size,
+//                                       int Jy_size,
+//                                       int Jz_size,
+//                                       int rho_size,
+//                                       const double *__restrict__ device_particle_position_x,
+//                                       const double *__restrict__ device_particle_position_y,
+//                                       const double *__restrict__ device_particle_momentum_z,
+//                                       const short *__restrict__ device_particle_charge,
+//                                       const double *__restrict__ device_particle_weight,
+//                                       const int *__restrict__ host_bin_index,
+//                                       unsigned int,
+//                                       unsigned int,
+//                                       const double *__restrict__ invgf_,
+//                                       const int *__restrict__ iold_,
+//                                       const double *__restrict__ deltaold_,
+//                                       double inv_cell_volume,
+//                                       double dx_inv,
+//                                       double dy_inv,
+//                                       double dx_ov_dt,
+//                                       double dy_ov_dt,
+//                                       int    i_domain_begin,
+//                                       int    j_domain_begin,
+//                                       int    nprimy,
+//                                       int    not_spectral )
+//    {
+//        // The OMP implementation is NOT bin aware. As per the precondition on
+//        // host_bin_index, index zero always contains the number of particles.
+//        // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
+//        const unsigned int bin_count      = 1;
+//        const int          particle_count = host_bin_index[bin_count - 1];
+//
+//        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+//            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
+//                                                         device_particle_position_x /* [0:particle_count] */, \
+//                                                         device_particle_position_y /* [0:particle_count] */, \
+//                                                         device_particle_momentum_z /* [0:particle_count] */, \
+//                                                         device_particle_charge /* [0:particle_count] */,     \
+//                                                         device_particle_weight /* [0:particle_count] */ )
+//            #pragma omp teams thread_limit( 64 ) distribute parallel for
+//        #elif defined( SMILEI_OPENACC_MODE )
+//            #pragma acc parallel                      \
+//            deviceptr( device_particle_position_x,    \
+//                       device_particle_position_y,    \
+//                       device_particle_momentum_z,    \
+//                       device_particle_charge,        \
+//                       device_particle_weight )       \
+//                present( iold [0:3 * particle_count], \
+//                         deltaold [0:3 * particle_count] )
+//            #pragma acc loop gang worker vector
+//        #endif
+//        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
+//            const double invgf                        = invgf_[particle_index];
+//            const int *const __restrict__ iold        = &iold_[particle_index];
+//            const double *const __restrict__ deltaold = &deltaold_[particle_index];
+//
+//            double Sx0[5];
+//            double Sx1[5];
+//            double Sy0[5];
+//            double Sy1[5];
+//
+//            // Variable declaration & initialization
+//            // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
+//
+//            // Locate the particle on the primal grid at former time-step & calculate coeff. S0
+//            {
+//                const double delta  = deltaold[0 * particle_count];
+//                const double delta2 = delta * delta;
+//                Sx0[0]              = 0.0;
+//                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+//                Sx0[2]              = 0.75 - delta2;
+//                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+//                Sx0[4]              = 0.0;
+//            }
+//            {
+//                const double delta  = deltaold[1 * particle_count];
+//                const double delta2 = delta * delta;
+//                Sy0[0]              = 0.0;
+//                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
+//                Sy0[2]              = 0.75 - delta2;
+//                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
+//                Sy0[4]              = 0.0;
+//            }
+//
+//            // Locate the particle on the primal grid at current time-step & calculate coeff. S1
+//            {
+//                const double xpn      = device_particle_position_x[particle_index] * dx_inv;
+//                const int    ip       = std::round( xpn );
+//                const int    ipo      = iold[0 * particle_count];
+//                const int    ip_m_ipo = ip - ipo - i_domain_begin;
+//                const double delta    = xpn - static_cast<double>( ip );
+//                const double delta2   = delta * delta;
+//
+//                Sx1[0] = 0.0;
+//                Sx1[1] = 0.0;
+//                // Sx1[2] = 0.0; // Always set below
+//                Sx1[3] = 0.0;
+//                Sx1[4] = 0.0;
+//
+//                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+//                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
+//                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+//            }
+//            {
+//                const double ypn      = device_particle_position_y[particle_index] * dy_inv;
+//                const int    jp       = std::round( ypn );
+//                const int    jpo      = iold[1 * particle_count];
+//                const int    jp_m_jpo = jp - jpo - j_domain_begin;
+//                const double delta    = ypn - static_cast<double>( jp );
+//                const double delta2   = delta * delta;
+//
+//                Sy1[0] = 0.0;
+//                Sy1[1] = 0.0;
+//                // Sy1[2] = 0.0; // Always set below
+//                Sy1[3] = 0.0;
+//                Sy1[4] = 0.0;
+//
+//                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
+//                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
+//                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
+//            }
+//
+//            // (x,y,z) components of the current density for the macro-particle
+//            const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
+//            const double crx_p         = charge_weight * dx_ov_dt;
+//            const double cry_p         = charge_weight * dy_ov_dt;
+//            const double crz_p         = charge_weight * ( 1.0 / 3.0 ) * device_particle_momentum_z[particle_index] * invgf;
+//
+//            // This is the particle position as grid index
+//            // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+//            const int ipo = iold[0 * particle_count] - 2;
+//            const int jpo = iold[1 * particle_count] - 2;
+//
+//            // case i =0
+//            for( unsigned int i = 0; i < 1; ++i ) {
+//                const int iloc = ( i + ipo ) * nprimy + jpo;
+//                /* Jx[iloc] += tmpJx[0]; */
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                rho[iloc] += charge_weight * Sx1[0] * Sy1[0];
+//                double tmp = 0.0;
+//                for( unsigned int j = 1; j < 5; j++ ) {
+//                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jy[iloc + j + not_spectral * ( /* i + */ ipo )] += tmp;
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
+//                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    rho[iloc + j] += charge_weight * Sx1[0] * Sy1[j];
+//                }
+//            }
+//
+//            double tmpJx[5]{};
+//
+//            // case i> 0
+//            for( unsigned int i = 1; i < 5; ++i ) {
+//                const int iloc = ( i + ipo ) * nprimy + jpo;
+//                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jx[iloc] += tmpJx[0];
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+//
+//                SMILEI_ACCELERATOR_ATOMIC
+//                rho[iloc] += charge_weight * Sx1[i] * Sy1[0];
+//
+//                double tmp = 0.0;
+//                for( unsigned int j = 1; j < 5; ++j ) {
+//                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jx[iloc + j] += tmpJx[j];
+//                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jy[iloc + j + not_spectral * ( i + ipo )] += tmp;
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
+//                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
+//
+//                    SMILEI_ACCELERATOR_ATOMIC
+//                    rho[iloc + j] += charge_weight * Sx1[i] * Sy1[j];
+//                }
+//            }
+//        }
+//    } // end currentDepositionKernel
+//
+//
+//} // namespace naive
+//
+//    #else
 
-    static inline void
-    currentDepositionKernel2D( double     *__restrict__ Jx,
-                             double       *__restrict__ Jy,
-                             double       *__restrict__ Jz,
-                             int Jx_size,
-                             int Jy_size,
-                             int Jz_size,
-                             const double *__restrict__ device_particle_position_x,
-                             const double *__restrict__ device_particle_position_y,
-                             const double *__restrict__ device_particle_momentum_z,
-                             const short  *__restrict__ device_particle_charge,
-                             const double *__restrict__ device_particle_weight,
-                             const int    *__restrict__ host_bin_index,
-                             unsigned int x_dimension_bin_count,
-                             unsigned int y_dimension_bin_count,
-                             const double *__restrict__ invgf_,
-                             const int *__restrict__ iold_,
-                             const double *__restrict__ deltaold_,
-                             double inv_cell_volume,
-                             double dx_inv,
-                             double dy_inv,
-                             double dx_ov_dt,
-                             double dy_ov_dt,
-                             int    i_domain_begin,
-                             int    j_domain_begin,
-                             int    nprimy,
-                             int    pxr )
-    {
-        // The OMP implementation is NOT bin aware. As per the precondition on
-        // host_bin_index, index zero always contains the number of particles.
-        // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
-        const unsigned int bin_count      = 1;
-        const int          particle_count = host_bin_index[bin_count - 1];
-
-        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
-                                                         device_particle_position_x /* [0:particle_count] */, \
-                                                         device_particle_position_y /* [0:particle_count] */, \
-                                                         device_particle_momentum_z /* [0:particle_count] */, \
-                                                         device_particle_charge /* [0:particle_count] */,     \
-                                                         device_particle_weight /* [0:particle_count] */ )
-            #pragma omp teams thread_limit( 64 ) distribute parallel for
-        #elif defined( SMILEI_OPENACC_MODE )
-            #pragma acc parallel                      \
-            deviceptr( device_particle_position_x,    \
-                       device_particle_position_y,    \
-                       device_particle_momentum_z,    \
-                       device_particle_charge,        \
-                       device_particle_weight )       \
-                present( iold [0:3 * particle_count], \
-                         deltaold [0:3 * particle_count] )
-            #pragma acc loop gang worker vector
-        #endif
-        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
-            const double invgf                        = invgf_[particle_index];
-            const int *const __restrict__ iold        = &iold_[particle_index];
-            const double *const __restrict__ deltaold = &deltaold_[particle_index];
-
-            double Sx0[5];
-            double Sx1[5];
-            double Sy0[5];
-            double Sy1[5];
-
-            // Variable declaration & initialization
-            // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
-
-            // Locate the particle on the primal grid at former time-step & calculate coeff. S0
-            {
-                const double delta  = deltaold[0 * particle_count];
-                const double delta2 = delta * delta;
-                Sx0[0]              = 0.0;
-                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sx0[2]              = 0.75 - delta2;
-                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sx0[4]              = 0.0;
-            }
-            {
-                const double delta  = deltaold[1 * particle_count];
-                const double delta2 = delta * delta;
-                Sy0[0]              = 0.0;
-                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sy0[2]              = 0.75 - delta2;
-                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sy0[4]              = 0.0;
-            }
-
-            // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-            {
-                const double xpn      = device_particle_position_x[particle_index] * dx_inv;
-                const int    ip       = std::round( xpn );
-                const int    ipo      = iold[0 * particle_count];
-                const int    ip_m_ipo = ip - ipo - i_domain_begin;
-                const double delta    = xpn - static_cast<double>( ip );
-                const double delta2   = delta * delta;
-
-                Sx1[0] = 0.0;
-                Sx1[1] = 0.0;
-                // Sx1[2] = 0.0; // Always set below
-                Sx1[3] = 0.0;
-                Sx1[4] = 0.0;
-
-                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
-                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
-            }
-            {
-                const double ypn      = device_particle_position_y[particle_index] * dy_inv;
-                const int    jp       = std::round( ypn );
-                const int    jpo      = iold[1 * particle_count];
-                const int    jp_m_jpo = jp - jpo - j_domain_begin;
-                const double delta    = ypn - static_cast<double>( jp );
-                const double delta2   = delta * delta;
-
-                Sy1[0] = 0.0;
-                Sy1[1] = 0.0;
-                // Sy1[2] = 0.0; // Always set below
-                Sy1[3] = 0.0;
-                Sy1[4] = 0.0;
-
-                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
-                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
-            }
-
-            // (x,y,z) components of the current density for the macro-particle
-            const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
-            const double crx_p         = charge_weight * dx_ov_dt;
-            const double cry_p         = charge_weight * dy_ov_dt;
-            const double crz_p         = charge_weight * ( 1.0 / 3.0 ) * device_particle_momentum_z[particle_index] * invgf;
-
-            // This is the particle position as grid index
-            // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-            const int ipo = iold[0 * particle_count] - 2;
-            const int jpo = iold[1 * particle_count] - 2;
-
-            for( unsigned int i = 0; i < 1; ++i ) {
-                const int iloc = ( i + ipo ) * nprimy + jpo;
-                /* Jx[iloc] += tmpJx[0]; */
-
-                SMILEI_ACCELERATOR_ATOMIC
-                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; j++ ) {
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
-                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-                }
-            }
-
-            double tmpJx[5]{};
-
-            for( unsigned int i = 1; i < 5; ++i ) {
-                const int iloc = ( i + ipo ) * nprimy + jpo;
-                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-                SMILEI_ACCELERATOR_ATOMIC
-                Jx[iloc] += tmpJx[0];
-                SMILEI_ACCELERATOR_ATOMIC
-                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; ++j ) {
-                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jx[iloc + j] += tmpJx[j];
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jy[iloc + j + pxr * ( i + ipo )] += tmp;
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
-                }
-            }
-        }
-    } // end currentDepositionKernel
-
-    static inline void
-    currentAndDensityDepositionKernel( double *__restrict__ Jx,
-                                       double *__restrict__ Jy,
-                                       double *__restrict__ Jz,
-                                       double *__restrict__ rho,
-                                       int Jx_size,
-                                       int Jy_size,
-                                       int Jz_size,
-                                       int rho_size,
-                                       const double *__restrict__ device_particle_position_x,
-                                       const double *__restrict__ device_particle_position_y,
-                                       const double *__restrict__ device_particle_momentum_z,
-                                       const short *__restrict__ device_particle_charge,
-                                       const double *__restrict__ device_particle_weight,
-                                       const int *__restrict__ host_bin_index,
-                                       unsigned int,
-                                       unsigned int,
-                                       const double *__restrict__ invgf_,
-                                       const int *__restrict__ iold_,
-                                       const double *__restrict__ deltaold_,
-                                       double inv_cell_volume,
-                                       double dx_inv,
-                                       double dy_inv,
-                                       double dx_ov_dt,
-                                       double dy_ov_dt,
-                                       int    i_domain_begin,
-                                       int    j_domain_begin,
-                                       int    nprimy,
-                                       int    pxr )
-    {
-        // The OMP implementation is NOT bin aware. As per the precondition on
-        // host_bin_index, index zero always contains the number of particles.
-        // See nvidiaParticles::prepareBinIndex / setHostBinIndex.
-        const unsigned int bin_count      = 1;
-        const int          particle_count = host_bin_index[bin_count - 1];
-
-        #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target is_device_ptr /* map */ ( /* to: */                                            \
-                                                         device_particle_position_x /* [0:particle_count] */, \
-                                                         device_particle_position_y /* [0:particle_count] */, \
-                                                         device_particle_momentum_z /* [0:particle_count] */, \
-                                                         device_particle_charge /* [0:particle_count] */,     \
-                                                         device_particle_weight /* [0:particle_count] */ )
-            #pragma omp teams thread_limit( 64 ) distribute parallel for
-        #elif defined( SMILEI_OPENACC_MODE )
-            #pragma acc parallel                      \
-            deviceptr( device_particle_position_x,    \
-                       device_particle_position_y,    \
-                       device_particle_momentum_z,    \
-                       device_particle_charge,        \
-                       device_particle_weight )       \
-                present( iold [0:3 * particle_count], \
-                         deltaold [0:3 * particle_count] )
-            #pragma acc loop gang worker vector
-        #endif
-        for( int particle_index = 0; particle_index < particle_count; ++particle_index ) {
-            const double invgf                        = invgf_[particle_index];
-            const int *const __restrict__ iold        = &iold_[particle_index];
-            const double *const __restrict__ deltaold = &deltaold_[particle_index];
-
-            double Sx0[5];
-            double Sx1[5];
-            double Sy0[5];
-            double Sy1[5];
-
-            // Variable declaration & initialization
-            // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
-
-            // Locate the particle on the primal grid at former time-step & calculate coeff. S0
-            {
-                const double delta  = deltaold[0 * particle_count];
-                const double delta2 = delta * delta;
-                Sx0[0]              = 0.0;
-                Sx0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sx0[2]              = 0.75 - delta2;
-                Sx0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sx0[4]              = 0.0;
-            }
-            {
-                const double delta  = deltaold[1 * particle_count];
-                const double delta2 = delta * delta;
-                Sy0[0]              = 0.0;
-                Sy0[1]              = 0.5 * ( delta2 - delta + 0.25 );
-                Sy0[2]              = 0.75 - delta2;
-                Sy0[3]              = 0.5 * ( delta2 + delta + 0.25 );
-                Sy0[4]              = 0.0;
-            }
-
-            // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-            {
-                const double xpn      = device_particle_position_x[particle_index] * dx_inv;
-                const int    ip       = std::round( xpn );
-                const int    ipo      = iold[0 * particle_count];
-                const int    ip_m_ipo = ip - ipo - i_domain_begin;
-                const double delta    = xpn - static_cast<double>( ip );
-                const double delta2   = delta * delta;
-
-                Sx1[0] = 0.0;
-                Sx1[1] = 0.0;
-                // Sx1[2] = 0.0; // Always set below
-                Sx1[3] = 0.0;
-                Sx1[4] = 0.0;
-
-                Sx1[ip_m_ipo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sx1[ip_m_ipo + 2] = 0.75 - delta2;
-                Sx1[ip_m_ipo + 3] = 0.5 * ( delta2 + delta + 0.25 );
-            }
-            {
-                const double ypn      = device_particle_position_y[particle_index] * dy_inv;
-                const int    jp       = std::round( ypn );
-                const int    jpo      = iold[1 * particle_count];
-                const int    jp_m_jpo = jp - jpo - j_domain_begin;
-                const double delta    = ypn - static_cast<double>( jp );
-                const double delta2   = delta * delta;
-
-                Sy1[0] = 0.0;
-                Sy1[1] = 0.0;
-                // Sy1[2] = 0.0; // Always set below
-                Sy1[3] = 0.0;
-                Sy1[4] = 0.0;
-
-                Sy1[jp_m_jpo + 1] = 0.5 * ( delta2 - delta + 0.25 );
-                Sy1[jp_m_jpo + 2] = 0.75 - delta2;
-                Sy1[jp_m_jpo + 3] = 0.5 * ( delta2 + delta + 0.25 );
-            }
-
-            // (x,y,z) components of the current density for the macro-particle
-            const double charge_weight = inv_cell_volume * static_cast<double>( device_particle_charge[particle_index] ) * device_particle_weight[particle_index];
-            const double crx_p         = charge_weight * dx_ov_dt;
-            const double cry_p         = charge_weight * dy_ov_dt;
-            const double crz_p         = charge_weight * ( 1.0 / 3.0 ) * device_particle_momentum_z[particle_index] * invgf;
-
-            // This is the particle position as grid index
-            // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-            const int ipo = iold[0 * particle_count] - 2;
-            const int jpo = iold[1 * particle_count] - 2;
-
-            // case i =0
-            for( unsigned int i = 0; i < 1; ++i ) {
-                const int iloc = ( i + ipo ) * nprimy + jpo;
-                /* Jx[iloc] += tmpJx[0]; */
-
-                SMILEI_ACCELERATOR_ATOMIC
-                Jz[iloc] += crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-
-                SMILEI_ACCELERATOR_ATOMIC
-                rho[iloc] += charge_weight * Sx1[0] * Sy1[0];
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; j++ ) {
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jy[iloc + j + pxr * ( /* i + */ ipo )] += tmp;
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
-                                              Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) );
-                    SMILEI_ACCELERATOR_ATOMIC
-                    rho[iloc + j] += charge_weight * Sx1[0] * Sy1[j];
-                }
-            }
-
-            double tmpJx[5]{};
-
-            // case i> 0
-            for( unsigned int i = 1; i < 5; ++i ) {
-                const int iloc = ( i + ipo ) * nprimy + jpo;
-                tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( 0.5 * ( Sy1[0] - Sy0[0] ) );
-
-                SMILEI_ACCELERATOR_ATOMIC
-                Jx[iloc] += tmpJx[0];
-
-                SMILEI_ACCELERATOR_ATOMIC
-                Jz[iloc] += crz_p * ( Sy1[0] * ( 0.5 * Sx0[i] + Sx1[i] ) );
-
-                SMILEI_ACCELERATOR_ATOMIC
-                rho[iloc] += charge_weight * Sx1[i] * Sy1[0];
-
-                double tmp = 0.0;
-                for( unsigned int j = 1; j < 5; ++j ) {
-                    tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + 0.5 * ( Sy1[j] - Sy0[j] ) );
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jx[iloc + j] += tmpJx[j];
-                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jy[iloc + j + pxr * ( i + ipo )] += tmp;
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
-                                              Sy1[j] * ( 0.5 * Sx0[i] + Sx1[i] ) );
-
-                    SMILEI_ACCELERATOR_ATOMIC
-                    rho[iloc + j] += charge_weight * Sx1[i] * Sy1[j];
-                }
-            }
-        }
-    } // end currentDepositionKernel
-
-
-} // namespace naive
-
-    #else
-
-namespace hip {
+namespace cudahip2d {
     namespace detail {
+#if defined( __HIP__ )
         static inline void
         checkErrors( ::hipError_t an_error_code,
                      const char  *file_name,
@@ -431,12 +439,26 @@ namespace hip {
                 std::exit( EXIT_FAILURE );
             }
         }
-    } // namespace detail
+// For NVIDIA compiler 
+#elif defined(  __NVCC__ )
+        static inline void
+        checkErrors( ::cudaError_t an_error_code,
+                     const char  *file_name,
+                     int          line )
+        {
+            if( an_error_code != ::cudaError_t::cudaSuccess ) {
+                std::cout << "CUDA error at " << file_name << ":" << line << " -> " << ::cudaGetErrorString( an_error_code ) << std::endl;
+                std::exit( EXIT_FAILURE );
+            }
+        }
+#endif
+
+   } // namespace detail
 
     #define checkHIPErrors( an_expression )                           \
         do {                                                          \
             detail::checkErrors( an_expression, __FILE__, __LINE__ ); \
-        } while( 0 )
+        } while( 0 )  
 
     namespace kernel {
         namespace atomic {
@@ -513,7 +535,7 @@ namespace hip {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          nprimy,
-                                         int          pxr )
+                                         int          not_spectral )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -737,7 +759,7 @@ namespace hip {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         } // end DepositCurrent
@@ -773,7 +795,7 @@ namespace hip {
                                             int          i_domain_begin,
                                             int          j_domain_begin,
                                             int          nprimy,
-                                            int          pxr )
+                                            int          not_spectral )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -1016,7 +1038,7 @@ namespace hip {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ pxr * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[scratch_space_index] ) );
             }
@@ -1024,7 +1046,8 @@ namespace hip {
     } // namespace kernel
 
 
-    static inline void
+    //static inline
+    void
     currentDepositionKernel2D( double *__restrict__ host_Jx,
                              double *__restrict__ host_Jy,
                              double *__restrict__ host_Jz,
@@ -1050,7 +1073,7 @@ namespace hip {
                              int    i_domain_begin,
                              int    j_domain_begin,
                              int    nprimy,
-                             int    pxr )
+                             int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1059,7 +1082,7 @@ namespace hip {
         // This cluster is very strongly bound by atomic operations in LDS (shared memory)
         // TODO(Etienne M): Find a way to lessen the atomic usage
 
-        const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
+        const ::dim3 kGridDimension  { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
 
         static constexpr std::size_t kWorkgroupSize = 128;
         const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
@@ -1072,8 +1095,8 @@ namespace hip {
         using ComputeFloat   = double;
         using ReductionFloat = double;
 
-        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-
+	auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+#if defined ( __HIP__ ) 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
@@ -1098,12 +1121,43 @@ namespace hip {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            pxr );
+                            not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
+#elif defined (  __NVCC__ )
+	KernelFunction <<<
+                            kGridDimension,
+                            kBlockDimension,
+                            0, // Shared memory
+                            0 // Stream
+                       >>>
+                       (
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
+                            Jx_size, Jy_size, Jz_size,
+                            device_particle_position_x,
+                            device_particle_position_y,
+                            device_particle_momentum_z,
+                            device_particle_charge,
+                            device_particle_weight,
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
+                            inv_cell_volume,
+                            dx_inv, dy_inv,
+                            dx_ov_dt, dy_ov_dt,
+                            i_domain_begin, j_domain_begin,
+                            nprimy,
+                            not_spectral
+                       );
+        checkHIPErrors( ::cudaDeviceSynchronize() );
+#endif
     }
 
-    static inline void
+    //static inline 
+    void
     currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
                                        double *__restrict__ host_Jy,
                                        double *__restrict__ host_Jz,
@@ -1131,7 +1185,7 @@ namespace hip {
                                        int    i_domain_begin,
                                        int    j_domain_begin,
                                        int    nprimy,
-                                       int    pxr )
+                                       int    not_spectral )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1140,7 +1194,7 @@ namespace hip {
         // This cluster is very strongly bound by atomic operations in LDS (shared memory)
         // TODO(Etienne M): Find a way to lessen the atomic usage
 
-        const ::dim3 kGridDimension /* In blocks */ { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
+        const ::dim3 kGridDimension  { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
 
         static constexpr std::size_t kWorkgroupSize = 128;
         const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
@@ -1152,9 +1206,8 @@ namespace hip {
         //
         using ComputeFloat   = double;
         using ReductionFloat = double;
-
         auto KernelFunction = kernel::DepositCurrentAndDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
-
+#if defined ( __HIP__ ) 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
@@ -1180,123 +1233,153 @@ namespace hip {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            pxr );
+                            not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
+#elif defined (  __NVCC__ )
+        KernelFunction <<<                                                                                                             
+                            kGridDimension,                                                                                            
+                            kBlockDimension,                                                                                           
+                            0, // Shared memory                                                                                        
+                            0 // Stream                                                                                                
+                       >>>                                                                                                             
+                       (                                                                                                               
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),                               
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),                               
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_rho ),
+                            Jx_size, Jy_size, Jz_size, rho_size,
+                            device_particle_position_x,                                                                                
+                            device_particle_position_y,                                                                                
+                            device_particle_momentum_z,                                                                                
+                            device_particle_charge,                                                                                    
+                            device_particle_weight,                                                                                    
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),                        
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),                           
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),                            
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),                        
+                            inv_cell_volume,                                                                                           
+                            dx_inv, dy_inv,                                                                                            
+                            dx_ov_dt, dy_ov_dt,                                                                                        
+                            i_domain_begin, j_domain_begin,                                                                            
+                            nprimy,                                                                                                    
+                            not_spectral                                                                                               
+                       );                                                                                                              
+        checkHIPErrors( ::cudaDeviceSynchronize() );  
+#endif 
     }
 
-} // namespace hip
+} // namespace hipcuda
 
-    #endif
+//#endif
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 //!
-extern "C" void
-currentDepositionKernel2D( double *__restrict__ host_Jx,
-                         double *__restrict__ host_Jy,
-                         double *__restrict__ host_Jz,
-                         int Jx_size,
-                         int Jy_size,
-                         int Jz_size,
-                         const double *__restrict__ device_particle_position_x,
-                         const double *__restrict__ device_particle_position_y,
-                         const double *__restrict__ device_particle_momentum_z,
-                         const short *__restrict__ device_particle_charge,
-                         const double *__restrict__ device_particle_weight,
-                         const int *__restrict__ host_bin_index,
-                         unsigned int x_dimension_bin_count,
-                         unsigned int y_dimension_bin_count,
-                         const double *__restrict__ host_invgf_,
-                         const int *__restrict__ host_iold_,
-                         const double *__restrict__ host_deltaold_,
-                         double inv_cell_volume,
-                         double dx_inv,
-                         double dy_inv,
-                         double dx_ov_dt,
-                         double dy_ov_dt,
-                         int    i_domain_begin,
-                         int    j_domain_begin,
-                         int    nprimy,
-                         int    pxr )
-{
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    naive:: // the naive, OMP version serves as a reference along with the CPU version
-    #else
-    hip::
-    #endif
-        currentDepositionKernel2D( host_Jx, host_Jy, host_Jz,
-                                 Jx_size, Jy_size, Jz_size,
-                                 device_particle_position_x, device_particle_position_y,
-                                 device_particle_momentum_z,
-                                 device_particle_charge,
-                                 device_particle_weight,
-                                 host_bin_index,
-                                 x_dimension_bin_count,
-                                 y_dimension_bin_count,
-                                 host_invgf_,
-                                 host_iold_, host_deltaold_,
-                                 inv_cell_volume,
-                                 dx_inv, dy_inv,
-                                 dx_ov_dt, dy_ov_dt,
-                                 i_domain_begin, j_domain_begin,
-                                 nprimy,
-                                 pxr );
-}
+//extern "C" void
+//currentDepositionKernel2D( double *__restrict__ host_Jx,
+//                         double *__restrict__ host_Jy,
+//                         double *__restrict__ host_Jz,
+//                         int Jx_size,
+//                         int Jy_size,
+//                         int Jz_size,
+//                         const double *__restrict__ device_particle_position_x,
+//                         const double *__restrict__ device_particle_position_y,
+//                         const double *__restrict__ device_particle_momentum_z,
+//                         const short *__restrict__ device_particle_charge,
+//                         const double *__restrict__ device_particle_weight,
+//                         const int *__restrict__ host_bin_index,
+//                         unsigned int x_dimension_bin_count,
+//                         unsigned int y_dimension_bin_count,
+//                         const double *__restrict__ host_invgf_,
+//                         const int *__restrict__ host_iold_,
+//                         const double *__restrict__ host_deltaold_,
+//                         double inv_cell_volume,
+//                         double dx_inv,
+//                         double dy_inv,
+//                         double dx_ov_dt,
+//                         double dy_ov_dt,
+//                         int    i_domain_begin,
+//                         int    j_domain_begin,
+//                         int    nprimy,
+//                         int    not_spectral )
+//{
+//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+//    naive:: // the naive, OMP version serves as a reference along with the CPU version
+//    #else
+//    cudahip::
+//    #endif
+//        currentDepositionKernel2D( host_Jx, host_Jy, host_Jz,
+//                                 Jx_size, Jy_size, Jz_size,
+//                                 device_particle_position_x, device_particle_position_y,
+//                                 device_particle_momentum_z,
+//                                 device_particle_charge,
+//                                 device_particle_weight,
+//                                 host_bin_index,
+//                                 x_dimension_bin_count,
+//                                 y_dimension_bin_count,
+//                                 host_invgf_,
+//                                 host_iold_, host_deltaold_,
+//                                 inv_cell_volume,
+//                                 dx_inv, dy_inv,
+//                                 dx_ov_dt, dy_ov_dt,
+//                                 i_domain_begin, j_domain_begin,
+//                                 nprimy,
+//                                 not_spectral );
+//}
+//
+////! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
+////!
+//extern "C" void
+//currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+//                                   double *__restrict__ host_Jy,
+//                                   double *__restrict__ host_Jz,
+//                                   double *__restrict__ host_rho,
+//                                   int Jx_size,
+//                                   int Jy_size,
+//                                   int Jz_size,
+//                                   int rho_size,
+//                                   const double *__restrict__ device_particle_position_x,
+//                                   const double *__restrict__ device_particle_position_y,
+//                                   const double *__restrict__ device_particle_momentum_z,
+//                                   const short *__restrict__ device_particle_charge,
+//                                   const double *__restrict__ device_particle_weight,
+//                                   const int *__restrict__ host_bin_index,
+//                                   unsigned int x_dimension_bin_count,
+//                                   unsigned int y_dimension_bin_count,
+//                                   const double *__restrict__ host_invgf_,
+//                                   const int *__restrict__ host_iold_,
+//                                   const double *__restrict__ host_deltaold_,
+//                                   double inv_cell_volume,
+//                                   double dx_inv,
+//                                   double dy_inv,
+//                                   double dx_ov_dt,
+//                                   double dy_ov_dt,
+//                                   int    i_domain_begin,
+//                                   int    j_domain_begin,
+//                                   int    nprimy,
+//                                   int    not_spectral )
+//{
+//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+//    naive:: // the naive, OMP version serves as a reference along with the CPU version
+//    #else
+//    cudahip::
+//    #endif
+//        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
+//                                           Jx_size, Jy_size, Jz_size, rho_size,
+//                                           device_particle_position_x, device_particle_position_y,
+//                                           device_particle_momentum_z,
+//                                           device_particle_charge,
+//                                           device_particle_weight,
+//                                           host_bin_index,
+//                                           x_dimension_bin_count,
+//                                           y_dimension_bin_count,
+//                                           host_invgf_,
+//                                           host_iold_, host_deltaold_,
+//                                           inv_cell_volume,
+//                                           dx_inv, dy_inv,
+//                                           dx_ov_dt, dy_ov_dt,
+//                                           i_domain_begin, j_domain_begin,
+//                                           nprimy,
+//                                           not_spectral );
+//}
 
-//! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
-//!
-extern "C" void
-currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
-                                   double *__restrict__ host_Jy,
-                                   double *__restrict__ host_Jz,
-                                   double *__restrict__ host_rho,
-                                   int Jx_size,
-                                   int Jy_size,
-                                   int Jz_size,
-                                   int rho_size,
-                                   const double *__restrict__ device_particle_position_x,
-                                   const double *__restrict__ device_particle_position_y,
-                                   const double *__restrict__ device_particle_momentum_z,
-                                   const short *__restrict__ device_particle_charge,
-                                   const double *__restrict__ device_particle_weight,
-                                   const int *__restrict__ host_bin_index,
-                                   unsigned int x_dimension_bin_count,
-                                   unsigned int y_dimension_bin_count,
-                                   const double *__restrict__ host_invgf_,
-                                   const int *__restrict__ host_iold_,
-                                   const double *__restrict__ host_deltaold_,
-                                   double inv_cell_volume,
-                                   double dx_inv,
-                                   double dy_inv,
-                                   double dx_ov_dt,
-                                   double dy_ov_dt,
-                                   int    i_domain_begin,
-                                   int    j_domain_begin,
-                                   int    nprimy,
-                                   int    pxr )
-{
-    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-    naive:: // the naive, OMP version serves as a reference along with the CPU version
-    #else
-    hip::
-    #endif
-        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
-                                           Jx_size, Jy_size, Jz_size, rho_size,
-                                           device_particle_position_x, device_particle_position_y,
-                                           device_particle_momentum_z,
-                                           device_particle_charge,
-                                           device_particle_weight,
-                                           host_bin_index,
-                                           x_dimension_bin_count,
-                                           y_dimension_bin_count,
-                                           host_invgf_,
-                                           host_iold_, host_deltaold_,
-                                           inv_cell_volume,
-                                           dx_inv, dy_inv,
-                                           dx_ov_dt, dy_ov_dt,
-                                           i_domain_begin, j_domain_begin,
-                                           nprimy,
-                                           pxr );
-}
-
-#endif

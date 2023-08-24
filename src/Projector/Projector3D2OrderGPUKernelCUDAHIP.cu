@@ -13,7 +13,8 @@
 
 #include "Params.h"
 #include "gpu.h"
-
+#include "stdio.h"
+#include <iostream>
 namespace cudahip {
     namespace detail {
 
@@ -237,6 +238,9 @@ namespace cudahip {
                                                                                      device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
+//std::cout << first_particle << std::endl;
+//printf("%d \n",first_particle);
+
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {
@@ -285,7 +289,7 @@ namespace cudahip {
                 const int kpo = iold[2 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
-
+                if (particle_index==first_particle + thread_index_offset) printf("ipo : %d\n",ipo); 
                 // Jx
                 //j=0
                 //k=0

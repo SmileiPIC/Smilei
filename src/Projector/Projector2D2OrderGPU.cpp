@@ -21,12 +21,12 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
-    pxr  = !parameters.is_pxr;
+    not_spectral  = !parameters.is_pxr;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_OPENACC_MODE ) 
     // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
@@ -41,9 +41,10 @@ Projector2D2OrderGPU::~Projector2D2OrderGPU()
     // EMPTY
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )    //SMILEI_ACCELERATOR_GPU_OMP )
+
 extern "C" void
-currentDepositionKernel2D( double *__restrict__ Jx,
+currentDepositionKernel2DOnDevice( double *__restrict__ Jx,
                          double *__restrict__ Jy,
                          double *__restrict__ Jz,
                          int Jx_size,
@@ -68,10 +69,10 @@ currentDepositionKernel2D( double *__restrict__ Jx,
                          int    i_domain_begin,
                          int    j_domain_begin,
                          int    nprimy,
-                         int    pxr );
+                         int    not_spectral );
 
 extern "C" void
-currentAndDensityDepositionKernel( double *__restrict__ Jx,
+currentAndDensityDepositionKernelOnDevice( double *__restrict__ Jx,
                                    double *__restrict__ Jy,
                                    double *__restrict__ Jz,
                                    double *__restrict__ rho,
@@ -98,7 +99,7 @@ currentAndDensityDepositionKernel( double *__restrict__ Jx,
                                    int    i_domain_begin,
                                    int    j_domain_begin,
                                    int    nprimy,
-                                   int    pxr );
+                                   int    not_spectral );
 
 
 #endif
@@ -129,10 +130,10 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int    j_domain_begin,
               int    nprimy,
               double,
-              int pxr )
+              int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        currentDepositionKernel2D( Jx,
+#if defined( SMILEI_ACCELERATOR_MODE )//SMILEI_ACCELERATOR_GPU_OMP )
+        currentDepositionKernel2DOnDevice( Jx,
                                  Jy,
                                  Jz,
                                  Jx_size,
@@ -157,7 +158,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  i_domain_begin,
                                  j_domain_begin,
                                  nprimy,
-                                 pxr );
+                                 not_spectral );
 #else
         SMILEI_ASSERT( false );
 #endif
@@ -190,10 +191,10 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int    j_domain_begin,
                         int    nprimy,
                         double,
-                        int pxr )
+                        int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        currentAndDensityDepositionKernel( Jx,
+#if defined( SMILEI_ACCELERATOR_MODE )//SMILEI_ACCELERATOR_GPU_OMP )
+        currentAndDensityDepositionKernelOnDevice( Jx,
                                            Jy,
                                            Jz,
                                            rho,
@@ -220,7 +221,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                            i_domain_begin,
                                            j_domain_begin,
                                            nprimy,
-                                           pxr );
+                                           not_spectral );
 #else
         SMILEI_ASSERT( false );
 #endif
@@ -367,10 +368,12 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         //                         i_domain_begin_, j_domain_begin_,
         //                         nprimy,
         //                         one_third,
-        //                         pxr );
+        //                         not_spectral );
         // }
 
         // Does not compute Rho !
+
+        // need to check what is going on here compared to the 3D version
 
         currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
                             Jx_size, Jy_size, Jz_size, rho_size,
@@ -382,7 +385,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                             i_domain_begin_, j_domain_begin_,
                             nprimy,
                             one_third,
-                            pxr );
+                            not_spectral );
 
     } else {
         // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -398,7 +401,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
             //                         i_domain_begin_, j_domain_begin_,
             //                         nprimy,
             //                         one_third,
-            //                         pxr );
+            //                         not_spectral );
             // }
         } else {
 
@@ -417,7 +420,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                       i_domain_begin_, j_domain_begin_,
                       nprimy,
                       one_third,
-                      pxr );
+                      not_spectral );
         }
     }
 }
@@ -434,3 +437,117 @@ void Projector2D2OrderGPU::susceptibility( ElectroMagn *EMfields,
 {
     ERROR( "Projector2D2OrderGPU::susceptibility(): Not implemented !" );
 }
+
+//#if defined( SMILEI_ACCELERATOR_MODE )
+////! Project global current densities (EMfields->Jx_/Jy_/Jz_)
+////!
+//extern "C" void
+//currentDepositionKernel2D( double *__restrict__ host_Jx,
+//                         double *__restrict__ host_Jy,
+//                         double *__restrict__ host_Jz,
+//                         int Jx_size,
+//                         int Jy_size,
+//                         int Jz_size,
+//                         const double *__restrict__ device_particle_position_x,
+//                         const double *__restrict__ device_particle_position_y,
+//                         const double *__restrict__ device_particle_momentum_z,
+//                         const short *__restrict__ device_particle_charge,
+//                         const double *__restrict__ device_particle_weight,
+//                         const int *__restrict__ host_bin_index,
+//                         unsigned int x_dimension_bin_count,
+//                         unsigned int y_dimension_bin_count,
+//                         const double *__restrict__ host_invgf_,
+//                         const int *__restrict__ host_iold_,
+//                         const double *__restrict__ host_deltaold_,
+//                         double inv_cell_volume,
+//                         double dx_inv,
+//                         double dy_inv,
+//                         double dx_ov_dt,
+//                         double dy_ov_dt,
+//                         int    i_domain_begin,
+//                         int    j_domain_begin,
+//                         int    nprimy,
+//                         int    not_spectral )
+//{
+//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+//    naive:: // the naive, OMP version serves as a reference along with the CPU version
+//    #else
+//    cudahip::
+//    #endif
+//        currentDepositionKernel2D( host_Jx, host_Jy, host_Jz,
+//                                 Jx_size, Jy_size, Jz_size,
+//                                 device_particle_position_x, device_particle_position_y,
+//                                 device_particle_momentum_z,
+//                                 device_particle_charge,
+//                                 device_particle_weight,
+//                                 host_bin_index,
+//                                 x_dimension_bin_count,
+//                                 y_dimension_bin_count,
+//                                 host_invgf_,
+//                                 host_iold_, host_deltaold_,
+//                                 inv_cell_volume,
+//                                 dx_inv, dy_inv,
+//                                 dx_ov_dt, dy_ov_dt,
+//                                 i_domain_begin, j_domain_begin,
+//                                 nprimy,
+//                                 not_spectral );
+//}
+//
+//
+////! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
+////!
+//extern "C" void
+//currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+//                                   double *__restrict__ host_Jy,
+//                                   double *__restrict__ host_Jz,
+//                                   double *__restrict__ host_rho,
+//                                   int Jx_size,
+//                                   int Jy_size,
+//                                   int Jz_size,
+//                                   int rho_size,
+//                                   const double *__restrict__ device_particle_position_x,
+//                                   const double *__restrict__ device_particle_position_y,
+//                                   const double *__restrict__ device_particle_momentum_z,
+//                                   const short *__restrict__ device_particle_charge,
+//                                   const double *__restrict__ device_particle_weight,
+//                                   const int *__restrict__ host_bin_index,
+//                                   unsigned int x_dimension_bin_count,
+//                                   unsigned int y_dimension_bin_count,
+//                                   const double *__restrict__ host_invgf_,
+//                                   const int *__restrict__ host_iold_,
+//                                   const double *__restrict__ host_deltaold_,
+//                                   double inv_cell_volume,
+//                                   double dx_inv,
+//                                   double dy_inv,
+//                                   double dx_ov_dt,
+//                                   double dy_ov_dt,
+//                                   int    i_domain_begin,
+//                                   int    j_domain_begin,
+//                                   int    nprimy,
+//                                   int    not_spectral )
+//{
+//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+//    naive:: // the naive, OMP version serves as a reference along with the CPU version
+//    #else
+//    cudahip::
+//    #endif
+//        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
+//                                           Jx_size, Jy_size, Jz_size, rho_size,
+//                                           device_particle_position_x, device_particle_position_y,
+//                                           device_particle_momentum_z,
+//                                           device_particle_charge,
+//                                           device_particle_weight,
+//                                           host_bin_index,
+//                                           x_dimension_bin_count,
+//                                           y_dimension_bin_count,
+//                                           host_invgf_,
+//                                           host_iold_, host_deltaold_,
+//                                           inv_cell_volume,
+//                                           dx_inv, dy_inv,
+//                                           dx_ov_dt, dy_ov_dt,
+//                                           i_domain_begin, j_domain_begin,
+//                                           nprimy,
+//                                           not_spectral );
+//}
+//#endif
+
