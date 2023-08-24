@@ -31,17 +31,30 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     const unsigned int nx_d = fields->dimDual[0];
     const unsigned int ny_p = fields->dimPrim[1];
     const unsigned int ny_d = fields->dimDual[1];
-
+ 
     // double sumJx = 0;
     // double sumJy = 0;
     // double sumJz = 0;
 
     // Electric field Ex^(d,p)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE )                                                                                                     
+    const int sizeofEx = fields->Ex_->number_of_points_;                                                                               
+    const int sizeofEy = fields->Ey_->number_of_points_;                                                                               
+    const int sizeofEz = fields->Ez_->number_of_points_;                                                                               
+    const int sizeofBx = fields->Bx_->number_of_points_;                                                                               
+    const int sizeofBy = fields->By_->number_of_points_;                                                                               
+    const int sizeofBz = fields->Bz_->number_of_points_;
+
+    #pragma acc parallel present( Ex2D[0:sizeofEx], Jx2D[0:sizeofEx], Bz2D[0:sizeofBz] )                             
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_d; ++x ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop worker
+#endif
 #if !defined( SMILEI_ACCELERATOR_MODE )
         #pragma omp simd
 #endif
@@ -51,11 +64,17 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     }
 
     // Electric field Ey^(p,d)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE ) 
+    #pragma acc parallel present( Ey2D[0:sizeofEy], Jy2D[0:sizeofEy], Bz2D[0:sizeofBz] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop worker
+#endif
 #if !defined( SMILEI_ACCELERATOR_MODE )
         #pragma omp simd
 #endif
@@ -65,11 +84,17 @@ void MA_Solver2D_norm::operator()( ElectroMagn *fields )
     }
 
     // Electric field Ez^(p,p)
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present( Ez2D[0:sizeofEz], Jz2D[0:sizeofEz], Bx2D[0:sizeofBx], By2D[0:sizeofBy] )                             
+    #pragma acc loop gang   
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop worker
+#endif
 #if !defined( SMILEI_ACCELERATOR_MODE )
         #pragma omp simd
 #endif
