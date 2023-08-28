@@ -34,15 +34,15 @@ jobs:
           export PYTHONEXE=python3
           h5pcc -show
           export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
+      #- name: compile Smilei
+      #  run: |
+      #    cd validation
+      #    export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
+      #    python3 validation.py -c  -v 
       - name: compile Smilei
         run: |
-          cd validation
           export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
-          python3 validation.py -c  -v 
-      # - name: compile Smilei
-      #   run: |
-      #     export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
-      #     make
+          make
       - name: run quick tests
         run: |
           export PYTHONEXE=python3
