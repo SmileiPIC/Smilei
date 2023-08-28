@@ -258,7 +258,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: $(PYHEADERS) $(EXEC) $(EXEC)_test
 
 #-----------------------------------------------------
 # Header
@@ -303,6 +303,12 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+# Calculate dependencies: special for Params.cpp which needs pyh files
+$(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
+	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
@@ -341,19 +347,15 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 	$(Q) $(SMILEICXX) $(OBJS:Smilei.o=Smilei_test.o) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
-# Avoid to check dependencies and to create .pyh if not necessary
-FILTER_RULES=clean distclean help env debug doc tar happi uninstall_happi
-ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
-    ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),)
-        # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
-        -include $(DEPS) pygenerator
-        # and pygenerator will create all the $(PYHEADERS) (which are files)
-        pygenerator : $(PYHEADERS)
-    endif
-endif
-
 # these are not file-related rules
-.PHONY: pygenerator $(FILTER_RULES)
+PHONY_RULES=clean distclean help env debug doc tar happi uninstall_happi
+.PHONY: $(PHONY_RULES)
+
+# Check dependencies only when necessary
+GOALS = $(if $(MAKECMDGOALS), $(MAKECMDGOALS), default)
+ifneq ($(filter-out $(PHONY_RULES) print-%, $(GOALS)),)
+    -include $(DEPS)
+endif
 
 #-----------------------------------------------------
 # Doc rules
