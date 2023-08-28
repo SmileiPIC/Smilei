@@ -1,6 +1,7 @@
 #ifndef DIAGNOSTICPARTICLELIST_H
 #define DIAGNOSTICPARTICLELIST_H
 
+#include "VectorPatch.h"
 #include "Diagnostic.h"
 
 class Patch;
@@ -80,7 +81,7 @@ public :
                 std::copy( property->begin(), property->begin() + patch_nParticles, buffer.begin() + patch_start[ipatch] );
             }
         }
-    };   
+    };
 
     //! Write a dataset
     virtual void write_scalar_uint64( H5Write * location, std::string name, uint64_t &, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) = 0;
