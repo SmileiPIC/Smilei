@@ -305,9 +305,9 @@ $(BUILD_DIR)/%.d: %.cpp
 
 # Calculate dependencies: special for Params.cpp which needs pyh files
 $(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
-        @echo "Checking dependencies for $<"
-        $(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-        $(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
