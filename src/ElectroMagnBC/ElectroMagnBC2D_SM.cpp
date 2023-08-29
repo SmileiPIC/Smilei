@@ -117,6 +117,18 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         B[1] = static_cast<Field2D *>( EMfields->By_ );
         B[2] = static_cast<Field2D *>( EMfields->Bz_ );
         
+#ifdef SMILEI_OPENACC_MODE
+        /*const int sizeofE0 = E[axis0_]->number_of_points_;
+        const int sizeofE1 = E[axis1_]->number_of_points_;
+        const int sizeofE2 = E[axis2_]->number_of_points_;
+        const int sizeofB0 = B[axis0_]->number_of_points_;
+        const int sizeofB1 = B[axis1_]->number_of_points_;
+        const int sizeofB2 = B[axis2_]->number_of_points_;
+
+        const int B_ext_size0 = B_val[axis0_]->number_of_points_;
+        const int B_ext_size1 = B_val[axis1_]->number_of_points_;
+        const int B_ext_size2 = B_val[axis2_]->number_of_points_;*/
+#endif
         // Lasers polarized along axis 1
         vector<double> b1( n_p[axis1_], 0. );
         vector<double> pos( 1 );
@@ -129,6 +141,13 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
         if( axis0_ == 0 ) { // for By^(d,p)
+#ifdef SMILEI_OPENACC_MODE
+        //    #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
+        //    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for collapse( 2 )
+#endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_p[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[1] )( iB_[1], j )
                     = Alpha_  *   ( *E[2] )( iB_[0]      , j )
@@ -139,6 +158,13 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     + B_val[1][j];
             }
         } else { // for Bx^(p,d)
+#ifdef SMILEI_OPENACC_MODE
+        //    #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
+        //    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for collapse( 2 )
+#endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_p[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[0] )( j, iB_[0] )
                     = -Alpha_ *   ( *E[2] )( j, iB_[1]        )
@@ -150,6 +176,8 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
         
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( db1, b1_size );
+
         // Lasers polarized along axis 2
         vector<double> b2( n_d[axis1_], 0. );
         if( ! vecLaser.empty() ) {
@@ -160,8 +188,18 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
+
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( db2, b2_size );
+
         // for Bz^(d,d)
         if( axis0_ == 0 ) {
+#ifdef SMILEI_OPENACC_MODE
+        //    #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
+        //    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for collapse( 2 )
+#endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_d[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[2] )( iB_[2], j )
                     = -Alpha_ *   ( *E[1] )( iB_[0]      , j )
@@ -170,6 +208,13 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     + B_val[2][j];
             }
         } else {
+#ifdef SMILEI_OPENACC_MODE
+        //    #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
+        //    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for collapse( 2 )
+#endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_d[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[2] )( j, iB_[2] )
                     = Alpha_ *   ( *E[0] )( j, iB_[1]       )
@@ -179,5 +224,6 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }
         }
         
+        //smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( db2, b2_size );
     }
 }

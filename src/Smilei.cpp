@@ -117,7 +117,7 @@ int main( int argc, char *argv[] )
     const int gpu_count = ::omp_get_num_devices();
 
     if( gpu_count < 1 ) {
-        ERROR( "Simlei needs one accelerator, none detected." );
+        ERROR( "Smilei needs one accelerator, none detected." );
     } else if( gpu_count > 1 ) {
         // NOTE: We do not support multi gpu per MPI proc in OpenMP mode
         // (nor in OpenACC). This makes management of the device completely

@@ -126,7 +126,7 @@ void RadiationCorrLandauLifshitz::operator()(
     {
         #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector private(rad_norm_energy)
     // Other GPUS
-    #elif 0 // defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #elif 0 // defined( SMILEI_ACCELERATOR_GPU_OMP )   // why elif 0  ???
         #pragma omp target defaultmap( none )                                     \
             map( to                                                               \
                  : Ex [istart_offset:np],                            \

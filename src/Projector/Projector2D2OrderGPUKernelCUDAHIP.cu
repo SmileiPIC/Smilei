@@ -586,7 +586,7 @@ namespace cudahip2d {
             // The unit is the cell
             const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
             const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
-            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 3 /* 3D */, 2 /* 2nd order interpolation */ );
+            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
             ComputeFloat one_half = 1. / 2.;
 
             // NOTE: We gain from the particles not being sorted inside a
@@ -632,18 +632,16 @@ namespace cudahip2d {
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
 
-                ComputeFloat Sx0[4];
+                ComputeFloat Sx0[5];
                 ComputeFloat Sx1[5];
-                ComputeFloat Sy0[4];
+                ComputeFloat Sy0[5];
                 ComputeFloat Sy1[5];
-                // double DSx[5];
-                // double DSy[5];
 
                 // Variable declaration & initialization
                 // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
 
                 // Locate the particle on the primal grid at former time-step & calculate coeff. S0
-                /*{
+                {
                     const ComputeFloat delta  = deltaold[0 * particle_count];
                     const ComputeFloat delta2 = delta * delta;
 
@@ -662,13 +660,13 @@ namespace cudahip2d {
                     Sy0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
                     Sy0[3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy0[4] = static_cast<ComputeFloat>( 0.0 );
-                }*/
-                init_S0(deltaold[0 * particle_count], Sx0);
-                init_S0(deltaold[1 * particle_count], Sy0);
+                }//*/
+                //init_S0(deltaold[0 * particle_count], Sx0);
+                //init_S0(deltaold[1 * particle_count], Sy0);
 
 
                 // Locate the particle on the primal grid at current time-step & calculate coeff. S1
-                /*{
+                {
                     // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
                     const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
                     const int          ip       = std::round( xpn );
@@ -705,11 +703,11 @@ namespace cudahip2d {
                     Sy1[jp_m_jpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy1[jp_m_jpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
                     Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }*/
-                init_S1( static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv,
+                }//*/
+                /*init_S1( static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv,
                     iold[0 * particle_count], i_domain_begin, Sx1);
                 init_S1( static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv,
-                    iold[1 * particle_count], j_domain_begin, Sy1);
+                    iold[1 * particle_count], j_domain_begin, Sy1);//*/
 
 
                 // (x,y,z) components of the current density for the macro-particle
@@ -729,9 +727,9 @@ namespace cudahip2d {
 
                 // Jx
 
-                //ComputeFloat tmpJx[5]{};
+                ComputeFloat tmpJx[5]{};
 
-                /*for( unsigned int i = 1; i < 5; ++i ) {
+                for( unsigned int i = 1; i < 5; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2 ) + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<ComputeFloat>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
                     atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
@@ -739,9 +737,9 @@ namespace cudahip2d {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
                         atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
                     }
-                }*/
+                }//*/
 
-                {
+                /*{
                     ComputeFloat tmp = crx_p * static_cast<ComputeFloat>( 0.5 ) * Sy1[0] ;
                     ComputeFloat tmp_reduction{};
                     const int iloc = ipo *  GPUClusterWithGCWidth + jpo ;
@@ -763,12 +761,12 @@ namespace cudahip2d {
                         tmp_reduction -= ( Sx1[i - 1] - Sx0[i - 2] ) * tmp;
                         atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
                     }
-                }
+                }//*/
 
 
                 // Jy
 
-                /*for( unsigned int i = 0; i < 1; ++i ) {
+                for( unsigned int i = 0; i < 1; ++i ) {
                     const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
                     ComputeFloat tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
@@ -784,8 +782,8 @@ namespace cudahip2d {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
                         atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
                     }
-                }*/
-                {
+                }//*/
+                /*{
                     ComputeFloat tmp = cry_p * Sy1[0] * one_half;
                     const int    iloc = ( ipo ) * GPUClusterWithGCWidth + jpo;
                     ComputeFloat tmp_reduction{};
@@ -808,12 +806,12 @@ namespace cudahip2d {
                         tmp_reduction -= tmp * ( Sx0[i-1] +  Sx1[i] );
                         atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
                     }
-                }
+                }//*/
 
 
                 // Jz
 
-                /*for( unsigned int i = 0; i < 1; ++i ) {
+                for( unsigned int i = 0; i < 1; ++i ) {
                     const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
                     atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * (  Sx1[i] ) ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
@@ -829,13 +827,13 @@ namespace cudahip2d {
                         atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
                                                                                                                       Sy1[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
                     }
-                }*/
-                {
+                }//*/
+                /*{
                     ComputeFloat tmp = crz_p * Sx1[0];
                     const int iloc = ipo * GPUClusterWithGCWidth + jpo;
                      atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( tmp *  Sy1[0]) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp * (Sy0[j] * one_half + Sy1[j]) ) );
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp * (Sy0[j-1] * one_half + Sy1[j]) ) );
                     }
                 }
 
@@ -846,7 +844,7 @@ namespace cudahip2d {
                         atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j-1] * ( one_half * Sx1[i] + Sx0[i-1] ) +
                                                                                                                       Sy1[j] * ( one_half * Sx0[i-1] + Sx1[i] ) ) ) );
                     }
-                }
+                }//*/
 
             }
 
@@ -857,8 +855,8 @@ namespace cudahip2d {
                  field_index += workgroup_size ) {
 
                 // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-                const unsigned int local_y_scratch_space_coordinate = field_index % Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+                const unsigned int local_x_scratch_space_coordinate = field_index / GPUClusterWithGCWidth;
+                const unsigned int local_y_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
 
                 const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
                 const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
