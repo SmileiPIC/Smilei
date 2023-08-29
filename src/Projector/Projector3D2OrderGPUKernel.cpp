@@ -71,7 +71,7 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                            int    nprimz,
                            int    not_spectral )
 {
-	printf("We are doing current deposition on GPU \n");
+    //	printf("We are doing current deposition on GPU \n");
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
     //#else
@@ -134,7 +134,7 @@ densityDeposition3DOnDevice(
                                      int    nprimz,
                                      int    not_spectral )
 {
-  printf("We are doing a densitydeposition on GPU \n");
+  //printf("We are doing a densitydeposition on GPU \n");
 
     	//#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version

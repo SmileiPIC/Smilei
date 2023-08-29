@@ -4432,12 +4432,25 @@ void VectorPatch::moveWindow(
     // Copy all Fields and Particles to the device
     // This step is not necessary if the things are done correctly in simWindow->shift
 
-// #if defined( SMILEI_ACCELERATOR_MODE)
-//     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-//        copyEMFieldsFromHostToDevice();
-//        copyParticlesFromHostToDevice();
-//     }
-// #endif
+
+// let's try initialising like we do at the start:
+/*#if defined( SMILEI_ACCELERATOR_MODE )
+    // Allocate particle and field arrays
+    // Also copy particle array content on device
+    vecPatches.allocateDataOnDevice( params, &smpi,
+                                        &radiation_tables_,
+                                        &multiphoton_Breit_Wheeler_tables_ );
+    // Copy field array content on device
+    vecPatches.copyFieldsFromHostToDevice();
+#endif*/
+
+// does not do anything?
+ /*#if defined( SMILEI_ACCELERATOR_MODE)
+     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
+        copyFieldsFromHostToDevice();
+        copyParticlesFromHostToDevice();
+     }
+ #endif*/
 
     timers.movWindow.update();
 }

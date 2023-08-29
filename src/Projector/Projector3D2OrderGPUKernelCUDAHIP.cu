@@ -289,7 +289,7 @@ namespace cudahip {
                 const int kpo = iold[2 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
-                if (particle_index==first_particle + thread_index_offset) printf("ipo : %d\n",ipo); 
+                //if (particle_index==first_particle + thread_index_offset) printf("ipo : %d\n",ipo); 
                 // Jx
                 //j=0
                 //k=0

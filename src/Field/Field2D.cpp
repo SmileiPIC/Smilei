@@ -335,8 +335,9 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         // Allocate only the first time we call this function
         sendFields_[iDim*2+iNeighbor] = new Field2D(size);
         recvFields_[iDim*2+iNeighbor] = new Field2D(size);
-    } else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    } 
+    else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
+#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         ERROR( "To Do GPU : envelope" );
 #endif
         delete sendFields_[iDim*2+iNeighbor];
@@ -345,7 +346,7 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         recvFields_[iDim*2+iNeighbor] = new Field2D(size);
     }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_MODE )
     const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) || ( name[0] == 'R' ) ) &&
                                               smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( data() );
     if( should_manipulate_gpu_memory ) {
@@ -399,8 +400,17 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     #pragma omp target if( should_manipulate_gpu_memory )
     #pragma omp teams distribute parallel for collapse( 2 )
+#elif defined( SMILEI_OPENACC_MODE )
+    const int subSize = sendFields_[iDim*2+iNeighbor]->size();
+    const int fSize = number_of_points_;
+    bool fieldName( (name.substr(0,1) == "B") );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+	#pragma acc loop worker vector
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
         }
@@ -438,8 +448,17 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                                       \
              : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for collapse( 2 )
+#elif defined( SMILEI_OPENACC_MODE )
+    int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
+    const int fSize = number_of_points_;
+    bool fieldName( name.substr(0,1) == "B" );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+	#pragma acc loop worker vector
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] = sub[i*NY+j];
         }
@@ -477,8 +496,18 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
         map( to                                           \
              : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for collapse( 2 )
+#elif defined( SMILEI_OPENACC_MODE )
+    const int subSize = sendFields_[iDim*2+iNeighbor]->size();
+    const int fSize = number_of_points_;
+    bool fieldName( (name.substr(0,1) == "J") || (name.substr(0,1) == "R"));
+    #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
+    //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+	#pragma acc loop worker vector
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
         }
@@ -516,8 +545,18 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                                       \
              : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for collapse( 2 )
+#elif defined( SMILEI_OPENACC_MODE )
+    int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
+    int fSize = number_of_points_;
+    bool fieldName( name.substr(0,1) == "J" || name.substr(0,1) == "R");
+    #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
+    //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+	#pragma acc loop worker vector
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] += sub[i*NY+j];
         }

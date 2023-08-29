@@ -23,6 +23,7 @@
 #include "EnvelopeBC_Factory.h"
 #include "DoubleGrids.h"
 #include "SyncVectorPatch.h"
+#include <iostream>
 
 using namespace std;
 
@@ -370,7 +371,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         {
             for( int ithread=0; ithread < max_threads ; ithread++ ) {
                 for( unsigned int j=0; j< ( patch_to_be_created[ithread] ).size(); j++ ) {
-                
+                    std::cout<< "this is the patch to be created:" << ( patch_to_be_created[ithread] ).size() <<" " << patch_to_be_created[ithread][j] << std:: endl; 
                     // Current newly created patch
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     
@@ -397,6 +398,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #if defined ( SMILEI_ACCELERATOR_MODE )
                         if ( params.gpu_computing ) {
                             // ADD NEW PARTS ON GPU
+				std::cout << " we are in the gpu particles creation " << std::endl;
                             for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                               mypatch->vecSpecies[ispec]->particles_to_move->clear();
                             //   mypatch->vecSpecies[ispec]->particles->copyParticles( 0, mypatch->vecSpecies[ispec]->getNbrOfParticles(),
