@@ -145,8 +145,8 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         //    #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
         //    #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-            #pragma omp teams distribute parallel for collapse( 2 )
+        //    #pragma omp target
+        //    #pragma omp teams distribute parallel for
 #endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_p[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[1] )( iB_[1], j )
@@ -162,8 +162,8 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         //    #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
         //    #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-            #pragma omp teams distribute parallel for collapse( 2 )
+        //    #pragma omp target
+        //    #pragma omp teams distribute parallel for
 #endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_p[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[0] )( j, iB_[0] )
@@ -197,8 +197,8 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         //    #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
         //    #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-            #pragma omp teams distribute parallel for collapse( 2 )
+        //    #pragma omp target
+        //    #pragma omp teams distribute parallel for
 #endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_d[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[2] )( iB_[2], j )
@@ -212,8 +212,8 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         //    #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
         //    #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-            #pragma omp target
-            #pragma omp teams distribute parallel for collapse( 2 )
+        //    #pragma omp target
+        //     #pragma omp teams distribute parallel for
 #endif
             for( unsigned int j=patch->isBoundary(axis1_,0) ; j<n_d[axis1_]-patch->isBoundary(axis1_,1) ; j++ ) {
                 ( *B[2] )( j, iB_[2] )
