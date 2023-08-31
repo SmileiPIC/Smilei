@@ -42,10 +42,12 @@ Changes made in the repository (not released)
 
 * **Happi**:
 
-  * operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,
+  * Operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,
     or basic functions such as ``exp()`` or ``sin()``
   * ``Probe`` has a new method ``changeField``
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
+  * ``multiPlot`` and ``multiSlide`` have a new argument ``legend_font``
+  * Various performance improvements
 
 * **Friedman filter**: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
 * **Lehe solver** for Maxwell equations now available in ``AMcylindrical`` geometry

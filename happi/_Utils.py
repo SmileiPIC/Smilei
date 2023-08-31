@@ -547,6 +547,7 @@ class _multiPlotUtil(object):
 		self.plt = Diags[0]._plt # pyplot
 		# Get keyword arguments
 		self.shape  = kwargs.pop("shape" , None)
+		self.legend_font = kwargs.pop("legend_font", None)
 		self.movie  = kwargs.pop("movie" , ""  )
 		self.fps    = kwargs.pop("fps"   , 15  )
 		self.dpi    = kwargs.pop("dpi"   , 200 )
@@ -657,6 +658,7 @@ class _multiPlotUtil(object):
 				self.ax[0].legend(
 					[Diag._plot for Diag in self.Diags if Diag._plot],
 					[Diag.options.plot["label"] for Diag in self.Diags if Diag._plot],
+					prop = self.legend_font
 				)
 	
 	def staticPlot(self):
@@ -698,7 +700,7 @@ class _multiPlotUtil(object):
 					else:
 						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					self.twinOptions(Diag)
-			if self.nlegends > 0: self.plt.legend()
+			self.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
 			mov.grab_frame()
@@ -717,7 +719,7 @@ class _multiPlotUtil(object):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0], cax_id = Diag._cax_id)
 			self.twinOptions(Diag)
-		if self.nlegends > 0: self.plt.legend()
+		self.legend()
 		self.plt.draw()
 		
 		from matplotlib.widgets import Slider
@@ -729,7 +731,7 @@ class _multiPlotUtil(object):
 
 def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ...,
-	              shape=None,
+	              shape=None, legend_font={},
 	              movie="", fps=15, dpi=200, saveAs=None,
 	              skipAnimation=False
 	              )
@@ -740,6 +742,7 @@ def multiPlot(*Diags, **kwargs):
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
+	legend_font : dictionnary to set the legend's font properties, such as {'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}.
 	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.
 	dpi : resolution of the movie.
@@ -766,6 +769,7 @@ def multiSlide(*Diags, **kwargs):
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
+	legend_font : dictionnary to set the legend's font properties, such as {'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}.
 	"""
 	
 	

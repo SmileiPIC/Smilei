@@ -840,6 +840,8 @@ Simultaneous plotting of multiple diagnostics
   * ``shape``: The arrangement of plots inside the figure. For instance, ``[2, 1]``
     makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
     If absent, stacks plots vertically.
+	* ``legend_font``: dictionnary to set the legend's font properties,
+    such as ``{'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}``.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
   * ``dpi`` : resolution of the ``movie`` or ``saveAs``.
@@ -856,7 +858,7 @@ Simultaneous plotting of multiple diagnostics
 
   * ``diag1``, ``diag2``, etc.
      | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
-  * ``figure`` and ``shape``: same as in ``happi.multiPlot``.
+  * ``figure``, ``shape``, and ``legend_font``: same as in ``happi.multiPlot``.
 
 
 **Example**::
@@ -890,7 +892,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
+  `matplotlib's figure options <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html>`_.
 
 .. rubric:: For the axes frame: ``aspect``, ``axis_facecolor``, ``frame_on``, ``position``,
   ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
@@ -899,7 +901,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to matplotlib's axes options: the same as functions starting
-  with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
+  with ``set_`` listed `here <http://matplotlib.org/stable/api/axes_api.html>`_.
 
 .. rubric:: For the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``,
   ``label``, ``linestyle``, ``linewidth``,
@@ -910,14 +912,14 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
+  `matplotlib's line options <https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html>`_.
 
 .. rubric:: For the image: ``cmap``, ``aspect``, ``interpolation``, ``norm``
 
 ..
 
   Please refer to
-  `matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
+  `matplotlib's image options <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html>`_.
 
 .. rubric:: For the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``,
   ``shrink``, ``anchor``, ``panchor``, ``extend``, ``extendfrac``, ``extendrect``,
@@ -926,7 +928,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
+  `matplotlib's colorbar options <https://matplotlib.org/stable/api/colorbar_api.html>`_.
 
 .. rubric:: For the tick number format: ``style_x``, ``scilimits_x``, ``useOffset_x``,
   ``style_y``, ``scilimits_y``, ``useOffset_y``
@@ -935,7 +937,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
+  `matplotlib's tick label format <http://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 .. rubric:: For fonts: ``title_font``, ``xlabel_font``, ``xticklabels_font``,
   ``ylabel_font``, ``yticklabels_font``, ``colorbar_font``
@@ -943,7 +945,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   These options are dictionnaries that may contain the entries available in
-  `matplotlib's text options <https://matplotlib.org/api/text_api.html#matplotlib.text.Text>`_,
+  `matplotlib's font properties <https://matplotlib.org/stable/api/font_manager_api.html#matplotlib.font_manager.FontProperties>`_,
   for instance::
 
     title_font = {'size': 15, 'weight': 'bold', 'family':'serif', 'color': 'k'}
