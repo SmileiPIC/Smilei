@@ -804,12 +804,11 @@ class Diagnostic(object):
 
 	# set options during animation
 	def _setTitle(self, ax, t=None):
-		title = []
-		if self._vlabel:
-			title += [self._vlabel]
 		if t is not None:
-			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
-		ax.set_title("  ".join(title), self.options.labels_font["title"])
+			time = t*self.timestep*self.units.tcoeff
+			ax.set_title(self.options.title.format(quantity=self._vlabel, time_prefix="t =", time=time, time_units=self.units.tname), self.options.labels_font["title"])
+		else:
+			ax.set_title(self.options.title.format(quantity=self._vlabel), self.options.labels_font["title"])
 	def _setAxesOptions(self, ax):
 		# Generic axes option
 		for option, value in self.options.axes.items():

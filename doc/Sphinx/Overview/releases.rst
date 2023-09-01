@@ -47,6 +47,7 @@ Changes made in the repository (not released)
   * ``Probe`` has a new method ``changeField``
   * ``Open`` has a new argument ``pint`` to disable the *Pint* package
   * ``multiPlot`` and ``multiSlide`` have a new argument ``legend_font``
+  * The ``title`` can be formatted with a placeholder for the current time in an animation
   * Various performance improvements
 
 * **Friedman filter**: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)

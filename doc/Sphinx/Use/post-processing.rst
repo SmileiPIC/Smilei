@@ -557,6 +557,11 @@ to manipulate the plotting options:
   
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
+* ``title``: a string that replaces the plot title (or the y-label in a 1D plot).
+  The current simulation time can be included with the placeholders ``{time}`` and
+  ``{time_units}``, together with formatting instructions conforming to
+  `python's string formatter <https://docs.python.org/3/library/string.html#format-string-syntax>`_.
+  For instance: ``title = "Density @ $t = {time:.0f} {time_units}$"``.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
   or the right-hand-side.
 * ``transparent``: ``None`` (by default), ``"over"``, ``"under"``, ``"both"``, or a *function*.
@@ -564,7 +569,7 @@ to manipulate the plotting options:
   set by ``vmin`` and ``vmax``.
   This argument may be set instead to a function mapping the data value :math:`\in [0,1]` to the
   transparency :math:`\in [0,1]`. For instance ``lambda x: 1-x``.
-* Many Matplotlib arguments listed in :ref:`advancedOptions`.
+* Other Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----
 
@@ -840,7 +845,7 @@ Simultaneous plotting of multiple diagnostics
   * ``shape``: The arrangement of plots inside the figure. For instance, ``[2, 1]``
     makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
     If absent, stacks plots vertically.
-	* ``legend_font``: dictionnary to set the legend's font properties,
+  * ``legend_font``: dictionnary to set the legend's font properties,
     such as ``{'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}``.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
@@ -895,7 +900,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   `matplotlib's figure options <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html>`_.
 
 .. rubric:: For the axes frame: ``aspect``, ``axis_facecolor``, ``frame_on``, ``position``,
-  ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
+  ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
   ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 
 ..

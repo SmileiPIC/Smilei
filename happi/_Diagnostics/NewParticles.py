@@ -271,6 +271,9 @@ class NewParticles(ParticleList):
 			for axis in self.axes: self._tmpdata.append( A[axis] )
 		return True
 	
+	def _setTitle(ax, t=None):
+		ax.set_title(self.options.title.format(self._vlabel), self.options.labels_font["title"])
+	
 	def _plotOnAxes_0D(self, ax, t, cax_id=0):
 		pass
 	

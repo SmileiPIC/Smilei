@@ -149,6 +149,7 @@ class Options(object):
 		self.side = "left"
 		self.transparent = None
 		self.export_dir = None
+		self.title = "{quantity}  {time_prefix} {time} {time_units}"
 
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -169,7 +170,8 @@ class Options(object):
 		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
-		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
+		self.export_dir  = kwargs.pop("export_dir" , self.export_dir )
+		self.title       = kwargs.pop("title"      , self.title )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.copy().items():
 			# figure
@@ -184,7 +186,7 @@ class Options(object):
 			elif kwa in ["axis_facecolor"]:
 				self.axes[kwa[5:]] = val
 			# labels
-			elif kwa in ["title","xlabel","ylabel"]:
+			elif kwa in ["xlabel","ylabel"]:
 				self.labels[kwa] = val
 			elif kwa in ["title_font","xlabel_font","ylabel_font"]:
 				kw = kwa[:-5]
