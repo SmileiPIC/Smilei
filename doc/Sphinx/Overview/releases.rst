@@ -39,6 +39,7 @@ Changes made in the repository (not released)
 * **Collisions**: new parameter ``time_frozen``
 * **Species**: in ``AMcylindrical`` geometry, the initial drift velocity profiles may be defined
   either in the ``x,r,θ``  directions with ``mean_velocity_AM`` or in the ``x,y,z`` directions with ``mean_velocity``.
+* **Lasers**: changed the delay and phase of gaussian lasers at high incidence to make them consistent between boundaries.
 
 * **Happi**:
 
