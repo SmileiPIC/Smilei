@@ -509,15 +509,23 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
     from math import pi, cos, sin, tan, atan, sqrt, exp
+    global Main
+    if len(Main)==0:
+        raise Exception("LaserGaussian2D profile has been defined before `Main()`")
+    grid_length = Main.grid_length
     # Polarization and amplitude
     dephasing, amplitudeZ, amplitudeY = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
     amplitudeZ *= a0 * omega
     delay_phase = [0., dephasing]
-    # In case of ymin/ymax
+    # Injection on ymin/ymax
     if box_side[0] == "y":
         focus = focus[::-1]
+        grid_length = grid_length[::-1]
         amplitudeY = -amplitudeY
+    # Injection on max boundary
+    if box_side.endswith("max"):
+        focus[0] = grid_length[0] - focus[0]
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == 0.:
@@ -542,10 +550,15 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             return sqrt(sqrt(w2)) * exp( -invWaist2*w2*(y-Y2)**2 )
         def phase(y):
             dy = y-Y1
-            return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + atan(invZr*dy)
-        phase_zero += phase(Y2)
-        if box_side[0] == "y":
-            phase_zero -= Y2 / sin(incidence_angle) * omega
+            return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) - 0.5*atan(invZr*dy)
+        # Adjust the phase to match that of a laser that could come from another face
+        if Y2 < 0:
+            distance_to_boundary = focus[1] / sin(incidence_angle)
+        elif Y2 < grid_length[1]:
+            distance_to_boundary = focus[0] / cos(incidence_angle)
+        else:
+            distance_to_boundary = (focus[1] - grid_length[1]) / sin(incidence_angle)
+        phase_zero -= omega * distance_to_boundary - 0.5*atan(distance_to_boundary/Zr)
     # Create Laser
     Laser(
         box_side       = box_side,
@@ -588,17 +601,25 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
     from math import pi, cos, sin, tan, atan, sqrt, exp
+    global Main
+    if len(Main)==0:
+        raise Exception("LaserGaussian3D profile has been defined before `Main()`")
+    grid_length = Main.grid_length
     # Polarization and amplitude
     [dephasing, amplitudeZ, amplitudeY] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
     amplitudeZ *= a0 * omega
-    # In case of ymin/ymax
+    # Injection on ymin/ymax or zmin/zmax
     if box_side[0] == "y":
         focus = [focus[1],focus[0],focus[2]]
+        grid_length = [grid_length[1],grid_length[0],grid_length[2]]
         amplitudeY = -amplitudeY
     elif box_side[0] == "z":
         focus = [focus[2],focus[0],focus[1]]
-        phase_zero -= pi/2.
+        grid_length = [grid_length[2],grid_length[0],grid_length[1]]
+    # Injection on max boundary
+    if box_side.endswith("max"):
+        focus[0] = grid_length[0] - focus[0]
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == [0.,0.]:
@@ -629,9 +650,11 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             Y = invZr * ( focus[0]*sz   + (y-focus[1])*cz                     )
             Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
             return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - atan(X)
-        phase_zero += phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
-        if box_side[0] in ["y","z"]:
-            phase_zero -= (focus[1]-sz/cz*focus[0]) / cysz  * omega
+        # Adjust the phase to match that of a laser that could come from another face
+        faces = (focus[0],focus[1],focus[2],focus[1]-grid_length[1],focus[2]-grid_length[2])
+        denominators = (cycz, cysz, -sy, cysz, -sy)
+        distance_to_boundary = min([N/D for N,D in zip(faces,denominators) if D != 0 and N/D > 0])
+        phase_zero -= omega * distance_to_boundary - atan(distance_to_boundary/Zr)
     # Create Laser
     Laser(
         box_side       = box_side,
