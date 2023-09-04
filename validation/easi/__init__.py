@@ -556,6 +556,20 @@ class Validation(object):
             print("")
         
         return benchmarks
+
+    def compare(self, benchname, simulation_dir):
+        from os import chdir
+        from .tools import execfile
+        global _dataNotMatching
+        _dataNotMatching = False
+        validation_script = self.smilei_path.analyses + "validate_" + benchname
+        Validate = self.CompareToReference(self.smilei_path.references, benchname)
+        chdir(simulation_dir)
+        execfile(validation_script, {"Validate":Validate})
+        if _dataNotMatching:
+            print("The validation procedure failed.")
+        else:
+            print("PASS")
     
     # DEFINE A CLASS TO CREATE A REFERENCE
     class CreateReference(object):
