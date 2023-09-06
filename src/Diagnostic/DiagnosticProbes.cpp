@@ -220,7 +220,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             fieldname[12] = "Env_E_abs";
             fieldname[13] = "Env_Ex_abs";
         } else if (!params.Laser_Envelope_model && params.use_BTIS3){
-            fieldname.resize( 11 );
+            fieldname.resize( 12 );
             fieldname[10] = "ByBTIS3";
             fieldname[11] = "BzBTIS3";
         } else if (params.Laser_Envelope_model && params.use_BTIS3){
