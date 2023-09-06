@@ -45,7 +45,61 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. READ THIS 
    There is now a utility to add new entries to this list.
-   Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
+   Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+.. [Oudin2022]
+
+    A. Oudin, A. Debayle, C. Ruyer, D. Benisti,
+    `Cross-beam energy transfer between spatially smoothed laser beams`,
+    `Phys. Plasmas 29, 112112 (2022) <https://doi.org/10.1063/5.0109511>`_
+    
+.. [Chen2022]
+
+    Q. Chen, Dominika Maslarova, J. Wang, S. Li, and D. Umstadter,
+    `Injection of electron beams into two laser wakefields and generation of electron rings`,
+    `Phys. Rev. E 106, 055202 (2022) <https://doi.org/10.1103/PhysRevE.106.055202>`_
+       
+.. [Paschke_Bruehl2023]
+
+    F. Paschke-Bruehl, M. Banjafar, M. Garten, L. G. Huang, B. E. Marré, M. Nakatsutsumi, L. Randolph, T. E. Cowan, U. Schramm and T. Kluge,
+    `Heating in multi-layer targets at ultra-high intensity laser irradiation and the impact of density oscillation`,
+    `New Journal of Physics 25 (2023) <https://doi.org/10.1088/1367-2630/accdfa>`_
+    
+.. [Vladisavlevici2023]
+
+    I. M. Vladisavlevici, D. Vizman and E. d'Humières,
+    `Theoretical investigation of the interaction of ultra-high intensity laser pulses with near critical density plasmas`,
+    `Plasma Physics and Controlled Fusion 65, 4 (2023) <https://doi.org/10.1088/1361-6587/acbe63>`_
+       
+.. [Gao2023]
+
+    Xiaohui Gao,
+    `Ionization dynamics of sub-micrometer-sized clusters in intense ultrafast laser pulses`,
+    `Phys. Plasmas 30, 052102 (2023) <https://doi.org/10.1063/5.0143356>`_
+    
+.. [Krafft2023]
+
+    C. Krafft and P. Savoini,
+    `Dynamics of Two-dimensional Type III Electron Beams in Randomly Inhomogeneous Solar Wind Plasmas`,
+    `The Astrophysical Journal 949,  1 <https://doi.org/10.3847/1538-4357/acc1e4>`_
+    
+.. [Hadjikyriacou2023]
+
+     A. Hadjikyriacou, J. Psikal, L. Giuffrida and M. Kucharik,
+     `Novel approach to TNSA enhancement using multi-layered targets—a numerical study`,
+     `Plasma Physics and Controlled Fusion 65, 8 <https://doi.org/10.1088/1361-6587/acdc51>`_
+     
+.. [Ghizzo2023]
+
+    Alain Ghizzo, Daniele Del Sarto, and Homam Betar,
+    `Collisionless Heating Driven by Vlasov Filamentation in a Counterstreaming Beams Configuration`,
+    `Phys. Rev. Lett. 131, 035101 (2023) <https://doi.org/10.1103/PhysRevLett.131.035101>`_
+     
+.. [Yang2023]
+
+   Tong Yang, Zhen Guo, Yang Yan, Minjian Wu, Yadong Xia, Qiangyou He, Hao Cheng, Yuze Li, Yanlv Fang, Yanying Zhao, Xueqing Yan and Chen Lin,
+   `Measurements of Plasma Density Profile Evolutions with Channel-guided Laser`,
+   `High Power Laser Science and Engineering pp. 1-15 (2023) <https://doi.org/10.1017/hpl.2023.50>`_
+     
 .. [Kumar2022b]
 
   Sonu Kumar, Rajat Dhawan, D.K. Singh and Hitendra K. Malik,
