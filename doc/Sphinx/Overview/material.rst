@@ -80,13 +80,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
     C. Krafft and P. Savoini,
     `Dynamics of Two-dimensional Type III Electron Beams in Randomly Inhomogeneous Solar Wind Plasmas`,
-    `The Astrophysical Journal 949,  1 <https://doi.org/10.3847/1538-4357/acc1e4>`_
+    `The Astrophysical Journal 949,  1 (2023) <https://doi.org/10.3847/1538-4357/acc1e4>`_
     
 .. [Hadjikyriacou2023]
 
      A. Hadjikyriacou, J. Psikal, L. Giuffrida and M. Kucharik,
      `Novel approach to TNSA enhancement using multi-layered targets—a numerical study`,
-     `Plasma Physics and Controlled Fusion 65, 8 <https://doi.org/10.1088/1361-6587/acdc51>`_
+     `Plasma Physics and Controlled Fusion 65, 8 (2023) <https://doi.org/10.1088/1361-6587/acdc51>`_
      
 .. [Ghizzo2023]
 
