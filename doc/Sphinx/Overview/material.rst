@@ -46,6 +46,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+.. [Schmitz2023]
+
+     B. Schmitz, D. Kreuter, and O. Boine-Frankenheim,
+     `Modeling of a Liquid Leaf Target TNSA Experiment Using Particle-In-Cell Simulations and Deep Learning`,
+     `Laser and Particle Beams, 2868112 (2023) <https://doi.org/10.1155/2023/2868112>`_
+     
 .. [Oudin2022]
 
     A. Oudin, A. Debayle, C. Ruyer, D. Benisti,
