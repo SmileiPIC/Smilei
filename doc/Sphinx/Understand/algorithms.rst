@@ -482,7 +482,7 @@ Thus, in the B-TIS3 scheme a translated interpolation scheme is used for :math:`
 
 .. math::
 
-    B_{z,i}^{(n), B-TIS3}=\tfrac{1}{2}[B_{z,i-1/2}^{(n+1/2) } + B_{z,i+1/2}^{(n-1/2)}].
+    B_{z,i}^{(n), B-TIS3}=\tfrac{1}{2}[B_{z,i-1/2}^{(n-1/2) } + B_{z,i+1/2}^{(n+1/2)}].
 
 As explained in the B-TIS3 reference, for :math:`\mathbf{B}` fields moving near to the speed of light in the `x` direction and for :math:`c\Delta t` near to the value :math:`\Delta x`,
 this choice is more accurate than the usual linear temporal intepolation of the magnetic fields.
