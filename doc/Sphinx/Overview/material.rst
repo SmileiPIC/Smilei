@@ -46,6 +46,30 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+.. [Bukharskii2023]
+
+       N. Bukharskii and Ph. Korneev,
+       `Intense widely controlled terahertz radiation from laser-driven wires`,
+       `Matter Radiat. Extremes 8, 044401 (2023) <https://doi.org/10.1063/5.0142083>`_
+        
+.. [Glek2022b]
+
+       P. B. Glek and A. M. Zheltikov,
+       `Enhanced coherent transition radiation from midinfrared‐laser‐driven microplasmas`,
+       `Scientific Reports 12, 7660 (2022) <https://doi.org/10.1038/s41598-022-10614-0>`_
+         
+.. [Margarone2022]
+
+      D. Margarone, J. Bonvalet, L. Giuffrida, A. Morace, V. Kantarelou, M. Tosca, D. Raffestin, P. Nicolai, A. Picciotto, Y. Abe, Y. Arikawa, S. Fujioka, Y. Fukuda, Y. Kuramitsu, H. Habara and D. Batani,
+      `In-Target Proton–Boron Nuclear Fusion Using a PW-Class Laser`,
+      `Appl. Sci. 12(3), 1444 (2022) <https://doi.org/10.3390/app12031444>`_
+      
+.. [Kochetkov2022]
+
+      Iu. V. Kochetkov, N. D. Bukharskii, M. Ehret, Y. Abe, K. F. F. Law,V. Ospina‐Bohorquez, J. J. Santos, S. Fujioka, G. Schaumann, B. Zielbauer, A. Kuznetsov and Ph. Korneev,
+      `Neural network analysis of quasistationary magnetic fields in microcoils driven by short laser pulses`,
+      `Scientific Reports 12, 13734 (2022) <https://doi.org/10.1038/s41598-022-17202-2>`_   
+      
 .. [Schmitz2023]
 
      B. Schmitz, D. Kreuter, and O. Boine-Frankenheim,
