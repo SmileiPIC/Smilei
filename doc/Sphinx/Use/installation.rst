@@ -15,7 +15,6 @@ Optional dependencies are:
 * Git
 * Python modules: sphinx, h5py, numpy, matplotlib, pint
 * ffmpeg
-* the `Picsar <http://picsar.net>`_ library: see :doc:`this documentation<install_PICSAR>`
 
 ----
 
@@ -49,8 +48,6 @@ Several environment variables may be required, depending on your setup.
   Defaults to ``./build``.
 * ``PYTHONEXE``: the python executable to use in smilei.
   Defaults to ``python``.
-* ``PICSAR``: set to ``TRUE`` to enable the PSATD solver from picsar.
-  Defaults to ``FALSE``.
 
 The usual ``CXXFLAGS`` and ``LDFLAGS`` can also be used to pass other
 arguments to the compiler and linker.

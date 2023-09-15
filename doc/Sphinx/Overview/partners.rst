@@ -178,19 +178,6 @@ Partners
 Related projects
 ^^^^^^^^^^^^^^^^
 
-.. |picsar| image:: /_static/labs/picsar.jpg
-  :width: 6em
-  :align: middle
-
-.. rst-class:: noborder
-
-+------------+-----------------------------------------------------------------------------+
-| |picsar|   |                                                                             |
-|            |  The `PICSAR <https://picsar.net/>`_ library for high-performance PIC       |
-|            |  algorithms is currently being incorporated in Smilei.                      |
-+------------+-----------------------------------------------------------------------------+
-
-
 .. |openpmd| image:: /_static/labs/openpmd.jpg
   :width: 6em
   :align: middle
