@@ -14,6 +14,18 @@ interaction to astrophysics.
 
 .. raw:: html
 
+  <a href="https://indico.math.cnrs.fr/e/smilei4" style="color:#3E4349; text-decoration:none">
+      <div style="text-align:center; background-color:#e6f0ff; margin:1em 0 0 0; padding:0.3em; border-radius:0.8em;border-left:0.3em #0672BA solid; border-right:0.3em #0672BA solid;">
+          <b>4th user & training workshop: 8-10 Nov 2023 in Prague (Czechia)</b><br />
+          Registration and abstract submission are open!
+      </div>
+  </a>
+  
+  <div style="width:100%; text-align:center; margin-bottom:2em;">
+  </div>
+  
+.. raw:: html
+
   <div style="width:100%; text-align:center; margin-bottom:4em;">
   <a href="Overview/releases.html" class="icon">
 

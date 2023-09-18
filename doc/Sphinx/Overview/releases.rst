@@ -14,7 +14,7 @@ Get Smilei
 *Learn about Git* `here <https://git-scm.com/doc>`_.
 
 
-You can find older, unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>
+You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>`_
 
 ----
 
@@ -23,16 +23,38 @@ You can find older, unsupported versions here <https://github.com/SmileiPIC/Smil
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
-* ``PML`` can now be used as a bounday condition for the envelope model too.
-* It is no longer necessary to use ``PML`` on all boundaries anymore. It is still required to use PML on both sides of a given boundary. 
-* Much faster ``DiagFields`` (speedup ~ x3)
-* ``DiagFields`` and ``DiagProbe`` accept a new parameter ``datatype``
-* Collisions: new parameter ``time_frozen``
-* Performances diagnostic: new parameter ``cumulative``
-* Laser Envelope: multi-level tunnel ionization creates multiple electrons, improving the sampling
-* For developers: new table management for Monte-Carlo physical processes (transparent to users)
-* Bugfixes:
+* **LaserEnvelope model**:
+
+  * Now compatible with ``PML`` boundaries
+  * In ``AMcylindrical`` geometry, the number of modes can be greater than 1 (only affects electromagnetic
+    fields and the densities, not envelope or susceptibility)
+  * multi-level tunnel ionization creates multiple electrons, improving the sampling
+
+* **Diagnostics**
+
+  * Much faster ``DiagFields`` (speedup ~ x3)
+  * ``DiagFields`` and ``DiagProbe``: new parameter ``datatype``
+  * ``DiagPerformances``: new parameter ``cumulative``
+
+* **Collisions**: new parameter ``time_frozen``
+* **Species**: in ``AMcylindrical`` geometry, the initial drift velocity profiles may be defined
+  either in the ``x,r,θ``  directions with ``mean_velocity_AM`` or in the ``x,y,z`` directions with ``mean_velocity``.
+* **Lasers**: changed the delay and phase of gaussian lasers at high incidence to make them consistent between boundaries.
+
+* **Happi**:
+
+  * Operations in ``Fields``, ``Probe``, and ``ParticleBinning`` may now accept physical constants, units,
+    or basic functions such as ``exp()`` or ``sin()``
+  * ``Probe`` has a new method ``changeField``
+  * ``Open`` has a new argument ``pint`` to disable the *Pint* package
+  * ``multiPlot`` and ``multiSlide`` have a new argument ``legend_font``
+  * The ``title`` can be formatted with a placeholder for the current time in an animation
+  * Various performance improvements
+
+* **Friedman filter**: now available in geometries ``1Dcartesian`` and ``AMcylindrical`` (previously available only in ``2Dcartesian``)
+* **Lehe solver** for Maxwell equations now available in ``AMcylindrical`` geometry
+
+* **Bugfixes**:
 
   * Poisson Solver correction was not properly accounted for with SDMD.
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
@@ -41,9 +63,17 @@ Changes made in the repository (not released)
   * ``PML`` are now compatible with dynamic load balancing.
   * solved segfault with Multiphoton Breit-Wheeler process in `AMcylindrical` geometry
   * Collisional ionization incorrect for :math:`Z^\star = Z-1`
+  * ``Field.getAxis`` was not accounting for the ``timestep``
+  * Bug correction in 1D relativistic Poisson solver
 
-* Experimental: :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP is now available.
-* Experimental: a rudimental visualization for macro-particle operation scheduling, activated through a compilation flag, is now available.
+* **Experimental**
+
+  * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
+  * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
+  * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
+  * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization or other mechanisms
+
+* **For developers**: new table management for Monte-Carlo physical processes (transparent to users)
 
 ----
 
@@ -59,9 +89,8 @@ Projects
 
 * In preparation:
 
-  * Perfectly-matched layers for the envelope model
-  * More spectral solvers
   * GPU support
+  * More spectral solvers
 
 
 ----
@@ -73,7 +102,7 @@ Release 4.7
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Lasers can be injected from all boundaries
-* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present
 * Option to create neutrons for D-D fusion
 * Collisions can be done less often
 * Lasers can be injected from all boundaries

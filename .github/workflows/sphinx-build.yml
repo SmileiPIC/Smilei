@@ -1,0 +1,18 @@
+name: check_docs
+
+on:
+  pull_request:
+    branches: [ master, develop, CI ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Build doc
+      run: |
+        sudo apt-get --allow-releaseinfo-change update -y 
+        sudo apt-get install -y git make sphinx
+        make -C doc/Sphinx html

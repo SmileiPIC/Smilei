@@ -5,8 +5,8 @@
 #include "Patch.h"
 #include "Timers.h"
 
-class Params;
-class OpenPMDparams;
+#include "OpenPMDparams.h"
+
 class SmileiMPI;
 class VectorPatch;
 class TimeSelection;

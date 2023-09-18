@@ -25,3 +25,9 @@ Validate("Field By" , By, 0.01)
 Bz = S.Probe(0, "Bz",timesteps=0.).getData()
 Validate("Field Bz" , Bz, 0.01)
 
+BzBTIS3 = S.Probe(0, "BzBTIS3",timesteps=3.).getData()[0][::10,::10]
+Validate("Field BzBTIS3" , BzBTIS3, 0.01)
+
+ByBTIS3 = S.Probe(0, "ByBTIS3",timesteps=3.).getData()[0][::10,::10]
+Validate("Field ByBTIS3" , ByBTIS3, 0.01)
+

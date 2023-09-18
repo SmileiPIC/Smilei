@@ -23,6 +23,7 @@
 #include "MultiphotonBreitWheelerTables.h"
 #include "Merging.h"
 #include "PartCompTime.h"
+#include "BirthRecords.h"
 
 class ElectroMagn;
 class Pusher;
@@ -126,6 +127,9 @@ public:
 
     //! vector of velocity profiles (vx, vy, vz)
     std::vector<Profile *> velocity_profile_;
+    
+    //! True if velocity profile is radial instead of cartesian
+    bool radial_velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperature_profile_;
@@ -167,7 +171,7 @@ public:
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
-    int electron_species_index;
+    size_t electron_species_index;
     //! Name of the species where field-ionized electrons go
     std::string ionization_electrons;
 
@@ -333,6 +337,9 @@ public:
 
     //! Particle Computation time evaluation
     PartCompTime *part_comp_time_ = NULL;
+    
+    //! Birth records
+    BirthRecords *birth_records_ = NULL;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -547,11 +554,7 @@ public:
     }
 
     //! Method to import particles in this species while conserving the sorting among bins
-    //! \param[in] Params the main Smilei parameters
-    //! \param[in,out] Patch current patch
-    //! \param[in,out] source_particles Particles object containing the particles to import
-    //! \param[in,out] localDiags vector of diags for tracked particles
-    virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
+    virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> &, double time_dual, Ionization *I = nullptr );
 
     //! This method eliminates the space gap between the bins
     //! (presence of empty particles between the bins)

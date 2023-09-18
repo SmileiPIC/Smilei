@@ -1,5 +1,8 @@
-from ._Factories import ScalarFactory, FieldFactory, ProbeFactory, ParticleBinningFactory, RadiationSpectrumFactory, PerformancesFactory, ScreenFactory, TrackParticlesFactory
+from ._Factories import ScalarFactory, FieldFactory, ProbeFactory, ParticleBinningFactory, RadiationSpectrumFactory, PerformancesFactory, ScreenFactory, TrackParticlesFactory, NewParticlesFactory
 from ._Utils import *
+
+
+PintWarningIssued = False
 
 class SmileiSimulation(object):
 	"""Object for handling the outputs of a Smilei simulation
@@ -27,7 +30,7 @@ class SmileiSimulation(object):
 
 	"""
 
-	def __init__(self, results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True):
+	def __init__(self, results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True, pint=True):
 		self.valid = False
 		# Import packages
 		import h5py
@@ -50,12 +53,46 @@ class SmileiSimulation(object):
 		self._verbose = verbose
 		self._reference_angular_frequency_SI = reference_angular_frequency_SI
 		self._scan = scan
+		self._ureg = None
 		
 		# Load the simulation (verify the path, get the namelist)
 		self.reload()
 		
 		# Load diagnostic factories
 		if self.valid:
+			
+			# Manage units with the pint package
+			global PintWarningIssued
+			if pint:
+				try:
+					from pint import UnitRegistry
+				except Exception as e:
+					if self._verbose and not PintWarningIssued:
+						print("WARNING: you do not have the *Pint* package, so you cannot modify units.")
+						print("       : The results will stay in code units.")
+						PintWarningIssued = True
+				else:
+					self._ureg = UnitRegistry()
+					if self._reference_angular_frequency_SI:
+						self._ureg.define("W_r = "+str(self._reference_angular_frequency_SI)+"*hertz") # frequency
+					else:
+						self._ureg.define("W_r = [reference_frequency]"                 ) # frequency
+					self._ureg.define("V_r = speed_of_light"                   ) # velocity
+					self._ureg.define("M_r = electron_mass"                    ) # mass
+					self._ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
+					self._ureg.define("L_r = V_r / W_r"                        ) # length
+					self._ureg.define("T_r = 1   / W_r"                        ) # time
+					self._ureg.define("P_r = M_r * V_r"                        ) # momentum
+					self._ureg.define("K_r = M_r * V_r**2"                     ) # energy
+					self._ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
+					self._ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
+					self._ureg.define("B_r = M_r * W_r / Q_r"                  ) # magnetic field
+					self._ureg.define("E_r = B_r * V_r"                        ) # electric field
+					self._ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
+			elif self._verbose and not PintWarningIssued:
+				print("WARNING: *Pint* package disabled. The results will stay in code units.")
+				PintWarningIssued = True
+			
 			self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 			self._diag_numbers = {}
 			self._diag_names = {}
@@ -72,18 +109,38 @@ class SmileiSimulation(object):
 			self.Performances = PerformancesFactory(self)
 			self.Screen = ScreenFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
-
-
+			self.NewParticles = NewParticlesFactory(self)
+			
 	def _openNamelist(self, path):
+		# empty class to store the namelist variables
+		class Namelist: pass
+		namelist = Namelist()
+		
 		# Fetch the python namelist
-		namespace={}
-		exec(open(path+self._os.sep+'smilei.py').read(), namespace) # execute the namelist into an empty namespace
-		class Namelist: pass # empty class to store the namelist variables
-		namelist = Namelist() # create new empty object
-		for key, value in namespace.items(): # transfer all variables to this object
-			if key[0]=="_": continue # skip builtins
-			setattr(namelist, key, value)
-
+		if self._scan:
+			namespace={}
+			with open(path+self._os.sep+'smilei.py') as f:
+				exec(f.read(), namespace) # execute the namelist into an empty namespace
+			for key, value in namespace.items(): # transfer all variables to this object
+				if key[0]=="_": continue # skip builtins
+				setattr(namelist, key, value)
+		else:
+			import shelve
+			class Block(object):
+				def __init__(self, **kwargs):
+					for k,v in kwargs.items():
+						setattr(self, k, v)
+			with shelve.open(path+self._os.sep+'info.shelf') as f:
+				for k in f:
+					if k == "_singletons":
+						for singletonName, singletonDict in f[k].items():
+							setattr(Namelist, singletonName, Block(**singletonDict))
+					elif k == "_components":
+						for componentName, componentList in f[k].items():
+							setattr(Namelist, componentName, [Block(**component) for component in componentList])
+					else:
+						setattr(Namelist, k, f[k])
+		
 		# Get some info on the simulation
 		try:
 			# get number of dimensions
@@ -214,15 +271,23 @@ class SmileiSimulation(object):
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
 	
-	def getTrackSpecies(self):
-		""" List the available tracked species """
+	def _getParticleListSpecies(self, filePrefix):
+		""" List the available species in diagnostics of type ParticleList """
 		species = []
 		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"TrackParticles*.h5")
+			files = self._glob(path+self._os.sep+filePrefix+"*.h5")
 			for file in files:
-				s = self._re.search("^TrackParticlesDisordered_(.+).h5",self._os.path.basename(file))
+				s = self._re.search("^"+filePrefix+"_(.+).h5",self._os.path.basename(file))
 				if s: species += [ s.groups()[0] ]
 		return list(set(species)) # unique species
+	
+	def getTrackSpecies(self):
+		""" List the available tracked species """
+		return self._getParticleListSpecies("TrackParticlesDisordered")
+	
+	def getNewParticlesSpecies(self):
+		""" List the available NewParticles species """
+		return self._getParticleListSpecies("NewParticles")
 	
 	def fieldInfo(self, diag):
 		""" Information on a specific Field diagnostic
@@ -306,20 +371,6 @@ class SmileiSimulation(object):
 			i = diag_numbers.index( diag )
 		probeNumber = diag_numbers[i]
 		probeName = diag_names[i]
-		
-		raw_fields = set()
-		for path in self._results_path:
-			file = path+self._os.sep+'Fields'+str(probeNumber)+'.h5'
-			try:
-				f = self._h5py.File(file, 'r')
-			except Exception as e:
-				continue
-			values = f["data"].values()
-			if len(values)==0:
-				continue
-			these_fields =  set(next(iter(values)).keys())
-			raw_fields = (raw_fields & these_fields) or these_fields
-			f.close()
 		
 		fields = []
 		for path in self._results_path:

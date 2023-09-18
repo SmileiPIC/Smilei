@@ -229,7 +229,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The solver for Maxwell's equations.
   Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
-  ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  ``"Lehe"`` and ``"Bouchard"`` are available for ``3DCartesian``.
+  ``"Lehe"`` is available for ``AMcylindrical``.
   The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
@@ -324,7 +325,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: number_of_pml_cells
 
   :type: List of lists of integers
-  :default: ``[[6,6],[6,6],[6,6]]``
+  :default: ``[[10,10],[10,10],[10,10]]``
 
   Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
@@ -423,6 +424,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
+
+  .. py:data:: use_BTIS3_interpolation
+
+    :default: ``False``
+
+    If ``True``, the B-translated interpolation scheme 3 (or B-TIS3) described in :doc:`/Understand/algorithms` is used.
 
 .. py:data:: custom_oversize
 
@@ -763,6 +770,7 @@ Each species has to be defined in a ``Species`` block::
       # charge_density = None,
       charge = -1.,
       mean_velocity = [0.],
+      #mean_velocity_AM = [0.],
       temperature = [1e-10],
       boundary_conditions = [
           ["reflective", "reflective"],
@@ -889,9 +897,20 @@ Each species has to be defined in a ``Species`` block::
 
   :type: a list of 3 floats or :doc:`profiles <profiles>`
 
-  The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+  The initial drift velocity of the particles, in units of the speed of light :math:`c`, in the `x`, `y` and `z` directions.
 
   **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+  
+.. py:data:: mean_velocity_AM
+
+  :type: a list of 3 floats or :doc:`profiles <profiles>`
+
+  The initial drift velocity of the particles, in units of the speed of light :math:`c`, in the longitudinal, radial and azimuthal directions.
+  This entry is available only in ``AMcylindrical`` velocity and cannot be used if also ``mean_velocity`` is used in the same ``Species``: only one of the two can be chosen.
+
+  **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+  **WARNING**: The initial cylindrical drift velocity is applied to each particle, thus it can be computationally demanding. 
 
 .. py:data:: temperature
 
@@ -1007,7 +1026,11 @@ Each species has to be defined in a ``Species`` block::
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
   * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species interacting with the laser envelope model. Valid only if the species has non-zero mass
+  * ``"borisBTIS3"``: as ``"boris"``, but using B fields interpolated with the B-TIS3 scheme.
+  * ``"ponderomotive_borisBTIS3"``: as ``"ponderomotive_boris"``, but using B fields interpolated with the B-TIS3 scheme.
 
+  **WARNING**: ``"borisBTIS3"`` and ``"ponderomotive_borisBTIS3"`` can be used only when ``use_BTIS3_interpolation=True`` in the ``Main`` block.
+  
 .. py:data:: radiation_model
 
   :default: ``"none"``
@@ -1099,6 +1122,20 @@ Each species has to be defined in a ``Species`` block::
   Large numbers may rapidly slow down the performances and lead to memory saturation.
 
   This parameter can **only** be assigned to photons species (mass = 0).
+
+.. py:data:: keep_interpolated_fields
+  
+  :default: ``[]``
+  
+  A list of interpolated fields that should be stored in memory for all particles of this species,
+  instead of being located in temporary buffers. These fields can then
+  be accessed in some diagnostics such as :ref:`particle binning <DiagParticleBinning>` or
+  :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
+  ``"Bx"``, ``"By"`` and ``"Bz"``.
+  
+  Additionally, the work done by each component of the electric field is available as
+  ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
+  are accumulated over time.
 
 ----
 
@@ -1934,8 +1971,8 @@ the evolution of the laser), the polarization of the laser plays no role in the 
 External fields
 ^^^^^^^^^^^^^^^
 
-An constant external field can be applied over the whole box
-(at the beginning of the simulation) using an ``ExternalField`` block::
+An initial field can be applied over the whole box
+at the beginning of the simulation using the ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1944,7 +1981,8 @@ An constant external field can be applied over the whole box
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
+  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
 
 .. py:data:: profile
 
@@ -1952,6 +1990,14 @@ An constant external field can be applied over the whole box
 
   The initial spatial profile of the applied field.
   Refer to :doc:`/Understand/units` to understand the units of this field.
+
+  Note that when using standard FDTD schemes, ``B`` fields are given at time ``t=0.5 dt`` and ``B_m`` fields at time ``t=0`` like ``E`` fields.
+  It is important to initialize ``B_m`` fields at ``t=0`` if there are particles in the simulation domain at the start of the simulation.
+  If ``B_m`` is omited, it is assumed that the magnetic field is constant and that ``B_m=B``.
+
+  Note that in AM geometry all field names must be followed by the number ``"i"`` of the mode that is currently passed with the string ``"_mode_i"``. For instance ``"Er_mode_1"``.
+  In this geometry, an external envelope field can also be used. It needs to be initialized at times ``"t=0"`` in ``"A_mode_1"`` and ``"t=-dt"`` in ``"A0_mode_1"``.
+  The user must use the ``"_mode_1"`` suffix for these two fields because there is no other possible mode for them.
 
 
 ----
@@ -2566,9 +2612,24 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
+  In the case the B-TIS3 interpolation is activated (see :doc:`/Understand/algorithms`),
+  the following fields are also available:
 
-.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
-          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
+  .. rst-class:: fancy
+       
+  +--------------------------------------------+-----------------------------------------------+
+  | | By_mBTIS3                                | | Components of the magnetic field            |
+  | | By_mBTIS3                                | | for the B-TIS3 interpolation                |
+  | |                                          | | (time-centered)                             |
+  +--------------------------------------------+-----------------------------------------------+
+  | | Br_mBTIS3_mode_0, Br_mBTIS3_mode_1, etc. | | Components of the magnetic field            |
+  | | Bt_mBTIS3_mode_0, Bt+mBTIS3_mode_1, etc. | | for the B-TIS3 interpolation                |
+  | |                                          | | (``AMcylindrical`` geometry, time-centered) |
+  +--------------------------------------------+-----------------------------------------------+
+
+
+.. Note:: In a given `DiagFields`, all fields must be of the same kind: either real or complex. Therefore To write these last three envelope real fields in ``"AMcylindrical"`` geometry,
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs", "Env_Chi"]``.
 
 .. py:data:: subgrid
 
@@ -2704,6 +2765,9 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   They are respectively the susceptibility, the envelope of the laser transverse vector potential,
   the envelope of the laser transverse electric field and the envelope of the laser longitudinal
   electric field.
+  
+  If the B-TIS3 interpolation scheme is activated (see :doc:`/Understand/algorithms`),
+  the following fields are also available: ``"ByBTIS3"``, ``"BzBTIS3"``.
 
 .. py:data:: time_integral
 
@@ -2820,7 +2884,9 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id`` (additionally, it may also have the
+    attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+    Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
@@ -3234,7 +3300,9 @@ for instance::
 
   The function must have one argument, that you may call, for instance, ``particles``.
   This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
-  ``weight`` and ``id``. Each of these attributes
+  ``weight`` and ``id`` (additionally, it may also have the
+  attributes ``Ex``, ``Bx``, ``Ey``, and so on, depending on :py:data:`keep_interpolated_fields`).
+  Each of these attributes
   are provided as **numpy** arrays where each cell corresponds to one particle.
   The function must return a boolean **numpy** array of the same shape, containing ``True``
   for particles that should be tracked, and ``False`` otherwise.
@@ -3269,6 +3337,37 @@ for instance::
   their statistical weight (``"w"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
+
+----
+
+.. rst-class:: experimental
+
+.. _DiagNewParticles:
+
+*NewParticles* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A *new-particle diagnostic* records the macro-particle information only at the time when
+they are generated by :doc:`../Understand/ionization` or other :doc:`../Understand/physics_modules`.
+
+You can add a new-particle diagnostic by including a block ``DiagNewParticles()`` in the namelist,
+for instance::
+
+  DiagNewParticles(
+      species = "electron",
+      every = 10,
+  #    attributes = ["x", "px", "py", "Ex", "Ey", "Bz"]
+  )
+
+**All the arguments are identical to those of TrackParticles.**
+However, there are particular considerations:
+
+* Although the creation of particles is recorded at every timestep, the argument ``every``
+  only indicates how often the data is written to the file. It is recommended to avoid 
+  small values of ``every`` for better performance.
+* In the case of :doc:`../Understand/ionization`, if the chosen ``species`` is that of the ionized electrons,
+  then the attribute "``q``" is not the charge of the electron, but the charge of the
+  ion, *before ionization occurred*.
 
 ----
 

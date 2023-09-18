@@ -100,6 +100,13 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     By_m = FieldFactory::create2D( dimPrim, 1, true,  "By_m", params );
     Bz_m = FieldFactory::create2D( dimPrim, 2, true,  "Bz_m", params );
     
+    if(use_BTIS3){
+        // BTIS3 fields must be centered as E in the x direction: By as Ez, Bz as Ey 
+        By_mBTIS3 = FieldFactory::create2D( dimPrim, 2, false, "By_mBTIS3", params );
+        Bz_mBTIS3 = FieldFactory::create2D( dimPrim, 1, false, "Bz_mBTIS3", params );
+
+    }
+    
     if( params.Laser_Envelope_model ) {
         Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs" );
         Env_Chi_    = new Field2D( dimPrim, "Env_Chi" );
@@ -884,12 +891,27 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
             smilei::tools::gpu::HostDeviceMemoryManagement::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz2D_m ),
                                                                               smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( Bz2D ),
                                                                               ( nx_p + 1 ) * ny_d );
+            // TODO(Arnaud B): Here some copies of the BTIS3 fields on teh device should be added if BTIS3 is used.
         } else {
             // If we have GPU support enabled and for some reason we have to handle a CPU buffer,
             // IsHostPointerMappedOnDevice would prevent us from using GPU memcpy function.
             std::memcpy( Bx2D_m, Bx2D, nx_p * ny_d * sizeof( double ) );
             std::memcpy( By2D_m, By2D, ( nx_p + 1 ) * ny_p * sizeof( double ) );
             std::memcpy( Bz2D_m, Bz2D, ( nx_p + 1 ) * ny_d * sizeof( double ) );
+            if(use_BTIS3){  // for BTIS3 interpolation
+                double *const             By2D_oldBTIS3 = By_mBTIS3->data();
+                double *const             Bz2D_oldBTIS3 = Bz_mBTIS3->data();
+                for( unsigned int i=0 ; i<nx_p ; i++ ) {
+                    // Magnetic field By^(p,p) for BTIS3 interpolation
+                    for( unsigned int j=0 ; j<ny_p ; j++ ) {
+                        By2D_oldBTIS3[ i*ny_p + j ] = By2D_m[ i*ny_p + j ] ;
+                    }    
+                    // Magnetic field Bz^(p,d) for BTIS3 interpolation
+                    for( unsigned int j=0 ; j<ny_d ; j++ ) {
+                        Bz2D_oldBTIS3[ i*ny_d + j ] = Bz2D_m[ i*ny_d + j ]; 
+                    }    
+                }    
+            } // end if use_BTIS3
         }
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
@@ -1256,7 +1278,48 @@ void ElectroMagn2D::centerMagneticFields()
             Bz2D_m[x * ny_d + y] = ( Bz2D[x * ny_d + y] + Bz2D_m[x * ny_d + y] ) * 0.5;
         }
     }
-}
+    if (use_BTIS3){
+        double *const             By2D_oldBTIS3 = By_mBTIS3->data();
+        double *const             Bz2D_oldBTIS3 = Bz_mBTIS3->data();
+
+#if defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present(By2D[0:sizeofBy],By2D_m[0:sizeofBy])
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 2 )
+#endif
+        for( unsigned int x = 0; x < ( nx_p - 1 ); ++x ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop vector
+#endif
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
+            for( unsigned int y = 0; y < ny_p; ++y ) {
+                By2D_oldBTIS3[x * ny_p + y] = ( By2D[(x+1) * ny_p + y] + By2D_oldBTIS3[x * ny_p + y] ) * 0.5;
+            }
+        }
+#if defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present(Bz2D[0:sizeofBz],Bz2D_m[0:sizeofBz])
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 2 )
+#endif
+        for( unsigned int x = 0; x < ( nx_p - 1 ); ++x ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop vector
+#endif
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
+            for( unsigned int y = 0; y < ny_d; ++y ) {
+                Bz2D_oldBTIS3[x * ny_d + y] = ( Bz2D[(x+1) * ny_d + y] + Bz2D_oldBTIS3[x * ny_d + y] ) * 0.5;
+            }
+        }
+    }
+}//END centerMagneticFields
 
 // Create a new field
 Field * ElectroMagn2D::createField( std::string fieldname, Params& params )

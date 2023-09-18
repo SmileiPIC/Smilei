@@ -93,7 +93,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::openPython();
     // Print python version
     MESSAGE( "Python version "<<PyTools::python_version() );
-    
+
 #ifdef SMILEI_USE_NUMPY
     smilei_import_array();
     // Workaround some numpy multithreading bug
@@ -219,7 +219,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // communication pattern initialized as partial B exchange
     full_B_exchange = false;
     // communication pattern initialized as partial A, Phi exchange for envelope simulations
-    full_Envelope_exchange = false;
+    full_Envelope_exchange = true;
 
     // --------------
     // Stop & Restart
@@ -289,10 +289,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Interpolation scheme
     PyTools::extract( "interpolator", interpolator_, "Main"  );
-    
+
     // Cancelation of the letter case
     std::transform( interpolator_.begin(), interpolator_.end(), interpolator_.begin(), ::tolower );
-    
+
     if (interpolator_ != "wt" && interpolator_ != "momentum-conserving") {
         ERROR_NAMELIST( "Parameter `Main.interpolator` should be `momentum-conserving` or `wt`.",
         LINK_NAMELIST + std::string("#main-variables"));
@@ -447,8 +447,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ",
                            LINK_NAMELIST + std::string("#laser-envelope-model"));
         }
-        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
-            full_Envelope_exchange = true;
+        if (geometry=="1Dcartesian"){
+            full_Envelope_exchange = false;
         }
 
         PyTools::extractVV( "Env_pml_sigma_parameters", envelope_pml_sigma_parameters, "LaserEnvelope" );
@@ -546,6 +546,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main"   );
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
 
+    // Use BTIS3 interpolation method to reduce the effects of numerical Cherenkov radiation
+    // This method is detailed in P.-L. Bourgeois and X. Davoine (2023) https://doi.org/10.1017/S0022377823000223
+    use_BTIS3 = false;
+    PyTools::extract( "use_BTIS3_interpolation", use_BTIS3, "Main"   );
+    if (use_BTIS3 && interpolation_order != 2 ){
+        ERROR("B-TIS3 interpolation implemented only at order 2.");
+    }
+    
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
@@ -586,9 +594,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( model != "Friedman" ) {
             ERROR_NAMELIST( "Currently, only the `Friedman` model is available in FieldFilter()",  LINK_NAMELIST + std::string("#field-filtering"));
         }
-        if( geometry != "2Dcartesian" ) {
-            ERROR_NAMELIST( "Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry",  LINK_NAMELIST + std::string("#field-filtering") );
-        }
         Friedman_filter = true;
         PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );
         if( Friedman_filter && ( Friedman_theta==0. ) ) {
@@ -596,6 +601,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         if( ( Friedman_theta<0. ) || ( Friedman_theta>1. ) ) {
             ERROR_NAMELIST( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1",  LINK_NAMELIST + std::string("#field-filtering") );
+        }
+        if (geometry=="3Dcartesian"){
+            ERROR("Friedman filter is not yet supported for `3Dcartesian geometry`");
         }
     }
 
@@ -754,6 +762,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             WARNING("In 1D, the vectorization block does not apply. `vectorization back to `off`.")
         }
 
+        if (use_BTIS3 && vectorization_mode != "off") {
+            ERROR("B-TIS3 interpolator not yet implemented in vectorized mode.")
+        }
+        
         // Cell sorting not defined by the user
         if (!defined_cell_sort) {
             if (vectorization_mode == "off") {
@@ -794,11 +806,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             );
     }
 
-    // PyTools::extract( "cell_sorting", cell_sorting, "Main"  );
-    //MESSAGE("Sorting per cell : " << cell_sorting );
-    //if (cell_sorting)
-    //    vectorization_mode = "on";
-
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
     if( gpu_computing ) {
 #if( defined( SMILEI_OPENACC_MODE ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -828,7 +835,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // Force cell sorting and later the adaptive vectorization mode in scalar mode
         cell_sorting_ = true;
-        
+
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
@@ -880,13 +887,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
             // Force cell sorting and later the adaptive vectorization mode in scalar mode
             cell_sorting_ = true;
-            
+
         }
     }
 
     // Force adaptive vectorization in scalar mode if cell_sorting requested
     if ( cell_sorting_ ) {
-        
+
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR_NAMELIST( "Cell sorting (required by Collision or Merging) is incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#vectorization") );
         } else if ( vectorization_mode == "off" ) {
@@ -1094,7 +1101,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     check_consistency();
-
+    
+    
+    // Run the _writeInfo function that creates a small pickle file with basic info
+    if( ! smpi->test_mode && smpi->isMaster() ) {
+        PyTools::runPyFunction( "writeInfo" );
+        PyTools::checkPyError();
+    }
 }
 
 Params::~Params()
@@ -1182,7 +1195,7 @@ void Params::compute()
         patch_dimensions[i] = patch_size_[i] * cell_length[i];
         n_cell_per_patch *= patch_size_[i];
     }
-    
+
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
 #if defined( SMILEI_ACCELERATOR_MODE )
@@ -1487,7 +1500,7 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 #endif
 #ifdef _OMPTASKS
         MESSAGE( 1, "OpenMP task parallelization activated");
-#else 
+#else
         MESSAGE( 1, "OpenMP task parallelization not activated");
 #endif
         MESSAGE( "" );
@@ -1625,10 +1638,10 @@ void Params::multiple_decompose()
     }
 
     number_of_region.resize( 3, 1 );
-    
+
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    
+
     if( nDim_field==1 ) {
         multiple_decompose_1D();
     } else if( nDim_field==2 ) {
@@ -1636,7 +1649,7 @@ void Params::multiple_decompose()
     } else if( nDim_field==3 ) {
         multiple_decompose_3D();
     }
-    
+
     map_rank.resize( number_of_region[0] );
     for( unsigned int ix = 0 ; ix < number_of_region[0] ; ix++ ) {
         map_rank[ix].resize( number_of_region[1] );
@@ -1644,13 +1657,13 @@ void Params::multiple_decompose()
             map_rank[ix][iy].resize( number_of_region[2] );
         }
     }
-    
+
     int new_rk(0);
     unsigned int ijk[3];
     region_coordinates.resize( nDim_field );
     // - Build the map of MPI ranks in 3D
     // - Set the coordinates of the current region
-    
+
     for(ijk[0] = 0 ; ijk[0] < number_of_region[0] ; ijk[0]++ ) {
         for( ijk[1] = 0 ; ijk[1] < number_of_region[1] ; ijk[1]++ ) {
             for( ijk[2] = 0 ; ijk[2] < number_of_region[2] ; ijk[2]++ ) {
@@ -1664,7 +1677,7 @@ void Params::multiple_decompose()
             }
         }
     }
-    
+
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
     for( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
@@ -1820,7 +1833,7 @@ void Params::multiple_decompose_3D()
                 << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2]
                 << " != " << sz << ")" );
     }
-    
+
 }
 
 string Params::speciesField( string field_name )

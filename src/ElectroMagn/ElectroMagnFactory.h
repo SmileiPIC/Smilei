@@ -35,13 +35,13 @@ public:
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
         
-        EMfields->finishInitialization( vecSpecies.size(), patch );
-        
         // initialize the envelope if used
         if( params.Laser_Envelope_model ) { // for the moment it works only with one envelope
             EMfields->envelope = EnvelopeFactory::create( params, patch );
         }
         
+        EMfields->finishInitialization( vecSpecies.size(), patch );
+
         bool first_creation = patch->isMaster() && ! dynamic_cast<RegionDomainDecomposition*>( domain_decomposition );
         
         // -----------------
@@ -234,13 +234,13 @@ public:
             newEMfields = new ElectroMagnAM( static_cast<ElectroMagnAM *>( EMfields ), params, patch );
         }
         
-        newEMfields->finishInitialization( vecSpecies.size(), patch );
-        
         // initialize the envelope if used
         if( EMfields->envelope != NULL ) {
             newEMfields->envelope = EnvelopeFactory::clone( EMfields->envelope, patch, params, n_moved );
         }
         
+        newEMfields->finishInitialization( vecSpecies.size(), patch );
+
         // -----------------
         // Clone time-average fields
         // -----------------

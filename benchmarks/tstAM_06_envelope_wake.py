@@ -35,6 +35,7 @@ Main(
 
     solve_poisson = False,
     print_every = 100,
+    use_BTIS3_interpolation = True,
 
 )
 
@@ -61,6 +62,11 @@ LaserEnvelopeGaussianAM(
 )
 
 
+FieldFilter(
+    model = "Friedman",
+    theta = 0.3,
+)
+
 n0 = 0.0017
 Radius_plasma = 300.
 longitudinal_profile = polygonal(xpoints=[3.*laser_fwhm,3.5*laser_fwhm,24.5*laser_fwhm,25.*laser_fwhm],xvalues=[0.,n0,n0,0.])
@@ -83,7 +89,7 @@ Species(
     charge_density = nplasma,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.,0.,0.],
-    pusher = "ponderomotive_boris",
+    pusher = "ponderomotive_borisBTIS3",
     time_frozen = 0.0,
     boundary_conditions = [
        ["remove", "remove"],
@@ -116,7 +122,7 @@ DiagProbe(
             [Main.grid_length[0], 2.*dr, 2.*dr]
         ],
         number = [nx],
-        fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs']
+        fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs','Bz','BzBTIS3']
 )
 
 
@@ -125,7 +131,7 @@ DiagProbe(
     origin   = [0., -nr*dr,0.],
     corners  = [ [nx*dx,-nr*dr,0.], [0,nr*dr,0.] ],
     number   = [nx, 2*nr],
-    fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs']
+    fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs','Bz','BzBTIS3']
 )
 
 

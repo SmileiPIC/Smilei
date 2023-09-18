@@ -442,4 +442,51 @@ separately. They can be used, e.g., to mitigate the numerical Cherenkov instabil
 relativistically drifting flows. 
 An exemple of their use to mitigate this effect is highlighted in the work by `Plotnikov et al. (2017) <https://arxiv.org/abs/1712.02883>`_.
 
+----
 
+.. _BTIS3:
+
+B-translated interpolation scheme version 3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This interpolation scheme, called B-TIS3 and described in detail in `P.-L. Bourgeois, X. Davoine (2023) <https://doi.org/10.1017/S0022377823000223>`_, mitigates some numerical artifacts
+that arise when macro-particles at relativistic velocities are present in the simulation:
+
+- inaccurate :math:`\mathbf{B}` interpolation due to the time and space staggering of :math:`\mathbf{E}` and :math:`\mathbf{B}` in the Yee grid. The associated errors are particularly detrimental for the accuracy of simulations with relativistic particles;
+
+- Numerical Cherenkov radiation (see e.g. `R. Lehe et al. (2013) <https://link.aps.org/doi/10.1103/PhysRevSTAB.16.021301>`_) that arises with the interaction of relativistic particles and the numerical dispersion of Finite Difference methods used to solve Maxwell's Equations. As explained in the same reference, this numerical artefact can increase the divergence and emittance of relativistic particle beams.
+
+The B-TIS3 interpolation scheme can give a more accurate computation of the force acting on particles in presence of
+fields that move at speed close to the speed of light in the `x` direction, which is the underlying hypothesis where this scheme can be used safely.
+This hypothesis is also partially satisfied by Numerical Cherenkov radiation, as shown in `P.-L. Bourgeois, X. Davoine (2020) <https://doi.org/10.1016/j.jcp.2020.109426>`_.
+Please note that this scheme does not remove this numerical artifact (which will remain visible e.g. in ``Field`` diagnostics), but it mitigates its effects on the macro-particles. Instead, the effects of this interpolation scheme on the force acting on the macro-particles can be seen also through ``Probes`` showing the associated B-TIS3 fields. This because ``Probes`` act as macro-particles interpolating the fields from the grid as if they were plasma macro-particles.
+
+As described in `P.-L. Bourgeois, X. Davoine (2023) <https://doi.org/10.1017/S0022377823000223>`_, the correction given by the B-TIS3 scheme on force interpolation (compared to the usual
+interpolation of the magnetic field) is effective only when the normalized integration timestep :math:`\Delta t` is near to the value :math:`\Delta x` of the
+grid cell size along the `x` direction.
+
+As explained before, in a typical PIC code using a Yee scheme to solve Maxwell's equations, the magnetic field interpolated on the macro-particles'
+positions is often linearly interpolated in time. For example, for the :math:`B_z` component of the magnetic field:
+
+.. math::
+
+    B_{z,i-1/2}^{(n)}=\tfrac{1}{2}[B_{z,i-1/2}^{(n+1/2) } + B_{z,i-1/2}^{(n-1/2)}].
+
+The B-TIS3 scheme tries to reduce the errors associated to this temporal interpolation and to the staggering of the electric and magnetic fields in the Yee cell,
+interpolating a magnetic field defined at the same `x` spatial indices of the electric field when necessary.
+
+For example, in the `y` component of the Lorentz force, the electric field component :math:`E_y` is defined on the primal grid in the `x` direction,
+but :math:`B_z` is defined on the dual grid in the `x` direction.
+
+Thus, in the B-TIS3 scheme a translated interpolation scheme is used for :math:`B_z` in the Lorentz force:
+
+.. math::
+
+    B_{z,i}^{(n), B-TIS3}=\tfrac{1}{2}[B_{z,i-1/2}^{(n-1/2) } + B_{z,i+1/2}^{(n+1/2)}].
+
+As explained in the B-TIS3 reference, for :math:`\mathbf{B}` fields moving near to the speed of light in the `x` direction and for :math:`c\Delta t` near to the value :math:`\Delta x`,
+this choice is more accurate than the usual linear temporal intepolation of the magnetic fields.
+
+Note that in the `x` component of the Lorentz force the electric field :math:`E_x` is defined on the
+dual grid in the `x` direction, thus the usual Yee-centered and linearly interpolated :math:`B_z` (also defined on the
+dual grid in the `x` direction) is maintained.

@@ -53,6 +53,7 @@ class Diagnostic(object):
 		self._cell_length    = self.simulation._cell_length
 		self._ncels          = self.simulation._ncels
 		self.timestep        = self.simulation._timestep
+		self._ureg           = self.simulation._ureg
 		
 		# Make the Options object
 		self.options = Options()
@@ -65,7 +66,7 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			self._error += ["Could not understand the 'units' argument"]
 			return
-		self.units.prepare(self.simulation._reference_angular_frequency_SI)
+		self.units._initRegistry(self._ureg)
 		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
@@ -74,14 +75,9 @@ class Diagnostic(object):
 			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
 			return
 		
-		# Prepare units for axes
 		self.dim = len(self._shape)
 		if self.valid:
-			xunits = None
-			yunits = None
-			if self.dim > 0: xunits = self._units[0]
-			if self.dim > 1: yunits = self._units[1]
-			self.units.convertAxes(xunits, yunits, self._vunits)
+			self._prepareUnits()
 		
 		# Prepare data_log output
 		self._dataAtTime = self._dataLogAtTime if self._data_log else self._dataLinAtTime
@@ -103,6 +99,12 @@ class Diagnostic(object):
 			print("\n".join(self._error))
 			return False
 		return True
+	
+	# Prepare units for axes
+	def _prepareUnits(self):
+		xunits = self._units[0] if len(self._shape) > 0 else None 
+		yunits = self._units[1] if len(self._shape) > 1 else None
+		self.units.convertAxes(xunits, yunits, self._vunits)
 
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -195,7 +197,8 @@ class Diagnostic(object):
 			The name of the requested axis.
 		timestep: int
 			The timestep at which the axis is obtained. Only matters in ParticleBinning,
-			Screen and RadiationSpectrum when `auto` axis limits are requested.
+			Screen and RadiationSpectrum when `auto` axis limits are requested; or in
+			Field when `moving=True`.
 
 		Returns:
 		--------
@@ -801,12 +804,11 @@ class Diagnostic(object):
 
 	# set options during animation
 	def _setTitle(self, ax, t=None):
-		title = []
-		if self._vlabel:
-			title += [self._vlabel]
 		if t is not None:
-			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
-		ax.set_title("  ".join(title), self.options.labels_font["title"])
+			time = t*self.timestep*self.units.tcoeff
+			ax.set_title(self.options.title.format(quantity=self._vlabel, time_prefix="t =", time=time, time_units=self.units.tname), self.options.labels_font["title"])
+		else:
+			ax.set_title(self.options.title.format(quantity=self._vlabel), self.options.labels_font["title"])
 	def _setAxesOptions(self, ax):
 		# Generic axes option
 		for option, value in self.options.axes.items():

@@ -34,3 +34,8 @@ Validate("Scalar Ukin_out_mvw", S.Scalar.Ukin_out_mvw().getData(), 0.005 )
 Validate("Scalar Ukin_inj_mvw", S.Scalar.Ukin_inj_mvw().getData(), 1.e-6 )
 Validate("Scalar Uelm_out_mvw", S.Scalar.Uelm_out_mvw().getData(), 0.01  )
 Validate("Scalar Uelm_inj_mvw", S.Scalar.Uelm_inj_mvw().getData(), 0.01  )
+
+# WORK CALCULATED IN TRACKED PARTICLES
+d = S.TrackParticles("electron", axes=["Wx","Wy"], select="any(t>0,py>2)").getData()
+Wx = d["Wx"][:,2]; Validate( "Tracked Wx", Wx[~np.isnan(Wx)], 1e-2 )
+Wy = d["Wy"][:,2]; Validate( "Tracked Wy", Wy[~np.isnan(Wy)], 1e-2 )

@@ -65,6 +65,12 @@ void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+    double *BLocyBTIS3;
+    double *BLoczBTIS3;
+    if(smpi->use_BTIS3){
+        BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][ipart] );
+        BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][ipart] );
+    }
 
     // Interpolate E, B
     // Compute coefficient for ipart position
@@ -79,6 +85,12 @@ void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field3D *Jy3D = static_cast<Field3D *>( EMfields->Jy_ );
     Field3D *Jz3D = static_cast<Field3D *>( EMfields->Jz_ );
     Field3D *Rho3D= static_cast<Field3D *>( EMfields->rho_ );
+    Field3D *By3DBTIS3;
+    Field3D *Bz3DBTIS3;
+    if(smpi->use_BTIS3){
+        By3DBTIS3 = static_cast<Field3D *>( EMfields->By_mBTIS3 );
+        Bz3DBTIS3 = static_cast<Field3D *>( EMfields->Bz_mBTIS3 );
+    }
 
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*d_inv_[0];
@@ -109,6 +121,13 @@ void Interpolator3D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     JLoc->z = compute( &coeffxp_[1], &coeffyp_[1], &coeffzd_[1], Jz3D, ip_, jp_, kd_ );
     // Interpolation of Rho^(p,p,p)
     ( *RhoLoc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Rho3D, ip_, jp_, kp_ );
+    
+    if (smpi->use_BTIS3){
+        // Interpolation of ByBTIS3^(p,p,d)
+        *( BLocyBTIS3+0*nparts ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzd_[1], By3DBTIS3, ip_, jp_, kd_ );
+        // Interpolation of BzBTIS3^(p,d,p)
+        *( BLoczBTIS3+0*nparts ) = compute( &coeffxp_[1], &coeffyd_[1], &coeffzp_[1], Bz3DBTIS3, ip_, jd_, kp_ );
+    }
 
 }
 
@@ -186,6 +205,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int ny_d = ny_p + 1;
     const int nz_d = nz_p + 1;
 
+    if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
     // const int npart_range_size         = last_index - first_index;
 
@@ -217,47 +237,133 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
     #pragma acc loop gang worker vector
 #endif
-    for( int ipart=first_index ; ipart<last_index; ipart++ ) {
+        for( int ipart=first_index ; ipart<last_index; ipart++ ) {
 
-        // Interpolation on current particle
+            // Interpolation on current particle
 
-        // Normalized particle position
-        const double xpn = position_x[ipart]*d_inv_[0];
-        const double ypn = position_y[ipart]*d_inv_[1];
-        const double zpn = position_z[ipart]*d_inv_[2];
+            // Normalized particle position
+            const double xpn = position_x[ipart]*d_inv_[0];
+            const double ypn = position_y[ipart]*d_inv_[1];
+            const double zpn = position_z[ipart]*d_inv_[2];
 
-        // Calculate coeffs
-        int    idx_p[3], idx_d[3];
-        double delta_p[3];
-        double coeffxp[3], coeffyp[3], coeffzp[3];
-        double coeffxd[3], coeffyd[3], coeffzd[3];
+            // Calculate coeffs
+            int    idx_p[3], idx_d[3];
+            double delta_p[3];
+            double coeffxp[3], coeffyp[3], coeffzp[3];
+            double coeffxd[3], coeffyd[3], coeffzd[3];
 
-        coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+            coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
 
-        // Interpolation of Ex^(d,p,p)
-        ELoc[0*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
-        // Interpolation of Ey^(p,d,p)
-        ELoc[1*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
-        // Interpolation of Ez^(p,p,d)
-        ELoc[2*nparts+ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
-        // Interpolation of Bx^(p,d,d)
-        BLoc[0*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
-        // Interpolation of By^(d,p,d)
-        BLoc[1*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
-        // Interpolation of Bz^(d,d,p)
-        BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
+            // Interpolation of Ex^(d,p,p)
+            ELoc[0*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+            // Interpolation of Ey^(p,d,p)
+            ELoc[1*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+            // Interpolation of Ez^(p,p,d)
+            ELoc[2*nparts+ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+            // Interpolation of Bx^(p,d,d)
+            BLoc[0*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+            // Interpolation of By^(d,p,d)
+            BLoc[1*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+            // Interpolation of Bz^(d,d,p)
+            BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
 
-        // Buffering of iol and delta
-        iold[0*nparts+ipart]  = idx_p[0];
-        iold[1*nparts+ipart]  = idx_p[1];
-        iold[2*nparts+ipart]  = idx_p[2];
-        delta[0*nparts+ipart] = delta_p[0];
-        delta[1*nparts+ipart] = delta_p[1];
-        delta[2*nparts+ipart] = delta_p[2];
-    }
-    #if defined(SMILEI_OPENACC_MODE)
-        #pragma acc exit data delete(this)
-    #endif
+            // Buffering of iol and delta
+            iold[0*nparts+ipart]  = idx_p[0];
+            iold[1*nparts+ipart]  = idx_p[1];
+            iold[2*nparts+ipart]  = idx_p[2];
+            delta[0*nparts+ipart] = delta_p[0];
+            delta[1*nparts+ipart] = delta_p[1];
+            delta[2*nparts+ipart] = delta_p[2];
+        }
+        #if defined(SMILEI_OPENACC_MODE)
+            #pragma acc exit data delete(this)
+        #endif
+    } else { // with B-TIS3 interpolation
+
+        const double *const __restrict__ By3DBTIS3 = EMfields->By_mBTIS3->data_;
+        const double *const __restrict__ Bz3DBTIS3 = EMfields->Bz_mBTIS3->data_;
+        double *const __restrict__ BLocyBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][0] );
+        double *const __restrict__ BLoczBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][0] );
+        
+        // loop on particles from istart to iend
+#if defined(SMILEI_ACCELERATOR_GPU_OMP)
+    // const int npart_range_size         = last_index - first_index;
+
+    #pragma omp target map( to                                                 \
+                            : i_domain_begin, j_domain_begin, k_domain_begin ) \
+        is_device_ptr( /* to: */                                               \
+                       position_x /* [first_index:npart_range_size] */,        \
+                       position_y /* [first_index:npart_range_size] */,        \
+                       position_z /* [first_index:npart_range_size] */ )
+    #pragma omp teams distribute parallel for
+#elif defined(SMILEI_OPENACC_MODE)
+    #pragma acc enter data create(this)
+    #pragma acc update device(this)
+    size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
+    #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
+                                 BLoc [first_index:interpolation_range_size],  \
+                                 iold [first_index:interpolation_range_size],  \
+                                delta [first_index:interpolation_range_size], \
+                                 Ex3D [0:sizeofEx],                            \
+                                 Ey3D [0:sizeofEy],                            \
+                                 Ez3D [0:sizeofEz],                            \
+                                 Bx3D [0:sizeofBx],                            \
+                                 By3D [0:sizeofBy],                            \
+                                 Bz3D [0:sizeofBz])                            \
+        deviceptr(position_x,                                                  \
+                  position_y,                                                  \
+                  position_z)                                                  \
+        copyin(d_inv_[0:3])
+
+    #pragma acc loop gang worker vector
+#endif
+        for( int ipart=first_index ; ipart<last_index; ipart++ ) {
+
+            //Interpolation on current particle
+
+            // Normalized particle position
+            const double xpn = position_x[ ipart ]*d_inv_[0];
+            const double ypn = position_y[ ipart ]*d_inv_[1];
+            const double zpn = position_z[ ipart ]*d_inv_[2];
+            // Calculate coeffs
+
+            int idx_p[3], idx_d[3];
+            double delta_p[3];
+            double coeffxp[3], coeffyp[3], coeffzp[3];
+            double coeffxd[3], coeffyd[3], coeffzd[3];
+
+            coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+
+            // Interpolation of Ex^(d,p,p)
+            *( ELoc+0*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+            // Interpolation of Ey^(p,d,p)
+            *( ELoc+1*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+            // Interpolation of Ez^(p,p,d)
+            *( ELoc+2*nparts+ipart ) = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+            // Interpolation of Bx^(p,d,d)
+            *( BLoc+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+            // Interpolation of By^(d,p,d)
+            *( BLoc+1*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+            // Interpolation of Bz^(d,d,p)
+            *( BLoc+2*nparts+ipart ) = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
+            // Interpolation of By^(p,p,d)
+            *( BLocyBTIS3+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], By3DBTIS3, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+            // Interpolation of By^(p,d,p)
+            *( BLoczBTIS3+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Bz3DBTIS3, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+
+            //Buffering of iol and delta
+            iold[ipart+0*nparts]  = idx_p[0];
+            iold[ipart+1*nparts]  = idx_p[1];
+            iold[ipart+2*nparts]  = idx_p[2];
+            delta[ipart+0*nparts] = delta_p[0];
+            delta[ipart+1*nparts] = delta_p[1];
+            delta[ipart+2*nparts] = delta_p[2];
+            #if defined(SMILEI_OPENACC_MODE)
+                #pragma acc exit data delete(this)
+            #endif
+        } // end ipart loop
+      
+    } // end with B-TIS3 interpolation
 }
 
 
@@ -314,71 +420,154 @@ void Interpolator3D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
     //Loop on bin particles
     int nparts( particles.numberOfParticles() );
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-        int idx_p[3], idx_d[3];
-        double delta_p[3];
-        double coeffxp[3], coeffyp[3], coeffzp[3];
-        double coeffxd[3], coeffyd[3], coeffzd[3];
+            int idx_p[3], idx_d[3];
+            double delta_p[3];
+            double coeffxp[3], coeffyp[3], coeffzp[3];
+            double coeffxd[3], coeffyd[3], coeffzd[3];
 
-        // Normalized particle position
-        double xpn = particles.position( 0, ipart )*d_inv_[0];
-        double ypn = particles.position( 1, ipart )*d_inv_[1];
-        double zpn = particles.position( 2, ipart )*d_inv_[2];
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart )*d_inv_[0];
+            double ypn = particles.position( 1, ipart )*d_inv_[1];
+            double zpn = particles.position( 2, ipart )*d_inv_[2];
 
-        coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+            coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
 
-        // Interpolation of Ex^(d,p,p)
-        ( *Epart )[ipart+0*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+            // Interpolation of Ex^(d,p,p)
+            ( *Epart )[ipart+0*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
 
-        // Interpolation of Ey^(p,d,p)
-        ( *Epart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1],  Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+            // Interpolation of Ey^(p,d,p)
+            ( *Epart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1],  Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
 
-        // Interpolation of Ez^(p,p,d)
-        ( *Epart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+            // Interpolation of Ez^(p,p,d)
+            ( *Epart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
 
-        // Interpolation of Bx^(p,d,d)
-        ( *Bpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+            // Interpolation of Bx^(p,d,d)
+            ( *Bpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
 
-        // Interpolation of By^(d,p,d)
-        ( *Bpart )[ipart+1*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+            // Interpolation of By^(d,p,d)
+            ( *Bpart )[ipart+1*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
 
-        // Interpolation of Bz^(d,d,p)
-        ( *Bpart )[ipart+2*nparts] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
-
-
-        // -------------------------
-        // Interpolation of Phi^(p,p,p)
-        // -------------------------
-        ( *PHIpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], Phi3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
-
-        // -------------------------
-        // Interpolation of GradPhix^(p,p,p)
-        // -------------------------
-        ( *GradPHIpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhix3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
-
-        // -------------------------
-        // Interpolation of GradPhiy^(p,p,p)
-        // -------------------------
-        ( *GradPHIpart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiy3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
-
-        // -------------------------
-        // Interpolation of GradPhiz^(p,p,p)
-        // -------------------------
-        ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiz3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+            // Interpolation of Bz^(d,d,p)
+            ( *Bpart )[ipart+2*nparts] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
 
 
-        //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = idx_p[0];
-        ( *iold )[ipart+1*nparts]  = idx_p[1];
-        ( *iold )[ipart+2*nparts]  = idx_p[2];
-        ( *delta )[ipart+0*nparts] = delta_p[0];
-        ( *delta )[ipart+1*nparts] = delta_p[1];
-        ( *delta )[ipart+2*nparts] = delta_p[2];
+            // -------------------------
+            // Interpolation of Phi^(p,p,p)
+            // -------------------------
+            ( *PHIpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], Phi3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
 
-    }
+            // -------------------------
+            // Interpolation of GradPhix^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhix3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+            // -------------------------
+            // Interpolation of GradPhiy^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiy3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+            // -------------------------
+            // Interpolation of GradPhiz^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiz3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
 
 
+            //Buffering of iol and delta
+            ( *iold )[ipart+0*nparts]  = idx_p[0];
+            ( *iold )[ipart+1*nparts]  = idx_p[1];
+            ( *iold )[ipart+2*nparts]  = idx_p[2];
+            ( *delta )[ipart+0*nparts] = delta_p[0];
+            ( *delta )[ipart+1*nparts] = delta_p[1];
+            ( *delta )[ipart+2*nparts] = delta_p[2];
+
+        }  // end ipart loop
+      
+    } else { // with B-TIS3 interpolation
+      
+        std::vector<double> *BypartBTIS3;
+        std::vector<double> *BzpartBTIS3;
+
+        BypartBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread] );
+        BzpartBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread] );
+        double* By3DBTIS3 = EMfields->By_mBTIS3->data_;
+        double* Bz3DBTIS3 = EMfields->Bz_mBTIS3->data_;
+      
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+            int idx_p[3], idx_d[3];
+            double delta_p[3];
+            double coeffxp[3], coeffyp[3], coeffzp[3];
+            double coeffxd[3], coeffyd[3], coeffzd[3];
+
+            // Normalized particle position
+            double xpn = particles.position( 0, ipart )*d_inv_[0];
+            double ypn = particles.position( 1, ipart )*d_inv_[1];
+            double zpn = particles.position( 2, ipart )*d_inv_[2];
+
+            coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+
+            // Interpolation of Ex^(d,p,p)
+            ( *Epart )[ipart+0*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+
+            // Interpolation of Ey^(p,d,p)
+            ( *Epart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1],  Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+
+            // Interpolation of Ez^(p,p,d)
+            ( *Epart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+
+            // Interpolation of Bx^(p,d,d)
+            ( *Bpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+
+            // Interpolation of By^(d,p,d)
+            ( *Bpart )[ipart+1*nparts] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+
+            // Interpolation of Bz^(d,d,p)
+            ( *Bpart )[ipart+2*nparts] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
+            
+            // Interpolation of ByBTIS3^(p,p,d)
+            (*BypartBTIS3)[ipart+0*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], By3DBTIS3, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+            
+            // Interpolation of BzBTIS3^(p,d,p)
+            (*BzpartBTIS3)[ipart+0*nparts] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Bz3DBTIS3, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d);
+
+
+            // -------------------------
+            // Interpolation of Phi^(p,p,p)
+            // -------------------------
+            ( *PHIpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], Phi3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+            // -------------------------
+            // Interpolation of GradPhix^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+0*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhix3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+            // -------------------------
+            // Interpolation of GradPhiy^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+1*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiy3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+            // -------------------------
+            // Interpolation of GradPhiz^(p,p,p)
+            // -------------------------
+            ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], &coeffzp[1], GradPhiz3D, idx_p[0], idx_p[1], idx_p[2], nx_p, ny_p, nz_p );
+
+
+            //Buffering of iol and delta
+            ( *iold )[ipart+0*nparts]  = idx_p[0];
+            ( *iold )[ipart+1*nparts]  = idx_p[1];
+            ( *iold )[ipart+2*nparts]  = idx_p[2];
+            ( *delta )[ipart+0*nparts] = delta_p[0];
+            ( *delta )[ipart+1*nparts] = delta_p[1];
+            ( *delta )[ipart+2*nparts] = delta_p[2];
+
+        }  // end ipart loop 
+      
+    } // end withB-TIS3 interpolation 
+    
 } // END Interpolator3D2Order
 
 void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int )

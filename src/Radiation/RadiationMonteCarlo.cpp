@@ -195,9 +195,9 @@ void RadiationMonteCarlo::operator()(
     double *const __restrict__ photon_weight = photons ? photons->getPtrWeight() : nullptr;
 
     // Quantum Parameter
-    double *const __restrict__ photon_chi_array = photons ? (photons->isQuantumParameter ? photons->getPtrChi() : nullptr) : nullptr;
+    double *const __restrict__ photon_chi_array = photons ? (photons->has_quantum_parameter ? photons->getPtrChi() : nullptr) : nullptr;
 
-    double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
+    double *const __restrict__ photon_tau = photons ? (photons->has_Monte_Carlo_process ? photons->getPtrTau() : nullptr) : nullptr;
 
 #ifdef SMILEI_OPENACC_MODE
     // Cell keys as a mask
@@ -477,11 +477,11 @@ void RadiationMonteCarlo::operator()(
                             photon_weight[iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
                             photon_charge[iphoton] = 0;
 
-                            if( photons->isQuantumParameter ) {
+                            if( photons->has_quantum_parameter ) {
                                 photon_chi_array[iphoton] = photon_chi;
                             }
 
-                            if( photons->isMonteCarlo ) {
+                            if( photons->has_Monte_Carlo_process ) {
                                 photon_tau[iphoton] = -1.;
                             }
 

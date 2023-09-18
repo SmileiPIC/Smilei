@@ -6,6 +6,7 @@ __all__ = [
 	"openNamelist",
 	"Options",
 	"Units",
+	"Operation",
 	"Movie",
 	"SaveAs",
 	"multiPlot",
@@ -148,6 +149,7 @@ class Options(object):
 		self.side = "left"
 		self.transparent = None
 		self.export_dir = None
+		self.title = "{quantity}  {time_prefix} {time} {time_units}"
 
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -168,7 +170,8 @@ class Options(object):
 		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
-		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
+		self.export_dir  = kwargs.pop("export_dir" , self.export_dir )
+		self.title       = kwargs.pop("title"      , self.title )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.copy().items():
 			# figure
@@ -183,7 +186,7 @@ class Options(object):
 			elif kwa in ["axis_facecolor"]:
 				self.axes[kwa[5:]] = val
 			# labels
-			elif kwa in ["title","xlabel","ylabel"]:
+			elif kwa in ["xlabel","ylabel"]:
 				self.labels[kwa] = val
 			elif kwa in ["title_font","xlabel_font","ylabel_font"]:
 				kw = kwa[:-5]
@@ -233,7 +236,6 @@ class Options(object):
 			self.image['cmap'] = self.explicit_cmap
 		return kwargs
 
-PintWarningIssued = False
 
 class Units(object):
 	""" Units()
@@ -262,22 +264,13 @@ class Units(object):
 				elif kwa == "y": self.requestedY = val
 				elif kwa == "v": self.requestedV = val
 				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
-
-		# We try to import the pint package
-		self.UnitRegistry = None
-		try:
-			from pint import UnitRegistry
-			self.UnitRegistry = UnitRegistry
-		except Exception as e:
-			global PintWarningIssued
-			if self.verbose and not PintWarningIssued:
-				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
-				print("       : The results will stay in code units.")
-				PintWarningIssued = True
-			return
+		self.ureg = None
+	
+	def _initRegistry(self, ureg):
+		self.ureg = ureg
 	
 	def _getUnits(self, units):
-		if self.UnitRegistry:
+		if self.ureg:
 			u = self.ureg(units)
 			try: u = u.units.format_babel(locale="en")
 			except Exception as e: u = ""
@@ -314,30 +307,9 @@ class Units(object):
 		elif requestedUnits:
 			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
-
-	def prepare(self, reference_angular_frequency_SI=None):
-		if self.UnitRegistry:
-			self.ureg = self.UnitRegistry()
-			if reference_angular_frequency_SI:
-				self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-			else:
-				self.ureg.define("W_r = [reference_frequency]"                 ) # frequency
-			self.ureg.define("V_r = speed_of_light"                   ) # velocity
-			self.ureg.define("W_r = "+str(reference_angular_frequency_SI)+"*hertz") # frequency
-			self.ureg.define("M_r = electron_mass"                    ) # mass
-			self.ureg.define("Q_r = 1.602176565e-19 * coulomb"        ) # charge
-			self.ureg.define("L_r = V_r / W_r"                        ) # length
-			self.ureg.define("T_r = 1   / W_r"                        ) # time
-			self.ureg.define("P_r = M_r * V_r"                        ) # momentum
-			self.ureg.define("K_r = M_r * V_r**2"                     ) # energy
-			self.ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
-			self.ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
-			self.ureg.define("B_r = M_r * W_r / Q_r"                  ) # magnetic field
-			self.ureg.define("E_r = B_r * V_r"                        ) # electric field
-			self.ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
 	
 	def convertAxes(self, xunits="", yunits="", vunits="", tunits=""):
-		if self.UnitRegistry:
+		if self.ureg:
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
 			self.vcoeff, self.vname = self._convert(vunits, self.requestedV)
@@ -349,7 +321,127 @@ class Units(object):
 			self.tcoeff, self.tname = 1., "code units"
 
 
-
+class Operation(object):
+	""" Operation(operation, QuantityTranslator, ureg)
+	
+	Convert the user's requested operation in a units-aware, data-aware expression
+	
+	Parameters:
+	-----------
+	operation: the user's requested operation
+	pattern: the regexp pattern to find the variables in the operation
+	QuantityTranslator: function that takes a string as argument (a quantity name)
+		and outputs its units + its replacement string + its displayed name
+	ureg: Pint's unit registry or None for no unit awareness
+	
+	Methods:
+	--------
+	eval(locals): evaluates the operation including variables in the `locals` namespace
+	"""
+	
+	def __init__(self, operation, QuantityTranslator, ureg):
+		import re
+		import numpy as np
+		self.ureg = ureg
+		self.constants = []
+		self.variables = []
+		self.imports = {}
+		
+		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b)(?![\['])", operation)
+		title = full_op.copy()
+		
+		# Special case: only 1 variable and nothing else
+		if len(full_op) == 3 and full_op[0] == full_op[-1] == "":
+			try:
+				units, replacement, name = QuantityTranslator(full_op[1])
+				self.variables += [full_op[1]]
+			except Exception:
+				raise Exception("Quantity "+full_op[1]+" unknown")
+			# Same units
+			self.translated_units = units
+			# Make the operation string
+			self.translated_operation = "(%s)" % replacement
+			# Make the title
+			self.title = name
+			# Define the eval function
+			self.eval = self.evalWithoutPint
+		
+		# With Pint
+		elif ureg:
+			basic_op = full_op.copy()
+			# Loop names encountered, and translate either as a known variable or as a known constant
+			for i,q in enumerate(full_op[1::2]):
+				try: # variable
+					if q in self.variables: # if previously found
+						j = self.variables.index(q)
+						full_op[2*i+1] = full_op[2*j+1]
+						basic_op[2*i+1] = basic_op[2*j+1]
+						title[2*j+1] = name
+					else:
+						units, replacement, name = QuantityTranslator(q)
+						self.constants += [ureg(units)]
+						self.variables += [q]
+						full_op[2*i+1] = "(%s*self.constants[%d])" % (replacement, len(self.constants)-1)
+						basic_op[2*i+1] = "(self.constants[%d])" % (len(self.constants)-1)
+						title[2*i+1] = name
+				except Exception: # constant
+					try:
+						self.constants += [ureg(q)]
+						full_op[2*i+1] = "(self.constants[%d])" % (len(self.constants)-1)
+						basic_op[2*i+1] = full_op[2*i+1]
+					except Exception: # numpy function
+						try:
+							self.imports[q] = getattr(np,q)
+						except Exception:
+							raise Exception("Quantity "+q+" not understood")
+			# Calculate the total units and its inverse
+			locals().update(self.imports)
+			units = eval("".join(basic_op)).units
+			self.translated_units = units.format_babel(locale="en")
+			# Make the operation string
+			self.translated_operation = "".join(full_op)
+			# Divide the operation by final units
+			self.constants += [1/units]
+			self.translated_operation = "(%s) * self.constants[-1]"%self.translated_operation
+			# Make the title
+			self.title = "".join(title)
+			# Define the eval function
+			self.eval = self.evalWithPint
+			
+		# Without Pint
+		else:
+			# Loop names encountered, and translate as a known variable
+			for i,q in enumerate(full_op[1::2]):
+				if q in self.variables: # if previously found
+					j = self.variables.index(q)
+					full_op[2*i+1] = full_op[2*j+1]
+					title[2*i+1] = title[2*j+1]
+				else:
+					try: # variable
+						units, replacement, name = QuantityTranslator(q)
+						self.variables += [q]
+						full_op[2*i+1] = "(%s)" % replacement
+						title[2*i+1] = name
+					except Exception: # numpy function
+						try:
+							self.imports[q] = getattr(np,q)
+						except Exception: # constant
+							raise Exception("Quantity "+q+" unknown")
+			self.translated_units = "1"
+			# Make the operation string
+			self.translated_operation = "".join(full_op)
+			# Make the title
+			self.title = "".join(title)
+			# Define the eval function
+			self.eval = self.evalWithoutPint
+	
+	def evalWithPint(self, l):
+		l.update(self.imports)
+		return eval(self.translated_operation, l, locals()).magnitude
+	
+	def evalWithoutPint(self, l):
+		l.update(self.imports)
+		return eval(self.translated_operation, l, locals())
 
 
 class Movie:
@@ -457,6 +549,7 @@ class _multiPlotUtil(object):
 		self.plt = Diags[0]._plt # pyplot
 		# Get keyword arguments
 		self.shape  = kwargs.pop("shape" , None)
+		self.legend_font = kwargs.pop("legend_font", None)
 		self.movie  = kwargs.pop("movie" , ""  )
 		self.fps    = kwargs.pop("fps"   , 15  )
 		self.dpi    = kwargs.pop("dpi"   , 200 )
@@ -567,6 +660,7 @@ class _multiPlotUtil(object):
 				self.ax[0].legend(
 					[Diag._plot for Diag in self.Diags if Diag._plot],
 					[Diag.options.plot["label"] for Diag in self.Diags if Diag._plot],
+					prop = self.legend_font
 				)
 	
 	def staticPlot(self):
@@ -608,7 +702,7 @@ class _multiPlotUtil(object):
 					else:
 						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					self.twinOptions(Diag)
-			if self.nlegends > 0: self.plt.legend()
+			self.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
 			mov.grab_frame()
@@ -627,7 +721,7 @@ class _multiPlotUtil(object):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0], cax_id = Diag._cax_id)
 			self.twinOptions(Diag)
-		if self.nlegends > 0: self.plt.legend()
+		self.legend()
 		self.plt.draw()
 		
 		from matplotlib.widgets import Slider
@@ -639,7 +733,7 @@ class _multiPlotUtil(object):
 
 def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ...,
-	              shape=None,
+	              shape=None, legend_font={},
 	              movie="", fps=15, dpi=200, saveAs=None,
 	              skipAnimation=False
 	              )
@@ -650,6 +744,7 @@ def multiPlot(*Diags, **kwargs):
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
+	legend_font : dictionnary to set the legend's font properties, such as {'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}.
 	movie : filename to create a movie, e.g. "my/path/mov.avi" or "my/path/mov.gif"
 	fps : frames per second for the movie.
 	dpi : resolution of the movie.
@@ -676,6 +771,7 @@ def multiSlide(*Diags, **kwargs):
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
 	shape : 2-element list giving the number of figures in x and y.
+	legend_font : dictionnary to set the legend's font properties, such as {'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}.
 	"""
 	
 	
@@ -687,12 +783,7 @@ def multiSlide(*Diags, **kwargs):
 class VTKfile:
 
 	def __init__(self):
-		try:
-			import vtk
-		except Exception as e:
-			print("Python module 'vtk' not found. Could not export to VTK format")
-			return
-		
+		import vtk
 		self.vtk = vtk
 	
 	def Array(self, data, name):

@@ -15,6 +15,16 @@
 #include "Interpolator.h"
 #include "Projector.h"
 
+// Fine timer ids
+#define interpolation_timer_id_     0
+#define push_timer_id_              1
+#define projection_timer_id_        2
+#define cell_keys_timer_id_         3
+#define ionization_timer_id_        4
+#define radiation_timer_id_         5
+#define mBW_timer_id_               6
+#define interp_fields_env_timer_id_ 7
+
 class DomainDecomposition;
 class Diagnostic;
 class SimWindow;
@@ -91,20 +101,69 @@ public:
     std::vector<unsigned int> size_;
     std::vector<unsigned int> oversize;
     
+    // Detailed timers (at the patch level)
+    // -----------------------
+
+    // Initialize timers
+    // 0 - Interpolation
+    // 1 - Pusher
+    // 2 - Projection
+    // 3 - exchange init + cell_keys
+    // 4 - ionization
+    // 5 - radiation
+    // 6 - Breit-Wheeler
+    // 7 - Interp Fields_Env
+    // 8 - Proj Susceptibility
+    // 9 - Push Momentum
+    // 10 - Interp Env_Old
+    // 11 - Proj Currents
+    // 12 - Push Pos
+    // 13 - Sorting
+
 #ifdef  __DETAILED_TIMERS
-    
+
     // OpenMP properties
     // -----------------------
     
-    int thread_number_;
+    int number_of_threads_;
     
     // Detailed timers
     // -----------------------
     
     //! Timers for the patch
     std::vector<double> patch_timers_;
+
+    //! temporary timers
+    std::vector<double> patch_tmp_timers_;
+
 #endif
+
+#ifdef __DETAILED_TIMERS
+    inline void __attribute__((always_inline)) startFineTimer(unsigned int index) {
+#ifdef _OMPTASKS
+        const int ithread = Tools::getOMPThreadNum();
+        patch_tmp_timers_[index * number_of_threads_ + ithread] = MPI_Wtime();
+#else
+        patch_tmp_timers_[index] = MPI_Wtime();
+#endif
+#else
+    inline void __attribute__((always_inline)) startFineTimer(unsigned int) {
+#endif
+    }
     
+#ifdef  __DETAILED_TIMERS
+    inline void __attribute__((always_inline)) stopFineTimer(unsigned int index) {
+#ifdef _OMPTASKS
+        const int ithread = Tools::getOMPThreadNum();   
+        patch_timers_[index * number_of_threads_ + ithread] += MPI_Wtime() - patch_tmp_timers_[index * number_of_threads_ + ithread];
+#else
+        patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
+#endif
+#else
+    inline void __attribute__((always_inline)) stopFineTimer(unsigned int) {
+#endif
+    }
+
     // Random number generator.
     Random * rand_;
     

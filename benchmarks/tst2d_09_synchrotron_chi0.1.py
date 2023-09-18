@@ -104,6 +104,10 @@ ExternalField(
     field = "Bz",
     profile = constant(B)
 )
+ExternalField(
+    field = "Bz_m",
+    profile = constant(B)
+)
 
 # ----------------------------------------------------------------------------------------
 # Loop to create all the species

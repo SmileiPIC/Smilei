@@ -117,7 +117,7 @@ private:
         DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
 
-        r_bar[ipart] = ((jpo + j_domain_begin_)*dr + deltaold[istart+ipart-ipart_ref+npart_total] + rp) * 0.5; // r at t = t0 - dt/2
+        r_bar[ipart] = ((jpo + j_domain_begin_ + deltaold[istart+ipart-ipart_ref+npart_total])*dr + rp) * 0.5; // r at t = t0 - dt/2
         std::complex<double> eitheta = ( position_y[istart+ipart] + Icpx * position_z[istart+ipart] ) / rp ; //exp(i theta)
         e_delta_m1[ipart] = std::sqrt(eitheta * (2.*std::real(array_eitheta_old[istart+ipart-ipart_ref]) - array_eitheta_old[istart+ipart-ipart_ref]));
         e_bar[ipart] = array_eitheta_old[istart+ipart-ipart_ref] * e_delta_m1[ipart];
@@ -254,7 +254,7 @@ private:
 
         //mode 0
         std::complex<double> crt_p= charge_weight[ipart]*( momentum_z[ipart]* real(e_bar_m1[ipart]) - momentum_y[ipart]*imag(e_bar_m1[ipart]) ) * invgf[ipart];
-        std::complex<double> e_delta = 1.5;
+        std::complex<double> e_delta = 0.5;
         std::complex<double> e_delta_inv = 0.5;
         std::complex<double> e_bar = 1.;
 

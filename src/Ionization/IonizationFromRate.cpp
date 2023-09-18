@@ -84,7 +84,6 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         // -----------------------------
         if( k_times!=0 ) {
             new_electrons.createParticle();
-            //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew )=particles->position( i, ipart );
@@ -94,6 +93,10 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
             }
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
+            
+            if( save_ion_charge_ ) {
+                ion_charge_.push_back( particles->charge( ipart ) );
+            }
             
             // Increase the charge of the particle
             particles->charge( ipart ) += k_times;

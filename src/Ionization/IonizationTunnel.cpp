@@ -160,7 +160,6 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
 
         if( k_times !=0 ) {
             new_electrons.createParticle();
-            //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew )=particles->position( i, ipart );
@@ -170,6 +169,10 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
             }
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
+            
+            if( save_ion_charge_ ) {
+                ion_charge_.push_back( particles->charge( ipart ) );
+            }
             
             // Increase the charge of the particle
             particles->charge( ipart ) += k_times;
@@ -291,7 +294,6 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
         // -----------------------------
         if( k_times !=0 ) {
             new_electrons_per_bin[ibin].createParticle();
-            //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons_per_bin[ibin].size() - 1;//cout<<"ibin "<<ibin<<"size "<<new_electrons_per_bin[ibin].size()<<"capacity "<<new_electrons_per_bin[ibin].capacity()<<"\n"<<endl;
             for( unsigned int i=0; i<new_electrons_per_bin[ibin].dimension(); i++ ) {
                 new_electrons_per_bin[ibin].position( i, idNew )=particles->position( i, ipart );
@@ -301,6 +303,10 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
             }
             new_electrons_per_bin[ibin].weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons_per_bin[ibin].charge( idNew )=-1;
+            
+            if( save_ion_charge_ ) {
+                ion_charge_per_bin_[ibin].push_back( particles->charge( ipart ) );
+            }
             
             // // Increase the charge of the particle
             particles->charge( ipart ) += k_times;

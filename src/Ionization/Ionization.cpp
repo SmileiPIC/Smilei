@@ -1,5 +1,9 @@
+#include <vector>
+
 #include "Ionization.h"
 #include "Species.h"
+
+using namespace std;
 
 Ionization::Ionization( Params &params, Species *species )
 {
@@ -20,6 +24,7 @@ Ionization::Ionization( Params &params, Species *species )
     
 #ifdef _OMPTASKS
     new_electrons_per_bin = new Particles[species->Nbins];
+    ion_charge_per_bin_.resize( species->Nbins );
 #endif
 }
 
@@ -29,33 +34,40 @@ Ionization::~Ionization()
 }
 
 
-void Ionization::joinNewElectrons(unsigned int Nbins)
+void Ionization::joinNewElectrons( unsigned int Nbins )
 {
-
     // if tasks on bins are used for ionization, join the lists of new electrons 
     // created in each bin, to have the list of new electrons for this species and patch
-    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-        // number of particles to add from the bin
-        unsigned int n_particles_to_create = new_electrons_per_bin[ibin].size();
-        new_electrons.createParticles(n_particles_to_create);
-
-        for (unsigned int ipart = 0; ipart < n_particles_to_create ; ipart++){
-
-            int idNew = (new_electrons.size() - n_particles_to_create) + ipart;
-
-            for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
-                new_electrons.position( i, idNew ) = (new_electrons_per_bin[ibin]).position( i, ipart );
-            }
-            for( unsigned int i=0; i<3; i++ ) {
-                new_electrons.momentum( i, idNew ) = (new_electrons_per_bin[ibin]).momentum( i, ipart );
-            }
-            new_electrons.weight( idNew ) = (new_electrons_per_bin[ibin]).weight( ipart );
-            new_electrons.charge( idNew ) = (new_electrons_per_bin[ibin]).charge( ipart );
-       
-        } // end ipart
-        new_electrons_per_bin[ibin].clear();
-    } // end ibin
-
     
-
+    size_t start = new_electrons.size();
+    
+    // Resize new_electrons
+    size_t total_n_new = 0;
+    for( size_t ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        total_n_new += new_electrons_per_bin[ibin].size();
+    }
+    new_electrons.createParticles( total_n_new );
+    // Also resize ion_charge_ if necessary
+    if( save_ion_charge_ ) {
+        ion_charge_.resize( start + total_n_new );
+    }
+    
+    // Move each new_electrons_per_bin into new_electrons
+    for( size_t ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        size_t n_new = new_electrons_per_bin[ibin].size();
+        for( size_t i=0; i<new_electrons.dimension(); i++ ) {
+            copy( &new_electrons_per_bin[ibin].position( i, 0 ), &new_electrons_per_bin[ibin].position( i, n_new ), &new_electrons.position( i, start ) );
+        }
+        for( size_t i=0; i<new_electrons.dimension(); i++ ) {
+            copy( &new_electrons_per_bin[ibin].momentum( i, 0 ), &new_electrons_per_bin[ibin].momentum( i, n_new ), &new_electrons.momentum( i, start ) );
+        }
+        copy( &new_electrons_per_bin[ibin].weight( 0 ), &new_electrons_per_bin[ibin].weight( n_new ), &new_electrons.weight( start ) );
+        copy( &new_electrons_per_bin[ibin].charge( 0 ), &new_electrons_per_bin[ibin].charge( n_new ), &new_electrons.charge( start ) );
+        new_electrons_per_bin[ibin].clear();
+        if( save_ion_charge_ ) {
+            copy( ion_charge_per_bin_[ibin].begin(), ion_charge_per_bin_[ibin].end(), ion_charge_.begin() + start );
+            ion_charge_per_bin_[ibin].clear();
+        }
+        start += n_new;
+    }
 }

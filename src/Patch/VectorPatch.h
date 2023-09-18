@@ -224,7 +224,18 @@ public :
     void solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
-    void runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
+    //! param[in] params object containing all constant simulation parameters
+    //! param[in] smpi object containing MPI functions for Smilei
+    //! param[in] itime the current time step
+    //! param[in] timers object to manage the code timers
+    //! param[in] simWindow object to manage the moving window
+    void runAllDiags( 
+        Params &params, 
+        SmileiMPI *smpi, 
+        unsigned int itime, 
+        Timers &timers, 
+        SimWindow *simWindow );
+        
     void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
@@ -360,6 +371,8 @@ public :
     std::vector<Field *> listBx_;
     std::vector<Field *> listBy_;
     std::vector<Field *> listBz_;
+    std::vector<Field *> listBy_mBTIS3;
+    std::vector<Field *> listBz_mBTIS3;
     std::vector<Field *> listForPML_;
     
     std::vector<Field *> listA_;
@@ -397,6 +410,8 @@ public :
     std::vector<std::vector< Field *>> listBl_;
     std::vector<std::vector< Field *>> listBr_;
     std::vector<std::vector< Field *>> listBt_;
+    std::vector<std::vector< Field *>> listBr_mBTIS3;
+    std::vector<std::vector< Field *>> listBt_mBTIS3;
     
     
     //! True if any antennas

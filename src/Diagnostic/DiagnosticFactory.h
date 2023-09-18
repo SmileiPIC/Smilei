@@ -9,6 +9,7 @@
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
+#include "DiagnosticNewParticles.h"
 #include "DiagnosticPerformances.h"
 
 #include "DiagnosticFields1D.h"
@@ -52,16 +53,16 @@ public:
         std::vector<Diagnostic *> vecDiagnostics;
         vecDiagnostics.push_back( new DiagnosticScalar( params, smpi, vecPatches( 0 ) ) );
         
-        for( unsigned int n_diag_particles = 0; n_diag_particles < PyTools::nComponents( "DiagParticleBinning" ); n_diag_particles++ ) {
-            vecDiagnostics.push_back( new DiagnosticParticleBinning( params, smpi, vecPatches( 0 ), n_diag_particles ) );
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagParticleBinning" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticParticleBinning( params, smpi, vecPatches( 0 ), i ) );
         }
         
-        for( unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents( "DiagScreen" ); n_diag_screen++ ) {
-            vecDiagnostics.push_back( new DiagnosticScreen( params, smpi, vecPatches( 0 ), n_diag_screen ) );
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagScreen" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticScreen( params, smpi, vecPatches( 0 ), i ) );
         }
-
-        for (unsigned int n_diag_rad_spectrum = 0; n_diag_rad_spectrum < PyTools::nComponents("DiagRadiationSpectrum"); n_diag_rad_spectrum++) {
-            vecDiagnostics.push_back( new DiagnosticRadiationSpectrum(params, smpi, vecPatches(0), radiation_tables_ , n_diag_rad_spectrum) );
+        
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagRadiationSpectrum" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticRadiationSpectrum(params, smpi, vecPatches(0), radiation_tables_ , i) );
         }
         
         return vecDiagnostics;
@@ -73,19 +74,21 @@ public:
     static std::vector<Diagnostic *> createLocalDiagnostics( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
     {
         std::vector<Diagnostic *> vecDiagnostics;
-        //MESSAGE("in create local diags:  global dims after declaring vecdiag " << vecPatches(0)->EMfields->Jx_s[1]->number_of_points_);
         
-        for( unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents( "DiagFields" ); n_diag_fields++ ) {
-            vecDiagnostics.push_back( DiagnosticFieldsFactory::create( params, smpi, vecPatches, n_diag_fields, openPMD ) );
-            //  MESSAGE("in create local diags:  global dims after creating and pushing back field diag " << vecPatches(0)->EMfields->Jx_s[1]->number_of_points_);
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagFields" ); i < n; i++ ) {
+            vecDiagnostics.push_back( DiagnosticFieldsFactory::create( params, smpi, vecPatches, i, openPMD ) );
         }
         
-        for( unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents( "DiagProbe" ); n_diag_probe++ ) {
-            vecDiagnostics.push_back( new DiagnosticProbes( params, smpi, vecPatches, n_diag_probe ) );
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagProbe" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticProbes( params, smpi, vecPatches, i ) );
         }
         
-        for( unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents( "DiagTrackParticles" ); n_diag_track++ ) {
-            vecDiagnostics.push_back( new DiagnosticTrack( params, smpi, vecPatches, n_diag_track, vecDiagnostics.size(), openPMD ) );
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagTrackParticles" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticTrack( params, smpi, vecPatches, i, vecDiagnostics.size(), openPMD ) );
+        }
+        
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagNewParticles" ); i < n; i++ ) {
+            vecDiagnostics.push_back( new DiagnosticNewParticles( params, smpi, vecPatches, i, vecDiagnostics.size(), openPMD ) );
         }
         
         if( PyTools::nComponents( "DiagPerformances" ) > 0 ) {
@@ -102,7 +105,7 @@ public:
     {
         std::vector<ProbeParticles *> probes( 0 );
         
-        for( unsigned int n_probe = 0; n_probe < PyTools::nComponents( "DiagProbe" ); n_probe++ ) {
+        for( unsigned int i = 0, n = PyTools::nComponents( "DiagProbe" ); i < n; i++ ) {
             probes.push_back( new ProbeParticles() );
         }
         

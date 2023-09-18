@@ -35,7 +35,8 @@ ElectroMagn::ElectroMagn( Params &params, vector<Species *> &vecSpecies, Patch *
     is_pxr( params.is_pxr ),
     nrj_mw_out( 0. ),
     nrj_mw_inj( 0. ),
-    filter_( NULL )
+    filter_( NULL ),
+    use_BTIS3(params.use_BTIS3)
 {
     size_ = patch->size_;
     oversize = patch->oversize;
@@ -73,7 +74,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     is_pxr( emFields->is_pxr ),
     nrj_mw_out( 0. ),
     nrj_mw_inj( 0. ),
-    filter_( NULL )
+    filter_( NULL ),
+    use_BTIS3(emFields->use_BTIS3)
 {
     dimPrim = emFields->dimPrim;
     dimDual = emFields->dimDual;
@@ -108,6 +110,8 @@ void ElectroMagn::initElectroMagnQuantities()
     Bx_m=NULL;
     By_m=NULL;
     Bz_m=NULL;
+    By_mBTIS3=NULL;
+    Bz_mBTIS3=NULL;
     Jx_=NULL;
     Jy_=NULL;
     Jz_=NULL;
@@ -164,6 +168,10 @@ void ElectroMagn::finishInitialization( int nspecies, Patch * )
         allFields.push_back( Env_Chi_ );
         allFields.push_back( Env_E_abs_ );
         allFields.push_back( Env_Ex_abs_ );
+    }
+    if ( By_mBTIS3 != NULL ){
+        allFields.push_back( By_mBTIS3 );
+        allFields.push_back( Bz_mBTIS3 );
     }
     
     // For species-related fields
@@ -288,6 +296,16 @@ ElectroMagn::~ElectroMagn()
     for( vector<Antenna>::iterator antenna=antennas.begin(); antenna!=antennas.end(); antenna++ ) {
         delete antenna->field;
         antenna->field=NULL;
+    }
+    
+    if (use_BTIS3){
+        if(By_mBTIS3 != NULL){
+            delete By_mBTIS3;
+        }
+    
+        if(Bz_mBTIS3 != NULL){
+            delete Bz_mBTIS3;
+        }
     }
 
 //     for ( unsigned int iExt = 0 ; iExt < prescribedFields.size() ; iExt++ ) {
@@ -461,14 +479,25 @@ double ElectroMagn::computeEnergy()
 
 void ElectroMagn::applyExternalFields( Patch *patch )
 {
+    std::vector<bool> input, copy;
+    input = {false, false, false};
+    copy = {true, true, true};
     for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
             applyExternalField( allFields[extfield->index], extfield->profile, patch );
         }
+        string name = LowerCase( extfield->field );
+        if( name==LowerCase( Bx_->name ) ) input[0] = true; 
+        if( name==LowerCase( By_->name ) ) input[1] = true; 
+        if( name==LowerCase( Bz_->name ) ) input[2] = true; 
+        if( name==LowerCase( Bx_m->name ) ) copy[0] = false; 
+        if( name==LowerCase( By_m->name ) ) copy[1] = false; 
+        if( name==LowerCase( Bz_m->name ) ) copy[2] = false; 
     }
-    Bx_m->copyFrom( Bx_ );
-    By_m->copyFrom( By_ );
-    Bz_m->copyFrom( Bz_ );
+    // These should be additions and not copies. In case B is given but not B_m, B is assumed constant over time and B_m=B.
+    if (input[0] && copy[0]) Bx_m->copyFrom( Bx_ );
+    if (input[1] && copy[1]) By_m->copyFrom( By_ );
+    if (input[2] && copy[2]) Bz_m->copyFrom( Bz_ );
 }
 
 void ElectroMagn::saveExternalFields( Patch *patch )

@@ -29,6 +29,8 @@ public:
     std::vector<cField2D *> Bl_m;
     std::vector<cField2D *> Br_m;
     std::vector<cField2D *> Bt_m;
+    std::vector<cField2D *> Br_mBTIS3;
+    std::vector<cField2D *> Bt_mBTIS3;
     std::vector<cField2D *> Jl_;
     std::vector<cField2D *> Jr_;
     std::vector<cField2D *> Jt_;
@@ -200,6 +202,8 @@ public:
     void applyExternalField( Field *, Profile *, Patch * ) override;
     //! Method used to impose one external time field
     void applyPrescribedField( Field *, Profile *, Patch *, double time ) override;
+    //! Method used to compute time centered B_m from E and B
+    void compute_B_m_fromEB();
     
     void initAntennas( Patch *patch, Params& params ) override;
     

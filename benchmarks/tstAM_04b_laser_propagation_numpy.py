@@ -56,7 +56,8 @@ Main(
         ["buneman","buneman"],
     ],
     solve_poisson = False,
-    print_every = 100
+    print_every = 100,
+    use_BTIS3_interpolation=True,
 )
 
 MovingWindow(
@@ -78,6 +79,7 @@ Species(
     	["remove", "remove"],
     	["reflective", "remove"],
     ],
+    pusher = "borisBTIS3",
 )
 
 laser_fwhm = 82. 
@@ -89,6 +91,9 @@ LaserGaussianAM(
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
 
+
+list_fields = ["Ex","Ey","Ez","By","Bz","ByBTIS3","BzBTIS3"]
+
 DiagProbe(
 	every = 100,
 	origin = [0., -Ltrans, 0.],
@@ -97,6 +102,7 @@ DiagProbe(
               [0.,  Ltrans, 0.]
                   ],
 	number = [nx, ntrans],
+        fields = list_fields,
 )
 
 DiagParticleBinning(
@@ -107,7 +113,7 @@ DiagParticleBinning(
         ["moving_x",0.,Lx,10],
         ["y",-Ltrans,Ltrans,6],
         ["z",-0.2*Ltrans, 0.2*Ltrans, 1]
-    ]
+    ],
 )
 
 DiagPerformances(

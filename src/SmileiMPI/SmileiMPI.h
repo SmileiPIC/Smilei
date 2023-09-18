@@ -221,6 +221,10 @@ public:
     std::vector<std::vector<double>> dynamics_deltaold;
     //! theta old
     std::vector<std::vector<std::complex<double>>> dynamics_eithetaold;
+    //! value of the By field for BTIS3
+    std::vector<std::vector<double>> dynamics_Bpart_yBTIS3;
+    //! value of the Bz field for BTIS3
+    std::vector<std::vector<double>> dynamics_Bpart_zBTIS3;
 
     //! value of the grad(AA*) at itime and itime-1
     std::vector<std::vector<double>> dynamics_GradPHIpart;
@@ -272,6 +276,10 @@ public:
         dynamics_invgf[ithread].resize( npart );
         dynamics_iold[ithread].resize( ndim_field*npart );
         dynamics_deltaold[ithread].resize( ndim_field*npart );
+        if(use_BTIS3){
+            dynamics_Bpart_yBTIS3[ithread].resize( npart );
+            dynamics_Bpart_zBTIS3[ithread].resize( npart );
+        }
         if( isAM ) {
             dynamics_eithetaold[ithread].resize( npart );
         }
@@ -298,6 +306,10 @@ public:
         dynamics_invgf.resize( n_buffers );
         dynamics_iold.resize( n_buffers );
         dynamics_deltaold.resize( n_buffers );
+        if(use_BTIS3){
+            dynamics_Bpart_yBTIS3.resize( n_buffers );
+            dynamics_Bpart_zBTIS3.resize( n_buffers );
+        }
         if( isAM ) {
             dynamics_eithetaold.resize( n_buffers );
         }
@@ -323,6 +335,10 @@ public:
         dynamics_invgf[buffer_id].resize( 1 );
         dynamics_iold[buffer_id].resize( 1 );
         dynamics_deltaold[buffer_id].resize( 1 );
+        if(use_BTIS3){
+            dynamics_Bpart_yBTIS3[buffer_id].resize( 1 );
+            dynamics_Bpart_zBTIS3[buffer_id].resize( 1 );
+        }
         if( isAM ) {
             dynamics_eithetaold[buffer_id].resize( 1 );
         }
@@ -386,6 +402,7 @@ public:
     };
 #endif
 
+    bool use_BTIS3;
 
 protected:
     //! Global MPI Communicator

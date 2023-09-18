@@ -241,7 +241,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
              // New electron has ion position
             new_electrons.makeParticleAt( *pi, ii, Wi, pe->charge( ie ), newpx, newpy, newpz );
             // If quantum parameter exists for new electron, then calculate it
-            if( new_electrons.isQuantumParameter ) {
+            if( new_electrons.has_quantum_parameter ) {
                 new_electrons.Chi.back() = pe->chi( ie ) * (w+1.) / gammae;
             }
         }
@@ -271,7 +271,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
+void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags, bool, std::vector<unsigned int>, std::vector<unsigned int>, int itime )
 {
-    patch->vecSpecies[ionization_electrons_]->importParticles( params, patch, new_electrons, localDiags );
+    patch->vecSpecies[ionization_electrons_]->importParticles( params, patch, new_electrons, localDiags, ( itime + 0.5 ) * params.timestep );
 }

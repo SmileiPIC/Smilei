@@ -111,9 +111,9 @@ void Timer::updateThreaded( VectorPatch &vecPatches, bool store )
         for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ )
         {
             // Loop over the values stored in each thread
-            for (int ithread = 0 ; ithread < vecPatches( ipatch )->thread_number_ ; ithread++) {
-                time_tmp += vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->thread_number_ + ithread];
-                vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->thread_number_ + ithread] = 0;
+            for (int ithread = 0 ; ithread < vecPatches( ipatch )->number_of_threads_ ; ithread++) {
+                time_tmp += vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->number_of_threads_ + ithread];
+                vecPatches( ipatch )->patch_timers_[this->patch_timer_id*vecPatches( ipatch )->number_of_threads_ + ithread] = 0;
             }
         }
         

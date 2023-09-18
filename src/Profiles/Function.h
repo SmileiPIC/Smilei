@@ -168,7 +168,7 @@ public:
     Function_File( std::string path, std::string dataset_name, H5Read *file, std::vector<double> cell_length )
     : path_( path ), dataset_name_( dataset_name ), file_( file ), cell_length_( cell_length )
     {
-        opened_file_count_ = new int( 0 );
+        opened_file_count_ = new int( 1 );
     };
     Function_File( Function_File *f )
     :path_( f->path_ ), dataset_name_( f->dataset_name_ ), file_( f->file_ ), cell_length_( f->cell_length_ )

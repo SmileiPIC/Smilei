@@ -66,6 +66,7 @@ void H5::init( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
             H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_COLLECTIVE );
             H5Pset_alloc_time( dcr_, H5D_ALLOC_TIME_EARLY );
         }
+        H5Pset_fill_time( dcr_, H5D_FILL_TIME_NEVER );
         // Check error
         if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
             id_ = -1;
@@ -107,7 +108,7 @@ H5::~H5()
 }
 
 
-//! 1D
+//! 1D without selection or chunks
 H5Space::H5Space( hsize_t size ) {
     dims_ = { size };
     global_ = size;
@@ -119,10 +120,11 @@ H5Space::H5Space( hsize_t size ) {
 }
 
 //! 1D
-H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk ) {
+H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk, bool extendable ) {
     dims_ = { size };
     global_ = size;
-    sid_ = H5Screate_simple( 1, &size, NULL );
+    const hsize_t unlimited[] = { H5S_UNLIMITED };
+    sid_ = H5Screate_simple( 1, &size, extendable ? unlimited : NULL );
     if( size <= 0 || npoints <= 0 ) {
         H5Sselect_none( sid_ );
     } else {
@@ -137,13 +139,21 @@ H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk )
 }
 
 //! ND
-H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::vector<hsize_t> npoints, std::vector<hsize_t> chunk ) {
+H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::vector<hsize_t> npoints, std::vector<hsize_t> chunk, std::vector<bool> extendable ) {
     dims_ = size;
     global_ = 1;
     for( unsigned int i=0; i<size.size(); i++ ) {
         global_ *= size[i];
     }
-    sid_ = H5Screate_simple( size.size(), &size[0], NULL );
+    if( extendable.empty() ) {
+        sid_ = H5Screate_simple( size.size(), &size[0], NULL );
+    } else {
+        std::vector<hsize_t> maxsize( size.size() );
+        for( size_t i = 0; i < size.size(); i++ ) {
+            maxsize[i] = extendable[i] ? H5S_UNLIMITED : size[i];
+        }
+        sid_ = H5Screate_simple( size.size(), &size[0], &maxsize[0] );
+    }
     if( global_ <= 0 ) {
         H5Sselect_none( sid_ );
     } else if( ! offset.empty() || ! npoints.empty() ) {

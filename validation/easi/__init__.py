@@ -4,19 +4,18 @@ class Display(object):
     """
     def __init__(self):
         
-        from os import get_terminal_size
-        
         self.terminal_mode_ = True
         
         # terminal properties for custom display
         try:
+            from os import get_terminal_size
             self.term_size_ = get_terminal_size()
         except:
             self.term_size_ = [0,0]
             self.terminal_mode_ = False
         
         # Used in a terminal
-        if (self.terminal_mode_):
+        if self.terminal_mode_:
             
             self.seperator_length_ = self.term_size_[0]
             
@@ -585,7 +584,7 @@ class Validation(object):
             from os.path import getsize
             from os import remove
             with open(self.reference_file, "wb") as f:
-                pickle.dump(self.data, f, protocol=2)
+                pickle.dump(self.data, f)
             size = getsize(self.reference_file)
             if size > 1000000:
                 print("Reference file is too large ("+str(size)+"B) - suppressing ...")

@@ -109,7 +109,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     std::complex<double> theta_old = array_eitheta_old[0];
     std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
-    e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
@@ -137,7 +136,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
         DSr[i] = Sr1[i] - Sr0[i];
     }
 
-    double r_bar = ((jpo + j_domain_begin_)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
+    double r_bar = ((jpo + j_domain_begin_ + deltaold[1*nparts])*dr + rp) * 0.5; // r at t = t0 - dt/2
 
     e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
     e_bar_m1 = theta_old * e_delta_m1;
@@ -183,7 +182,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
         Jr_p[j] =  Jr_p[j+1] * Vd[j] + tmpJr[j];
     }
 
-    e_delta = 1.5;
+    e_delta = 0.5;
     e_delta_inv = 0.5;
 
    //Compute division by R in advance for Jt and rho evaluation.
@@ -803,7 +802,6 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM */*emAM*/, std::complex<
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     std::complex<double> theta_old = array_eitheta_old[0];
     std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
-    e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
@@ -831,7 +829,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM */*emAM*/, std::complex<
         DSr[i] = Sr1[i] - Sr0[i];
     }
 
-    double r_bar = ((jpo + j_domain_begin_)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
+    double r_bar = ((jpo + j_domain_begin_ + deltaold[1*nparts])*dr + rp) * 0.5; // r at t = t0 - dt/2
     e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
     e_bar_m1 = theta_old * e_delta_m1;
 
@@ -876,7 +874,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM */*emAM*/, std::complex<
         }
     }
 
-    e_delta = 1.5;
+    e_delta = 0.5;
     e_delta_inv = 0.5;
 
    //Compute division by R in advance for Jt and rho evaluation.

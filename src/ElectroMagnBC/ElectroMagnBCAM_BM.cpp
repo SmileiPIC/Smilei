@@ -213,7 +213,7 @@ void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
                 ( *Bt )( i, j+1 ) =     Alpha_Bt_Rmax * ( *Bt )( i, j )
                                         + Beta_Bt_Rmax  * ( *Bt_old )( i, j+1 )
                                         + Gamma_Bt_Rmax * ( *Bt_old )( i, j )
-                                        - Icpx * ( double )imode * CB_BM * Epsilon_Bt_Rmax  * ( ( *Br )( i, j ) - ( *Br_old )( i, j ) )
+                                        - Icpx * ( double )imode * CB_BM * Epsilon_Bt_Rmax  * ( ( *Br )( i, j ) + ( *Br_old )( i, j ) )
                                         - CE_BM * Delta_Bt_Rmax * ( ( *Er )( i, j+1 )+( *Er )( i, j )-( *Er )( i-1, j+1 ) -( *Er )( i-1, j ) ) ;
                 //if (std::abs((*Bt)(i,j+1))>1.){
                 //    MESSAGE("BtMF");

@@ -599,7 +599,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // Creation of the particles in local_particles_vector
             particle_creator.create( init_space, params, patch, itime );
 
-
             // suppress all particles in the thermalized region
             //int * mask = new int[injector_species->particles->size()];
             // std::vector<int> mask(injector_species->particles->size());
@@ -627,10 +626,11 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //delete [] mask;
 
             // Update positions from momentum
-            // Particle not created at the same position of another species
+            // Particle not created at the same position of another injector
             if( !particle_injector->position_initialization_on_injector_ ) {
 
-                unsigned int number_of_particles = local_particles_vector[i_injector].size();
+                Particles* particles = &local_particles_vector[i_injector];
+                unsigned int number_of_particles = particles->size();
 
                 // Shift to update the positions
                 double position_shift[3] = {0., 0., 0.};
@@ -640,71 +640,109 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     position_shift[axis] = params.cell_length[axis];
                 }
 
-                double * __restrict__ position_x = local_particles_vector[i_injector].getPtrPosition( 0 );
-                double * __restrict__ position_y = local_particles_vector[i_injector].getPtrPosition( 1 );
-                double * __restrict__ position_z = local_particles_vector[i_injector].getPtrPosition( 2 );
+                double * __restrict__ position_x = particles->getPtrPosition( 0 );
+                double * __restrict__ position_y = particles->getPtrPosition( 1 );
+                double * __restrict__ position_z = particles->getPtrPosition( 2 );
 
-                double * __restrict__ momentum_x = local_particles_vector[i_injector].getPtrMomentum( 0 );
-                double * __restrict__ momentum_y = local_particles_vector[i_injector].getPtrMomentum( 1 );
-                double * __restrict__ momentum_z = local_particles_vector[i_injector].getPtrMomentum( 2 );
+                double * __restrict__ momentum_x = particles->getPtrMomentum( 0 );
+                double * __restrict__ momentum_y = particles->getPtrMomentum( 1 );
+                double * __restrict__ momentum_z = particles->getPtrMomentum( 2 );
 
-                if (params.nDim_field == 1) {
+                if (params.nDim_particle == 1) {
 
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
                         + momentum_z[ip]*momentum_z[ip]);
 
-                        position_x[ip] += ( momentum_x[ip]
-                                                    * inverse_gamma + position_shift[0]);
+                        position_x[ip] += momentum_x[ip] * inverse_gamma + position_shift[0];
                     }
 
-                } else if (params.nDim_field == 2) {
+                } else if (params.nDim_particle == 2) {
 
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
                         + momentum_z[ip]*momentum_z[ip]);
 
-                        position_x[ip] += ( momentum_x[ip]
-                                                    * inverse_gamma + position_shift[0]);
-                        position_y[ip] += ( momentum_y[ip]
-                                                    * inverse_gamma + position_shift[1]);
+                        position_x[ip] += momentum_x[ip] * inverse_gamma + position_shift[0];
+                        position_y[ip] += momentum_y[ip] * inverse_gamma + position_shift[1];
                     }
 
 
-                } else if (params.nDim_field == 3) {
+                } else if (params.nDim_particle == 3) {
 
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
                         double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip]
                             + momentum_y[ip]*momentum_y[ip] + momentum_z[ip]*momentum_z[ip]);
 
-                        position_x[ip] += ( momentum_x[ip]
-                                                    * inverse_gamma + position_shift[0]);
-                        position_y[ip] += ( momentum_y[ip]
-                                                    * inverse_gamma + position_shift[1]);
-                        position_z[ip] += ( momentum_z[ip]
-                                                    * inverse_gamma + position_shift[2]);
+                        position_x[ip] += momentum_x[ip] * inverse_gamma + position_shift[0];
+                        position_y[ip] += momentum_y[ip] * inverse_gamma + position_shift[1];
+                        position_z[ip] += momentum_z[ip] * inverse_gamma + position_shift[2];
                     }
 
-                } // end if ndim_field
-            } // end if new particle positions
+                } // end if nDim_particle
+                
+                // Filter out particles to keep only the ones that are in the simulation domain
+                if( particles->size() > 0 ) {
+                
+                    int new_particle_number = particles->size() - 1;
+                    
+                    // Suppr not interesting parts ...
+                    for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
+                        for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
+                            if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] >= params.cell_length[axis]*params.global_size_[axis]  ) {
+                                if( new_particle_number > ip ) {
+                                    particles->overwriteParticle( new_particle_number, ip );
+                                }
+                                new_particle_number--;
+                                break;
+                            }
+                        }
+                    }
+                    new_particle_number += 1;
+
+                    // New energy from particles
+                    double energy = 0.;
+                    // Matter particle case
+                    if( injector_species->mass_ > 0 ) {
+                        for( int ip = 0; ip<new_particle_number; ip++ ) {
+                            energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
+                        }
+                        injector_species->nrj_new_part_ += injector_species->mass_ * energy;
+                    }
+                    // Photon case
+                    else if( injector_species->mass_ == 0 ) {
+                        for( int ip=0; ip<new_particle_number; ip++ ) {
+                            energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
+                        }
+                        injector_species->nrj_new_part_ += energy;
+                    }
+                    // Insertion of the particles as a group in the vector of species
+                    particles->eraseParticleTrail( new_particle_number );
+                } // if particles > 0
+            }
         } // end loop injector
 
-        // Update positions with copy from another species
+        // Update positions with copy from another injector
         for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
 
             // Pointer to the current particle injector
             ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
-
-            // Particle created at the same position of another species
+            
+            if( !patch->isBoundary( particle_injector->axis(), particle_injector->min_max() ) ) continue;
+            
+            // Particle created at the same position of another injector
             if (particle_injector->position_initialization_on_injector_) {
 
-                // We first get the species id associated to this injector
+                // We first get the associated injector
                 unsigned int i_injector_2 = particle_injector->position_initialization_on_injector_index_;
-
-                const unsigned int particle_number    = local_particles_vector[i_injector].size();
+                // Resize position vectors
+                const unsigned int particle_number = local_particles_vector[i_injector_2].size();
+                for( unsigned int i = 0; i < params.nDim_particle; i++ ) {
+                    local_particles_vector[i_injector].resize( particle_number );
+                }
                 // Pointers injector 1
                 double *const __restrict__ px         = local_particles_vector[i_injector].getPtrPosition(0);
                 double *const __restrict__ py         = local_particles_vector[i_injector].getPtrPosition(1);
@@ -713,8 +751,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 const double *const __restrict__ lpvx = local_particles_vector[i_injector_2].getPtrPosition(0);
                 const double *const __restrict__ lpvy = local_particles_vector[i_injector_2].getPtrPosition(1);
                 const double *const __restrict__ lpvz = local_particles_vector[i_injector_2].getPtrPosition(2);
-
-                if (params.nDim_field == 3) {
+                if (params.nDim_particle == 3) {
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
                         px[ip] = lpvx[ip];
@@ -722,72 +759,30 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         pz[ip] = lpvz[ip];
                     }
                 }
-                else if (params.nDim_field == 2) {
+                else if (params.nDim_particle == 2) {
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
                         px[ip] = lpvx[ip];
                         py[ip] = lpvy[ip];
                     }
                 }
-                else if (params.nDim_field == 1) {
+                else if (params.nDim_particle == 1) {
                     #pragma omp simd
                     for ( unsigned int ip = 0; ip < particle_number ; ip++ ) {
                         px[ip] = lpvx[ip];
                     }
-                } // if nDim_field
-            } // if particle positions
-
-            // Filter particles when initialized on different position
-            if( local_particles_vector[i_injector].size() > 0 ) {
-
-                // We first get the species id associated to this injector
-                unsigned int i_species = particle_injector->getSpeciesNumber();
-                Species * injector_species = species( ipatch, i_species );
-                Particles* particles = &local_particles_vector[i_injector];
-
-                // Then the new number of particles in species
-                int new_particle_number = particles->size() - 1;
-
-                // Suppr not interesting parts ...
-                for( int ip = new_particle_number ; ip >= 0 ; ip-- ) {
-                    for( unsigned int axis = 0; axis<params.nDim_field; axis++ ) {
-                        if( particles->Position[axis][ip] < 0. || particles->Position[axis][ip] >= params.cell_length[axis]*params.global_size_[axis]  ) {
-                            if( new_particle_number > ip ) {
-                                particles->overwriteParticle( new_particle_number, ip );
-                            }
-                            new_particle_number--;
-                        }
-                    }
-                }
-
-                new_particle_number += 1;
-
-                // New energy from particles
-                double energy = 0.;
-                // Matter particle case
-                if( injector_species->mass_ > 0 ) {
-                    for( int ip = 0; ip<new_particle_number; ip++ ) {
-                        energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
-                    }
-                    injector_species->nrj_new_part_ += injector_species->mass_ * energy;
-                }
-                // Photon case
-                else if( injector_species->mass_ == 0 ) {
-                    for( int ip=0; ip<new_particle_number; ip++ ) {
-                        energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
-                    }
-                    injector_species->nrj_new_part_ += energy;
-                }
-
-                // Insertion of the particles as a group in the vector of species
-                if( new_particle_number > 0 ) {
-
-                    particles->eraseParticleTrail( new_particle_number );
-                    injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
-
-                }
-            } // if particles > 0
+                } // if nDim_particle
+            }
         } // end for i_injector
+        
+        
+        // Move injected particles to the arrays
+        for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
+            ParticleInjector * particle_injector = patch->particle_injector_vector_[i_injector];
+            Species * injector_species = species( ipatch, particle_injector->getSpeciesNumber() );
+            injector_species->importParticles( params, patches_[ipatch], local_particles_vector[i_injector], localDiags, ( itime + 0.5 ) * params.timestep );
+        }
+        
     } // end for ipatch
 
     timers.particleInjection.update( params.printNow( itime ) );
@@ -1068,6 +1063,9 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             //SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
             //SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+            // if (params.use_BTIS3){
+            //     SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
+            // }
         }
     }
     timers.syncField.update( params.printNow( itime ) );
@@ -1079,8 +1077,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
-        if( params.geometry != "AMcylindrical" )
+        if( params.geometry != "AMcylindrical" ){
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
+            // if (params.use_BTIS3){
+            //     SyncVectorPatch::finalizeexchangeBmBTIS3( params, ( *this ) );
+            // }
+        }
         timers.syncField.update( params.printNow( itime ) );
 
         timers.maxwellBC.restart();
@@ -1102,6 +1104,16 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             saveOldRho( params );
+        }
+        
+        if ( (!params.is_spectral) && (params.geometry== "AMcylindrical") && (params.use_BTIS3) ){
+            if (params.geometry== "AMcylindrical"){ 
+                for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+                    SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
+                }
+            } else { // Cartesian geometries
+                SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), smpi );
+            }
         }
     }
 
@@ -1266,6 +1278,11 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 //   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
 //   - set diag_flag to 0 after write
 // NOTE: This function will pull the GPU data unless we are at t=0
+//! param[in] params object containing all constant simulation parameters
+//! param[in] smpi object containing MPI functions for Smilei
+//! param[in] itime the current time step
+//! param[in] timers object to manage the code timers
+//! param[in] simWindow object to manage the moving window
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
@@ -2552,20 +2569,21 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     } // end loop on patches
 
     // Re-exchange the properly spatially centered B field
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_plus_halfdt_, *this );
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_plus_halfdt_, *this );
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_plus_halfdt_, *this );
-
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_minus_halfdt_, *this );
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_minus_halfdt_, *this );
-    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_minus_halfdt_, *this );
-
+    if (params.geometry!="1Dcartesian"){ // in 1D this is not necessary since no B field is present in this initialization
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_plus_halfdt_, *this );
+    
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_minus_halfdt_, *this );
+    }
 
 
     MESSAGE( 0, "Summing fields of relativistic species to the grid fields" );
@@ -3328,6 +3346,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listBx_.resize( size() ) ;
         listBy_.resize( size() ) ;
         listBz_.resize( size() ) ;
+        if (smpi->use_BTIS3){
+            listBy_mBTIS3.resize( size() ) ;
+            listBz_mBTIS3.resize( size() ) ;
+        }
 
         if( patches_[0]->EMfields->envelope != NULL ) {
             listA_.resize( size() ) ;
@@ -3357,6 +3379,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
             listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
             listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+            if (smpi->use_BTIS3){
+                listBy_mBTIS3[ipatch] = patches_[ipatch]->EMfields->By_mBTIS3 ;
+                listBz_mBTIS3[ipatch] = patches_[ipatch]->EMfields->Bz_mBTIS3 ;
+            }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
@@ -3396,6 +3422,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listBl_.resize( nmodes ) ;
         listBr_.resize( nmodes ) ;
         listBt_.resize( nmodes ) ;
+        if (smpi->use_BTIS3){
+            listBr_mBTIS3.resize( nmodes ) ;
+            listBt_mBTIS3.resize( nmodes ) ;
+        }
 
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
             listJl_[imode].resize( size() );
@@ -3410,6 +3440,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBl_[imode].resize( size() );
             listBr_[imode].resize( size() );
             listBt_[imode].resize( size() );
+            if (smpi->use_BTIS3){
+                listBr_mBTIS3[imode].resize( size() );
+                listBt_mBTIS3[imode].resize( size() );
+            }
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
                 listJl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jl_[imode] ;
                 listJr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jr_[imode] ;
@@ -3423,6 +3457,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listBl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bl_[imode] ;
                 listBr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Br_[imode] ;
                 listBt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_[imode] ;
+                if (smpi->use_BTIS3){
+                    listBr_mBTIS3[imode][ipatch]    = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Br_mBTIS3[imode] ;
+                    listBt_mBTIS3[imode][ipatch]    = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_mBTIS3[imode] ;
+                }
             }
         }
 
@@ -3611,6 +3649,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listBy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 7 );
             listBz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 8 );
             listrho_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 4 );
+            if (smpi->use_BTIS3){
+                listBy_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listBz_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+            }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
             for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
@@ -3641,6 +3683,10 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                if (smpi->use_BTIS3){
+                    listBr_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBt_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
                 listEl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
@@ -5291,7 +5337,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
         smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread, 1, 4);
 
 #ifdef  __DETAILED_TIMERS
-        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
         } // end task on reduction of patch densities
@@ -5315,7 +5361,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
 
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new electrons from ionization
         } // end if Ionize
@@ -5340,7 +5386,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,9);
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new photons from radiation
         } // end if Radiate
@@ -5363,7 +5409,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,10);
 
 #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task on reduction of new photons from Multiphoton Breit Wheeler
         } // end if Multiphoton Breit Wheeler
@@ -5485,7 +5531,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,4);
 
             #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
             #endif
             } // end task on reduction of patch densities
 
@@ -5508,7 +5554,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,8);
 
                 #ifdef  __DETAILED_TIMERS
-                ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+                ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
                 #endif
                 } // end task on reduction of new electrons from ionization
             } // end if Ionize
@@ -5599,7 +5645,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, omp_get_thread_num(),1,4);
 
             #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->number_of_threads_ + ithread] += MPI_Wtime() - timer;
             #endif
             } // end task on reduction of patch densities
 

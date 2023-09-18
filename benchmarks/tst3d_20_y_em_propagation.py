@@ -25,40 +25,42 @@ Main(
 )
 
 ang = [-pi/7., pi/6.]
+focus = [0.5*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]]
+time_envelope = tgaussian(fwhm=t0*6, center=t0*9)
 
 LaserGaussian3D(
     box_side        = "xmin",
     a0              = 1.,
     omega           = 1.,
-    focus           = [0.7*Lsim[0], 0.5*Lsim[1], 0.6*Lsim[2]],
+    focus           = focus,
     waist           = l0,
     incidence_angle = ang,
-    time_envelope   = tgaussian(fwhm=t0*6)
+    time_envelope   = time_envelope,
 )
 
 LaserGaussian3D(
     box_side        = "ymin",
     a0              = 1.,
     omega           = 1.,
-    focus           = [0.7*Lsim[0], 0.5*Lsim[1], 0.6*Lsim[2]],
+    focus           = focus,
     waist           = l0,
     incidence_angle = [ang[0], pi/2.-ang[1]],
-    time_envelope   = tgaussian(fwhm=t0*6)
+    time_envelope   = time_envelope
 )
 
 LaserGaussian3D(
     box_side        = "zmin",
     a0              = 1.,
     omega           = 1.,
-    focus           = [0.7*Lsim[0], 0.5*Lsim[1], 0.6*Lsim[2]],
+    focus           = focus,
     waist           = l0,
     incidence_angle = [-asin(cos(ang[0])*sin(ang[1])), -atan(cos(ang[1])/tan(ang[0]))],
-    time_envelope   = tgaussian(fwhm=t0*6),
-    polarization_phi = pi/2.,
+    time_envelope   = time_envelope,
+    polarization_phi = -pi/2,
 )
 
 
-globalEvery = int(rest*4)
+globalEvery = int(rest)
 
 DiagScalar(
     every=globalEvery
@@ -66,5 +68,5 @@ DiagScalar(
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ex','Ey','Ez','Bz']
+    fields = ['Ex','Ey','Ez','Bx','By','Bz']
 )

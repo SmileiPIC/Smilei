@@ -68,27 +68,13 @@ Patch::Patch( Params &params, SmileiMPI *, DomainDecomposition *domain_decomposi
 #ifdef  __DETAILED_TIMERS
 
     #ifdef _OPENMP
-        thread_number_ = omp_get_num_threads();
+        number_of_threads_ = omp_get_num_threads();
     #else
-        thread_number_= 1;
+        number_of_threads_= 1;
     #endif
 
-    // Initialize timers
-    // 0 - Interpolation
-    // 1 - Pusher
-    // 2 - Projection
-    // 3 - exchange init + cell_keys
-    // 4 - ionization
-    // 5 - radiation
-    // 6 - Breit-Wheeler
-    // 7 - Interp Fields_Env
-    // 8 - Proj Susceptibility
-    // 9 - Push Momentum
-    // 10 - Interp Env_Old
-    // 11 - Proj Currents
-    // 12 - Push Pos
-    // 13 - Sorting
-    patch_timers_.resize( 15 * thread_number_, 0. );
+    patch_timers_.resize( 15 * number_of_threads_, 0. );
+    patch_tmp_timers_.resize( 15 * number_of_threads_, 0. );
 #endif
 
 } // END Patch::Patch
@@ -111,13 +97,14 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *, unsigned int ipatch )
 #ifdef  __DETAILED_TIMERS
 
 #ifdef _OPENMP
-    thread_number_ = omp_get_num_threads();
+    number_of_threads_ = omp_get_num_threads();
 #else
-    thread_number_= 1;
+    number_of_threads_ = 1;
 #endif
 
     // Initialize timers
-    patch_timers_.resize( 15 * thread_number_, 0. );
+    patch_timers_.resize( 15 * number_of_threads_, 0. );
+    patch_tmp_timers_.resize( 15 * number_of_threads_, 0. );
 #endif
 
 }
@@ -236,6 +223,9 @@ void Patch::finalizeMPIenvironment( Params &params )
 
     if( params.geometry == "AMcylindrical" ) {
         nb_comms += 9*( params.nmodes - 1 );
+        if (params.use_BTIS3){ // add BrBTIS3 and BtBTIS3 for each mode
+            nb_comms += 2*params.nmodes;
+        }
     }
     // if envelope is present,
     // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)

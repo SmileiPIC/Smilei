@@ -16,4 +16,4 @@ Smilei is an open-source, user-friendly electromagnetic particle-in-cell code fo
 
 * [Issues](https://github.com/SmileiPIC/Smilei/issues): bug reports, feature requests, reporting on bad doc or unexpected behaviour.
 * [Chat room](https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org): general discussions, suggestions, remarks, sharing results & papers or just to say hi!
-* [Contribute](https://smileipic.github.io/Smilei/contribute.html).
+* [Contribute](https://smileipic.github.io/Smilei/Use/contribute.html).

@@ -34,6 +34,14 @@ class Particle;
 class Params;
 class Patch;
 
+struct InterpolatedFields {
+    //! Tells the way each interpolated field is treated: 0 = not kept, 1 = kept, 2 = accumulated
+    std::vector<int> mode_;
+    //! arrays of fields interpolated on the particle positions. The order is Ex, Ey, Ez, Bx, By, Bz, Wx, Wy, Wz
+    std::vector<std::vector<double>> F_;
+};
+
+
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
 //----------------------------------------------------------------------------------------------------------------------
@@ -123,7 +131,7 @@ public:
     //! Tells if old positions are kept (true) or not
     inline bool keepOldPositions() const
     {
-        return (Position_old.size() > 0);
+        return Position_old.size() > 0;
     }
 
     //! Copy particle iPart at the end of dest_parts
@@ -399,17 +407,20 @@ public:
 #endif
 
     Particle operator()( unsigned int iPart );
+    
+    void prepareInterpolatedFields( std::vector<std::vector<double>> &pold, size_t start, size_t n );
+    void copyInterpolatedFields( double *Ebuffer, double *Bbuffer, std::vector<std::vector<double>> &pold, size_t start, size_t n, size_t buffer_size, double mass_ );
 
     //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
-    void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
+    void getProperty( size_t iprop, std::vector<uint64_t> *&prop )
     {
         prop = uint64_prop_[iprop];
     }
-    void getProperty( unsigned int iprop, std::vector<short> *&prop )
+    void getProperty( size_t iprop, std::vector<short> *&prop )
     {
         prop = short_prop_[iprop];
     }
-    void getProperty( unsigned int iprop, std::vector<double> *&prop )
+    void getProperty( size_t iprop, std::vector<double> *&prop )
     {
         prop = double_prop_[iprop];
     }
@@ -437,7 +448,7 @@ public:
         return &(Weight[0]);
     };
     virtual double* getPtrChi() {
-        return (isQuantumParameter ? Chi.data() : nullptr);
+        return (has_quantum_parameter ? Chi.data() : nullptr);
     };
     virtual short* getPtrCharge() {
         return &(Charge[0]);
@@ -446,7 +457,7 @@ public:
         return &(Id[0]);
     };
     virtual double* getPtrTau() {
-        return (isMonteCarlo ? Tau.data() : nullptr);
+        return (has_Monte_Carlo_process ? Tau.data() : nullptr);
     };
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);
@@ -501,31 +512,34 @@ public:
     // Parameters
     // partiles properties, respect type order : all double, all short, all unsigned int
 
-    //! array containing the particle position
+    //! array of particle positions
     std::vector< std::vector<double> > Position;
 
-    //! array containing the particle former (old) positions
+    //! array of particle former (old) positions
     std::vector< std::vector<double> >Position_old;
 
-    //! array containing the particle moments
+    //! array of particle momenta
     std::vector< std::vector<double> >  Momentum;
 
-    //! containing the particle weight: equivalent to a charge density
+    //! array of particle weights: equivalent to a density normalized to the number of macro-particles per cell
     std::vector<double> Weight;
 
-    //! containing the particle quantum parameter
+    //! array of particle quantum parameters
     std::vector<double> Chi;
 
-    //! Incremental optical depth for the Monte-Carlo process
+    //! array of optical depths for the Monte-Carlo process
     std::vector<double> Tau;
 
-    //! charge state of the particle (multiples of e>0)
+    //! array of particle charges
     std::vector<short> Charge;
 
-    //! Id of the particle
+    //! array of particle IDs
     std::vector<uint64_t> Id;
-
-    //! cell_keys of the particle
+    
+    //! arrays of fields interpolated at particle positions
+    InterpolatedFields * interpolated_fields_;
+    
+    //! array of particle cell keys (for sorting per cell)
     std::vector<int> cell_keys;
 
     // TEST PARTICLE PARAMETERS
@@ -542,12 +556,12 @@ public:
 
     //! Quantum parameter for particles that are submitted
     //! to a radiation reaction force (CED or QED)
-    bool isQuantumParameter;
+    bool has_quantum_parameter;
 
     //! Parameters for particles that are submitted to a
     //! Monte-Carlo process such as:
     //! - discontinuous radiation reaction force
-    bool isMonteCarlo;
+    bool has_Monte_Carlo_process;
 
     unsigned int host_nparts_;
 

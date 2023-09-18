@@ -5,6 +5,7 @@ from ._Diagnostics.ParticleBinning import ParticleBinning
 from ._Diagnostics.Screen import Screen
 from ._Diagnostics.RadiationSpectrum import RadiationSpectrum
 from ._Diagnostics.TrackParticles import TrackParticles
+from ._Diagnostics.NewParticles import NewParticles
 from ._Diagnostics.Performances import Performances
 
 class ScalarFactory(object):
@@ -511,15 +512,14 @@ class TrackParticlesFactory(object):
 		To get a list of available tracked species, simply omit this argument.
 	select: string (optional)
 		Instructions for selecting particles among those available.
-		Syntax 1: select="any(times, condition)"
-		Syntax 2: select="all(times, condition)"
+		Syntax 1: select="any(times, condition)" -> particles satisfying `condition` for at least one of the `times`
+		Syntax 2: select="all(times, condition)" -> particles satisfying `condition` at all `times`
+		Syntax 3: select=[ID1, ID2, ...] -> particles selected by their ID
 		`times` is a selection of timesteps t, for instance `t>50`.
 		`condition` is a condition on particles properties (x, y, z, px, py, pz), for instance `px>0`.
-		Syntax 1 selects particles satisfying `condition` for at least one of the `times`.
-		Syntax 2 selects particles satisfying `condition` at all `times`.
 		Example: select="all(t<40, px<0.1)" selects particles that kept px<0.1 until timestep 40.
 		Example: select="any(t>0, px>1.)" selects particles that reached px>1 at some point.
-		It is possible to make logical operations: + is OR; * is AND; - is NOT.
+		It is possible to make logical operations: + is OR; * is AND; ~ is NOT.
 		Example: select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"
 	timesteps : int or [int, int] (optional)
 		If omitted, all timesteps are used.
@@ -577,4 +577,67 @@ class TrackParticlesFactory(object):
 				msg += "\nAvailable TrackParticles diagnostics:\n" + ", ".join(specs)
 			else:
 				msg += "\nNo TrackParticles diagnostics available"
+		return msg
+
+
+
+class NewParticlesFactory(object):
+	"""Import and analyze new particles from a Smilei simulation
+
+	Parameters:
+	-----------
+	species : string (optional)
+		Name of a species in a NewParticles diagnostic.
+		To get a list of available species, simply omit this argument.
+	select: string (optional)
+		Instructions for selecting particles among those available.
+		It must be a condition on particles properties (x, y, z, px, py, pz), for instance `px>0`.
+		It is possible to make logical operations: + is OR; * is AND; ~ is NOT.
+		Example: select="(x>1)*(x<2)"
+		It is also possible to select directly a list of IDs.
+		Example: select=[ID1, ID2, ...]
+	units : A units specification such as ["m","second"]
+	axes: A list of required particle properties.
+		Each axis is "x", "y", "z", "px", "py" or "pz", "chi".
+
+	Usage:
+	------
+		S = happi.Open("path/to/simulation") # Load the simulation
+		np = S.NewParticles(...)             # Load the tracked-particle diagnostic
+		np.get()                             # Obtain the data
+	"""
+
+	def __init__(self, simulation, species=None):
+		self._simulation = simulation
+		self._additionalKwargs = dict()
+		self._children = []
+		if not simulation._scan: return
+		
+		# If not a specific species (root level), build a list of species shortcuts
+		if species is None:
+			if simulation._verbose: print("Scanning for new particle diagnostics")
+			# Get a list of species
+			specs = self._simulation.getNewParticlesSpecies()
+			# Create species shortcuts
+			for spec in specs:
+				child = NewParticlesFactory(simulation, spec)
+				setattr(self, spec, child)
+				self._children += [child]
+
+		else:
+			# the species is saved for generating the object in __call__
+			self._additionalKwargs.update( {"species":species} )
+	
+	def __call__(self, *args, **kwargs):
+		kwargs.update(self._additionalKwargs)
+		return NewParticles(self._simulation, *args, **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalKwargs) == 0 and self._simulation._scan:
+			specs = self._simulation.getNewParticlesSpecies()
+			if specs:
+				msg += "\nAvailable NewParticles diagnostics:\n" + ", ".join(specs)
+			else:
+				msg += "\nNo NewParticles diagnostics available"
 		return msg

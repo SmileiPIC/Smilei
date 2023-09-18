@@ -192,6 +192,9 @@ class Main(SmileiSingleton):
     solve_relativistic_poisson = False
     relativistic_poisson_max_iteration = 50000
     relativistic_poisson_max_error = 1.e-22
+    
+    # BTIS3 interpolator
+    use_BTIS3_interpolation = False
 
     # Default fields
     maxwell_solver = 'Yee'
@@ -384,6 +387,7 @@ class Species(SmileiComponent):
     charge_density = None
     number_density = None
     mean_velocity = []  # Default value is     0, set in ParticleCreator function in species.cpp
+    mean_velocity_AM = []
     temperature = []    # Default value is 1e-10, set in ParticleCreator function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
@@ -423,6 +427,7 @@ class Species(SmileiComponent):
     maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
+    keep_interpolated_fields = []
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
@@ -548,6 +553,15 @@ class DiagFields(SmileiComponent):
     datatype = "double"
 
 class DiagTrackParticles(SmileiComponent):
+    """Track diagnostic"""
+    name = ""
+    species = None
+    every = 0
+    flush_every = 1
+    filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz", "w"]
+
+class DiagNewParticles(SmileiComponent):
     """Track diagnostic"""
     name = ""
     species = None

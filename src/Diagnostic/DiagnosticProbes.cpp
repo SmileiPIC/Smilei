@@ -213,17 +213,29 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         fieldname[7] = "Jy";
         fieldname[8] = "Jz";
         fieldname[9] = "Rho";
-        if( params.Laser_Envelope_model ) {
+        if( params.Laser_Envelope_model && !params.use_BTIS3) {
             fieldname.resize( 14 );
             fieldname[10] = "Env_A_abs";
             fieldname[11] = "Env_Chi";
             fieldname[12] = "Env_E_abs";
             fieldname[13] = "Env_Ex_abs";
+        } else if (!params.Laser_Envelope_model && params.use_BTIS3){
+            fieldname.resize( 12 );
+            fieldname[10] = "ByBTIS3";
+            fieldname[11] = "BzBTIS3";
+        } else if (params.Laser_Envelope_model && params.use_BTIS3){
+            fieldname.resize( 16 );
+            fieldname[10] = "Env_A_abs";
+            fieldname[11] = "Env_Chi";
+            fieldname[12] = "Env_E_abs";
+            fieldname[13] = "Env_Ex_abs";
+            fieldname[14] = "ByBTIS3";
+            fieldname[15] = "BzBTIS3";
         }
     }
     nFields = fieldname.size();
     nBuffers = nFields + 1; // +1 for garbage
-    fieldlocation.resize( 17, nFields );
+    fieldlocation.resize( 19, nFields );
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     species_field_index.resize( nspec );
     species_field_location.resize( nspec );
@@ -233,6 +245,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             if( fieldname[i]==fieldname[j] ) {
                 ERROR( "Probe #"<<n_probe<<": field "<<fieldname[i]<<" appears twice" );
             }
+        }
+        if(!params.use_BTIS3 & ((fieldname[i]=="ByBTIS3") || (fieldname[i]=="BzBTIS3")) ){
+            ERROR( "Probe #"<<n_probe<<": asks for a B-TIS3 field, but B-TIS3 interpolation is not activated");
         }
         if( fieldname[i]=="Ex" ) {
             fieldlocation[0] = i;
@@ -275,6 +290,10 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         } else if( fieldname[i]=="PoyZ" ) {
             fieldlocation[16] = i;
             has_poynting = true;
+        } else if( fieldname[i]=="ByBTIS3" ) {
+            fieldlocation[17] = i;
+        } else if( fieldname[i]=="BzBTIS3" ) {
+            fieldlocation[18] = i;
         } else {
             // Species-related field
             
@@ -738,6 +757,14 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             ( *probesArray )( fieldlocation[3], iPart_MPI )=smpi->dynamics_Bpart[ithread][ipart+0*npart];
             ( *probesArray )( fieldlocation[4], iPart_MPI )=smpi->dynamics_Bpart[ithread][ipart+1*npart];
             ( *probesArray )( fieldlocation[5], iPart_MPI )=smpi->dynamics_Bpart[ithread][ipart+2*npart];
+            if (smpi->use_BTIS3){
+                if (fieldlocation[17] < nFields){
+                    ( *probesArray )( fieldlocation[17], iPart_MPI )=smpi->dynamics_Bpart_yBTIS3[ithread][ipart+0*npart];
+                }
+                if (fieldlocation[18] < nFields){
+                    ( *probesArray )( fieldlocation[18], iPart_MPI )=smpi->dynamics_Bpart_zBTIS3[ithread][ipart+0*npart];
+                }
+            }
             ( *probesArray )( fieldlocation[6], iPart_MPI )=Jloc_fields.x;
             ( *probesArray )( fieldlocation[7], iPart_MPI )=Jloc_fields.y;
             ( *probesArray )( fieldlocation[8], iPart_MPI )=Jloc_fields.z;

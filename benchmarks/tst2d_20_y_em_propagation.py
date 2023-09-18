@@ -31,7 +31,7 @@ Main(
         ['silver-muller'],
     ],
     
-    EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[cos(ang), sin(ang)],[0.,-1.]],
+    EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-cos(ang), -sin(ang)],[cos(ang), sin(ang)],[-cos(ang), -sin(ang)]],
     
 )
 

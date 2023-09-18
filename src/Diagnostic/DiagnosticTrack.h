@@ -1,14 +1,13 @@
 #ifndef DIAGNOSTICTRACK_H
 #define DIAGNOSTICTRACK_H
 
-#include "Diagnostic.h"
+#include "DiagnosticParticleList.h"
 
 class Patch;
 class Params;
 class SmileiMPI;
 
-
-class DiagnosticTrack : public Diagnostic
+class DiagnosticTrack : public DiagnosticParticleList
 {
 
 public :
@@ -23,36 +22,34 @@ public :
     
     void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
-    bool prepare( int itime ) override;
-    
-    void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
-    
-    //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override
-    {
-        return 0;
-    }
-    
     //! Get disk footprint of current diagnostic
     uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
-    //! Fills a buffer with the required particle property
-    template<typename T> void fill_buffer( VectorPatch &vecPatches, unsigned int iprop, std::vector<T> &buffer );
+    //! Returns the Particles object of interest in a given patch
+    Particles * getParticles( Patch * patch ) override;
     
-    //! Write a scalar dataset with the given buffer
-    template<typename T> void write_scalar( H5Write*, std::string, T &, hid_t, H5Space*, H5Space*, unsigned int );
+    //! Prepare all HDF5 groups, datasets and spaces
+    H5Space * prepareH5( SimWindow *simWindow, SmileiMPI *smpi, int itime, uint32_t nParticles_local, uint64_t nParticles_global, uint64_t offset ) override;
     
-    //! Write a vector component dataset with the given buffer
-    template<typename T> void write_component( H5Write*, std::string, T &, hid_t, H5Space*, H5Space*, unsigned int );
+    //! Close HDF5 groups, datasets and spaces
+    void deleteH5() override;
     
-    //! Set a given patch's particles with the required IDs
+    //! Modify the filtered particles (apply new ID)
+    void modifyFiltered( VectorPatch &, unsigned int ) override;
+    
+    //! Write a dataset
+    void write_scalar_uint64( H5Write * location, std::string name, uint64_t &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    void write_scalar_short ( H5Write * location, std::string name, short    &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    void write_scalar_double( H5Write * location, std::string name, double   &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    void write_component_uint64( H5Write * location, std::string name, uint64_t &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    void write_component_short ( H5Write * location, std::string name, short    &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    void write_component_double( H5Write * location, std::string name, double   &buffer, H5Space *file_space, H5Space *mem_space, unsigned int unit_type ) override;
+    
+    //! Set a given patch's particles with the required IDs (used at initialization & simWindow)
     void setIDs( Patch * );
     
-    //! Set a given particles with the required IDs
+    //! Set a given particles with the required IDs (used by importParticles)
     void setIDs( Particles & );
-    
-    //! Index of the species used
-    unsigned int speciesId_;
     
     //! Last ID assigned to a particle by this MPI domain
     uint64_t latest_Id;
@@ -62,50 +59,7 @@ public :
     
 private :
     
-    H5Write *data_group;
-    
-    //! Number of spatial dimensions
-    unsigned int nDim_particle;
-    
-    //! Current particle partition among the patches own by current MPI
-    std::vector<unsigned int> patch_start;
-    
-    //! Tells whether this diag includes a particle filter
-    bool has_filter;
-    
-    //! Tells whether this diag includes a particle filter
-    PyObject *filter;
-    
-    //! Selection of the filtered particles in each patch
-    std::vector<std::vector<unsigned int> > patch_selection;
-    
-    //! Buffer for the output of double array
-    std::vector<double> data_double;
-    //! Buffer for the output of short array
-    std::vector<short> data_short;
-    //! Buffer for the output of uint64 array
-    std::vector<uint64_t> data_uint64;
-    
-    //! Approximate total number of particles
-    double npart_total;
-    
-    //! Number of particles shared among patches in this proc
-    uint32_t nParticles_local;
-    
-    //! Booleans to determine which attributes to write out
-    std::vector<bool> write_position;
-    std::vector<bool> write_momentum;
-    bool write_charge;
-    bool write_weight;
-    bool write_chi   ;
-    std::vector<bool> write_E;
-    std::vector<bool> write_B;
-    bool interpolate;
-    bool write_any_position;
-    bool write_any_momentum;
-    bool write_any_E;
-    bool write_any_B;
-    
+    H5Write * data_group_;
 };
 
 #endif

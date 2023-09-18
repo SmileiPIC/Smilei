@@ -4,14 +4,25 @@
 #
 # Load the correct modules:
 #
-# module load intel/18.0.3.222
-# module load mpi/intelmpi/2018.0.3.222
-#
-# You have to install your own hdf5:
-# export HDF5_ROOT=<path to your installation folder>
-# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
-# export PATH=${HDF5_ROOT}/bin:${PATH}
-# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
-# export HDF5_ROOT_DIR=${HDF5_ROOT}
+#    module purge
+#    module load mpi  #--- default--> openmpi/4.1.4
+#    module load flavor/hdf5/parallel hdf5/1.8.20
+#    module load python3/3.8.10
+#    export PYTHONEXE=python3.8
+#    
+#    
+#    # Required path to use the right Python
+#    export PYTHONHOME=/ccc/products/python3-3.8.10/system/default #$PYTHON3_INCDIR
+#    export CPATH=$CPATH:$PYTHON3_INCDIR
+#    export CPATH=$CPATH:$PYTHON3_INCDIR/$PYTHONEXE
+#    export PATH=$PYTHONHOME/bin:$PATH
+#    export LIBRARY_PATH=$PYTHONHOME/lib:$LIBRARY_PATH
+#    export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
+#    
+#    
+#    export PATH=${HDF5_ROOT}/bin:${PATH}
+#    export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+#    export HDF5_ROOT_DIR=${HDF5_ROOT}
+
 
 CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias #-ipo

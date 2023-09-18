@@ -60,6 +60,7 @@ Species::Species( Params &params, Patch *patch ) :
     charge_profile_( NULL ),
     density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
+    radial_velocity_profile_( false ),
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
@@ -72,7 +73,6 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_( false ),
     position_initialization_on_species_index_( -1 ),
     electron_species( NULL ),
-    electron_species_index( -1 ),
     photon_species_( nullptr ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
@@ -400,39 +400,19 @@ Species::~Species()
 {
     delete particles;
     delete particles_to_move;
-
+    
     delete Push;
     delete Interp;
     delete Proj;
-
-    if( Merge ) {
-        delete Merge;
-    }
-
-    if( Ionize ) {
-        delete Ionize;
-    }
-    if( Radiate ) {
-        delete Radiate;
-    }
-    if( part_comp_time_ ) {
-        delete part_comp_time_;
-    }
-    if( Multiphoton_Breit_Wheeler_process ) {
-        delete Multiphoton_Breit_Wheeler_process;
-    }
-    if( partBoundCond ) {
-        delete partBoundCond;
-    }
-    if( particles_per_cell_profile_ ) {
-        delete particles_per_cell_profile_;
-    }
-    if( charge_profile_ ) {
-        delete charge_profile_;
-    }
-    if( density_profile_ ) {
-        delete density_profile_;
-    }
+    delete Merge;
+    delete Ionize;
+    delete Radiate;
+    delete part_comp_time_;
+    delete Multiphoton_Breit_Wheeler_process;
+    delete partBoundCond;
+    delete particles_per_cell_profile_;
+    delete charge_profile_;
+    delete density_profile_;
     for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
         delete velocity_profile_[i];
     }
@@ -442,17 +422,13 @@ Species::~Species()
     if( ionization_rate_!=Py_None ) {
         Py_DECREF( ionization_rate_ );
     }
-
-    if (radiated_photons_) {
-        delete radiated_photons_;
-    }
-
+    delete radiated_photons_;
     for (int k=0 ; k<2 ; k++) {
-        if (mBW_pair_particles_[k]) {
-    //        delete mBW_pair_particles_[k];
-        }
+        delete mBW_pair_particles_[k];
     }
-
+    
+    delete birth_records_;
+    
 #ifdef _OMPTASKS
     if (nrj_lost_per_bin != NULL){
         delete[] nrj_lost_per_bin;
@@ -691,10 +667,6 @@ void Species::dynamics( double time_dual,
 
     const int ithread = Tools::getOMPThreadNum();
 
-#ifdef  __DETAILED_TIMERS
-    double timer;
-#endif
-
     unsigned int iPart;
 
     std::vector<double> nrj_lost_per_thd( 1, 0. );
@@ -703,6 +675,7 @@ void Species::dynamics( double time_dual,
 # ifdef _PARTEVENTTRACING
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
 # endif
+
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -720,9 +693,7 @@ void Species::dynamics( double time_dual,
         // Prepare particles buffers for multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
 
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
+            patch->startFineTimer(mBW_timer_id_);
 
 #if defined( SMILEI_OPENACC_MODE) 
             static_cast<nvidiaParticles*>(mBW_pair_particles_[0])->deviceResize( particles->deviceSize() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(0) );
@@ -734,9 +705,7 @@ void Species::dynamics( double time_dual,
             mBW_pair_particles_[1]->reserve(particles->numberOfParticles() * Multiphoton_Breit_Wheeler_process->getPairCreationSampling(1));
 #endif
 
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[0] += MPI_Wtime() - timer;
-#endif
+            patch->stopFineTimer(mBW_timer_id_);
         }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
@@ -747,32 +716,23 @@ void Species::dynamics( double time_dual,
 #endif
         for( unsigned int ibin = 0 ; ibin < particles->numberOfBins() ; ibin++ ) {
 
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-
+            patch->startFineTimer(interpolation_timer_id_);
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,0);
+
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[0] += MPI_Wtime() - timer;
-#endif
+            patch->stopFineTimer(interpolation_timer_id_);
 
             // Ionization
             if( Ionize ) {
 
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
+                patch->startFineTimer(4);
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
                 ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], &smpi->dynamics_Epart[ithread], patch, Proj );
-                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[4] += MPI_Wtime() - timer;
-#endif
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
+                patch->stopFineTimer(4);
             }
 
             if( time_dual<=time_frozen_ ) continue; // Do not push frozen particles
@@ -780,9 +740,7 @@ void Species::dynamics( double time_dual,
             // Radiation losses
             if( Radiate ) {
 
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
+                patch->startFineTimer(5);
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,6);
                 // Radiation process
@@ -804,9 +762,7 @@ void Species::dynamics( double time_dual,
                 //                               last_index[ibin],
                 //                               ithread );
 
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[5] += MPI_Wtime() - timer;
-#endif
+                patch->stopFineTimer(5);
 
             }
 
@@ -814,11 +770,9 @@ void Species::dynamics( double time_dual,
             // Multiphoton Breit-Wheeler
             if( Multiphoton_Breit_Wheeler_process ) {
 
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
+                patch->startFineTimer(6);
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,7);
+
                 // Pair generation process
                 // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
@@ -850,67 +804,78 @@ void Species::dynamics( double time_dual,
 
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,7);
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[6] += MPI_Wtime() - timer;
-#endif
+                patch->stopFineTimer(6);
             }
 
         } //ibin
-
-        // Compression of the bins if necessary
-        if( Multiphoton_Breit_Wheeler_process ) {
-
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
+        
+        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
+            
+            // Compression of the bins if necessary
+            if( Multiphoton_Breit_Wheeler_process ) {
 
 #ifdef SMILEI_OPENACC_MODE
-            removeTaggedParticles(smpi,
-                                &particles->first_index[0],
-                                &particles->last_index[0],
-                                ithread,
-                                false);
+                removeTaggedParticles(smpi,
+                                    &particles->first_index[0],
+                                    &particles->last_index[0],
+                                    ithread,
+                                    false);
 #else
-            // Remove Photons while keeping the first index of each bin
-            // Concerns as well the smpi buffers
-            removeTaggedParticlesPerBin(smpi, ithread, false);
+                // Remove Photons while keeping the first index of each bin
+                // Concerns as well the smpi buffers
+                removeTaggedParticlesPerBin(smpi, ithread, false);
 
-            // Delete the gap between the bins
-            // Concerns as well the smpi buffers
-            compress(smpi, ithread, true);
+                // Delete the gap between the bins
+                // Concerns as well the smpi buffers
+                compress(smpi, ithread, true);
 #endif
+                patch->startFineTimer(6);
 
+                // Remove Particles while keeping the first index of each bin
+                // Concerns as well the smpi buffers
+                removeTaggedParticlesPerBin(smpi, ithread, false);
 
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[6] += MPI_Wtime() - timer;
-#endif
+                // Delete the gap between the bins
+                // Concerns as well the smpi buffers
+                compress(smpi, ithread, true);
 
-        }
+                patch->stopFineTimer(6);
 
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
+            }
+            
+            
+// #ifdef  __DETAILED_TIMERS
+//             timer = MPI_Wtime();
+// #endif
+            patch->startFineTimer(1);
 
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
 
-        // Push the particles and the photons
-        ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread );
-        //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+            size_t start = 0, stop = particles->size(), n = stop - start;
+            vector<vector<double>> pold;
+            particles->prepareInterpolatedFields( pold, start, n );
 
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, start, stop, ithread );
+            //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+            
+            // Copy interpolated fields to persistent buffers if requested
+            if( particles->interpolated_fields_ ) {
+                particles->copyInterpolatedFields( &( smpi->dynamics_Epart[ithread][start] ), &( smpi->dynamics_Bpart[ithread][start] ), pold, start, n, smpi->getBufferSize(ithread), mass_ );
+            }
+            
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[1] += MPI_Wtime() - timer;
-#endif
+            patch->stopFineTimer(1);
 
-        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
+// #ifdef  __DETAILED_TIMERS
+//                 patch->patch_timers_[1] += MPI_Wtime() - timer;
+// #endif
+
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 double energy_lost( 0. );
 
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
+                patch->startFineTimer(3);
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,2);
                 // Apply wall and boundary conditions
@@ -936,27 +901,21 @@ void Species::dynamics( double time_dual,
                 }
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,2);
 
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[3] += MPI_Wtime() - timer;
-#endif
+                patch->stopFineTimer(3);
 
                 //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
+                patch->startFineTimer(2);
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+
                 // Project currents if not a Test species and charges as well if a diag is needed.
                 // Do not project if a photon
                 if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                     Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
                 }
-                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[2] += MPI_Wtime() - timer;
-#endif
+                smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+                patch->stopFineTimer(2);
 
                 if(params.is_spectral && mass_>0){
                     partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
@@ -1005,7 +964,9 @@ void Species::dynamics( double time_dual,
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
         if( params.geometry != "AMcylindrical" ) {
 
+            patch->startFineTimer(2);
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                 // TODO(Etienne M): DIAGS. The projector needs to work on valid data. Currently, in GPU mode, it'll read
@@ -1016,14 +977,18 @@ void Species::dynamics( double time_dual,
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 }
             }
+
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+            patch->stopFineTimer(2);
 
         } else {
             int n_species = patch->vecSpecies.size();
             complex<double> *b_rho=nullptr;
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
+            patch->startFineTimer(2);
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
+
             for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
                 int ifield = imode*n_species+ispec;
                 b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
@@ -1033,7 +998,9 @@ void Species::dynamics( double time_dual,
                     }
                 }
             }
+
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
+            patch->stopFineTimer(2);
 
         }
     } // End projection for frozen particles
@@ -1113,7 +1080,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[0*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
 
@@ -1152,7 +1119,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,5);
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[4*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
                 } // end task Ionize bin
@@ -1201,7 +1168,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         //                               ithread );
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[5*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
 
@@ -1247,7 +1214,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,7);
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[6*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                         } // end Multiphoton Breit Wheeler on ibin
                     } // end ibin task for Multiphoton Breit Wheeler
@@ -1272,7 +1239,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                             *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
                     } // end ibin loop to clean decayed photons
 #ifdef  __DETAILED_TIMERS
-                    patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                    patch->patch_timers_[6*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                     } // end task for photon cleaning for all bins
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,7);
@@ -1293,13 +1260,24 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     timer = MPI_Wtime();
 #endif
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,1);
+                    
+                    size_t start = particles->first_index[ibin], stop = particles->last_index[ibin], n = stop - start;
+                    vector<vector<double>> pold;
+                    particles->prepareInterpolatedFields( pold, start, n );
+                    
                     // Push the particles and the photons
-                    ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
+                    ( *Push )( *particles, smpi, start, stop, buffer_id );
                     //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+                    
+                    // Copy interpolated fields to persistent buffers if requested
+                    if( particles->interpolated_fields_ ) {
+                        particles->copyInterpolatedFields( &( smpi->dynamics_Epart[buffer_id][start] ), &( smpi->dynamics_Bpart[buffer_id][start] ), pold, start, n, smpi->getBufferSize(buffer_id), mass_ );
+                    }
+                    
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
-                    patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                    patch->patch_timers_[1*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
                     } // end task for Push on ibin
@@ -1353,7 +1331,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
 
 
@@ -1394,7 +1372,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[2*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             }//end task for Proj of ibin
          }// end ibin loop for Proj
@@ -1424,7 +1402,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 //                radiated_energy += radiated_energy_per_bin[ibin];
 //             }
 // #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+//             patch->patch_timers_[5*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 // #endif
 //         } // end if Radiate or Multiphoton_Breit_Wheeler_process
 //         } // end task for lost/radiated energy reduction
@@ -1454,7 +1432,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                         } // end task projection for frozen or test
                     } // end ibin
@@ -1482,7 +1460,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                         } // end task projection for frozen or test
                     } //end ibin
@@ -1513,7 +1491,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                         } // end task projection for frozen or test
                     } // end ibin
@@ -1521,9 +1499,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
                     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
 #ifdef  __DETAILED_TIMERS
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_projected)
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_projected[ibin])
 #else
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_projected)
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_projected[ibin])
 #endif
                         {
                         for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i]   = 0.0;
@@ -1542,7 +1520,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                        patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                        patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                         } // end task projection for frozen or test
                     } //end ibin
@@ -1590,7 +1568,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                nrj_radiated_ += radiated_energy_per_bin[ibin];
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[5*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
         } // end if Radiate or Multiphoton_Breit_Wheeler_process
         } // end task for lost/radiated energy reduction
@@ -1685,43 +1663,26 @@ void Species::dynamicsImportParticles( double time_dual, Params &params, Patch *
 {
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
-        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags, time_dual, Ionize );
     }
 
     // if moving particle
-    if( time_dual>time_frozen_ ) { // moving particle
+    if( time_dual>time_frozen_ ) {
 
         // Radiation losses
-        if( Radiate ) {
-
+        if( Radiate && photon_species_ ) {
             // If creation of macro-photon, we add them to photon_species
-            if( photon_species_ ) {
-
-                //std::cerr << "eraseLeaving" << std::endl;
-
 #ifdef SMILEI_OPENACC_MODE
                 // We first erase empty slots in the buffer of photons
                 // radiation_photons_->cell_keys is used as a mask
-                static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
+            static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
 #endif
-                //std::cerr << " N photons to import: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->deviceSize() << std::endl;
-                //std::cerr << "import" << std::endl;
-                photon_species_->importParticles( params,
-                                                 patch,
-                                                 *radiated_photons_,
-                                                 localDiags );
-                //std::cerr << " N photons in species: " <<  photon_species_->particles->deviceSize() << std::endl;
-
-                //photon_species_->particles->last_index[0] = photon_species_->particles->deviceSize();
-
+            photon_species_->importParticles( params, patch, *radiated_photons_, localDiags, time_dual );
 
 #ifdef SMILEI_OPENACC_MODE
-                // We explicitely clear the device Particles
-                //std::cerr << "Clear" << std::endl;
-                static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
-                //std::cerr << " N photons after cleaning: " <<  static_cast<nvidiaParticles*>(radiated_photons_)->deviceSize() << std::endl;
+            // We explicitely clear the device Particles
+            static_cast<nvidiaParticles*>(radiated_photons_)->deviceClear();
 #endif
-            }
         }
 
         // Multiphoton Breit-Wheeler
@@ -1736,20 +1697,16 @@ void Species::dynamicsImportParticles( double time_dual, Params &params, Patch *
                 static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->eraseLeavingParticles();
 #endif
 
-                mBW_pair_species_[k]->importParticles( params,
-                                                      patch,
-                                                      *mBW_pair_particles_[k],
-                                                      localDiags );
-
+                mBW_pair_species_[k]->importParticles( params, patch, *mBW_pair_particles_[k], localDiags, time_dual );
+                
 #ifdef SMILEI_OPENACC_MODE
                 // We explicitely clear the device Particles
                 static_cast<nvidiaParticles*>(mBW_pair_particles_[k])->deviceClear();
 #endif
-
             }
 
         }
-    }//END if time vs. time_frozen_
+    }
 }
 
 
@@ -2157,8 +2114,8 @@ void Species::countSortParticles( Params &params )
 
 }
 
-//! Move all particles from another species to this one
-void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
+// Move all particles from another species to this one
+void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags, double time_dual, Ionization *I )
 {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
     // ---------------------------------------------------
@@ -2183,7 +2140,12 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     if( particles->tracked ) {
         dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
     }
-
+    
+    // If there is a diagnostic for recording particle birth, then copy new particles to the buffer
+    if( birth_records_ ) {
+        birth_records_->update( source_particles, npart, time_dual, I );
+    }
+    
     // Move particles
     vector<int> src_bin_keys( npart, 0 );
     for( unsigned int i=0; i<npart; i++ ) {
@@ -2982,7 +2944,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[7*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[7*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task interp
         } // end ibin
@@ -3012,7 +2974,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,5);
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[4*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                 } // end task ionize
             } // end ibin
@@ -3049,7 +3011,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[8*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[8*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                 } // end task susceptibility
             } // end ibin
@@ -3072,7 +3034,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[9*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                 } // end task susceptibility
             } // end ibin
@@ -3353,7 +3315,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,0);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[10*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[10*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task interpolate
         } // end ibin
@@ -3376,7 +3338,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,1);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[11*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[11*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task
         } // end ibin
@@ -3415,7 +3377,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,2);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task
         } // end ibin
@@ -3451,7 +3413,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+            patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task
         } // end ibin
@@ -3492,7 +3454,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
 #ifdef  __DETAILED_TIMERS
-                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                    patch->patch_timers_[3*patch->number_of_threads_ + ithread] += MPI_Wtime() - timer;
 #endif
                     } // end task projection for frozen or test
                 } // end ibin
@@ -3505,10 +3467,8 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     #pragma omp task default(shared) firstprivate(ibin,bin_size0)
 #endif
                     {
-#ifdef  __DETAILED_TIMERS
-                    ithread = Tools::getOMPThreadNum();
-                    timer = MPI_Wtime();
-#endif
+
+                    patch->startFineTimer(3);
 
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,3);
                     for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
@@ -3518,9 +3478,8 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     } // end loop on particles
                     smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),1,3);
 
-#ifdef  __DETAILED_TIMERS
-                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
+                    patch->stopFineTimer(3);
+
                     } // end task projection for frozen or test
                 } //end ibin
             } // end if on geometry

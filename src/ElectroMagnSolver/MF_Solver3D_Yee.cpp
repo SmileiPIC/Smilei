@@ -7,7 +7,7 @@
 MF_Solver3D_Yee::MF_Solver3D_Yee( Params &params )
     : Solver3D( params )
 {
-    // EMPTY
+    isEFilterApplied = params.Friedman_filter;
 }
 
 MF_Solver3D_Yee::~MF_Solver3D_Yee()
@@ -17,9 +17,10 @@ MF_Solver3D_Yee::~MF_Solver3D_Yee()
 
 void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
-    const double *const __restrict__ Ex3D = fields->Ex_->data();
-    const double *const __restrict__ Ey3D = fields->Ey_->data();
-    const double *const __restrict__ Ez3D = fields->Ez_->data();
+    // Static-cast of the fields
+    //const double *const __restrict__ Ex3D = fields->Ex_->data();
+    //const double *const __restrict__ Ey3D = fields->Ey_->data();
+    //const double *const __restrict__ Ez3D = fields->Ez_->data();
     double *const __restrict__ Bx3D       = fields->Bx_->data();
     double *const __restrict__ By3D       = fields->By_->data();
     double *const __restrict__ Bz3D       = fields->Bz_->data();
@@ -30,8 +31,19 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     const unsigned int ny_d = fields->dimDual[1];
     const unsigned int nz_p = fields->dimPrim[2];
     const unsigned int nz_d = fields->dimDual[2];
+    double __restrict__ *Ex3D ;
+    double __restrict__ *Ey3D ;
+    double __restrict__ *Ez3D ;
+    if (isEFilterApplied) {
+        Ex3D = &(fields->filter_->Ex_[0]->data_[0]);
+        Ey3D = &(fields->filter_->Ey_[0]->data_[0]);
+        Ez3D = &(fields->filter_->Ez_[0]->data_[0]);
+    } else {
+        Ex3D = &(fields->Ex_->data_[0]);
+        Ey3D = &(fields->Ey_->data_[0]);
+        Ez3D = &(fields->Ez_->data_[0]);
+    }
 
-    
     // Magnetic field Bx^(p,d,d)
 #if defined( SMILEI_OPENACC_MODE )
     const int sizeofEx = fields->Ex_->number_of_points_;
@@ -61,7 +73,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
 #if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
@@ -84,7 +96,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
             }
         }
     }
-    
+
     // Magnetic field Bz^(d,d,p)
 #if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )

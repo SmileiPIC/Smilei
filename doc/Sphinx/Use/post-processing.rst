@@ -18,7 +18,7 @@ In a *python* command line (or script), call the following function to open
 your :program:`Smilei` simulation. Note that several simulations can be opened at once,
 as long as they correspond to several :ref:`restarts <Checkpoints>` of the same simulation.
 
-.. py:method:: happi.Open(results_path=".", show=True, reference_angular_frequency_SI=None, verbose=True)
+.. py:method:: happi.Open(results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True, pint=True)
 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
@@ -33,7 +33,9 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
 
   * ``verbose``: if ``False``, less information is printed while post-processing.
 
-  * ``scan``: if ``False``, HDF5 output files are not scanned initially.
+  * ``scan``: if ``False``, HDF5 output files are not scanned initially, and the namelist is not read.
+
+  * ``pint``: if ``True``, *happi* attempts to load the *Pint* package and to use it for managing units.
 
 
 **Returns:** An object containing various methods to extract and manipulate the simulation
@@ -242,6 +244,11 @@ Open a Probe diagnostic
   Diag = S.Probe(0, "Ex")
 
 
+.. py:method:: Probe.changeField(field)
+
+  In cases where happi's performance is an issue, it is possible to switch between different fields
+  of an open ``Probe`` diagnostic using this method. The ``field`` argument is the same as in ``Probe(...)`` above.
+
 ----
 
 Open a ParticleBinning diagnostic
@@ -359,7 +366,8 @@ Open a TrackParticles diagnostic
       If it does, sorted particles are directly read from the sorted file.
     * A string for selecting particles (same syntax as ``select``): only selected
       particles are sorted in a new file. The file name must be defined
-      in the argument ``sorted_as``.
+      in the argument ``sorted_as``. If ``timesteps`` is used, only selected timesteps
+      will be included in the created file. 
     
   * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
     selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
@@ -392,6 +400,28 @@ Open a TrackParticles diagnostic
   | For example, ``select="any((t>30)*(t<60), px>1) + all(t>0, (x>1)*(x<2))"``
 
 
+----
+
+.. rst-class:: experimental
+
+Open a NewParticles diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: NewParticles(species=None, select="", axes=[], units=[""], **kwargs)
+
+  * ``units``: same as before.
+  * ``species``: same as for ``TrackParticles``
+  * ``axes``: same as for ``TrackParticles``, with the addition of another axis ``t``
+    that represents the time when the particle was born.
+  * ``select``: Instructions for selecting particles among those available.
+    It must be a condition on particles properties ``axes``, for instance ``px>0``.
+    It is possible to make logical operations: ``+`` is *OR*; ``*`` is *AND*; ``~`` is *NOT*.
+    
+    | **Example:** ``select="(x>1)*(x<2)"``
+    
+    It is also possible to select directly a list of IDs.
+    
+    | **Example:** ``select=[ID1, ID2, ...]``
 
 ----
 
@@ -527,6 +557,11 @@ to manipulate the plotting options:
   
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
+* ``title``: a string that replaces the plot title (or the y-label in a 1D plot).
+  The current simulation time can be included with the placeholders ``{time}`` and
+  ``{time_units}``, together with formatting instructions conforming to
+  `python's string formatter <https://docs.python.org/3/library/string.html#format-string-syntax>`_.
+  For instance: ``title = "Density @ $t = {time:.0f} {time_units}$"``.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
   or the right-hand-side.
 * ``transparent``: ``None`` (by default), ``"over"``, ``"under"``, ``"both"``, or a *function*.
@@ -534,7 +569,7 @@ to manipulate the plotting options:
   set by ``vmin`` and ``vmax``.
   This argument may be set instead to a function mapping the data value :math:`\in [0,1]` to the
   transparency :math:`\in [0,1]`. For instance ``lambda x: 1-x``.
-* Many Matplotlib arguments listed in :ref:`advancedOptions`.
+* Other Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----
 
@@ -585,10 +620,10 @@ Obtain the data
 
 
 .. py:method:: Scalar.getAxis( axis )
-               Field.getAxis( axis )
+               Field.getAxis( axis, timestep )
                Probe.getAxis( axis )
-               ParticleBinning.getAxis( axis )
-               Screen.getAxis( axis )
+               ParticleBinning.getAxis( axis, timestep )
+               Screen.getAxis( axis, timestep )
 
   Returns the list of positions of the diagnostic data along the requested axis.
   If the axis is not available, returns an empty list.
@@ -601,6 +636,10 @@ Obtain the data
     * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
       defined in the namelist
+
+  * ``timestep``: The timestep at which the axis is obtained. Only matters in
+    ``ParticleBinning``, ``Screen`` and ``RadiationSpectrum`` when ``auto`` axis
+    limits are requested; or in ``Field`` when ``moving=True``.
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)
@@ -652,7 +691,9 @@ Export 2D or 3D data to VTK
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
+      This rendering requires the particles to be sorted.
     * ``"cloud"``: show a cloud of particles. One file is generated for each iteration.
+      This rendering can be used without sorting the particles.
 
   * ``data_format``: the data formatting in the case of :py:meth:`TrackParticles`,
     either ``"vtk"`` or ``"xml"``. The format ``"vtk"`` results in ascii.
@@ -804,6 +845,8 @@ Simultaneous plotting of multiple diagnostics
   * ``shape``: The arrangement of plots inside the figure. For instance, ``[2, 1]``
     makes two plots stacked vertically, and ``[1, 2]`` makes two plots stacked horizontally.
     If absent, stacks plots vertically.
+  * ``legend_font``: dictionnary to set the legend's font properties,
+    such as ``{'size':15, 'weight':'bold', 'family':'serif', 'color':'k'}``.
   * ``movie`` : filename to create a movie.
   * ``fps`` : frames per second for the movie.
   * ``dpi`` : resolution of the ``movie`` or ``saveAs``.
@@ -820,7 +863,7 @@ Simultaneous plotting of multiple diagnostics
 
   * ``diag1``, ``diag2``, etc.
      | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
-  * ``figure`` and ``shape``: same as in ``happi.multiPlot``.
+  * ``figure``, ``shape``, and ``legend_font``: same as in ``happi.multiPlot``.
 
 
 **Example**::
@@ -854,16 +897,16 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
+  `matplotlib's figure options <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html>`_.
 
 .. rubric:: For the axes frame: ``aspect``, ``axis_facecolor``, ``frame_on``, ``position``,
-  ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
+  ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
   ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 
 ..
 
   Please refer to matplotlib's axes options: the same as functions starting
-  with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
+  with ``set_`` listed `here <http://matplotlib.org/stable/api/axes_api.html>`_.
 
 .. rubric:: For the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``,
   ``label``, ``linestyle``, ``linewidth``,
@@ -874,14 +917,14 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
+  `matplotlib's line options <https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html>`_.
 
 .. rubric:: For the image: ``cmap``, ``aspect``, ``interpolation``, ``norm``
 
 ..
 
   Please refer to
-  `matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
+  `matplotlib's image options <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html>`_.
 
 .. rubric:: For the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``,
   ``shrink``, ``anchor``, ``panchor``, ``extend``, ``extendfrac``, ``extendrect``,
@@ -890,7 +933,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
+  `matplotlib's colorbar options <https://matplotlib.org/stable/api/colorbar_api.html>`_.
 
 .. rubric:: For the tick number format: ``style_x``, ``scilimits_x``, ``useOffset_x``,
   ``style_y``, ``scilimits_y``, ``useOffset_y``
@@ -899,7 +942,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   Please refer to
-  `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
+  `matplotlib's tick label format <http://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 .. rubric:: For fonts: ``title_font``, ``xlabel_font``, ``xticklabels_font``,
   ``ylabel_font``, ``yticklabels_font``, ``colorbar_font``
@@ -907,7 +950,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 ..
 
   These options are dictionnaries that may contain the entries available in
-  `matplotlib's text options <https://matplotlib.org/api/text_api.html#matplotlib.text.Text>`_,
+  `matplotlib's font properties <https://matplotlib.org/stable/api/font_manager_api.html#matplotlib.font_manager.FontProperties>`_,
   for instance::
 
     title_font = {'size': 15, 'weight': 'bold', 'family':'serif', 'color': 'k'}
