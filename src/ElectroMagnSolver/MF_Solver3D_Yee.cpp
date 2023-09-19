@@ -31,9 +31,9 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     const unsigned int ny_d = fields->dimDual[1];
     const unsigned int nz_p = fields->dimPrim[2];
     const unsigned int nz_d = fields->dimDual[2];
-    double __restrict__ *Ex3D ;
-    double __restrict__ *Ey3D ;
-    double __restrict__ *Ez3D ;
+    double *__restrict__ Ex3D ;
+    double *__restrict__ Ey3D ;
+    double *__restrict__ Ez3D ;
     if (isEFilterApplied) {
         Ex3D = &(fields->filter_->Ex_[0]->data_[0]);
         Ey3D = &(fields->filter_->Ey_[0]->data_[0]);
