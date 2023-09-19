@@ -18,9 +18,6 @@ MF_Solver3D_Yee::~MF_Solver3D_Yee()
 void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
     // Static-cast of the fields
-    //const double *const __restrict__ Ex3D = fields->Ex_->data();
-    //const double *const __restrict__ Ey3D = fields->Ey_->data();
-    //const double *const __restrict__ Ez3D = fields->Ez_->data();
     double *const __restrict__ Bx3D       = fields->Bx_->data();
     double *const __restrict__ By3D       = fields->By_->data();
     double *const __restrict__ Bz3D       = fields->Bz_->data();
@@ -31,18 +28,10 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     const unsigned int ny_d = fields->dimDual[1];
     const unsigned int nz_p = fields->dimPrim[2];
     const unsigned int nz_d = fields->dimDual[2];
-    double *__restrict__ Ex3D ;
-    double *__restrict__ Ey3D ;
-    double *__restrict__ Ez3D ;
-    if (isEFilterApplied) {
-        Ex3D = &(fields->filter_->Ex_[0]->data_[0]);
-        Ey3D = &(fields->filter_->Ey_[0]->data_[0]);
-        Ez3D = &(fields->filter_->Ez_[0]->data_[0]);
-    } else {
-        Ex3D = &(fields->Ex_->data_[0]);
-        Ey3D = &(fields->Ey_->data_[0]);
-        Ez3D = &(fields->Ez_->data_[0]);
-    }
+    //double *__restrict__ Ex3D ;
+    const double * __restrict__ Ex3D = isEFilterApplied ? fields->filter_->Ex_[0]->data() : fields->Ex_->data();
+    const double * __restrict__ Ey3D = isEFilterApplied ? fields->filter_->Ey_[0]->data() : fields->Ey_->data();
+    const double * __restrict__ Ez3D = isEFilterApplied ? fields->filter_->Ez_[0]->data() : fields->Ez_->data();
 
     // Magnetic field Bx^(p,d,d)
 #if defined( SMILEI_OPENACC_MODE )
