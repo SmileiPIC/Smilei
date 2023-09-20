@@ -766,18 +766,34 @@ namespace detail {
                 // The appropriate thrust::zip_iterator for the current
                 // simulation's parameters
 
-                const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
-                                                                                        particle_container.getPtrPosition( 1 ),
-                                                                                        particle_container.getPtrPosition( 2 ),
-                                                                                        particle_container.getPtrMomentum( 0 ),
-                                                                                        particle_container.getPtrMomentum( 1 ),
-                                                                                        particle_container.getPtrMomentum( 2 ),
-                                                                                        particle_container.getPtrWeight(),
-                                                                                        particle_container.getPtrCharge() ) );
+                if (particle_container.tracked) {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrPosition( 1 ),
+                                                                                            particle_container.getPtrPosition( 2 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge(),
+                                                                                            particle_container.getPtrId() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
 
-                doSortParticleByKey( particle_container.getPtrCellKeys(),
-                                     particle_container.getPtrCellKeys() + particle_container.deviceSize(),
-                                     value_first );
+                }
+                else {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrPosition( 1 ),
+                                                                                            particle_container.getPtrPosition( 2 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
+                }
             }
         }
     }
@@ -885,8 +901,39 @@ namespace detail {
             } else {
                 // Returns the appropriate thrust::zip_iterator for the
                 // current simulation's parameters
-                const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
-                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                if (particle_container.tracked) {
+                    const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
+                        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrPosition( 1 ),
+                                                                          particle_container.getPtrPosition( 2 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge(),
+                                                                          particle_container.getPtrId() ) );
+                    };
+                    const auto particle_no_key_iterator_provider = []( nvidiaParticles& particle_container ) {
+                        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrPosition( 1 ),
+                                                                          particle_container.getPtrPosition( 2 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge(),
+                                                                          particle_container.getPtrId() ) );
+                    };
+                    doImportAndSortParticles( particle_container,
+                                          particle_to_inject,
+                                          cluster_manipulator,
+                                          particle_iterator_provider,
+                                          particle_no_key_iterator_provider );
+                }
+                else {
+                    const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
+                        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
                                                                           particle_container.getPtrPosition( 0 ),
                                                                           particle_container.getPtrPosition( 1 ),
                                                                           particle_container.getPtrPosition( 2 ),
@@ -895,10 +942,10 @@ namespace detail {
                                                                           particle_container.getPtrMomentum( 2 ),
                                                                           particle_container.getPtrWeight(),
                                                                           particle_container.getPtrCharge() ) );
-                };
+                    };
 
-                const auto particle_no_key_iterator_provider = []( nvidiaParticles& particle_container ) {
-                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                    const auto particle_no_key_iterator_provider = []( nvidiaParticles& particle_container ) {
+                        return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
                                                                           particle_container.getPtrPosition( 1 ),
                                                                           particle_container.getPtrPosition( 2 ),
                                                                           particle_container.getPtrMomentum( 0 ),
@@ -906,13 +953,14 @@ namespace detail {
                                                                           particle_container.getPtrMomentum( 2 ),
                                                                           particle_container.getPtrWeight(),
                                                                           particle_container.getPtrCharge() ) );
-                };
+                    };
 
-                doImportAndSortParticles( particle_container,
+                    doImportAndSortParticles( particle_container,
                                           particle_to_inject,
                                           cluster_manipulator,
                                           particle_iterator_provider,
                                           particle_no_key_iterator_provider );
+                }
             }
         }
     }
@@ -975,6 +1023,10 @@ void nvidiaParticles::softReserve( unsigned int particle_count, float growth_fac
         nvidia_tau_.reserve( new_capacity );
     }
 
+    if( tracked ) {
+        nvidia_id_.reserve( new_capacity );
+    }
+
     nvidia_cell_keys_.reserve( new_capacity );
 }
 
@@ -997,6 +1049,10 @@ void nvidiaParticles::reserve( unsigned int particle_count )
 
     if( isMonteCarlo ) {
         nvidia_tau_.reserve( particle_count );
+    }
+
+    if( tracked ) {
+        nvidia_id_.reserve( particle_count );
     }
 
     nvidia_cell_keys_.reserve( particle_count );
@@ -1025,6 +1081,10 @@ void nvidiaParticles::resize( unsigned int particle_count )
 
     if( isMonteCarlo ) {
         nvidia_tau_.resize( particle_count );
+    }
+
+    if( tracked ) {
+        nvidia_id_.resize( particle_count );
     }
 
     nvidia_cell_keys_.resize( particle_count );
@@ -1064,6 +1124,11 @@ void nvidiaParticles::free()
         std::swap( nvidia_tau_, a_dummy_vector );
     }
 
+    if( tracked ) {
+        thrust::device_vector<uint64_t> a_dummy_vector{};
+        std::swap( nvidia_id_, a_dummy_vector );
+    }
+
     {
         thrust::device_vector<int> a_dummy_vector{};
         std::swap( nvidia_cell_keys_, a_dummy_vector );
@@ -1090,6 +1155,10 @@ void nvidiaParticles::deviceResize( unsigned int new_size )
     //     ( *nvidia_uint64_prop[iprop] ).resize( n_particles+n_additional_particles );
     // }
 
+    if (tracked) {
+        nvidia_id_.resize( new_size );
+    }
+
     nvidia_cell_keys_.resize( new_size );
 
     gpu_nparts_ = new_size;
@@ -1110,6 +1179,10 @@ void nvidiaParticles::deviceClear()
     }
 
     // TODO(Etienne M): Clear cell keys too ?
+
+    if (tracked) {
+        nvidia_id_.clear();
+    }
 
     gpu_nparts_ = 0;
 }
@@ -1202,6 +1275,15 @@ void nvidiaParticles::initializeDataOnDevice()
 }
 
 // -------------------------------------------------------------------------------------------------
+//! Copy particle IDs from host to device
+// -------------------------------------------------------------------------------------------------
+void nvidiaParticles::initializeIDsOnDevice()
+{
+    nvidia_id_.resize( Id.size() );
+    thrust::copy((Id).begin(), (Id).end(), (nvidia_id_).begin());
+}
+
+// -------------------------------------------------------------------------------------------------
 //! Copy the particles from host to device
 // -------------------------------------------------------------------------------------------------
 void nvidiaParticles::copyFromHostToDevice()
@@ -1226,6 +1308,10 @@ void nvidiaParticles::copyFromHostToDevice()
 
     if( isMonteCarlo ) {
         thrust::copy( Tau.begin(), Tau.end(), nvidia_tau_.begin() );
+    }
+
+    if( tracked ) {
+        thrust::copy( Id.begin(), Id.end(), nvidia_id_.begin() );
     }
 }
 
@@ -1253,6 +1339,10 @@ void nvidiaParticles::copyFromDeviceToHost()
     if (isMonteCarlo) {
         Tau.resize( gpu_nparts_ );
         thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
+    }
+    if (tracked) {
+        Id.resize( gpu_nparts_ );
+        thrust::copy((nvidia_id_).begin(), (nvidia_id_).begin()+gpu_nparts_, (Id).begin());
     }
 }
 
@@ -1342,6 +1432,15 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          count_if_out() );
     }
 
+    if( tracked ) {
+        thrust::copy_if( thrust::device,
+                         nvidia_id_.cbegin(),
+                         nvidia_id_.cbegin() + nparts,
+                         nvidia_cell_keys_.cbegin(),
+                         cp_parts->nvidia_id_.begin(),
+                         count_if_out() );
+    }
+
     particles_to_move->copyFromDeviceToHost();
 }
 
@@ -1426,6 +1525,14 @@ int nvidiaParticles::eraseLeavingParticles()
                                count_if_out() );
         }
 
+        if( tracked ) {
+            thrust::remove_if( thrust::device,
+                               nvidia_id_.begin(),
+                               nvidia_id_.begin() + nparts,
+                               nvidia_cell_keys_.cbegin(),
+                               count_if_out() );
+        }
+
         // Update current number of particles
         gpu_nparts_ -= nparts_to_remove;
 
@@ -1496,6 +1603,13 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
                         nvidia_tau_.begin() + nparts );
     }
 
+    if( tracked ) {
+        thrust::copy_n( thrust::device,
+                        cp_parts->nvidia_id_.cbegin(),
+                        nparts_add,
+                        nvidia_id_.begin() + nparts );
+    }
+
     // No more particles to move
     cp_parts->resize( 0 );
 
@@ -1523,6 +1637,11 @@ void nvidiaParticles::createParticles( int n_additional_particles )
     // for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
     //     ( *nvidia_uint64_prop[iprop] ).resize( n_particles+n_additional_particles );
     // }
+
+    if (tracked) {
+        nvidia_id_.resize( new_size );
+        thrust::fill( nvidia_id_.begin() + n_particles, nvidia_id_.begin() + new_size, 0 );
+    }
 
     nvidia_cell_keys_.resize( new_size );
     thrust::fill( nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, -1 );
