@@ -1283,7 +1283,8 @@ void ElectroMagn2D::centerMagneticFields()
         double *const             Bz2D_oldBTIS3 = Bz_mBTIS3->data();
 
 #if defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present(By2D[0:sizeofBy],By2D_m[0:sizeofBy])
+    const int sizeofByBTIS3 = By_mBTIS3->size();
+    #pragma acc parallel present(By2D_oldBTIS3[0:sizeofByBTIS3],By2D[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
@@ -1301,7 +1302,8 @@ void ElectroMagn2D::centerMagneticFields()
             }
         }
 #if defined( SMILEI_OPENACC_MODE )
-    #pragma acc parallel present(Bz2D[0:sizeofBz],Bz2D_m[0:sizeofBz])
+    const int sizeofBzBTIS3 = Bz_mBTIS3->size();
+    #pragma acc parallel present(Bz2D_oldBTIS3[0:sizeofBz],Bz2D[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target

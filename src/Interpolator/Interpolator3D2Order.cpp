@@ -302,6 +302,8 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
                                  BLoc [first_index:interpolation_range_size],  \
+                                 BLocyBTIS3 [first_index:interpolation_range_size],\
+                                 BLoczBTIS3 [first_index:interpolation_range_size],\
                                  iold [first_index:interpolation_range_size],  \
                                 delta [first_index:interpolation_range_size], \
                                  Ex3D [0:sizeofEx],                            \
@@ -309,7 +311,9 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                                  Ez3D [0:sizeofEz],                            \
                                  Bx3D [0:sizeofBx],                            \
                                  By3D [0:sizeofBy],                            \
-                                 Bz3D [0:sizeofBz])                            \
+                                 Bz3D [0:sizeofBz],                            \
+                                 By3DBTIS3 [0:sizeofEz],                     \
+                                 Bz3DBTIS3 [0:sizeofEy])                     \
         deviceptr(position_x,                                                  \
                   position_y,                                                  \
                   position_z)                                                  \

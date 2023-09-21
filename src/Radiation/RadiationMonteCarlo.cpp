@@ -529,11 +529,11 @@ void RadiationMonteCarlo::operator()(
                             photon_weight[iphoton_start + iphoton] = weight[ipart]*inv_radiation_photon_sampling_;
                             photon_charge[iphoton_start + iphoton] = 0;
 
-                            if( photons->isQuantumParameter ) {
+                            if( photons->has_quantum_parameter ) {
                                 photon_chi_array[iphoton_start + iphoton] = photon_chi;
                             }
 
-                            if( photons->isMonteCarlo ) {
+                            if( photons->has_Monte_Carlo_process ) {
                                 photon_tau[iphoton_start + iphoton] = -1.;
                             }
                                 

@@ -279,6 +279,8 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     size_t interpolation_range_size = ( last_index + 1 * nparts ) - first_index;
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],\
                                  BLoc [first_index:interpolation_range_size],\
+                                 BypartBTIS3 [first_index:interpolation_range_size],\
+                                 BzpartBTIS3 [first_index:interpolation_range_size],\
                                  iold [first_index:interpolation_range_size],\
                                  delta [first_index:interpolation_range_size],\
                                  Ex2D [0:sizeofEx],\
@@ -286,7 +288,9 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                  Ez2D [0:sizeofEz],\
                                  Bx2D [0:sizeofBx],\
                                  By2D [0:sizeofBy],\
-                                 Bz2D [0:sizeofBz])\
+                                 Bz2D [0:sizeofBz],\
+                                 By2D_mBTIS3 [0:sizeofEz],\
+                                 Bz2D_mBTIS3 [0:sizeofEy])\
     deviceptr(position_x, position_y)              \
     copyin(d_inv_[0:2])
     #pragma acc loop gang worker vector

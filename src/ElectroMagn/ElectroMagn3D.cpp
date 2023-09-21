@@ -1296,16 +1296,53 @@ void ElectroMagn3D::centerMagneticFields()
         // Static-cast of the fields
         double *const __restrict__ BymBTIS3 = By_mBTIS3->data();
         double *const __restrict__ BzmBTIS3 = Bz_mBTIS3->data();
-    
+#if defined( SMILEI_OPENACC_MODE )
+    const int sizeofByBTIS3 = By_mBTIS3->size();
+    #pragma acc parallel present(By3D[0:sizeofBy],BymBTIS3[0:sizeofByBTIS3])
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 3 )
+#endif
         for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop worker
+#endif
             for( unsigned int j=0 ; j<ny_p ; j++ ) {
+#ifdef SMILEI_OPENACC_MODE
+            #pragma acc loop vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // EMPTY
+#else
+            #pragma omp simd
+#endif
                 for( unsigned int k=0 ; k<nz_d ; k++ ) {
                     // Magnetic field By^(p,p,d) for BTIS3 interpolation
                     BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] = ( By3D[ (i+1)*(ny_p*nz_d) + j*nz_d + k ] + BymBTIS3[ i*(ny_p*nz_d) + j*nz_d + k ] )*0.5;  
                     //( *By_oldBTIS3 )( i, j, k ) = ( ( *By3D )( i+1, j, k ) + ( *By_oldBTIS3 )( i, j, k ) )*0.5;
                 }
             }
+         }
+#if defined( SMILEI_OPENACC_MODE )
+    const int sizeofBzBTIS3 = Bz_mBTIS3->size();
+    #pragma acc parallel present(Bz3D[0:sizeofBz],BzmBTIS3[0:sizeofBzBTIS3])
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 3 )
+#endif
+        for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc loop worker
+#endif
             for( unsigned int j=0 ; j<ny_d ; j++ ) {
+#ifdef SMILEI_OPENACC_MODE
+            #pragma acc loop vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            // EMPTY
+#else
+            #pragma omp simd
+#endif
                 for( unsigned int k=0 ; k<nz_p ; k++ ) {
                     // Magnetic field Bz^(p,d,p) for BTIS3 interpolation
                     BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] = ( Bz3D[ (i+1)*(ny_d*nz_p) + j*nz_p + k ] + BzmBTIS3[ i*(ny_d*nz_p) + j*nz_p + k ] )*0.5;

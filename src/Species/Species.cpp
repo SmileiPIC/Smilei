@@ -2330,10 +2330,10 @@ void Species::compress(SmileiMPI *smpi, int ithread, bool compute_cell_keys) {
                     momentum_y[ipart_l] = momentum_y[ipart_r];
                     momentum_z[ipart_l] = momentum_z[ipart_r];
                     charge[ipart_l] = charge[ipart_r];
-                    if( particles->isQuantumParameter ) {
+                    if( particles->has_quantum_parameter ) {
                         chi[ipart_l] = chi[ipart_r];
                     }
-                    if( particles->isMonteCarlo ) {
+                    if( particles->has_Monte_Carlo_process ) {
                         tau[ipart_l] = tau[ipart_r];
                     }
                 }
@@ -2514,10 +2514,10 @@ void Species::removeTaggedParticlesPerBin(
                         momentum_y[ipart] = momentum_y[last_photon_index];
                         momentum_z[ipart] = momentum_z[last_photon_index];
                         charge[ipart] = charge[last_photon_index];
-                        if( particles->isQuantumParameter ) {
+                        if( particles->has_quantum_parameter ) {
                             chi[ipart] = chi[last_photon_index];
                         }
-                        if( particles->isMonteCarlo ) {
+                        if( particles->has_Monte_Carlo_process ) {
                             tau[ipart] = tau[last_photon_index];
                         }
 
@@ -2607,8 +2607,8 @@ void Species::removeTaggedParticles(
 
     short *const __restrict__ charge = particles->getPtrCharge();
 
-    double *const __restrict__ chi = particles->isQuantumParameter ? particles->getPtrChi() : nullptr;
-    double *const __restrict__ tau = particles->isMonteCarlo ? particles->getPtrTau() : nullptr;
+    double *const __restrict__ chi = particles->has_quantum_parameter ? particles->getPtrChi() : nullptr;
+    double *const __restrict__ tau = particles->has_Monte_Carlo_process ? particles->getPtrTau() : nullptr;
 
     // Only if there are particles
     if( nparts > 0 ) {
@@ -2665,10 +2665,10 @@ void Species::removeTaggedParticles(
                     momentum_y[ipart] = momentum_y[last_moving_index];
                     momentum_z[ipart] = momentum_z[last_moving_index];
                     charge[ipart] = charge[last_moving_index];
-                    if( particles->isQuantumParameter ) {
+                    if( particles->has_quantum_parameter ) {
                         chi[ipart] = chi[last_moving_index];
                     }
-                    if( particles->isMonteCarlo ) {
+                    if( particles->has_Monte_Carlo_process ) {
                         tau[ipart] = tau[last_moving_index];
                     }
 

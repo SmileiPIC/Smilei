@@ -711,14 +711,14 @@ namespace detail {
         // TODO(Etienne M): Find a better way to dispatch at runtime. This is
         // complex to read and to maintainable.
 
-        if( particle_container.isQuantumParameter ) {
-            if( particle_container.isMonteCarlo ) {
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 SMILEI_ASSERT( false );
             }
         } else {
-            if( particle_container.isMonteCarlo ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 // The appropriate thrust::zip_iterator for the current
@@ -753,14 +753,14 @@ namespace detail {
         // TODO(Etienne M): Find a better way to dispatch at runtime. This is
         // complex to read and to maintainable.
 
-        if( particle_container.isQuantumParameter ) {
-            if( particle_container.isMonteCarlo ) {
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 SMILEI_ASSERT( false );
             }
         } else {
-            if( particle_container.isMonteCarlo ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 // The appropriate thrust::zip_iterator for the current
@@ -805,14 +805,14 @@ namespace detail {
                                              a_parent_patch.Pcoordinates[0],
                                              a_parent_patch.Pcoordinates[1] };
 
-        if( particle_container.isQuantumParameter ) {
-            if( particle_container.isMonteCarlo ) {
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 SMILEI_ASSERT( false );
             }
         } else {
-            if( particle_container.isMonteCarlo ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 // Returns the appropriate thrust::zip_iterator for the
@@ -873,14 +873,14 @@ namespace detail {
                                              a_parent_patch.Pcoordinates[1],
                                              a_parent_patch.Pcoordinates[2] };
 
-        if( particle_container.isQuantumParameter ) {
-            if( particle_container.isMonteCarlo ) {
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 SMILEI_ASSERT( false );
             }
         } else {
-            if( particle_container.isMonteCarlo ) {
+            if( particle_container.has_Monte_Carlo_process ) {
                 SMILEI_ASSERT( false );
             } else {
                 // Returns the appropriate thrust::zip_iterator for the
@@ -967,11 +967,11 @@ void nvidiaParticles::softReserve( unsigned int particle_count, float growth_fac
     nvidia_weight_.reserve( new_capacity );
     nvidia_charge_.reserve( new_capacity );
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         nvidia_chi_.reserve( new_capacity );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         nvidia_tau_.reserve( new_capacity );
     }
 
@@ -991,11 +991,11 @@ void nvidiaParticles::reserve( unsigned int particle_count )
     nvidia_weight_.reserve( particle_count );
     nvidia_charge_.reserve( particle_count );
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         nvidia_chi_.reserve( particle_count );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         nvidia_tau_.reserve( particle_count );
     }
 
@@ -1019,11 +1019,11 @@ void nvidiaParticles::resize( unsigned int particle_count )
     nvidia_weight_.resize( particle_count );
     nvidia_charge_.resize( particle_count );
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         nvidia_chi_.resize( particle_count );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         nvidia_tau_.resize( particle_count );
     }
 
@@ -1054,12 +1054,12 @@ void nvidiaParticles::free()
         std::swap( nvidia_charge_, a_dummy_vector );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         thrust::device_vector<double> a_dummy_vector{};
         std::swap( nvidia_chi_, a_dummy_vector );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         thrust::device_vector<double> a_dummy_vector{};
         std::swap( nvidia_tau_, a_dummy_vector );
     }
@@ -1153,14 +1153,14 @@ void nvidiaParticles::initializeDataOnDevice()
     // Quantum parameter (for QED effects):
     // - if radiation reaction (continuous or discontinuous)
     // - if multiphoton-Breit-Wheeler if photons
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         nvidia_double_prop_.push_back( &nvidia_chi_ );
     }
 
     // Optical Depth for Monte-Carlo processes:
     // - if the discontinuous (Monte-Carlo) radiation reaction
     // is activated, tau is the incremental optical depth to emission
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         nvidia_double_prop_.push_back( &nvidia_tau_ );
     }
 
@@ -1220,11 +1220,11 @@ void nvidiaParticles::copyFromHostToDevice()
 
     thrust::copy( Charge.begin(), Charge.end(), nvidia_charge_.begin() );
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         thrust::copy( Chi.begin(), Chi.end(), nvidia_chi_.begin() );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         thrust::copy( Tau.begin(), Tau.end(), nvidia_tau_.begin() );
     }
 }
@@ -1246,11 +1246,11 @@ void nvidiaParticles::copyFromDeviceToHost()
     thrust::copy((nvidia_weight_).begin(), (nvidia_weight_).begin()+gpu_nparts_, (Weight).begin());
     Charge.resize( gpu_nparts_ );
     thrust::copy((nvidia_charge_).begin(), (nvidia_charge_).begin()+gpu_nparts_, (Charge).begin());
-    if (isQuantumParameter) {
+    if (has_quantum_parameter) {
         Chi.resize( gpu_nparts_ );
         thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
     }
-    if (isMonteCarlo) {
+    if (has_Monte_Carlo_process) {
         Tau.resize( gpu_nparts_ );
         thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
     }
@@ -1324,7 +1324,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     }
 
     // Special treatment for chi if radiation emission
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         thrust::copy_if( thrust::device,
                          nvidia_chi_.cbegin(),
                          nvidia_chi_.cbegin() + nparts,
@@ -1333,7 +1333,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          count_if_out() );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         thrust::copy_if( thrust::device,
                          nvidia_tau_.cbegin(),
                          nvidia_tau_.cbegin() + nparts,
@@ -1410,7 +1410,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                count_if_out() );
         }
 
-        if( isQuantumParameter ) {
+        if( has_quantum_parameter ) {
             thrust::remove_if( thrust::device,
                                nvidia_chi_.begin(),
                                nvidia_chi_.begin() + nparts,
@@ -1418,7 +1418,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                count_if_out() );
         }
 
-        if( isMonteCarlo ) {
+        if( has_Monte_Carlo_process ) {
             thrust::remove_if( thrust::device,
                                nvidia_tau_.begin(),
                                nvidia_tau_.begin() + nparts,
@@ -1482,14 +1482,14 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
                         nvidia_position_[i].begin() + nparts );
     }
 
-    if( isQuantumParameter ) {
+    if( has_quantum_parameter ) {
         thrust::copy_n( thrust::device,
                         cp_parts->nvidia_chi_.cbegin(),
                         nparts_add,
                         nvidia_chi_.begin() + nparts );
     }
 
-    if( isMonteCarlo ) {
+    if( has_Monte_Carlo_process ) {
         thrust::copy_n( thrust::device,
                         cp_parts->nvidia_tau_.cbegin(),
                         nparts_add,
