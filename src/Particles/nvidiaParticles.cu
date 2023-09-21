@@ -129,7 +129,8 @@ namespace detail {
                    SizeType local_x_dimension_in_cell,
                    SizeType local_y_dimension_in_cell,
                    SizeType global_x_patch_offset_in_cell,
-                   SizeType global_y_patch_offset_in_cell );
+                   SizeType global_y_patch_offset_in_cell, 
+		   int CellStartingGlobalIndex );
 
         //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
         //! zipiterator).
@@ -163,6 +164,7 @@ namespace detail {
         SizeType local_y_dimension_in_cluster_;
         SizeType global_x_patch_offset_in_cell_;
         SizeType global_y_patch_offset_in_cell_;
+	int CellStartingGlobalIndex_;
     };
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -178,7 +180,8 @@ namespace detail {
                    SizeType local_z_dimension_in_cell,
                    SizeType global_x_patch_offset_in_cell,
                    SizeType global_y_patch_offset_in_cell,
-                   SizeType global_z_patch_offset_in_cell );
+                   SizeType global_z_patch_offset_in_cell, 
+		   int CellStartingGlobalIndex );
 
         //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
         //! zipiterator).
@@ -215,6 +218,7 @@ namespace detail {
         SizeType global_x_patch_offset_in_cell_;
         SizeType global_y_patch_offset_in_cell_;
         SizeType global_z_patch_offset_in_cell_;
+	int CellStartingGlobalIndex_;
     };
 
 
@@ -548,12 +552,13 @@ namespace detail {
                                          SizeType local_x_dimension_in_cell,
                                          SizeType local_y_dimension_in_cell,
                                          SizeType global_x_patch_offset_in_patch,
-                                         SizeType global_y_patch_offset_in_patch )
+                                         SizeType global_y_patch_offset_in_patch, int CellStartingGlobalIndex )
         : inverse_of_x_cell_dimension_{ 1.0 / x_cell_dimension }
         , inverse_of_y_cell_dimension_{ 1.0 / y_cell_dimension }
         , local_y_dimension_in_cluster_{ local_y_dimension_in_cell / kClusterWidth }
         , global_x_patch_offset_in_cell_{ global_x_patch_offset_in_patch * local_x_dimension_in_cell }
         , global_y_patch_offset_in_cell_{ global_y_patch_offset_in_patch * local_y_dimension_in_cell }
+        , CellStartingGlobalIndex_{CellStartingGlobalIndex}
     {
         // EMPTY
     }
@@ -567,7 +572,7 @@ namespace detail {
                                          SizeType local_z_dimension_in_cell,
                                          SizeType global_x_patch_offset_in_patch,
                                          SizeType global_y_patch_offset_in_patch,
-                                         SizeType global_z_patch_offset_in_patch )
+                                         SizeType global_z_patch_offset_in_patch, int CellStartingGlobalIndex )
         : inverse_of_x_cell_dimension_{ 1.0 / x_cell_dimension }
         , inverse_of_y_cell_dimension_{ 1.0 / y_cell_dimension }
         , inverse_of_z_cell_dimension_{ 1.0 / z_cell_dimension }
@@ -576,6 +581,7 @@ namespace detail {
         , global_x_patch_offset_in_cell_{ global_x_patch_offset_in_patch * local_x_dimension_in_cell }
         , global_y_patch_offset_in_cell_{ global_y_patch_offset_in_patch * local_y_dimension_in_cell }
         , global_z_patch_offset_in_cell_{ global_z_patch_offset_in_patch * local_z_dimension_in_cell }
+        , CellStartingGlobalIndex_{CellStartingGlobalIndex}
     {
         // EMPTY
     }
@@ -587,7 +593,7 @@ namespace detail {
     {
         const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
                                                                                     inverse_of_x_cell_dimension_ ) -
-                                                             global_x_patch_offset_in_cell_;
+                                                             CellStartingGlobalIndex_;//global_x_patch_offset_in_cell_;
         const SizeType local_y_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<2>( a_particle ) *
                                                                                     inverse_of_y_cell_dimension_ ) -
                                                              global_y_patch_offset_in_cell_;
@@ -620,7 +626,7 @@ namespace detail {
     {
         const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
                                                                                     inverse_of_x_cell_dimension_ ) -
-                                                             global_x_patch_offset_in_cell_;
+                                                             CellStartingGlobalIndex_;//global_x_patch_offset_in_cell_;
         const SizeType local_y_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<2>( a_particle ) *
                                                                                     inverse_of_y_cell_dimension_ ) -
                                                              global_y_patch_offset_in_cell_;
@@ -663,14 +669,15 @@ namespace detail {
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 1 ) ) ) );
         const auto last  = first + particle_container.deviceSize();
-
+        int CellStartingGlobalIndex = a_parent_patch.getCellStartingGlobalIndex(0) + parameters.oversize[0]; // we don't need the ghostwidth
         doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>{ parameters.cell_length[0],
                                                                                           parameters.cell_length[1],
                                                                                           parameters.patch_size_[0],
                                                                                           parameters.patch_size_[1],
                                                                                           a_parent_patch.Pcoordinates[0],
-                                                                                          a_parent_patch.Pcoordinates[1] } );
+                                                                                          a_parent_patch.Pcoordinates[1],
+											  CellStartingGlobalIndex } );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -684,7 +691,7 @@ namespace detail {
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 1 ) ),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 2 ) ) ) );
         const auto last  = first + particle_container.deviceSize();
-
+        int CellStartingGlobalIndex = a_parent_patch.getCellStartingGlobalIndex(0) + parameters.oversize[0];
         doComputeParticleClusterKey( first, last,
                                      Cluster3D<Params::getGPUClusterWidth( 3 /* 3D */ )>{ parameters.cell_length[0],
                                                                                           parameters.cell_length[1],
@@ -694,7 +701,8 @@ namespace detail {
                                                                                           parameters.patch_size_[2],
                                                                                           a_parent_patch.Pcoordinates[0],
                                                                                           a_parent_patch.Pcoordinates[1],
-                                                                                          a_parent_patch.Pcoordinates[2] } );
+                                                                                          a_parent_patch.Pcoordinates[2],
+                                                                                          CellStartingGlobalIndex } );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -797,13 +805,14 @@ namespace detail {
 
         // TODO(Etienne M): Find a better way to dispatch at runtime. This is
         // complex to read and to maintainable.
+        int CellStartingGlobalIndex = a_parent_patch.getCellStartingGlobalIndex(0);
 
         const Cluster2D cluster_manipulator{ parameters.cell_length[0],
                                              parameters.cell_length[1],
                                              parameters.patch_size_[0],
                                              parameters.patch_size_[1],
                                              a_parent_patch.Pcoordinates[0],
-                                             a_parent_patch.Pcoordinates[1] };
+                                             a_parent_patch.Pcoordinates[1], CellStartingGlobalIndex };
 
         if( particle_container.isQuantumParameter ) {
             if( particle_container.isMonteCarlo ) {
@@ -862,6 +871,7 @@ namespace detail {
 
         // TODO(Etienne M): Find a better way to dispatch at runtime. This is
         // complex to read and to maintainable.
+        int CellStartingGlobalIndex = a_parent_patch.getCellStartingGlobalIndex(0) + parameters.oversize[0]; // we don't need the ghostwidth
 
         const Cluster3D cluster_manipulator{ parameters.cell_length[0],
                                              parameters.cell_length[1],
@@ -871,7 +881,7 @@ namespace detail {
                                              parameters.patch_size_[2],
                                              a_parent_patch.Pcoordinates[0],
                                              a_parent_patch.Pcoordinates[1],
-                                             a_parent_patch.Pcoordinates[2] };
+                                             a_parent_patch.Pcoordinates[2], CellStartingGlobalIndex };
 
         if( particle_container.isQuantumParameter ) {
             if( particle_container.isMonteCarlo ) {
