@@ -71,6 +71,9 @@ public:
     //! Initialize the particle properties on device as a mirror of the host definition
     void initializeDataOnDevice() override;
 
+    //! Initialize particle IDs on device
+    void initializeIDsOnDevice() override;
+
     //! Send the particles from host to device
     void copyFromHostToDevice() override;
     
@@ -104,6 +107,9 @@ public:
     };
     int * getPtrCellKeys() override {
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
+    };
+    uint64_t * getPtrId() override {
+        return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
 
     // -----------------------------------------------------------------------------
@@ -211,6 +217,9 @@ protected:
 
     //! Monte-Carlo parameter
     thrust::device_vector<double> nvidia_tau_;
+
+    //! Particle IDs
+    thrust::device_vector<uint64_t> nvidia_id_;
 
     //! List of double* arrays
     std::vector<thrust::device_vector<double>*> nvidia_double_prop_;

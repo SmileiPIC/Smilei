@@ -1149,6 +1149,10 @@ void Particles::initializeDataOnDevice()
 {
     ERROR( "Device only feature, should not have come here!" );
 }
+void Particles::initializeIDsOnDevice()
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
 void Particles::copyFromHostToDevice()
 {
     ERROR( "Device only feature, should not have come here!" );
