@@ -46,6 +46,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+.. [Drobniak2023]
+
+      P. Drobniak, E. Baynard, C. Bruni, K. Cassou, C. Guyot, G. Kane, S. Kazamias, V. Kubytskyi, N. Lericheux, B. Lucas, M. Pittman, F. Massimo, A. Beck, A. Specka, P. Nghiem, and D. Minenna,
+      `Random scan optimization of a laser-plasma electron injector based on fast particle-in-cell simulations`,
+      `Phys. Rev. Accel. Beams 26, 091302 (2023) <https://doi.org/10.1103/PhysRevAccelBeams.26.091302>`_
+      
 .. [Bukharskii2023]
 
        N. Bukharskii and Ph. Korneev,
