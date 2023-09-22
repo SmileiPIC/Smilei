@@ -188,7 +188,7 @@ void DiagnosticTrack::setIDs( Patch *patch )
     for( unsigned int iPart=0; iPart<s; iPart++ ) {
         patch->vecSpecies[species_index_]->particles->id( iPart ) = ++latest_Id;
     }
-    patch->vecSpecies[speciesId_]->particles->initializeIDsOnDevice();
+    patch->vecSpecies[species_index_]->particles->initializeIDsOnDevice();
 }
 
 
