@@ -188,7 +188,9 @@ void DiagnosticTrack::setIDs( Patch *patch )
     for( unsigned int iPart=0; iPart<s; iPart++ ) {
         patch->vecSpecies[species_index_]->particles->id( iPart ) = ++latest_Id;
     }
+#if defined( SMILEI_ACCELERATOR_MODE )
     patch->vecSpecies[species_index_]->particles->initializeIDsOnDevice();
+#endif
 }
 
 
