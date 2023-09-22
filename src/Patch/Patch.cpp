@@ -143,18 +143,21 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     max_local_.resize( params.nDim_field, 0. );
     center_   .resize( params.nDim_field, 0. );
     cell_starting_global_index.resize( params.nDim_field, 0 );
+    cell_starting_global_index_noGC.resize( params.nDim_field, 0 );
     radius = 0.;
     for( unsigned int i = 0 ; i<params.nDim_field ; i++ ) {
         min_local_[i] = ( Pcoordinates[i]   )*( params.patch_size_[i]*params.cell_length[i] );
         max_local_[i] = ( Pcoordinates[i]+1 )*( params.patch_size_[i]*params.cell_length[i] );
         cell_starting_global_index[i] += Pcoordinates[i]*params.patch_size_[i];
-        cell_starting_global_index[i] -= params.oversize[i];
+	cell_starting_global_index_noGC[i] = Pcoordinates[i]*params.patch_size_[i];
+        cell_starting_global_index[i] -= params.oversize[i];	
         center_[i] = ( min_local_[i]+max_local_[i] )*0.5;
         radius += pow( max_local_[i] - center_[i] + params.cell_length[i], 2 );
     }
     radius = sqrt( radius );
 
     cell_starting_global_index[0] += n_moved;
+    cell_starting_global_index_noGC[0] += n_moved; 
     min_local_[0] += n_moved*params.cell_length[0];
     max_local_[0] += n_moved*params.cell_length[0];
     center_   [0] += n_moved*params.cell_length[0];
@@ -303,6 +306,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     max_local_ = vecPatch( 0 )->max_local_;
     center_   .resize( nDim_fields_, 0. );
     cell_starting_global_index = vecPatch( 0 )->cell_starting_global_index;
+    cell_starting_global_index_noGC = vecPatch( 0 )->cell_starting_global_index_noGC;
     radius = 0.;
     
     int rk(0);
@@ -325,6 +329,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
                             radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
                             cell_starting_global_index[iDim] = params.offset_map[iDim][ijk[iDim]];
+			    cell_starting_global_index_noGC[iDim] = params.offset_map[iDim][ijk[iDim]];
                             // Neighbor before
                             if( ijk[iDim] > 0 ) {
                                 unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };

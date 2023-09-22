@@ -72,7 +72,6 @@ Field2D::~Field2D()
         if ( sendFields_[iside] != NULL ) {
 
 #if defined ( SMILEI_ACCELERATOR_MODE )
-
             if ( sendFields_[iside]->isOnDevice() )
             {
                 sendFields_[iside]->deleteOnDevice();
@@ -82,7 +81,6 @@ Field2D::~Field2D()
             {
                 recvFields_[iside]->deleteOnDevice();
             }
-
 #endif
 
             delete sendFields_[iside];
@@ -95,7 +93,6 @@ Field2D::~Field2D()
         delete [] data_;
         delete [] data_2D;
     }
-
 }
 
 
@@ -335,6 +332,13 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         // Allocate only the first time we call this function
         sendFields_[iDim*2+iNeighbor] = new Field2D(size);
         recvFields_[iDim*2+iNeighbor] = new Field2D(size);
+
+#if defined( SMILEI_ACCELERATOR_MODE ) 
+       if( ( name[0] == 'B' ) || ( name[0] == 'J' || name[0] == 'R' ) ) {
+           sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
+           recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
+       }
+#endif
     } 
     else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
 #if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -345,29 +349,6 @@ void Field2D::create_sub_fields( int iDim, int iNeighbor, int ghost_size )
         delete recvFields_[iDim*2+iNeighbor];
         recvFields_[iDim*2+iNeighbor] = new Field2D(size);
     }
-
-#if defined( SMILEI_ACCELERATOR_MODE )
-    const bool should_manipulate_gpu_memory = ( ( name[0] == 'B' ) || ( name[0] == 'J' ) || ( name[0] == 'R' ) ) &&
-                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( data() );
-    if( should_manipulate_gpu_memory ) {
-        // At initialization, data() is NOT on the GPU so we dont map the
-        // exchange buffers to the GPU.
-        // On the other hand, later in the pic loop, data() will be on GPU and
-        // we need to map the exchange buffers.
-        // const double *const dsend = sendFields_[iDim * 2 + iNeighbor]->data();
-        // const double *const drecv = recvFields_[iDim * 2 + iNeighbor]->data();
-        // const int           dSize = sendFields_[iDim * 2 + iNeighbor]->number_of_points_;
-
-        sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
-        recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
-
-        // const bool is_already_mapped_on_gpu = smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( dsend /* or drecv */ );
-        // if( !is_already_mapped_on_gpu ) {
-        //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( dsend, dSize );
-        //     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( drecv, dSize );
-        // }
-    }
-#endif
 }
 
 void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
@@ -499,7 +480,7 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 #elif defined( SMILEI_OPENACC_MODE )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
-    bool fieldName( (name.substr(0,1) == "J") || (name.substr(0,1) == "R"));
+    bool fieldName( ((name.substr(0,1) == "J") || (name.substr(0,1) == "R") ) && smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub ));
     #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
     //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang

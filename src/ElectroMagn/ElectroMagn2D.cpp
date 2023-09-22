@@ -1223,7 +1223,7 @@ void ElectroMagn2D::centerMagneticFields()
     const int sizeofBz = Bz_->size();
 
     #pragma acc parallel present(Bx2D[0:sizeofBx],Bx2D_m[0:sizeofBx])
-    #pragma acc loop gang
+    #pragma acc loop gang worker
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
@@ -1243,7 +1243,7 @@ void ElectroMagn2D::centerMagneticFields()
     // Magnetic field By^(d,p)
 #if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(By2D[0:sizeofBy],By2D_m[0:sizeofBy])
-    #pragma acc loop gang
+    #pragma acc loop gang worker
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )
@@ -1262,7 +1262,7 @@ void ElectroMagn2D::centerMagneticFields()
     // Magnetic field Bz^(d,d)
 #if defined( SMILEI_OPENACC_MODE )
     #pragma acc parallel present(Bz2D[0:sizeofBz],Bz2D_m[0:sizeofBz])
-    #pragma acc loop gang
+    #pragma acc loop gang worker
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for collapse( 2 )

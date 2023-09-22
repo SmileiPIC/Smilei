@@ -429,6 +429,7 @@ public:
     //! bin discovery.
     //!
     virtual void initializeDataOnDevice();
+    virtual void initializeIDsOnDevice();
     virtual void copyFromHostToDevice();
     virtual void copyFromDeviceToHost();
 
