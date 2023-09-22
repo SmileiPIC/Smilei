@@ -232,6 +232,10 @@ public:
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
 
+    //! inverse spatial step (inverse cell dimension in every direction)
+    ///std::vector<double> inverse_cell_length;
+
+
     //! Size of a patch in each direction
     std::vector<double> patch_dimensions;
 

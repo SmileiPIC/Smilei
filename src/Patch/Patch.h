@@ -319,6 +319,22 @@ public:
     {
         return cell_starting_global_index[i];
     }
+
+    //! Return global starting ( NOT including oversize, ex : rank 0 returns 0) index for direction i
+    //! \param i direction
+    //! @see cell_starting_global_index_noGC
+    inline int    getCellStartingGlobalIndex_noGC( int i ) const
+    {
+        return cell_starting_global_index_noGC[i];
+    }
+    
+    //! Set global starting index for direction i
+    //! @see cell_starting_global_index_noGC
+    inline int    &getCellStartingGlobalIndex_noGC( int i )
+    {
+        return cell_starting_global_index_noGC[i];
+    }
+
     //! Set real min coordinate for direction i
     //! @see min_local_
     inline double &getDomainLocalMin( int i )
@@ -402,7 +418,7 @@ protected:
     //!     - concerns ghost data
     //!     - "- oversize" on rank 0
     std::vector<int> cell_starting_global_index;
-    
+    std::vector<int> cell_starting_global_index_noGC;
     double cell_volume;
     
     //! Buffers for exchange
