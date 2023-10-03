@@ -1,0 +1,64 @@
+#
+# Machine file for RUCHE
+# __________________________________________________________
+#
+# Documentation:
+#https://mesocentre.pages.centralesupelec.fr/user_doc/ruche/01_cluster_overview/
+
+SMILEICXX.DEPS = nvcc -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/openmpi-4.1.5-ckfuippq6gf6qsilwitd7d2zyd5bng32/include/ -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/include/
+
+THRUSTCXX = nvcc -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/openmpi-4.1.5-ckfuippq6gf6qsilwitd7d2zyd5bng32/include/ -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/include/
+
+ACCELERATOR_GPU_FLAGS += -w
+# IDRIS config for curand
+ACCELERATOR_GPU_FLAGS += -gpu=cc70 -acc -std=c++14  -lcurand #-ta=tesla:cc70 -std=c++14  -lcurand -cudalib=curand
+# ACCELERATOR_GPU_FLAGS += --expt-relaxed-constexpr
+
+ACCELERATOR_CUDA_FLAGS += -w -gpu=cc70 -cuda -std=c++14  -lcurand
+
+
+ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%) 
+
+ACCELERATOR_GPU_KERNEL_FLAGS += --expt-relaxed-constexpr
+ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_70
+ACCELERATOR_GPU_FLAGS        += -Minfo=accel # what is offloaded/copied
+# ACCELERATOR_GPU_FLAGS        += -Minfo=all   # very verbose output
+
+# OpenACC support
+ACCELERATOR_GPU_FLAGS += -DSMILEI_OPENACC_MODE
+ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_OPENACC_MODE
+
+# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_OPENACC_MODE'
+# ACCELERATOR_GPU_FLAGS        += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
+# ACCELERATOR_GPU_KERNEL_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
+# LDFLAGS                      += -mp=gpu
+
+LDFLAGS +=  -L/gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/gcc-11.2.0/gettext-0.21-bppg5g6ijfrvi7sdylhhg3t5f6v2fh2x/lib/
+LDFLAGS += -L/gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/nvhpc-23.7/cuda-11.8.0-j62qyr3fdv4uuxx3kln3ckwo4xoqrntx/lib64/ -gpu=cc70 -acc -cuda -cudalib=curand -lcurand  # -lcudart -lcurand -lacccuda -L/ -gpu=cc70 -cuda #--gpu-architecture=compute_70 -std=c++14 -lcudart -lcurand -lacccuda -L/ #-ta=tesla:cc70 -std=c++14 -cudalib=curand -lcudart -lcurand -lacccuda -L/ #-stdlib=libc++  #-std=c++14  #-L/gpfslocalsys/cuda/11.2/lib64/
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1 -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/nvhpc-23.7/cuda-11.8.0-j62qyr3fdv4uuxx3kln3ckwo4xoqrntx/include -std=c++14 
+
+
+############################################
+#  example of a job script
+############################################
+
+#!/bin/bash
+#
+##SBATCH --job-name=validation_smilei
+##SBATCH --output=%x.o%j 
+##SBATCH --time=00:20:00 
+##SBATCH --ntasks=1                   # Number of MPI processes (= total number of GPU)
+##SBATCH --ntasks-per-node=1          # nombre de tache MPI par noeud (= nombre de GPU par noeud)
+##SBATCH --gres=gpu:1
+##SBATCH --partition=gpu_test
+#
+## Load necessary modules
+#source /gpfs/users/prouveurc/env_smilei.sh
+#module load anaconda3/2022.10/gcc-11.2.0
+#
+## Run cuda code
+#LD_PRELOAD=/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/gcc-11.2.0-mpv3i3uebzvnvz7wxn6ywysd5hftycj3/lib64/libstdc++.so.6.0.29 ./smilei input.py
+#
+#
+

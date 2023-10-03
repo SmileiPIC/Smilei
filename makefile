@@ -96,7 +96,7 @@ else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)
     CXXFLAGS += -std=c++11
 else
-    CXXFLAGS += -std=c++14 -Wall
+    CXXFLAGS += -std=c++14 #-Wall #not recognized by nvcc, make an exception
 endif
 
 # HDF5 library
