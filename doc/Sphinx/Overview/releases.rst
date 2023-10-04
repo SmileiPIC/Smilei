@@ -32,15 +32,15 @@ Projects
 
 * Already available, but experimental:
 
-  * :doc:`/Understand/SDMD`
   * Particle merging
   * Nuclear reactions
-  * Interface with the PICSAR library for AM spectral solver
+  * Perfectly Matched Layers
+  * NewParticles diagnostic
 
 * In preparation:
 
   * GPU support
-  * More spectral solvers
+  * Spectral solvers
 
 
 ----
@@ -97,6 +97,8 @@ Release 4.8
 
   * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
   * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization or other mechanisms
+  
+..
   * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
   * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
 
