@@ -19,7 +19,6 @@ Unreferenced pages
   :maxdepth: 1
 
   /Use/ids
-  /Use/install_PICSAR
   /Use/install_linux
   /Use/install_macos
   /Use/install_supercomputer
