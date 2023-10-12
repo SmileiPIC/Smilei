@@ -393,22 +393,22 @@ void Interpolator1D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
     // -------------------------
-    *( Env_A_abs_Loc ) = compute( &coeffp_[1], Env_A_abs_1D, ip_ );
+    *( Env_A_abs_Loc )  = compute( coeffp_, Env_A_abs_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_Chi_^(p)
     // -------------------------
-    *( Env_Chi_Loc ) = compute( &coeffp_[1], Env_Chi_1D, ip_ );
+    *( Env_Chi_Loc )    = compute( coeffp_, Env_Chi_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
-    *( Env_E_abs_Loc ) = compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+    *( Env_E_abs_Loc )  = compute( coeffp_, Env_E_abs_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_Ex_abs_^(p)
     // -------------------------
-    *( Env_Ex_abs_Loc ) = compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
+    *( Env_Ex_abs_Loc ) = compute( coeffp_, Env_Ex_abs_1D, ip_ );
 
 } // END Interpolator1D2OrderV
 
