@@ -2592,8 +2592,7 @@ void SmileiMPI::resizeDeviceBuffers( unsigned int ithread,
         dynamics_deltaold[ithread].reserve( new_particle_capacity * ndim_field );
     }
 
-    if( particle_count > kCurrentParticleCapacity ||
-        particle_count > 0 ) {
+    if( particle_count > 0 ) {
         // Make sure we do not deal with empty() buffers. Some diagnostics
         // can resize(0). Could be a resize(1).
 
