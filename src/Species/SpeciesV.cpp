@@ -316,7 +316,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
-                                       ithread, particles->first_index[ipack*packsize_] );
+                                       ithread, scell, particles->first_index[ipack*packsize_] );
             } // end interpolation
             smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,0);
 
