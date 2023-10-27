@@ -109,6 +109,7 @@ runAM:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tstAM_v_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps3/gitlab-runner/logs"
 
 runCollisions:
   stage: run_default

@@ -253,10 +253,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
 
                     mypatch->EMfields->laserDisabled();
-                    if (!params.multiple_decomposition){
-                        mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
-                        if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
-                    }
                 }
                 
                 mypatch->EMfields->laserDisabled();
@@ -318,10 +314,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
 
                     mypatch->EMfields->laserDisabled();
-                    if (!params.multiple_decomposition){
-                        mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
-                        if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
-                    }
                 }
                 if( mypatch->wasXmax( params ) ) {
                     for( auto &embc:mypatch->EMfields->emBoundCond ) {
@@ -359,7 +351,19 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #ifndef _NO_MPI_TM
         #pragma omp barrier
 #endif
-        
+
+    //Apply xmin boundary conditions now that all patches are created
+    for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
+            mypatch = vecPatches.patches_[ipatch];
+            if( mypatch->isXmin() ) {
+                if (!params.multiple_decomposition){
+                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, mypatch);
+                }
+             }
+    }
+            
+   
         //Fill necessary patches with particles
 #ifndef _NO_MPI_TM
         #pragma omp master
