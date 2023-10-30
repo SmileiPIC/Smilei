@@ -418,6 +418,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #endif
 
     //Apply xmin boundary conditions now that all patches are created
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static) private(mypatch)
+#endif
     for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
             mypatch = vecPatches.patches_[ipatch];
             if( mypatch->isXmin() ) {
