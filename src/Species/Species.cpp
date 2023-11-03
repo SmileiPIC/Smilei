@@ -856,7 +856,7 @@ void Species::dynamics( double time_dual,
             particles->prepareInterpolatedFields( pold, start, n );
 
             // Push the particles and the photons
-            ( *Push )( *particles, smpi, start, stop, ithread );
+            ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread );
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
             
             // Copy interpolated fields to persistent buffers if requested
