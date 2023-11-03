@@ -24,7 +24,7 @@
 
 #include <csignal>
 #include <cstdlib>
-
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 

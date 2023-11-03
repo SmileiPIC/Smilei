@@ -22,7 +22,7 @@ as shown in this Figure:
     :width: 18cm
     :align: center
 
-Both panels show the `y` component of the Lorentz force acting on the macro-particles in a Smilei simulation of Laser Wakefield Acceleration.
+Both panels show a field proportional to the `y` component of the Lorentz force acting on the electron macro-particles in a Smilei simulation of Laser Wakefield Acceleration.
 Top panel: simulation not using the B-TIS3 interpolation.
 Bottom panel: simulation using the B-TIS3 interpolation.
 The high frequency modulations, due to the Numerical Cherenkov Radiation are evident in the top panel, while they are

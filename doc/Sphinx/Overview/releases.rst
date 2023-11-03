@@ -23,6 +23,32 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+...
+
+----
+
+Projects
+^^^^^^^^^^^^^^^^
+
+* Already available, but experimental:
+
+  * Particle merging
+  * Nuclear reactions
+  * Perfectly Matched Layers
+  * NewParticles diagnostic
+
+* In preparation:
+
+  * GPU support
+  * Spectral solvers
+
+
+----
+
+
+Release 4.8
+^^^^^^^^^^^^^^^^^^^^^
+
 * **LaserEnvelope model**:
 
   * Now compatible with ``PML`` boundaries
@@ -56,7 +82,8 @@ Changes made in the repository (not released)
 
 * **Bugfixes**:
 
-  * Poisson Solver correction was not properly accounted for with SDMD.
+  * Compilation fixed for the newest version of GNU make
+  * Poisson Solver correction was not properly accounted for with SDMD
   * Bug correction using Monte-Carlo radiation and multiphoton Breit-Wheeler processes with checkpoints
   * C++11 compilation issue
   * Reading particle weights and momenta from hdf5 file
@@ -68,32 +95,15 @@ Changes made in the repository (not released)
 
 * **Experimental**
 
-  * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
-  * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
   * B-TIS3 interpolation scheme to reduce the effects of numerical Cherenkov radiation is implemented up to interpolation order 2
   * New diagnostic: ``DiagNewParticles`` records particle information when they are created by ionization or other mechanisms
+  
+..
+  * :doc:`/Understand/task_parallelization` of macro-particle operations with OpenMP
+  * Rudimentary visualization for macro-particle operation scheduling, activated through a compilation flag
 
 * **For developers**: new table management for Monte-Carlo physical processes (transparent to users)
 
-----
-
-Projects
-^^^^^^^^^^^^^^^^
-
-* Already available, but experimental:
-
-  * :doc:`/Understand/SDMD`
-  * Particle merging
-  * Nuclear reactions
-  * Interface with the PICSAR library for AM spectral solver
-
-* In preparation:
-
-  * GPU support
-  * More spectral solvers
-
-
-----
 
 Release 4.7
 ^^^^^^^^^^^^^^^^^^^^^

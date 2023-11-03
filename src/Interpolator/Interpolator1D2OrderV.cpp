@@ -263,22 +263,22 @@ void Interpolator1D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
         // -------------------------
         // Interpolation of Phi^(p,p)
         // -------------------------
-        ( *PHIpart )[ipart] = compute( &coeffp_[1], Phi1D, ip_ );
+        ( *PHIpart )[ipart]              = compute( coeffp_, Phi1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhix^(p,p)
         // -------------------------
-        ( *GradPHIpart )[ipart+0*nparts] = compute( &coeffp_[1], GradPhix1D, ip_ );
+        ( *GradPHIpart )[ipart+0*nparts] = compute( coeffp_, GradPhix1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhiy^(p,p)
         // -------------------------
-        ( *GradPHIpart )[ipart+1*nparts] = compute( &coeffp_[1], GradPhiy1D, ip_ );
+        ( *GradPHIpart )[ipart+1*nparts] = compute( coeffp_, GradPhiy1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhiz^(p,p)
         // -------------------------
-        ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffp_[1], GradPhiz1D, ip_ );
+        ( *GradPHIpart )[ipart+2*nparts] = compute( coeffp_, GradPhiz1D, ip_ );
 
 
         //Buffering of iold and delta
@@ -334,22 +334,22 @@ void Interpolator1D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
         // -------------------------
         // Interpolation of Phiold^(p)
         // -------------------------
-        ( *PHI_mpart )[ipart] = compute( &coeffp_[1], Phi_m1D, ip_ );
+        ( *PHI_mpart )[ipart]              = compute( coeffp_, Phi_m1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhix_m^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffp_[1], GradPhix_m1D, ip_ );
+        ( *GradPHI_mpart )[ipart+0*nparts] = compute( coeffp_, GradPhix_m1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhiyold^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffp_[1], GradPhiy_m1D, ip_ );
+        ( *GradPHI_mpart )[ipart+1*nparts] = compute( coeffp_, GradPhiy_m1D, ip_ );
 
         // -------------------------
         // Interpolation of GradPhizold^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+2*nparts] = compute( &coeffp_[1], GradPhiz_m1D, ip_ );
+        ( *GradPHI_mpart )[ipart+2*nparts] = compute( coeffp_, GradPhiz_m1D, ip_ );
 
         //Buffering of iold and delta
         ( *iold )[ipart+0*nparts]  = ip_;
@@ -393,22 +393,22 @@ void Interpolator1D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
     // -------------------------
-    *( Env_A_abs_Loc ) = compute( &coeffp_[1], Env_A_abs_1D, ip_ );
+    *( Env_A_abs_Loc )  = compute( coeffp_, Env_A_abs_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_Chi_^(p)
     // -------------------------
-    *( Env_Chi_Loc ) = compute( &coeffp_[1], Env_Chi_1D, ip_ );
+    *( Env_Chi_Loc )    = compute( coeffp_, Env_Chi_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
-    *( Env_E_abs_Loc ) = compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+    *( Env_E_abs_Loc )  = compute( coeffp_, Env_E_abs_1D, ip_ );
 
     // -------------------------
     // Interpolation of Env_Ex_abs_^(p)
     // -------------------------
-    *( Env_Ex_abs_Loc ) = compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
+    *( Env_Ex_abs_Loc ) = compute( coeffp_, Env_Ex_abs_1D, ip_ );
 
 } // END Interpolator1D2OrderV
 
@@ -446,7 +446,7 @@ void Interpolator1D2OrderV::envelopeFieldForIonization( ElectroMagn *EMfields, P
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)
         // ---------------------------------
-        ( *Env_Eabs_part )[ipart] = compute( &coeffp_[1], Env_Eabs, ip_ );
+        ( *Env_Eabs_part )[ipart] = compute( coeffp_, Env_Eabs, ip_ );
 
     }
 
