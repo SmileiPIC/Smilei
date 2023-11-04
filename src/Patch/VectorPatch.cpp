@@ -3638,77 +3638,79 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
 
     }
 
-    if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
-        for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
-            listJx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 1 );
-            listJy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 2 );
-            listJz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 3 );
-            listBx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 6 );
-            listBy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 7 );
-            listBz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 8 );
-            listrho_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 4 );
-            if (smpi->use_BTIS3){
-                listBy_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listBz_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-            }
-        }
-        if( patches_[0]->EMfields->envelope != NULL ) {
+    if( ! smpi->test_mode ) {
+        if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
             for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
-                listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listEnvEx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listEnvE_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listEnvA_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhix_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhiy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhiz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhix0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhiy0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhiz0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-            }
-
-        }
-    } else {
-        unsigned int nmodes = static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size();
-        for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
-            for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
-                listJl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listJr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listJt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listJx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 1 );
+                listJy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 2 );
+                listJz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 3 );
+                listBx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 6 );
+                listBy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 7 );
+                listBz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 8 );
+                listrho_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 4 );
                 if (smpi->use_BTIS3){
-                    listBr_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                    listBt_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBy_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBz_mBTIS3[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 }
-                listEl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
-                if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
-                    listrho_old_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
-        }
-        if( patches_[0]->EMfields->envelope != NULL ) {
-            for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
-                listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listEnvEx_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listEnvE_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listEnvA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                // listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhil_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhir_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhil0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listGradPhir0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
-                listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+            if( patches_[0]->EMfields->envelope != NULL ) {
+                for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                    listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listEnvEx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listEnvE_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listEnvA_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhix_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhiy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhiz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhix0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhiy0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhiz0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                }
+    
             }
-
+        } else {
+            unsigned int nmodes = static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size();
+            for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
+                for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                    listJl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listJr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listJt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    if (smpi->use_BTIS3){
+                        listBr_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                        listBt_mBTIS3[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    }
+                    listEl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                    if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
+                        listrho_old_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
+            }
+            if( patches_[0]->EMfields->envelope != NULL ) {
+                for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                    listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listEnvEx_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listEnvE_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listEnvA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    // listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhil_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhir_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhil0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listGradPhir0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                    listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                }
+    
+            }
         }
     }
 }
