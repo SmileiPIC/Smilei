@@ -184,6 +184,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
     * Either ``timestep``, in units of :math:`T_r`,
     * or ``timestep_over_CFL``, in units of the *Courant–Friedrichs–Lewy* (CFL) time.
 
+.. py:data:: gpu_computing
+
+   :default: ``False``
+   Activates GPU acceleration if set to True
 
 .. py:data:: number_of_patches
 
@@ -191,7 +195,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
   It is also strongly advised to have more patches than the total number of openMP threads.
-  See :doc:`/Understand/parallelization`.
+  See :doc:`/Understand/parallelization`.On the other hand, in case of GPU-acceleration it is recommended to use one patch per MPI-rank
+  (with one MPI-rank per GPU)
 
 
 .. py:data:: patch_arrangement

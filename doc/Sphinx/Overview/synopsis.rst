@@ -25,6 +25,9 @@ MPI/OpenMP parallelization, dynamic load balancing and SIMD vectorization.
 It has been successfully tested on various architectures, among which the most recent
 Intel Cascadelake (CSL) & Fujitsu A64FX (ARM).
 
+Recently, GPU acceleration has been implemented in SMILEI and allows offloading on Nvidia or AMD GPUs, such as V100, A100 or MI250.
+As of yet, not all features are supported.  
+
 In Smilei, Maxwell’s equations are solved using a Yee mesh, where the
 electric and magnetic fields are centered following the finite-difference time-domain (FDTD)
 method or related methods. A pseudo-spectral analytical time domain method is
