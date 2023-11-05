@@ -52,9 +52,12 @@ Partners
 |            |   `Maison de la Simulation <https://mdls.fr/>`_ (MdlS), USR 3441                                        |
 |            |                                                                                                         |
 +            +---------------------------------------------------------------------------------------------------------+
+|            |   * `Olga Abramkina <olga.abramkina@idriss.fr>`_                                                        |
 |            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
 |            |   * `Haithem Kallala <haithem.kallala@cea.fr>`_                                                         |
 |            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_                                                             |
+|            |   * `Francesco Massimo <francesco.massimo@cea.fr>`_                                                     |
+|            |   * `Charles Prouveur <charles.prouveur@cea.fr>`_                                                       |
 |            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
 
@@ -103,6 +106,7 @@ Partners
 |            |   `Institut du developpement et des ressources en informatique scientifique <http://www.idris.fr>`_ (IDRIS), UPS 851 |
 +            +----------------------------------------------------------------------------------------------------------------------+
 |            |                                                                                                                      |
+|            |   * `Olga Abramkina <olga.abramkina@idriss.fr>`_                                                                     |
 |            |   * `Marie Flé <marie.fle@idris.fr>`_                                                                                |
 +------------+----------------------------------------------------------------------------------------------------------------------+
 

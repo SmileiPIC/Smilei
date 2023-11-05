@@ -495,8 +495,12 @@ class Performances(Diagnostic):
 		# Display the data
 		self._plot.set_data( self._np.flipud(A))
 		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
-		ax.collections.remove(self._vlines)
-		ax.collections.remove(self._hlines)
+		try:
+			self._vlines.remove()
+			self._hlines.remove()
+		except:
+			ax.collections.remove(self._vlines)
+			ax.collections.remove(self._hlines)
 		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
 		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
 		return self._plot

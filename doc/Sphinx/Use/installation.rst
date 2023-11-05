@@ -15,6 +15,7 @@ Optional dependencies are:
 * Git
 * Python modules: sphinx, h5py, numpy, matplotlib, pint
 * ffmpeg
+* CUDA for NVIDIA GPUs or HIP-SYCL for AMD GPUs (it is recommended to use the already installed software stack and the support team of a supercomputer you have access to). 
 
 ----
 
@@ -107,6 +108,8 @@ Advanced compilation options
   make config=omptasks                     # use OpenMP task parallelization, not supported by old compilers
   make config=part_event_tracing_tasks_off # trace the use particle operators, without task parallelization
   make config=part_event_tracing_tasks_on  # trace the use particle operators, with OpenMP task parallelization
+  make config="gpu_nvidia noopenmp"        # For Nvidia GPU acceleration
+  make config="gpu_amd"                    # For AMD GPU acceleration
 
 It is possible to combine arguments above within quotes, for instance:
 

@@ -1,6 +1,18 @@
 Highlights
 ----------
 
+Improved performance using GPU offloading
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:program:`Smilei` computational performance has been recently enhanced with GPU offloading support,
+in particular the projection of current has been accelerated with a CUDA kernel while other features 
+have been accelerated with the use of either OpenAcc Pragmas or OpenMP pragmas. 
+
+SMILEI can bes tested on recent supercomputers such as Adastra where it shows great weak scaling efficiency even while using diagnostics as shown in figure below:
+
+.. image:: /_static/weak_scaling_efficiency.png
+    :width: 12cm
+    :align: center
+
 Mitigation of numerical artifacts with relativistic particles 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The staggering in space and time of the electromagnetic fields and the numerical dispersion of electromagnetic solvers

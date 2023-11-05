@@ -33,8 +33,7 @@ def setMatplotLibBackend(show=True):
 		if "matplotlib.pyplot" in sys.modules:
 			print("WARNING: 'show=False' was set earlier. Restart python if you want figures to appear.")
 	matplotlib.rcParams['font.family'] = 'serif'
-	matplotlib.rcParams['font.serif'] = 'Times New Roman'
-	#print(matplotlib.get_backend())
+	matplotlib.rcParams['font.serif'] = ['Times New Roman', 'DejaVu Serif', 'Liberation Serif']
 
 
 def updateMatplotLibColormaps():
