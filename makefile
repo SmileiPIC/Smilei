@@ -361,12 +361,6 @@ $(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
-# Calculate dependencies: special for Params.cpp which needs pyh files
-$(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
-	@echo "Checking dependencies for $<"
-	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
-
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp

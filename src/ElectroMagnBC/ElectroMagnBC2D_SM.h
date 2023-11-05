@@ -19,7 +19,7 @@ class ElectroMagnBC2D_SM : public ElectroMagnBC2D
 public:
 
     ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned int i_boundary );
-    ~ElectroMagnBC2D_SM() {};
+    ~ElectroMagnBC2D_SM();
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
