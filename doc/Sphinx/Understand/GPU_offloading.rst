@@ -1,23 +1,25 @@
 GPU offloading
 ----------------------
 
-In order to be able to be used on most recent supercomputers :program:`Smilei` has been ported on GPUs.
-Although a few key features remain to be implemented such as AM geometry, ionization and PML, the fundamentals of the code are currently accelerated on GPUs
-if GPUs are available.
-
-Initially built to handle complex graphical output and related to rendering and video games, GPUs appeared only relatively recently in the HPC ecosystem.
+To support recent supercomputers, :program:`Smilei` has been ported on GPU (graphical processing units).
+Initially built to handle complex graphical output and related to rendering and video games,
+GPUs appeared only relatively recently in the HPC ecosystem.
 Unlike CPUs, GPUs can do much smaller sets of tasks with massive data throughput.
 
-Currently 7 of the 10 most powerful supercomputers are based on GPU acceleration and everything points to that trend of adding accelerators to continue: The announced exaflopic supercomputers will include GPUs.
+Currently 7 of the 10 most powerful supercomputers are based on GPU acceleration and
+the trend seems confirmed at least in the near future: 
+the announced exaflopic supercomputers will include GPUs.
 
+* Guideline: in general it is recommended to use one patch per GPU
+  to obtain the best performance. However, for better memory management,
+  testing a few patches per GPU is encouraged.
 
-* Guideline using GPU: in general it is better to use one patch per GPU to obtain the best performance out of the GPU  
-
-* Current supported features:
+* Currently supported features:
 
   * Both AMD's GPUs and Nvidia's GPUs are supported
   * Cartesian geometry in 2D and in 3D
-  * Diagnostics: field, probe, scalar, bin, particle tracking 
+  * Diagnostics: Field, Probes, Scalar, ParticleBinning, TrackParticles
   * Moving Window.
 
-* Notable features currently missing: AM geometry, ionization, PML, envelop
+* A few key features remain to be implemented (AM geometry, ionization, PML, envelope,
+  additional physics), but the fundamentals of the code are ported.

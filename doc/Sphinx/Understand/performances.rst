@@ -14,4 +14,4 @@ provide important advantages.
    parallelization
    SDMD
    vectorization
-   
+   GPU_offloading

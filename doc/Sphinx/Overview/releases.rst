@@ -39,12 +39,22 @@ Projects
 
 * In preparation:
 
-  * GPU support
   * Spectral solvers
 
 
 ----
 
+Release 5.0
+^^^^^^^^^^^^^^^^^^^^^
+
+* **GPU support** (not all features are supported at the moment)
+
+  * Both AMD and Nvidia GPUs
+  * Cartesian geometry in 2D and in 3D
+  * Moving Window
+  * Diagnostics: Field, Probes, Scalar, ParticleBinning, TrackParticles 
+
+----
 
 Release 4.8
 ^^^^^^^^^^^^^^^^^^^^^
@@ -104,6 +114,7 @@ Release 4.8
 
 * **For developers**: new table management for Monte-Carlo physical processes (transparent to users)
 
+----
 
 Release 4.7
 ^^^^^^^^^^^^^^^^^^^^^

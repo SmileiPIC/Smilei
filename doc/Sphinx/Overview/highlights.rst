@@ -13,6 +13,8 @@ SMILEI can bes tested on recent supercomputers such as Adastra where it shows gr
     :width: 12cm
     :align: center
 
+----
+
 Mitigation of numerical artifacts with relativistic particles 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The staggering in space and time of the electromagnetic fields and the numerical dispersion of electromagnetic solvers

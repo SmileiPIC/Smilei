@@ -133,13 +133,17 @@ Running on GPU-equiped nodes
 On a supercomputer equipped with GPUs it is necessary to use a binding script.
 Here are two examples: 
 
-With Nvidia GPUs: srun bind_gpu.sh  ./smilei input.py
+With Nvidia GPUs:
+``srun bind_gpu.sh  ./smilei input.py``
 
-With AMD GPUs using cray on Adastra: srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- ./bind ./smilei input.py
+With AMD GPUs using cray on Adastra:
+``srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- ./bind ./smilei input.py``
 
-For the binding scripts themselves, as it depends completely on the node architecture, please contact you admin support team.
+For the binding scripts themselves, as it depends completely on the node
+architecture, please contact your admin support team.
 
-Be aware that GPU support is in development and not all features are currently available. Please refer to the list of current supported features.
+Be aware that GPU support is in development and not all features are currently available.
+Please refer to the list of current supported features.
 
 ----
 
