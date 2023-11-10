@@ -102,6 +102,7 @@ void SmileiMPI_test::init( Params &params, DomainDecomposition *domain_decomposi
     // Initialize patch environment
     patch_count.resize( smilei_sz, 0 );
     Tcapabilities = smilei_sz;
+    use_BTIS3 = params.use_BTIS3;
 
     remove( "patch_load.txt" );
 
