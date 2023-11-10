@@ -761,8 +761,8 @@ void DiagnosticScalar::compute( Patch *patch, int )
             const unsigned int izstart = iFieldStart[2];
             const unsigned int izend   = iFieldEnd[2];
 
-            const double ny = field->dims_[1];
-            const double nz = field->dims_[2];
+            const double ny = field->dims_.size() > 1 ? field->dims_[1]  : 1;
+            const double nz = field->dims_.size() > 2 ? field->dims_[2]  : 1;
 
             double minval = minloc.val;
             double maxval = maxloc.val;
