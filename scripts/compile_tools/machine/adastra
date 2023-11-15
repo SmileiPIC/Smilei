@@ -4,7 +4,7 @@
 # Note:
 #
 # You'll want to compile smilei with the "gpu_amd" config flag enabled:
-# $ make machine="adastra_gpu" config="amd_gpu" -j
+# $ make machine="adastra" config="amd_gpu" -j
 #
 # Each node has 4 MI250X accelerators. An MI250X is made of 2 GCDs which are to 
 # be used as if it was an individual GPU.
@@ -15,7 +15,8 @@
 # module purge
 # module load craype-accel-amd-gfx90a craype-x86-trento
 # module load PrgEnv-cray/8.3.3
-# module load cray-mpich/8.1.21 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
+# module load cpe/23.02
+# module load cray-mpich/8.1.24 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
 # module load amd-mixed/5.2.3
 # module list
 #
