@@ -460,22 +460,23 @@ void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 
 void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
 {
-
-   double sign = -1.;
+   double sign = 1.;
    for (unsigned int i=0; i< imode; i++) sign *= -1;
 
    if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
            //Fold rho
            for( unsigned int j=1 ; j<3; j++ ) {
-               rhoj[i+j] += sign * rhoj[i-j];
-               rhoj[i-j]  = sign * rhoj[i+j];
+               rhoj[i+j] += -sign * rhoj[i-j]; // not sur for modes > 0 
            }
            //Apply BC
            if (imode > 0){
                rhoj[i] = 0.;
+               rhoj[i-1]  = - rhoj[i+1];
            } else {
-               rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+               //rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+               rhoj[i] = rhoj[i+1];
+               rhoj[i-1]  = rhoj[i+1];
            }
        }
    }
@@ -484,14 +485,16 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
        for( unsigned int i=2 ; i<(npriml_+1)*nprimr_+2; i+=nprimr_ ) {
            //Fold Jl
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jl [i+j] +=  sign * Jl[i-j];
-               Jl[i-j]   =  sign * Jl[i+j];
+               Jl [i+j] +=  -sign * Jl[i-j];
             }
             if (imode > 0){
                 Jl [i] = 0. ;
+                Jl[i-1]   =  -Jl[i+1];
            } else {
                 //Force dJl/dr = 0 at r=0.
-                Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+                Jl [i] =  Jl [i+1] ;
+                Jl [i-1] =  Jl [i+1] ;
            }
        }
    }
@@ -502,12 +505,12 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            int ilocr = i*(nprimr_+1)+3;
            //Fold Jt
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jt [iloc+j] += -sign * Jt[iloc-j];
-               Jt[iloc-j]   = -sign * Jt[iloc+j];
+               Jt [iloc+j] += sign * Jt[iloc-j];
+               //Jt[iloc-j]   = -sign * Jt[iloc+j];
            }
            for( unsigned int j=0 ; j<3; j++ ) {
-               Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-               Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+               Jr [ilocr+2-j] += sign * Jr [ilocr-3+j];
+               //Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
            }
 
            if (imode == 1){
@@ -517,6 +520,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
                Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
            } else{
                Jt [iloc] = 0. ;
+               Jt [iloc-1] = -Jt [iloc+1] ;
                //Force dJr/dr = 0 and Jr=0 at r=0.
                //Jr [ilocr] =  Jr [ilocr+1]/9.;
                Jr [ilocr-1] = -Jr [ilocr];
