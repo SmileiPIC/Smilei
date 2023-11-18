@@ -168,6 +168,18 @@ As of November 2021, 90 papers have been published covering a broad range of top
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
 
+.. [Yan2022]
+
+    X. Yan, Y. Wu, X. Geng, H. Zhang, B. Shen and L. Ji,
+    `Generation of polarized proton beams with gaseous targets from CO2-laser-driven collisionless shock acceleration`,
+    `Physics of Plasmas 29, 053101 (2022) <https://doi.org/10.1063/5.0084870>`_
+
+.. [Chen2022]
+
+    Q. Chen, D. Maslarova, J. Wang, S. X. Lee, V. Horný and D. Umstadter,
+    `Transient Relativistic Plasma Grating to Tailor High-Power Laser Fields, Wakefield Plasma Waves, and Electron Injection`,
+    `Physical Review Letters 128, 164801 (2022) <https://doi.org/10.1103/PhysRevLett.128.164801>`_
+
 .. [Glek2022b]
 
      P. B. Glek and A. M. Zheltikov,

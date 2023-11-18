@@ -4,7 +4,7 @@
 # Note:
 #
 # You'll want to compile smilei with the "gpu_amd" config flag enabled:
-# $ make machine="adastra_gpu" config="amd_gpu" -j
+# $ make machine="adastra" config="amd_gpu" -j
 #
 # Each node has 4 MI250X accelerators. An MI250X is made of 2 GCDs which are to 
 # be used as if it was an individual GPU.
@@ -15,7 +15,8 @@
 # module purge
 # module load craype-accel-amd-gfx90a craype-x86-trento
 # module load PrgEnv-cray/8.3.3
-# module load cray-mpich/8.1.21 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
+# module load cpe/23.02
+# module load cray-mpich/8.1.24 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
 # module load amd-mixed/5.2.3
 # module list
 #
@@ -54,7 +55,7 @@ endif
 # Warning flags
 ################################################################################
 
-ADASTRA_WARNING_FLAGS := #-Wextra -pedantic -fdiagnostics-show-option -fstrict-aliasing -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-aliasing -Wsuggest-override -Wswitch-default -Wswitch-enum -Wtautological-compare -Wundef -Wunreachable-code
+# ADASTRA_WARNING_FLAGS := -Wextra -pedantic -fdiagnostics-show-option -fstrict-aliasing -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-aliasing -Wsuggest-override -Wswitch-default -Wswitch-enum -Wtautological-compare -Wundef -Wunreachable-code
 # ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
 ################################################################################
@@ -76,7 +77,7 @@ ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADAS
 # To check for leaks, use this feature
 # ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address # -fsanitize=undefined
 # -g and -ggdb have no know runtime overhead expect for program size
-ADASTRA_DEBUG_FLAGS           := #-g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS) -v # --cray-print-opts=all -craype-verbose
+ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS) -v # --cray-print-opts=all -craype-verbose
 
 ################################################################################
 # Omp flags
@@ -142,7 +143,11 @@ ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP)
 # libamdhip64. In addition, libmpi_gtl_hsa.so has libamdhip64 as a dependency so
 # the resulting executable will depend on libamdhip64 wether we like it or not.
 
-ADASTRA_LIBRARIES_HIP := -L$(ROCM_PATH)/lib -lamdhip64
+
+ifneq (,$(call parse_config,gpu_amd))
+    # Use C++14 as required by rocThrust
+	ADASTRA_LIBRARIES_HIP := -L$(ROCM_PATH)/lib -lamdhip64
+endif
 
 ADASTRA_LIBRARIES := $(ADASTRA_LIBRARIES_OMP_STATIC) $(ADASTRA_LIBRARIES_MPI) $(ADASTRA_LIBRARIES_HIP)
 
@@ -154,9 +159,9 @@ ADASTRA_LIBRARIES := $(ADASTRA_LIBRARIES_OMP_STATIC) $(ADASTRA_LIBRARIES_MPI) $(
 # ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesn't work as expected
 ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += #$(ADASTRA_WARNING_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += #$(ADASTRA_DEBUG_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_DEBUG_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OMP_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 # ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # Disabled due to unsupported option '-fopenmp-targets=' for language mode 'HIP'
@@ -164,9 +169,9 @@ ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS)
 ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_INCLUDES)
 
 CXXFLAGS += $(ADASTRA_FEATURE_FLAGS)
-CXXFLAGS += #$(ADASTRA_WARNING_FLAGS)
+CXXFLAGS += $(ADASTRA_WARNING_FLAGS)
 CXXFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
-CXXFLAGS += #$(ADASTRA_DEBUG_FLAGS)
+CXXFLAGS += $(ADASTRA_DEBUG_FLAGS)
 CXXFLAGS += $(ADASTRA_OMP_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added
