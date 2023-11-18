@@ -100,7 +100,8 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                     ( *Br )( i, 1 )=( *Br )( i, 3 );
                 }
                 for( unsigned int i=0; i<nl_d ; i++ ) {
-                    ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
+                    //( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
+                    ( *Bt )( i, j )= ( *Bt )( i, j+1 );
                 }
 
             } else { // modes > 1
