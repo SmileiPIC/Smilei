@@ -105,7 +105,9 @@ void ElectroMagnBC3D_SM::save_fields( Field *my_field, Patch *patch )
             xyz = 1;
         } else if( field3D->name=="Bz" ) {
             xyz = 2;
-        }
+        } else {
+            return;
+       }
         
         if( axis0_ == 0 ) {
             field3D->extract_slice_yz( iB_[xyz], B_val[xyz] );
