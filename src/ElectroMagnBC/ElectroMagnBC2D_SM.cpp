@@ -87,7 +87,7 @@ void ElectroMagnBC2D_SM::save_fields( Field *my_field, Patch *patch )
             xyz = 1;
         } else if( field2D->name=="Bz" ) {
             xyz = 2;
-        } else
+        } else {
             return;
         }
         
