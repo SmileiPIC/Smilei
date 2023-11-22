@@ -83,7 +83,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                     //( *Et )( i, j )= -1./3.*( 4.*Icpx*( *Er )( i, j+1 )+( *Et )( i, j+1 ) );
-                    ( *Et )( i, j )= -Icpx/8.*( 9.*( *Er )( i, j+1 )-( *Er )( i, j+2 ) );
+                    //( *Et )( i, j )= -Icpx/8.*( 9.*( *Er )( i, j+1 )-( *Er )( i, j+2 ) );
+                    ( *Et )( i, j )= -Icpx*( *Er )( i, j+1 );
                     ( *Et )( i, j-1 )=( *Et )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {
