@@ -485,7 +485,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
        for( unsigned int i=2 ; i<(npriml_+1)*nprimr_+2; i+=nprimr_ ) {
            //Fold Jl
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jl [i+j] +=  -sign * Jl[i-j];
+               Jl [i+j] +=  sign * Jl[i-j];
             }
             if (imode > 0){
                 Jl [i] = 0. ;
@@ -493,7 +493,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            } else {
                 //Force dJl/dr = 0 at r=0.
                 //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
-                Jl [i] =  Jl [i+1] ;
+                //Jl [i] =  Jl [i+1] ;
                 Jl [i-1] =  Jl [i+1] ;
            }
        }
@@ -505,20 +505,23 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            int ilocr = i*(nprimr_+1)+3;
            //Fold Jt
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jt [iloc+j] += sign * Jt[iloc-j];
+               Jt [iloc+j] -= sign * Jt[iloc-j];
                //Jt[iloc-j]   = -sign * Jt[iloc+j];
            }
            for( unsigned int j=0 ; j<3; j++ ) {
-               Jr [ilocr+2-j] += sign * Jr [ilocr-3+j];
+               Jr [ilocr+2-j] -= sign * Jr [ilocr-3+j];
                //Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
            }
 
            if (imode == 1){
-               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-               Jt [iloc-1] = Jt [iloc+1] ;
-               //Force dJr/dr = 0 at r=0.
-               //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-               Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+               Jr [ilocr-1] = Jr [ilocr];
+               Jt [iloc]= -Icpx*Jr[ilocr];
+
+               //Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
+               //Jt [iloc-1] = Jt [iloc+1] ;
+               ////Force dJr/dr = 0 at r=0.
+               ////Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
+               //Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
            } else{
                Jt [iloc] = 0. ;
                Jt [iloc-1] = -Jt [iloc+1] ;
