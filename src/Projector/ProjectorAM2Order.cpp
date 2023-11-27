@@ -460,8 +460,7 @@ void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 
 void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
 {
-
-   double sign = -1.;
+   double sign = 1.;
    for (unsigned int i=0; i< imode; i++) sign *= -1;
 
    if (diag_flag && rhoj) {
@@ -469,13 +468,15 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            //Fold rho
            for( unsigned int j=1 ; j<3; j++ ) {
                rhoj[i+j] += sign * rhoj[i-j];
-               rhoj[i-j]  = sign * rhoj[i+j];
            }
            //Apply BC
            if (imode > 0){
                rhoj[i] = 0.;
+               rhoj[i-1]  = - rhoj[i+1];
            } else {
+	       //This is just for cosmetics on the picture, rho has no influence on the results
                rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+               rhoj[i-1]  = rhoj[i+1];
            }
        }
    }
@@ -484,14 +485,14 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
        for( unsigned int i=2 ; i<(npriml_+1)*nprimr_+2; i+=nprimr_ ) {
            //Fold Jl
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jl [i+j] +=  sign * Jl[i-j];
-               Jl[i-j]   =  sign * Jl[i+j];
+               Jl [i+j] +=  sign * Jl[i-j]; //Add even modes, substract odd modes since el(theta=0 = el(theta=pi) at all r.
             }
             if (imode > 0){
                 Jl [i] = 0. ;
+                Jl[i-1]   =  -Jl[i+1];
            } else {
-                //Force dJl/dr = 0 at r=0.
-                Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+		//Jl mode 1 on axis is left as is. It looks over estimated but it is necessary to conserve a correct divergence and a proper evaluation on the field on axis.
+                Jl [i-1] =  Jl [i+1] ;
            }
        }
    }
@@ -502,24 +503,19 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            int ilocr = i*(nprimr_+1)+3;
            //Fold Jt
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jt [iloc+j] += -sign * Jt[iloc-j];
-               Jt[iloc-j]   = -sign * Jt[iloc+j];
+               Jt [iloc+j] -= sign * Jt[iloc-j]; // substract pair modes, add odd modes since et(theta=0 = -et(theta=pi) at all r.
            }
            for( unsigned int j=0 ; j<3; j++ ) {
-               Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-               Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+               Jr [ilocr+2-j] -= sign * Jr [ilocr-3+j];// substract pair modes, add odd modes since er(theta=0 = -er(theta=pi) at all r.
            }
 
            if (imode == 1){
-               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-               //Force dJr/dr = 0 at r=0.
-               //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-               Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+               Jr [ilocr-1] = Jr [ilocr]; // dJr/dr mode 1 = 0 on axis
+               Jt [iloc]= -Icpx*Jr[ilocr]; // Jt mode 1 = -I Jr mode 1 on axis to keep div(J) = 0.
            } else{
-               Jt [iloc] = 0. ;
-               //Force dJr/dr = 0 and Jr=0 at r=0.
-               //Jr [ilocr] =  Jr [ilocr+1]/9.;
-               Jr [ilocr-1] = -Jr [ilocr];
+               Jt [iloc] = 0. ; // only mode 1 is non zero on axis
+               Jt [iloc-1] = -Jt [iloc+1]; // only mode 1 is non zero on axis
+               Jr [ilocr-1] = -Jr [ilocr]; // only mode 1 is non zero on axis
            }
        }
    }
