@@ -71,8 +71,6 @@ As of November 2021, 90 papers have been published covering a broad range of top
      `Modeling of a Liquid Leaf Target TNSA Experiment Using Particle-In-Cell Simulations and Deep Learning`,
      `Laser and Particle Beams, 2868112 (2023) <https://doi.org/10.1155/2023/2868112>`_
      
-
-       
 .. [Paschke_Bruehl2023]
 
     F. Paschke-Bruehl, M. Banjafar, M. Garten, L. G. Huang, B. E. Marré, M. Nakatsutsumi, L. Randolph, T. E. Cowan, U. Schramm and T. Kluge,
@@ -371,8 +369,8 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
   Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
 
-  
-  .. [Tomassini2021]
+
+.. [Tomassini2021]
 
     Paolo Tomassini, Francesco Massimo, Luca Labate and Leonida A. Gizzi,
     `Accurate electron beam phase-space theory for ionization-injection schemes driven by laser pulses`,
