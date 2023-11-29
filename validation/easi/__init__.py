@@ -556,6 +556,7 @@ class Validation(object):
         
         return benchmarks
 
+    #Compare the results of given "simulation_dir" to the reference results of the given benchname.
     def compare(self, benchname, simulation_dir):
         from os import chdir
         from .tools import execfile
@@ -569,6 +570,18 @@ class Validation(object):
             print("The validation procedure failed.")
         else:
             print("PASS")
+
+    #Generate reference from an already existing directory
+    def generate_reference(self, benchname, simulation_dir):
+        from os import chdir
+        from .tools import execfile
+        global _dataNotMatching
+        _dataNotMatching = False
+        validation_script = self.smilei_path.analyses + "validate_" + benchname
+        Validate = self.CreateReference(self.smilei_path.references, benchname)
+        chdir(simulation_dir)
+        execfile(validation_script, {"Validate":Validate})
+        Validate.write()
     
     # DEFINE A CLASS TO CREATE A REFERENCE
     class CreateReference(object):
