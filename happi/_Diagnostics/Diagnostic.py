@@ -129,6 +129,7 @@ class Diagnostic(object):
 		--------
 		A list of [min, max] for each axis.
 		"""
+		assert self.dim <= 2, "Method limits() may only be used in 1D or 2D"
 		self._prepare1()
 		l = []
 		factor = [self._xfactor, self._yfactor]

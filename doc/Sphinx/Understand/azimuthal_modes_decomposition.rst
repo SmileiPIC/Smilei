@@ -384,13 +384,13 @@ Equations :eq:`transverse_on_axis` can have a non zero solution only for :math:`
 We therefore conclude that all modes must cancel on axis except for :math:`m=1`.
 
 .. math::
-   E_{\theta}^{m>1}[2] = 0
+   \tilde{E_{\theta}}^{m>1}[2] = 0
 
-   B_r^{m>1}[2] = 0
+   \tilde{B_r}^{m>1}[2] = 0
 
-   E_r^{m>1}[2] = -E_r^{m>1}[3]
+   \tilde{E_r}^{m>1}[2] = -\tilde{E_r}^{m>1}[3]
 
-   B_{\theta}^{m>1}[2] = -B_{\theta}^{m>1}[3]
+   \tilde{B_{\theta}}^{m>1}[2] = -\tilde{B_{\theta}}^{m>1}[3]
 
 Let's now write the Gauss law for mode :math:`m=1`:
 
@@ -407,49 +407,19 @@ The continuity equation on axis and written in cylindrical coordinates becomes:
 
 Eq. :eq:`transverse_on_axis` already establishes that the first term is zero.
 It is only necessary to cancel the second term.
-
-In order to do so, let's build an uncentered finite dfference scheme of the second order.
-Simple Taylor developments give for any quantity :math:`u`:
+To ensure this derivative cancels on axis we simply pick:
 
 .. math::
-   u(x+\frac{dx}{2})=u(x)+\frac{dx}{2}u'(x)+\frac{dx^2}{8}u''(x)+O(dx3)
+   \tilde{E_r}^{m=1}[2] = \tilde{E}_r^{m=1}[3]
 
-   u(x+\frac{3dx}{2})=u(x)+\frac{3dx}{2}u'(x)+\frac{9dx^2}{8}u''(x)+O(dx3)
-
-By combination we obtain the scheme we are looking for:
+And equation :eq:`transverse_on_axis` then gives 
 
 .. math::
-   u'(x) = \frac{9u(x+\frac{dx}{2})-u(x+\frac{3dx}{2})-8u(x)}{3dx}
-
-We can therefore write:
-
-.. math::
-   \frac{\partial \tilde{E_r}^{m=1}}{\partial r}(r=0)= 9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})-8\tilde{E_r}^{m=1}(r=0) = 0
-
-which gives:
-
-.. math::
-   \tilde{E_r}^{m=1}(r=0)=\frac{1}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
-
-And from :eq:`transverse_on_axis` this turns into:
-
-.. math::
-   \tilde{E_{\theta}}^{m=1}(r=0)=\frac{-i}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
-
-giving the corresponding boundary condition for :math:`E_{\theta}^{m=1}`:
-
-.. math::
-   E_{\theta}^{m=1}[2] = \frac{-i}{8}\left(9E_r^{m=1}[3]-E_r^{m=1}[4]\right)
-
-Once :math:`E_{\theta}^{m=1}` is defined on axis,  we need to pick :math:`E_r^{m=1}` so that :eq:`transverse_on_axis` is matched.
-With a linear interpolation we obtain:
-
-.. math::
-   E_r^{m=1}[2] = 2iE_{\theta}^{m=1}[2]-E_r^{m=1}[3]
+   \tilde{E_{\theta}}^{m=1}[2] = -i\tilde{E_r}^{m=1}[3]
 
 All the equation derived here are also valid for the magnetic field.
 But because of a different duality, it is more convenient to use a different approach.
-The equations :eq:`MaxwellEqsAzimuthalModes` has a :math:`\frac{E_l}{r}` term in the expression of :math:`B_r` which makes it undefined on axis.
+The equations :eq:`MaxwellEqsAzimuthalModes` has a :math:`\frac{\tilde{E_l}}{r}` term in the expression of :math:`B_r` which makes it undefined on axis.
 Nevertheless, we need to evaluate this term for the mode :math:`m=1` and it can be done as follows.
 
 .. math::

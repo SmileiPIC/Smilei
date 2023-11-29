@@ -46,6 +46,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+
+.. [Jonnerby2023]
+
+      J. Jonnerby, A. von Boetticher, J. Holloway, L. Corner, A. Picksley, A. J. Ross, R. J. Shalloo , C. Thornton, N. Bourgeois, R. Walczak, and S. M. Hooker,
+      `Measurement of the decay of laser-driven linear plasma wakefields`,
+      `Phys. Rev. E 108, 055211  (2023) <https://link.aps.org/doi/10.1103/PhysRevE.108.055211>`_
+         
 .. [Drobniak2023]
 
       P. Drobniak, E. Baynard, C. Bruni, K. Cassou, C. Guyot, G. Kane, S. Kazamias, V. Kubytskyi, N. Lericheux, B. Lucas, M. Pittman, F. Massimo, A. Beck, A. Specka, P. Nghiem, and D. Minenna,

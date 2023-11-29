@@ -154,9 +154,11 @@ class Probe(Diagnostic):
 		
 		self._selection = tuple(s if type(s) is slice else slice(s,s+1) for s in self._selection)
 		
+		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
+			self._limits = [[self._centers[0].min(), self._centers[0].max()]]
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
@@ -197,6 +199,7 @@ class Probe(Diagnostic):
 			#Y = self._np.maximum( Y, 0.)
 			#Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
+			self._limits = [[X.min(), X.max()],[Y.min(), Y.max()]]
 
 		# Prepare the reordering of the points for patches disorder
 		tmpShape = self._initialShape
@@ -332,6 +335,22 @@ class Probe(Diagnostic):
 	def changeField(self, field):
 		self._loadField(field)
 		self._prepareUnits()
+	
+	# Method to obtain the plot limits
+	def limits(self):
+		"""Gets the overall limits of the diagnostic along its axes
+
+		Returns:
+		--------
+		A list of [min, max] for each axis.
+		"""
+		assert self.dim <= 2, "Method limits() may only be used in 1D or 2D"
+		self._prepare1()
+		l = []
+		factor = [self._xfactor, self._yfactor]
+		for i in range(self.dim):
+			l.append([self._limits[i][0]*factor[i], self._limits[i][1]*factor[i]])
+		return l
 	
 	# get all available fields
 	def getFields(self):
