@@ -128,7 +128,7 @@ administrators.
 ----
 
 Running on GPU-equiped nodes
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 On a supercomputer equipped with GPUs it is necessary to use a binding script.
 Here are two examples: 

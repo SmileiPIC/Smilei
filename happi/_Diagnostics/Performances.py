@@ -442,12 +442,11 @@ class Performances(Diagnostic):
 
 			if self._verbose: print("Successfully exported to VTK, folder='"+self._exportDir)
 
-	def _prepare4(self):
-		if self._mode == "map" and self._ndim_fields==2:
-			self._extent = [
-				0., self._xfactor*self._number_of_patches[0]*self._patch_length[0],
-				0., self._yfactor*self._number_of_patches[1]*self._patch_length[1]
-			]
+	def _prepareExtent(self):
+		self._extent = [
+			self._xfactor*self._xoffset, self._xfactor*( self._xoffset + self._number_of_patches[0]*self._patch_length[0] ),
+			self._yfactor*self._yoffset, self._yfactor*( self._yoffset + self._number_of_patches[1]*self._patch_length[1] )
+		]
 	
 	def _calculateMPIcontours_2D(self):
 		# Add lines to visualize MPI contours
@@ -462,9 +461,9 @@ class Performances(Diagnostic):
 			vlines_i += [ self._np.full((len(j)//2), i, dtype=self._np.uint32) ]
 			vlines_jmin += [ j[ 0::2 ] ]
 			vlines_jmax += [ j[ 1::2 ] ]
-		vlines_i    = self._np.concatenate( vlines_i    )*self._xfactor*self._patch_length[0]
-		vlines_jmin = self._np.concatenate( vlines_jmin )*self._yfactor*self._patch_length[1]
-		vlines_jmax = self._np.concatenate( vlines_jmax )*self._yfactor*self._patch_length[1]
+		vlines_i    = (self._xoffset + self._np.concatenate( vlines_i    )*self._patch_length[0])*self._xfactor
+		vlines_jmin = (self._yoffset + self._np.concatenate( vlines_jmin )*self._patch_length[1])*self._yfactor
+		vlines_jmax = (self._yoffset + self._np.concatenate( vlines_jmax )*self._patch_length[1])*self._yfactor
 
 		# Horizontal lines
 		hlines_j    = []
@@ -477,9 +476,9 @@ class Performances(Diagnostic):
 			hlines_j += [ self._np.full((len(i)//2), j, dtype=self._np.uint32) ]
 			hlines_imin += [ i[ 0::2 ] ]
 			hlines_imax += [ i[ 1::2 ] ]
-		hlines_j    = self._np.concatenate( hlines_j    )*self._yfactor*self._patch_length[1]
-		hlines_imin = self._np.concatenate( hlines_imin )*self._xfactor*self._patch_length[0]
-		hlines_imax = self._np.concatenate( hlines_imax )*self._xfactor*self._patch_length[0]
+		hlines_j    = (self._yoffset + self._np.concatenate( hlines_j    )*self._patch_length[1])*self._yfactor
+		hlines_imin = (self._xoffset + self._np.concatenate( hlines_imin )*self._patch_length[0])*self._xfactor
+		hlines_imax = (self._xoffset + self._np.concatenate( hlines_imax )*self._patch_length[0])*self._xfactor
 		
 		return vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax
 	
