@@ -47,6 +47,37 @@ As of November 2021, 90 papers have been published covering a broad range of top
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
+
+.. [Vallieres2023]
+
+    S. Vallières, J. Powell, T. Connell, M. Evans, M. Lytova, F. Fillion-Gourdeau, S. Fourmaux, S. Payeur, P. Lassonde, S. MacLean, and F. Légaré,
+    `High Dose-Rate MeV Electron Beam from a Tightly-Focused Femtosecond IR Laser in Ambient Air`,
+    `Laser and Photonics Review 23000782300078 (2023) <https://doi.org/10.1002/lpor.202300078>`_
+
+.. [Starodubtseva2023]
+
+    E. Starodubtseva, I. Tsymbalov, D. Gorlova, K. Ivanov, and A. Savel'ev,
+    `Low energy electron injection for direct laser acceleration`,
+    `Phys. Plasmas 30, 083105 (2023) <https://doi.org/10.1063/5.0155196>`_
+
+.. [Maffini2023]
+
+    A. Maffini, F. Mirani, M. Galbiati, K. Ambrogioni, F. Gatti, M. S. G. De Magistris, D. Vavassori, D. Orecchia, D. Dellasega, V. Russo, M. Zavelani-Rossi and M. Passoni,
+    `Towards compact laser-driven accelerators: exploring the potential of advanced double-layer targets`,
+    `EPJ Techniques and Instrumentation 10, 15 (2023) <https://doi.org/10.1140/epjti/s40485-023-00102-8>`_
+       
+.. [Guskov2023]
+
+    S. Yu. Gus'kov, Ph. Korneev, and M. Murakami,
+    `Laser-driven electrodynamic implosion of fast ions in a thin shell`,
+    `Matter Radiat. Extremes 8, 056602 (2023) <https://doi.org/10.1063/5.0156113>`_
+
+.. [RezaeiPandari2023]
+
+    M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, T. G. Pak, S. B. Kim, G. W. Lee, R. Massudi, A. R. Niknam, S. K. Lee, K.-Y. Kim, and C. H. Nam,
+    `Laser Wakefield Electron Acceleration with Polarization-Dependent Ionization Injection`,
+    `Physical Review Applied 20, 034026 (2023) <http://dx.doi.org/10.1103/PhysRevApplied.20.034026>`_
+    
 .. [Jonnerby2023]
 
       J. Jonnerby, A. von Boetticher, J. Holloway, L. Corner, A. Picksley, A. J. Ross, R. J. Shalloo , C. Thornton, N. Bourgeois, R. Walczak, and S. M. Hooker,
