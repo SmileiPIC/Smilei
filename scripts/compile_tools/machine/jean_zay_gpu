@@ -6,12 +6,12 @@
 # http://www.idris.fr/jean-zay
 #
 
-SMILEICXX.DEPS = g++
+SMILEICXX.DEPS = $(SMILEICXX)
 THRUSTCXX = nvcc
 
 ACCELERATOR_GPU_FLAGS += -w
 # IDRIS config for curand
-ACCELERATOR_GPU_FLAGS += -ta=tesla:cc70 -std=c++14  -lcurand 
+ACCELERATOR_GPU_FLAGS += -acc=gpu -gpu=cc70 -std=c++14 -cudalib=curand
 # ACCELERATOR_GPU_FLAGS += --expt-relaxed-constexpr
 
 ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
@@ -30,5 +30,5 @@ ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_OPENACC_MODE
 # ACCELERATOR_GPU_KERNEL_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
 # LDFLAGS                      += -mp=gpu
 
-LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
+LDFLAGS += -acc=gpu -gpu=cc70 -std=c++14 -cudalib=curand -lcudart -lacccuda
 CXXFLAGS +=  -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1

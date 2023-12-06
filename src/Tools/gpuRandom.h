@@ -2,8 +2,8 @@
 #define GPU_RANDOM
 
 #if defined( SMILEI_OPENACC_MODE )
-    // #include <openacc_curand.h>
-    #include "curand_kernel.h"
+    #include <openacc_curand.h>
+    //#include "curand_kernel.h"
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     // #define __HIP_PLATFORM_HCC__
     // #define __HIP_PLATFORM_AMD__
