@@ -35,6 +35,7 @@
 #include "LaserEnvelope.h"
 #include "BinaryProcesses.h"
 #include "CollisionalNuclearReaction.h"
+#include <unistd.h>
 
 using namespace std;
 
@@ -49,11 +50,9 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
     dump_minutes( 0.0 ),
     exit_after_dump( true ),
     time_reference( MPI_Wtime() ),
-    time_dump_step( 0 ),
     keep_n_dumps( 2 ),
     keep_n_dumps_max( 10000 ),
     dump_deflate( 0 ),
-    dump_request( smpi->getSize() ),
     file_grouping( 0 )
 {
 
@@ -66,7 +65,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
 
         PyTools::extract( "dump_minutes", dump_minutes, "Checkpoints"  );
         if( dump_minutes > 0 ) {
-            MESSAGE( 1, "Code will stop after " << dump_minutes << " minutes" );
+            MESSAGE( 1, "Code will dump after " << dump_minutes << " minutes" );
         }
 
         PyTools::extract( "keep_n_dumps", keep_n_dumps, "Checkpoints"  );
@@ -186,40 +185,27 @@ Checkpoint::~Checkpoint() {}
 
 void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params )
 {
-
-    // check for excedeed time
-    if( dump_minutes != 0.0 ) {
-        int tagUB = smpi->getTagUB();
+    bool dump_now = false;
+    
+    // Find out whether we should make a checkpoint due to dump_minutes
+    if( dump_minutes != 0. ) {
         // master checks whenever we passed the time limit
-        if( smpi->isMaster() && time_dump_step==0 ) {
-            double elapsed_time = ( MPI_Wtime() - time_reference )/60.;
-            if( elapsed_time > dump_minutes ) {
-                time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
-                MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
-                // master does a non-blocking send
-                for( unsigned int dest=0; dest < ( unsigned int ) smpi->getSize(); dest++ ) {
-                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->world(), &dump_request[dest] );
-                }
-            }
-        } else { // non master nodes receive the time_dump_step (non-blocking)
-            int todump=0;
-            MPI_Iprobe( 0, tagUB, MPI_COMM_WORLD, &todump, &dump_status_prob );
-            if( todump ) {
-                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->world(), &dump_status_recv );
-            }
+        if( smpi->isMaster() &&  MPI_Wtime() - time_reference > dump_minutes * 60. ) {
+            dump_now = true;
         }
-        smpi->barrier();
+        // Broadcast the result
+        MPI_Bcast( &dump_now, 1, MPI_CXX_BOOL, 0, smpi->world() );
     }
-
-    if( signal_received!=0 ||
-            ( dump_step != 0 && ( ( itime-this_run_start_step ) % dump_step == 0 ) ) ||
-            ( time_dump_step!=0 && itime==time_dump_step ) ) {
+    
+    // Dump if at requested timestep
+    dump_now = dump_now || ( dump_step != 0 && ( ( itime-this_run_start_step ) % dump_step == 0 ) );
+    
+    if( signal_received != 0 || dump_now ) {
         dumpAll( vecPatches, region, itime,  smpi, simWindow, params );
         if( exit_after_dump || ( ( signal_received!=0 ) && ( signal_received != SIGUSR2 ) ) ) {
-            exit_asap=true;
+            exit_asap = true;
         }
-        signal_received=0;
-        time_dump_step=0;
+        signal_received = 0;
         time_reference = MPI_Wtime();
     }
 }
