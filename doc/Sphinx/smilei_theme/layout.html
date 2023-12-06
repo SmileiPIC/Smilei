@@ -65,7 +65,7 @@
             {%- if entry == title %}
         </ul>
                 {{ toc }}
-        <ul>
+        <ul id="smallScreenMenuAfterTOC">
             {%- else %}
             <li class="outer">
                 <a href="{{ url }}">{{ entry }}</a>
@@ -191,7 +191,7 @@
             </svg>
         </div>
         
-        <div id="smallScreenMenuButton" onclick="toggleSmallScreenMenu(event)">
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
             <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
                viewBox="-20 -20 140 140">
               <g  style="fill:#ffffff;stroke:none;">
@@ -227,6 +227,9 @@
 {%- block footer %}
     <div class="footer">
       <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
       <a href="site.html">Site index</a>
       </div>
       {%- if last_updated %}
@@ -261,6 +264,21 @@
         for( var i=0; i<menus.length; i++ )
             menus[i].active = false;
         
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type=="dark" || theme == "light" ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+            }
+        }
+        if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+            switchTheme("dark");
+        }
         
         var ul = nav_list.getElementsByTagName("ul")[0], li;
         var keep_nav = false;
@@ -295,7 +313,6 @@
         }
         
         function toggleSmallScreenMenu(e) {
-            e.preventDefault();
             if( smallScreenMenu.className != "on" ) {
                 smallScreenMenu.className = "on";
                 smallScreenMenuButton.className = "pushed";
@@ -304,6 +321,14 @@
                 smallScreenMenu.className = "off";
                 smallScreenMenuButton.className = "";
                 document.documentElement.style.overflow = "";
+            }
+        }
+        
+        var smallScreenMenuTOC = document.getElementById("smallScreenMenuAfterTOC").previousElementSibling
+            .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+        for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+            if (smallScreenMenuTOC[i].tagName = "a") {
+                smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
             }
         }
         
