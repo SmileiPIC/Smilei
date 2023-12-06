@@ -267,16 +267,25 @@
         // Manage theme
         var theme="light";
         function switchTheme(type) {
-            if( type=="dark" || theme == "light" ) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
                 theme = "dark";
                 document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
             } else {
                 theme = "light";
                 document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
             }
         }
-        if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            theme = "dark";
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
             switchTheme("dark");
         }
         
@@ -324,11 +333,13 @@
             }
         }
         
-        var smallScreenMenuTOC = document.getElementById("smallScreenMenuAfterTOC").previousElementSibling
-            .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
-        for (var i = 0; i < smallScreenMenuTOC.length; i++) {
-            if (smallScreenMenuTOC[i].tagName = "a") {
-                smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
             }
         }
         
