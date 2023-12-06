@@ -498,19 +498,7 @@ class ParticleBinning(Diagnostic):
 		if self.auto_axes:
 			self._updateAxes(t)
 			if len(self._shape) > 1:
-				# prepare extent for 2d plots
-				self._extent = [
-					self._xfactor*self._centers[0][0],
-					self._xfactor*self._centers[0][-1],
-					self._yfactor*self._centers[1][0],
-					self._yfactor*self._centers[1][-1]
-				]
-				if self._log[0]:
-					self._extent[0] = self._np.log10(self._extent[0])
-					self._extent[1] = self._np.log10(self._extent[1])
-				if self._log[1]:
-					self._extent[2] = self._np.log10(self._extent[2])
-					self._extent[3] = self._np.log10(self._extent[3])
+				self._prepareExtent()
 		# Get arrays from all requested diagnostics
 		A = {}
 		for d in self._diags:

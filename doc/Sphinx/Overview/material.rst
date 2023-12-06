@@ -46,6 +46,44 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+
+
+.. [Vallieres2023]
+
+    S. Vallières, J. Powell, T. Connell, M. Evans, M. Lytova, F. Fillion-Gourdeau, S. Fourmaux, S. Payeur, P. Lassonde, S. MacLean, and F. Légaré,
+    `High Dose-Rate MeV Electron Beam from a Tightly-Focused Femtosecond IR Laser in Ambient Air`,
+    `Laser and Photonics Review 23000782300078 (2023) <https://doi.org/10.1002/lpor.202300078>`_
+
+.. [Starodubtseva2023]
+
+    E. Starodubtseva, I. Tsymbalov, D. Gorlova, K. Ivanov, and A. Savel'ev,
+    `Low energy electron injection for direct laser acceleration`,
+    `Phys. Plasmas 30, 083105 (2023) <https://doi.org/10.1063/5.0155196>`_
+
+.. [Maffini2023]
+
+    A. Maffini, F. Mirani, M. Galbiati, K. Ambrogioni, F. Gatti, M. S. G. De Magistris, D. Vavassori, D. Orecchia, D. Dellasega, V. Russo, M. Zavelani-Rossi and M. Passoni,
+    `Towards compact laser-driven accelerators: exploring the potential of advanced double-layer targets`,
+    `EPJ Techniques and Instrumentation 10, 15 (2023) <https://doi.org/10.1140/epjti/s40485-023-00102-8>`_
+       
+.. [Guskov2023]
+
+    S. Yu. Gus'kov, Ph. Korneev, and M. Murakami,
+    `Laser-driven electrodynamic implosion of fast ions in a thin shell`,
+    `Matter Radiat. Extremes 8, 056602 (2023) <https://doi.org/10.1063/5.0156113>`_
+
+.. [RezaeiPandari2023]
+
+    M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, T. G. Pak, S. B. Kim, G. W. Lee, R. Massudi, A. R. Niknam, S. K. Lee, K.-Y. Kim, and C. H. Nam,
+    `Laser Wakefield Electron Acceleration with Polarization-Dependent Ionization Injection`,
+    `Physical Review Applied 20, 034026 (2023) <http://dx.doi.org/10.1103/PhysRevApplied.20.034026>`_
+    
+.. [Jonnerby2023]
+
+      J. Jonnerby, A. von Boetticher, J. Holloway, L. Corner, A. Picksley, A. J. Ross, R. J. Shalloo , C. Thornton, N. Bourgeois, R. Walczak, and S. M. Hooker,
+      `Measurement of the decay of laser-driven linear plasma wakefields`,
+      `Phys. Rev. E 108, 055211  (2023) <https://link.aps.org/doi/10.1103/PhysRevE.108.055211>`_
+         
 .. [Drobniak2023]
 
       P. Drobniak, E. Baynard, C. Bruni, K. Cassou, C. Guyot, G. Kane, S. Kazamias, V. Kubytskyi, N. Lericheux, B. Lucas, M. Pittman, F. Massimo, A. Beck, A. Specka, P. Nghiem, and D. Minenna,
@@ -64,8 +102,6 @@ As of November 2021, 90 papers have been published covering a broad range of top
      `Modeling of a Liquid Leaf Target TNSA Experiment Using Particle-In-Cell Simulations and Deep Learning`,
      `Laser and Particle Beams, 2868112 (2023) <https://doi.org/10.1155/2023/2868112>`_
      
-
-       
 .. [Paschke_Bruehl2023]
 
     F. Paschke-Bruehl, M. Banjafar, M. Garten, L. G. Huang, B. E. Marré, M. Nakatsutsumi, L. Randolph, T. E. Cowan, U. Schramm and T. Kluge,
@@ -364,8 +400,8 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
   Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
 
-  
-  .. [Tomassini2021]
+
+.. [Tomassini2021]
 
     Paolo Tomassini, Francesco Massimo, Luca Labate and Leonida A. Gizzi,
     `Accurate electron beam phase-space theory for ionization-injection schemes driven by laser pulses`,

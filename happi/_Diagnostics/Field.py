@@ -342,7 +342,7 @@ class Field(Diagnostic):
 		
 		# Handle moving window
 		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
-			self._xoffset = h5item.attrs["x_moved"]
+			self._xoffset = h5item.attrs["x_moved"] + (self.options.xoffset or 0.)
 			if self.dim>1 and hasattr(self,"_extent"):
 				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
 				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
@@ -385,7 +385,7 @@ class Field(Diagnostic):
 		
 		# Handle moving window
 		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
-			self._xoffset = h5item.attrs["x_moved"]
+			self._xoffset = h5item.attrs["x_moved"] + (self.options.xoffset or 0.)
 			if self.dim>1 and hasattr(self,"_extent"):
 				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
 				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
@@ -442,7 +442,7 @@ class Field(Diagnostic):
 		
 		# Handle moving window
 		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
-			self._xoffset = h5item.attrs["x_moved"]
+			self._xoffset = h5item.attrs["x_moved"] + (self.options.xoffset or 0.)
 			if self.dim>1 and hasattr(self,"_extent"):
 				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
 				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])

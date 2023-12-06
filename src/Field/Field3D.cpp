@@ -274,7 +274,7 @@ double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target teams distribute parallel for collapse(3) \
 	      map(tofrom: nrj)  \
-              map(from: ixstart, ixend, iystart, iyend, izstart, izend) \
+              map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) \
 	      /*is_device_ptr( data_ ) */           \
 	      reduction(+:nrj) 
 #elif defined( SMILEI_OPENACC_MODE )

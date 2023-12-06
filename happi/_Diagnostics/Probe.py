@@ -53,8 +53,9 @@ class Probe(Diagnostic):
 		self._dataForTime = {}
 		for file in self._h5probe:
 			for key, val in file.items():
-				try   : self._dataForTime[int(key)] = val
-				except Exception as e: break
+				if val:
+					try   : self._dataForTime[int(key)] = val
+					except Exception as e: break
 		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
 		if self._alltimesteps.size == 0:
 			raise Exception("No timesteps found")
@@ -154,35 +155,38 @@ class Probe(Diagnostic):
 		
 		self._selection = tuple(s if type(s) is slice else slice(s,s+1) for s in self._selection)
 		
+		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
+			self._limits = [[self._centers[0].min(), self._centers[0].max()]]
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
-			d = (p1[1,:] - p1[0,:])/2. # half separation between the points
-			p1[0,:] += d
-			p1 = self._np.vstack((p1, p1[-1,:]+d)) # add last edges at the end of box
-			offset = p1[0,:]
-			p1 = self._np.apply_along_axis(lambda x: x-offset, 1, p1) # move points
 			p2 = self._centers[1] # locations of grid points along second dimension
-			d = (p2[1,:] - p2[0,:])/2. # half separation between the points
-			p2[0,:] += d
-			p2 = self._np.vstack((p2, p2[-1,:]+d)) # add last edges at the end of box
-			offset = p2[0,:]
-			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
+			d1 = (p1[1,:] - p1[0,:]) # separation between the points
+			d2 = (p2[1,:] - p2[0,:])
+			p1 = self._np.vstack((p1, p1[-1,:]+d1)) # add last edges at the end of box
+			p2 = self._np.vstack((p2, p2[-1,:]+d2))
+			p1 -= 0.5*(d1+d2) # Move all edges by half separation
+			p2 -= 0.5*(d1+d2)
 			# Trick in a 3D simulation (the probe has to be projected)
 			if self._ndim_particles==3:
 				# unit vectors in the two dimensions + perpendicular
 				u1 = self.p_plot[0] / self._np.linalg.norm(self.p_plot[0])
 				u2 = self.p_plot[1] / self._np.linalg.norm(self.p_plot[1])
+				# Prepare offset (zero = box origin, projected on the probe plane)
+				u1u2 = self._np.dot(u1, u2)
+				Ox = self._np.dot(p1[0,:], u1)
+				Oy = (self._np.dot(p1[0,:], u2)-Ox*u1u2)/(1-u1u2**2)
 				# Distances along first direction
-				p1[:,0] = self._np.dot(p1, u1)
-				p1[:,1:] = 0.
+				p1[:,0] = self._np.dot(p1-p1[0,:], u1) + Ox
+				p1[:,1] = Oy
+				p1[:,2] = 0.
 				# Distances along second direction
-				p2x = self._np.dot(p2, u1)
-				p2[:,1] = self._np.dot(p2, u2)
-				p2[:,0] = p2x
+				p2x = self._np.dot(p2-p2[0,:], u1)
+				p2[:,1] = self._np.dot(p2-p2[0,:], u2) + Oy
+				p2[:,0] = p2x + Ox
 				p2[:,2:] = 0.
 			# Now p1 and p2 contain edges grid points along the 2 dimensions
 			# We have to convert into X and Y 2D arrays (similar to meshgrid)
@@ -191,12 +195,13 @@ class Probe(Diagnostic):
 			for i in range(p2.shape[0]):
 				X[:,i] = p1[:,0] + (p2[i,0]-p2[0,0])
 				Y[:,i] = p1[:,1] + (p2[i,1]-p2[0,1])
-			#FOLLOWING LINES CREATE PB IN THE SELECTION OF min/max OF AXES
-			#X = self._np.maximum( X, 0.)
-			#X = self._np.minimum( X, self._ncels[0]*self._cell_length[0])
-			#Y = self._np.maximum( Y, 0.)
-			#Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
+			if self._ndim_particles==2:
+				X = self._np.maximum( X, 0.)
+				X = self._np.minimum( X, self._ncels[0]*self._cell_length[0])
+				Y = self._np.maximum( Y, 0.)
+				Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
+			self._limits = [[X.min(), X.max()],[Y.min(), Y.max()]]
 
 		# Prepare the reordering of the points for patches disorder
 		tmpShape = self._initialShape
@@ -333,6 +338,24 @@ class Probe(Diagnostic):
 		self._loadField(field)
 		self._prepareUnits()
 	
+	# Method to obtain the plot limits
+	def limits(self):
+		"""Gets the overall limits of the diagnostic along its axes
+
+		Returns:
+		--------
+		A list of [min, max] for each axis.
+		"""
+		assert self.dim <= 2, "Method limits() may only be used in 1D or 2D"
+		self._prepare1()
+		factor = [self._xfactor, self._yfactor]
+		offset = [self._xoffset, self._yoffset]
+		l = [[
+				(offset[i] + self._limits[i][0])*factor[i], 
+				(offset[i] + self._limits[i][1])*factor[i]
+			] for i in range(self.dim)]
+		return l
+
 	# get all available fields
 	def getFields(self):
 		return self._fields
@@ -395,7 +418,10 @@ class Probe(Diagnostic):
 
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _plotOnAxes_2D_(self, ax, A):
-		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], A, **self.options.image)
+		self._plot = ax.pcolormesh(
+			self._xfactor*( self._xoffset + self._edges[0] ),
+			self._yfactor*( self._yoffset + self._edges[1] ),
+			A, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_array( A.flatten() )

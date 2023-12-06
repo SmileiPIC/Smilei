@@ -160,8 +160,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
              number_of_cells
 
   A list of numbers: size of the simulation box for each dimension of the simulation.
-   * Either ``grid_length``, the simulation length in each direction in units of :math:`L_r`,
-   * or ``number_of_cells``, the number of cells in each direction.
+
+  * Either ``grid_length``, the simulation length in each direction in units of :math:`L_r`,
+  * or ``number_of_cells``, the number of cells in each direction.
 
 
 .. py:data:: cell_length
@@ -173,20 +174,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
              number_of_timesteps
 
   Duration of the simulation.
-    * Either ``simulation_time``, the simulation duration in units of :math:`T_r`,
-    * or ``number_of_timesteps``, the total number of timesteps.
+
+  * Either ``simulation_time``, the simulation duration in units of :math:`T_r`,
+  * or ``number_of_timesteps``, the total number of timesteps.
 
 
 .. py:data:: timestep
              timestep_over_CFL
 
   Duration of one timestep.
-    * Either ``timestep``, in units of :math:`T_r`,
-    * or ``timestep_over_CFL``, in units of the *Courant–Friedrichs–Lewy* (CFL) time.
+
+  * Either ``timestep``, in units of :math:`T_r`,
+  * or ``timestep_over_CFL``, in units of the *Courant–Friedrichs–Lewy* (CFL) time.
 
 .. py:data:: gpu_computing
 
    :default: ``False``
+   
    Activates GPU acceleration if set to True
 
 .. py:data:: number_of_patches
@@ -430,11 +434,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
-  .. py:data:: use_BTIS3_interpolation
+.. py:data:: use_BTIS3_interpolation
 
-    :default: ``False``
+  :default: ``False``
 
-    If ``True``, the B-translated interpolation scheme 3 (or B-TIS3) described in :doc:`/Understand/algorithms` is used.
+  If ``True``, the B-translated interpolation scheme 3 (or B-TIS3) described in :doc:`/Understand/algorithms` is used.
 
 .. py:data:: custom_oversize
 
@@ -920,6 +924,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: temperature
 
   :type: a list of 3 floats or :doc:`profiles <profiles>`
+  :default: ``1e-10``
 
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
