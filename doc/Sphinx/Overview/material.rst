@@ -48,6 +48,18 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Guo2023]
+
+    A. Guo, Q. Lu, S. Lu, S. Wang and R. Wang,
+    `Properties of Electron-scale Magnetic Reconnection at a Quasi-perpendicular Shock`,
+    `The Astrophysical Journal 955, 1 (2023) <https://doi.org/10.3847/1538-4357/acec48>`_
+       
+.. [Si2023]
+
+    M. Si, Y. Huang, M. Ruan, B. Shen, Z. Xu, T. Yu, X. Wang and Y. Chen,
+    `Relativistic-guided stable mode of few-cycle 20 micron level infrared radiation`,
+    `Optics Express 31, 24, 40202-40209 (2023) <https://doi.org/10.1364/OE.503814>`_
+       
 .. [Vallieres2023]
 
     S. Vallières, J. Powell, T. Connell, M. Evans, M. Lytova, F. Fillion-Gourdeau, S. Fourmaux, S. Payeur, P. Lassonde, S. MacLean, and F. Légaré,
@@ -204,6 +216,25 @@ As of November 2021, 90 papers have been published covering a broad range of top
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
 
+.. [Bukharskii2022]
+
+    N. Bukharskii, Iu. Kochetkov and Ph. Korneev,
+    `Terahertz annular antenna driven with a short intense laser pulse`,
+    `Applied Physics Letters 120, 014102 (2022) <https://doi.org/10.1063/5.0076700>`_
+            
+
+.. [Jirka2022]
+
+    M. Jirka, P. Sasorov and S. V. Bulanov,
+    `New and old physics in the interaction of a radiating electron with the extreme electromagnetic field`,
+    `Physical Review D 105, 113004 (2022) <https://doi.org/10.1103/PhysRevD.105.113004>`_
+        
+.. [Geng2022]
+
+    X. Geng, L. Ji and B. Shen,
+    `Quasimonochromatic Bright Gamma-ray Generation from Synchronized Compton Scattering via Azimuthal Spatial-Temporal Coupling`,
+    `Physical Review Applied 17, 024055 (2022) <https://doi.org/10.1063/5.0084870>`_
+              
 .. [Yan2022]
 
     X. Yan, Y. Wu, X. Geng, H. Zhang, B. Shen and L. Ji,
@@ -337,8 +368,6 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `Stimulated-Raman-scattering amplification of attosecond XUV pulses with pulse-train pumps and application to local in-depth plasma-density measurement`,
   `Phys. Rev. E 106, 045208 (2022) <http://dx.doi.org/10.1103/PhysRevE.106.045208>`_
 
-
-
 .. [Krafft2022b]
 
   C. Krafft and P. Savoini,
@@ -400,7 +429,18 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
   Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
 
+.. [Tiwary2021]
 
+  S. Tiwary and N. Kumar,
+  `Particle jets in colliding two ultraintense laser pulses of varying frequencies`,
+  `Physical Review Research 3, 043190 (2021) <https://doi.org/10.1103/PhysRevResearch.3.043190>`_
+
+.. [Spiers2021]
+
+  B. T. Spiers, R. Aboushelbaya, Q. Feng, M. W. Mayr, I. Ouatu, R. W. Paddock, R. Timmis, R. H.-W. Wang  and P. A. Norreys,
+  `Methods for extremely sparse-angle proton tomography`,
+  `Physical Review E 104, 045201 (2021) <https://doi.org/10.1103/PhysRevE.104.045201>`_
+      
 .. [Tomassini2021]
 
     Paolo Tomassini, Francesco Massimo, Luca Labate and Leonida A. Gizzi,
