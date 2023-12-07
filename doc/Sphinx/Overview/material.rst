@@ -216,6 +216,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
 
+.. [PChen2022]
+
+    P. Chen, G. Mourou, M. Besancon, Y. Fukuda, J.-F. Glicenstein, J. Nam, C.-E. Lin, K.-N. Lin, S.-X. Liu, Y.-K. Liu, M. Kando, K. Kondo, S. Paganis, A. Pirozhkov, H. Takabe, B. Tuchming, W.-P. Wang, N. Watamura, J. Wheeler and H.-Y. Wu on behalf of the AnaBHEL Collaboration,
+    `AnaBHEL (Analog Black Hole Evaporation via Lasers) Experiment: Concept, Design, and Status`,
+    `Photonics 9(12), 1003 (2022) <https://doi.org/10.3390/photonics9121003>`_
+
 .. [Bukharskii2022]
 
     N. Bukharskii, Iu. Kochetkov and Ph. Korneev,
