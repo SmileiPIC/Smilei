@@ -29,6 +29,10 @@ Changes made in the repository (not released)
   * Changed coordinate reference for 2D probe in 3D or AM geometry
     (zero is the box origin projected orthogonally on the probe plane).
 
+* Documentation:
+
+  * Dark theme (switch on the bottom left, or set browser preferences).
+
 ----
 
 Projects
