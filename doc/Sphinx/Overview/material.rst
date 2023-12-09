@@ -48,6 +48,54 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Diab2023]
+
+    R. Diab,  S.-G. Baek,  P. Bonoli,  T. G. Jenkins,  M. Ono, D. Smithe,
+    `Particle-in-cell simulations of parasitic electrostatic wave excitation in the ion cyclotron range of frequencies and high harmonic fast wave regimes`,
+    `AIP Conference Proceedings 2984, 080001 (2023) <https://doi.org/10.1063/5.0164928>`_
+
+.. [Sladkov2023]
+
+    A. D. Sladkov and A. V. Korzhimanov,
+    `Cherenkov Radiation of an Ultrashort Laser Pulse Propagating in a Strongly Magnetized Plasma at Various Intensities and Directions of the Magnetic Field`,
+    `Radiophysics and Quantum Electronics 65, 888–896 (2023) <https://doi.org/10.1007/s11141-023-10265-9>`_
+
+.. [Montefiori2023]
+
+    S. Montefiori and M. Tamburini
+    `SFQEDtoolkit: A high-performance library for the accurate modeling of strong-field QED processes in PIC and Monte Carlo codes`,
+    `Computer Physics Communications 292, 108855 (2023) <https://doi.org/10.1016/j.cpc.2023.108855>`_
+
+.. [Shekhanov2023]
+
+    S. Shekhanov, A. Gintrand, L. Hudec, R. Liska, J. Limpouch, S. Weber and V. Tikhonchuk
+    `Kinetic modeling of laser absorption in foams`,
+    `Physics of Plasmas 30, 012708 (2023) <https://doi.org/10.1063/5.0131786>`_
+
+.. [Yu2023]
+
+    J. Yu, J. Zhong, Y. Ping and W. An
+    `Electron acceleration in a coil target-driven low-β magnetic reconnection simulation`,
+    `Matter and Radiation at Extremes 8, 064003 (2023) <https://doi.org/10.1063/5.0149259>`_
+
+.. [Zagidullin2023]
+
+    R. Zagidullin, S. Tietze, M. Zepf, J. Wang and S. Rykovanov
+    `Density-dependent carrier-envelope phase shift in attosecond pulse generation from relativistically oscillating mirrors`,
+    `Matter and Radiation at Extremes 8, 064004 (2023) <https://doi.org/10.1063/5.0155957>`_
+
+.. [Cai2023]
+
+    J. Cai, Y. Shou, Y. Geng, L. Han, X. Xu, S. Wen, B. Shen, J. Yu and X. Yan
+    `Extremely powerful and frequency-tunable terahertz pulses from a table-top laser-plasma wiggler`,
+    `High Power Laser Science and Engineering (2023) <https://www.cambridge.org/core/journals/high-power-laser-science-and-engineering/article/extremely-powerful-and-frequencytunable-terahertz-pulses-from-a-tabletop-laserplasma-wiggler/4E93CDD2F494C44A799266AB3E62277F>`_
+       
+.. [Jirka2023]
+
+    M. Jirka and H. Kladecová
+    `Pair production in an electron collision with a radially polarized laser pulse`,
+    `Physics of Plasmas 30, 113102 (2023) <https://doi.org/10.1063/5.0168022>`_
+
 .. [Guo2023]
 
     A. Guo, Q. Lu, S. Lu, S. Wang and R. Wang,
@@ -216,13 +264,24 @@ As of November 2021, 90 papers have been published covering a broad range of top
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
 
+.. [Siminos2022]
+
+    E. Siminos  and I. Thiele
+    `Parametric study of laser wakefield driven generation of intense sub-cycle pulses`,
+    `Plasma Physics and Controlled Fusion 64, 034006 (2022) <https://doi.org/10.1088/1361-6587/ac4311>`_
+
+.. [PChen2022]
+
+    P. Chen, G. Mourou, M. Besancon, Y. Fukuda, J.-F. Glicenstein, J. Nam, C.-E. Lin, K.-N. Lin, S.-X. Liu, Y.-K. Liu, M. Kando, K. Kondo, S. Paganis, A. Pirozhkov, H. Takabe, B. Tuchming, W.-P. Wang, N. Watamura, J. Wheeler and H.-Y. Wu on behalf of the AnaBHEL Collaboration,
+    `AnaBHEL (Analog Black Hole Evaporation via Lasers) Experiment: Concept, Design, and Status`,
+    `Photonics 9(12), 1003 (2022) <https://doi.org/10.3390/photonics9121003>`_
+
 .. [Bukharskii2022]
 
     N. Bukharskii, Iu. Kochetkov and Ph. Korneev,
     `Terahertz annular antenna driven with a short intense laser pulse`,
     `Applied Physics Letters 120, 014102 (2022) <https://doi.org/10.1063/5.0076700>`_
             
-
 .. [Jirka2022]
 
     M. Jirka, P. Sasorov and S. V. Bulanov,
@@ -428,6 +487,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `Simple adaptations to speed-up the Particle-In-Cell code Smilei on the ARM-based Fujitsu A64FX processor.`,
   `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
   Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
+
+.. [Romansky2021]
+
+  V. I. Romansky, A. M. Bykov and S. M. Osipov,
+  `On electron acceleration by mildly-relativistic shocks: PIC simulations`,
+  `Journal of Physics: Conference Series 2103 012009 (2021) <https://dx.doi.org/10.1088/1742-6596/2103/1/012009>`_
 
 .. [Tiwary2021]
 
@@ -887,6 +952,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `Electron Beam Driven Generation of Frequency-Tunable Isolated Relativistic Subcycle Pulses`,
   `Phys. Rev. Lett. 122, 104803 (2019) <http://dx.doi.org/10.1103/PhysRevLett.122.104803>`_
   `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_
+
+.. [Golovanov2018]
+
+  A. A. Golovanov  and I. Yu. Kostyukov,
+  `Bubble regime of plasma wakefield in 2D and 3D geometries`,
+  `Physics of Plasmas 25, 103107 (2018) <https://doi.org/10.1063/1.5047274>`_
 
 .. [Massimo2018]
 
