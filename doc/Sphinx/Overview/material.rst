@@ -50,7 +50,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Diab2023]
 
-    R. Diab,  S.-G. Baek,  P. Bonoli,  T. G. Jenkins,  M. Ono, D. Smithe,
+    R. Diab,  S.-G. Baek,  P. Bonoli,  T. G. Jenkins,  M. Ono and D. Smithe,
     `Particle-in-cell simulations of parasitic electrostatic wave excitation in the ion cyclotron range of frequencies and high harmonic fast wave regimes`,
     `AIP Conference Proceedings 2984, 080001 (2023) <https://doi.org/10.1063/5.0164928>`_
 
@@ -263,6 +263,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
     S. Marini, M. Grech, P. S. Kleij, M. Raynaud and C. Riconda,
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
+
+.. [Blackman2022]
+
+    D. R. Blackman, Y. Shi, S. R. Klein, M. Cernaianu, D. Doria, P. Ghenuche and A. Arefiev 
+    `Electron acceleration from transparent targets irradiated by ultra-intense helical laser beams`,
+    `Communications Physics 5, 116 (2022) <https://doi.org/10.1038/s42005-022-00894-3>`_
 
 .. [Siminos2022]
 
