@@ -203,8 +203,8 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 unsigned int i=0;
                 ( *Br )( i, j ) = Alpha_Xmin   * ( *Et )( i, j )
                                   +              Beta_Xmin    * ( *Br )( i+1, j )
-                                  +              Gamma_Xmin   * byW;
-                +              Delta_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
+                                  +              Gamma_Xmin   * byW
+                                  +              Delta_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
             }//j  ---end compute Br
             
             
