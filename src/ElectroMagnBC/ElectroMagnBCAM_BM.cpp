@@ -189,7 +189,7 @@ void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
             unsigned int j= n_d[1]-2;
             
             // for Bl^(p,d)
-            for( unsigned int i=0 ; i<n_p[0]; i++ ) {
+            for( unsigned int i=0 ; i<n_p[0]-1; i++ ) {
                 ( *Bl )( i, j+1 ) = ( *Bl_old )( i, j )
                                     -      Alpha_Bl_Rmax * ( ( *Bl )( i, j ) - ( *Bl_old )( i, j+1 ) )
                                     +      Gamma_Bl_Rmax * ( ( *Br )( i+1, j ) + ( *Br_old )( i+1, j ) - ( *Br )( i, j ) - ( *Br_old )( i, j ) )
