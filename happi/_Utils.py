@@ -195,7 +195,7 @@ class Options(object):
 				kw = kwa[:-5]
 				self.labels_font[kw] = val
 			elif kwa in ["xticklabels", "yticklabels"]:
-				self.ticklabels[kw] = val
+				self.ticklabels[kwa] = val
 			elif kwa in ["xticklabels_font", "yticklabels_font"]:
 				kw = kwa[:-5]
 				self.ticklabels_font[kw] = val

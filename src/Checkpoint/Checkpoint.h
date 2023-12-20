@@ -63,9 +63,6 @@ public:
     //! incremental number of times we've done a dump
     unsigned int dump_number;
     
-    //! incremental number of times we've done a dump_minutes
-    unsigned int dump_minutes_times;
-    
     //! this static variable is defined (in the .cpp) as false but becomes true when
     //! the signal SIGUSR1 is captured by the signal_callback_handler fnction
     static int signal_received;
@@ -113,18 +110,12 @@ private:
     void dumpMovingWindow( H5Write &f, SimWindow *simWindow );
     void restartMovingWindow( H5Read &f, SimWindow *simWindow );
     
-    //! function that returns elapsed time from creator (uses private var time_reference)
-    //double time_seconds();
-    
     //! to dump and stop a simulation you might just check if a file named stop has been created this variable
     //! is true if since last time a file named stop appeared
     bool stop_file_seen_since_last_check;
     
-    //! time of the constructor
+    //! Last dump time
     double time_reference;
-    
-    //! step at which perform a dump in case time_dump returns true
-    unsigned int time_dump_step;
     
     //! keep the last keep_n_dumps dump files
     unsigned int keep_n_dumps;
@@ -135,10 +126,6 @@ private:
     
     //! int deflate dump value
     int dump_deflate;
-    
-    std::vector<MPI_Request> dump_request;
-    MPI_Status dump_status_prob;
-    MPI_Status dump_status_recv;
     
     //! group checkpoint files in subdirs of file_grouping files
     unsigned int file_grouping;
