@@ -203,8 +203,8 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 unsigned int i=0;
                 ( *Br )( i, j ) = Alpha_Xmin   * ( *Et )( i, j )
                                   +              Beta_Xmin    * ( *Br )( i+1, j )
-                                  +              Gamma_Xmin   * byW;
-                +              Delta_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
+                                  +              Gamma_Xmin   * byW
+                                  +              Delta_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
             }//j  ---end compute Br
             
             
@@ -258,7 +258,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 ( *Br )( i, j ) = - Alpha_Xmax   * ( *Et )( i-1, j )
                                   +                   Beta_Xmax    * ( *Br )( i-1, j )
                                   +                   Gamma_Xmax   * byE
-                                  +                   Delta_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
+                                  -                   Delta_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
                 
             }//j  ---end compute Br
             

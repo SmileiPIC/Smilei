@@ -1,5 +1,7 @@
 from .._Utils import *
 
+from matplotlib import ticker
+
 class Diagnostic(object):
 	"""Mother class for all Diagnostics.
 	To create a diagnostic, refer to the doc of the SmileiSimulation class.
@@ -832,23 +834,18 @@ class Diagnostic(object):
 		for option, value in self.options.labels.items():
 			getattr(ax, "set_"+option)( value, self.options.labels_font[option] )
 		# Ticklabels + fonts
-		for option, value in self.options.ticklabels_font.items():
-			if option in self.options.ticklabels:
-				getattr(ax, "set_"+option)( value, self.options.ticklabels_font[option] )
-			else: # manage tick label fonts even when not setting tick labels first
-				ticklabels = getattr(ax, "get_"+option)()
-				self._plt.setp(ticklabels, **self.options.ticklabels_font[option])
+		for tl in ["xticklabels", "yticklabels"]:
+			font = self.options.ticklabels_font[tl] if tl in self.options.ticklabels_font else {}
+			if tl in self.options.ticklabels:
+				getattr(ax, "set_"+tl)( self.options.ticklabels[tl], fontdict=font )
+			elif font: # manage tick label fonts even when not setting tick labels first
+				ticklabels = getattr(ax, "get_"+tl)()
+				self._plt.setp(ticklabels, **font)
 		# Tick formatting
-		try:
-			if self.options.xtick: ax.ticklabel_format(axis="x",**self.options.xtick)
-		except Exception as e:
-			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
-			self.options.xtick = []
-		try:
-			if self.options.ytick: ax.ticklabel_format(axis="y",**self.options.ytick)
-		except Exception as e:
-			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
-			self.options.ytick = []
+		if type(ax.xaxis.get_major_formatter()) == ticker.ScalarFormatter:
+			ax.ticklabel_format(axis="x",**self.options.xtick)
+		if type(ax.yaxis.get_major_formatter()) == ticker.ScalarFormatter:
+			ax.ticklabel_format(axis="y",**self.options.ytick)
 	def _setColorbarOptions(self, ax):
 		# Colorbar tick font
 		if self.options.colorbar_font:

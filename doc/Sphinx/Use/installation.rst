@@ -143,6 +143,47 @@ executed before compilation. If you successfully write such a file for
 a common supercomputer, please share it with developpers so that it can
 be included in the next release of :program:`Smilei`.
 
+
+.. rubric:: Compilation for GPU accelerated nodes:
+
+As each supercomputer has a different environnment to compile for GPUs and since the nvhpc + CUDA/ cray + HIP modules evolve quickly, a machine file is required for the compilation.
+Several machine files are already available as an example in smilei/scripts/compile_tools/machine/ ; such as: jean_zay_gpu_V100, jean_zay_gpu_A100, adastra, ruche_gpu2.
+
+Typically we need it to specify ACCELERATOR_GPU_FLAGS += -ta=tesla:cc80 for nvhpc <23.4 and ACCELERATOR_GPU_FLAGS += -gpu=cc80 -acc for the more recent versions of nvhpc.
+
+.. code-block:: bash
+
+	make -j 12 machine="jean_zay_gpu_A100" config="gpu_nvidia noopenmp verbose" # for Nvidia GPU
+	make -j 12 machine="adastra" config="gpu_amd" 			            # for AMD GPU
+
+
+Furthermore, here are 2 examples of known working ennvironments, first for AMD GPUs, second for Nvidia GPUs:
+
+.. code-block:: bash
+
+	module purge
+	module load craype-accel-amd-gfx90a craype-x86-trento
+	module load PrgEnv-cray/8.3.3
+	module load cpe/23.02
+	module load cray-mpich/8.1.24 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
+	module load amd-mixed/5.2.3
+
+.. code-block:: bash
+
+	module purge
+	module load anaconda-py3/2020.11  # python is fine as well if you can pip install the required modules
+	module load nvidia-compilers/23.1
+	module load cuda/11.2
+	module load openmpi/4.1.1-cuda
+	module load hdf5/1.12.0-mpi-cuda
+	# For HDF5, note that module show can give you the right path
+	export HDF5_ROOT_DIR=/DIRECTORY_NAME/hdf5/1.12.0/pgi-20.4-HASH/
+
+Note: 
+
+* we are aware of issues with CUDA >12.0, fixes are being tested but are not deployed yet. We recommend CUDA 11.x at the moment.
+* The hdf5 module should be compiled with the nvidia/cray compiler ; openmpi as well, but depending on the nvhpc module it might not be needed as it can be included in the nvhpc module 
+
 ----
 
 .. _vectorization_flags:
