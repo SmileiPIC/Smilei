@@ -70,7 +70,7 @@ public:
             }
         }
         else {
-            ERROR_NAMELIST( "Unknwon parameters setting the particle computing time evaluation operator: "
+            ERROR_NAMELIST( "Unknown parameters setting the particle computing time evaluation operator: "
              << params.geometry << ", Order : " << params.interpolation_order,
             LINK_NAMELIST + std::string("#main-variables"));
         }
