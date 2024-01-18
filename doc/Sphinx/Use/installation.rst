@@ -105,9 +105,6 @@ Advanced compilation options
   make config=vtune                        # For Intel Vtune
   make config=inspector                    # For Intel Inspector
   make config=detailed_timers              # More detailed timers, but somewhat slower execution
-  make config=omptasks                     # use OpenMP task parallelization, not supported by old compilers
-  make config=part_event_tracing_tasks_off # trace the use particle operators, without task parallelization
-  make config=part_event_tracing_tasks_on  # trace the use particle operators, with OpenMP task parallelization
   make config="gpu_nvidia noopenmp"        # For Nvidia GPU acceleration
   make config="gpu_amd"                    # For AMD GPU acceleration
 
