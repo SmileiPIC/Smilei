@@ -49,8 +49,6 @@ public:
     DividedString fieldBoundary, fieldBoundaryParameters, particleBoundary, particleBoundaryParameters;
     //! current smoothing description
     std::string currentSmoothing, currentSmoothingParameters;
-    //! position of the fields within a cell
-    std::vector<double> position;
     
     //! Returns a time string in the openPMD format
     std::string getLocalTime();
@@ -74,10 +72,10 @@ public:
     void writeSpeciesAttributes( H5Write& );
     
     //! Write the attributes for a record
-    void writeRecordAttributes( H5Write&, unsigned int );
+    void writeRecordAttributes( H5Write&, unsigned int, double timeOffset = 0 );
     
     //! Write the attributes for a field record
-    void writeFieldRecordAttributes( H5Write& );
+    void writeFieldRecordAttributes( H5Write&, std::vector<double> &stagger );
     
     //! Write the attributes for a component
     void writeComponentAttributes( H5Write&, unsigned int );
