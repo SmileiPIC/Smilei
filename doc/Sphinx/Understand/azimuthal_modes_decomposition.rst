@@ -450,7 +450,7 @@ With a similar interpolation we obtain the boundary condition on axis for :math:
 .. math::
    B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
 
-Longitudinal fields on axis
+Longitudinal field on axis
 """""""""""""""""""""""""""""
 
 We have alreayd established that only modes :math:`m=0` of longitudinal fields are non zero on axis.
@@ -468,11 +468,6 @@ Introducing this result in the standard FDTD expression of :math:`E_l` we get:
 
 Again, the :math:`n` indice indicates the time step here.
 
-:math:`B_l^{m=0}` is independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along :math:`r` is zero
-on axis (derivative of a pair function is zero at :math:`x=0` ). From this we get:
-
-.. math::
-   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
 
 Below axis
 """"""""""""""""""""""""""""
@@ -492,6 +487,8 @@ We extend this logic to primal fields in :math:`r`:
    E_{\theta}^{m\neq1}[1] = -E_{\theta}^{m\neq1}[3]
 
    E_{\theta}^{m=1}[1] = E_{\theta}^{m=1}[3]
+
+   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
 
    B_{r}^{m\neq1}[1] = -B_{r}^{m\neq1}[3]
 
