@@ -56,7 +56,6 @@ Partners
 |            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
 |            |   * `Haithem Kallala <haithem.kallala@cea.fr>`_                                                         |
 |            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_                                                             |
-|            |   * `Francesco Massimo <francesco.massimo@universite-paris-saclay.fr>`_                                 |
 |            |   * `Charles Prouveur <charles.prouveur@cea.fr>`_                                                       |
 |            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
