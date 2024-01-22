@@ -71,7 +71,7 @@ void Histogram::digitize( vector<Species *> species,
             }
             
         } else { // if the particles out of the "box" must be included
-        
+
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 // skip already discarded particles
                 if( int_buffer[ipart] < 0 ) {
@@ -82,13 +82,12 @@ void Histogram::digitize( vector<Species *> species,
                 // move out-of-range indexes back into range
                 if( ind < 0 ) {
                     ind = 0;
-                }
-                if( ind >= axis->nbins ) {
+                } else if( ind >= axis->nbins ) {
                     ind = axis->nbins-1;
                 }
                 int_buffer[ipart] += ind;
             }
-            
+
         }
         
     } // loop axes
