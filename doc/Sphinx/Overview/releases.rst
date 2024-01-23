@@ -32,6 +32,7 @@ Changes made in the repository (not released)
 * Bug fixes:
 
   * ``dump_minutes`` often failed to write some checkpoint files.
+  * ``"auto"`` limits in ``ParticleBinning`` could fail with only one side on ``"auto"``.
 
 ----
 

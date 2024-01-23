@@ -18,16 +18,12 @@ OpenPMDparams::OpenPMDparams( Params &p ):
     
     // Grid parameters
     string xyz = "xyz";
-    gridGlobalOffset.resize( params->nDim_field );
-    gridOffset      .resize( params->nDim_field );
-    position        .resize( params->nDim_field );
+    gridGlobalOffset.resize( params->nDim_field, 0. );
+    gridOffset      .resize( params->nDim_field, 0. );
     gridSpacing     .resize( params->nDim_field );
     for( unsigned int idim=0; idim<params->nDim_field; idim++ ) {
         axisLabels.addString( xyz.substr( idim, 1 ) );
-        gridGlobalOffset[idim] = 0.;
-        gridOffset      [idim] = 0.;
-        position        [idim] = 0.;
-        gridSpacing     [idim] = params->cell_length[idim];
+        gridSpacing[idim] = params->cell_length[idim];
     }
     fieldSolverParameters = "";
     if( params->maxwell_sol == "Yee" ) {
@@ -192,15 +188,15 @@ void OpenPMDparams::writeSpeciesAttributes( H5Write & )
 {
 }
 
-void OpenPMDparams::writeRecordAttributes( H5Write &location, unsigned int unit_type )
+void OpenPMDparams::writeRecordAttributes( H5Write &location, unsigned int unit_type, double timeOffset )
 {
     location.attr( "unitDimension", unitDimension[unit_type] );
-    location.attr( "timeOffset", 0. );
+    location.attr( "timeOffset", timeOffset );
 }
 
-void OpenPMDparams::writeFieldRecordAttributes( H5Write &location )
+void OpenPMDparams::writeFieldRecordAttributes( H5Write &location, vector<double> &stagger )
 {
-    location.attr( "position", position );
+    location.attr( "position", stagger );
 }
 
 void OpenPMDparams::writeComponentAttributes( H5Write &location, unsigned int unit_type )

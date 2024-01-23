@@ -305,7 +305,6 @@ public:
     //! Number of elements in arrays without duplicated borders
     unsigned int bufsize[3][2];
 
-    //!\todo should this be just an integer???
     //! Oversize domain to exchange less particles (from params)
     std::vector<unsigned int> oversize;
 
@@ -380,9 +379,6 @@ public:
     cField *p_AM_;
     cField *Ap_AM_;
 
-    //! \todo check time_dual or time_prim (MG)
-//    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
-//    virtual void solveMaxwellAmpere() = 0;
     //! Maxwell Ampere Solver
     Solver *MaxwellAmpereSolver_;
     //! Maxwell Faraday Solver
