@@ -463,11 +463,10 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            //Apply BC
            if (imode > 0){
                rhoj[i] = 0.;
-               rhoj[i-1]  = - rhoj[i+1];
+               rhoj[i-1]  = - rhoj[i+1]; // Zero Jl mode > 0 on axis.
            } else {
-	       //This is just for cosmetics on the picture, rho has no influence on the results
-               rhoj[i] = rhoj[i+1];
-               rhoj[i-1]  = rhoj[i+1];
+               rhoj[i] = rhoj[i+1]; //This smoothing is just for cosmetics on the picture, rho has no influence on the results.
+               rhoj[i-1]  = rhoj[i+1]; // Non zero Jl mode > 0 on axis.
            }
        }
    }
@@ -480,11 +479,11 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
             }
             if (imode > 0){
                 Jl [i] = 0. ;
-                Jl[i-1]   =  -Jl[i+1];
+                Jl[i-1]   =  -Jl[i+1]; // Zero Jl mode > 0 on axis.
            } else {
-		//Jl mode 0 on axis is left as is. It looks over estimated but it is necessary to conserve a correct divergence and a proper evaluation on the field on axis.
-                Jl [i-1] =  Jl [i+1] ;
-                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+		//Jl mode 0 on axis should be left as is. It looks over estimated but it might be necessary to conserve a correct divergence and a proper evaluation on the field on axis.
+                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;  //Here we use smoothig on axis for results appearing more physical.
+                Jl [i-1] =  Jl [i+1] ; // Non zero Jl mode 0 on axis.
            }
        }
    }
