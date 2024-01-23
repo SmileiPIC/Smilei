@@ -79,7 +79,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                     ( *El )( i, j-1 )=-( *El )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                    ( *Et )( i, j )= -Icpx*( *Er )( i, j+1 );
+                    ( *Et )( i, j )= -Icpx/8.*( 9.*( *Er )( i, j+1 )-( *Er )( i, j+2 ) );// div( E mode 1) = 0 on axis.
                     ( *Et )( i, j-1 )=( *Et )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {

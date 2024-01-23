@@ -77,7 +77,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Jl_p[5], Jr_p[5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
+    complex<double> e_delta, e_delta_m1, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
     complex<double> *Jl, *Jr, *Jt, *rho;
 
     for( unsigned int i=0; i<5; i++ ) {
@@ -107,7 +107,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     //calculate exponential coefficients
 
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    std::complex<double> theta_old = array_eitheta_old[0];
+    std::complex<double> eitheta_old = array_eitheta_old[0];
     std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -138,8 +138,9 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     double r_bar = ((jpo + j_domain_begin_ + deltaold[1*nparts])*dr + rp) * 0.5; // r at t = t0 - dt/2
 
-    e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
-    e_bar_m1 = theta_old * e_delta_m1;
+    //e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
+    e_delta_m1 = std::sqrt(eitheta * std::conj(eitheta_old)); //ei^(theta-theta_old)/2. std::sqrt keeps the root with positive real part which is what we need here.
+    e_bar_m1 = eitheta_old * e_delta_m1;                      //ei^(theta+theta_old)/2.
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -183,9 +184,9 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     }
 
     e_delta = 0.5;
-    e_delta_inv = 0.5;
+    //e_delta_inv = 0.5;
 
-   //Compute division by R in advance for Jt and rho evaluation.
+    //Compute division by R in advance for Jt and rho evaluation.
     for( unsigned int j=0 ; j<5 ; j++ ) {
         Sr0[j] *= invR__local[j];
         Sr1[j] *= invR__local[j];
@@ -197,8 +198,9 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             e_delta *= e_delta_m1;
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
-            e_delta_inv =1./e_delta - 1.;
+            //e_delta_inv =1./e_delta - 1.;
             crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
+            //crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
         }
 
         // Add contribution J_p to global array
@@ -247,7 +249,8 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             iloc = ( i+ipo )*nprimr_ + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. ));
+                //Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. ));
+                Jt [linindex] -= crt_p*(Sr1[j]*Sl1[i]*( e_delta-1. ) - Sr0[j]*Sl0[i]*(std::conj(e_delta) - 1.));
             }
         }
 
@@ -354,8 +357,6 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
     // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
     // It will therefore fail to evaluate the current accurately at t=0 if a plasma is already in the box.
 
-
-
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -366,17 +367,6 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
 
     if( type > 0 ) { //if current density
         ERROR("This projector can be used only for charge density at the moment.");
-        // charge_weight *= 1./sqrt( 1.0 + particles.momentum( 0, ipart )*particles.momentum( 0, ipart )
-        //                           + particles.momentum( 1, ipart )*particles.momentum( 1, ipart )
-        //                           + particles.momentum( 2, ipart )*particles.momentum( 2, ipart ) );
-        // if( type == 1 ) { //if Jl
-        //     charge_weight *= particles.momentum( 0, ipart );
-        // } else if( type == 2 ) { //if Jr
-        //     charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/ r ;
-        //     nr++;
-        // } else { //if Jt
-        //     charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
-        // }
     }
 
     complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
@@ -460,8 +450,9 @@ void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 
 void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
 {
-   double sign = 1.;
-   for (unsigned int i=0; i< imode; i++) sign *= -1;
+   // Mode 0 contribution "below axis" is added.
+   // Non zero modes are substracted because a particle sitting exactly on axis has a non defined theta and can not contribute to a theta dependent mode. 
+   double sign = (imode == 0) ? 1 : -1 ;
 
    if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
@@ -475,7 +466,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
                rhoj[i-1]  = - rhoj[i+1];
            } else {
 	       //This is just for cosmetics on the picture, rho has no influence on the results
-               rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+               rhoj[i] = rhoj[i+1];
                rhoj[i-1]  = rhoj[i+1];
            }
        }
@@ -491,8 +482,9 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
                 Jl [i] = 0. ;
                 Jl[i-1]   =  -Jl[i+1];
            } else {
-		//Jl mode 1 on axis is left as is. It looks over estimated but it is necessary to conserve a correct divergence and a proper evaluation on the field on axis.
+		//Jl mode 0 on axis is left as is. It looks over estimated but it is necessary to conserve a correct divergence and a proper evaluation on the field on axis.
                 Jl [i-1] =  Jl [i+1] ;
+                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
            }
        }
    }
@@ -503,15 +495,15 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
            int ilocr = i*(nprimr_+1)+3;
            //Fold Jt
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jt [iloc+j] -= sign * Jt[iloc-j]; // substract pair modes, add odd modes since et(theta=0 = -et(theta=pi) at all r.
+               Jt [iloc+j] += sign * Jt[iloc-j]; 
            }
            for( unsigned int j=0 ; j<3; j++ ) {
-               Jr [ilocr+2-j] -= sign * Jr [ilocr-3+j];// substract pair modes, add odd modes since er(theta=0 = -er(theta=pi) at all r.
+               Jr [ilocr+2-j] += sign * Jr [ilocr-3+j];
            }
 
            if (imode == 1){
-               Jr [ilocr-1] = Jr [ilocr]; // dJr/dr mode 1 = 0 on axis
-               Jt [iloc]= -Icpx*Jr[ilocr]; // Jt mode 1 = -I Jr mode 1 on axis to keep div(J) = 0.
+               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);// Jt mode 1 = -I Jr mode 1 on axis to keep div(J) = 0.
+               Jr [ilocr-1] = Jr [ilocr]; // Jr mode 1 is non zero on axis.
            } else{
                Jt [iloc] = 0. ; // only mode 1 is non zero on axis
                Jt [iloc-1] = -Jt [iloc+1]; // only mode 1 is non zero on axis
