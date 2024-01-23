@@ -48,7 +48,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Seidel2024]
 
+    A. Seidel, B. Lei, C. Zepter, M. C. Kaluza, A. Sävert, M. Zepf, and D. Seipt,
+    `Polarization and CEP dependence of the transverse phase space in laser driven accelerators`,
+    `Physical Review Research 6, 013056 (2024) <https://doi.org/10.1103/PhysRevResearch.6.013056>`_
+    
 .. [Gao2023b]
 
     X. Gao,
