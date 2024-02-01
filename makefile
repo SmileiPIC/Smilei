@@ -103,6 +103,7 @@ endif
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
 LDFLAGS := -L$(HDF5_ROOT_DIR)/lib  $(LDFLAGS)
+DEPSFLAGS += -I$(HDF5_ROOT_DIR)/include
 endif
 # Boost library
 ifneq ($(strip $(BOOST_ROOT_DIR)),)
@@ -112,8 +113,11 @@ endif
 LDFLAGS += -lhdf5
 # Include subdirs
 CXXFLAGS += $(DIRS:%=-I%)
+DEPSFLAGS += $(DIRS:%=-I%)
 # Python-related flags
 CXXFLAGS += -I$(BUILD_DIR)/src/Python
+DEPSFLAGS += -I$(BUILD_DIR)/src/Python
+
 PYSCRIPTS = $(shell find src/Python -name \*.py)
 PYHEADERS := $(addprefix $(BUILD_DIR)/, $(PYSCRIPTS:.py=.pyh))
 PY_CXXFLAGS := $(shell $(PYTHONCONFIG) --includes)
@@ -199,8 +203,9 @@ ifneq (,$(call parse_config,gpu_nvidia))
 	
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE -DSMILEI_OPENACC_MODE
 	GPU_COMPILER = nvcc
-	GPU_COMPILER_FLAGS += -x cu -DSMILEI_ACCELERATOR_MODE -DSMILEI_OPENACC_MODE $(DIRS:%=-I%) $(PY_FLAGS)
-	
+	GPU_COMPILER_FLAGS += -x cu -DSMILEI_ACCELERATOR_MODE -DSMILEI_OPENACC_MODE
+	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
+
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 	
@@ -211,7 +216,7 @@ endif
 ifneq (,$(call parse_config,gpu_amd))
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE
 	GPU_COMPILER_FLAGS = -x hip -DSMILEI_ACCELERATOR_MODE $(DIRS:%=-I%) $(PY_FLAGS)
-	
+	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)	
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 	
@@ -336,13 +341,13 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 # Calculate dependencies: special for Params.cpp which needs pyh files
 $(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
@@ -466,7 +471,7 @@ tables_clean:
 $(TABLES_BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX) $(DPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 # Compile cpps
 $(TABLES_BUILD_DIR)/%.o : $(TABLES_DIR)/%.cpp

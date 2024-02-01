@@ -7,22 +7,15 @@
 #
 
 SMILEICXX.DEPS = g++
-GPU_COMPILER = nvcc
+#GPU_COMPILER = nvcc
 
 CXXFLAGS += -w
-# IDRIS config for curand
-CXXFLAGS += -ta=tesla:cc70 -std=c++14 -lcurand
-# CXXFLAGS += --expt-relaxed-constexpr
-CXXFLAGS += -Minfo=accel # what is offloaded/copied
+CXXFLAGS += -ta=tesla:cc70 -std=c++14 -lcurand -Minfo=accel # what is offloaded/copied
 # CXXFLAGS += -Minfo=all   # very verbose output
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 
-GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_70
+
+GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_70 
 GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
 
-# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_OPENACC_MODE'
-# CXXFLAGS += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
-# GPU_COMPILER_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
-# LDFLAGS += -mp=gpu
-
 LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
-CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
