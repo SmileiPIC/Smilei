@@ -215,8 +215,8 @@ endif
 # AMD GPUs
 ifneq (,$(call parse_config,gpu_amd))
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE
-	GPU_COMPILER_FLAGS = -x hip -DSMILEI_ACCELERATOR_MODE $(DIRS:%=-I%) $(PY_FLAGS)
-	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)	
+	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%) #$(PY_FLAGS)
+	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 	
