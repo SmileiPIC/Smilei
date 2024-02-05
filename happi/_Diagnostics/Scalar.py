@@ -6,39 +6,55 @@ class Scalar(Diagnostic):
 	
 	def _init(self, scalar=None, timesteps=None, data_log=False, data_transform=None, **kwargs):
 		# Get available scalars
-		scalars = self.getScalars()
+		scalars = self.simulation.getScalars()
 		
 		# If no scalar chosen, only print the available scalars
 		if scalar is None:
+			error = []
 			if len(scalars)>0:
-				self._error += ["Error: no scalar chosen"]
-				self._error += ["Printing available scalars:"]
-				self._error += ["---------------------------"]
+				error += ["Error: no scalar chosen"]
+				error += ["Printing available scalars:"]
+				error += ["---------------------------"]
 				l = [""]
 				for s in scalars:
 					if len(s)>4 and s[:2]!=l[-1][:2] and s[-2:]!=l[-1][-2:]:
-						if l!=[""]: self._error += ["\t".join(l)]
+						if l!=[""]: error += ["\t".join(l)]
 						l = []
 					l.append(s)
-				if l!=[""]: self._error += ["\t".join(l)]
+				if l!=[""]: error += ["\t".join(l)]
 			else:
-				self._error += ["No scalars found"]
-			return
+				error += ["No scalars found"]
+			raise Exception("\n".join(error))
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
-		# Find which scalar is requested
-		if scalar not in scalars:
-			fs = list(filter(lambda x:scalar in x, scalars))
-			if len(fs)==0:
-				self._error += ["No scalar `"+scalar+"` found"]
-				return
-			if len(fs)>1:
-				self._error += ["Several scalars match: "+(' '.join(fs))]
-				self._error += ["Please be more specific and retry."]
-				return
-			scalar = fs[0]
-		self._scalarname = scalar
+		# Find which scalar is requested & associated units
+		self.operation = scalar
+		def scalarTranslator(s):
+			units = "??"
+			if   s == "time":
+				units = "T_r"
+			elif s == "Ubal_norm":
+				units = ""
+			else:
+				units = {
+					"U":"K_r * N_r * L_r^%i" % self._ndim_particles,
+					"P":"K_r * N_r * L_r^%i" % self._ndim_particles,
+					"D":"N_r * L_r^%i" % self._ndim_particles,
+					"E":"E_r",
+					"B":"B_r",
+					"J":"J_r",
+					"R":"Q_r * N_r",
+					"Z":"Q_r",
+					"N":"",
+					}[s[0]]
+			return units, "S['%s']"%s, s
+		self._operation = Operation(scalar, scalarTranslator, self._ureg)
+		self._scalarname = self._operation.variables
+		self._vunits = self._operation.translated_units
+		self._title  = self._operation.title
+		if not self._scalarname:
+			raise Exception("String "+self.operation+" does not seem to include any scalar")
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -47,26 +63,31 @@ class Scalar(Diagnostic):
 		# Already get the data from the file
 		# Loop file line by line
 		self._alltimesteps = []
-		self._values = []
-		times_values = {}
+		S = { s:[] for s in self._scalarname }
 		for path in self._results_path:
 			try:
-				with open(path+'/scalars.txt') as f:
-					for line in f:
-						line = line.strip()
-						if line[0]!="#": break
-						prevline = line
-					scalars = prevline[1:].strip().split() # list of scalars
-					scalarindex = scalars.index(scalar) # index of the requested scalar
-					line = str(line.strip()).split()
-					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
-					for line in f:
-						line = str(line.strip()).split()
-						times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
+				f = open(path+'/scalars.txt')
 			except:
 				continue
-		self._alltimesteps  = self._np.array(sorted(times_values.keys()))
-		self._values = self._np.array([times_values[k] for k in self._alltimesteps])
+			for line in f:
+				if line[0]!="#": break
+				prevline = line
+			scalars = prevline[1:].strip().split() # list of scalars
+			scalarindexes = {s:scalars.index(s) for s in self._scalarname} # indexes of the requested scalars
+			line = str(line.strip()).split()
+			self._alltimesteps += [ int( self._np.round(float(line[0]) / float(self.timestep)) ) ]
+			for s,i in scalarindexes.items():
+				S[s] += [float(line[i])]
+			for line in f:
+				line = str(line.strip()).split()
+				self._alltimesteps += [ int( self._np.round(float(line[0]) / float(self.timestep)) ) ]
+				for s,i in scalarindexes.items():
+					S[s] += [float(line[i])]
+			f.close()
+		self._alltimesteps  = self._np.array(self._alltimesteps)
+		for s in S:
+			S[s] = self._np.array(S[s])
+		self._values = self._operation.eval(locals())
 		self._timesteps = self._np.copy(self._alltimesteps)
 		
 		# 2 - Manage timesteps
@@ -88,65 +109,13 @@ class Scalar(Diagnostic):
 			self._error += ["Timesteps not found"]
 			return
 		
-		
-		# 3 - Build units
-		# -------------------------------------------------------------------
-		self._vunits = "??"
-		if   self._scalarname == "time":
-			self._vunits = "T_r"
-		elif self._scalarname == "Ubal_norm":
-			self._vunits = ""
-		else:
-			self._vunits = {
-				"U":"K_r * N_r * L_r^%i" % self._ndim_particles,
-				"P":"K_r * N_r * L_r^%i" % self._ndim_particles,
-				"D":"N_r * L_r^%i" % self._ndim_particles,
-				"E":"E_r",
-				"B":"B_r",
-				"J":"J_r",
-				"R":"Q_r * N_r",
-				"Z":"Q_r",
-				"N":"",
-				}[self._scalarname[0]]
-		self._title =self._scalarname
-		
 		# Finish constructor
 		self.valid = True
 		return kwargs
 	
 	# Method to print info on included scalars
 	def _info(self):
-		return "Scalar "+self._scalarname
-	
-	# get all available scalars
-	def getScalars(self):
-		allScalars = None
-		for path in self._results_path:
-			try:
-				file = path+'/scalars.txt'
-				f = open(file, 'r')
-			except Exception as e:
-				continue
-			try:
-				# Find last commented line
-				prevline = ""
-				for line in f:
-					line = line.strip()
-					if line[0]!="#": break
-					prevline = line[1:].strip()
-				scalars = str(prevline).split() # list of scalars
-				scalars = scalars[1:] # remove first, which is "time"
-			except Exception as e:
-				scalars = []
-			f.close()
-			if allScalars is None:
-				allScalars = scalars
-			else:
-				allScalars = self._np.intersect1d(allScalars, scalars)
-		if allScalars is None:
-			self._error += ["Cannot open 'scalars.txt'"]
-			return []
-		return allScalars
+		return "Scalar "+self.operation
 	
 	# get all available timesteps
 	def getAvailableTimesteps(self):

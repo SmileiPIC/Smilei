@@ -28,6 +28,8 @@ Changes made in the repository (not released)
   * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
   * Changed coordinate reference for 2D probe in 3D or AM geometry
     (zero is the box origin projected orthogonally on the probe plane).
+  * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
+    The list of available scalars can be obtained from ``getScalars()``.
 
 * Bug fixes:
 

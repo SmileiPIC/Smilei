@@ -101,12 +101,16 @@ about the corresponding diagnostics in the simulation.
   Returns a list of available diagnostics of the given type
   
   * ``diagType``: The diagnostic type (``"Field"``, ``"Probe"``, etc.)
+  
+.. rubric:: Information on specific diagnostics
+
+.. py:method:: getScalars()
+  
+  Returns a list of available scalars.
 
 .. py:method:: getTrackSpecies()
 
   Returns a list of available tracked species.
-  
-.. rubric:: Information on specific diagnostics
 
 .. py:method:: fieldInfo(diag)
 
@@ -145,8 +149,7 @@ Open a Scalar diagnostic
 
 .. py:method:: Scalar(scalar=None, timesteps=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``scalar``: The name of the scalar.
-     | If not given, then a list of available scalars is printed.
+  * ``scalar``: The name of the scalar, or an operation on scalars, such as ``"Uelm+Ukin"``.
   * ``timesteps``: The requested timestep(s).
      | If omitted, all timesteps are used.
      | If one number  given, the nearest timestep available is used.

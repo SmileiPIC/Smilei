@@ -331,8 +331,7 @@ class Operation(object):
 	
 	Parameters:
 	-----------
-	operation: the user's requested operation
-	pattern: the regexp pattern to find the variables in the operation
+	operation: the user's requested operation (string containing variables and operators)
 	QuantityTranslator: function that takes a string as argument (a quantity name)
 		and outputs its units + its replacement string + its displayed name
 	ureg: Pint's unit registry or None for no unit awareness
