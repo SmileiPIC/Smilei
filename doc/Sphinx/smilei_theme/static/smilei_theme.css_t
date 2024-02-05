@@ -44,6 +44,9 @@
 	--main_bold: {{ theme_main_color_bold }};
 	--main_med : {{ theme_main_color_med  }};
 	--main_pale: {{ theme_main_color_pale }};
+	--header_color : {{ theme_header_color }};
+	--header_pushed: {{ theme_header_pushed }};
+	--header_text  : {{ theme_header_text }};
 	
 	--alt-bg: #181818;
 }
@@ -55,6 +58,9 @@
 	--main_bold: {{ theme_dark_main_color_bold }};
 	--main_med : {{ theme_dark_main_color_med  }};
 	--main_pale: {{ theme_dark_main_color_pale }};
+	--header_color : {{ theme_dark_header_color }};
+	--header_pushed: {{ theme_dark_header_pushed }};
+	--header_text  : {{ theme_dark_header_text }};
 	
 	--alt-bg: #ccc;
 }
@@ -116,7 +122,7 @@ div.logo {
 	margin: 1mm 2em 1mm 1mm;
 	padding: 0 2mm;
 	border-radius: 2mm;
-	background-color: #fff; background-color: var(--bg);
+	background-color: {{ theme_header_text }}; background-color: var(--header_text);
 	height:{{ theme_head_height| float -2 }}mm;
 }
 
@@ -517,7 +523,7 @@ div.headercolor {
 	top:0;
 	height: {{ theme_head_height }}mm;
 	width: 100%;
-	background-color:{{ theme_main_color_bold }}; background-color: var(--main_bold);
+	background-color:{{ theme_header_color }}; background-color: var(--header_color);
 }
 
 div.hpositioner {
@@ -531,7 +537,6 @@ div.header {
 	position: relative;
 	height: 100%;
 	font-size: 1em;
-	color: white;
 	display: inline-block;
 	text-align: left;
 }
@@ -619,7 +624,7 @@ div.header > * {
 
 .menu > div > a,
 .menu > div > a:hover {
-	color: white; color: var(--bg);
+	color: {{ theme_header_text }}; color: var(--header_text);
 	text-decoration: none;
 }
 
@@ -652,7 +657,7 @@ div.header > * {
 }
 
 .menuButton.pushed {
-	background-color:{{ theme_main_color_med }}; color: var(--main_med);
+	background-color:{{ theme_header_pushed }}; background-color: var(--header_pushed);
 }
 
 .menu div.toctree-smilei {
