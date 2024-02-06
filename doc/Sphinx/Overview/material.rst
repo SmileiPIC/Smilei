@@ -48,6 +48,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Gorlova2024]
+
+    D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev and A. B. Savelev,
+    `THz transition radiation of electron bunches laser-accelerated in long-scale near-critical-density plasmas`,
+    `Laser Physics Letters 21, 035001 (2024) <https://doi.org/10.1088/1612-202X/ad21ed>`_
+
 .. [Seidel2024]
 
     A. Seidel, B. Lei, C. Zepter, M. C. Kaluza, A. Sävert, M. Zepf, and D. Seipt,
