@@ -182,16 +182,34 @@ private:
         coeffxp[2] = 0.5 * ( delta2+delta_p[0]+0.25 );
 
         delta      = ypn - ( double )idx_d[1] + 0.5;
-        delta2     = delta*delta;
-        coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
-        coeffyd[1] = 0.75 - delta2;
-        coeffyd[2] = 0.5 * ( delta2+delta+0.25 );
+        //delta2     = delta*delta;
+        //coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
+        //coeffyd[1] = 0.75 - delta2;
+        //coeffyd[2] = 0.5 * ( delta2+delta+0.25 );
+        if (delta >= 0){
+            coeffyd[0] = 0.;
+            coeffyd[1] = (1. - delta)*(0.75 + 0.25*(( double )idx_d[1] - 0.5)/ypn );
+            coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
+        } else {
+            coeffyd[0] = (- delta)*(0.75 + 0.25*(( double )idx_d[1] - 1.5)/ypn) ;
+            coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
+            coeffyd[2] = 0.;
+        }
 
         delta_p[1] = ypn - ( double )idx_p[1];
-        delta2     = delta_p[1]*delta_p[1];
-        coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
-        coeffyp[1] = 0.75 - delta2;
-        coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
+        //delta2     = delta_p[1]*delta_p[1];
+        //coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
+        //coeffyp[1] = 0.75 - delta2;
+        //coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
+        if (delta_p[1] >= 0){
+            coeffyp[0] = 0.;
+            coeffyp[1] = (1. - delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] )/ypn );
+            coeffyp[2] = 1. - coeffyd[1]; //conservation de la charge
+        } else {
+            coeffyp[0] = (- delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] - 1.0)/ypn) ;
+            coeffyp[1] = 1. - coeffyd[0]; //conservation de la charge
+            coeffyp[2] = 0.;
+        }
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
