@@ -111,11 +111,11 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     if (delta >= 0){
         // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts] et delta = (x - x_n)/dx
         Sr0[1] = 0.;
-        Sr0[2] = (1. - delta)*(0.75 + 0.25*iold[1*nparts]/(iold[1*nparts]+delta) );
+        Sr0[2] = (1. - delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_)/(iold[1*nparts]+j_domain_begin_+delta) );
         Sr0[3] = 1. - Sr0[2]; //conservation de la charge
     } else {
         // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]-1  et delta = (x - x_{n+1})/dx
-        Sr0[1] = (- delta)*(0.75 + 0.25*(iold[1*nparts]-1)/(iold[1*nparts]+delta) );
+        Sr0[1] = (- delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_-1.)/(iold[1*nparts]+j_domain_begin_+delta) );
         Sr0[2] = 1. - Sr0[1]; //conservation de la charge
         Sr0[3] = 0.;
     }
@@ -176,6 +176,9 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
         Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
         Sr1[jp_m_jpo+3] = 0.;
     }
+
+    //cout <<deltaold[1*nparts] << " " << delta << " " << iold[1*nparts]+j_domain_begin_ << " " << jp << " " << Sr0[1] << " " << Sr0[2] << " " << Sr0[3] << " " << Sr1[jp_m_jpo+1] << " " << Sr1[jp_m_jpo+2] << " " << Sr1[jp_m_jpo+3] << endl;
+
 
     // TENTATIVE NEW SHAPE functions PIC
     //

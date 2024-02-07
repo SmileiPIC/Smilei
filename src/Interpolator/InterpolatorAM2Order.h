@@ -204,10 +204,10 @@ private:
         if (delta_p[1] >= 0){
             coeffyp[0] = 0.;
             coeffyp[1] = (1. - delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] )/ypn );
-            coeffyp[2] = 1. - coeffyd[1]; //conservation de la charge
+            coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
         } else {
             coeffyp[0] = (- delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] - 1.0)/ypn) ;
-            coeffyp[1] = 1. - coeffyd[0]; //conservation de la charge
+            coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
             coeffyp[2] = 0.;
         }
 
