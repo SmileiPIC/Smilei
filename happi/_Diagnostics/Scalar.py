@@ -97,17 +97,11 @@ class Scalar(Diagnostic):
 		for i,t in enumerate(self._timesteps):
 			self._data.update({ t : i })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
-		if timesteps is not None:
-			try:
-				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except Exception as e:
-				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
-				return
+		timestep_indices = kwargs.pop("timestep_indices", None)
+		self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
 		
 		# Need at least one timestep
-		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
+		assert self._timesteps.size > 0, "Timesteps not found"
 		
 		# Finish constructor
 		self.valid = True
@@ -123,7 +117,6 @@ class Scalar(Diagnostic):
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")

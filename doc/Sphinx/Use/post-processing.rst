@@ -150,10 +150,15 @@ Open a Scalar diagnostic
 .. py:method:: Scalar(scalar=None, timesteps=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``scalar``: The name of the scalar, or an operation on scalars, such as ``"Uelm+Ukin"``.
-  * ``timesteps``: The requested timestep(s).
-     | If omitted, all timesteps are used.
-     | If one number  given, the nearest timestep available is used.
-     | If two numbers given, all the timesteps in between are used.
+  * ``timesteps`` or ``timestep_indices``: The requested range of timesteps.
+    
+     * If omitted, all timesteps are used.
+     * If one number  given, the nearest timestep available is used.
+     * If two numbers given, all the timesteps in between are used.
+     
+     When using ``timesteps``, provide the timesteps themselves, but
+     when using ``timestep_indices``, provide their indices in the list
+     of the available timesteps.
   * ``units``: A unit specification (see :ref:`units`)
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
@@ -173,7 +178,7 @@ Open a Field diagnostic
 
 .. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, moving=False, export_dir=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``data_transform``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``data_log``, ``data_transform``: same as before.
   * ``diagNumber``: number or ``name`` of the fields diagnostic
      | If not given, then a list of available diagnostic numbers is printed.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -231,7 +236,7 @@ Open a Probe diagnostic
 
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``probeNumber``: number or ``name`` of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -259,7 +264,7 @@ Open a ParticleBinning diagnostic
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``: number or ``name`` of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
@@ -309,7 +314,7 @@ Open a Screen diagnostic
 
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
@@ -326,7 +331,7 @@ Open a RadiationSpectrum diagnostic
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
@@ -347,7 +352,7 @@ Open a TrackParticles diagnostic
 
 .. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
-  * ``timesteps``, ``units``, ``export_dir``: same as before.
+  * ``timesteps`` (or ``timestep_indices``), ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
     If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.

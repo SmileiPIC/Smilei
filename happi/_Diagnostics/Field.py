@@ -176,11 +176,8 @@ class Field(Diagnostic):
 		for i,t in enumerate(self._timesteps):
 			self._data.update({ t : i })
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
-		if timesteps is not None:
-			try:
-				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except Exception as e:
-				raise Exception("Argument `timesteps` must be one or two non-negative integers")
+		timestep_indices = kwargs.pop("timestep_indices", None)
+		self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
@@ -316,7 +313,6 @@ class Field(Diagnostic):
 	
 	# get the value of x_moved for a requested timestep
 	def getXmoved(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
@@ -330,7 +326,6 @@ class Field(Diagnostic):
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
@@ -372,7 +367,6 @@ class Field(Diagnostic):
 	# Method to obtain the data only
 	# Specific to cylindrical geometry, to reconstruct the plane at some theta
 	def _theta_getDataAtTime(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
@@ -429,7 +423,6 @@ class Field(Diagnostic):
 	# Specific to cylindrical geometry, to reconstruct a 3d box
 	def _build3d_getDataAtTime(self, t):
 		from scipy.interpolate import RegularGridInterpolator
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
