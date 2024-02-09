@@ -95,13 +95,16 @@ class ParticleBinning(Diagnostic):
 		self._timesteps = {}
 		self._alltimesteps = {}
 		self._indexOfTime  = {}
+		self._h5files = []
 		self._h5items = {}
+		timestep_indices = kwargs.pop("timestep_indices", None)
 		for d in self._diags:
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
 				try:
 					f = self._h5py.File(path+self._os.sep+self._diagType+str(d)+'.h5', 'r')
+					self._h5files += [f]
 				except:
 					continue
 				items.update( dict(f) )
@@ -113,12 +116,8 @@ class ParticleBinning(Diagnostic):
 			self._indexOfTime.update({ d:{} })
 			for i,t in enumerate(self._timesteps[d]):
 				self._indexOfTime[d].update({ t : i })
-			# If timesteps is None, then keep all timesteps, otherwise, select timesteps
-			if timesteps is not None:
-				try:
-					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
-				except Exception as e:
-					raise Exception("Argument 'timesteps' must be one or two non-negative integers")
+			# Select timesteps if requested
+			self._timesteps[d] = self._selectTimesteps(timesteps, timestep_indices, self._timesteps[d])
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
 				raise Exception(
@@ -493,7 +492,6 @@ class ParticleBinning(Diagnostic):
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
-		if not self._validate(): return
 		# Auto axes require recalculation of bin size and centers
 		if self.auto_axes:
 			self._updateAxes(t)
