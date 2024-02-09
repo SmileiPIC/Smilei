@@ -31,6 +31,9 @@ Validate("Scalar Uelm_Bz_m", S.Scalar.Uelm_Bz_m().getData(), 100.)
 # SCALARS RELATED TO SPECIES
 Validate("Scalar Ukin_ion" , S.Scalar.Ukin_ion ().getData(), 100.)
 
+# OPERATION ON SCALARS
+Validate("Scalar Ukin+Uelm", S.Scalar("Ukin+Uelm").getData(), 100.)
+
 # 1D SCREEN DIAGS
 for i,d in enumerate(S.namelist.DiagScreen):
 	last_data = S.Screen(i, timesteps=21000).getData()[-1]

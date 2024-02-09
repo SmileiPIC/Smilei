@@ -339,10 +339,6 @@ void VectorPatch::dynamics( Params &params,
 
     timers.particles.restart();
     ostringstream t;
-#ifdef _PARTEVENTTRACING
-    bool diag_PartEventTracing {false};
-    double reference_time;
-#endif
 
 #ifdef _OMPTASKS
     #pragma omp single
@@ -362,7 +358,7 @@ void VectorPatch::dynamics( Params &params,
     bool diag_PartEventTracing {false};
     if( !params.Laser_Envelope_model ) {
         diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-        if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+        if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
     }
 #endif
 
@@ -1406,6 +1402,10 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
                     for( unsigned int i=0; i<mins.size(); i++ ) {
                         for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                        }
+                    }
+                    for( unsigned int i=0; i<maxs.size(); i++ ) {
+                        for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
                         }
                     }
@@ -4559,7 +4559,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
 #  ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+    if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
 #  endif
 
 
@@ -4601,7 +4601,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    // if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+    // if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
 #endif
 
 #ifdef _OMPTASKS

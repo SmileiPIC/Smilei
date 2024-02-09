@@ -48,6 +48,84 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Gorlova2024]
+
+    D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev and A. B. Savelev,
+    `THz transition radiation of electron bunches laser-accelerated in long-scale near-critical-density plasmas`,
+    `Laser Physics Letters 21, 035001 (2024) <https://doi.org/10.1088/1612-202X/ad21ed>`_
+
+.. [Seidel2024]
+
+    A. Seidel, B. Lei, C. Zepter, M. C. Kaluza, A. Sävert, M. Zepf, and D. Seipt,
+    `Polarization and CEP dependence of the transverse phase space in laser driven accelerators`,
+    `Physical Review Research 6, 013056 (2024) <https://doi.org/10.1103/PhysRevResearch.6.013056>`_
+    
+.. [Gao2023b]
+
+    X. Gao,
+    `Anisotropic field ionization in nanoclusters mediated by a Brunel-electron-driven plasma wave`,
+    `Physical Review A 108, 033109 (2023) <https://doi.org/10.1103/PhysRevA.108.033109>`_
+
+.. [Yoon2023b]
+
+    Y. D. Yoon, P. M. Bellan and G. S. Yun,
+    `Phase-space Analysis of Ordered and Disordered Nonthermal Ion Energization during Magnetic Reconnection`,
+    `The Astrophysical Journal, 956:105 (2023) <https://doi.org/10.3847/1538-4357/acf1f5>`_
+
+.. [Bhadoria2023]
+
+    S. Bhadoria, M. Marklund and C. H. Keitel,
+    `Energy enhancement of laser-driven ions by radiation reaction and Breit-Wheeler pair production in the ultra-relativistic transparency regime`,
+    `High Power Laser Science and Engineering (2023) <https://www.cambridge.org/core/journals/high-power-laser-science-and-engineering/article/energy-enhancement-of-laserdriven-ions-by-radiation-reaction-and-breitwheeler-pair-production-in-the-ultrarelativistic-transparency-regime/EE3DB62B65E6AABFD1801875C20C2DFD>`_
+
+.. [Diab2023]
+
+    R. Diab,  S.-G. Baek,  P. Bonoli,  T. G. Jenkins,  M. Ono and D. Smithe,
+    `Particle-in-cell simulations of parasitic electrostatic wave excitation in the ion cyclotron range of frequencies and high harmonic fast wave regimes`,
+    `AIP Conference Proceedings 2984, 080001 (2023) <https://doi.org/10.1063/5.0164928>`_
+
+.. [Sladkov2023]
+
+    A. D. Sladkov and A. V. Korzhimanov,
+    `Cherenkov Radiation of an Ultrashort Laser Pulse Propagating in a Strongly Magnetized Plasma at Various Intensities and Directions of the Magnetic Field`,
+    `Radiophysics and Quantum Electronics 65, 888–896 (2023) <https://doi.org/10.1007/s11141-023-10265-9>`_
+
+.. [Montefiori2023]
+
+    S. Montefiori and M. Tamburini
+    `SFQEDtoolkit: A high-performance library for the accurate modeling of strong-field QED processes in PIC and Monte Carlo codes`,
+    `Computer Physics Communications 292, 108855 (2023) <https://doi.org/10.1016/j.cpc.2023.108855>`_
+
+.. [Shekhanov2023]
+
+    S. Shekhanov, A. Gintrand, L. Hudec, R. Liska, J. Limpouch, S. Weber and V. Tikhonchuk
+    `Kinetic modeling of laser absorption in foams`,
+    `Physics of Plasmas 30, 012708 (2023) <https://doi.org/10.1063/5.0131786>`_
+
+.. [Yu2023]
+
+    J. Yu, J. Zhong, Y. Ping and W. An
+    `Electron acceleration in a coil target-driven low-β magnetic reconnection simulation`,
+    `Matter and Radiation at Extremes 8, 064003 (2023) <https://doi.org/10.1063/5.0149259>`_
+
+.. [Zagidullin2023]
+
+    R. Zagidullin, S. Tietze, M. Zepf, J. Wang and S. Rykovanov
+    `Density-dependent carrier-envelope phase shift in attosecond pulse generation from relativistically oscillating mirrors`,
+    `Matter and Radiation at Extremes 8, 064004 (2023) <https://doi.org/10.1063/5.0155957>`_
+
+.. [Cai2023]
+
+    J. Cai, Y. Shou, Y. Geng, L. Han, X. Xu, S. Wen, B. Shen, J. Yu and X. Yan
+    `Extremely powerful and frequency-tunable terahertz pulses from a table-top laser-plasma wiggler`,
+    `High Power Laser Science and Engineering (2023) <https://www.cambridge.org/core/journals/high-power-laser-science-and-engineering/article/extremely-powerful-and-frequencytunable-terahertz-pulses-from-a-tabletop-laserplasma-wiggler/4E93CDD2F494C44A799266AB3E62277F>`_
+       
+.. [Jirka2023]
+
+    M. Jirka and H. Kladecová
+    `Pair production in an electron collision with a radially polarized laser pulse`,
+    `Physics of Plasmas 30, 113102 (2023) <https://doi.org/10.1063/5.0168022>`_
+
 .. [Guo2023]
 
     A. Guo, Q. Lu, S. Lu, S. Wang and R. Wang,
@@ -128,7 +206,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
        
 .. [Gao2023]
 
-    Xiaohui Gao,
+    X. Gao,
     `Ionization dynamics of sub-micrometer-sized clusters in intense ultrafast laser pulses`,
     `Phys. Plasmas 30, 052102 (2023) <https://doi.org/10.1063/5.0143356>`_
     
@@ -146,13 +224,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
      
 .. [Ghizzo2023]
 
-    Alain Ghizzo, Daniele Del Sarto, and Homam Betar,
+    A. Ghizzo, D. Del Sarto, and H. Betar,
     `Collisionless Heating Driven by Vlasov Filamentation in a Counterstreaming Beams Configuration`,
     `Phys. Rev. Lett. 131, 035101 (2023) <https://doi.org/10.1103/PhysRevLett.131.035101>`_
      
 .. [Yang2023]
 
-   Tong Yang, Zhen Guo, Yang Yan, Minjian Wu, Yadong Xia, Qiangyou He, Hao Cheng, Yuze Li, Yanlv Fang, Yanying Zhao, Xueqing Yan and Chen Lin,
+   T. Yang, Z. Guo, Y. Yan, M. Wu, Y. Xia, Q. He, H. Cheng, Y. Li, Y. Fang, Y. Zhao, X. Yan and C. Lin,
    `Measurements of Plasma Density Profile Evolutions with Channel-guided Laser`,
    `High Power Laser Science and Engineering pp. 1-15 (2023) <https://doi.org/10.1017/hpl.2023.50>`_
 
@@ -164,25 +242,25 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Pak2023]
 
-  Taegyu Pak, Mohammad Rezaei-Pandari, Sang Beom Kim, Geonwoo Lee, Dae Hee Wi, Calin Ioan Hojbota, Mohammad Mirzaie, Hyeongmun Kim, Jae Hee Sung, Seong Ku Lee, Chul Kang and Ki-Yong Kim,
+  T. Pak, M. Rezaei-Pandari, S. B. Kim, G. Lee, D. H. Wi, C. I. Hojbota, M. Mirzaie, H. Kim, J. H. Sung, S. K. Lee, C. Kang and K.-Y. Kim,
   `Multi-millijoule terahertz emission from laser-wakefield-accelerated electrons`,
   `Light Sci Appl 12, 37 (2023) <http://dx.doi.org/10.1038/s41377-022-01068-0>`_
 
 .. [Istokskaia2023]
 
-  Valeriia Istokskaia, Marco Tosca, Lorenzo Giuffrida, Jan Psikal, Filip Grepl, Vasiliki Kantarelou, Stanislav Stancek, Sabrina Di Siena, Arsenios Hadjikyriacou, Aodhan McIlvenny, Yoann Levy, Jaroslav Huynh, Martin Cimrman, Pavel Pleskunov, Daniil Nikitin, Andrei Choukourov, Fabio Belloni, Antonino Picciotto, Satyabrata Kar, Marco Borghesi, Antonio Lucianetti, Tomas Mocek and Daniele Margarone,
+  V. Istokskaia, M. Tosca, L. Giuffrida, J. Psikal, F. Grepl, V. Kantarelou, S. Stancek, S. Di Siena, A. Hadjikyriacou, A. McIlvenny, Y. Levy, J. Huynh, M. Cimrman, P. Pleskunov, D. Nikitin, A. Choukourov, F. Belloni, A. Picciotto, S. Kar, M. Borghesi, A. Lucianetti, T. Mocek and D. Margarone,
   `A multi-MeV alpha particle source via proton-boron fusion driven by a 10-GW tabletop laser`,
   `Commun Phys 6, 27 (2023) <http://dx.doi.org/10.1038/s42005-023-01135-x>`_
 
 .. [Yoon2023]
 
-  Young Dae Yoon, Deirdre E. Wendel and Gunsu S. Yun,
+  Y. D. Yoon, D. E. Wendel and G. S. Yun,
   `Equilibrium selection via current sheet relaxation and guide field amplification`,
   `Nat Commun 14, 139 (2023) <http://dx.doi.org/10.1038/s41467-023-35821-9>`_
 
 .. [Galbiati2023]
 
-   Marta Galbiati, Arianna Formenti, Mickael Grech and Matteo Passoni,
+   M. Galbiati, A. Formenti, M. Grech and M. Passoni,
    `Numerical investigation of non-linear inverse Compton scattering in double-layer targets`,
    `Front. Phys. 11, fphy.2023.1117543 (2023) <http://dx.doi.org/10.3389/fphy.2023.1117543>`_
 
@@ -200,7 +278,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Miethlinger2023]
 
-   Thomas Miethlinger, Nico Hoffmann and Thomas Kluge,
+   T. Miethlinger, N. Hoffmann and T. Kluge,
    `Acceptance Rates of Invertible Neural Networks on Electron Spectra from Near-Critical Laser-Plasmas: A Comparison`,
    `Parallel Processing and Applied Mathematics, 273-284 (2023) <http://dx.doi.org/10.1007/978-3-031-30445-3_23>`_
 
@@ -216,13 +294,30 @@ As of November 2021, 90 papers have been published covering a broad range of top
     `Electron acceleration by laser plasma wedge interaction`,
     `Phys. Rev. Research 5, 013115 (2023) <http://dx.doi.org/10.1103/PhysRevResearch.5.013115>`_
 
+.. [Blackman2022]
+
+    D. R. Blackman, Y. Shi, S. R. Klein, M. Cernaianu, D. Doria, P. Ghenuche and A. Arefiev 
+    `Electron acceleration from transparent targets irradiated by ultra-intense helical laser beams`,
+    `Communications Physics 5, 116 (2022) <https://doi.org/10.1038/s42005-022-00894-3>`_
+
+.. [Siminos2022]
+
+    E. Siminos  and I. Thiele
+    `Parametric study of laser wakefield driven generation of intense sub-cycle pulses`,
+    `Plasma Physics and Controlled Fusion 64, 034006 (2022) <https://doi.org/10.1088/1361-6587/ac4311>`_
+
+.. [PChen2022]
+
+    P. Chen, G. Mourou, M. Besancon, Y. Fukuda, J.-F. Glicenstein, J. Nam, C.-E. Lin, K.-N. Lin, S.-X. Liu, Y.-K. Liu, M. Kando, K. Kondo, S. Paganis, A. Pirozhkov, H. Takabe, B. Tuchming, W.-P. Wang, N. Watamura, J. Wheeler and H.-Y. Wu on behalf of the AnaBHEL Collaboration,
+    `AnaBHEL (Analog Black Hole Evaporation via Lasers) Experiment: Concept, Design, and Status`,
+    `Photonics 9(12), 1003 (2022) <https://doi.org/10.3390/photonics9121003>`_
+
 .. [Bukharskii2022]
 
     N. Bukharskii, Iu. Kochetkov and Ph. Korneev,
     `Terahertz annular antenna driven with a short intense laser pulse`,
     `Applied Physics Letters 120, 014102 (2022) <https://doi.org/10.1063/5.0076700>`_
             
-
 .. [Jirka2022]
 
     M. Jirka, P. Sasorov and S. V. Bulanov,
@@ -273,19 +368,19 @@ As of November 2021, 90 papers have been published covering a broad range of top
           
 .. [Chen2022]
 
-     Q. Chen, Dominika Maslarova, J. Wang, S. Li, and D. Umstadter,
+     Q. Chen, D. Maslarova, J. Wang, S. Li, and D. Umstadter,
      `Injection of electron beams into two laser wakefields and generation of electron rings`,
      `Phys. Rev. E 106, 055202 (2022) <https://doi.org/10.1103/PhysRevE.106.055202>`_
 
 .. [Kumar2022b]
 
-    Sonu Kumar, Rajat Dhawan, D.K. Singh and Hitendra K. Malik,
+    S. Ku., R. Dhawan, D.K. Singh and H. K. Malik,
     `Diagnostic of laser wakefield acceleration with ultra – Short laser pulse by using SMILEI PIC code`,
     `Materials Today: Proceedings 62, 3203-3207 (2022) <http://dx.doi.org/10.1016/j.matpr.2022.04.028>`_
 
 .. [Kumar2022a]
 
-    Sonu Kumar, Dhananjay K Singh and Hitendra K Malik,
+    S. Kumar, D. K. Singh and H. K. Malik,
     `Comparative study of ultrashort single-pulse and multi-pulse driven laser wakefield acceleration`,
     `Laser Phys. Lett. 20, 026001 (2022) <http://dx.doi.org/10.1088/1612-202X/aca978>`_
 
@@ -297,13 +392,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Zhang2022b]
 
-    Yue Zhang, Feng Wang, Jianyong Liu and Jizhong Sun,
+    Y. Zhang, F. Wang, J. Liu and J. Sun,
     `Simulation of the inverse bremsstrahlung absorption by plasma plume in laser penetration welding`,
     `Chemical Physics Letters 793, 139434 (2022) <http://dx.doi.org/10.1016/j.cplett.2022.139434>`_
 
 .. [Vladisavlevici2022]
 
-    Iuliana-Mariana Vladisavlevici, Daniel Vizman and Emmanuel d’Humières,
+    I.-M. Vladisavlevici, D. Vizman and E. d’Humières,
     `Laser Driven Electron Acceleration from Near-Critical Density Targets towards the Generation of High Energy γ-Photons`,
     `Photonics 9, 953 (2022) <http://dx.doi.org/10.3390/photonics9120953>`_
 
@@ -321,32 +416,32 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Guo2022]
 
-    Yinlong Guo, Xuesong Geng, Liangliang Ji, Baifei Shen and Ruxin Li,
+    Y. Guo, X. Geng, L. Ji, B. Shen and R. Li,
     `Improving the accuracy of hard photon emission by sigmoid sampling of the quantum-electrodynamic table in particle-in-cell Monte Carlo simulations`,
     `Phys. Rev. E 105, 025309 (2022) <http://dx.doi.org/10.1103/PhysRevE.105.025309>`_
 
 .. [Pae2022]
 
-    Ki Hong Pae, Chul Min Kim, Vishwa Bandhu Pathak, Chang-Mo Ryu and Chang Hee Nam,
+    K. . Pae, C. M. Kim, V. B. Pathak, C.-M. Ryu and C. H. Nam,
     `Direct laser acceleration of electrons from a plasma mirror by an intense few-cycle Laguerre–Gaussian laser and its dependence on the carrier-envelope phase`,
     `Plasma Phys. Control. Fusion 64, 055013 (2022) <http://dx.doi.org/10.1088/1361-6587/ac5a0a>`_
 
       
 .. [Zhang2022a]
 
-   Cui-Wen Zhang, Yi-Xuan Zhu, Jian-Feng Lv and Bai-Song Xie,
+   C.-W. Zhang, Y.-X. Zhu, J.-F. Lu and B.-S. Xie,
    `Simulation Study of a Bright Attosecond γ-ray Source Generation by Irradiating an Intense Laser on a Cone Target`,
    `Applied Sciences 12, 4361 (2022) <http://dx.doi.org/10.3390/app12094361>`_
 
 .. [Han2022]
 
-   Qianqian Han, Xuesong Geng, Baifei Shen, Zhizhan Xu and Liangliang Ji,
+   Q. Han, X. Geng, B. Shen, Z. Xu and L. Ji,
    `Ultra-fast polarization of a thin electron layer in the rotational standing-wave field driven by double ultra-intense laser pulses`,
    `New J. Phys. 24, 063013 (2022) <http://dx.doi.org/10.1088/1367-2630/ac740f>`_
 
 .. [Gothel2022]
 
-   Ilja Göthel, Constantin Bernert, Michael Bussmann, Marco Garten, Thomas Miethlinger, Martin Rehwald, Karl Zeil, Tim Ziegler, Thomas E Cowan, Ulrich Schramm and Thomas Kluge,
+   I. Göthel, C. Bernert, M. Bussmann, M. Garten, T. Miethlinger, M. Rehwald, K. Zeil, T. Ziegler, T. E. Cowan, U. Schramm and T. Kluge,
    `Optimized laser ion acceleration at the relativistic critical density surface`,
    `Plasma Phys. Control. Fusion 64, 044010 (2022) <http://dx.doi.org/10.1088/1361-6587/ac4e9f>`_
 
@@ -364,7 +459,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Sundstrom2022]
 
-  Andréas Sundström, Mickael Grech, István Pusztai and Caterina Riconda,
+  A. Sundström, M. Grech, I. Pusztai and C. Riconda,
   `Stimulated-Raman-scattering amplification of attosecond XUV pulses with pulse-train pumps and application to local in-depth plasma-density measurement`,
   `Phys. Rev. E 106, 045208 (2022) <http://dx.doi.org/10.1103/PhysRevE.106.045208>`_
 
@@ -382,13 +477,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Kong2022]
 
-  Defeng Kong, Guoqiang Zhang, Yinren Shou, Shirui Xu, Zhusong Mei, Zhengxuan Cao, Zhuo Pan, Pengjie Wang, Guijun Qi, Yao Lou, Zhiguo Ma, Haoyang Lan, Wenzhao Wang, Yunhui Li, Peter Rubovic, Martin Veselsky, Aldo Bonasera, Jiarui Zhao, Yixing Geng, Yanying Zhao, Changbo Fu, Wen Luo, Yugang Ma, Xueqing Yan and Wenjun Ma,
+  D. Kong, G. Zhang, Y. Shou, S. Xu, Z. Mei, Z. Cao, Z. Pan, P. Wang, G. Qi, Y. Lou, Z. Ma, H. Lan, W. Wang, Y. Li, P. Rubovic, M. Veselsky, A. Bonasera, J. Zhao, Y. Geng, Y. Zhao, C. Fu, W. Luo, Y. Ma, X. Yan and W. Ma,
   `High-energy-density plasma in femtosecond-laser-irradiated nanowire-array targets for nuclear reactions`,
   `Matter and Radiation at Extremes 7, 064403 (2022) <http://dx.doi.org/10.1063/5.0120845>`_
 
 .. [Davidson2022]
 
-  Conor Davidson, Zheng-Ming Sheng, Thomas Wilson and Paul McKenna,
+  C. Davidson, Z.-M. Sheng, T. Wilson and P. McKenna,
   `Theoretical and computational studies of the Weibel instability in several beam–plasma interaction configurations`,
   `J. Plasma Phys. 88, 905880206 (2022) <http://dx.doi.org/10.1017/S0022377822000253>`_
   
@@ -399,13 +494,14 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `Journal of Applied Physics 131, 103104 (2022) <http://dx.doi.org/10.1063/5.0070670>`_
 
 .. [Umstadter2022]
+
    D. Umstadter
    `Controlled Injection of Electrons for Improved Performance of Laser-Wakefield Acceleration`,
    `United States: N. p., (2022) <http://dx.doi.org/10.2172/1838680>`_
 
 .. [Massimo2022]
 
-  Francesco Massimo, Mathieu Lobet, Julien Derouillat, Arnaud Beck, Guillaume Bouchard, Mickael Grech, Frédéric Pérez, Tommaso Vinci,
+  F. Massimo, M. Lobet, J. Derouillat, A. Beck, G. Bouchard, M. Grech, F. Pérez, T. Vinci,
   `A Task Programming Implementation for the Particle in Cell Code Smilei`,
   `PASC '22: Proceedings of the Platform for Advanced Scientific Computing Conference 5, 1 (2022) <https://doi.org/10.1145/3539781.3539788>`_,
   `arXiv:2204.12837 <https://arxiv.org/abs/2204.12837>`_
@@ -429,6 +525,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
   Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
 
+.. [Romansky2021]
+
+  V. I. Romansky, A. M. Bykov and S. M. Osipov,
+  `On electron acceleration by mildly-relativistic shocks: PIC simulations`,
+  `Journal of Physics: Conference Series 2103 012009 (2021) <https://dx.doi.org/10.1088/1742-6596/2103/1/012009>`_
+
 .. [Tiwary2021]
 
   S. Tiwary and N. Kumar,
@@ -443,13 +545,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
       
 .. [Tomassini2021]
 
-    Paolo Tomassini, Francesco Massimo, Luca Labate and Leonida A. Gizzi,
+    P. Tomassini, F. Massimo, L. Labate and L. A. Gizzi,
     `Accurate electron beam phase-space theory for ionization-injection schemes driven by laser pulses`,
     `High Pow Laser Sci Eng 10, e15 (2021) <http://dx.doi.org/10.1017/hpl.2021.56>`_
     
 .. [Meinhold2021]
 
-  Tim Arniko Meinhold and Naveen Kumar,
+  T. A. Meinhold and N. Kumar,
   `Radiation pressure acceleration of protons from structured thin-foil targets`,
   `J. Plasma Phys. 87, 905870607 (2021) <http://dx.doi.org/10.1017/S0022377821001070>`_
 
@@ -461,13 +563,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Shi2021b]
 
-  Yin Shi, David R Blackman and Alexey Arefiev,
+  Y. Shi, D. R. Blackman and A. Arefiev,
   `Electron acceleration using twisted laser wavefronts`,
   `Plasma Phys. Control. Fusion 63, 125032 (2021) <http://dx.doi.org/10.1088/1361-6587/ac318d>`_
 
 .. [Kumar2021]
 
-  Naveen Kumar and Brian Reville,
+  N. Kumar and B. Reville,
   `Nonthermal Particle Acceleration at Highly Oblique Nonrelativistic Shocks`,
   `ApJL 921, L14 (2021) <http://dx.doi.org/10.3847/2041-8213/ac30e0>`_
 
@@ -479,7 +581,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Horny2021]
 
-  Vojtěch Horný and László Veisz,
+  V. Horný and L. Veisz,
   `Generation of single attosecond relativistic electron bunch from intense laser interaction with a nanosphere`,
   `Plasma Phys. Control. Fusion 63, 125025 (2021) <http://dx.doi.org/10.1088/1361-6587/ac2996>`_
 
@@ -509,7 +611,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Shou2021]
 
-  Yinren Shou, Dahui Wang, Pengjie Wang, Jianbo Liu, Zhengxuan Cao, Zhusong Mei, Shirui Xu, Zhuo Pan, Defeng Kong, Guijun Qi, Zhipeng Liu, Yulan Liang, Ziyang Peng, Ying Gao, Shiyou Chen, Jiarui Zhao, Yanying Zhao, Han Xu, Jun Zhao, Yanqing Wu, Xueqing Yan and Wenjun Ma,
+  Y. Shou, D. Wang, P. Wang, J. Liu, Z. Cao, Z. Mei, S. Xu, Z. Pan, D. Kong, G. Qi, Z. Liu, Y. Liang, Z. Peng, Y. Gao, S. Chen, J. Zhao, Y. Zhao, H. Xu, J. Zhao, Y. Wu, X. Yan and W. Ma,
   `High-efficiency generation of narrowband soft x rays from carbon nanotube foams irradiated by relativistic femtosecond lasers`,
   `Opt. Lett. 46, 3969 (2021) <http://dx.doi.org/10.1364/OL.432817>`_
 
@@ -521,13 +623,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Hosseinkhani2021]
 
-  H. Hosseinkhani, M. Pishdast, J. Yazdanpanah and S.A. Ghasemi,
+  H. Hosseinkhani, M. Pishdast, J. Yazdanpanah and S. A. Ghasemi,
   `Investigation of the classical and quantum radiation reaction effect on interaction of ultra high power laser with near critical plasma`,
   `J. Nuclear Sci. Technol. 42, 27-35 (2021) <http://dx.doi.org/10.24200/nst.2021.1197>`_
 
 .. [MercuriBaron2021]
 
-  A Mercuri-Baron, M Grech, F Niel, A Grassi, M Lobet, A Di Piazza and C Riconda,
+  A. Mercuri-Baron, M. Grech, F. Niel, A. Grassi, M. Lobet, A. Di Piazza and C. Riconda,
   `Impact of the laser spatio-temporal shape on Breit–Wheeler pair production`,
   `New J. Phys. 23, 085006 (2021) <http://dx.doi.org/10.1088/1367-2630/ac1975>`_
 
@@ -539,7 +641,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Shi2021a]
 
-  Yin Shi, David Blackman, Dan Stutman and Alexey Arefiev,
+  Y. Shi, D. Blackman, D. Stutman and A. Arefiev,
   `Generation of Ultrarelativistic Monoenergetic Electron Bunches via a Synergistic Interaction of Longitudinal Electric and Magnetic Fields of a Twisted Laser`,
   `Phys. Rev. Lett. 126, 234801 (2021) <http://dx.doi.org/10.1103/PhysRevLett.126.234801>`_
 
@@ -551,7 +653,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Shekhanov2021]
 
-  S A Shekhanov and V T Tikhonchuk,
+  S. A. Shekhanov and V. T. Tikhonchuk,
   `SRS-SBS competition and nonlinear laser energy absorption in a high temperature plasma`,
   `Plasma Phys. Control. Fusion 63, 115016 (2021) <http://dx.doi.org/10.1088/1361-6587/ac2614>`_
 
@@ -563,7 +665,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Yoon2021b]
 
-  Young Dae Yoon, Gunsu S. Yun, Deirdre E. Wendel and James L. Burch,
+  Y. D. Yoon, G. S. Yun, D. E. Wendel and J. L. Burch,
   `Collisionless relaxation of a disequilibrated current sheet and implications for bifurcated structures`,
   `Nat Commun 12, 3774 (2021) <http://dx.doi.org/10.1038/s41467-021-24006-x>`_
 
@@ -593,7 +695,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Do2021]
 
-  Hue Thi Bich Do, Ding Wen Jun, Zackaria Mahfoud, Wu Lin and Michel Bosman,
+  H. T. B. Do, D. W. Jun, Z. Mahfoud, W. Lin and M. Bosman,
   `Electron dynamics in plasmons`,
   `Nanoscale 13, 2801-2810 (2021) <http://dx.doi.org/10.1039/D0NR07025D>`_
 
@@ -611,7 +713,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Cantono2021]
 
-  Giada Cantono, Alexander Permogorov, Julien Ferri, Evgeniya Smetanina, Alexandre Dmitriev, Anders Persson, Tünde Fülöp and Claes-Göran Wahlström,
+  G. Cantono, A. Permogorov, J. Ferri, E. Smetanina, A. Dmitriev, A. Persson, T. Fülöp and C.-G. Wahlström,
   `Laser-driven proton acceleration from ultrathin foils with nanoholes`,
   `Sci Rep 11, 5006 (2021) <http://dx.doi.org/10.1038/s41598-021-84264-z>`_
 
@@ -623,13 +725,13 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Yoon2021a]
 
-  Young Dae Yoon and Paul M. Bellan,
+  Y. D. Yoon and P. M. Bellan,
   `How Hall electric fields intrinsically chaotize and heat ions during collisionless magnetic reconnection`,
   `Physics of Plasmas 28, 022113 (2021) <http://dx.doi.org/10.1063/5.0040374>`_
 
 .. [Sampath2021]
 
-  Archana Sampath, Xavier Davoine, Sébastien Corde, Laurent Gremillet, Max Gilljohann, Maitreyi Sangal, Christoph H. Keitel, Robert Ariniello, John Cary, Henrik Ekerfelt, Claudio Emma, Frederico Fiuza, Hiroki Fujii, Mark Hogan, Chan Joshi, Alexander Knetsch, Olena Kononenko, Valentina Lee, Mike Litos, Kenneth Marsh, Zan Nie, Brendan O’Shea, J. Ryan Peterson, Pablo San Miguel Claveria, Doug Storey, Yipeng Wu, Xinlu Xu, Chaojie Zhang and Matteo Tamburini,
+  A. Sampath, X. Davoine, S. Corde, L. Gremillet, M. Gilljohann, M. Sangal, C. H. Keitel, R. Ariniello, J. Cary, H. Ekerfelt, C. Emma, F. Fiuza, H. Fujii, M. Hogan, C. Joshi, A. Knetsch, O. Kononenko, V. Lee, M. Litos, K. Marsh, Z. Nie, B. O’Shea, J. R. Peterson, P. San Miguel Claveria, D. Storey, Y. Wu, X. Xu, C. Zhang and M. Tamburini,
   `Extremely Dense Gamma-Ray Pulses in Electron Beam-Multifoil Collisions`,
   `Phys. Rev. Lett. 126, 064801 (2021) <http://dx.doi.org/10.1103/PhysRevLett.126.064801>`_
 
@@ -647,7 +749,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Gelfer2021]
 
-  E G Gelfer, A M Fedotov and S Weber,
+  E. G. Gelfer, A. M, Fedotov and S. Weber,
   `Radiation induced acceleration of ions in a laser irradiated transparent foil`,
   `New J. Phys. 23, 095002 (2021) <http://dx.doi.org/10.1088/1367-2630/ac1a97>`_
   `arXiv:1907.02621 <https://arxiv.org/abs/1907.02621>`_
@@ -754,7 +856,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Marcowith2020]
 
-  Alexandre Marcowith, Gilles Ferrand, Mickael Grech, Zakaria Meliani, Illya Plotnikov and Rolf Walder,
+  A. Marcowith, G. Ferrand, M. Grech, Z. Meliani, I. Plotnikov and R. Walder,
   `Multi-scale simulations of particle acceleration in astrophysical systems`,
   `Living Rev Comput Astrophys 6, 1 (2020) <http://dx.doi.org/10.1007/s41115-020-0007-6>`_
   `arXiv:2002.09411 <https://arxiv.org/abs/2002.09411>`_
@@ -843,26 +945,26 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Fang2019]
 
-  Jun Fang, Chun-Yan Lu, Jing-Wen Yan and Huan Yu,
+  J. Fang, C.-Y. Lu, J.-W. Yan and H. Yu,
   `Early acceleration of electrons and protons at the nonrelativistic quasiparallel shocks with different obliquity angles`,
   `Res. Astron. Astrophys. 19, 182 (2019) <http://dx.doi.org/10.1088/1674-4527/19/12/182>`_
   `arXiv:1908.08170 <https://arxiv.org/abs/1908.08170>`_
 
 .. [Yoon2019b]
 
-  Young Dae Yoon and Paul M. Bellan,
+  Y. Yoon and P. M. Bellan,
   `Kinetic Verification of the Stochastic Ion Heating Mechanism in Collisionless Magnetic Reconnection`,
   `ApJ 887, L29 (2019) <http://dx.doi.org/10.3847/2041-8213/ab5b0a>`_
 
 .. [Yoon2019a]
 
-  Young Dae Yoon and Paul M. Bellan,
+  Y. D. Yoon and P. M. Bellan,
   `The electron canonical battery effect in magnetic reconnection: Completion of the electron canonical vorticity framework`,
   `Physics of Plasmas 26, 100702 (2019) <http://dx.doi.org/10.1063/1.5122225>`_
 
 .. [Massimo2019]
 
-  F Massimo, A Beck, J Derouillat, M Grech, M Lobet, F Pérez, I Zemzemi and A Specka,
+  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A Specka,
   `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
   `Plasma Phys. Control. Fusion 61, 124001 (2019) <http://dx.doi.org/10.1088/1361-6587/ab49cf>`_
   `arXiv:1912.04127 <https://arxiv.org/abs/1912.04127>`_
@@ -888,6 +990,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
   `Phys. Rev. Lett. 122, 104803 (2019) <http://dx.doi.org/10.1103/PhysRevLett.122.104803>`_
   `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_
 
+.. [Golovanov2018]
+
+  A. A. Golovanov  and I. Yu. Kostyukov,
+  `Bubble regime of plasma wakefield in 2D and 3D geometries`,
+  `Physics of Plasmas 25, 103107 (2018) <https://doi.org/10.1063/1.5047274>`_
+
 .. [Massimo2018]
 
   F. Massimo, A. Beck, A. Specka, I. Zemzemi, J. Derouillat, M. Grech and F. Pérez,
@@ -908,14 +1016,14 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Niel2018b]
 
-  F Niel, C Riconda, F Amiranoff, M Lobet, J Derouillat, F Pérez, T Vinci and M Grech,
+  F. Niel, C. Riconda, F. Amiranoff, M. Lobet, J. Derouillat, F. Pérez, T. Vinci and M. Grech,
   `From quantum to classical modeling of radiation reaction: a focus on the radiation spectrum`,
   `Plasma Phys. Control. Fusion 60, 094002 (2018) <http://dx.doi.org/10.1088/1361-6587/aace22>`_
   `arXiv:1802.02927 <https://arxiv.org/abs/1802.02927>`_
 
 .. [Plotnikov2018]
 
-  Illya Plotnikov, Anna Grassi and Mickael Grech,
+  I. Plotnikov, A. Grassi and M. Grech,
   `Perpendicular relativistic shocks in magnetized pair plasma`,
   `Monthly Notices of the Royal Astronomical Society 477, 5238-5260 (2018) <http://dx.doi.org/10.1093/mnras/sty979>`_
   `arXiv:1712.02883 <https://arxiv.org/abs/1712.02883>`_
@@ -936,7 +1044,7 @@ As of November 2021, 90 papers have been published covering a broad range of top
 
 .. [Fedeli2017]
 
-  L Fedeli, A Formenti, L Cialfi, A Sgattoni, G Cantono and M Passoni,
+  L. Fedeli, A. Formenti, L. Cialfi, A. Sgattoni, G. Cantono and M. Passoni,
   `Structured targets for advanced laser-driven sources`,
   `Plasma Phys. Control. Fusion 60, 014013 (2017) <http://dx.doi.org/10.1088/1361-6587/aa8a54>`_
 

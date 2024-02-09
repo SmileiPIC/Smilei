@@ -88,7 +88,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
 
             else if( imode==1 ) {
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                    ( *Bl )( i, j )= -( *Bl )( i, j+1 );
+                    ( *Bl )( i, j )= -( *Bl )( i, j+1 ); // Zero Bl mode 1 on axis.
                 }
 
                 for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
@@ -97,7 +97,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                     ( *Br )( i, 1 )=( *Br )( i, 3 );
                 }
                 for( unsigned int i=0; i<nl_d ; i++ ) {
-                    ( *Bt )( i, j )= ( *Bt )( i, j+1 );
+                    ( *Bt )( i, j )= ( *Bt )( i, j+1 ); // Non zero Bt mode 1 on axis.
                 }
 
             } else { // modes > 1

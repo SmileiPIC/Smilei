@@ -188,10 +188,6 @@ void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
         
             unsigned int j= n_d[1]-2;
             
-            
-            //   MESSAGE("JGLOB "<< patch->getCellStartingGlobalIndex(1)+j);
-            //std::cout<<"come heree "<<patch->getCellStartingGlobalIndex(1)<<"  "<<j<<" \n " ;
-            //std::cout<<"come here "<<n_p[1] <<" nr*d[1] "<<n_p[1]*d[1]<<" \n " ;
             // for Bl^(p,d)
             for( unsigned int i=0 ; i<n_p[0]-1; i++ ) {
                 ( *Bl )( i, j+1 ) = ( *Bl_old )( i, j )
@@ -199,12 +195,6 @@ void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
                                     +      Gamma_Bl_Rmax * ( ( *Br )( i+1, j ) + ( *Br_old )( i+1, j ) - ( *Br )( i, j ) - ( *Br_old )( i, j ) )
                                     -      Beta_Bl_Rmax * Icpx * ( double )imode * ( ( *Er )( i, j+1 ) + ( *Er )( i, j ) )
                                     - 2. * Beta_Bl_Rmax * ( *Et )( i, j );
-                //if (std::abs((*Bl)(i,j+1))>1.){
-                //MESSAGE("BlBM");
-                //MESSAGE(i);
-                //MESSAGE(j+1);
-                //MESSAGE((*Bl)(i,j+1));
-                //}
             }//i  ---end Bl
             
             // for Bt^(d,d)
@@ -215,12 +205,6 @@ void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double, Patch *patch )
                                         + Gamma_Bt_Rmax * ( *Bt_old )( i, j )
                                         - Icpx * ( double )imode * CB_BM * Epsilon_Bt_Rmax  * ( ( *Br )( i, j ) + ( *Br_old )( i, j ) )
                                         - CE_BM * Delta_Bt_Rmax * ( ( *Er )( i, j+1 )+( *Er )( i, j )-( *Er )( i-1, j+1 ) -( *Er )( i-1, j ) ) ;
-                //if (std::abs((*Bt)(i,j+1))>1.){
-                //    MESSAGE("BtMF");
-                //    MESSAGE(i);
-                //    MESSAGE(j+1);
-                //    MESSAGE((*Bt)(i,j+1));
-                //}
             }//i  ---end Bt
         }
     }

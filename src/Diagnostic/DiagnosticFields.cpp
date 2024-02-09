@@ -154,10 +154,11 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
         for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
             vecPatches( ipatch )->EMfields->allFields_avg.resize( diag_n+1 );
             if( time_average > 1 ) {
-                for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ )
+                for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
                     vecPatches( ipatch )->EMfields->allFields_avg[diag_n].push_back(
                         vecPatches( ipatch )->EMfields->createField( fields_names[ifield], params )
                     );
+                }
             }
         }
     }
@@ -333,9 +334,16 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             // Write
             H5Write dset = writeField( iteration_group_, fields_names[ifield] );
             // Attributes for openPMD
+            Field *f = vecPatches( 0 )->EMfields->allFields[fields_indexes[ifield]];
+            vector<double> stagger( f->dims().size() );
+            for( unsigned int i = 0; i < stagger.size(); i++ ) {
+                stagger[i] = 0.5 * (double) f->isDual(i);
+            }
+            bool ends_with_m = 0 == fields_names[ifield].compare( fields_names[ifield].length()-2, 2, "_m" );
+            double stagger_t = ends_with_m ? vecPatches( 0 )->EMfields->timestep*0.5 : 0.;
             openPMD_->writeFieldAttributes( dset, subgrid_start_, subgrid_step_ );
-            openPMD_->writeRecordAttributes( dset, field_type[ifield] );
-            openPMD_->writeFieldRecordAttributes( dset );
+            openPMD_->writeRecordAttributes( dset, field_type[ifield], stagger_t );
+            openPMD_->writeFieldRecordAttributes( dset, stagger );
             openPMD_->writeComponentAttributes( dset, field_type[ifield] );
         }
         #pragma omp barrier 

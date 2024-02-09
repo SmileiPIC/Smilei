@@ -195,7 +195,7 @@ class Options(object):
 				kw = kwa[:-5]
 				self.labels_font[kw] = val
 			elif kwa in ["xticklabels", "yticklabels"]:
-				self.ticklabels[kw] = val
+				self.ticklabels[kwa] = val
 			elif kwa in ["xticklabels_font", "yticklabels_font"]:
 				kw = kwa[:-5]
 				self.ticklabels_font[kw] = val
@@ -331,8 +331,7 @@ class Operation(object):
 	
 	Parameters:
 	-----------
-	operation: the user's requested operation
-	pattern: the regexp pattern to find the variables in the operation
+	operation: the user's requested operation (string containing variables and operators)
 	QuantityTranslator: function that takes a string as argument (a quantity name)
 		and outputs its units + its replacement string + its displayed name
 	ureg: Pint's unit registry or None for no unit awareness
