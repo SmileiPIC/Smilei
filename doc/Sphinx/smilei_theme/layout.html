@@ -65,7 +65,7 @@
             {%- if entry == title %}
         </ul>
                 {{ toc }}
-        <ul>
+        <ul id="smallScreenMenuAfterTOC">
             {%- else %}
             <li class="outer">
                 <a href="{{ url }}">{{ entry }}</a>
@@ -162,16 +162,15 @@
               <g transform="translate(0,-932.36216)" >
                 <circle
                    r="25" cy="977.51044" cx="38.078663"
-                   style="opacity:1;fill:none;stroke:#ffffff;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                 <rect
                    transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
-                   rx="4.9996676" ry="7.4995141"
-                   y="316.16959" x="947.6142"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
                    height="14.117695" width="46.476151"
-                   style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;" />
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
                 <path
                    d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
-                   style="opacity:1;fill:none;stroke:#ffffff;stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
               </g>
             </svg>
         </div>
@@ -180,21 +179,18 @@
                xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 80 120">
               <g
-                 transform="translate(0,-932.36216)">
-                <path
-                   d="m 10,962.36216 60,60.00004"
-                   style="fill:none;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
-                <path
-                   d="M 70,962.36216 10,1022.3622"
-                   style="fill:none;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
               </g>
             </svg>
         </div>
         
-        <div id="smallScreenMenuButton" onclick="toggleSmallScreenMenu(event)">
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
             <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
                viewBox="-20 -20 140 140">
-              <g  style="fill:#ffffff;stroke:none;">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
                 <circle cx="15" cy="20" r="5" />
                 <circle cx="35" cy="20" r="5" />
                 <circle cx="85" cy="20" r="5" />
@@ -226,6 +222,9 @@
 
 {%- block footer %}
     <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
       <div>
       <a href="site.html">Site index</a>
       </div>
@@ -261,6 +260,30 @@
         for( var i=0; i<menus.length; i++ )
             menus[i].active = false;
         
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
         
         var ul = nav_list.getElementsByTagName("ul")[0], li;
         var keep_nav = false;
@@ -295,7 +318,6 @@
         }
         
         function toggleSmallScreenMenu(e) {
-            e.preventDefault();
             if( smallScreenMenu.className != "on" ) {
                 smallScreenMenu.className = "on";
                 smallScreenMenuButton.className = "pushed";
@@ -304,6 +326,16 @@
                 smallScreenMenu.className = "off";
                 smallScreenMenuButton.className = "";
                 document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
             }
         }
         

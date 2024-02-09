@@ -35,7 +35,6 @@
 #include "LaserEnvelope.h"
 #include "BinaryProcesses.h"
 #include "CollisionalNuclearReaction.h"
-#include <unistd.h>
 
 using namespace std;
 
