@@ -108,32 +108,68 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     // TENTATIVE NEW SHAPE functions CIC
     
-    if (delta >= 0){
-        // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts] et delta = (x - x_n)/dx
-        Sr0[1] = 0.;
-        Sr0[2] = (1. - delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_)/(iold[1*nparts]+j_domain_begin_+delta) );
-        Sr0[3] = 1. - Sr0[2]; //conservation de la charge
-    } else {
-        // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]-1  et delta = (x - x_{n+1})/dx
-        Sr0[1] = (- delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_-1.)/(iold[1*nparts]+j_domain_begin_+delta) );
-        Sr0[2] = 1. - Sr0[1]; //conservation de la charge
-        Sr0[3] = 0.;
-    }
-
-    // TENTATIVE NEW SHAPE functions PIC
-    //
     //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts] et delta = (x - x_n)/dx
+    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
     //    Sr0[1] = 0.;
-    //    Sr0[2] = 0.5*(1. - delta)*(2*(iold[1*nparts]+1) + 3*iold[1*nparts] - (iold[1*nparts]+delta))/((iold[1*nparts]+1)*(iold[1*nparts]+1)-iold[1*nparts]*iold[1*nparts]);
+    //    Sr0[2] = (1. - delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_)/(iold[1*nparts]+j_domain_begin_+delta) );
     //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
     //} else {
-    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]-1  et delta = (x - x_{n+1})/dx
-    //    Sr0[1] = 0.5*(- delta)*(2*(iold[1*nparts]) + 3*(iold[1*nparts]-1) - (iold[1*nparts]+delta))/((iold[1*nparts])*(iold[1*nparts])-(iold[1*nparts]-1)*(iold[1*nparts]-1));
+    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+_j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
+    //    Sr0[1] = (- delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_-1.)/(iold[1*nparts]+j_domain_begin_+delta) );
     //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
     //    Sr0[3] = 0.;
     //}
 
+    // TENTATIVE NEW SHAPE functions PIC
+    
+    if (delta >= 0){
+        // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts] + j_domain_begin_ et delta = (x - x_n)/dx
+        Sr0[1] = 0.;
+        Sr0[2] = 0.5*(1. - delta)*(2*(iold[1*nparts]+j_domain_begin_+1) + 3*(iold[1*nparts]+j_domain_begin_) - (iold[1*nparts]+j_domain_begin_+delta))/((iold[1*nparts]+j_domain_begin_+1)*(iold[1*nparts]+j_domain_begin_+1)-(iold[1*nparts]+j_domain_begin_)*(iold[1*nparts]+j_domain_begin_));
+        Sr0[3] = 1. - Sr0[2]; //conservation de la charge
+    } else {
+        // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
+        Sr0[1] = 0.5*(- delta)*(2*(iold[1*nparts]+j_domain_begin_) + 3*(iold[1*nparts]+j_domain_begin_-1) - (iold[1*nparts]+j_domain_begin_+delta))/((iold[1*nparts]+j_domain_begin_)*(iold[1*nparts]+j_domain_begin_)-(iold[1*nparts]+j_domain_begin_-1)*(iold[1*nparts]+j_domain_begin_-1));
+        Sr0[2] = 1. - Sr0[1]; //conservation de la charge
+        Sr0[3] = 0.;
+    }
+
+    // TENTATIVE NEW SHAPE functions spline
+   
+    //double pn, sn; //parametre de la fonction de forme 
+    //if (delta >= 0){
+    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
+    //    pn = 1./(1.+4.*(iold[1*nparts]+j_domain_begin_));
+    //    sn = 0.5*(sqrt(1+2.*pn)-1.)/pn;
+    //    Sr0[1] = 0.;
+    //    Sr0[2] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
+    //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
+    //} else {
+    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
+    //    pn = 1./(1.+4.*(iold[1*nparts]+j_domain_begin_-1));
+    //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
+    //    delta = 1. + delta;
+    //    Sr0[1] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
+    //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
+    //    Sr0[3] = 0.;
+    //}
+    //
+    // TENTATIVE NEW SHAPE functions polynomial order 3
+   
+    //delta2 = delta*delta;
+    //if (delta >= 0){
+    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
+    //    Sr0[1] = 0.;
+    //    Sr0[2] = 1+1.5*delta-7.5*delta2+5*delta*delta2; 
+    //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
+    //} else {
+    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
+    //    delta = 1. + delta;
+    //    delta2 = delta*delta;
+    //    Sr0[1] = 1+1.5*delta-7.5*delta2+5*delta*delta2; 
+    //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
+    //    Sr0[3] = 0.;
+    //}
 
     //calculate exponential coefficients
 
@@ -165,34 +201,70 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     // TENTATIVE NEW SHAPE functions CIC
     
-    if (delta >= 0){
-        // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
-        Sr1[jp_m_jpo+1] = 0.;
-        Sr1[jp_m_jpo+2] = (1. - delta)*(0.75 + 0.25*jp/ypn );
-        Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
-    } else {
-        // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
-        Sr1[jp_m_jpo+1] = (- delta)*(0.75 + 0.25*(jp-1)/ypn );
-        Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
-        Sr1[jp_m_jpo+3] = 0.;
-    }
+    //if (delta >= 0){
+    //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
+    //    Sr1[jp_m_jpo+1] = 0.;
+    //    Sr1[jp_m_jpo+2] = (1. - delta)*(0.75 + 0.25*jp/ypn );
+    //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
+    //} else {
+    //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
+    //    Sr1[jp_m_jpo+1] = (- delta)*(0.75 + 0.25*(jp-1)/ypn );
+    //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
+    //    Sr1[jp_m_jpo+3] = 0.;
+    //}
 
     //cout <<deltaold[1*nparts] << " " << delta << " " << iold[1*nparts]+j_domain_begin_ << " " << jp << " " << Sr0[1] << " " << Sr0[2] << " " << Sr0[3] << " " << Sr1[jp_m_jpo+1] << " " << Sr1[jp_m_jpo+2] << " " << Sr1[jp_m_jpo+3] << endl;
 
 
     // TENTATIVE NEW SHAPE functions PIC
-    //
+    
+    if (delta >= 0){
+        // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
+        Sr1[jp_m_jpo+1] = 0.;
+        Sr1[jp_m_jpo+2] = 0.5*(1. - delta)*(2*(jp+1) + 3*jp - ypn)/((jp+1)*(jp+1)-jp*jp);
+        Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
+    } else {
+        // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
+        Sr1[jp_m_jpo+1] = 0.5*(- delta)*(2*jp + 3*(jp-1) - ypn)/(jp*jp-(jp-1)*(jp-1));
+        Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
+        Sr1[jp_m_jpo+3] = 0.;
+    }
+
+    // TENTATIVE NEW SHAPE functions spline
     //if (delta >= 0){
     //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
+    //    pn = 1./(1.+4.*jp);
+    //    sn = 0.5*(sqrt(1+2.*pn)-1.)/pn;
     //    Sr1[jp_m_jpo+1] = 0.;
-    //    Sr1[jp_m_jpo+2] = 0.5*(1. - delta)*(2*(jp+1) + 3*jp - ypn)/((jp+1)*(jp+1)-jp*jp);
+    //    Sr1[jp_m_jpo+2] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
     //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
     //} else {
     //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
-    //    Sr1[jp_m_jpo+1] = 0.5*(- delta)*(2*jp + 3*(jp-1) - ypn)/(jp*jp-(jp-1)*(jp-1));
+    //    pn = 1./(1.+4.*(jp-1));
+    //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
+    //    delta = 1. + delta;
+    //    Sr1[jp_m_jpo+1] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
     //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
     //    Sr1[jp_m_jpo+3] = 0.;
     //}
+
+    // TENTATIVE NEW SHAPE functions polynomial order 3
+   
+    //delta2 = delta*delta;
+    //if (delta >= 0){
+    //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
+    //    Sr1[jp_m_jpo+1] = 0.;
+    //    Sr1[jp_m_jpo+2] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
+    //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
+    //} else {
+    //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
+    //    delta = 1. + delta;
+    //    delta2 = delta*delta;
+    //    Sr1[jp_m_jpo+1] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
+    //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
+    //    Sr1[jp_m_jpo+3] = 0.;
+    //}
+
 
     for( unsigned int i=0; i < 5; i++ ) {
         DSl[i] = Sl1[i] - Sl0[i];
