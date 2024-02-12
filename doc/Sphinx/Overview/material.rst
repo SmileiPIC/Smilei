@@ -48,6 +48,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Vladisavlevici2024]
+
+    I.-M. Vladisavlevici, X. Ribeyre, D. Vizman and E. d’Humières,
+    `Investigation of γ-photon sources using near-critical density targets towards the optimization of the linear Breit–Wheeler process`,
+    `Plasma Physics and Controlled Fusion 66, 035009 (2024) <https://doi.org/10.1088/1361-6587/ad20f7>`_
+
 .. [Gorlova2024]
 
     D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev and A. B. Savelev,
