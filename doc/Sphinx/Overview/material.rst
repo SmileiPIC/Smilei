@@ -48,6 +48,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [Su2024]
+
+    W. Su, X. Cao, C. Ma, Y. Wang and G. Zhang,
+    `Multi-layer phenomena in petawatt laser-driven acceleration of heavy ions`,
+    `Plasma Science and Technology 26, 025202 (2024) <https://doi.org/10.1088/2058-6272/ad0c97>`_
+
 .. [Vladisavlevici2024]
 
     I.-M. Vladisavlevici, X. Ribeyre, D. Vizman and E. d’Humières,
@@ -1001,12 +1007,6 @@ As of November 2021, 90 papers have been published covering a broad range of top
   A. A. Golovanov  and I. Yu. Kostyukov,
   `Bubble regime of plasma wakefield in 2D and 3D geometries`,
   `Physics of Plasmas 25, 103107 (2018) <https://doi.org/10.1063/1.5047274>`_
-
-.. [Massimo2018]
-
-  F. Massimo, A. Beck, A. Specka, I. Zemzemi, J. Derouillat, M. Grech and F. Pérez,
-  `Efficient Modeling of Laser Wakefield Acceleration Through the PIC Code Smilei in CILEX Project`,
-  `Proc. 13th International Computational Accelerator Physics Conference (ICAP'18), Key West, FL, USA, 20-24 October 2018 <https://doi.org/10.18429/JACoW-ICAP2018-MOPAG02>`_
 
 .. [ToledoRedondo2018]
 
