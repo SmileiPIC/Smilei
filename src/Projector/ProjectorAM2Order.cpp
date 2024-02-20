@@ -106,19 +106,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     //Sr0[2] = 0.75-delta2;
     //Sr0[3] = 0.5 * ( delta2+delta+0.25 );
 
-    // TENTATIVE NEW SHAPE functions CIC
-    
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
-    //    Sr0[1] = 0.;
-    //    Sr0[2] = (1. - delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_)/(iold[1*nparts]+j_domain_begin_+delta) );
-    //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+_j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
-    //    Sr0[1] = (- delta)*(0.75 + 0.25*(iold[1*nparts]+j_domain_begin_-1.)/(iold[1*nparts]+j_domain_begin_+delta) );
-    //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
-    //    Sr0[3] = 0.;
-    //}
 
     // TENTATIVE NEW SHAPE functions PIC
     
@@ -134,42 +121,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
         Sr0[3] = 0.;
     }
 
-    // TENTATIVE NEW SHAPE functions spline
-   
-    //double pn, sn; //parametre de la fonction de forme 
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
-    //    pn = 1./(1.+4.*(iold[1*nparts]+j_domain_begin_));
-    //    sn = 0.5*(sqrt(1+2.*pn)-1.)/pn;
-    //    Sr0[1] = 0.;
-    //    Sr0[2] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
-    //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
-    //    pn = 1./(1.+4.*(iold[1*nparts]+j_domain_begin_-1));
-    //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
-    //    delta = 1. + delta;
-    //    Sr0[1] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
-    //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
-    //    Sr0[3] = 0.;
-    //}
-    //
-    // TENTATIVE NEW SHAPE functions polynomial order 3
-   
-    //delta2 = delta*delta;
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur 2 et 3, x_n = iold[1*nparts]+j_domain_begin_ et delta = (x - x_n)/dx
-    //    Sr0[1] = 0.;
-    //    Sr0[2] = 1+1.5*delta-7.5*delta2+5*delta*delta2; 
-    //    Sr0[3] = 1. - Sr0[2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur 1 et 2, x_n = iold[1*nparts]+j_domain_begin_ - 1  et delta = (x - x_{n+1})/dx
-    //    delta = 1. + delta;
-    //    delta2 = delta*delta;
-    //    Sr0[1] = 1+1.5*delta-7.5*delta2+5*delta*delta2; 
-    //    Sr0[2] = 1. - Sr0[1]; //conservation de la charge
-    //    Sr0[3] = 0.;
-    //}
 
     //calculate exponential coefficients
 
@@ -199,23 +150,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     //Sr1[jp_m_jpo+2] = 0.75-delta2;
     //Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
 
-    // TENTATIVE NEW SHAPE functions CIC
-    
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
-    //    Sr1[jp_m_jpo+1] = 0.;
-    //    Sr1[jp_m_jpo+2] = (1. - delta)*(0.75 + 0.25*jp/ypn );
-    //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
-    //    Sr1[jp_m_jpo+1] = (- delta)*(0.75 + 0.25*(jp-1)/ypn );
-    //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
-    //    Sr1[jp_m_jpo+3] = 0.;
-    //}
-
-    //cout <<deltaold[1*nparts] << " " << delta << " " << iold[1*nparts]+j_domain_begin_ << " " << jp << " " << Sr0[1] << " " << Sr0[2] << " " << Sr0[3] << " " << Sr1[jp_m_jpo+1] << " " << Sr1[jp_m_jpo+2] << " " << Sr1[jp_m_jpo+3] << endl;
-
-
     // TENTATIVE NEW SHAPE functions PIC
     
     if (delta >= 0){
@@ -230,42 +164,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
         Sr1[jp_m_jpo+3] = 0.;
     }
 
-    // TENTATIVE NEW SHAPE functions spline
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
-    //    pn = 1./(1.+4.*jp);
-    //    sn = 0.5*(sqrt(1+2.*pn)-1.)/pn;
-    //    Sr1[jp_m_jpo+1] = 0.;
-    //    Sr1[jp_m_jpo+2] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
-    //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
-    //    pn = 1./(1.+4.*(jp-1));
-    //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
-    //    delta = 1. + delta;
-    //    Sr1[jp_m_jpo+1] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
-    //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
-    //    Sr1[jp_m_jpo+3] = 0.;
-    //}
-
-    // TENTATIVE NEW SHAPE functions polynomial order 3
-   
-    //delta2 = delta*delta;
-    //if (delta >= 0){
-    //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
-    //    Sr1[jp_m_jpo+1] = 0.;
-    //    Sr1[jp_m_jpo+2] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
-    //    Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+2]; //conservation de la charge
-    //} else {
-    //    // Si delta < 0: on projette sur jp_m_jpo+1 et jp_m_jpo+2, x_n = jp-1  et delta = (x - x_{n+1})/dx
-    //    delta = 1. + delta;
-    //    delta2 = delta*delta;
-    //    Sr1[jp_m_jpo+1] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
-    //    Sr1[jp_m_jpo+2] = 1. - Sr1[jp_m_jpo+1]; //conservation de la charge
-    //    Sr1[jp_m_jpo+3] = 0.;
-    //}
-
-
     for( unsigned int i=0; i < 5; i++ ) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -273,7 +171,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     double r_bar = ((jpo + j_domain_begin_ + deltaold[1*nparts])*dr + rp) * 0.5; // r at t = t0 - dt/2
 
-    //e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
     e_delta_m1 = std::sqrt(eitheta * std::conj(eitheta_old)); //ei^(theta-theta_old)/2. std::sqrt keeps the root with positive real part which is what we need here.
     e_bar_m1 = eitheta_old * e_delta_m1;                      //ei^(theta+theta_old)/2.
 
@@ -319,7 +216,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     }
 
     e_delta = 0.5;
-    //e_delta_inv = 0.5;
 
     //Compute division by R in advance for Jt and rho evaluation.
     for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -333,9 +229,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             e_delta *= e_delta_m1;
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
-            //e_delta_inv =1./e_delta - 1.;
             crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
-            //crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
         }
 
         // Add contribution J_p to global array
@@ -384,7 +278,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             iloc = ( i+ipo )*nprimr_ + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                //Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. ));
                 Jt [linindex] -= crt_p*(Sr1[j]*Sl1[i]*( e_delta-1. ) - Sr0[j]*Sl0[i]*(std::conj(e_delta) - 1.));
             }
         }
@@ -617,7 +510,6 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
                 Jl[i-1]   =  -Jl[i+1]; // Zero Jl mode > 0 on axis.
            } else {
 		//Jl mode 0 on axis should be left as is. It looks over estimated but it might be necessary to conserve a correct divergence and a proper evaluation on the field on axis.
-                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;  //Here we use smoothig on axis for results appearing more physical.
                 Jl [i-1] =  Jl [i+1] ; // Non zero Jl mode 0 on axis.
            }
        }
