@@ -48,6 +48,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
 
 
+.. [RezaeiPandari2024]
+
+    M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, A. R. Niknam, R. Massudi, K.-Y. Kim, and C. H. Nam,
+    `Investigation of terahertz radiation generation from laser-wakefield acceleration`,
+    `AIP Advances 14, 025347 (2024) <https://doi.org/10.1063/5.0187339>`_
+
 .. [Su2024]
 
     W. Su, X. Cao, C. Ma, Y. Wang and G. Zhang,
