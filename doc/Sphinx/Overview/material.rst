@@ -38,6 +38,8 @@ As of February 2024, 172 papers have been published covering a broad range of to
 * astrophysical and space plasmas
 * high-performance computing (HPC)
 
+Following is the distribution of these topics in the listed publications up to November 2021:
+
 .. _fig_paper_topics:
 
 .. figure:: /_static/figures/paper_topics.png
