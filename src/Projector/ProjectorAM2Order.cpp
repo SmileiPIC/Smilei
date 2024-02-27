@@ -123,15 +123,13 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     // TENTATIVE NEW SHAPE functions PIC on 3 points
     delta2 = delta*delta;
-    double b0mhalf = 28./29 - 0.5;
     //Check if ir is odd or not and affect coeff correspondingly.
-    double coeff = ((iold[1*nparts]+j_domain_begin_) & 1) ? b0mhalf/(iold[1*nparts]+j_domain_begin_) : 0  ;
+    double coeff = ((iold[1*nparts]+j_domain_begin_) & 1) ? (28./29 - 0.5)/(iold[1*nparts]+j_domain_begin_) : 0  ;
     Sr0[1] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
     Sr0[2] = 0.75-delta2 ; // Keeping it unmodified
     //c_0 is slightly different on axis
     if (iold[1*nparts]+j_domain_begin_ == 0)
         Sr0[2] += (delta2-0.25)/29.; 
-    //Sr0[3] = 0.5 * ( delta2+delta+0.25 ) - coeff * (delta2-0.25) ;
     Sr0[3] = 1. - Sr0[1] - Sr0[2];
 
     //calculate exponential coefficients
@@ -162,7 +160,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     //Sr1[jp_m_jpo+2] = 0.75-delta2;
     //Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
 
-    // TENTATIVE NEW SHAPE functions PIC
+    // TENTATIVE NEW SHAPE functions PIC 2 points
     
     //if (delta >= 0){
     //    // Si delta >= 0: on projette sur jp_m_jpo+2 et jp_m_jpo+3, x_n = jp et delta = (x - x_n)/dx
@@ -179,12 +177,11 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     // TENTATIVE NEW SHAPE functions PIC on 3 points
     delta2 = delta*delta;
     //Check if ir is odd or not and affect coeff correspondingly.
-    coeff = (jp & 1) ? b0mhalf/(jp) : 0  ;
+    coeff = (jp & 1) ? (28./29 - 0.5)/(jp) : 0  ;
     Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
     Sr1[jp_m_jpo+2] = 0.75-delta2; // Keeping it unmodified
     if (jp == 0)
         Sr1[jp_m_jpo+2] += (delta2-0.25)/29. ;
-    //Sr0[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 ) - coeff * (delta2-0.25) ;
     Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+1] - Sr1[jp_m_jpo+2];
 
     for( unsigned int i=0; i < 5; i++ ) {

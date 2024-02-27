@@ -186,122 +186,66 @@ private:
         //coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
         //coeffyd[1] = 0.75 - delta2;
         //coeffyd[2] = 0.5 * ( delta2+delta+0.25 );
-        // New shape function CIC
-        //if (delta >= 0){
-        //    coeffyd[0] = 0.;
-        //    coeffyd[1] = (1. - delta)*(0.75 + 0.25*(( double )idx_d[1] - 0.5)/ypn );
-        //    coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
-        //} else {
-        //    coeffyd[0] = (- delta)*(0.75 + 0.25*(( double )idx_d[1] - 1.5)/ypn) ;
-        //    coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
-        //    coeffyd[2] = 0.;
-        //}
-        // TENTATIVE NEW SHAPE functions PIC
-        double x_n, x_np1; 
-        if (delta >= 0){
-            // Si delta >= 0: on projette sur 1 et 2, x_n = idx_d[1] - 0.5 et delta = (x - x_n)/dx
-            //x_n = ( double )idx_d[1] - 0.5 >= 0. ? ( double )idx_d[1] - 0.5 : 0.; 
-            x_n = ( double )idx_d[1] - 0.5 ; 
-            x_np1 = ( double )idx_d[1] + 0.5; 
-            coeffyd[0] = 0.;
-            coeffyd[1] = 0.5*(1. - delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
-            coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
-        } else {
-            // Si delta < 0: on projette sur 0 et 1, x_n = idx_d[1] - 1.5 et delta = (x - x_{n+1})/dx
-            x_n = ( double )idx_d[1] - 1.5 >= 0 ? ( double )idx_d[1] - 1.5 : 0.; 
-            //x_n = ( double )idx_d[1] - 1.5 ; 
-            x_np1 = ( double )idx_d[1] - 0.5; 
-            coeffyd[0] = 0.5*(- delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
-            coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
-            coeffyd[2] = 0.;
-        }
 
-        // New shape function Spline (doesn't seem to work for unknown reasons. Maybe computing different sn for primal and dual positions is not correct)
-        //double pn, sn;
+        // TENTATIVE NEW SHAPE functions PIC 2 points
+        //double x_n, x_np1; 
         //if (delta >= 0){
-        //    pn = 1./(1.+4.*(( double )idx_d[1] - 0.5));
-        //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
+        //    // Si delta >= 0: on projette sur 1 et 2, x_n = idx_d[1] - 0.5 et delta = (x - x_n)/dx
+        //    //x_n = ( double )idx_d[1] - 0.5 >= 0. ? ( double )idx_d[1] - 0.5 : 0.; 
+        //    x_n = ( double )idx_d[1] - 0.5 ; 
+        //    x_np1 = ( double )idx_d[1] + 0.5; 
         //    coeffyd[0] = 0.;
-        //    coeffyd[1] =( delta <= sn ? 1.-delta*delta/sn   : (1.-delta)*(1-delta)/(1.-sn)); 
+        //    coeffyd[1] = 0.5*(1. - delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
         //    coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
         //} else {
-        //    pn = 1./(1.+4.*(( double )idx_d[1] - 1.5));
-        //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
-        //    //delta = 1. + delta;
-        //    coeffyd[0] =( 1. + delta <= sn ? 1.-(1.+delta)*(1.+delta)/sn   : delta*delta/(1.-sn)); 
+        //    // Si delta < 0: on projette sur 0 et 1, x_n = idx_d[1] - 1.5 et delta = (x - x_{n+1})/dx
+        //    x_n = ( double )idx_d[1] - 1.5 >= 0 ? ( double )idx_d[1] - 1.5 : 0.; 
+        //    //x_n = ( double )idx_d[1] - 1.5 ; 
+        //    x_np1 = ( double )idx_d[1] - 0.5; 
+        //    coeffyd[0] = 0.5*(- delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
         //    coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
         //    coeffyd[2] = 0.;
         //}
-        // New shape function polynomial order 3
-        //if (delta >= 0){
-        //    coeffyd[0] = 0.;
-        //    coeffyd[1] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
-        //    coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
-        //} else {
-        //    delta = 1. + delta;
-        //    delta2 = delta*delta;
-        //    coeffyd[0] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
-        //    coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
-        //    coeffyd[2] = 0.;
-        //}
+
+        // TENTATIVE NEW SHAPE functions PIC 3  points
+        delta2 = delta*delta;
+        //Check if ir is odd or not and affect coeff correspondingly.
+        // 5/6 - 1/2 = 1/3
+        double coeff = (idx_d[1] & 1) ? (1./3)/(idx_d[1]+0.5 + j_domain_begin_) : 0  ;
+        coeffyd[0] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
+        coeffyd[1] = 0.75-delta2 ; // Keeping it unmodified
+        coeffyd[2] = 1. - coeffyd[0] - coeffyd[1];
 
         delta_p[1] = ypn - ( double )idx_p[1];
         //delta2     = delta_p[1]*delta_p[1];
         //coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
         //coeffyp[1] = 0.75 - delta2;
         //coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
-        // New shape function CIC
+
+        //// TENTATIVE NEW SHAPE functions PIC 2 points
         //if (delta_p[1] >= 0){
+        //    // Si delta >= 0: on projette sur 1 et 2, x_n = idx_p[1] et delta = (x - x_n)/dx
+        //    x_n = ( double )idx_p[1]; 
         //    coeffyp[0] = 0.;
-        //    coeffyp[1] = (1. - delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] )/ypn );
+        //    coeffyp[1] = 0.5*(1. - delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
         //    coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
         //} else {
-        //    coeffyp[0] = (- delta_p[1])*(0.75 + 0.25*(( double )idx_p[1] - 1.0)/ypn) ;
+        //    // Si delta < 0: on projette sur 0 et 1, x_n = idx_p[1] - 1. et delta = (x - x_{n+1})/dx
+        //    x_n = ( double )idx_p[1] - 1.; 
+        //    coeffyp[0] = 0.5*(- delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
         //    coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
         //    coeffyp[2] = 0.;
         //}
 
-        // TENTATIVE NEW SHAPE functions PIC
-        if (delta_p[1] >= 0){
-            // Si delta >= 0: on projette sur 1 et 2, x_n = idx_p[1] et delta = (x - x_n)/dx
-            x_n = ( double )idx_p[1]; 
-            coeffyp[0] = 0.;
-            coeffyp[1] = 0.5*(1. - delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
-            coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
-        } else {
-            // Si delta < 0: on projette sur 0 et 1, x_n = idx_p[1] - 1. et delta = (x - x_{n+1})/dx
-            x_n = ( double )idx_p[1] - 1.; 
-            coeffyp[0] = 0.5*(- delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
-            coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
-            coeffyp[2] = 0.;
-        }
-
-        // New shape function Spline
-        //if (delta_p[1] >= 0){
-        //    pn = 1./(1.+4.*(( double )idx_p[1] - 0.0));
-        //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
-        //    coeffyp[0] = 0.;
-        //    coeffyp[1] =( delta_p[1] <= sn ? 1.-delta_p[1]*delta_p[1]/sn   : (1.-delta_p[1])*(1-delta_p[1])/(1.-sn)); 
-        //    coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
-        //} else {
-        //    pn = 1./(1.+4.*(( double )idx_p[1] - 1.0));
-        //    sn = ( pn >= 0. ? 0.5*(sqrt(1+2.*pn)-1.)/pn : 0.5*(sqrt(3)-1.)  ); // si p<0 on fait comme si p=0.
-        //    coeffyp[0] =( 1. + delta_p[1] <= sn ? 1.-(1.+delta_p[1])*(1.+delta_p[1])/sn   : delta_p[1]*delta_p[1]/(1.-sn)); 
-        //    coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
-        //    coeffyp[2] = 0.;
-        //}
-        // New shape function polynomial order 3
-        //if (delta_p[1] >= 0){
-        //    coeffyp[0] = 0.;
-        //    coeffyp[1] = 1 + 1.5*delta_p[1] -7.5*delta2+5.*delta2*delta_p[1];
-        //    coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
-        //} else {
-        //    delta = 1. + delta_p[1];
-        //    delta2 = delta*delta;
-        //    coeffyp[0] = 1 + 1.5*delta -7.5*delta2+5.*delta2*delta;
-        //    coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
-        //    coeffyp[2] = 0.;
-        //}
+        // TENTATIVE NEW SHAPE functions PIC 3  points
+        delta2     = delta_p[1]*delta_p[1];
+        //Check if ir is odd or not and affect coeff correspondingly.
+        coeff = (idx_p[1] & 1) ? (28./29. - 0.5)/(idx_p[1] + j_domain_begin_) : 0  ;
+        coeffyp[0] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
+        coeffyp[1] = 0.75-delta2 ;
+        if (idx_p[1]+j_domain_begin_ == 0)
+            coeffyp[1] += (delta2-0.25)/29.; 
+        coeffyp[2] = 1. - coeffyp[0] - coeffyp[1];
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
