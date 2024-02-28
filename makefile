@@ -18,7 +18,6 @@ SMILEICXX ?= mpicxx
 PYTHONEXE ?= python
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
-GPU_COMPILER ?= $(CC)
 TABLES_BUILD_DIR ?= tools/tables/build
 
 #-----------------------------------------------------
@@ -202,10 +201,9 @@ ifneq (,$(call parse_config,gpu_nvidia))
 	override config += noopenmp # Prevent openmp for nvidia
 	
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE -DSMILEI_OPENACC_MODE
-	GPU_COMPILER = nvcc
+	GPU_COMPILER ?= nvcc
 	GPU_COMPILER_FLAGS += -x cu -DSMILEI_ACCELERATOR_MODE -DSMILEI_OPENACC_MODE
 	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
-
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 	
@@ -215,6 +213,7 @@ endif
 # AMD GPUs
 ifneq (,$(call parse_config,gpu_amd))
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE
+	GPU_COMPILER ?= $(CC)
 	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%) #$(PY_FLAGS)
 	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
