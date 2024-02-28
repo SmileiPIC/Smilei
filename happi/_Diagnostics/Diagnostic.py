@@ -26,7 +26,6 @@ class Diagnostic(object):
 		self._log = []
 		self._data_log = False
 		self._data_transform = None
-		self._error = []
 		self._xoffset = 0.
 		
 		# The 'simulation' is a SmileiSimulation object. It is passed as an instance attribute
@@ -43,9 +42,7 @@ class Diagnostic(object):
 		
 		# Reload the simulation, in case it has been updated
 		self.simulation.reload()
-		if not self.simulation.valid:
-			self._error += ["Invalid Smilei simulation"]
-			return
+		assert self.simulation.valid, "Invalid Smilei simulation"
 		
 		# Copy some parameters from the simulation
 		self._results_path   = self.simulation._results_path
@@ -65,21 +62,20 @@ class Diagnostic(object):
 		self.units = kwargs.pop("units", [""])
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self._verbose)
 		if type(self.units) is dict         : self.units = Units(verbose = self._verbose, **self.units)
-		if type(self.units) is not Units:
-			self._error += ["Could not understand the 'units' argument"]
-			return
+		assert type(self.units) is Units, "Could not understand the 'units' argument"
 		self.units._initRegistry(self._ureg)
+		
+		# Manage the 'timesteps' or 'timestep_indices'
+		assert not ( "timesteps" in kwargs and "timestep_indices" in kwargs ),\
+			"Cannot define both `timesteps` and `timestep_indices`"
 		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
-		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
-			self.valid = False
-			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
-			return
+		assert remaining_kwargs is None or len(remaining_kwargs) == 0,\
+			"The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())
 		
 		self.dim = len(self._shape)
-		if self.valid:
-			self._prepareUnits()
+		self._prepareUnits()
 		
 		# Prepare data_log output
 		self._dataAtTime = self._dataLogAtTime if self._data_log else self._dataLinAtTime
@@ -88,19 +84,6 @@ class Diagnostic(object):
 	def __repr__(self):
 		self.info()
 		return ""
-
-	# Method to verify everything was ok during initialization
-	def _validate(self):
-		try:
-			self.simulation.valid
-		except Exception as e:
-			print("No valid Smilei simulation selected")
-			return False
-		if not self.simulation.valid or not self.valid:
-			print("***ERROR*** - Diagnostic is invalid")
-			print("\n".join(self._error))
-			return False
-		return True
 	
 	# Prepare units for axes
 	def _prepareUnits(self):
@@ -143,7 +126,7 @@ class Diagnostic(object):
 
 	# Method to print info on this diag
 	def info(self):
-		if self._validate() and self._verbose:
+		if self._verbose:
 			print(self._info())
 
 	# Method to get only the arrays of data
@@ -159,7 +142,6 @@ class Diagnostic(object):
 		A list of arrays: each array corresponding to the diagnostic data at a given
 		timestep.
 		"""
-		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 		data = []
 
@@ -175,7 +157,6 @@ class Diagnostic(object):
 
 	def getTimesteps(self):
 		"""Obtains the list of timesteps selected in this diagnostic"""
-		if not self._validate(): return []
 		return self._timesteps
 
 	def getTimes(self):
@@ -184,7 +165,6 @@ class Diagnostic(object):
 		By default, times are in the code's units, but are converted to the diagnostic's
 		units defined by the `units` argument, if provided.
 		"""
-		if not self._validate(): return []
 		return self.units.tcoeff * self.timestep * self._np.array(self._timesteps)
 	
 	def _getCenters(self, axis_index, timestep):
@@ -234,7 +214,6 @@ class Diagnostic(object):
 		!!! Deprecated !!!
 		Use functions `getData`, `getTimesteps`, `getTimes` and `getAxis` instead.
 		"""
-		if not self._validate(): return
 		# obtain the data arrays
 		data = self.getData(timestep=timestep)
 		# format the results into a dictionary
@@ -286,7 +265,6 @@ class Diagnostic(object):
 			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).plot(vmin=0, vmax=1e14)
 		"""
-		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
 		self.info()
@@ -334,7 +312,6 @@ class Diagnostic(object):
 			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).streak(vmin=0, vmax=1e14)
 		"""
-		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
 		self.info()
@@ -422,7 +399,6 @@ class Diagnostic(object):
 
 			This takes the particle binning diagnostic #1 and plots the resulting array in figure 1 from 0 to 3e14.
 		"""
-		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
 		self.info()
@@ -482,7 +458,6 @@ class Diagnostic(object):
 			S = happi.Open("path/to/my/results")
 			S.ParticleBinning(1).slide(vmin=0, vmax=1e14)
 		"""
-		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
 		ax = self._make_axes(axes)
@@ -516,20 +491,26 @@ class Diagnostic(object):
 		
 		self.info()
 	
+	# Method to select specific timesteps (or indices) among those available
+	def _selectTimesteps(self, timestep_selection, timestep_index_selection, timesteps):
+		if timestep_selection is not None:
+			ts = self._np.array(timestep_selection, ndmin=1, dtype=float)
+			if ts.size==2: # get all times in between bounds
+				return timesteps[ (timesteps>=ts[0]) * (timesteps<=ts[1]) ]
+			elif ts.size==1: # get nearest time
+				return self._np.array([timesteps[(self._np.abs(timesteps-ts)).argmin()]])
+			else:
+				raise Exception("Argument `timesteps` must be one or two non-negative integers")
+		elif timestep_index_selection is not None:
+			ts = self._np.array(timestep_index_selection, ndmin=1, dtype=int)
+			if ts.size==2:
+				return timesteps[ ts[0]:ts[1] ]
+			elif ts.size==1:
+				return self._np.array(timesteps[ts[0]])
+			else:
+				raise Exception("Argument `timestep_indices` must be one or two non-negative integers")
+		return timesteps
 	
-	# Method to select specific timesteps among those available in times
-	def _selectTimesteps(self, timesteps, times):
-		ts = self._np.array(self._np.double(timesteps),ndmin=1)
-		if ts.size==2:
-			# get all times in between bounds
-			times = times[ (times>=ts[0]) * (times<=ts[1]) ]
-		elif ts.size==1:
-			# get nearest time
-			times = self._np.array([times[(self._np.abs(times-ts)).argmin()]])
-		else:
-			raise
-		return times
-
 	# Method to select portion of a mesh based on a slice
 	def _selectSubset(self, portion, meshpoints, axisname, axisunits, operation):
 		try:
@@ -877,7 +858,6 @@ class Diagnostic(object):
 	
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
-		if not self._validate(): return
 		# prepare vfactor
 		self._prepare1()
 

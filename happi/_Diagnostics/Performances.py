@@ -191,16 +191,10 @@ class Performances(Diagnostic):
 		self._data = {}
 		for i,t in enumerate(self._timesteps):
 			self._data.update({ t : i })
-		# If timesteps is None, then keep all timesteps otherwise, select timesteps
-		if timesteps is not None:
-			try:
-				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except Exception as e:
-				raise Exception("Argument `timesteps` must be one or two non-negative integers")
-		
-		# Need at least one timestep
-		if self._timesteps.size < 1:
-			raise Exception("Timesteps not found")
+		# Select timesteps if requested
+		timestep_indices = kwargs.pop("timestep_indices", None)
+		self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
+		assert self._timesteps.size > 0, "Timesteps not found"
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -270,7 +264,6 @@ class Performances(Diagnostic):
 
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")

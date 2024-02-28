@@ -88,7 +88,7 @@ Following is a comparison of the accelerated electron spectra at the end of thes
 In the green line it is shown the result of the previously known averaged ionization model. Without the longitudinal
 momentum initialization, few electrons obtained through ionization are trapped and accelerated in the plasma wave.
 The red line shows the result with the new averaged ionization model implemented in :program:`Smilei`, which accurately reproduces 
-the spectrum obtained with the simulation without an envelope model (blue line). 
+the spectrum obtained with the *standard laser* simulation without an envelope model. 
 
 
 The envelope simulation required an amount of computing resources orders of magnitude smaller than those required by the simulation without a 
@@ -145,7 +145,7 @@ an amount of resources greater by at least an order of magnitude.
 
 The laser (in red) propagates through a low density plasma and drives a nonlinear Langmuir wave (in blue) that 
 propagates at a velocity close to that of light in its wake. In this simulation, a moving window is used 
-so we can follow the laser as it propagates through the plasma. We see electrons (in white) being self-injected 
+so we can follow the laser as it propagates through the plasma. We see electrons being self-injected 
 in this wakefield where they see a strong electric field that accelerates them up to ultra-relativistic (GeV) energy level.
 
 An animation generated from the simulation data can be found `here <https://www.youtube.com/watch?v=-LX_yT29nAU>`_ 
@@ -230,7 +230,7 @@ shows how this balancing reduces the time of the simulation.
     :align: center
 
 The red curve is the best situation obtained in the previous section, while
-the black curve corresponds to the DLB algorithm enabled.
+the curves with dynamic load balancing are indicated as *DLB*.
 
 The portion of the box belonging to each MPI process varies when the load balancing
 occurs. The following figure shows how each of these portions evolve with time.
@@ -239,7 +239,7 @@ occurs. The following figure shows how each of these portions evolve with time.
 
 The four panels correspond to four timesteps during the simulation.
 The colorscale represents the log-scaled load of each patch.
-The black lines show the borders of each MPI process' portion of the box.
+The lines show the borders of each MPI process' portion of the box.
 The MPI processes that are close to the hotspot tend to handle a smaller portion
 of the box.
 
@@ -266,7 +266,7 @@ with a total of :math:`\sim 1.4` billion quasi-particles in the box.
 The following figure (top panel) shows half of the simulation box in the
 y-direction, and the laser field is reported at three different times.
 The reflected laser pulse (at time :math:`t_2`) shows a different spectral content than
-the incident pulse (at time :math:`t_0`). The plasma electron density is shown in black.
+the incident pulse (at time :math:`t_0`).
 A close-up view of the interaction region is given in the bottom panel, illustrating
 the electron bunches being pulled out from the plasma surface.
 
@@ -317,8 +317,8 @@ A 2-dimensional simulation, in conditions close to actual experiments, ran
 on a box size of 1024 µm x 512 µm for  10 ps
 with 25 billion quasi-particles. The following figure shows the evolution
 of the pump and seed intensities in the head-on collision at three different times.
-The blue-yellow maps correspond to the plasma density while the white-red maps
-correspond to the lasers intensity.
+Surfaces corresponding to the laser intensity are overlaid on top of surfaces
+corresponding to the plasma density.
 
 .. image:: /_static/pump_seed.jpg
     :align: center
