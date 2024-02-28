@@ -30,7 +30,8 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of February 2024, 173 papers have been published covering a broad range of topics:
+As of February 2024, 174
+ papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,6 +51,12 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Psikal2024]
+
+    J. Psikal,
+    `Effect of the rising edge of ultrashort laser pulse on the target normal sheath acceleration of ions`,
+    `Plasma Physics and Controlled Fusion 66 045007 (2024) <https://doi.org/10.1088/1361-6587/ad268d>`_
 
 .. [RezaeiPandari2024]
 
