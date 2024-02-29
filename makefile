@@ -225,7 +225,6 @@ endif
 #activate openmp unless noopenmp flag
 # For Fujitsu compiler: -Kopenmp
 ifeq (,$(call parse_config,noopenmp))
-$(info OpenMP activated)
 	ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
 		OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
 	else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
