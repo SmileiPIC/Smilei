@@ -23,10 +23,14 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* GPU:
+
+  * Compilation simplified and better documented.
+
 * Happi:
 
   * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
-    The list of available scalars can be obtained from ``getScalars()``.
+  * The list of available scalars can be obtained from ``getScalars()``.
   * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
   * New argument ``timestep_indices`` as an alternative to ``timesteps``.
   * Changed coordinate reference for 2D probe in 3D or AM geometry

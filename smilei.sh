@@ -97,6 +97,6 @@ for namelist in "${namelist_files[@]}"; do
     cp $namelist $outdir
 done
 cd $outdir
-$mpiexe -np $proc $smilei "${namelists[@]}"
+$mpiexe --map-by ppr:$proc:socket:pe=$OMP_NUM_THREADS -np $proc $smilei "${namelists[@]}"
 cd $H
 
