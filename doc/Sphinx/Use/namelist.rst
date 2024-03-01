@@ -2576,8 +2576,8 @@ This is done by including a block ``DiagFields``::
   | | Jy_abc       | | Components of the current due to species "abc"      |
   | | Jz_abc       | |                                                     |
   +----------------+-------------------------------------------------------+
-  | | Rho          | |  Total density                                      |
-  | | Rho_abc      | |  Density of species "abc"                           |
+  | | Rho          | |  Total charge density                               |
+  | | Rho_abc      | |  Charge density of species "abc"                    |
   +----------------+-------------------------------------------------------+
 
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
@@ -2766,8 +2766,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   * the electric field components ``"Ex"``, ``"Ey"``, ``"Ez"``
   * the magnetic field components ``"Bx"``, ``"By"``, ``"Bz"``
   * the Poynting vector components ``"PoyX"``, ``"PoyY"``, ``"PoyZ"``
-  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and density ``"Rho"``
-  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
+  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and charge density ``"Rho"``
+  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and charge density ``"Rho_abc"``
     of a given species named ``"abc"``
 
   In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),
