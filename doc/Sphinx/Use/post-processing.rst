@@ -293,19 +293,9 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
-
 **Units of the results:**
 
-  The raw quantity stored in the output file has the units of the :py:data:`deposited_quantity`.
-  Generally, this is a sum of :ref:`macro-particle weights<Weights>`. As those weights
-  are not in units of density (but of density multiplied by hypervolume), a correction
-  is applied in *happi*: it divides the data by an hypervolume. More precisely,
-  for each direction ``x``, ``y`` or ``z``, if this direction is not included in one of 
-  the diagnostic's axes, *happi* divides by the length of the box in that direction.
-  
-  In addition, in order to make the units relative to the bin size, *happi* divides the data
-  in each bin by the bin size.
-
+  :doc:`Details on the units from this diagnostic's output<binning_units>`.
 
 ----
 

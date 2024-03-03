@@ -55,10 +55,12 @@ class TrackParticles(ParticleList):
 		disorderedfiles = self._findFiles("TrackParticlesDisordered")
 		
 		# Get x_moved and add moving_x in the list of properties
+		self._maxAvailableTime = 0
 		self._XmovedForTime = {}
 		for file in disorderedfiles:
 			with self._h5py.File(file, "r") as f:
 				for t, val in f["data"].items():
+					self._maxAvailableTime = max(int(t), self._maxAvailableTime)
 					x_moved = val.attrs.get("x_moved")
 					if x_moved is not None:
 						self._XmovedForTime[int(t)] = x_moved
@@ -183,13 +185,21 @@ class TrackParticles(ParticleList):
 		else:
 			try:
 				f = self._h5py.File(orderedfile, "r")
-				if "finished_ordering" not in f.attrs.keys():
-					return True
+				finished_ordering = "finished_ordering" in f.attrs.keys()
+				last_timestep = f["Times"][-1]
 			except:
 				self._os.remove(orderedfile)
 				return True
 			finally:
 				f.close()
+			if not finished_ordering:
+				return True
+			elif last_timestep < self._maxAvailableTime:
+				# If the file says finished_ordering, but the last ordered timestep
+				# is inconsistent with the last available timestep, then it means
+				# that a new restart has been added to the list.
+				raise Exception("Cannot open a TrackParticles diagnostic that was previously opened with a different list of simulations.\n"
+				+"Remove or backup the following file: " + orderedfile)
 		return False
 	
 	def _filterTimesteps( self, tlist, bounds ):

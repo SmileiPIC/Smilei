@@ -164,6 +164,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * Either ``grid_length``, the simulation length in each direction in units of :math:`L_r`,
   * or ``number_of_cells``, the number of cells in each direction.
 
+  .. note::
+    
+    In ``AMcylindrical`` geometry, the grid represents 2-dimensional fields.
+    The second dimension is the **radius** of the cylinder.
 
 .. py:data:: cell_length
 
