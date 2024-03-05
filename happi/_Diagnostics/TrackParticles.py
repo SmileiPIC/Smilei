@@ -202,21 +202,6 @@ class TrackParticles(ParticleList):
 				+"Remove or backup the following file: " + orderedfile)
 		return False
 	
-	def _filterTimesteps( self, tlist, bounds ):
-		try:
-			ts = self._np.array(bounds, ndmin=1, dtype=float)
-			if ts.size==2:
-				# get all times in between bounds
-				tlist = tlist[(self._timesteps>=ts[0]) * (self._timesteps<=ts[1])]
-			elif ts.size==1:
-				# get nearest time
-				tlist = self._np.array(tlist[ self._np.array([(self._np.abs(tlist-ts)).argmin()]) ])
-			else:
-				raise
-		except:
-			raise Exception("Argument `timesteps` must be one or two non-negative integers")
-		return tlist
-	
 	def _selectParticles( self, select, already_sorted, chunksize ):
 		if type(select) is str:
 			# Parse the selector

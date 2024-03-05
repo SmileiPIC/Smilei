@@ -506,7 +506,7 @@ class Diagnostic(object):
 			if ts.size==2:
 				return timesteps[ ts[0]:ts[1] ]
 			elif ts.size==1:
-				return self._np.array(timesteps[ts[0]])
+				return self._np.array([timesteps[ts[0]]])
 			else:
 				raise Exception("Argument `timestep_indices` must be one or two non-negative integers")
 		return timesteps
