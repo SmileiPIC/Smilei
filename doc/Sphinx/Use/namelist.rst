@@ -1523,7 +1523,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :type: a *python* function or a :doc:`time profile <profiles>`
     :default:  ``tconstant()``
 
-    The temporal envelope of the laser.
+    The temporal envelope of the laser (field, not intensity).
 
   .. py:data:: space_envelope
 
@@ -1544,8 +1544,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :type: a list of two floats
     :default: ``[ 0., 0. ]``
 
-    An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
-    case of elliptical polarization where the two temporal profiles might have a slight
+    An extra delay for the time envelopes of :math:`B_y` and :math:`B_z`,
+    expressed in terms of phase (:math:`=\omega t`). This delay is applied to the
+    :py:data:`time_envelope`, but not to the carrier wave.
+    This option is useful in the
+    case of elliptical polarization where the two temporal profiles should have a slight
     delay due to the mismatched :py:data:`phase`.
 
 
@@ -1562,7 +1565,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         omega            = 1.,
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
   .. py:data:: a0
@@ -1583,6 +1587,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
 
+  .. py:data:: phase_offset
+    
+    :default: 0.
+    
+    An extra phase added to both the envelope and to the carrier wave.
 
 
 .. rubric:: 4. Defining a 2D gaussian wave
@@ -1600,9 +1609,13 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         incidence_angle  = 0.,
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
+  This is similar to ``LaserPlanar1D``, with some additional arguments for
+  specific 2D aspects.
+  
   .. py:data:: focus
 
     :type: A list of two floats ``[X, Y]``
@@ -1618,10 +1631,6 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: 0.
 
     The angle of the laser beam relative to the normal to the injection plane, in radians.
-
-  .. py:data:: time_envelope
-
-     Time envelope of the field (not intensity).
 
 
 .. rubric:: 5. Defining a 3D gaussian wave
@@ -1639,7 +1648,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having

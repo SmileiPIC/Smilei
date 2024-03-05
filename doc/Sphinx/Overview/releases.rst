@@ -40,6 +40,8 @@ Changes made in the repository (not released)
 
   * Dark theme (click the switch on the bottom left, or set browser preferences).
 
+* Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
+
 * Bug fixes:
 
   * ``dump_minutes`` often failed to write some checkpoint files.

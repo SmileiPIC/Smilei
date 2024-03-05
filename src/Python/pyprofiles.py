@@ -468,8 +468,9 @@ def transformPolarization(polarization_phi, ellipticity):
     return [dephasing, amplitudeY, amplitudeZ]
 
 def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
-        polarization_phi=0., ellipticity=0., time_envelope=tconstant(),phase_zero=0.):
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(),phase_offset=0.):
     import math
+    assert len(focus)==1, "LaserPlanar1D: focus must be a list of length 1."
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
@@ -481,7 +482,7 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ amplitudeZ, amplitudeY ],
-        phase          = [ dephasing-phase_zero, -phase_zero ],
+        phase          = [ dephasing-phase_offset, -phase_offset ],
         delay_phase    = [ 0., dephasing ]
     )
 
@@ -490,6 +491,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import vectorize, sqrt
+    assert len(focus)==1, "LaserEnvelopePlanar1D: focus must be a list of length 1."
 
     def space_time_envelope(x,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
@@ -507,11 +509,11 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
 
 
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
-        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.):
     from math import pi, cos, sin, tan, atan, sqrt, exp
+    assert len(focus)==2, "LaserGaussian2D: focus must be a list of length 2."
     global Main
-    if len(Main)==0:
-        raise Exception("LaserGaussian2D profile has been defined before `Main()`")
+    assert len(Main)==1, "LaserGaussian2D profile has been defined before `Main()`"
     grid_length = Main.grid_length
     # Polarization and amplitude
     dephasing, amplitudeZ, amplitudeY = transformPolarization(polarization_phi, ellipticity)
@@ -558,7 +560,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             distance_to_boundary = focus[0] / cos(incidence_angle)
         else:
             distance_to_boundary = (focus[1] - grid_length[1]) / sin(incidence_angle)
-        phase_zero -= omega * distance_to_boundary - 0.5*atan(distance_to_boundary/Zr)
+        phase_offset -= omega * distance_to_boundary - 0.5*atan(distance_to_boundary/Zr)
     # Create Laser
     Laser(
         box_side       = box_side,
@@ -566,7 +568,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ lambda y:amplitudeY*spatial(y), lambda y:amplitudeZ*spatial(y) ],
-        phase          = [ lambda y:phase(y)-phase_zero+delay_phase[1], lambda y:phase(y)-phase_zero+delay_phase[0] ],
+        phase          = [ lambda y:phase(y)-phase_offset+delay_phase[1], lambda y:phase(y)-phase_offset+delay_phase[0] ],
         delay_phase    = delay_phase
     )
 
@@ -575,6 +577,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import exp, sqrt, arctan, vectorize
+    assert len(focus)==2, "LaserEnvelopeGaussian2D: focus must be a list of length 2."
 
     def gaussian_beam_with_temporal_profile(x,y,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
@@ -599,11 +602,11 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
     )
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
-        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.):
     from math import pi, cos, sin, tan, atan, sqrt, exp
+    assert len(focus)==3, "LaserGaussian3D: focus must be a list of length 3."
     global Main
-    if len(Main)==0:
-        raise Exception("LaserGaussian3D profile has been defined before `Main()`")
+    assert len(Main)==1, "LaserGaussian3D profile has been defined before `Main()`"
     grid_length = Main.grid_length
     # Polarization and amplitude
     [dephasing, amplitudeZ, amplitudeY] = transformPolarization(polarization_phi, ellipticity)
@@ -654,7 +657,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         faces = (focus[0],focus[1],focus[2],focus[1]-grid_length[1],focus[2]-grid_length[2])
         denominators = (cycz, cysz, -sy, cysz, -sy)
         distance_to_boundary = min([N/D for N,D in zip(faces,denominators) if D != 0 and N/D > 0])
-        phase_zero -= omega * distance_to_boundary - atan(distance_to_boundary/Zr)
+        phase_offset -= omega * distance_to_boundary - atan(distance_to_boundary/Zr)
     # Create Laser
     Laser(
         box_side       = box_side,
@@ -662,7 +665,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ lambda y,z:amplitudeY*spatial(y,z), lambda y,z:amplitudeZ*spatial(y,z) ],
-        phase          = [ lambda y,z:phase(y,z)-phase_zero+dephasing, lambda y,z:phase(y,z)-phase_zero ],
+        phase          = [ lambda y,z:phase(y,z)-phase_offset+dephasing, lambda y,z:phase(y,z)-phase_offset ],
         delay_phase    = [ 0., dephasing ]
     )
 
@@ -671,7 +674,8 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import exp, sqrt, arctan, vectorize
-
+    assert len(focus)==3, "LaserEnvelopeGaussian3D: focus must be a list of length 3."
+    
     def gaussian_beam_with_temporal_profile(x,y,z,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
         Zr = omega * waist**2/2.
@@ -696,7 +700,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
 
 
 def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
-        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.):
     from math import cos, sin, tan, atan, sqrt, exp
     assert len(focus)==2, "LaserGaussianAM: focus must be a list of length 2."
     # Polarization and amplitude
@@ -719,7 +723,7 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
         space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
-        phase          = [ lambda y:phase(y)-phase_zero+dephasing, lambda y:phase(y)-phase_zero ],
+        phase          = [ lambda y:phase(y)-phase_offset+dephasing, lambda y:phase(y)-phase_offset ],
         delay_phase    = [ 0., dephasing ]
     )
 
@@ -732,6 +736,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import exp, sqrt, arctan, vectorize
+    assert len(focus)==2, "LaserEnvelopeGaussianAM: focus must be a list of length 2."
 
     def gaussian_beam_with_temporal_profile(x,r,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
