@@ -1669,14 +1669,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side         = "xmin",
         a0               = 1.,
         omega            = 1.,
-        focus            = [50., 0.],
+        focus            = [50.],
         waist            = 3.,
         polarization_phi = 0.,
         ellipticity      = 0.,
         time_envelope    = tconstant()
     )
 
-  Note that here, the focus is given in [x,r] coordinates.
+  Note that here the focus is given in [x] coordinates, since it propagates on the `r=0` axis .
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -1939,7 +1939,7 @@ in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
 
     LaserEnvelopeGaussianAM(
         a0              = 1.,
-        focus           = [150., 40.],
+        focus           = [150.],
         waist           = 30.,
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',

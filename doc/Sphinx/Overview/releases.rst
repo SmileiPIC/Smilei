@@ -41,6 +41,8 @@ Changes made in the repository (not released)
   * Dark theme (click the switch on the bottom left, or set browser preferences).
 
 * Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
+* The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
+  (the transverse coordinate of the focus in this geometry is zero).
 
 * Bug fixes:
 

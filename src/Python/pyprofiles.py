@@ -712,18 +712,18 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
     w  = sqrt(1./(1.+(focus[0]/Zr)**2))
     invWaist2 = (w/waist)**2
     coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
-    def spatial(y):
-        return w * exp( -invWaist2*(y-focus[1])**2 )
-    def phase(y):
-        return coeff * (y-focus[1])**2
+    def spatial(r):
+        return w * exp( -invWaist2*(r)**2 )
+    def phase(r):
+        return coeff * (r)**2
     # Create Laser
     Laser(
         box_side        = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
-        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
-        phase          = [ lambda y:phase(y)-phase_offset+dephasing, lambda y:phase(y)-phase_offset ],
+        space_envelope = [ lambda r:amplitudeZ*spatial(r), lambda y:amplitudeY*spatial(r) ],
+        phase          = [ lambda r:phase(r)-phase_offset+dephasing, lambda r:phase(r)-phase_offset ],
         delay_phase    = [ 0., dephasing ]
     )
 
