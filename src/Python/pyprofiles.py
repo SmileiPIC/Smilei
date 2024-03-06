@@ -469,8 +469,6 @@ def transformPolarization(polarization_phi, ellipticity):
 
 def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(),phase_offset=0.):
-    import math
-    assert len(focus)==1, "LaserPlanar1D: focus must be a list of length 1."
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
@@ -486,12 +484,10 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
         delay_phase    = [ 0., dephasing ]
     )
 
-def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(),
+def LaserEnvelopePlanar1D( a0=1., omega=1., time_envelope=tconstant(),
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]],
         polarization_phi = 0.,ellipticity = 0.):
-    import cmath
     from numpy import vectorize, sqrt
-    assert len(focus)==1, "LaserEnvelopePlanar1D: focus must be a list of length 1."
 
     def space_time_envelope(x,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
