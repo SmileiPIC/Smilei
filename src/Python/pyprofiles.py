@@ -702,7 +702,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
 def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.):
     from math import cos, sin, tan, atan, sqrt, exp
-    assert len(focus)==2, "LaserGaussianAM: focus must be a list of length 2."
+    assert len(focus)==1, "LaserGaussianAM: focus must be a list of length 1."
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
@@ -736,7 +736,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
     from numpy import exp, sqrt, arctan, vectorize
-    assert len(focus)==2, "LaserEnvelopeGaussianAM: focus must be a list of length 2."
+    assert len(focus)==1, "LaserEnvelopeGaussianAM: focus must be a list of length 1."
 
     def gaussian_beam_with_temporal_profile(x,r,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
