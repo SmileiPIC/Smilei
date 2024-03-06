@@ -718,7 +718,7 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
-        space_envelope = [ lambda r:amplitudeZ*spatial(r), lambda y:amplitudeY*spatial(r) ],
+        space_envelope = [ lambda r:amplitudeZ*spatial(r), lambda r:amplitudeY*spatial(r) ],
         phase          = [ lambda r:phase(r)-phase_offset+dephasing, lambda r:phase(r)-phase_offset ],
         delay_phase    = [ 0., dephasing ]
     )
