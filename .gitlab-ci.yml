@@ -14,7 +14,7 @@ stages:
 install:
   stage: install
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Force workdir cleaning in case of retried
@@ -32,7 +32,7 @@ install:
 compile_default:
   stage: compile_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ compile_default:
 runQuick:
   stage: run_quick
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -54,7 +54,7 @@ runQuick:
 run1D:
   stage: run_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -66,7 +66,7 @@ run1D:
 run2D:
   stage: run_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -80,7 +80,7 @@ run2D:
 run3D:
   stage: run_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -95,7 +95,7 @@ run3D:
 runAM:
   stage: run_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -107,7 +107,7 @@ runAM:
 runCollisions:
   stage: run_default
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     # Move in test dir
@@ -118,7 +118,7 @@ runCollisions:
 compile_picsar:
   stage: compile_picsar
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -128,7 +128,7 @@ compile_picsar:
 run_picsar:
   stage: run_picsar
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -137,7 +137,7 @@ run_picsar:
 compile_debug:
   stage: compile_debug
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -147,7 +147,7 @@ compile_debug:
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -157,7 +157,7 @@ compile_no_mpi_threadmultiple:
 compile_no_openmp:
   stage: compile_no_openmp
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -167,7 +167,7 @@ compile_no_openmp:
 compile_omptasks:
   stage: compile_omptasks
   only:
-    - develop
+    - single_interpolator_coeffs_function
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -177,7 +177,7 @@ compile_omptasks:
 run_omptasks:
   stage: run_omptasks
   only:
-    - develop
+    - single_interpolator_coeffs_function
     
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

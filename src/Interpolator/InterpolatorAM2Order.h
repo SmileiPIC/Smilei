@@ -107,54 +107,6 @@ public:
     };
 
 private:
-    //inline void coeffs( double xpn, double rpn )
-    //{
-    //    // Indexes of the central nodes
-    //    ip_ = round( xpn );
-    //    id_ = round( xpn+0.5 );
-    //    jp_ = round( rpn );
-    //    jd_ = round( rpn+0.5 );
-
-    //    //std::cout << "xpn = " << ip_ << " rpn = " << jp_ << std::endl;
-
-    //    // Declaration and calculation of the coefficient for interpolation
-    //    double delta2;
-    //    
-    //    deltax_   = xpn - ( double )id_ + 0.5;
-    //    delta2  = deltax_*deltax_;
-    //    coeffxd_[0] = 0.5 * ( delta2-deltax_+0.25 );
-    //    coeffxd_[1] = 0.75 - delta2;
-    //    coeffxd_[2] = 0.5 * ( delta2+deltax_+0.25 );
-    //    
-    //    deltax_   = xpn - ( double )ip_;
-    //    delta2  = deltax_*deltax_;
-    //    coeffxp_[0] = 0.5 * ( delta2-deltax_+0.25 );
-    //    coeffxp_[1] = 0.75 - delta2;
-    //    coeffxp_[2] = 0.5 * ( delta2+deltax_+0.25 );
-    //    
-    //    deltar_   = rpn - ( double )jd_ + 0.5;
-    //    delta2  = deltar_*deltar_;
-    //    coeffyd_[0] = 0.5 * ( delta2-deltar_+0.25 );
-    //    coeffyd_[1] = 0.75 - delta2;
-    //    coeffyd_[2] = 0.5 * ( delta2+deltar_+0.25 );
-    //    
-    //    deltar_   = rpn - ( double )jp_;
-    //    delta2  = deltar_*deltar_;
-    //    coeffyp_[0] = 0.5 * ( delta2-deltar_+0.25 );
-    //    coeffyp_[1] = 0.75 - delta2;
-    //    coeffyp_[2] = 0.5 * ( delta2+deltar_+0.25 );
-    //    
-    //    //std::cout << "coeffxp = " <<  coeffxp_[0] << " " <<  coeffxp_[1] << " " <<  coeffxp_[2] << std::endl;
-    //    //std::cout << "coeffxd = " <<  coeffxd_[0] << " " <<  coeffxd_[1] << " " <<  coeffxd_[2] << std::endl;
-    //    //std::cout << "coeffyp = " <<  coeffyp_[0] << " " <<  coeffyp_[1] << " " <<  coeffyp_[2] << std::endl;
-    //    //std::cout << "coeffyd = " <<  coeffyd_[0] << " " <<  coeffyd_[1] << " " <<  coeffyd_[2] << std::endl;
-
-    //    // First index for summation
-    //    ip_ = ip_ - i_domain_begin_;
-    //    id_ = id_ - i_domain_begin_;
-    //    jp_ = jp_ - j_domain_begin_;
-    //    jd_ = jd_ - j_domain_begin_;
-    //};
     
     inline void coeffs( double xpn, double ypn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffyp,
@@ -182,88 +134,17 @@ private:
         coeffxp[2] = 0.5 * ( delta2+delta_p[0]+0.25 );
 
         delta      = ypn - ( double )idx_d[1] + 0.5;
-        //delta2     = delta*delta;
-        //coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
-        //coeffyd[1] = 0.75 - delta2;
-        //coeffyd[2] = 0.5 * ( delta2+delta+0.25 );
-
-        // TENTATIVE NEW SHAPE functions PIC 2 points
-        //double x_n, x_np1; 
-        //if (delta >= 0){
-        //    // Si delta >= 0: on projette sur 1 et 2, x_n = idx_d[1] - 0.5 et delta = (x - x_n)/dx
-        //    //x_n = ( double )idx_d[1] - 0.5 >= 0. ? ( double )idx_d[1] - 0.5 : 0.; 
-        //    x_n = ( double )idx_d[1] - 0.5 ; 
-        //    x_np1 = ( double )idx_d[1] + 0.5; 
-        //    coeffyd[0] = 0.;
-        //    coeffyd[1] = 0.5*(1. - delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
-        //    coeffyd[2] = 1. - coeffyd[1]; //conservation de la charge
-        //} else {
-        //    // Si delta < 0: on projette sur 0 et 1, x_n = idx_d[1] - 1.5 et delta = (x - x_{n+1})/dx
-        //    x_n = ( double )idx_d[1] - 1.5 >= 0 ? ( double )idx_d[1] - 1.5 : 0.; 
-        //    //x_n = ( double )idx_d[1] - 1.5 ; 
-        //    x_np1 = ( double )idx_d[1] - 0.5; 
-        //    coeffyd[0] = 0.5*(- delta)*(2*(x_np1) + 3*x_n - ypn)/((x_np1)*(x_np1)-x_n*x_n);
-        //    coeffyd[1] = 1. - coeffyd[0]; //conservation de la charge
-        //    coeffyd[2] = 0.;
-        //}
-
-        // TENTATIVE NEW SHAPE functions PIC 3  points
-        delta2 = delta*delta;
+        delta2     = delta*delta;
         coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
         coeffyd[1] = 0.75 - delta2;
-        if (idx_d[1]==1){
-            double bdualm1 = 0.75;
-            double cdual0 = -0.5;
-            coeffyd[0] += (bdualm1-0.5) * (delta2 - 0.25) ;
-            coeffyd[1] += (cdual0+1.0) * (delta2 - 0.25) ;
-        } else {
-            double b0 = 0.625;
-            double c1 = -0.75;
-            coeffyd[0] += (b0-0.5)/(idx_d[1]-0.5) * (delta2 - 0.25) ;
-            coeffyd[1] += (c1+1.0)/(idx_d[1]-0.5) * (delta2 - 0.25) ;
-        }
-        coeffyd[2] = 1. - coeffyd[0] - coeffyd[1];
+        coeffyd[2] = 0.5 * ( delta2+delta+0.25 );
+
 
         delta_p[1] = ypn - ( double )idx_p[1];
-        //delta2     = delta_p[1]*delta_p[1];
-        //coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
-        //coeffyp[1] = 0.75 - delta2;
-        //coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
-
-        //// TENTATIVE NEW SHAPE functions PIC 2 points
-        //if (delta_p[1] >= 0){
-        //    // Si delta >= 0: on projette sur 1 et 2, x_n = idx_p[1] et delta = (x - x_n)/dx
-        //    x_n = ( double )idx_p[1]; 
-        //    coeffyp[0] = 0.;
-        //    coeffyp[1] = 0.5*(1. - delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
-        //    coeffyp[2] = 1. - coeffyp[1]; //conservation de la charge
-        //} else {
-        //    // Si delta < 0: on projette sur 0 et 1, x_n = idx_p[1] - 1. et delta = (x - x_{n+1})/dx
-        //    x_n = ( double )idx_p[1] - 1.; 
-        //    coeffyp[0] = 0.5*(- delta_p[1])*(2*(x_n+1) + 3*x_n - ypn)/((x_n+1)*(x_n+1)-x_n*x_n);
-        //    coeffyp[1] = 1. - coeffyp[0]; //conservation de la charge
-        //    coeffyp[2] = 0.;
-        //}
-
-        // TENTATIVE NEW SHAPE functions PIC 3  points
         delta2     = delta_p[1]*delta_p[1];
         coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
         coeffyp[1] = 0.75 - delta2;
-
-        if (idx_p[1]==0){
-            double c0 = 8./3.;
-            double bm1 = -4./3.;
-            coeffyp[0] += (bm1-0.5) * (delta2 - 0.25) ;
-            coeffyp[1] += (c0 + 1.) * (delta2 - 0.25) ;
-        } else {
-            double b0 = 0.625;
-            double c1 = -0.75;
-            double coeffb = (b0-0.5)/idx_p[1];
-            double coeffc = (c1+1.0)/idx_p[1];
-            coeffyp[0] += coeffb * (delta2 - 0.25) ;
-            coeffyp[1] += coeffc * (delta2 - 0.25) ;
-        }
-        coeffyp[2] = 1. - coeffyp[0] - coeffyp[1];
+        coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
@@ -274,18 +155,10 @@ private:
         
     }
 
-    //// Last prim index computed
-    //int ip_, jp_;
-    //// Last dual index computed
-    //int id_, jd_;
     // Last delta computed
     double deltax_, deltar_ ;
     // exp m theta
     std::complex<double> exp_m_theta_;
-    // Interpolation coefficient on Prim grid
-    //double coeffxp_[3], coeffyp_[3];
-    //// Interpolation coefficient on Dual grid
-    //double coeffxd_[3], coeffyd_[3];
     //! Number of modes;
     unsigned int nmodes_;
     
