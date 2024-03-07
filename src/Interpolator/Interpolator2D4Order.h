@@ -53,102 +53,102 @@ public:
 
 private:
 
-    //! Compuation of coefficients for interpolation using particle normalized positions xpn and ypn
-    inline void __attribute__((always_inline)) coeffs( double xpn, double ypn )
-    {
-        // Indexes of the central nodes
-        ip_ = round( xpn );
-        id_ = round( xpn+0.5 );
-        jp_ = round( ypn );
-        jd_ = round( ypn+0.5 );
+    ////! Compuation of coefficients for interpolation using particle normalized positions xpn and ypn
+    //inline void __attribute__((always_inline)) coeffs( double xpn, double ypn )
+    //{
+    //    // Indexes of the central nodes
+    //    ip_ = round( xpn );
+    //    id_ = round( xpn+0.5 );
+    //    jp_ = round( ypn );
+    //    jd_ = round( ypn+0.5 );
 
-        // Declaration and calculation of the coefficient for interpolation
-        double delta2, delta3, delta4;
+    //    // Declaration and calculation of the coefficient for interpolation
+    //    double delta2, delta3, delta4;
 
-        deltax   = xpn - ( double )id_ + 0.5;
-        delta2  = deltax*deltax;
-        delta3  = delta2*deltax;
-        delta4  = delta3*deltax;
-        coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    deltax   = xpn - ( double )id_ + 0.5;
+    //    delta2  = deltax*deltax;
+    //    delta3  = delta2*deltax;
+    //    delta4  = delta3*deltax;
+    //    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    //    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
-        deltax   = xpn - ( double )ip_;
-        delta2  = deltax*deltax;
-        delta3  = delta2*deltax;
-        delta4  = delta3*deltax;
-        coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    deltax   = xpn - ( double )ip_;
+    //    delta2  = deltax*deltax;
+    //    delta3  = delta2*deltax;
+    //    delta4  = delta3*deltax;
+    //    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    //    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
-        // std::cerr << " xpn: " << xpn
-        //           << " delta: " << deltax
-        //           << " coeff: "<< coeffxp_[0]
-        //           << std::endl;
+    //    // std::cerr << " xpn: " << xpn
+    //    //           << " delta: " << deltax
+    //    //           << " coeff: "<< coeffxp_[0]
+    //    //           << std::endl;
 
-        deltay   = ypn - ( double )jd_ + 0.5;
-        delta2  = deltay*deltay;
-        delta3  = delta2*deltay;
-        delta4  = delta3*deltay;
-        coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    deltay   = ypn - ( double )jd_ + 0.5;
+    //    delta2  = deltay*deltay;
+    //    delta3  = delta2*deltay;
+    //    delta4  = delta3*deltay;
+    //    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    //    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
-        deltay   = ypn - ( double )jp_;
-        delta2  = deltay*deltay;
-        delta3  = delta2*deltay;
-        delta4  = delta3*deltay;
-        coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    deltay   = ypn - ( double )jp_;
+    //    delta2  = deltay*deltay;
+    //    delta3  = delta2*deltay;
+    //    delta4  = delta3*deltay;
+    //    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    //    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+    //    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+    //    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
-        //!\todo CHECK if this is correct for both primal & dual grids !!!
-        // First index for summation
-        ip_ = ip_ - i_domain_begin;
-        id_ = id_ - i_domain_begin;
-        jp_ = jp_ - j_domain_begin;
-        jd_ = jd_ - j_domain_begin;
+    //    //!\todo CHECK if this is correct for both primal & dual grids !!!
+    //    // First index for summation
+    //    ip_ = ip_ - i_domain_begin;
+    //    id_ = id_ - i_domain_begin;
+    //    jp_ = jp_ - j_domain_begin;
+    //    jd_ = jd_ - j_domain_begin;
 
-        // std::cerr << " coefxp: " << coeffxp_[0]
-        //           << " " << coeffxp_[1]
-        //           << " " << coeffxp_[2]
-        //           << " " << coeffxp_[3]
-        //           << " " << coeffxp_[4] << std::endl;
-        //
-        // std::cerr << " coefyp: " << coeffyp_[0]
-        //           << " " << coeffyp_[1]
-        //           << " " << coeffyp_[2]
-        //           << " " << coeffyp_[3]
-        //           << " " << coeffyp_[4] << std::endl;
-        //
-        // std::cerr << " coefxd: " << coeffxd_[0]
-        //           << " " << coeffxd_[1]
-        //           << " " << coeffxd_[2]
-        //           << " " << coeffxd_[3]
-        //           << " " << coeffxd_[4] << std::endl;
-        //
-        // std::cerr << " coefyd: " << coeffyd_[0]
-        //           << " " << coeffyd_[1]
-        //           << " " << coeffyd_[2]
-        //           << " " << coeffyd_[3]
-        //           << " " << coeffyd_[4] << std::endl;
-        //
-        // std::cerr << " xpn: " << xpn
-        //           << " ypn: " << ypn
-        //           << " ip: " << ip_
-        //           << " id: " << id_
-        //           << " jp: " << jp_
-        //           << " jd: " << jd_ << std::endl;
+    //    // std::cerr << " coefxp: " << coeffxp_[0]
+    //    //           << " " << coeffxp_[1]
+    //    //           << " " << coeffxp_[2]
+    //    //           << " " << coeffxp_[3]
+    //    //           << " " << coeffxp_[4] << std::endl;
+    //    //
+    //    // std::cerr << " coefyp: " << coeffyp_[0]
+    //    //           << " " << coeffyp_[1]
+    //    //           << " " << coeffyp_[2]
+    //    //           << " " << coeffyp_[3]
+    //    //           << " " << coeffyp_[4] << std::endl;
+    //    //
+    //    // std::cerr << " coefxd: " << coeffxd_[0]
+    //    //           << " " << coeffxd_[1]
+    //    //           << " " << coeffxd_[2]
+    //    //           << " " << coeffxd_[3]
+    //    //           << " " << coeffxd_[4] << std::endl;
+    //    //
+    //    // std::cerr << " coefyd: " << coeffyd_[0]
+    //    //           << " " << coeffyd_[1]
+    //    //           << " " << coeffyd_[2]
+    //    //           << " " << coeffyd_[3]
+    //    //           << " " << coeffyd_[4] << std::endl;
+    //    //
+    //    // std::cerr << " xpn: " << xpn
+    //    //           << " ypn: " << ypn
+    //    //           << " ip: " << ip_
+    //    //           << " id: " << id_
+    //    //           << " jp: " << jp_
+    //    //           << " jd: " << jd_ << std::endl;
 
-    }
+    //}
     
     
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, int* idx_p, int* idx_d,
@@ -225,16 +225,16 @@ private:
     double dble_115_ov_192 ;
     double dble_5_ov_8 ;
 
-    // Last prim index computed
-    int ip_, jp_;
-    // Last dual index computed
-    int id_, jd_;
-    // Last delta computed
-    double deltax, deltay;
-    // Interpolation coefficient on Prim grid
-    double coeffxp_[5], coeffyp_[5];
-    // Interpolation coefficient on Dual grid
-    double coeffxd_[5], coeffyd_[5];
+    //// Last prim index computed
+    //int ip_, jp_;
+    //// Last dual index computed
+    //int id_, jd_;
+    //// Last delta computed
+    //double deltax, deltay;
+    //// Interpolation coefficient on Prim grid
+    //double coeffxp_[5], coeffyp_[5];
+    //// Interpolation coefficient on Dual grid
+    //double coeffxd_[5], coeffyd_[5];
 
 };//END class
 
