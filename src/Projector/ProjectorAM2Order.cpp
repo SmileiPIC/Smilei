@@ -123,13 +123,22 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     // TENTATIVE NEW SHAPE functions PIC on 3 points
     delta2 = delta*delta;
-    //Check if ir is odd or not and affect coeff correspondingly.
-    double coeff = ((iold[1*nparts]+j_domain_begin_) & 1) ? (28./29 - 0.5)/(iold[1*nparts]+j_domain_begin_) : 0  ;
-    Sr0[1] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
-    Sr0[2] = 0.75-delta2 ; // Keeping it unmodified
-    //c_0 is slightly different on axis
-    if (iold[1*nparts]+j_domain_begin_ == 0)
-        Sr0[2] += (delta2-0.25)/29.; 
+    Sr0[1] = 0.5 * ( delta2-delta+0.25 ) ;
+    Sr0[2] = 0.75-delta2  ; 
+
+    if (iold[1*nparts]+j_domain_begin_ == 0){
+        double c0 = 8./3.;
+        double bm1 = -4./3.;
+        Sr0[1] += (bm1 - 0.5) * (delta2 - 0.25); 
+        Sr0[2] += (c0 + 1.)    * (delta2 - 0.25); 
+    } else {
+        double b0 = 0.625;
+        double c1 = -0.75;
+        double coeffb = (b0-0.5)/(iold[1*nparts]+j_domain_begin_);
+        double coeffc = (c1+1.0)/(iold[1*nparts]+j_domain_begin_);
+        Sr0[1] +=   coeffb * (delta2 - 0.25) ; 
+        Sr0[2] +=   coeffc * (delta2 - 0.25) ; 
+    }
     Sr0[3] = 1. - Sr0[1] - Sr0[2];
 
     //calculate exponential coefficients
@@ -176,13 +185,23 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     // TENTATIVE NEW SHAPE functions PIC on 3 points
     delta2 = delta*delta;
-    //Check if ir is odd or not and affect coeff correspondingly.
-    coeff = (jp & 1) ? (28./29 - 0.5)/(jp) : 0  ;
-    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
-    Sr1[jp_m_jpo+2] = 0.75-delta2; // Keeping it unmodified
-    if (jp == 0)
-        Sr1[jp_m_jpo+2] += (delta2-0.25)/29. ;
+    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    if (jp == 0){
+        double c0 = 8./3.;
+        double bm1 = -4./3.;
+        Sr1[jp_m_jpo+1] += (bm1 - 0.5) * (delta2 - 0.25)  ;
+        Sr1[jp_m_jpo+2] += (c0 + 1.) * (delta2 - 0.25)  ;
+    } else {
+        double b0 = 0.625;
+        double c1 = -0.75;
+        double coeffb = (b0-0.5)/jp;
+        double coeffc = (c1+1.0)/jp;
+        Sr1[jp_m_jpo+1] +=   coeffb * (delta2 - 0.25) ; 
+        Sr1[jp_m_jpo+2] +=   coeffc * (delta2 - 0.25) ; 
+    }
     Sr1[jp_m_jpo+3] = 1. - Sr1[jp_m_jpo+1] - Sr1[jp_m_jpo+2];
+
 
     for( unsigned int i=0; i < 5; i++ ) {
         DSl[i] = Sl1[i] - Sl0[i];

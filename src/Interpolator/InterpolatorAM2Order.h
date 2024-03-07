@@ -209,11 +209,19 @@ private:
 
         // TENTATIVE NEW SHAPE functions PIC 3  points
         delta2 = delta*delta;
-        //Check if ir is odd or not and affect coeff correspondingly.
-        // 5/6 - 1/2 = 1/3
-        double coeff = (idx_d[1] & 1) ? (1./3)/(idx_d[1]+0.5 + j_domain_begin_) : 0  ;
-        coeffyd[0] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
-        coeffyd[1] = 0.75-delta2 ; // Keeping it unmodified
+        coeffyd[0] = 0.5 * ( delta2-delta+0.25 );
+        coeffyd[1] = 0.75 - delta2;
+        if (idx_d[1]==1){
+            double bdualm1 = 0.75;
+            double cdual0 = -0.5;
+            coeffyd[0] += (bdualm1-0.5) * (delta2 - 0.25) ;
+            coeffyd[1] += (cdual0+1.0) * (delta2 - 0.25) ;
+        } else {
+            double b0 = 0.625;
+            double c1 = -0.75;
+            coeffyd[0] += (b0-0.5)/(idx_d[1]-0.5) * (delta2 - 0.25) ;
+            coeffyd[1] += (c1+1.0)/(idx_d[1]-0.5) * (delta2 - 0.25) ;
+        }
         coeffyd[2] = 1. - coeffyd[0] - coeffyd[1];
 
         delta_p[1] = ypn - ( double )idx_p[1];
@@ -239,12 +247,22 @@ private:
 
         // TENTATIVE NEW SHAPE functions PIC 3  points
         delta2     = delta_p[1]*delta_p[1];
-        //Check if ir is odd or not and affect coeff correspondingly.
-        coeff = (idx_p[1] & 1) ? (28./29. - 0.5)/(idx_p[1] + j_domain_begin_) : 0  ;
-        coeffyp[0] = 0.5 * ( delta2-delta+0.25 ) + coeff * (delta2 - 0.25) ;
-        coeffyp[1] = 0.75-delta2 ;
-        if (idx_p[1]+j_domain_begin_ == 0)
-            coeffyp[1] += (delta2-0.25)/29.; 
+        coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
+        coeffyp[1] = 0.75 - delta2;
+
+        if (idx_p[1]==0){
+            double c0 = 8./3.;
+            double bm1 = -4./3.;
+            coeffyp[0] += (bm1-0.5) * (delta2 - 0.25) ;
+            coeffyp[1] += (c0 + 1.) * (delta2 - 0.25) ;
+        } else {
+            double b0 = 0.625;
+            double c1 = -0.75;
+            double coeffb = (b0-0.5)/idx_p[1];
+            double coeffc = (c1+1.0)/idx_p[1];
+            coeffyp[0] += coeffb * (delta2 - 0.25) ;
+            coeffyp[1] += coeffc * (delta2 - 0.25) ;
+        }
         coeffyp[2] = 1. - coeffyp[0] - coeffyp[1];
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
