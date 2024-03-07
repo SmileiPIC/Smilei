@@ -23,18 +23,32 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* GPU:
+
+  * Compilation simplified and better documented.
+
 * Happi:
 
+  * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
+  * The list of available scalars can be obtained from ``getScalars()``.
   * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
+  * New argument ``timestep_indices`` as an alternative to ``timesteps``.
   * Changed coordinate reference for 2D probe in 3D or AM geometry
     (zero is the box origin projected orthogonally on the probe plane).
-  * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
-    The list of available scalars can be obtained from ``getScalars()``.
+
+* Documentation:
+
+  * Dark theme (click the switch on the bottom left, or set browser preferences).
+
+* Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
+* The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
+  (the transverse coordinate of the focus in this geometry is zero).
 
 * Bug fixes:
 
   * ``dump_minutes`` often failed to write some checkpoint files.
   * ``"auto"`` limits in ``ParticleBinning`` could fail with only one side on ``"auto"``.
+  * CFL condition is more accurately determined in ``AMcylindrical`` and the feature ``timestep_over_CFL`` should be more reliable in that geometry.
 
 ----
 

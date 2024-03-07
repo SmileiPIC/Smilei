@@ -39,7 +39,7 @@ laser_fwhm = 19.80
 LaserGaussianAM(
     box_side         = "xmin",
     a0              = 2.,
-    focus           = [0., 0.],
+    focus           = [0.],
     waist           = 25.,
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )

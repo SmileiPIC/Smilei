@@ -240,7 +240,12 @@ class Main(SmileiSingleton):
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     if (Main.geometry=="AMcylindrical"):
-                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + ((Main.number_of_AM-1)/Main.cell_length[1])**2 )
+                        alpha = [0.210486, 0.591305, 3.5234, 8.51041, 15.5059]
+                        if (Main.number_of_AM < 6):
+                            alpha = 1. + alpha[Main.number_of_AM-1]
+                        else:
+                            alpha = (Main.number_of_AM-1)**2
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + alpha/Main.cell_length[1]**2 )
                     else:
                         dim = int(Main.geometry[0])
                         if dim<1 or dim>3:

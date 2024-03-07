@@ -163,7 +163,7 @@ Species(
 laser_fwhm = 120. 
 LaserEnvelopeGaussianAM(
     a0              = 2.,
-    focus           = [10.,0.],  
+    focus           = [10.],  
     waist           = 95.,
     time_envelope   = tgaussian(center=(Lx-1.8*laser_fwhm), fwhm=laser_fwhm)
 )

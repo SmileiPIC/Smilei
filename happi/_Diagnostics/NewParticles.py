@@ -133,13 +133,14 @@ class NewParticles(ParticleList):
 			print("Kept "+str(self.nselectedParticles)+" particles")
 		
 		# Finish constructor
+		assert "timesteps" not in kwargs and "timestep_indices" not in kwargs,\
+			"The NewParticles diagnostic does not accept 'timesteps' or 'timestep_indices' as arguments."
 		self._timesteps = [None]
 		self.valid = True
 		return kwargs
 	
 	# We override the get and getData methods
 	def getData(self):
-		if not self._validate(): return
 		for data in self.iterParticles(chunksize=self.nParticles):
 			return data
 	
