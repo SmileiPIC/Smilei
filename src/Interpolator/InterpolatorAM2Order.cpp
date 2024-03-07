@@ -764,7 +764,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         double coeffxd[3], coeffyd[3];
 
         // Compute coefficients
-        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
 
         // only mode 0 is used
 
