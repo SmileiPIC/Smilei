@@ -146,8 +146,7 @@ private:
             double *coeffyp,
             double *coeffxd,
             double *coeffyd,
-            double *delta_p,
-            bool compute_dual = true ) const
+            double *delta_p) const
     {
         // Indexes of the central nodes
         idx_p[0] = std::round( xpn );
@@ -178,7 +177,7 @@ private:
         idx_p[0] = idx_p[0] - i_domain_begin;
         idx_p[1] = idx_p[1] - j_domain_begin;
 
-        if (compute_dual){
+        if (idx_d){
             idx_d[0] = std::round( xpn+0.5 );
             idx_d[1] = std::round( ypn+0.5 );
 

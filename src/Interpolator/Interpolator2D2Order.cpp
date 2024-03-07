@@ -582,11 +582,11 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         double ypn = particles.position( 1, ipart )*d_inv_[1];
 
         // Calculate coeffs
-        int idx_p[2],idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
 
-        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+        coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // -------------------------
         // Interpolation of Phiold^(p,p)
@@ -632,11 +632,11 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     double xpn = particles.position( 0, ipart )*d_inv_[0];
     double ypn = particles.position( 1, ipart )*d_inv_[1];
 
-    int idx_p[2],idx_d[2];
+    int idx_p[2];
     double delta_p[2];
     double coeffxp[3], coeffyp[3];
     
-    coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+    coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
     // Indexes of the central nodes
     idx_p[0] = round( xpn );
@@ -704,11 +704,11 @@ void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double ypn = particles.position( 1, ipart )*d_inv_[1];
         
         // Calculate coeffs
-        int idx_p[2],idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
         
-        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+        coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p)
