@@ -255,7 +255,6 @@ private:
         //mode 0
         std::complex<double> crt_p= charge_weight[ipart]*( momentum_z[ipart]* real(e_bar_m1[ipart]) - momentum_y[ipart]*imag(e_bar_m1[ipart]) ) * invgf[ipart];
         std::complex<double> e_delta = 0.5;
-        std::complex<double> e_delta_inv = 0.5;
         std::complex<double> e_bar = 1.;
 
 
@@ -263,19 +262,18 @@ private:
             if (imode > 0){
                 e_delta *= e_delta_m1[ipart];
                 e_bar *= e_bar_m1[ipart];
-                e_delta_inv =1./e_delta - 1.;
                 crt_p = charge_weight[ipart]*Icpx*e_bar * one_ov_dt * 2. * r_bar[ipart] /( double )imode ;
             }
 
             //j=0 case
             UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
-                bJ [200*imode + (i*5 )*vecSize + ipart] += crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
+                bJ [200*imode + (i*5 )*vecSize + ipart] -= crt_p*(Sr1[0]*Sl1[i]*( e_delta-1. ) );
             }
             //i=0 case
             UNROLL_S(4)
             for( unsigned int j=1 ; j<5 ; j++ ) {
-                bJ [200*imode + (j)*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
+                bJ [200*imode + (j)*vecSize + ipart] -= crt_p*(Sr1[j]*Sl1[0]*( e_delta-1. ) );
             }
 
 
@@ -283,7 +281,7 @@ private:
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 UNROLL_S(4)
                 for ( unsigned int j=1; j<5 ; j++ ) {
-                    bJ [200*imode + (i*5+j )*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
+                    bJ [200*imode + (i*5+j )*vecSize + ipart] -= crt_p*(Sr1[j]*Sl1[i]*( e_delta-1. ) - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*(std::conj(e_delta) - 1.));
                 }
             }
 
