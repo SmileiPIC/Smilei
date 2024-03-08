@@ -608,11 +608,11 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         // -------------------------
         ( *GradPHI_mpart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], GradPhiz_m2D, idx_p[0], idx_p[1] );
 
-        //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = idx_p[0];
-        ( *iold )[ipart+1*nparts]  = idx_p[1];
-        ( *delta )[ipart+0*nparts] = delta_p[0];
-        ( *delta )[ipart+1*nparts] = delta_p[1];
+        ////Buffering of iol and delta
+        //( *iold )[ipart+0*nparts]  = idx_p[0];
+        //( *iold )[ipart+1*nparts]  = idx_p[1];
+        //( *delta )[ipart+0*nparts] = delta_p[0];
+        //( *delta )[ipart+1*nparts] = delta_p[1];
 
 
     }
