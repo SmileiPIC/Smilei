@@ -608,11 +608,11 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         // -------------------------
         ( *GradPHI_mpart )[ipart+2*nparts] = compute( &coeffxp[1], &coeffyp[1], GradPhiz_m2D, idx_p[0], idx_p[1] );
 
-        ////Buffering of iol and delta
-        //( *iold )[ipart+0*nparts]  = idx_p[0];
-        //( *iold )[ipart+1*nparts]  = idx_p[1];
-        //( *delta )[ipart+0*nparts] = delta_p[0];
-        //( *delta )[ipart+1*nparts] = delta_p[1];
+        //Buffering of iol and delta
+        ( *iold )[ipart+0*nparts]  = idx_p[0];
+        ( *iold )[ipart+1*nparts]  = idx_p[1];
+        ( *delta )[ipart+0*nparts] = delta_p[0];
+        ( *delta )[ipart+1*nparts] = delta_p[1];
 
 
     }
@@ -637,33 +637,6 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     double coeffxp[3], coeffyp[3];
     
     coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
-
-    // Indexes of the central nodes
-    idx_p[0] = round( xpn );
-    idx_p[1] = round( ypn );
-
-    // Declaration and calculation of the coefficient for interpolation
-    double delta2;
-
-    delta_p[0]   = xpn - ( double )idx_p[0];
-    delta2  = delta_p[0]*delta_p[0];
-    coeffxp[0] = 0.5 * ( delta2-delta_p[0]+0.25 );
-    coeffxp[1] = 0.75 - delta2;
-    coeffxp[2] = 0.5 * ( delta2+delta_p[0]+0.25 );
-
-    delta_p[1]   = ypn - ( double )idx_p[1];
-    delta2  = delta_p[1]*delta_p[1];
-    coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
-    coeffyp[1] = 0.75 - delta2;
-    coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
-
-
-
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    //ip_ = ip_ - i_domain_begin;
-    //jp_ = jp_ - j_domain_begin;
-
 
     // -------------------------
     // Interpolation of Env_A_abs_^(p,p)
