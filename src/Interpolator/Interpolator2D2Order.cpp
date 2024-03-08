@@ -572,6 +572,8 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 
     std::vector<double> *PHI_mpart     = &( smpi->dynamics_PHI_mpart[ithread] );
     std::vector<double> *GradPHI_mpart = &( smpi->dynamics_GradPHI_mpart[ithread] );
+    std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //Loop on bin particles
     int nparts( particles.numberOfParticles() );
