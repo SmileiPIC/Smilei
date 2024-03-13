@@ -239,7 +239,6 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
     // **field points to the first field of the species of interest in EM->allFields
     // They are ordered as Jx0, Jy0, Jz0, Rho0, Jx1, Jy1, Jz1, Rho1, etc.
 
-
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*D_inv_[0];
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
@@ -255,8 +254,6 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
         if (r > 0) {
             exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         }
-
-
 
         double Jx_ = 0., Jy_ = 0., Jz_ = 0., Rho_ = 0.;
         for( unsigned int imode = 0; imode < nmodes_ ; imode++ ) {
