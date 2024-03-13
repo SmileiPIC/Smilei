@@ -43,19 +43,24 @@ void Interpolator1D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
 
     // Particle position (in units of the spatial-step)
-    double xjn = particles.position( 0, ipart )*dx_inv_;
+    double xpn = particles.position( 0, ipart )*dx_inv_;
     // Calculate coeffs
-    coeffs( xjn );
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[5];
+    double coeffxd[5];
+    coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+    //coeffs( xjn );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D_m, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D_m, idx_d[0] );
 
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D,   idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D,   idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D_m, idx_p[0] );
 
 }//END Interpolator1D4Order
 
@@ -80,29 +85,34 @@ void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field1D *Rho1D    = static_cast<Field1D *>( EMfields->rho_ );
 
     // Particle position (in units of the spatial-step)
-    double xjn = particles.position( 0, ipart )*dx_inv_;
+    double xpn = particles.position( 0, ipart )*dx_inv_;
     // Calculate coeffs
-    coeffs( xjn );
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[5];
+    double coeffxd[5];
+    coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+    //coeffs( xjn );
 
     int nparts( particles.numberOfParticles() );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D_m, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D_m, idx_d[0] );
 
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D,   idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D,   idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D_m, idx_p[0] );
 
     // Interpolate the fields from the Primal grid : Jy, Jz, Rho
-    JLoc->y = compute( coeffp_, Jy1D,  ip_ );
-    JLoc->z = compute( coeffp_, Jz1D,  ip_ );
-    ( *RhoLoc ) = compute( coeffp_, Rho1D, ip_ );
+    JLoc->y = compute( coeffxp, Jy1D,  idx_p[0] );
+    JLoc->z = compute( coeffxp, Jz1D,  idx_p[0] );
+    ( *RhoLoc ) = compute( coeffxp, Rho1D, idx_p[0] );
 
     // Interpolate the fields from the Dual grid : Jx
-    JLoc->x = compute( coeffd_, Jx1D,  id_ );
+    JLoc->x = compute( coeffxd, Jx1D,  idx_d[0] );
 
 }
 
@@ -110,12 +120,17 @@ void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 void Interpolator1D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
-    double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;
-    int *i = F->isDual( 0 ) ? &id_ : &ip_;
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[5];
+    double coeffxd[5];
+    double *coeff = F->isDual( 0 ) ? coeffxd : coeffxp;
+    int *i = F->isDual( 0 ) ? &idx_d[0] : &idx_p[0];
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xjn = particles.position( 0, ipart )*dx_inv_;
-        coeffs( xjn );
+        double xpn = particles.position( 0, ipart )*dx_inv_;
+        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+        //coeffs( xjn );
         FieldLoc[ipart] = compute( coeff, F, *i );
     }
 }
@@ -146,7 +161,6 @@ void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         double delta_p[1];
         double coeffxp[5];
         double coeffxd[5];
-
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
         // Interpolation of Ex^(d)
