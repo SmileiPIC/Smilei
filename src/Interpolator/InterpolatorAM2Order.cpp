@@ -758,12 +758,12 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
 
-        int idx_p[2], idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
 
         // Compute coefficients
-        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+        coeffs( xpn, rpn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // only mode 0 is used
 
@@ -827,11 +827,11 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     double rpn = r * D_inv_[1];
 
     // Compute coefficients
-    int idx_p[2], idx_d[2];
+    int idx_p[2];
     double delta_p[2];
     double coeffxp[3], coeffyp[3];
 
-    coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+    coeffs( xpn, rpn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
     // -------------------------
     // Interpolation of Env_A_abs_^(p,p)
@@ -874,12 +874,12 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
 
-        int idx_p[2], idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
 
         // Compute coefficients
-        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, NULL, NULL, delta_p, false );
+        coeffs( xpn, rpn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // only mode 0 is used
 
