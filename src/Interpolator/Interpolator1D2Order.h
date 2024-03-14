@@ -34,35 +34,6 @@ public:
     void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
 
 private:
-    //inline void __attribute__((always_inline)) coeffs( double xjn )
-    //{
-    //    double xjmxi2;
-
-    //    // Dual
-    //    id_      = round( xjn+0.5 );      // index of the central point
-    //    xjmxi  = xjn - ( double )id_ +0.5; // normalized distance to the central node
-    //    xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
-
-    //    // 2nd order interpolation on 3 nodes
-    //    coeffd_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-    //    coeffd_[1] = ( 0.75-xjmxi2 );
-    //    coeffd_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
-
-    //    id_ -= index_domain_begin;
-
-    //    // Primal
-    //    ip_      = round( xjn );    // index of the central point
-    //    xjmxi  = xjn -( double )ip_; // normalized distance to the central node
-    //    xjmxi2 = pow( xjmxi, 2 );   // square of the normalized distance to the central node
-
-    //    // 2nd order interpolation on 3 nodes
-    //    coeffp_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-    //    coeffp_[1] = ( 0.75-xjmxi2 );
-    //    coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
-
-    //    ip_ -= index_domain_begin;
-    //}
-    
     inline void coeffs( double xpn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffxd, double* delta_p )
     {
@@ -95,17 +66,6 @@ private:
         }
         
     }    
-    //// Last prim index computed
-    //int ip_;
-    //// Last dual index computed
-    //int id_;
-    //// Last delta computed
-    //double xjmxi, deltax;
-    //// Interpolation coefficient on Prim grid
-    //double coeffp_[3];
-    //// Interpolation coefficient on Dual grid
-    //double coeffd_[3];
-
 
 };//END class
 

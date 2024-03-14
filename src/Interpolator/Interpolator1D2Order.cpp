@@ -38,7 +38,6 @@ void Interpolator1D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double coeffxp[3];
     double coeffxd[3];
     coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-    //coeffs( xjn );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
     *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
@@ -91,7 +90,6 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double coeffxp[3];
     double coeffxd[3];
     coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-    //coeffs( xjn );
 
     int nparts( particles.numberOfParticles() );
 
@@ -134,7 +132,6 @@ void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *i
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dx_inv_;
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-        //coeffs( xjn );
         FieldLoc[ipart] = compute( coeff, F, *i );
     }
 }
@@ -226,7 +223,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
           // Interpolation of BzBTIS3^(p)
           *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
           
-
           //Buffering of iol and delta
           *( iold+0*nparts+ipart)   = idx_p[0];
           *( delta+0*nparts+ipart)  = delta_p[0];
@@ -416,8 +412,6 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         //Buffering of iol and delta
         *( iold+ipart+0*nparts)  = idx_p[0];
         *( delta+ipart+0*nparts) = delta_p[0];
-
-
     }
 
 } // END Interpolator1D2Order
@@ -435,46 +429,30 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     double xpn = particles.position( 0, ipart )*dx_inv_;
 
     // Indexes of the central nodes
-    //ip_ = round( xpn );
     int idx_p[1];
     double delta_p[1];
     double coeffxp[3];
     coeffs( xpn, idx_p, NULL, coeffxp, NULL, delta_p );
 
-    //// Declaration and calculation of the coefficient for interpolation
-    //double deltax, delta2;
-
-
-    //deltax     = xpn - ( double )ip_;
-    //delta2     = deltax*deltax;
-    //coeffp_[0] = 0.5 * ( delta2-deltax+0.25 );
-    //coeffp_[1] = 0.75 - delta2;
-    //coeffp_[2] = 0.5 * ( delta2+deltax+0.25 );
-
-
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    //ip_ = ip_ - index_domain_begin;
-
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
     // -------------------------
-    *( Env_A_abs_Loc )  = compute( coeffxp, Env_A_abs_1D, idx_p[0] ); //compute( &coeffp_[1], Env_A_abs_1D, ip_ );
+    *( Env_A_abs_Loc )  = compute( coeffxp, Env_A_abs_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_Chi_^(p)
     // -------------------------
-    *( Env_Chi_Loc )    = compute( coeffxp, Env_Chi_1D, idx_p[0] ); //compute( &coeffp_[1], Env_Chi_1D, ip_ );
+    *( Env_Chi_Loc )    = compute( coeffxp, Env_Chi_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
-    *( Env_E_abs_Loc )  = compute( coeffxp, Env_E_abs_1D, idx_p[0] ); // compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+    *( Env_E_abs_Loc )  = compute( coeffxp, Env_E_abs_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_Ex_abs_^(p)
     // -------------------------
-    *( Env_Ex_abs_Loc ) = compute( coeffxp, Env_Ex_abs_1D, idx_p[0] ); // compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
+    *( Env_Ex_abs_Loc ) = compute( coeffxp, Env_Ex_abs_1D, idx_p[0] ); 
 
 } // END Interpolator1D2Order
 
@@ -495,20 +473,6 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         double delta_p[1];
         double coeffxp[3];
         coeffs( xpn, idx_p, NULL, coeffxp, NULL, delta_p );
-
-        //double delta2;
-
-        //// Primal
-        //idx_p[0]     = round( xpn );                 // index of the central point
-        //delta_p[0]   = xpn -( double )idx_p[0];      // normalized distance to the central node
-        //delta2       = pow( delta_p[0], 2 );         // square of the normalized distance to the central node
-
-        //// 2nd order interpolation on 3 nodes
-        //coeffxp[0]   = 0.5 * ( delta2-delta_p[0]+0.25 );
-        //coeffxp[1]   = ( 0.75-delta2 );
-        //coeffxp[2]   = 0.5 * ( delta2+delta_p[0]+0.25 );
-
-        //idx_p[0]    -= index_domain_begin;
 
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)

@@ -52,13 +52,12 @@ void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double xpn = particles.position( 0, ipart )*d_inv_[0];
     double ypn = particles.position( 1, ipart )*d_inv_[1];
     double zpn = particles.position( 2, ipart )*d_inv_[2];
-    // Calculate coeffs
+    // Compute coeffs
     int    idx_p[3], idx_d[3];
     double delta_p[3];
     double coeffxp[5], coeffyp[5], coeffzp[5];
     double coeffxd[5], coeffyd[5], coeffzd[5];
     coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
-    //coeffs( xpn, ypn, zpn );
 
     // Interpolation of Ex^(d,p,p)
     *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], &coeffzp[2], Ex3D, idx_d[0], idx_p[1], idx_p[2] );
@@ -100,13 +99,12 @@ void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double xpn = particles.position( 0, ipart )*d_inv_[0];
     double ypn = particles.position( 1, ipart )*d_inv_[1];
     double zpn = particles.position( 2, ipart )*d_inv_[2];
-    // Calculate coeffs
+    // Compute coeffs
     int    idx_p[3], idx_d[3];
     double delta_p[3];
     double coeffxp[5], coeffyp[5], coeffzp[5];
     double coeffxd[5], coeffyd[5], coeffzd[5];
     coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
-    //coeffs( xpn, ypn, zpn );
 
     int nparts( particles.numberOfParticles() );
 
@@ -152,8 +150,8 @@ void Interpolator3D4Order::oneField( Field **field, Particles &particles, int *i
         double xpn = particles.position( 0, ipart )*d_inv_[0];
         double ypn = particles.position( 1, ipart )*d_inv_[1];
         double zpn = particles.position( 2, ipart )*d_inv_[2];
-        //coeffs( xpn, ypn, zpn );
         coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+
         FieldLoc[ipart] = compute( coeffx, coeffy, coeffz, F, *i, *j, *k );
     }
 }
@@ -209,7 +207,6 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         *( BLoc+2*nparts+ipart ) = compute( &coeffxd[2], &coeffyd[2], &coeffzp[2], Bz3D, idx_d[0], idx_d[1], idx_p[2] );
 
         //Buffering of iol and delta
-        //Buffering of iol and delta
         *( iold+0*nparts+ipart )  = idx_p[0];
         *( iold+1*nparts+ipart )  = idx_p[1];
         *( iold+2*nparts+ipart )  = idx_p[2];
@@ -217,7 +214,6 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         *( delta+1*nparts+ipart ) = delta_p[1];
         *( delta+2*nparts+ipart ) = delta_p[2];
     }
-
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
@@ -236,7 +232,6 @@ void Interpolator3D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
-
     }
 }
 

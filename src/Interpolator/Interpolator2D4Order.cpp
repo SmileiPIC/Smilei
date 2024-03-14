@@ -19,7 +19,6 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     d_inv_[0] = 1.0/params.cell_length[0];
     d_inv_[1] = 1.0/params.cell_length[1];
 
-
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_48 = 1.0/48.0;
@@ -58,7 +57,6 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double coeffxp[5], coeffyp[5];
     double coeffxd[5], coeffyd[5];
     coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
-    //coeffs( xpn, ypn );
 
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], Ex2D, idx_d[0], idx_p[1] );
@@ -105,7 +103,6 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double coeffxp[5], coeffyp[5];
     double coeffxd[5], coeffyd[5];
     coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
-    //coeffs( xpn, ypn );
 
     int nparts( particles.numberOfParticles() );
 
@@ -147,7 +144,6 @@ void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *i
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*d_inv_[0];
         double ypn = particles.position( 1, ipart )*d_inv_[1];
-        //coeffs( xpn, ypn );
         coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }

@@ -16,10 +16,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Interpolator2D( patch )
 {
-
     d_inv_[0] = 1.0/params.cell_length[0];
     d_inv_[1] = 1.0/params.cell_length[1];
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -27,7 +25,6 @@ Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Int
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
 {
-
     // Static cast of the electromagnetic fields
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
     Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
@@ -44,7 +41,6 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double delta_p[2];
     double coeffxp[3], coeffyp[3];
     double coeffxd[3], coeffyd[3];
-    //coeffs( xpn, ypn );
     coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
     // Interpolation of Ex^(d,p)
@@ -103,7 +99,6 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double coeffxp[3], coeffyp[3];
     double coeffxd[3], coeffyd[3];
     coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
-    //coeffs( xpn, ypn );
 
     int nparts( particles.numberOfParticles() );
 
@@ -146,15 +141,12 @@ void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *i
     double coeffxd[3], coeffyd[3];
     double *coeffx = F->isDual( 0 ) ? &coeffxd[1] : &coeffxp[1];
     double *coeffy = F->isDual( 1 ) ? &coeffyd[1] : &coeffyp[1];
-    //int *i = F->isDual( 0 ) ? &id_ : &ip_;
-    //int *j = F->isDual( 1 ) ? &jd_ : &jp_;
     int *i = F->isDual( 0 ) ? &idx_d[0] : &idx_p[0];
     int *j = F->isDual( 1 ) ? &idx_d[1] : &idx_p[1];
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*d_inv_[0];
         double ypn = particles.position( 1, ipart )*d_inv_[1];
-        //coeffs( xpn, ypn );
         coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }
@@ -188,7 +180,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const double *const __restrict__ By2D = static_cast<Field2D *>( EMfields->By_m )->data();
     const double *const __restrict__ Bz2D = static_cast<Field2D *>( EMfields->Bz_m )->data();
 
-#if defined(SMILEI_OPENACC_MODE)    //( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined(SMILEI_OPENACC_MODE)    
     const int sizeofEx = EMfields->Ex_->size();
     const int sizeofEy = EMfields->Ey_->size();
     const int sizeofEz = EMfields->Ez_->size();
@@ -208,9 +200,6 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
 
     if (!smpi->use_BTIS3){ // without B-TIS3 interpolation
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    //const int npart_range_size            = last_index - first_index;
-    //const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
-    //const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
 
     #pragma omp target map( to                                                     \
                             : i_domain_begin, j_domain_begin )                     \
@@ -280,9 +269,6 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         const double *const __restrict__ By2D_mBTIS3 = static_cast<Field2D *>( EMfields->By_mBTIS3 )->data();
         const double *const __restrict__ Bz2D_mBTIS3 = static_cast<Field2D *>( EMfields->Bz_mBTIS3 )->data();
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    //const int npart_range_size            = last_index - first_index;
-    //const int interpolation_range_2D_size = npart_range_size + 1 * nparts;
-    //const int interpolation_range_3D_size = npart_range_size + 2 * nparts;
 
     #pragma omp target map( to                                                     \
                             : i_domain_begin, j_domain_begin )                     \
@@ -448,7 +434,6 @@ void Interpolator2D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             // Interpolation of Bz^(d,d)
             ( *Bpart )[ipart+2*nparts] = compute( &coeffxd[1], &coeffyd[1], Bz2D, idx_d[0], idx_d[1] );
 
-
             // -------------------------
             // Interpolation of Phi^(p,p)
             // -------------------------
@@ -587,7 +572,6 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
-
         coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // -------------------------
@@ -682,7 +666,6 @@ void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
-        
         coeffs( xpn, ypn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // ---------------------------------

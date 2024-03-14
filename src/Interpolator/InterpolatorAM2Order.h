@@ -157,8 +157,6 @@ private:
         
     }
 
-    //// Last delta computed
-    //double deltax_, deltar_ ;
     // exp m theta
     std::complex<double> exp_m_theta_;
     //! Number of modes;

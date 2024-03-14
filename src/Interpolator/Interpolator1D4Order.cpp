@@ -50,7 +50,6 @@ void Interpolator1D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double coeffxp[5];
     double coeffxd[5];
     coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-    //coeffs( xjn );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
     *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
@@ -92,7 +91,6 @@ void Interpolator1D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double coeffxp[5];
     double coeffxd[5];
     coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-    //coeffs( xjn );
 
     int nparts( particles.numberOfParticles() );
 
@@ -130,7 +128,6 @@ void Interpolator1D4Order::oneField( Field **field, Particles &particles, int *i
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dx_inv_;
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
-        //coeffs( xjn );
         FieldLoc[ipart] = compute( coeff, F, *i );
     }
 }
@@ -180,8 +177,6 @@ void Interpolator1D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         *( iold+0*nparts+ipart)  = idx_p[0];
         *( delta+0*nparts+ipart) = delta_p[0];
     }
-
-
 }
 
 
@@ -194,14 +189,12 @@ void Interpolator1D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &pa
         for( int isel=0 ; isel<nsel_tot; isel++ ) {
             fields( EMfields, particles, ( *selection )[isel], offset, buffer+isel, buffer+isel+3*offset );
         }
-
     } else {
 
         int npart_tot = particles.numberOfParticles();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
-
     }
 }
 

@@ -88,55 +88,7 @@ public:
 
 private:
 
-    ////! Compuation of coefficients for interpolation using particle normalized positions xpn and ypn
-    //inline void __attribute__((always_inline)) coeffs( double xpn, double ypn )
-    //{
-    //    // Indexes of the central nodes
-    //    ip_ = std::round( xpn );
-    //    id_ = std::round( xpn+0.5 );
-    //    jp_ = std::round( ypn );
-    //    jd_ = std::round( ypn+0.5 );
-
-    //    // Declaration and calculation of the coefficient for interpolation
-    //    double delta2;
-
-    //    deltax      = xpn - ( double )id_ + 0.5;
-    //    delta2      = deltax * deltax;
-    //    coeffxd_[0] = 0.5 * ( delta2 - deltax + 0.25 );
-    //    coeffxd_[1] = 0.75 - delta2;
-    //    coeffxd_[2] = 0.5 * ( delta2 + deltax + 0.25 );
-
-    //    deltax      = xpn - ( double )ip_;
-    //    delta2      = deltax * deltax;
-    //    coeffxp_[0] = 0.5 * ( delta2 - deltax + 0.25 );
-    //    coeffxp_[1] = 0.75 - delta2;
-    //    coeffxp_[2] = 0.5 * ( delta2 + deltax + 0.25 );
-
-    //    deltay      = ypn - ( double )jd_ + 0.5;
-    //    delta2      = deltay * deltay;
-    //    coeffyd_[0] = 0.5 * ( delta2 - deltay + 0.25 );
-    //    coeffyd_[1] = 0.75 - delta2;
-    //    coeffyd_[2] = 0.5 * ( delta2 + deltay + 0.25 );
-
-    //    deltay      = ypn - ( double )jp_;
-    //    delta2      = deltay * deltay;
-    //    coeffyp_[0] = 0.5 * ( delta2 - deltay + 0.25 );
-    //    coeffyp_[1] = 0.75 - delta2;
-    //    coeffyp_[2] = 0.5 * ( delta2 + deltay + 0.25 );
-
-    //    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    //    // First index for summation
-    //    ip_ = ip_ - i_domain_begin;
-    //    id_ = id_ - i_domain_begin;
-    //    jp_ = jp_ - j_domain_begin;
-    //    jd_ = jd_ - j_domain_begin;
-    //}
-
     SMILEI_ACCELERATOR_DECLARE_ROUTINE
-    /// idx_p[0] = ip
-    /// idx_p[1] = jp
-    /// Similarly for idx_d.
-    ///
     inline void __attribute__( ( always_inline ) )
     coeffs( double  xpn,
             double  ypn,
@@ -172,7 +124,6 @@ private:
         coeffyp[2] = 0.5 * ( delta2 + delta + 0.25 );
         delta_p[1] = delta;
 
-        //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
         idx_p[0] = idx_p[0] - i_domain_begin;
         idx_p[1] = idx_p[1] - j_domain_begin;
@@ -198,18 +149,6 @@ private:
         }
     }
     SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
-
-    //// Last prim index computed
-    //int ip_, jp_;
-    //// Last dual index computed
-    //int id_, jd_;
-    //// Last delta computed
-    //double deltax, deltay;
-    //// Interpolation coefficient on Prim grid
-    //double coeffxp_[3], coeffyp_[3];
-    //// Interpolation coefficient on Dual grid
-    //double coeffxd_[3], coeffyd_[3];
-
 
 };//END class
 

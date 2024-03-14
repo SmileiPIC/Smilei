@@ -49,7 +49,7 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double rpn = r * D_inv_[1];
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
-    // Calculate coeffs
+    // Compute coeffs
     int idx_p[2], idx_d[2];
     double delta_p[2];
     double coeffxp[3], coeffyp[3];
@@ -95,7 +95,6 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     delta2 = std::real( exp_m_theta_ ) * *( BLoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( BLoc+2*nparts );
     *( BLoc+2*nparts ) = -std::imag( exp_m_theta_ ) * *( BLoc+1*nparts ) + std::real( exp_m_theta_ ) * *( BLoc+2*nparts );
     *( BLoc+1*nparts ) = delta2 ;
-    //std::cout << "standard final " <<  *( ELoc ) << " " <<  *( ELoc+nparts ) << " " <<  *( ELoc+2*nparts )<< " " <<  *( BLoc ) << " " <<  *( BLoc+nparts ) << " " <<  *( BLoc+2*nparts ) << std::endl;
 
 } // END InterpolatorAM2Order
 
@@ -312,7 +311,6 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
             double delta_p[2];
             double coeffxp[3], coeffyp[3];
             double coeffxd[3], coeffyd[3];
-
             coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
             // Static cast of the electromagnetic fields, mode 0
@@ -471,8 +469,6 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
       
     } // end with B-TIS3 interpolation
 
-    
-
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
@@ -606,7 +602,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             ( *iold )[ipart+1*nparts]  = idx_p[1];
             ( *delta )[ipart+0*nparts] = delta_p[0];
             ( *delta )[ipart+1*nparts] = delta_p[1];
-            ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+            ( *eitheta_old)[ipart] =  std::conj(exp_m_theta_local);  //exp(i theta)
 
         } // end ipart loop
       
@@ -719,7 +715,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             ( *iold )[ipart+1*nparts]  = idx_p[1];
             ( *delta )[ipart+0*nparts] = delta_p[0];
             ( *delta )[ipart+1*nparts] = delta_p[1];
-            ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+            ( *eitheta_old)[ipart] =  std::conj(exp_m_theta_local);  //exp(i theta)
 
         } // end ipart loop
       
@@ -784,13 +780,11 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         // -------------------------
         ( *GradPHI_mpart )[ipart+2*nparts] = 0.; // zero with cylindrical symmetry
 
-
         if (r > 0){
             exp_m_theta_local = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         } else {
             exp_m_theta_local = 1. ;
         }
-
 
         // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
         delta2 = std::real( exp_m_theta_local ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ;
@@ -803,7 +797,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         ( *iold )[1*nparts+ipart]  = idx_p[1];
         ( *delta )[0*nparts+ipart] = delta_p[0];
         ( *delta )[1*nparts+ipart] = delta_p[1];
-        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_local) - exp_m_theta_local ;  //exp(i theta)
+        ( *eitheta_old)[ipart] =  std::conj(exp_m_theta_local);  //exp(i theta)
 
     }
 
@@ -827,7 +821,6 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     int idx_p[2];
     double delta_p[2];
     double coeffxp[3], coeffyp[3];
-
     coeffs( xpn, rpn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
     // -------------------------
@@ -871,11 +864,10 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
 
+        // Compute coefficients
         int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
-
-        // Compute coefficients
         coeffs( xpn, rpn, idx_p, NULL, coeffxp, coeffyp, NULL, NULL, delta_p );
 
         // only mode 0 is used
