@@ -30,8 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of February 2024, 174
- papers have been published covering a broad range of topics:
+As of March 2024, 175 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -51,6 +50,12 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Mondal2024]
+
+    A. Mondal, R. Sabui, S. Tata, R. M. G. M. Trines, S. V. Rahul, F. Li, S. Sarkar, W. Trickey, R. Y. Kumar, D. Rajak, J. Pasley, Z. Sheng, J. Jha, M. Anand, R. Gopal, A. P. L. Robinson and M. Krishnamurthy,
+    `Shaped liquid drops generate MeV temperature electron beams with millijoule class laser`,
+    `Nature Communications Physics 7, 85 (2024) <https://doi.org/10.1038/s42005-024-01550-8>`_
 
 .. [Psikal2024]
 
