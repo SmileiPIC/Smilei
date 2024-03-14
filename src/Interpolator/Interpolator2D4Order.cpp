@@ -19,7 +19,6 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     d_inv_[0] = 1.0/params.cell_length[0];
     d_inv_[1] = 1.0/params.cell_length[1];
 
-
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_48 = 1.0/48.0;
@@ -53,20 +52,24 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     double xpn = particles.position( 0, ipart )*d_inv_[0];
     double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
-    coeffs( xpn, ypn );
+    int idx_p[2], idx_d[2];
+    double delta_p[2];
+    double coeffxp[5], coeffyp[5];
+    double coeffxd[5], coeffyd[5];
+    coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
     // Interpolation of Ex^(d,p)
-    *( ELoc+0*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
+    *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], Ex2D, idx_d[0], idx_p[1] );
     // Interpolation of Ey^(p,d)
-    *( ELoc+1*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_ );
+    *( ELoc+1*nparts ) = compute( &coeffxp[2], &coeffyd[2], Ey2D, idx_p[0], idx_d[1] );
     // Interpolation of Ez^(p,p)
-    *( ELoc+2*nparts ) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_ );
+    *( ELoc+2*nparts ) = compute( &coeffxp[2], &coeffyp[2], Ez2D, idx_p[0], idx_p[1] );
     // Interpolation of Bx^(p,d)
-    *( BLoc+0*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_ );
+    *( BLoc+0*nparts ) = compute( &coeffxp[2], &coeffyd[2], Bx2D, idx_p[0], idx_d[1] );
     // Interpolation of By^(d,p)
-    *( BLoc+1*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_ );
+    *( BLoc+1*nparts ) = compute( &coeffxd[2], &coeffyp[2], By2D, idx_d[0], idx_p[1] );
     // Interpolation of Bz^(d,d)
-    *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_ );
+    *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], Bz2D, idx_d[0], idx_d[1] );
 } // END Interpolator2D4Order
 
 void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *, int ithread, LocalFields *JLoc, double *RhoLoc )
@@ -95,45 +98,53 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     double xpn = particles.position( 0, ipart )*d_inv_[0];
     double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
-    coeffs( xpn, ypn );
+    int idx_p[2], idx_d[2];
+    double delta_p[2];
+    double coeffxp[5], coeffyp[5];
+    double coeffxd[5], coeffyd[5];
+    coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
     int nparts( particles.numberOfParticles() );
 
     // Interpolation of Ex^(d,p)
-    *( ELoc+0*nparts ) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
+    *( ELoc+0*nparts ) =  compute( &coeffxd[2], &coeffyp[2], Ex2D, idx_d[0], idx_p[1] );
     // Interpolation of Ey^(p,d)
-    *( ELoc+1*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_ );
+    *( ELoc+1*nparts ) = compute( &coeffxp[2], &coeffyd[2], Ey2D, idx_p[0], idx_d[1] );
     // Interpolation of Ez^(p,p)
-    *( ELoc+2*nparts ) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_ );
+    *( ELoc+2*nparts ) = compute( &coeffxp[2], &coeffyp[2], Ez2D, idx_p[0], idx_p[1] );
     // Interpolation of Bx^(p,d)
-    *( BLoc+0*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_ );
+    *( BLoc+0*nparts ) = compute( &coeffxp[2], &coeffyd[2], Bx2D, idx_p[0], idx_d[1] );
     // Interpolation of By^(d,p)
-    *( BLoc+1*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_ );
+    *( BLoc+1*nparts ) = compute( &coeffxd[2], &coeffyp[2], By2D, idx_d[0], idx_p[1] );
     // Interpolation of Bz^(d,d)
-    *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_ );
+    *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], Bz2D, idx_d[0], idx_d[1] );
     // Interpolation of Jx^(d,p)
-    JLoc->x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_ );
+    JLoc->x = compute( &coeffxd[2], &coeffyp[2], Jx2D, idx_d[0], idx_p[1] );
     // Interpolation of Ey^(p,d)
-    JLoc->y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_ );
+    JLoc->y = compute( &coeffxp[2], &coeffyd[2], Jy2D, idx_p[0], idx_d[1] );
     // Interpolation of Ez^(p,p)
-    JLoc->z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_ );
+    JLoc->z = compute( &coeffxp[2], &coeffyp[2], Jz2D, idx_p[0], idx_p[1] );
     // Interpolation of Rho^(p,p)
-    ( *RhoLoc ) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_ );
+    ( *RhoLoc ) = compute( &coeffxp[2], &coeffyp[2], Rho2D, idx_p[0], idx_p[1] );
 }
 
 //! Interpolator on another field than the basic ones
 void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field2D *F = static_cast<Field2D *>( *field );
-    double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
-    double *coeffy = F->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
-    int *i = F->isDual( 0 ) ? &id_ : &ip_;
-    int *j = F->isDual( 1 ) ? &jd_ : &jp_;
+    int idx_p[2], idx_d[2];
+    double delta_p[2];
+    double coeffxp[5], coeffyp[5];
+    double coeffxd[5], coeffyd[5];
+    double *coeffx = F->isDual( 0 ) ? &coeffxd[2] : &coeffxp[2];
+    double *coeffy = F->isDual( 1 ) ? &coeffyd[2] : &coeffyp[2];
+    int *i = F->isDual( 0 ) ? &idx_d[0] : &idx_p[0];
+    int *j = F->isDual( 1 ) ? &idx_d[1] : &idx_p[1];
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*d_inv_[0];
         double ypn = particles.position( 1, ipart )*d_inv_[1];
-        coeffs( xpn, ypn );
+        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }
 }
@@ -166,7 +177,6 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         double delta_p[2];
         double coeffxp[5], coeffyp[5];
         double coeffxd[5], coeffyd[5];
-
         coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
         // Interpolation of Ex^(d,p)

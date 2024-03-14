@@ -138,7 +138,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
 
     double r_bar = ((jpo + j_domain_begin_ + deltaold[1*nparts])*dr + rp) * 0.5; // r at t = t0 - dt/2
 
-    //e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
     e_delta_m1 = std::sqrt(eitheta * std::conj(eitheta_old)); //ei^(theta-theta_old)/2. std::sqrt keeps the root with positive real part which is what we need here.
     e_bar_m1 = eitheta_old * e_delta_m1;                      //ei^(theta+theta_old)/2.
 
@@ -184,7 +183,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
     }
 
     e_delta = 0.5;
-    //e_delta_inv = 0.5;
 
     //Compute division by R in advance for Jt and rho evaluation.
     for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -198,9 +196,7 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             e_delta *= e_delta_m1;
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
-            //e_delta_inv =1./e_delta - 1.;
             crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
-            //crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
         }
 
         // Add contribution J_p to global array
@@ -249,7 +245,6 @@ void ProjectorAM2Order::currents(   ElectroMagnAM *emAM,
             iloc = ( i+ipo )*nprimr_ + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                //Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. ));
                 Jt [linindex] -= crt_p*(Sr1[j]*Sl1[i]*( e_delta-1. ) - Sr0[j]*Sl0[i]*(std::conj(e_delta) - 1.));
             }
         }
@@ -482,7 +477,6 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
                 Jl[i-1]   =  -Jl[i+1]; // Zero Jl mode > 0 on axis.
            } else {
 		//Jl mode 0 on axis should be left as is. It looks over estimated but it might be necessary to conserve a correct divergence and a proper evaluation on the field on axis.
-                //Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;  //Here we use smoothig on axis for results appearing more physical.
                 Jl [i-1] =  Jl [i+1] ; // Non zero Jl mode 0 on axis.
            }
        }

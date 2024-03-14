@@ -269,22 +269,23 @@ void ProjectorAM2OrderV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 
 void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
 {
-
-   double sign = -1.;
-   for (unsigned int i=0; i< imode; i++) sign *= -1;
+   // Mode 0 contribution "below axis" is added.
+   // Non zero modes are substracted because a particle sitting exactly on axis has a non defined theta and can not contribute to a theta dependent mode. 
+   double sign = (imode == 0) ? 1 : -1 ;
 
    if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
            //Fold rho
            for( unsigned int j=1 ; j<3; j++ ) {
                rhoj[i+j] += sign * rhoj[i-j];
-               rhoj[i-j]  = sign * rhoj[i+j];
            }
            //Apply BC
            if (imode > 0){
                rhoj[i] = 0.;
+               rhoj[i-1]  = - rhoj[i+1]; // Zero Jl mode > 0 on axis.
            } else {
-               rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+               rhoj[i] = rhoj[i+1]; //This smoothing is just for cosmetics on the picture, rho has no influence on the results.
+               rhoj[i-1]  = rhoj[i+1]; // Non zero Jl mode > 0 on axis.
            }
        }
    }
@@ -293,14 +294,14 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
        for( unsigned int i=2 ; i<(npriml_+1)*nprimr_+2; i+=nprimr_ ) {
            //Fold Jl
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jl [i+j] +=  sign * Jl[i-j];
-               Jl[i-j]   =  sign * Jl[i+j];
+               Jl [i+j] +=  sign * Jl[i-j]; //Add even modes, substract odd modes since el(theta=0 = el(theta=pi) at all r.
             }
             if (imode > 0){
                 Jl [i] = 0. ;
+                Jl[i-1]   =  -Jl[i+1]; // Zero Jl mode > 0 on axis.
            } else {
-                //Force dJl/dr = 0 at r=0.
-                Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+		//Jl mode 0 on axis should be left as is. It looks over estimated but it might be necessary to conserve a correct divergence and a proper evaluation on the field on axis.
+                Jl [i-1] =  Jl [i+1] ; // Non zero Jl mode 0 on axis.
            }
        }
    }
@@ -311,24 +312,19 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
            int ilocr = i*(nprimr_+1)+3;
            //Fold Jt
            for( unsigned int j=1 ; j<3; j++ ) {
-               Jt [iloc+j] += -sign * Jt[iloc-j];
-               Jt[iloc-j]   = -sign * Jt[iloc+j];
+               Jt [iloc+j] += sign * Jt[iloc-j]; 
            }
            for( unsigned int j=0 ; j<3; j++ ) {
-               Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-               Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+               Jr [ilocr+2-j] += sign * Jr [ilocr-3+j];
            }
 
            if (imode == 1){
-               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-               //Force dJr/dr = 0 at r=0.
-               //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-               Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);// Jt mode 1 = -I Jr mode 1 on axis to keep div(J) = 0.
+               Jr [ilocr-1] = Jr [ilocr]; // Jr mode 1 is non zero on axis.
            } else{
-               Jt [iloc] = 0. ;
-               //Force dJr/dr = 0 and Jr=0 at r=0.
-               //Jr [ilocr] =  Jr [ilocr+1]/9.;
-               Jr [ilocr-1] = -Jr [ilocr];
+               Jt [iloc] = 0. ; // only mode 1 is non zero on axis
+               Jt [iloc-1] = -Jt [iloc+1]; // only mode 1 is non zero on axis
+               Jr [ilocr-1] = -Jr [ilocr]; // only mode 1 is non zero on axis
            }
        }
    }
