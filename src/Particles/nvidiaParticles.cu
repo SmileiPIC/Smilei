@@ -585,7 +585,10 @@ namespace detail {
     template <typename Tuple>
     __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
     Cluster2D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    // arrange cell index to have a proper sort for collisions
     {
+        //Sort is done per cell for collisions but arranged in larger tiles for projector performance.
+
         const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
                                                                                     inverse_of_x_cell_dimension_ ) -
                                                              CellStartingGlobalIndex_for_x_;
@@ -599,17 +602,25 @@ namespace detail {
         // NOTE: Flat tiles have been studied but were not as efficient for the
         // projection. The square provides the minimal perimeter (and thus ghost
         // cell amount) for a given area.
-        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
-        static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
+        // We assume same kClusterWidth in all dimensions
+        //static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
+        //static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
+        static constexpr SizeType cluster_size_in_cell = kClusterWidth*kClusterWidth;
 
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
+        //const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / kClusterWidth;
+        //const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
+        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / kClusterWidth;
 
-        const SizeType y_stride = local_y_dimension_in_cluster_;
+        //const SizeType y_stride = local_y_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * y_stride +
-                                       local_y_particle_cluster_coordinate_in_cluster;
+        //const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * y_stride +
+        //                               local_y_particle_cluster_coordinate_in_cluster;
+        const SizeType cluster_index = (local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_
+                                       + local_y_particle_cluster_coordinate_in_cluster ) * cluster_size_in_cell
+                                       + kClusterWidth * (local_x_particle_coordinate_in_cell % kClusterWidth) 
+                                       + local_y_particle_coordinate_in_cell % kClusterWidth
 
         return static_cast<IDType>( cluster_index );
     }
