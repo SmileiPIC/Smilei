@@ -2,9 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef SMILEI_OPENACC_MODE
-    #include <accelmath.h>
-#endif
 
 #include "ElectroMagn.h"
 #include "Field3D.h"
