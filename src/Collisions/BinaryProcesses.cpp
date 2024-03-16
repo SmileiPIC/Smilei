@@ -190,6 +190,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         return;
     }
     
+    BinaryProcessData D;
+    
     // numbers of species in each group
     size_t nspec1 = species_group1_.size();
     size_t nspec2 = species_group1_.size();
@@ -212,13 +214,11 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     }
     
     // Info for ionization
-    bool electronFirst = patch->vecSpecies[species_group2_[0]]->atomic_number_==0 ? true : false;
+    D.electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
     
     // Loop bins of particles
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
-        BinaryProcessData D;
-        D.electronFirst = electronFirst;
         
         // get number of particles for all necessary species
         size_t npart1 = 0;
