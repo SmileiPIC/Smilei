@@ -34,51 +34,10 @@ public:
     void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
 
 private:
-    inline void __attribute__((always_inline)) coeffs( double xjn )
-    {
-        double xjmxi2;
-
-        // Dual
-        id_      = round( xjn+0.5 );      // index of the central point
-        xjmxi  = xjn - ( double )id_ +0.5; // normalized distance to the central node
-        xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
-
-        // 2nd order interpolation on 3 nodes
-        coeffd_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-        coeffd_[1] = ( 0.75-xjmxi2 );
-        coeffd_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
-
-        id_ -= index_domain_begin;
-
-        // Primal
-        ip_      = round( xjn );    // index of the central point
-        xjmxi  = xjn -( double )ip_; // normalized distance to the central node
-        xjmxi2 = pow( xjmxi, 2 );   // square of the normalized distance to the central node
-
-        // 2nd order interpolation on 3 nodes
-        coeffp_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-        coeffp_[1] = ( 0.75-xjmxi2 );
-        coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
-
-        ip_ -= index_domain_begin;
-    }
-    
     inline void coeffs( double xpn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffxd, double* delta_p )
     {
         double delta, delta2;
-        
-        // Dual
-        idx_d[0]    = round( xpn+0.5 );              // index of the central point
-        delta       = xpn - ( double )idx_d[0] +0.5; // normalized distance to the central node
-        delta2      = delta*delta;                   // square of the normalized distance to the central node
-        
-        // 2nd order interpolation on 3 nodes
-        coeffxd[0]   = 0.5 * ( delta2-delta+0.25 );
-        coeffxd[1]   = ( 0.75-delta2 );
-        coeffxd[2]   = 0.5 * ( delta2+delta+0.25 );
-        
-        idx_d[0]   -= index_domain_begin;
         
         // Primal
         idx_p[0]    = round( xpn );                 // index of the central point
@@ -91,19 +50,22 @@ private:
         coeffxp[2]   = 0.5 * ( delta2+delta_p[0]+0.25 );
         
         idx_p[0]   -= index_domain_begin;
+
+        if(idx_d){
+            // Dual
+            idx_d[0]    = round( xpn+0.5 );              // index of the central point
+            delta       = xpn - ( double )idx_d[0] +0.5; // normalized distance to the central node
+            delta2      = delta*delta;                   // square of the normalized distance to the central node
+            
+            // 2nd order interpolation on 3 nodes
+            coeffxd[0]   = 0.5 * ( delta2-delta+0.25 );
+            coeffxd[1]   = ( 0.75-delta2 );
+            coeffxd[2]   = 0.5 * ( delta2+delta+0.25 );
+            
+            idx_d[0]   -= index_domain_begin;
+        }
         
     }    
-    // Last prim index computed
-    int ip_;
-    // Last dual index computed
-    int id_;
-    // Last delta computed
-    double xjmxi, deltax;
-    // Interpolation coefficient on Prim grid
-    double coeffp_[3];
-    // Interpolation coefficient on Dual grid
-    double coeffd_[3];
-
 
 };//END class
 

@@ -30,13 +30,15 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of November 2021, 90 papers have been published covering a broad range of topics:
+As of March 2024, 176 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
 * quantum electrodynamics (QED) processes in plasmas
 * astrophysical and space plasmas
 * high-performance computing (HPC)
+
+Following is the distribution of these topics in the listed publications up to November 2021:
 
 .. _fig_paper_topics:
 
@@ -46,7 +48,32 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
+   You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Cai2024]
+
+    W. Cai, L. Zhang, X. Geng, X. Zhang, B. Shen, L. Ji, 
+    `Harmonic generation and modulation based on intense x-ray interaction with crystal-like structures`,
+    `Physics of Plasmas 31, 033107 (2024) <https://doi.org/10.1063/5.0189617>`_
+
+.. [Mondal2024]
+
+    A. Mondal, R. Sabui, S. Tata, R. M. G. M. Trines, S. V. Rahul, F. Li, S. Sarkar, W. Trickey, R. Y. Kumar, D. Rajak, J. Pasley, Z. Sheng, J. Jha, M. Anand, R. Gopal, A. P. L. Robinson and M. Krishnamurthy,
+    `Shaped liquid drops generate MeV temperature electron beams with millijoule class laser`,
+    `Nature Communications Physics 7, 85 (2024) <https://doi.org/10.1038/s42005-024-01550-8>`_
+
+.. [Psikal2024]
+
+    J. Psikal,
+    `Effect of the rising edge of ultrashort laser pulse on the target normal sheath acceleration of ions`,
+    `Plasma Physics and Controlled Fusion 66 045007 (2024) <https://doi.org/10.1088/1361-6587/ad268d>`_
+
+.. [RezaeiPandari2024]
+
+    M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, A. R. Niknam, R. Massudi, K.-Y. Kim, and C. H. Nam,
+    `Investigation of terahertz radiation generation from laser-wakefield acceleration`,
+    `AIP Advances 14, 025347 (2024) <https://doi.org/10.1063/5.0187339>`_
 
 .. [Su2024]
 

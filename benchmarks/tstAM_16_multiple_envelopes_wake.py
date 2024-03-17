@@ -98,9 +98,9 @@ center_laser_2 = center_laser_1-150.
 center_laser_envelopes = [center_laser_0,center_laser_1,center_laser_2]
 
 # focus of the envelopes
-focus_0           = [center_laser_0, 0.]
-focus_1           = [center_laser_1, 0.]
-focus_2           = [center_laser_2, 0.]
+focus_0           = [center_laser_0]
+focus_1           = [center_laser_1]
+focus_2           = [center_laser_2]
 
 focus_envelopes = [focus_0,focus_1,focus_2]
 

@@ -37,8 +37,8 @@
 
 SMILEICXX := CC
 SMILEICXX.DEPS := $(SMILEICXX)
-# THRUSTCXX := hipcc
-THRUSTCXX := $(SMILEICXX)
+# GPU_COMPILER := hipcc
+GPU_COMPILER := $(SMILEICXX)
 
 ################################################################################
 # Feature flags
@@ -80,15 +80,6 @@ ADASTRA_OPTIMIZATION_FLAGS       := -O3 $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADAS
 ADASTRA_DEBUG_FLAGS           := -g -ggdb $(ADASTRA_DEBUG_SANITIZER_FLAGS) -v # --cray-print-opts=all -craype-verbose
 
 ################################################################################
-# Omp flags
-################################################################################
-
-# No need to be specific with something like:
-# -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a
-# The craype-accel-amd-gfx90a module does it for us.
-ADASTRA_OMP_FLAGS := -fopenmp
-
-################################################################################
 # OMP GPU offloading support flags
 ################################################################################
 
@@ -104,12 +95,12 @@ ifneq (,$(call parse_config,gpu_amd))
     # When using hip/cuda to build kernels
     # When you ask CCE to drive the hip compilation
     # NOTE: the -x hip flag MUST come before the .cu files !
-    ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    ADASTRA_GPU_COMPILER_FLAGS := -x hip
+    # ADASTRA_GPU_COMPILER_FLAGS += --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
     # Diagnostics
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
-    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += -Rpass-analysis=kernel-resource-usage
+    # ADASTRA_GPU_COMPILER_FLAGS += --save-temps # Cuda/HIP kernel info. To use with the AMD compiler (the Cray compiler don't produce interesting details, only the Clang LLVM IR)
+    # ADASTRA_GPU_COMPILER_FLAGS += -Rpass-analysis=kernel-resource-usage
 endif
 
 ################################################################################
@@ -156,17 +147,16 @@ ADASTRA_LIBRARIES := $(ADASTRA_LIBRARIES_OMP_STATIC) $(ADASTRA_LIBRARIES_MPI) $(
 ################################################################################
 
 # Inherit of all the typical *.cpp compilation options
-# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesn't work as expected
-ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_FEATURE_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_DEBUG_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OMP_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
-# ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # Disabled due to unsupported option '-fopenmp-targets=' for language mode 'HIP'
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS)
-ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_INCLUDES)
+# GPU_COMPILER_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesn't work as expected
+GPU_COMPILER_FLAGS += $(ADASTRA_FEATURE_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_WARNING_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_DEBUG_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_OMP_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
+# GPU_COMPILER_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # Disabled due to unsupported option '-fopenmp-targets=' for language mode 'HIP'
+GPU_COMPILER_FLAGS += $(ADASTRA_GPU_COMPILER_FLAGS)
+GPU_COMPILER_FLAGS += $(ADASTRA_INCLUDES)
 
 CXXFLAGS += $(ADASTRA_FEATURE_FLAGS)
 CXXFLAGS += $(ADASTRA_WARNING_FLAGS)

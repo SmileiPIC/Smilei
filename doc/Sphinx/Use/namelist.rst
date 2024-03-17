@@ -164,6 +164,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * Either ``grid_length``, the simulation length in each direction in units of :math:`L_r`,
   * or ``number_of_cells``, the number of cells in each direction.
 
+  .. note::
+    
+    In ``AMcylindrical`` geometry, the grid represents 2-dimensional fields.
+    The second dimension is the **radius** of the cylinder.
 
 .. py:data:: cell_length
 
@@ -1519,7 +1523,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :type: a *python* function or a :doc:`time profile <profiles>`
     :default:  ``tconstant()``
 
-    The temporal envelope of the laser.
+    The temporal envelope of the laser (field, not intensity).
 
   .. py:data:: space_envelope
 
@@ -1540,8 +1544,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :type: a list of two floats
     :default: ``[ 0., 0. ]``
 
-    An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
-    case of elliptical polarization where the two temporal profiles might have a slight
+    An extra delay for the time envelopes of :math:`B_y` and :math:`B_z`,
+    expressed in terms of phase (:math:`=\omega t`). This delay is applied to the
+    :py:data:`time_envelope`, but not to the carrier wave.
+    This option is useful in the
+    case of elliptical polarization where the two temporal profiles should have a slight
     delay due to the mismatched :py:data:`phase`.
 
 
@@ -1558,7 +1565,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         omega            = 1.,
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
   .. py:data:: a0
@@ -1579,6 +1587,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular.
 
+  .. py:data:: phase_offset
+    
+    :default: 0.
+    
+    An extra phase added to both the envelope and to the carrier wave.
 
 
 .. rubric:: 4. Defining a 2D gaussian wave
@@ -1596,9 +1609,13 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         incidence_angle  = 0.,
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
+  This is similar to ``LaserPlanar1D``, with some additional arguments for
+  specific 2D aspects.
+  
   .. py:data:: focus
 
     :type: A list of two floats ``[X, Y]``
@@ -1614,10 +1631,6 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: 0.
 
     The angle of the laser beam relative to the normal to the injection plane, in radians.
-
-  .. py:data:: time_envelope
-
-     Time envelope of the field (not intensity).
 
 
 .. rubric:: 5. Defining a 3D gaussian wave
@@ -1635,7 +1648,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
         ellipticity      = 0.,
-        time_envelope    = tconstant()
+        time_envelope    = tconstant(),
+        phase_offset     = 0.,
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
@@ -1655,14 +1669,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side         = "xmin",
         a0               = 1.,
         omega            = 1.,
-        focus            = [50., 0.],
+        focus            = [50.],
         waist            = 3.,
         polarization_phi = 0.,
         ellipticity      = 0.,
         time_envelope    = tconstant()
     )
 
-  Note that here, the focus is given in [x,r] coordinates.
+  Note that here the focus is given in [x] coordinates, since it propagates on the `r=0` axis .
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -1925,7 +1939,7 @@ in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
 
     LaserEnvelopeGaussianAM(
         a0              = 1.,
-        focus           = [150., 40.],
+        focus           = [150.],
         waist           = 30.,
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
@@ -2576,8 +2590,8 @@ This is done by including a block ``DiagFields``::
   | | Jy_abc       | | Components of the current due to species "abc"      |
   | | Jz_abc       | |                                                     |
   +----------------+-------------------------------------------------------+
-  | | Rho          | |  Total density                                      |
-  | | Rho_abc      | |  Density of species "abc"                           |
+  | | Rho          | |  Total charge density                               |
+  | | Rho_abc      | |  Charge density of species "abc"                    |
   +----------------+-------------------------------------------------------+
 
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
@@ -2766,8 +2780,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   * the electric field components ``"Ex"``, ``"Ey"``, ``"Ez"``
   * the magnetic field components ``"Bx"``, ``"By"``, ``"Bz"``
   * the Poynting vector components ``"PoyX"``, ``"PoyY"``, ``"PoyZ"``
-  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and density ``"Rho"``
-  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
+  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and charge density ``"Rho"``
+  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and charge density ``"Rho_abc"``
     of a given species named ``"abc"``
 
   In the case of an envelope model for the laser (see :doc:`/Understand/laser_envelope`),

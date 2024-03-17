@@ -31,19 +31,23 @@ void Interpolator1D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
 
     // Particle position (in units of the spatial-step)
-    double xjn = particles.position( 0, ipart )*dx_inv_;
+    double xpn = particles.position( 0, ipart )*dx_inv_;
     // Calculate coeffs
-    coeffs( xjn );
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[3];
+    double coeffxd[3];
+    coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D_m, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D_m, idx_d[0] );
 
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D,   idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D,   idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D_m, idx_p[0] );
 
 }//END Interpolator1D2Order
 
@@ -79,33 +83,37 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     }
 
     // Particle position (in units of the spatial-step)
-    double xjn = particles.position( 0, ipart )*dx_inv_;
+    double xpn = particles.position( 0, ipart )*dx_inv_;
     // Calculate coeffs
-    coeffs( xjn );
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[3];
+    double coeffxd[3];
+    coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
     int nparts( particles.numberOfParticles() );
 
     // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D_m, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D_m, idx_d[0] );
 
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D,   idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D,   idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D_m, idx_p[0] );
 
     // Interpolate the fields from the Primal grid : Jy, Jz, Rho
-    JLoc->y = compute( coeffp_, Jy1D,  ip_ );
-    JLoc->z = compute( coeffp_, Jz1D,  ip_ );
-    ( *RhoLoc ) = compute( coeffp_, Rho1D, ip_ );
+    JLoc->y = compute(     coeffxp, Jy1D,  idx_p[0] );
+    JLoc->z = compute(     coeffxp, Jz1D,  idx_p[0] );
+    ( *RhoLoc ) = compute( coeffxp, Rho1D, idx_p[0] );
 
     // Interpolate the fields from the Dual grid : Jx
-    JLoc->x = compute( coeffd_, Jx1D,  id_ );
+    JLoc->x = compute( coeffxd, Jx1D,  idx_d[0] );
     
     if (smpi->use_BTIS3){
-        *( BLocyBTIS3+0*nparts ) = compute( coeffp_, By1DBTIS3, ip_ );
-        *( BLoczBTIS3+0*nparts ) = compute( coeffp_, Bz1DBTIS3, ip_ );
+        *( BLocyBTIS3+0*nparts ) = compute( coeffxp, By1DBTIS3, idx_p[0] );
+        *( BLoczBTIS3+0*nparts ) = compute( coeffxp, Bz1DBTIS3, idx_p[0] );
     }
 
 }
@@ -114,12 +122,16 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
-    double *coeff = F->isDual( 0 ) ? coeffd_ : coeffp_;
-    int *i = F->isDual( 0 ) ? &id_ : &ip_;
+    int idx_p[1], idx_d[1];
+    double delta_p[1];
+    double coeffxp[3];
+    double coeffxd[3];
+    double *coeff = F->isDual( 0 ) ? coeffxd : coeffxp;
+    int *i = F->isDual( 0 ) ? &idx_d[0] : &idx_p[0];
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xjn = particles.position( 0, ipart )*dx_inv_;
-        coeffs( xjn );
+        double xpn = particles.position( 0, ipart )*dx_inv_;
+        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
         FieldLoc[ipart] = compute( coeff, F, *i );
     }
 }
@@ -154,7 +166,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
             double delta_p[1];
             double coeffxp[3];
             double coeffxd[3];
-
             coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
             // Interpolation of Ex^(d)
@@ -212,7 +223,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
           // Interpolation of BzBTIS3^(p)
           *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
           
-
           //Buffering of iol and delta
           *( iold+0*nparts+ipart)   = idx_p[0];
           *( delta+0*nparts+ipart)  = delta_p[0];
@@ -296,13 +306,13 @@ void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             // Interpolation of Bz^(d)
             *( Bpart+2*nparts+ipart ) = compute( coeffxd, Bz1D, idx_d[0] );
             // Interpolation of Phi^(p)
-            *( PHIpart+0*nparts+ipart ) = compute( coeffxp, Phi1D, idx_d[0] );
+            *( PHIpart+0*nparts+ipart ) = compute( coeffxp, Phi1D, idx_p[0] );
             // Interpolation of GradPhix^(p)
-            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_d[0] );
+            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_p[0] );
             // Interpolation of GradPhiy^(p)
-            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_d[0] );
+            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_p[0] );
             // Interpolation of GradPhiz^(p)
-            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_d[0] );
+            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_p[0] );
 
             //Buffering of iol and delta
             *( iold+0*nparts+ipart)  = idx_p[0];
@@ -344,13 +354,13 @@ void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             // Interpolation of BzBTIS3^(p)
             *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
             // Interpolation of Phi^(p)
-            *( PHIpart+0*nparts+ipart )     = compute( coeffxp, Phi1D, idx_d[0] );
+            *( PHIpart+0*nparts+ipart )     = compute( coeffxp, Phi1D, idx_p[0] );
             // Interpolation of GradPhix^(p)
-            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_d[0] );
+            *( GradPHIpart+0*nparts+ipart ) = compute( coeffxp, GradPhix1D, idx_p[0] );
             // Interpolation of GradPhiy^(p)
-            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_d[0] );
+            *( GradPHIpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy1D, idx_p[0] );
             // Interpolation of GradPhiz^(p)
-            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_d[0] );
+            *( GradPHIpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz1D, idx_p[0] );
 
             //Buffering of iol and delta
             *( iold+0*nparts+ipart)  = idx_p[0];
@@ -384,27 +394,24 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 
         // Calculate coeffs
 
-        int idx_p[1], idx_d[1];
+        int idx_p[1];
         double delta_p[1];
         double coeffxp[3];
-        double coeffxd[3];
 
-        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+        coeffs( xpn, idx_p, NULL, coeffxp, NULL, delta_p );
 
         // Interpolation of Phi^(p)
-        *( PHI_mpart+0*nparts+ipart )     = compute( coeffxp, Phi_m1D, idx_d[0] );
+        *( PHI_mpart+0*nparts+ipart )     = compute( coeffxp, Phi_m1D, idx_p[0] );
         // Interpolation of GradPhix^(p)
-        *( GradPHI_mpart+0*nparts+ipart ) = compute( coeffxp, GradPhix_m1D, idx_d[0] );
+        *( GradPHI_mpart+0*nparts+ipart ) = compute( coeffxp, GradPhix_m1D, idx_p[0] );
         // Interpolation of GradPhiy^(p)
-        *( GradPHI_mpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy_m1D, idx_d[0] );
+        *( GradPHI_mpart+1*nparts+ipart ) = compute( coeffxp, GradPhiy_m1D, idx_p[0] );
         // Interpolation of GradPhiz^(p)
-        *( GradPHI_mpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz_m1D, idx_d[0] );
+        *( GradPHI_mpart+2*nparts+ipart ) = compute( coeffxp, GradPhiz_m1D, idx_p[0] );
 
         //Buffering of iol and delta
         *( iold+ipart+0*nparts)  = idx_p[0];
         *( delta+ipart+0*nparts) = delta_p[0];
-
-
     }
 
 } // END Interpolator1D2Order
@@ -422,42 +429,30 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     double xpn = particles.position( 0, ipart )*dx_inv_;
 
     // Indexes of the central nodes
-    ip_ = round( xpn );
-
-    // Declaration and calculation of the coefficient for interpolation
-    double deltax, delta2;
-
-
-    deltax     = xpn - ( double )ip_;
-    delta2     = deltax*deltax;
-    coeffp_[0] = 0.5 * ( delta2-deltax+0.25 );
-    coeffp_[1] = 0.75 - delta2;
-    coeffp_[2] = 0.5 * ( delta2+deltax+0.25 );
-
-
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    ip_ = ip_ - index_domain_begin;
+    int idx_p[1];
+    double delta_p[1];
+    double coeffxp[3];
+    coeffs( xpn, idx_p, NULL, coeffxp, NULL, delta_p );
 
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
     // -------------------------
-    *( Env_A_abs_Loc )  = compute( coeffp_, Env_A_abs_1D, ip_ ); //compute( &coeffp_[1], Env_A_abs_1D, ip_ );
+    *( Env_A_abs_Loc )  = compute( coeffxp, Env_A_abs_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_Chi_^(p)
     // -------------------------
-    *( Env_Chi_Loc )    = compute( coeffp_, Env_Chi_1D, ip_ ); //compute( &coeffp_[1], Env_Chi_1D, ip_ );
+    *( Env_Chi_Loc )    = compute( coeffxp, Env_Chi_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
-    *( Env_E_abs_Loc )  = compute( coeffp_, Env_E_abs_1D, ip_ ); // compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+    *( Env_E_abs_Loc )  = compute( coeffxp, Env_E_abs_1D, idx_p[0] ); 
 
     // -------------------------
     // Interpolation of Env_Ex_abs_^(p)
     // -------------------------
-    *( Env_Ex_abs_Loc ) = compute( coeffp_, Env_Ex_abs_1D, ip_ ); // compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
+    *( Env_Ex_abs_Loc ) = compute( coeffxp, Env_Ex_abs_1D, idx_p[0] ); 
 
 } // END Interpolator1D2Order
 
@@ -471,26 +466,13 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-        int idx_p[1];
-        double delta_p[1];
-        double coeffxp[3];
-
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
 
-        double delta2;
-
-        // Primal
-        idx_p[0]     = round( xpn );                 // index of the central point
-        delta_p[0]   = xpn -( double )idx_p[0];      // normalized distance to the central node
-        delta2       = pow( delta_p[0], 2 );         // square of the normalized distance to the central node
-
-        // 2nd order interpolation on 3 nodes
-        coeffxp[0]   = 0.5 * ( delta2-delta_p[0]+0.25 );
-        coeffxp[1]   = ( 0.75-delta2 );
-        coeffxp[2]   = 0.5 * ( delta2+delta_p[0]+0.25 );
-
-        idx_p[0]    -= index_domain_begin;
+        int idx_p[1];
+        double delta_p[1];
+        double coeffxp[3];
+        coeffs( xpn, idx_p, NULL, coeffxp, NULL, delta_p );
 
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)

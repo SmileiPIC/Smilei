@@ -616,7 +616,32 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     if( geometry == "AMcylindrical" ) {
         if( !is_spectral ){
-            res_space2 += ( nmodes*nmodes - 1 )*res_space[1]*res_space[1];
+            double alpha;
+            switch (nmodes){
+                case 1: {
+                    alpha = 0.210486;
+                    break;
+                }
+                case 2: {
+                    alpha = 0.591305;
+                    break;
+                }
+                case 3: {
+                    alpha = 3.5234;
+                    break;
+                }
+                case 4: {
+                    alpha = 8.51041;
+                    break;
+                }
+                case 5: {
+                    alpha = 15.5059;
+                    break;
+                }
+                default:
+                    alpha = (nmodes-1)*(nmodes-1)-1.;
+            }
+            res_space2 += alpha * res_space[1]*res_space[1];
         } else {
             res_space2 = max(res_space[0], res_space[1]) * max(res_space[0], res_space[1]);
             if( timestep != min(cell_length[0], cell_length[1]) ) {

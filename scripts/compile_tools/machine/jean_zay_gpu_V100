@@ -1,0 +1,21 @@
+#
+# Machine file for Jean Zay at IDRIS
+# __________________________________________________________
+#
+# Documentation:
+# http://www.idris.fr/jean-zay
+#
+
+SMILEICXX.DEPS = g++
+#GPU_COMPILER = nvcc
+
+CXXFLAGS += -w
+CXXFLAGS += -ta=tesla:cc70 -std=c++14 -lcurand -Minfo=accel # what is offloaded/copied
+# CXXFLAGS += -Minfo=all   # very verbose output
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
+
+
+GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_70 
+GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
+
+LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
