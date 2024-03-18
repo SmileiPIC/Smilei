@@ -371,7 +371,12 @@ namespace detail {
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
                              thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
                              thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                             bin_upper_bound );
+                             bin_upper_bound,
+                             [](auto x, auto y)-> bool {
+                             // Divide x by 16 and compare with y
+                             return (x / 16) < y;
+                             }
+ );
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   bin_upper_bound,
@@ -620,7 +625,7 @@ namespace detail {
         const SizeType cluster_index = (local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_
                                        + local_y_particle_cluster_coordinate_in_cluster ) * cluster_size_in_cell
                                        + kClusterWidth * (local_x_particle_coordinate_in_cell % kClusterWidth) 
-                                       + local_y_particle_coordinate_in_cell % kClusterWidth
+                                       + local_y_particle_coordinate_in_cell % kClusterWidth;
 
         return static_cast<IDType>( cluster_index );
     }
