@@ -344,6 +344,19 @@ namespace detail {
         }
     }
 
+    // Functor to apply stride
+    struct StrideFunctor {
+        int start_;
+        int stride_;
+    
+        __host__ __device__
+        StrideFunctor(int start, int stride) : start_(start), stride_(stride) {}
+    
+        __host__ __device__
+        int operator()(int x) const {
+            return start_ + x * stride_;
+        }
+    };
     inline void
     Cluster::computeBinIndex( nvidiaParticles& particle_container )
     {
@@ -366,16 +379,24 @@ namespace detail {
         // NOTE: A particle is in a bin if the index of the bin is the same integer value as the particle's cell key.
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
         //
+
+        // Create counting iterator starting from 'zero'
+        thrust::counting_iterator<int> basic_count(0);
+        // Transform iterator applying the stride and changing the first element
+        thrust::transform_iterator<StrideFunctor, thrust::counting_iterator<int>, int> cluster_count(basic_count, StrideFunctor(15, 16));
         thrust::upper_bound( thrust::device,
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
-                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                             bin_upper_bound,
-                             [](auto x, auto y)-> bool {
-                             // Divide x by 16 and compare with y
-                             return (x / 16) < y;
-                             }
+                             //thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
+                             //thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
+                             cluster_count,
+                             cluster_count + particle_container.last_index.size(),
+                             bin_upper_bound
+                             //,
+                             //[](auto x, auto y)-> bool {
+                             //// Divide x by 16 and compare with y
+                             //return (x / 16) < y;
+                             //}
  );
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
