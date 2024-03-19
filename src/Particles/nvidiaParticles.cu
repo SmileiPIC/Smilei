@@ -346,15 +346,14 @@ namespace detail {
 
     // Functor to apply stride
     struct StrideFunctor {
-        int start_;
         int stride_;
     
         __host__ __device__
-        StrideFunctor(int start, int stride) : start_(start), stride_(stride) {}
+        StrideFunctor(int stride) : stride_(stride) {}
     
         __host__ __device__
         int operator()(int x) const {
-            return start_ + x * stride_;
+            return stride_ - 1 + x * stride_;
         }
     };
     inline void
@@ -378,12 +377,24 @@ namespace detail {
 
         // NOTE: A particle is in a bin if the index of the bin is the same integer value as the particle's cell key.
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
-        //
+        
+        //kClusterwidth should not be hard coded here
+        int Ncells_per_cluster = 4;
+        switch( particle_container.dimension() ) {
+            case 2: {
+                Ncells_per_cluster *= 4;
+                break;
+            }
+            case 3: {
+                Ncells_per_cluster *= 4*4;
+                break;
+            }
+        }
 
         // Create counting iterator starting from 'zero'
         thrust::counting_iterator<int> basic_count(0);
         // Transform iterator applying the stride and changing the first element
-        thrust::transform_iterator<StrideFunctor, thrust::counting_iterator<int>, int> cluster_count(basic_count, StrideFunctor(15, 16));
+        thrust::transform_iterator<StrideFunctor, thrust::counting_iterator<int>, int> cluster_count(basic_count, StrideFunctor(Ncells_per_cluster));
         thrust::upper_bound( thrust::device,
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
@@ -675,6 +686,7 @@ namespace detail {
         static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
         static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
         static constexpr SizeType z_cluster_dimension_in_cell = kClusterWidth;
+        static constexpr SizeType cluster_size_in_cell = kClusterWidth*kClusterWidth*kClusterWidth;
 
         const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
         const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
@@ -684,10 +696,16 @@ namespace detail {
         const SizeType z_stride = local_z_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
-                                       local_y_particle_cluster_coordinate_in_cluster * z_stride +
-                                       local_z_particle_cluster_coordinate_in_cluster;
-
+        //const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
+        //                               local_y_particle_cluster_coordinate_in_cluster * z_stride +
+        //                               local_z_particle_cluster_coordinate_in_cluster;
+        const SizeType cluster_index = ( local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_ * local_z_dimension_in_cluster_
+                                       + local_y_particle_cluster_coordinate_in_cluster * local_z_dimension_in_cluster_ 
+                                       + local_z_particle_cluster_coordinate_in_cluster) * cluster_size_in_cell
+                                       + kClusterWidth * kClusterWidth * (local_x_particle_coordinate_in_cell % kClusterWidth) 
+                                       +                 kClusterWidth * (local_y_particle_coordinate_in_cell % kClusterWidth)
+                                       +                                  local_z_particle_coordinate_in_cell % kClusterWidth;
+        // It is not the cluster index anymore. The name of this variable should be changed
         return static_cast<IDType>( cluster_index );
     }
 
