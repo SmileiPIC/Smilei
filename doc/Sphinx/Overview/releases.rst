@@ -23,7 +23,15 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-...
+* Happi:
+
+  * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
+  * Changed coordinate reference for 2D probe in 3D or AM geometry
+    (zero is the box origin projected orthogonally on the probe plane).
+
+* Bug fixes:
+
+  * ``dump_minutes`` often failed to write some checkpoint files.
 
 ----
 

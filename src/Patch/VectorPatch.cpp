@@ -339,10 +339,6 @@ void VectorPatch::dynamics( Params &params,
 
     timers.particles.restart();
     ostringstream t;
-#ifdef _PARTEVENTTRACING
-    bool diag_PartEventTracing {false};
-    double reference_time;
-#endif
 
 #ifdef _OMPTASKS
     #pragma omp single
@@ -362,7 +358,7 @@ void VectorPatch::dynamics( Params &params,
     bool diag_PartEventTracing {false};
     if( !params.Laser_Envelope_model ) {
         diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-        if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+        if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
     }
 #endif
 
@@ -4559,7 +4555,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
 #  ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+    if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
 #  endif
 
 
@@ -4601,7 +4597,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #ifdef _PARTEVENTTRACING
     bool diag_PartEventTracing {false};
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
-    // if (diag_PartEventTracing) smpi->reference_time = MPI_Wtime();
+    // if (diag_PartEventTracing) smpi->reference_time_ = MPI_Wtime();
 #endif
 
 #ifdef _OMPTASKS

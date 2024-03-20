@@ -557,6 +557,9 @@ to manipulate the plotting options:
   
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
+* ``xoffset``, ``yoffset``: numerical values to offset the
+  coordinates. These values must be given in the original (normalized)
+  units, i.e. not acounting for the factors above or for unit conversion.
 * ``title``: a string that replaces the plot title (or the y-label in a 1D plot).
   The current simulation time can be included with the placeholders ``{time}`` and
   ``{time_units}``, together with formatting instructions conforming to

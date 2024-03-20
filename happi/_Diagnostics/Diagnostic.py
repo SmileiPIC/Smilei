@@ -1,5 +1,7 @@
 from .._Utils import *
 
+from matplotlib import ticker
+
 class Diagnostic(object):
 	"""Mother class for all Diagnostics.
 	To create a diagnostic, refer to the doc of the SmileiSimulation class.
@@ -129,11 +131,14 @@ class Diagnostic(object):
 		--------
 		A list of [min, max] for each axis.
 		"""
+		assert self.dim <= 2, "Method limits() may only be used in 1D or 2D"
 		self._prepare1()
-		l = []
 		factor = [self._xfactor, self._yfactor]
-		for i in range(self.dim):
-			l.append([self._centers[i].min()*factor[i], self._centers[i].max()*factor[i]])
+		offset = [self._xoffset, self._yoffset]
+		l = [[
+				(offset[i] + self._centers[i].min())*factor[i], 
+				(offset[i] + self._centers[i].max())*factor[i]
+			] for i in range(self.dim)]
 		return l
 
 	# Method to print info on this diag
@@ -212,12 +217,15 @@ class Diagnostic(object):
 		except Exception as e: return []
 		if   axis_index == 0:
 			factor = (self.options.xfactor or 1.) * self.units.xcoeff
+			offset = self.options.xoffset or 0.
 		elif axis_index == 1:
 			factor = (self.options.yfactor or 1.) * self.units.ycoeff
+			offset = self.options.yoffset or 0.
 		else:
 			factor, _ = self.units._convert(self._units[axis_index], None)
+			offset = 0.
 		axis = self._getCenters(axis_index, timestep)
-		return factor * axis
+		return factor * ( offset + axis )
 
 	# Method to obtain the data and the axes
 	def get(self, timestep=None):
@@ -354,8 +362,8 @@ class Diagnostic(object):
 		A = self._np.double([self._dataAtTime(t) for t in self._timesteps])
 		# Plot
 		ax.cla()
-		xmin = self._xfactor*self._centers[0][0]
-		xmax = self._xfactor*self._centers[0][-1]
+		xmin = self._xfactor*( self._xoffset + self._centers[0][0] )
+		xmax = self._xfactor*( self._xoffset + self._centers[0][-1] )
 		extent = [xmin, xmax, self._yfactor*self._timesteps[0], self._yfactor*self._timesteps[-1]]
 		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
 		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
@@ -608,6 +616,9 @@ class Diagnostic(object):
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = (self.options.vfactor or 1.) * self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
+		# prepare the offsets
+		self._xoffset = self.options.xoffset or 0.
+		self._yoffset = self.options.yoffset or 0.
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._plotOnAxes:
@@ -639,19 +650,7 @@ class Diagnostic(object):
 			if self.options.yfactor: self._ylabel += "/"+str(self.options.yfactor)
 			self._ylabel = self._label[1] + " (" + self._ylabel + ")"
 			if self._log[1]: self._ylabel = "Log[ "+self._ylabel+" ]"
-			# prepare extent for 2d plots
-			self._extent = [
-				self._xfactor*self._centers[0][0],
-				self._xfactor*self._centers[0][-1],
-				self._yfactor*self._centers[1][0],
-				self._yfactor*self._centers[1][-1]
-			]
-			if self._log[0]:
-				self._extent[0] = self._np.log10(self._extent[0])
-				self._extent[1] = self._np.log10(self._extent[1])
-			if self._log[1]:
-				self._extent[2] = self._np.log10(self._extent[2])
-				self._extent[3] = self._np.log10(self._extent[3])
+			self._prepareExtent()
 		# prepare title
 		self._vlabel = ""
 		if self.units.vname: self._vlabel += " (" + self.units.vname + ")"
@@ -692,6 +691,21 @@ class Diagnostic(object):
 		return True
 
 	def _prepare4(self): pass
+
+	def _prepareExtent(self):
+		# prepare extent for 2d plots
+		self._extent = [
+			self._xfactor*( self._xoffset + self._centers[0][0]  ),
+			self._xfactor*( self._xoffset + self._centers[0][-1] ),
+			self._yfactor*( self._yoffset + self._centers[1][0]  ),
+			self._yfactor*( self._yoffset + self._centers[1][-1] )
+		]
+		if self._log[0]:
+			self._extent[0] = self._np.log10(self._extent[0])
+			self._extent[1] = self._np.log10(self._extent[1])
+		if self._log[1]:
+			self._extent[2] = self._np.log10(self._extent[2])
+			self._extent[3] = self._np.log10(self._extent[3])
 
 	# Method to set limits to a plot
 	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
@@ -820,23 +834,18 @@ class Diagnostic(object):
 		for option, value in self.options.labels.items():
 			getattr(ax, "set_"+option)( value, self.options.labels_font[option] )
 		# Ticklabels + fonts
-		for option, value in self.options.ticklabels_font.items():
-			if option in self.options.ticklabels:
-				getattr(ax, "set_"+option)( value, self.options.ticklabels_font[option] )
-			else: # manage tick label fonts even when not setting tick labels first
-				ticklabels = getattr(ax, "get_"+option)()
-				self._plt.setp(ticklabels, **self.options.ticklabels_font[option])
+		for tl in ["xticklabels", "yticklabels"]:
+			font = self.options.ticklabels_font[tl] if tl in self.options.ticklabels_font else {}
+			if tl in self.options.ticklabels:
+				getattr(ax, "set_"+tl)( self.options.ticklabels[tl], fontdict=font )
+			elif font: # manage tick label fonts even when not setting tick labels first
+				ticklabels = getattr(ax, "get_"+tl)()
+				self._plt.setp(ticklabels, **font)
 		# Tick formatting
-		try:
-			if self.options.xtick: ax.ticklabel_format(axis="x",**self.options.xtick)
-		except Exception as e:
-			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
-			self.options.xtick = []
-		try:
-			if self.options.ytick: ax.ticklabel_format(axis="y",**self.options.ytick)
-		except Exception as e:
-			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
-			self.options.ytick = []
+		if type(ax.xaxis.get_major_formatter()) == ticker.ScalarFormatter:
+			ax.ticklabel_format(axis="x",**self.options.xtick)
+		if type(ax.yaxis.get_major_formatter()) == ticker.ScalarFormatter:
+			ax.ticklabel_format(axis="y",**self.options.ytick)
 	def _setColorbarOptions(self, ax):
 		# Colorbar tick font
 		if self.options.colorbar_font:

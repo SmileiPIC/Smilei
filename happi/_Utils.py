@@ -121,9 +121,11 @@ class Options(object):
 	def __init__(self, **kwargs):
 		self.figure  = 1
 		self.xfactor = None
+		self.xoffset = None
 		self.xmin    = None
 		self.xmax    = None
 		self.yfactor = None
+		self.yoffset = None
 		self.ymin    = None
 		self.ymax    = None
 		self.vsym    = False
@@ -155,9 +157,11 @@ class Options(object):
 		# First, we manage the main optional arguments
 		self.figure0["num"] = kwargs.pop("figure", self.figure)
 		self.xfactor     = kwargs.pop("xfactor"    , self.xfactor  )
+		self.xoffset     = kwargs.pop("xoffset"    , self.xoffset  )
 		self.xmin        = kwargs.pop("xmin"       , self.xmin  )
 		self.xmax        = kwargs.pop("xmax"       , self.xmax  )
 		self.yfactor     = kwargs.pop("yfactor"    , self.yfactor  )
+		self.yoffset     = kwargs.pop("yoffset"    , self.yoffset  )
 		self.ymin        = kwargs.pop("ymin"       , self.ymin  )
 		self.ymax        = kwargs.pop("ymax"       , self.ymax  )
 		self.vfactor     = kwargs.pop("vfactor"    , self.vfactor  )
@@ -191,7 +195,7 @@ class Options(object):
 				kw = kwa[:-5]
 				self.labels_font[kw] = val
 			elif kwa in ["xticklabels", "yticklabels"]:
-				self.ticklabels[kw] = val
+				self.ticklabels[kwa] = val
 			elif kwa in ["xticklabels_font", "yticklabels_font"]:
 				kw = kwa[:-5]
 				self.ticklabels_font[kw] = val
