@@ -641,6 +641,13 @@ Species::copyParticlesFromHostToDevice()
     particles->copyFromHostToDevice();
 }
 
+//! Copy particles from device to host
+void
+Species::copyParticlesFromDeviceToHost()
+{
+    particles->copyFromDeviceToHost();
+}
+
 #endif // end if SMILEI_ACCELERATOR_MODE
 
 // ---------------------------------------------------------------------------------------------------------------------

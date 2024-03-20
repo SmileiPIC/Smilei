@@ -4459,10 +4459,11 @@ void VectorPatch::moveWindow(
     // Bring all particles and field grids to the Host (except species grids)
     // This part can be optimized by copying only the patch to be destructed
 
+
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        copyParticlesFromDeviceToHost();
-        copyFieldsFromDeviceToHost();
+        //copyParticlesFromDeviceToHost();
+        //copyFieldsFromDeviceToHost();
         //copyDeviceStateToHost(true,false);
     }
 #endif
