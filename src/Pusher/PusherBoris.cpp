@@ -2,9 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef SMILEI_OPENACC_MODE
-    #include <accelmath.h>
-#endif
 
 #include "Particles.h"
 #include "Species.h"

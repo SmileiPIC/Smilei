@@ -145,7 +145,7 @@ Species(
 
 LaserEnvelopeGaussianAM( 
     a0              = 2.,     
-    focus           = [begin_upramp, 0.],
+    focus           = [begin_upramp],
     waist           = 100.,
     time_envelope   = tgaussian(center=(2.0*laser_fwhm), fwhm=laser_fwhm),
     Envelope_boundary_conditions = [ ["reflective"] ],

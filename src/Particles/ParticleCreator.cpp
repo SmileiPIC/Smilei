@@ -285,13 +285,13 @@ int ParticleCreator::create( struct SubSpace sub_space,
         }
 
         // In AM, normalization of weights might be required
-        bool renormalize = true;
+        bool regular_weight = false;
         if( position_initialization_ == "regular" ) {
-            renormalize = false;
+            regular_weight = true;
         } else if( position_initialization_on_species_ ) {
             unsigned int ispec = species_->position_initialization_on_species_index_;
             if( patch->vecSpecies[ispec]->position_initialization_ == "regular" ) {
-                renormalize = false;
+                regular_weight = true;
             }
         }
 
@@ -328,7 +328,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params, patch->rand_ );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0], patch->rand_ );
-                        ParticleCreator::createWeight( particles_, nPart, iPart, density( i, j, k ), params, renormalize );
+                        ParticleCreator::createWeight( particles_, nPart, iPart, density( i, j, k ), params, regular_weight );
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
 
                         iPart += nPart;
@@ -931,33 +931,28 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::createWeight( Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
-                                    Params &params, bool renormalize )
+                                    Params &params, bool regular_weight )
 {
     double w = n_real_particles / nPart;
     for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
 
-    // In AM, we have a correction to make : multiply by radius
+    // In AM, we have a correction to make : multiply by cell radius
     // because n_real_particles was computed with the cell section, not cell volume
     // See above : density( i, j, k ) *= params.cell_volume;
-    // where params.cell_volume is 2*pi*dR*dL (in AM only)
+    // where params.cell_volume is 2*pi*dR*dL (in AM only). Multiplication by R is missing.
     if( params.geometry == "AMcylindrical" ) {
-        double radius;
-        for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-            radius = sqrt(particles->position(1,p)*particles->position(1,p) + particles->position(2,p)*particles->position(2,p));
-            particles->weight( p ) *= radius;
-        }
-        // We also need to renormalize in case total weight is not exaclty the same anymore
-        if( renormalize ) {
-            double total_weight = 0.;
+        if (regular_weight){ // Multiply each weight by the radius of the particle. Particles towards the axis are lighter.
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-                total_weight += particles->weight( p );
+                double radius = sqrt(particles->position(1,p)*particles->position(1,p) + particles->position(2,p)*particles->position(2,p));
+                particles->weight( p ) *= radius;
             }
+        } else { // Multiply each weight by the radius of the cell. All particles of the cell have identical weights.
+            double radius = sqrt(particles->position(1,iPart)*particles->position(1,iPart) + particles->position(2,iPart)*particles->position(2,iPart));
             double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
-            double coeff = n_real_particles * cell_radius / total_weight;
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-                particles->weight( p ) *= coeff;
+                particles->weight( p ) *= cell_radius;
             }
         }
     }

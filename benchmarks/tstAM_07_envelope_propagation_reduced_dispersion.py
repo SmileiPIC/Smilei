@@ -52,7 +52,7 @@ LoadBalancing(
 
 LaserEnvelopeGaussianAM(
     a0              = 1.,
-    focus           = [center_laser, Main.grid_length[1]/2.],
+    focus           = [center_laser],
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit_reduced_dispersion',

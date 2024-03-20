@@ -92,16 +92,10 @@ class Probe(Diagnostic):
 		# -------------------------------------------------------------------
 		# If timesteps is None, then keep all timesteps otherwise, select timesteps
 		self._timesteps = self._alltimesteps
-		if timesteps is not None:
-			try:
-				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except Exception as e:
-				raise Exception("Argument `timesteps` must be one or two non-negative integers")
-
-		# Need at least one timestep
-		if self._timesteps.size < 1:
-			raise Exception("Timesteps not found")
-
+		timestep_indices = kwargs.pop("timestep_indices", None)
+		self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
+		assert self._timesteps.size > 0, "Timesteps not found"
+		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
@@ -362,7 +356,6 @@ class Probe(Diagnostic):
 	
 	# get the value of x_moved for a requested timestep
 	def getXmoved(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+str(t)+" not found in this diagnostic")
@@ -379,7 +372,6 @@ class Probe(Diagnostic):
 
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
-		if not self._validate(): return
 		# Verify that the timestep is valid
 		if t not in self._timesteps:
 			print("Timestep "+t+" not found in this diagnostic")

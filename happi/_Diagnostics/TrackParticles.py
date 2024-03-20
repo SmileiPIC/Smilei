@@ -27,6 +27,8 @@ class TrackParticles(ParticleList):
 	
 	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, sorted_as="", length=None, chunksize=20000000, **kwargs):
 		
+		timestep_indices = kwargs.pop("timestep_indices", None)
+		
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
 			species = self.simulation.getTrackSpecies()
@@ -53,10 +55,12 @@ class TrackParticles(ParticleList):
 		disorderedfiles = self._findFiles("TrackParticlesDisordered")
 		
 		# Get x_moved and add moving_x in the list of properties
+		self._maxAvailableTime = 0
 		self._XmovedForTime = {}
 		for file in disorderedfiles:
 			with self._h5py.File(file, "r") as f:
 				for t, val in f["data"].items():
+					self._maxAvailableTime = max(int(t), self._maxAvailableTime)
 					x_moved = val.attrs.get("x_moved")
 					if x_moved is not None:
 						self._XmovedForTime[int(t)] = x_moved
@@ -89,13 +93,13 @@ class TrackParticles(ParticleList):
 			self._timesteps = self._np.array(sorted(self._locationForTime))
 			
 			# If specific timesteps requested, narrow the selection
-			if sorted_as and timesteps is not None:
-				self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
-		
+			if sorted_as:
+				self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
+				assert self._timesteps.size > 0, "Timesteps not found"
+			
 			self._alltimesteps = self._np.copy(self._timesteps)
 			
-			if not self._locationForTime:
-				raise Exception("No data found for this diagnostic")
+			assert self._locationForTime, "No data found for this diagnostic"
 			
 			# List available properties
 			try: # python 2
@@ -132,11 +136,8 @@ class TrackParticles(ParticleList):
 		if self._timesteps.size == 0:
 			raise Exception("No tracked particles found")
 		# If specific timesteps requested, narrow the selection
-		if timesteps is not None:
-			self._timesteps = self._filterTimesteps( self._timesteps, timesteps )
-		# Need at least one timestep
-		if self._timesteps.size < 1:
-			raise Exception("Timesteps not found")
+		self._timesteps = self._selectTimesteps(timesteps, timestep_indices, self._timesteps)
+		assert self._timesteps.size > 0, "Timesteps not found"
 		
 		
 		# Select particles
@@ -184,29 +185,22 @@ class TrackParticles(ParticleList):
 		else:
 			try:
 				f = self._h5py.File(orderedfile, "r")
-				if "finished_ordering" not in f.attrs.keys():
-					return True
+				finished_ordering = "finished_ordering" in f.attrs.keys()
+				last_timestep = f["Times"][-1]
 			except:
 				self._os.remove(orderedfile)
 				return True
 			finally:
 				f.close()
+			if not finished_ordering:
+				return True
+			elif last_timestep < self._maxAvailableTime:
+				# If the file says finished_ordering, but the last ordered timestep
+				# is inconsistent with the last available timestep, then it means
+				# that a new restart has been added to the list.
+				raise Exception("Cannot open a TrackParticles diagnostic that was previously opened with a different list of simulations.\n"
+				+"Remove or backup the following file: " + orderedfile)
 		return False
-	
-	def _filterTimesteps( self, tlist, bounds ):
-		try:
-			ts = self._np.array(bounds, ndmin=1, dtype=float)
-			if ts.size==2:
-				# get all times in between bounds
-				tlist = tlist[(self._timesteps>=ts[0]) * (self._timesteps<=ts[1])]
-			elif ts.size==1:
-				# get nearest time
-				tlist = self._np.array(tlist[ self._np.array([(self._np.abs(tlist-ts)).argmin()]) ])
-			else:
-				raise
-		except:
-			raise Exception("Argument `timesteps` must be one or two non-negative integers")
-		return tlist
 	
 	def _selectParticles( self, select, already_sorted, chunksize ):
 		if type(select) is str:
@@ -522,7 +516,6 @@ class TrackParticles(ParticleList):
 
 	# Method to generate the raw data (only done once)
 	def _generateRawData(self, times=None):
-		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 
 		if self._sort:
@@ -594,7 +587,6 @@ class TrackParticles(ParticleList):
 
 	# We override the get and getData methods
 	def getData(self, timestep=None):
-		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 
 		if timestep is None:
@@ -629,7 +621,6 @@ class TrackParticles(ParticleList):
 
 	# Iterator on UNSORTED particles for a given timestep
 	def iterParticles(self, timestep, chunksize=1):
-		if not self._validate(): return
 		self._prepare1() # prepare the vfactor
 
 		if timestep not in self._timesteps:
@@ -765,7 +756,6 @@ class TrackParticles(ParticleList):
 	
 	# Convert data to VTK format
 	def toVTK(self, rendering="trajectory", data_format="xml"):
-		if not self._validate(): return
 
 		if self._ndim_particles != 3:
 			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")

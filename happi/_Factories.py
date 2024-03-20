@@ -39,10 +39,8 @@ class ScalarFactory(object):
 		# If not a specific scalar (root level), build a list of scalar shortcuts
 		if scalar is None:
 			if simulation._verbose: print("Scanning for Scalar diagnostics")
-			# Create a temporary, empty scalar diagnostic
-			tmpDiag = Scalar(simulation)
 			# Get a list of scalars
-			scalars = tmpDiag.getScalars()
+			scalars = simulation.getScalars()
 			# Create scalars shortcuts
 			for scalar in scalars:
 				setattr(self, scalar, ScalarFactory(simulation, scalar))
@@ -53,7 +51,25 @@ class ScalarFactory(object):
 
 	def __call__(self, *args, **kwargs):
 		return Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			scalars = self._simulation.getScalars()
+			if scalars:
+				msg += "\nAvailable Scalar diagnostics:\n"
+				l = [""]
+				for s in scalars:
+					if len(s)>4 and s[:2]!=l[-1][:2] and s[-2:]!=l[-1][-2:]:
+						if l!=[""]:
+							msg += "\t".join(l) + "\n"
+						l = []
+					l.append(s)
+				if l!=[""]:
+					msg += "\t".join(l) + "\n"
+			else:
+				msg += "\nNo Scalar diagnostics available"
+		return msg
 
 class FieldFactory(object):
 	"""Import and analyze a Field diagnostic from a Smilei simulation

@@ -1402,6 +1402,10 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
                     for( unsigned int i=0; i<mins.size(); i++ ) {
                         for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                        }
+                    }
+                    for( unsigned int i=0; i<maxs.size(); i++ ) {
+                        for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
                         }
                     }

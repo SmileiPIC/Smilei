@@ -258,7 +258,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 ( *Br )( i, j ) = - Alpha_Xmax   * ( *Et )( i-1, j )
                                   +                   Beta_Xmax    * ( *Br )( i-1, j )
                                   +                   Gamma_Xmax   * byE
-                                  +                   Delta_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
+                                  -                   Delta_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
                 
             }//j  ---end compute Br
             

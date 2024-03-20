@@ -15,11 +15,11 @@ class Machine(object):
                 v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
                 v = int(v.split(".")[0]) # Major version number
                 if v > 1:
-                    MPIRUN = "mpirun --oversubscribe -np "
+                    MPIRUN = "mpirun --oversubscribe -np %d --map-by ppr:%d:socket:pe=%d"
                 else:
-                    MPIRUN = "mpirun -mca btl tcp,sm,self -np "
+                    raise Exception("Open MPI version > 1 required")
             else:
-                MPIRUN = "mpirun -np "
+                MPIRUN = "mpirun -np %d --map-by ppr:%d:socket:pe=%d"
         except CalledProcessError as e:
             print("Testing mpiexec")
             mpi_version = str(check_output("mpiexec -help", shell=True))
@@ -31,7 +31,7 @@ class Machine(object):
         self.COMPILE_COMMAND = self.MAKE+' -j 4 > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         # self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-        self.RUN_COMMAND = "export OMP_NUM_THREADS="+str(self.options.omp)+"; "+MPIRUN+str(self.options.mpi)+" "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file
+        self.RUN_COMMAND = "export OMP_NUM_THREADS="+str(self.options.omp)+"; "+MPIRUN%(self.options.mpi, self.options.mpi, self.options.omp)+" "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file
     
     
     def clean(self):

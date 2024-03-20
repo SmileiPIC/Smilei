@@ -320,7 +320,7 @@ Cancellation on axis
 """""""""""""""""""""""
 
 The first basic principle is that a mode 0 field defined on axis can only be longitudinal otherwise it would be ill defined.
-On the opposite, longitudinal fields on axis can only be of mode 0 since they do not depend on :math:`theta`.
+On the opposite, longitudinal fields on axis can only be of mode 0 since they do not depend on :math:`\theta`.
 From this we can already state that :math:`E_r^{m=0},\ E_t^{m=0},\ B_r^{m=0},\ B_t^{m=0},\ E_l^{m>0},\ B_l^{m>0}` are zero on axis.
 
 
@@ -415,7 +415,12 @@ To ensure this derivative cancels on axis we simply pick:
 And equation :eq:`transverse_on_axis` then gives 
 
 .. math::
-   \tilde{E_{\theta}}^{m=1}[2] = -i\tilde{E_r}^{m=1}[3]
+   \tilde{E_{\theta}}^{m=1}(r=0) = -i\tilde{E_r}^{m=1}(r=0)
+
+With a finite difference scheme, this is implemented as
+
+.. math::
+   \tilde{E_{\theta}}^{m=1}[2] = -\frac{i}{8}(9\tilde{E_r}^{m=1}[3]-\tilde{E_r}^{m=1}[4])
 
 All the equation derived here are also valid for the magnetic field.
 But because of a different duality, it is more convenient to use a different approach.
@@ -450,7 +455,7 @@ With a similar interpolation we obtain the boundary condition on axis for :math:
 .. math::
    B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
 
-Longitudinal fields on axis
+Longitudinal field on axis
 """""""""""""""""""""""""""""
 
 We have alreayd established that only modes :math:`m=0` of longitudinal fields are non zero on axis.
@@ -468,11 +473,6 @@ Introducing this result in the standard FDTD expression of :math:`E_l` we get:
 
 Again, the :math:`n` indice indicates the time step here.
 
-:math:`B_l^{m=0}` is independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along :math:`r` is zero
-on axis (derivative of a pair function is zero at :math:`x=0` ). From this we get:
-
-.. math::
-   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
 
 Below axis
 """"""""""""""""""""""""""""
@@ -481,7 +481,8 @@ Fields "below" axis are primal fields data with indice :math:`j<2` and dual fiel
 These fields are not physical in the sense that they do not contribute to the reconstruction of any physical field in real space and are not obtained by solving Maxwell's equations.
 Nevertheless, it is numerically convenient to give them a value in order to facilitate field interpolation for macro-particles near axis.
 This is already what is done for dual fields in :math:`r` which cancel on axis for instance.
-We extend this logic to primal fields in :math:`r`:
+We extend this logic to primal fields in :math:`r` as well.
+For any given field :math:`F`, the symetric of :math:`F` with respect to the axis is :math:`F` if :math:`F` is non zero on axis and :math:`-F` if :math:`F` is zero on axis:
 
 .. math::
 
@@ -489,19 +490,35 @@ We extend this logic to primal fields in :math:`r`:
 
    E_{l}^{m>0}[1] = -E_{l}^{m>0}[3]
 
+   E_{r}^{m\neq1}[2] = -E_{r}^{m\neq1}[3]
+
+   E_{r}^{m=1}[2] = E_{r}^{m=1}[3]
+
    E_{\theta}^{m\neq1}[1] = -E_{\theta}^{m\neq1}[3]
 
    E_{\theta}^{m=1}[1] = E_{\theta}^{m=1}[3]
+
+   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
+
+   B_{l}^{m>0}[2]=-B_{l}^{m>0}[3]
 
    B_{r}^{m\neq1}[1] = -B_{r}^{m\neq1}[3]
 
    B_{r}^{m=1}[1] = B_{r}^{m=1}[3]
 
+   B_{t}^{m\neq1}[2] = -B_{t}^{m\neq1}[3]
+
+   B_{t}^{m=1}[2] = B_{t}^{m=1}[3]
+
 Currents near axis
 """""""""""""""""""""
 
 A specific treatment must be applied to charge and current densities near axis because the projector deposits charge and current "below" axis.
-Quantities below axis must be brought back in the "physical" terms on and above axis.
+Quantities below axis must be folded back onto their symetric "above" axis. 
+Mode 0 contributions below axis are added to their "above axis" counterparts.
+On the opposite, strictly positive modes contributions are deduced.
+This ensures that a particle sitting on axis will have a net contribution to the domain only in mode 0 as expected because in that case :math:`\theta` is not defined and therefore
+the deposition can not be a function of :math:`\theta`.
 
 Using the continuity equation instead of Gauss law for transverse current of mode :math:`m=1` on axis, we can derive the exact same boundary conditions
 on axis for current density as for the electric field.

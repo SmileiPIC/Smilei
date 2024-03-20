@@ -12,9 +12,11 @@
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
-#include <thrust/sort.h>
-#include <thrust/remove.h>
 #include <thrust/count.h>
+#include <thrust/remove.h>
+#include <thrust/sort.h>
+
+
 #include "Patch.h"
 #include "gpu.h"
 #include "nvidiaParticles.h"
