@@ -3583,6 +3583,9 @@ A few things are important to know when you need dumps and restarts.
 
     In a previous run, the simulation state may have been dumped several times.
     These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
+    In case multiple dumps are kept, the newest one will overwrite the oldest one. 
+    To restart the simulation from the most advanced point, specify the dump number 
+    corresponding to the newest that was created.
 
 
 ----

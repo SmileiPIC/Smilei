@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of March 2024, 176 papers have been published covering a broad range of topics:
+As of March 2024, 177 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -51,6 +51,18 @@ Following is the distribution of these topics in the listed publications up to N
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
 
+.. [Kumar2024]
+
+     R. Y. Kumar, R. Sabui, R. Gopal, F. Li, S. Sarkar, W. Trickey, M. Anand, J. Pasley, Z.-M. Sheng, R. M. G. M. Trines, R. H. H. Scott, A. P. L. Robinson, V. Sharma, and M. Krishnamurthy, 
+    `Tailored mesoscopic plasma accelerates electrons exploiting parametric instability`,
+    `New Journal of Physics 26, 033027 (2024) <https://doi.org/10.1088/1367-2630/ad2ffc>`_
+
+.. [Ehret2024]
+
+    M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, José Antonio Pérez-Hernández, J. J. Santos, and G. Gatti, 
+    `High-repetition-rate source of nanosecond duration kA-current pulses driven by relativistic laser pulses`,
+    `High Power Laser Science and Engineering (2024) <https://doi.org/10.1017/hpl.2024.14>`_
+       
 .. [Cai2024]
 
     W. Cai, L. Zhang, X. Geng, X. Zhang, B. Shen, L. Ji, 

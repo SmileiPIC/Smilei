@@ -257,13 +257,12 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         RandomShuffle shuffler( *patch->rand_, npartmax );
         
         // Calculate the densities
-        double n1  = 0.; // density of group 1
+        double n1  = 0., n2 = 0.;
         for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
             for( int i = pg1[ispec1]->first_index[ibin]; i < pg1[ispec1]->last_index[ibin]; i++ ) {
                 n1 += pg1[ispec1]->weight( i );
             }
         }
-        double n2  = 0.; // density of group 2
         for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
             for( int i = pg2[ispec2]->first_index[ibin]; i < pg2[ispec2]->last_index[ibin]; i++ ) {
                 n2 += pg2[ispec2]->weight( i );
@@ -294,8 +293,6 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         D.n123 = pow( n1, 2./3. );
         D.n223 = pow( n2, 2./3. );
         
-        std::vector<int> count1(npairs), count2(npairs);
-        
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
@@ -314,44 +311,45 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                     D.i2 = shuffler.next();
                 }
             }
-            // count1[D.i1]
             
-            // find species and index i1 of particle "1"
-            size_t ispec1;
+            // find species and indices of particles
+            size_t ispec1, ispec2;
             for( ispec1=0 ; D.i1>=np1[ispec1]; ispec1++ ) {
                 D.i1 -= np1[ispec1];
             }
-            // find species and index i2 of particle "2"
-            size_t ispec2;
             for( ispec2=0 ; D.i2>=np2[ispec2]; ispec2++ ) {
                 D.i2 -= np2[ispec2];
             }
+            // p1 and p2 are the pointers to Particles
             D.p1 = pg1[ispec1];
             D.p2 = pg2[ispec2];
+            // i1 and i2 are particle indices in this bin
             D.i1 += D.p1->first_index[ibin];
             D.i2 += D.p2->first_index[ibin];
             
-            D.m1 = mass1[ispec1];
-            D.m2 = mass2[ispec2];
-            D.m12 = D.m1 / D.m2;
+            // Get Weights
             D.minW = D.p1->weight(D.i1);
             D.maxW = D.p2->weight(D.i2);
             if( D.minW > D.maxW ) {
                 swap( D.minW, D.maxW );
             }
-            
             // If one weight is zero, then skip. Can happen after nuclear reaction
             if( D.minW <= 0. ) continue;
-
+            
+            // Get masses
+            D.m1 = mass1[ispec1];
+            D.m2 = mass2[ispec2];
+            D.m12 = D.m1 / D.m2;
+            
+            // Calculate the timestep correction
             D.dt_correction = D.maxW * dt_corr;
             if( i % N2max <= (npairs-1) % N2max ) {
                 D.dt_correction *= weight_correction_2 ;
             } else {
                 D.dt_correction *= weight_correction_1;
             }
-
-            // Get momenta and calculate gammas
-
+            
+            // Calculate gammas
             D.gamma1 = D.p1->LorentzFactor( D.i1 );
             D.gamma2 = D.p2->LorentzFactor( D.i2 );
             double gamma12 = D.m12 * D.gamma1 + D.gamma2;
