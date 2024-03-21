@@ -174,10 +174,12 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
                         // The tag is the patch number in the receiver vector of patches 
                         // in order to avoid too large tags not supported by some MPI versions.
+#if defined ( SMILEI_ACCELERATOR_MODE )
                         mypatch->copyFieldsFromDeviceToHost();
                         for( unsigned int ispec = 0; ispec < mypatch->vecSpecies.size(); ispec++ ) {
                             mypatch->vecSpecies[ispec]->copyParticlesFromDeviceToHost();
                         }
+#endif
                         smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params, false );
                     }
                 }
