@@ -2114,6 +2114,8 @@ It is applied using an ``Antenna`` block::
   If it accepts numpy arrays, these arrays will correspond to the coordinates of 1 patch,
   and the return value must be a numpy array of the same size.
 
+
+
 ----
 
 Walls
@@ -3080,8 +3082,10 @@ for instance::
 
 A *screen* collects data from the macro-particles when they cross a surface.
 It processes this data similarly to the :ref:`particle binning diagnostics <DiagParticleBinning>`
-as it makes a histogram of the macro-particle properties. The only difference is
-that the histogram is made only by the particles that cross the surface.
+as it makes a histogram of the macro-particle properties. There are two differences:
+
+* the histogram is made only by the particles that cross the surface
+* the data is accumulated for all timesteps.
 
 You can add a screen by including a block ``DiagScreen()`` in the namelist,
 for instance::
@@ -3479,6 +3483,16 @@ For more clarity, this graph illustrates the five syntaxes for time selections:
   * Any value set to ``0`` will be replaced by the default value.
   * Special case: ``every=0`` means no output.
   * The numbers may be non-integers (apart from ``repeat``). The closest timesteps are chosen.
+
+----
+
+Profiles
+^^^^^^^^^^^^^^^
+
+Some of the quantities described in the previous sections can be profiles that depend on 
+space and/or time. See the :doc:`documentation on profiles <profiles>` for detailed
+instructions.
+
 
 ----
 
