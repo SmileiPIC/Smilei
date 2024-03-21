@@ -365,7 +365,8 @@ namespace detail {
         constexpr __host__ __device__ bool
         operator()( const int& x, const int& y ) const
         {
-            return x/64 < y;
+            //return x < y/64;
+            return x*64+63 < y;
         }
     };
 
@@ -392,17 +393,17 @@ namespace detail {
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
         
         //kClusterwidth should not be hard coded here
-        int Ncells_per_cluster = 4;
-        switch( particle_container.dimension() ) {
-            case 2: {
-                Ncells_per_cluster *= 4;
-                break;
-            }
-            case 3: {
-                Ncells_per_cluster *= 4*4;
-                break;
-            }
-        }
+        //int Ncells_per_cluster = 4;
+        //switch( particle_container.dimension() ) {
+        //    case 2: {
+        //        Ncells_per_cluster *= 4;
+        //        break;
+        //    }
+        //    case 3: {
+        //        Ncells_per_cluster *= 4*4;
+        //        break;
+        //    }
+        //}
 
         // Create counting iterator starting from 'zero'
         //thrust::counting_iterator<int> basic_count(0);
