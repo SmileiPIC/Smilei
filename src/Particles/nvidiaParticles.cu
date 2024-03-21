@@ -360,6 +360,15 @@ namespace detail {
             return stride_ - 1 + x * stride_;
         }
     };
+    struct custom_predicate
+    {
+        constexpr __host__ __device__ bool
+        operator()( const int& x, const int& y ) const
+        {
+            return x/64 < y;
+        }
+    };
+
     inline void
     Cluster::computeBinIndex( nvidiaParticles& particle_container )
     {
@@ -396,23 +405,19 @@ namespace detail {
         }
 
         // Create counting iterator starting from 'zero'
-        thrust::counting_iterator<int> basic_count(0);
+        //thrust::counting_iterator<int> basic_count(0);
         // Transform iterator applying the stride and changing the first element
-        thrust::transform_iterator<StrideFunctor, thrust::counting_iterator<int>, int> cluster_count(basic_count, StrideFunctor(Ncells_per_cluster));
+        //thrust::transform_iterator<StrideFunctor, thrust::counting_iterator<int>, int> cluster_count(basic_count, StrideFunctor(Ncells_per_cluster));
         thrust::upper_bound( thrust::device,
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
                              static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
-                             //thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                             //thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                             cluster_count,
-                             cluster_count + particle_container.last_index.size(),
-                             bin_upper_bound
-                             //,
-                             //[](auto x, auto y)-> bool {
-                             //// Divide x by 16 and compare with y
-                             //return (x / 16) < y;
-                             //}
- );
+                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
+                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
+                             //cluster_count,
+                             //cluster_count + particle_container.last_index.size(),
+                             bin_upper_bound,
+                             custom_predicate()
+                            );
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   bin_upper_bound,
@@ -700,17 +705,15 @@ namespace detail {
         const SizeType z_stride = local_z_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        //const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
-        //                               local_y_particle_cluster_coordinate_in_cluster * z_stride +
-        //                               local_z_particle_cluster_coordinate_in_cluster;
-        const SizeType cluster_index = ( local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_ * local_z_dimension_in_cluster_
-                                       + local_y_particle_cluster_coordinate_in_cluster * local_z_dimension_in_cluster_ 
-                                       + local_z_particle_cluster_coordinate_in_cluster) * cluster_size_in_cell
+        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
+                                       local_y_particle_cluster_coordinate_in_cluster * z_stride +
+                                       local_z_particle_cluster_coordinate_in_cluster;
+        const SizeType cell_index =    cluster_index * cluster_size_in_cell
                                        + kClusterWidth * kClusterWidth * (local_x_particle_coordinate_in_cell % kClusterWidth) 
                                        +                 kClusterWidth * (local_y_particle_coordinate_in_cell % kClusterWidth)
                                        +                                  local_z_particle_coordinate_in_cell % kClusterWidth;
         // It is not the cluster index anymore. The name of this variable should be changed
-        return static_cast<IDType>( cluster_index );
+        return static_cast<IDType>( cell_index );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
