@@ -485,6 +485,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Moreover = d2G/dr2 = dA/dr and it simplify with previous dA/dr which 0 anyway on axis.
                     // Equation for G is only d2G/dx2 = d2G/dt2 on axis
                     // ====
+                    // ====
                     // dA/dx = dA/dx + ik0 A
                     // r dA/dx = r dA/dx + ik0 rA <=> dG/dx = dG/dx + ik0 G
                     std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dl) ;
@@ -502,13 +503,13 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u3_np1_l_pml )( i, j ) = +kappa_prime_l_p[i]*sigma_l_p[i] ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) - sigma_prime_l_p[i]*kappa_l_p[i] ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) - alpha_prime_l_p[i]*pow(kappa_l_p[i],2) ;
-                    ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) * -1 *  pow(sigma_l_p[i],2) * dG_over_dx_fdtd / pow(kappa_l_p[i],4) ;
+                    ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) * -1 *  pow(sigma_l_p[i],2) * dA_over_dx_fdtd / pow(kappa_l_p[i],4) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_l_pml )( i, j ) = (2.*dt)/(2.-dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )*( *u3_np1_l_pml )( i, j ) ;
                     ( *u3_np1_l_pml )( i, j ) = ( *u3_np1_l_pml )( i, j ) + ( 2.+dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )/( 2.-dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )*( *u3_nm1_l_pml )( i, j ) ;
                     // 2. update u2
-                    ( *u2_np1_l_pml )( i, j ) = -1*(2.*sigma_prime_l_p[i]*kappa_l_p[i]+pow(kappa_l_p[i],2)*alpha_prime_l_p[i]-3.*kappa_prime_l_p[i]*sigma_l_p[i])*dG_over_dx_fdtd ;
-                    ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) - sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2_fdtd ;
+                    ( *u2_np1_l_pml )( i, j ) = -1*(2.*sigma_prime_l_p[i]*kappa_l_p[i]+pow(kappa_l_p[i],2)*alpha_prime_l_p[i]-3.*kappa_prime_l_p[i]*sigma_l_p[i])*dA_over_dx_fdtd ;
+                    ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) - sigma_l_p[i]*kappa_l_p[i]*d2A_over_dx2_fdtd ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) * sigma_l_p[i] ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u3_np1_l_pml )( i, j ) + ( *u3_nm1_l_pml )( i, j ) ) ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
@@ -516,9 +517,9 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u2_np1_l_pml )( i, j ) = (2.*dt)/(2.-dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )*( *u2_np1_l_pml )( i, j ) ;
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) + ( 2.+dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )/( 2.-dt*(i1*k0*1 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )*( *u2_nm1_l_pml )( i, j ) ;
                     // 3. update u1
-                    ( *u1_np1_l_pml )( i, j ) = -1.*( 3*kappa_prime_l_p[i]*sigma_l_p[i]  - sigma_prime_l_p[i]*kappa_l_p[i] ) * dG_over_dx_fdtd ;
-                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
-                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*i1*k0*sigma_l_p[i]*pow(kappa_l_p[i],2) * dG_over_dx_fdtd ;
+                    ( *u1_np1_l_pml )( i, j ) = -1.*( 3*kappa_prime_l_p[i]*sigma_l_p[i]  - sigma_prime_l_p[i]*kappa_l_p[i] ) * dA_over_dx_fdtd ;
+                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2A_over_dx2 ;
+                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*i1*k0*sigma_l_p[i]*pow(kappa_l_p[i],2) * dA_over_dx_fdtd ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u2_np1_l_pml )( i, j ) + ( *u2_nm1_l_pml )( i, j ) ) ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
@@ -528,9 +529,9 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Envelop udpate with correction/source terms
                     // ----
                     // 4.a update A : Correction/source terms
-                    source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2G_over_dx2_fdtd ;
-                    source_term_x = source_term_x - kappa_prime_l_p[i]*dG_over_dx_fdtd ;
-                    source_term_x = source_term_x + ( 2.*i1*k0*pow(kappa_l_p[i],2) - 2.*i1*k0*pow(kappa_l_p[i],3) ) * dG_over_dx_fdtd;
+                    source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2A_over_dx2_fdtd ;
+                    source_term_x = source_term_x - kappa_prime_l_p[i]*dA_over_dx_fdtd ;
+                    source_term_x = source_term_x + ( 2.*i1*k0*pow(kappa_l_p[i],2) - 2.*i1*k0*pow(kappa_l_p[i],3) ) * dA_over_dx_fdtd;
                     source_term_x = source_term_x - pow(kappa_l_p[i],3)*0.5*( ( *u1_np1_l_pml )( i, j ) + ( *u1_nm1_l_pml )( i, j ) ) ;
                     source_term_x = dt*dt*source_term_x / pow(kappa_l_p[i],3) ;
                     // ( *A_np1_pml )( i, j ) = 0. ;
@@ -760,7 +761,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                 } // end y loop
             } // end x loop
 
-            for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
+            for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
                 for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
                     // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
                     ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
