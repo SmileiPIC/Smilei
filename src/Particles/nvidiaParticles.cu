@@ -362,11 +362,16 @@ namespace detail {
     };
     struct custom_predicate
     {
+        int stride_;
+
+        __host__ __device__
+        custom_predicate(int stride) : stride_(stride) {}
+
         constexpr __host__ __device__ bool
         operator()( const int& x, const int& y ) const
         {
-            //return x < y/64;
-            return x*64+63 < y;
+            //return x < y/stride_;
+            return x*stride_ + stride_ -1 < y;
         }
     };
 
@@ -393,17 +398,17 @@ namespace detail {
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
         
         //kClusterwidth should not be hard coded here
-        //int Ncells_per_cluster = 4;
-        //switch( particle_container.dimension() ) {
-        //    case 2: {
-        //        Ncells_per_cluster *= 4;
-        //        break;
-        //    }
-        //    case 3: {
-        //        Ncells_per_cluster *= 4*4;
-        //        break;
-        //    }
-        //}
+        int Ncells_per_cluster = 4;
+        switch( particle_container.dimension() ) {
+            case 2: {
+                Ncells_per_cluster *= 4;
+                break;
+            }
+            case 3: {
+                Ncells_per_cluster *= 4*4;
+                break;
+            }
+        }
 
         // Create counting iterator starting from 'zero'
         //thrust::counting_iterator<int> basic_count(0);
@@ -417,7 +422,7 @@ namespace detail {
                              //cluster_count,
                              //cluster_count + particle_container.last_index.size(),
                              bin_upper_bound,
-                             custom_predicate()
+                             custom_predicate(Ncells_per_cluster)
                             );
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
