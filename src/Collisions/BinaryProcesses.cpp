@@ -14,6 +14,7 @@
 #include "H5.h"
 #include "Patch.h"
 #include "VectorPatch.h"
+#include "RandomShuffle.h"
 
 using namespace std;
 
@@ -188,125 +189,100 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     if( itime < timesteps_frozen_ || itime % every_ != 0 ) {
         return;
     }
-
-    vector<unsigned int> *sg1, *sg2, index1, index2;
-    unsigned int nspec1, nspec2; // numbers of species in each group
-    unsigned int npart1, npart2; // numbers of macro-particles in each group
-    unsigned int npairs; // number of pairs of macro-particles
-    vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
-    unsigned int ispec1, ispec2, N2max;
-    Species   *s1, *s2;
-    Particles *p1=NULL, *p2;
-
-    sg1 = &species_group1_;
-    sg2 = &species_group2_;
-
+    
+    BinaryProcessData D;
+    
+    // numbers of species in each group
+    size_t nspec1 = species_group1_.size();
+    size_t nspec2 = species_group1_.size();
+    // Get the lists of particle pointers and masses
+    vector<Particles*> pg1( nspec1 ), pg2( nspec2 );
+    vector<double> mass1( nspec1 ), mass2( nspec2 );
+    for( size_t i = 0; i < nspec1; i++ ) {
+        pg1[i] = patch->vecSpecies[species_group1_[i]]->particles;
+        mass1[i] = patch->vecSpecies[species_group1_[i]]->mass_;
+    }
+    for( size_t i = 0; i < nspec2; i++ ) {
+        pg2[i] = patch->vecSpecies[species_group2_[i]]->particles;
+        mass2[i] = patch->vecSpecies[species_group2_[i]]->mass_;
+    }
+    // numbers of macro-particles in each species, in each group
+    vector<size_t> np1( nspec1 ), np2( nspec2 );
+    
     for( unsigned int i=0; i<processes_.size(); i++ ) {
         processes_[i]->prepare();
     }
-
-    // Loop bins of particles (typically, cells, but may also be clusters)
+    
+    // Info for ionization
+    D.electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
+    
+    // Loop bins of particles
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
-
-        BinaryProcessData D;
-
+        
         // get number of particles for all necessary species
-        for( unsigned int i=0; i<2; i++ ) { // try twice to ensure group 1 has more macro-particles
-            nspec1 = sg1->size();
-            nspec2 = sg2->size();
-            np1.resize( nspec1 ); // number of particles in each species of group 1
-            np2.resize( nspec2 ); // number of particles in each species of group 2
-            npart1 = 0;
-            npart2 = 0;
-            for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-                s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-                np1[ispec1] = s1->particles->last_index[ibin] - s1->particles->first_index[ibin];
-                npart1 += np1[ispec1];
-            }
-            for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-                s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-                np2[ispec2] = s2->particles->last_index[ibin] - s2->particles->first_index[ibin];
-                npart2 += np2[ispec2];
-            }
-            if( npart2 <= npart1 ) {
-                break;    // ok if group1 has more macro-particles
-            } else { // otherwise, we exchange groups and try again
-                swap( sg1, sg2 );
-            }
+        size_t npart1 = 0;
+        for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
+            np1[ispec1] = pg1[ispec1]->last_index[ibin] - pg1[ispec1]->first_index[ibin];
+            npart1 += np1[ispec1];
         }
-        // now group1 has more macro-particles than group2
-
+        size_t npart2 = 0;
+        for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
+            np2[ispec2] = pg2[ispec2]->last_index[ibin] - pg2[ispec2]->first_index[ibin];
+            npart2 += np2[ispec2];
+        }
+        // We need to shuffle the group that has most particles
+        bool shuffle1 = npart1 > npart2;
+        size_t npartmin = npart1;
+        size_t npartmax = npart2;
+        if( shuffle1 ) {
+            swap( npartmin, npartmax );
+        }
         // skip to next bin if no particles
-        if( npart1==0 || npart2==0 ) {
+        if( npartmax == 0 ) {
             continue;
         }
-
-        // Shuffle particles to have random pairs
-        //    (It does not really exchange them, it is just a temporary re-indexing)
-        index1.resize( npart1 );
-        for( unsigned int i=0; i<npart1; i++ ) {
-            index1[i] = i;    // first, we make an ordered array
-        }
-        // shuffle the index array
-        for( unsigned int i=npart1; i>1; i-- ) {
-            unsigned int p = patch->rand_->integer() % i;
-            swap( index1[i-1], index1[p] );
-        }
+        
+        size_t npairs, N2max;
         if( intra_ ) { // In the case of pairing within one species
-            if( npart1 < 2 ) {
+            if( npartmax < 2 ) {
                 continue;
             }
-            npairs = ( npart1 + 1 ) / 2; // half as many pairs as macro-particles
-            index2.resize( npairs );
-            for( unsigned int i=0; i<npairs; i++ ) {
-                index2[i] = index1[( i+npairs )%npart1];    // index2 is second half
-            }
-            index1.resize( npairs ); // index1 is first half
-            N2max = npart1 - npairs; // number of not-repeated particles (in group 2 only)
+            npairs = ( npartmax + 1 ) / 2; // half as many pairs as macro-particles
+            N2max = npartmax - npairs; // number of not-repeated particles (in group with less particles)
         } else { // In the case of pairing between two species
-            npairs = npart1; // as many pairs as macro-particles in group 1 (most numerous)
-            index2.resize( npairs );
-            for( unsigned int i=0; i<npart1; i++ ) {
-                index2[i] = i % npart2;
-            }
-            N2max = npart2; // number of not-repeated particles (in group 2 only)
+            npairs = npartmax; // as many pairs as macro-particles (in group with more particles)
+            N2max = npartmin; // number of not-repeated particles (in group with less particles)
         }
-
-        // Data for ionization
-        D.electronFirst = patch->vecSpecies[( *sg1 )[0]]->atomic_number_==0 ? true : false;
-
+        RandomShuffle shuffler( *patch->rand_, npartmax );
+        
         // Calculate the densities
-        double n1  = 0.; // density of group 1
-        for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-            p1 = s1->particles;
-            for( int i = p1->first_index[ibin]; i < p1->last_index[ibin]; i++ ) {
-                n1 += p1->weight( i );
+        double n1  = 0., n2 = 0.;
+        for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
+            for( int i = pg1[ispec1]->first_index[ibin]; i < pg1[ispec1]->last_index[ibin]; i++ ) {
+                n1 += pg1[ispec1]->weight( i );
             }
         }
-        double n2  = 0.; // density of group 2
-        for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            p2 = s2->particles;
-            for( int i = p2->first_index[ibin]; i < p2->last_index[ibin]; i++ ) {
-                n2 += p2->weight( i );
+        for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
+            for( int i = pg2[ispec2]->first_index[ibin]; i < pg2[ispec2]->last_index[ibin]; i++ ) {
+                n2 += pg2[ispec2]->weight( i );
             }
         }
-
+        
         // Get cell volume
-        ispec1 = -1;
-        do {
-            ispec1++;
-            p1 = patch->vecSpecies[( *sg1 )[ispec1]]->particles;
-        } while( ispec1<nspec1 && p1->first_index[ibin] == p1->last_index[ibin] );
-        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, p1->first_index[ibin], params );
-
+        double inv_cell_volume = 0.;
+        for( size_t ispec1 = 0; ispec1 < nspec1; ispec1++ ) {
+            if( pg1[ispec1]->first_index[ibin] < pg1[ispec1]->last_index[ibin] ) {
+                inv_cell_volume = 1./patch->getPrimalCellVolume( pg1[ispec1], pg1[ispec1]->first_index[ibin], params );
+                break;
+            }
+        }
+        
         // Set the debye length
         if( BinaryProcesses::debye_length_required_ ) {
             D.debye2 = patch->debye_length_squared[ibin];
         }
-
+        
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_ ? 2*npairs-1 : npairs;
         double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
@@ -316,52 +292,64 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         n2  *= inv_cell_volume;
         D.n123 = pow( n1, 2./3. );
         D.n223 = pow( n2, 2./3. );
-
+        
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
         for( unsigned int i = 0; i<npairs; i++ ) {
-
-            // find species and index i1 of particle "1"
-            D.i1 = index1[i];
+            
+            // Determine the shuffled indices in the whole groups of species
+            if( intra_ ) {
+                D.i1 = shuffler.next();
+                D.i2 = shuffler.next();
+            } else {
+                if( shuffle1 ) {
+                    D.i1 = shuffler.next();
+                    D.i2 = i % npart2;
+                } else {
+                    D.i1 = i % npart1;
+                    D.i2 = shuffler.next();
+                }
+            }
+            
+            // find species and indices of particles
+            size_t ispec1, ispec2;
             for( ispec1=0 ; D.i1>=np1[ispec1]; ispec1++ ) {
                 D.i1 -= np1[ispec1];
             }
-            // find species and index i2 of particle "2"
-            D.i2 = index2[i];
             for( ispec2=0 ; D.i2>=np2[ispec2]; ispec2++ ) {
                 D.i2 -= np2[ispec2];
             }
-
-            s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-            s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            D.i1 += s1->particles->first_index[ibin];
-            D.i2 += s2->particles->first_index[ibin];
-            D.p1 = s1->particles;
-            D.p2 = s2->particles;
-
-            D.m1 = s1->mass_;
-            D.m2 = s2->mass_;
-            D.m12 = s1->mass_ / s2->mass_;
-
+            // p1 and p2 are the pointers to Particles
+            D.p1 = pg1[ispec1];
+            D.p2 = pg2[ispec2];
+            // i1 and i2 are particle indices in this bin
+            D.i1 += D.p1->first_index[ibin];
+            D.i2 += D.p2->first_index[ibin];
+            
+            // Get Weights
             D.minW = D.p1->weight(D.i1);
             D.maxW = D.p2->weight(D.i2);
             if( D.minW > D.maxW ) {
                 swap( D.minW, D.maxW );
             }
-
             // If one weight is zero, then skip. Can happen after nuclear reaction
             if( D.minW <= 0. ) continue;
-
+            
+            // Get masses
+            D.m1 = mass1[ispec1];
+            D.m2 = mass2[ispec2];
+            D.m12 = D.m1 / D.m2;
+            
+            // Calculate the timestep correction
             D.dt_correction = D.maxW * dt_corr;
             if( i % N2max <= (npairs-1) % N2max ) {
                 D.dt_correction *= weight_correction_2 ;
             } else {
                 D.dt_correction *= weight_correction_1;
             }
-
-            // Get momenta and calculate gammas
-
+            
+            // Calculate gammas
             D.gamma1 = D.p1->LorentzFactor( D.i1 );
             D.gamma2 = D.p2->LorentzFactor( D.i2 );
             double gamma12 = D.m12 * D.gamma1 + D.gamma2;
@@ -384,6 +372,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                 D.COM_gamma = 1./sqrt( 1.-COM_vsquare );
                 D.term1 = ( D.COM_gamma - 1. ) / COM_vsquare;
             }
+
             double vcv1g1  = D.COM_vx*( D.p1->momentum( 0, D.i1 ) ) + D.COM_vy*( D.p1->momentum( 1, D.i1 ) ) + D.COM_vz*( D.p1->momentum( 2, D.i1 ) );
             double vcv2g2  = D.COM_vx*( D.p2->momentum( 0, D.i2 ) ) + D.COM_vy*( D.p2->momentum( 1, D.i2 ) ) + D.COM_vz*( D.p2->momentum( 2, D.i2 ) );
             D.gamma1_COM = ( D.gamma1-vcv1g1 )*D.COM_gamma;

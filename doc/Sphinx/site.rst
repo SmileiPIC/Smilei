@@ -18,6 +18,7 @@ Unreferenced pages
 .. toctree::
   :maxdepth: 1
 
+  /Use/binning_units
   /Use/ids
   /Use/install_linux
   /Use/install_macos

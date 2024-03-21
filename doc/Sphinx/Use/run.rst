@@ -141,9 +141,13 @@ With AMD GPUs using cray on Adastra:
 
 For the binding scripts themselves, as it depends completely on the node
 architecture, please contact your admin support team.
+ 
+Binding script for adastra can be found here: https://github.com/SmileiPIC/Smilei/issues/672#issuecomment-1820677606 with the example of a slurm script.
+it can be used as a template for other AMD GPUs based supercomputers/clusters.
 
 Be aware that GPU support is in development and not all features are currently available.
 Please refer to the list of current supported features.
+
 
 ----
 

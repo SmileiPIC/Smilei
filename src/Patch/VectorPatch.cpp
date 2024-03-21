@@ -1402,6 +1402,10 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
                     for( unsigned int i=0; i<mins.size(); i++ ) {
                         for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                        }
+                    }
+                    for( unsigned int i=0; i<maxs.size(); i++ ) {
+                        for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
                             maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
                         }
                     }
@@ -4455,10 +4459,11 @@ void VectorPatch::moveWindow(
     // Bring all particles and field grids to the Host (except species grids)
     // This part can be optimized by copying only the patch to be destructed
 
+
 #if defined( SMILEI_ACCELERATOR_MODE)
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        copyParticlesFromDeviceToHost();
-        copyFieldsFromDeviceToHost();
+        //copyParticlesFromDeviceToHost();
+        //copyFieldsFromDeviceToHost();
         //copyDeviceStateToHost(true,false);
     }
 #endif

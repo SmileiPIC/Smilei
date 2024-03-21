@@ -281,6 +281,35 @@ class SmileiSimulation(object):
 				if s: species += [ s.groups()[0] ]
 		return list(set(species)) # unique species
 	
+	# get all available scalars
+	def getScalars(self):
+		allScalars = None
+		for path in self._results_path:
+			try:
+				file = path+'/scalars.txt'
+				f = open(file, 'r')
+			except Exception as e:
+				continue
+			try:
+				# Find last commented line
+				prevline = ""
+				for line in f:
+					line = line.strip()
+					if line[0]!="#": break
+					prevline = line[1:].strip()
+				scalars = str(prevline).split() # list of scalars
+				scalars = scalars[1:] # remove first, which is "time"
+			except Exception as e:
+				scalars = []
+			f.close()
+			if allScalars is None:
+				allScalars = scalars
+			else:
+				allScalars = self._np.intersect1d(allScalars, scalars)
+		if allScalars is None:
+			return []
+		return allScalars
+	
 	def getTrackSpecies(self):
 		""" List the available tracked species """
 		return self._getParticleListSpecies("TrackParticlesDisordered")

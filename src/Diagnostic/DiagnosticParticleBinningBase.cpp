@@ -246,8 +246,8 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
         if( !std::isnan( axis->min ) && !std::isnan( axis->max ) ) {
             continue;
         }
-        double axis_min = numeric_limits<double>::max();
-        double axis_max = numeric_limits<double>::lowest();
+        double axis_min = std::isnan( axis->min ) ? numeric_limits<double>::max() : numeric_limits<double>::lowest();
+        double axis_max = std::isnan( axis->max ) ? numeric_limits<double>::lowest() : numeric_limits<double>::max();
         for( unsigned int i_s=0; i_s<species_indices.size(); i_s++ ) {
             Species *s = patch->vecSpecies[species_indices[i_s]];
             unsigned int n = s->getNbrOfParticles();

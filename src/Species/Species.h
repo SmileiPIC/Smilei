@@ -390,6 +390,10 @@ public:
     void
     copyParticlesFromHostToDevice();
 
+    //! Copy particles from device to host
+    void
+    copyParticlesFromDeviceToHost();
+
     //! Prepare the species Current and Rho grids on Device
     void
     prepareSpeciesCurrentAndChargeOnDevice( 

@@ -38,7 +38,7 @@ PML_Solver3D_Envelope::PML_Solver3D_Envelope( Params &params )
 
     // X-PML
     kappa_x_max = 1.0 ;
-    sigma_x_max = 2.01 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    sigma_x_max = 2.0 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
     alpha_x_max = 0.0 ;
     power_pml_kappa_x = 3.;
     power_pml_sigma_x = 2.;
