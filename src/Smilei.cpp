@@ -478,21 +478,18 @@ int main( int argc, char *argv[] )
 
     unsigned int itime=checkpoint.this_run_start_step+1;
     while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
-
+        
+        // calculate new times
+        // -------------------
+        time_prim += params.timestep;
+        time_dual += params.timestep;
+        if( params.keep_python_running_ ) {
+            PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
+        }
+        
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
         {
-
-            // calculate new times
-            // -------------------
-            #pragma omp single
-            {
-                time_prim += params.timestep;
-                time_dual += params.timestep;
-                if( params.keep_python_running_ ) {
-                    PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
-                }
-            }
-
+            
             // Patch reconfiguration
             if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow( itime ) ) {
                 vecPatches.reconfiguration( params, timers, itime );

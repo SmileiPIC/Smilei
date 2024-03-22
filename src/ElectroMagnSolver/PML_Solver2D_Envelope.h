@@ -29,7 +29,7 @@ protected:
     double power_pml_kappa_x ;
     double power_pml_sigma_x ;
     double power_pml_alpha_x ;
-    double alpha_cx ;
+    std::complex<double> alpha_cx ;
     double alpha_y_max ;
     double sigma_y_max ;
     double kappa_y_max ;
@@ -40,7 +40,7 @@ protected:
 
     std::vector<double> kappa_x_p;
     std::vector<double> sigma_x_p;
-    std::vector<double> alpha_x_p;
+    std::vector<std::complex<double>> alpha_x_p;
     std::vector<double> kappa_prime_x_p;
     std::vector<double> sigma_prime_x_p;
     std::vector<double> alpha_prime_x_p;

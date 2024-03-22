@@ -110,7 +110,7 @@ endif
 # ADASTRA_INCLUDES_MPI := -I$(CRAY_MPICH_DIR)/include
 # ADASTRA_INCLUDES_HIP := -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
-ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP)
+ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP) -I/opt/software/rocm/5.7.1/include 
 
 ################################################################################
 # Libs
