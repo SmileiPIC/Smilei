@@ -667,14 +667,14 @@ namespace detail {
         //const SizeType y_stride = local_y_dimension_in_cluster_;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        //const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * y_stride +
-        //                               local_y_particle_cluster_coordinate_in_cluster;
         const SizeType cluster_index = (local_x_particle_cluster_coordinate_in_cluster * local_y_dimension_in_cluster_
-                                       + local_y_particle_cluster_coordinate_in_cluster ) * cluster_size_in_cell
+                                       + local_y_particle_cluster_coordinate_in_cluster ) 
+
+        const SizeType cell_index =    cluster_index * cluster_size_in_cell
                                        + kClusterWidth * (local_x_particle_coordinate_in_cell % kClusterWidth) 
                                        + local_y_particle_coordinate_in_cell % kClusterWidth;
 
-        return static_cast<IDType>( cluster_index );
+        return static_cast<IDType>( cell_index );
     }
     
     template <Cluster::DifferenceType kClusterWidth>
