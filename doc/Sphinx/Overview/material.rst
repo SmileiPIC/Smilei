@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of March 2024, 177 papers have been published covering a broad range of topics:
+As of March 2024, 179 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,12 +50,17 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+.. [Yu2024]
 
+     J. Yu, J. Zhong, Y. Ping, and W. An, 
+     `Numerical study of the suppression of magnetic reconnection onset with injected plasma`,
+     `Physics of Plasmas 31, 032111 (2024) <https://doi.org/10.1063/5.0186879>`_
+       
 .. [Kumar2024]
 
      R. Y. Kumar, R. Sabui, R. Gopal, F. Li, S. Sarkar, W. Trickey, M. Anand, J. Pasley, Z.-M. Sheng, R. M. G. M. Trines, R. H. H. Scott, A. P. L. Robinson, V. Sharma, and M. Krishnamurthy, 
-    `Tailored mesoscopic plasma accelerates electrons exploiting parametric instability`,
-    `New Journal of Physics 26, 033027 (2024) <https://doi.org/10.1088/1367-2630/ad2ffc>`_
+     `Tailored mesoscopic plasma accelerates electrons exploiting parametric instability`,
+     `New Journal of Physics 26, 033027 (2024) <https://doi.org/10.1088/1367-2630/ad2ffc>`_
 
 .. [Ehret2024]
 

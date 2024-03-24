@@ -449,7 +449,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-COMPILER_INFO
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-GPU_COMPILER print-GPU_COMPILER_FLAGS print-COMPILER_INFO
 
 #-----------------------------------------------------
 # Smilei tables
