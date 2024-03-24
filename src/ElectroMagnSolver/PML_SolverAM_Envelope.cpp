@@ -43,6 +43,11 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     alpha_l_max       = params.envelope_pml_alpha_parameters[0][1] ;
     power_pml_alpha_l = params.envelope_pml_alpha_parameters[0][2] ;
 
+    /*
+    For the moment x-PML are force to be vacuum, with Dirichlet condition at x-max and x-min
+    Due to stability issues. There is no PML for x for now.
+    */
+
     //Define here the value of coefficient kappa_y_max, power_kappa_y, sigma_y_max, power_sigma_y
     // Vaccum
     // kappa_r_max = 1. ;
@@ -53,14 +58,14 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_sigma_r = 1.;
     // power_pml_alpha_r = 1.;
     // Abs
-    kappa_cr          = params.envelope_pml_kappa_parameters[1][0] ;
-    kappa_r_max       = params.envelope_pml_kappa_parameters[1][1] ;
-    power_pml_kappa_r = params.envelope_pml_kappa_parameters[1][2] ;
+    kappa_cr          = params.envelope_pml_kappa_parameters[1][0] ; // Default 1 int order to have box/PML interface
+    kappa_r_max       = params.envelope_pml_kappa_parameters[1][1] ; // Increase kappa can increase stability and absorbtion
+    power_pml_kappa_r = params.envelope_pml_kappa_parameters[1][2] ; // 2,3,4... 3 by default
     sigma_r_max       = params.envelope_pml_sigma_parameters[1][0] ; // 10 for 20 cells dx = 1 ; 20 for 20 cells dx = 0.5
-    power_pml_sigma_r = params.envelope_pml_sigma_parameters[1][1] ;
-    alpha_cr          = params.envelope_pml_alpha_parameters[1][0] ;
-    alpha_r_max       = params.envelope_pml_alpha_parameters[1][1] ;
-    power_pml_alpha_r = params.envelope_pml_alpha_parameters[1][2] ;
+    power_pml_sigma_r = params.envelope_pml_sigma_parameters[1][1] ; // 2 is a good choice
+    alpha_cr          = params.envelope_pml_alpha_parameters[1][0] ; // 0.05 seems sufficient to ensure stability for "long-time"
+    alpha_r_max       = params.envelope_pml_alpha_parameters[1][1] ; // Same as alpha_cr to ensure alpha is constant across PML 
+    power_pml_alpha_r = params.envelope_pml_alpha_parameters[1][2] ; // No importance
 }
 
 PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
@@ -222,7 +227,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
                 // Derivatives
                 kappa_prime_l_p[i] = (kappa_l_max - kappa_cl) * power_pml_kappa_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
-                alpha_prime_l_p[i] = - (alpha_l_max-alpha_cl) * power_pml_alpha_l / length_l_pml_lmin * pow( 1. - ( ncells_pml_min[0] - 1 - i )*dl/length_l_pml_lmin , power_pml_alpha_l-1 ) ;
+                alpha_prime_l_p[i] = -(alpha_l_max-alpha_cl) * power_pml_alpha_l / length_l_pml_lmin * pow( 1. - ( ncells_pml_min[0] - 1 - i )*dl/length_l_pml_lmin , power_pml_alpha_l-1 ) ;
                 // Convention Envelop Smilei
                 // kappa_l_p[i] *= +1 ;
                 // sigma_l_p[i] *= -1 ;
@@ -243,7 +248,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
                 // Parameters
                 kappa_l_p[i] = kappa_cl + (kappa_l_max - kappa_cl) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
-                alpha_l_p[i] = alpha_cl + alpha_l_max * pow(1. - ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl/length_l_pml_lmax , power_pml_alpha_l );
+                alpha_l_p[i] = alpha_cl + (alpha_l_max-alpha_cl) * pow(1. - ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl/length_l_pml_lmax , power_pml_alpha_l );
                 // Derivatives
                 kappa_prime_l_p[i] = (kappa_l_max - kappa_cl) * power_pml_kappa_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l-1 ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_prime_l_p[i] = sigma_l_max * power_pml_sigma_l * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l-1 ) / pow( length_l_pml_lmax , power_pml_sigma_l ) ;
@@ -683,7 +688,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u2_np1_l_pml )( i, j ) = ( *u2_np1_l_pml )( i, j ) + ( 2.+dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )/( 2.-dt*(i1*k0 + alpha_l_p[i]+sigma_l_p[i]/kappa_l_p[i] ) )*( *u2_nm1_l_pml )( i, j ) ;
                     // 3. update u1
                     ( *u1_np1_l_pml )( i, j ) = -1.*( 3*kappa_prime_l_p[i]*sigma_l_p[i]  - sigma_prime_l_p[i]*kappa_l_p[i] ) * dG_over_dx_fdtd ;
-                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2 ;
+                    ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*sigma_l_p[i]*kappa_l_p[i]*d2G_over_dx2_fdtd ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) + 2.*i1*k0*sigma_l_p[i]*pow(kappa_l_p[i],2) * dG_over_dx_fdtd ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) - pow(kappa_l_p[i],3)*0.5*( ( *u2_np1_l_pml )( i, j ) + ( *u2_nm1_l_pml )( i, j ) ) ;
                     ( *u1_np1_l_pml )( i, j ) = ( *u1_np1_l_pml )( i, j ) / pow(kappa_l_p[i],4) ;
@@ -697,7 +702,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u3_np1_r_pml )( i, j ) = +kappa_prime_r_p[j]*sigma_r_p[j] ;
                     ( *u3_np1_r_pml )( i, j ) = ( *u3_np1_r_pml )( i, j ) - sigma_prime_r_p[j]*kappa_r_p[j] ;
                     ( *u3_np1_r_pml )( i, j ) = ( *u3_np1_r_pml )( i, j ) - alpha_prime_r_p[j]*pow(kappa_r_p[j],2) ;
-                    ( *u3_np1_r_pml )( i, j ) = ( *u3_np1_r_pml )( i, j ) * -1. * pow(sigma_r_p[j],2) * dG_over_dy / pow(kappa_r_p[j],4) ;
+                    ( *u3_np1_r_pml )( i, j ) = - ( *u3_np1_r_pml )( i, j ) * pow(sigma_r_p[j],2) * dG_over_dy / pow(kappa_r_p[j],4) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_r_pml )( i, j ) = (2.*dt)/(2.-dt*(i1*k0 + alpha_r_p[j]+sigma_r_p[j]/kappa_r_p[j] ) )*( *u3_np1_r_pml )( i, j ) ;
                     ( *u3_np1_r_pml )( i, j ) = ( *u3_np1_r_pml )( i, j ) + ( 2.+dt*(i1*k0 + alpha_r_p[j]+sigma_r_p[j]/kappa_r_p[j] ) )/( 2.-dt*(i1*k0 + alpha_r_p[j]+sigma_r_p[j]/kappa_r_p[j] ) )*( *u3_nm1_r_pml )( i, j ) ;
@@ -726,7 +731,7 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_x = ( kappa_l_p[i] - pow(kappa_l_p[i],3) )*d2G_over_dx2_fdtd ;
                     source_term_x = source_term_x - kappa_prime_l_p[i]*dG_over_dx_fdtd ;
                     source_term_x = source_term_x + ( 2.*i1*k0*pow(kappa_l_p[i],2) - 2.*i1*k0*pow(kappa_l_p[i],3) ) * dG_over_dx_fdtd;
-                    source_term_x = source_term_x - pow(kappa_l_p[i],3)*0.5*( ( *u1_np1_l_pml )( i, j ) + ( *u1_nm1_l_pml )( i, j ) ) ;
+                    source_term_x = source_term_x + pow(kappa_l_p[i],3)*0.5*( ( *u1_np1_l_pml )( i, j ) + ( *u1_nm1_l_pml )( i, j ) ) ;
                     source_term_x = dt*dt*source_term_x / pow(kappa_l_p[i],3) ;
 
                     source_term_y = ( kappa_r_p[j] - pow(kappa_r_p[j],3) )*d2G_over_dy2 ;
@@ -747,20 +752,6 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *G_nm1_pml )( i, j ) ;
                     ( *G_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) + 2.*( *G_n_pml )( i, j ) ;
                     ( *G_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G_np1_pml )( i, j );
-                } // end y loop
-            } // end x loop
-
-            // for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
-            //     for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
-            //         // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
-            //         ( *G_n_pml )( i, j ) += (0.02/2.)*(( *G_nm1_pml )( i, j ) - 2.*( *G_n_pml )( i, j ) + ( *G_np1_pml )( i, j ) );
-            //         //( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
-            //      }
-            // }
-
-
-            for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
-                for( unsigned int j=solvermin ; j < solvermax ; j++ ) {
                     // ----
                     // ( *A_np1_pml )( i, j ) = ( *G_np1_pml )( i, j ) / ( (double) ( j_glob_pml+j )*dr ) ;
                     // ( *A_np1_pml )( i, j ) = (
@@ -783,13 +774,13 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                 } // end y loop
             } // end x loop
 
-            for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
-                for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
-                    // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
-                    ( *G_n_pml )( i, j ) += (0.02/2.)*(( *G_nm1_pml )( i, j ) - 2.*( *G_n_pml )( i, j ) + ( *G_np1_pml )( i, j ) );
-                    ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
-                 }
-            }
+            // for( unsigned int i=2 ; i<nl_p-2; i++ ) { // x loop
+            //     for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
+            //         // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
+            //         ( *G_n_pml )( i, j ) += (0.02/2.)*(( *G_nm1_pml )( i, j ) - 2.*( *G_n_pml )( i, j ) + ( *G_np1_pml )( i, j ) );
+            //         ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
+            //      }
+            // }
 
             for( unsigned int i=0 ; i<nl_p ; i++ ) { // x loop
                 for( unsigned int j=0 ; j < nr_p ; j++ ) { // y loop
