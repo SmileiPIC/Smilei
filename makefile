@@ -289,7 +289,7 @@ ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
 endif
 
-SMILEICXX.DEPS ?= $(SMILEICXX)
+SMILEICXX_DEPS ?= $(SMILEICXX)
 
 #-----------------------------------------------------
 # Rules for building the excutable smilei

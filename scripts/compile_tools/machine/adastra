@@ -36,7 +36,7 @@
 ################################################################################
 
 SMILEICXX := CC
-SMILEICXX.DEPS := $(SMILEICXX)
+SMILEICXX_DEPS := $(SMILEICXX)
 # GPU_COMPILER := hipcc
 GPU_COMPILER := $(SMILEICXX)
 

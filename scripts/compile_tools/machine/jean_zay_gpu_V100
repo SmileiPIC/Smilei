@@ -6,7 +6,7 @@
 # http://www.idris.fr/jean-zay
 #
 
-SMILEICXX.DEPS = g++
+SMILEICXX_DEPS = g++
 #GPU_COMPILER = nvcc
 
 CXXFLAGS += -w
