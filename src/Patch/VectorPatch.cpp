@@ -2691,35 +2691,31 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         ( *this )( ipatch )->EMfields->initRelativisticPoissonFields();
     }
 
-    std::vector<Field *> El_;
-    std::vector<Field *> Er_;
-    std::vector<Field *> Et_;
-    std::vector<Field *> Bl_;
-    std::vector<Field *> Br_;
-    std::vector<Field *> Bt_;
-    std::vector<Field *> Bl_m;
-    std::vector<Field *> Br_m;
-    std::vector<Field *> Bt_m;
+    std::vector<Field *> listBl_m(this->size());
+    std::vector<Field *> listBr_m(this->size());
+    std::vector<Field *> listBt_m(this->size());
 
-    std::vector<Field *> El_rel_;
-    std::vector<Field *> Er_rel_;
-    std::vector<Field *> Et_rel_;
-    std::vector<Field *> Bl_rel_;
-    std::vector<Field *> Br_rel_;
-    std::vector<Field *> Bt_rel_;
+    std::vector<Field *> listEl_rel(this->size());
+    std::vector<Field *> listEr_rel(this->size());
+    std::vector<Field *> listEt_rel(this->size());
+    std::vector<Field *> listBl_rel(this->size());
+    std::vector<Field *> listBr_rel(this->size());
+    std::vector<Field *> listBt_rel(this->size());
 
-    std::vector<Field *> Bl_rel_t_plus_halfdt_;
-    std::vector<Field *> Br_rel_t_plus_halfdt_;
-    std::vector<Field *> Bt_rel_t_plus_halfdt_;
-    std::vector<Field *> Bl_rel_t_minus_halfdt_;
-    std::vector<Field *> Br_rel_t_minus_halfdt_;
-    std::vector<Field *> Bt_rel_t_minus_halfdt_;
+    std::vector<Field *> listBl_rel_t_plus_halfdt(this->size());
+    std::vector<Field *> listBr_rel_t_plus_halfdt(this->size());
+    std::vector<Field *> listBt_rel_t_plus_halfdt(this->size());
+    std::vector<Field *> listBl_rel_t_minus_halfdt(this->size());
+    std::vector<Field *> listBr_rel_t_minus_halfdt(this->size());
+    std::vector<Field *> listBt_rel_t_minus_halfdt(this->size());
 
-    std::vector<Field *> Ap_AM_;
+    std::vector<Field *> listAp_AM(this->size());
 
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
     for( unsigned int imode=0 ; imode<params.nmodes_rel_field_init ; imode++ ) {
+
+        //std::vector<Field *> El_ = listEl_[imode];
 
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2732,29 +2728,23 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            El_.push_back( emAM->El_[imode] );
-            Er_.push_back( emAM->Er_[imode] );
-            Et_.push_back( emAM->Et_[imode] );
-            Bl_.push_back( emAM->Bl_[imode] );
-            Br_.push_back( emAM->Br_[imode] );
-            Bt_.push_back( emAM->Bt_[imode] );
-            Bl_m.push_back( emAM->Bl_m[imode] );
-            Br_m.push_back( emAM->Br_m[imode] );
-            Bt_m.push_back( emAM->Bt_m[imode] );
-            El_rel_.push_back( emAM->El_rel_ );
-            Er_rel_.push_back( emAM->Er_rel_ );
-            Et_rel_.push_back( emAM->Et_rel_ );
-            Bl_rel_.push_back( emAM->Bl_rel_ );
-            Br_rel_.push_back( emAM->Br_rel_ );
-            Bt_rel_.push_back( emAM->Bt_rel_ );
-            Bl_rel_t_plus_halfdt_.push_back( emAM->Bl_rel_t_plus_halfdt_ );
-            Br_rel_t_plus_halfdt_.push_back( emAM->Br_rel_t_plus_halfdt_ );
-            Bt_rel_t_plus_halfdt_.push_back( emAM->Bt_rel_t_plus_halfdt_);
-            Bl_rel_t_minus_halfdt_.push_back( emAM->Bl_rel_t_minus_halfdt_ );
-            Br_rel_t_minus_halfdt_.push_back( emAM->Br_rel_t_minus_halfdt_ );
-            Bt_rel_t_minus_halfdt_.push_back( emAM->Bt_rel_t_minus_halfdt_ );
+            listBl_m[ipatch] = emAM->Bl_m[imode] ;
+            listBr_m[ipatch] = emAM->Br_m[imode] ;
+            listBt_m[ipatch] = emAM->Bt_m[imode] ;
+            listEl_rel[ipatch] = emAM->El_rel_ ;
+            listEr_rel[ipatch] = emAM->Er_rel_ ;
+            listEt_rel[ipatch] = emAM->Et_rel_ ;
+            listBl_rel[ipatch] = emAM->Bl_rel_ ;
+            listBr_rel[ipatch] = emAM->Br_rel_ ;
+            listBt_rel[ipatch] = emAM->Bt_rel_ ;
+            listBl_rel_t_plus_halfdt[ipatch] = emAM->Bl_rel_t_plus_halfdt_ ;
+            listBr_rel_t_plus_halfdt[ipatch] = emAM->Br_rel_t_plus_halfdt_ ;
+            listBt_rel_t_plus_halfdt[ipatch] = emAM->Bt_rel_t_plus_halfdt_;
+            listBl_rel_t_minus_halfdt[ipatch] = emAM->Bl_rel_t_minus_halfdt_ ;
+            listBr_rel_t_minus_halfdt[ipatch] = emAM->Br_rel_t_minus_halfdt_ ;
+            listBt_rel_t_minus_halfdt[ipatch] = emAM->Bt_rel_t_minus_halfdt_ ;
 
-            Ap_AM_.push_back( emAM->Ap_AM_ );
+            listAp_AM[ipatch] = emAM->Ap_AM_ ;
         }
 
         // unsigned int nx_p2_global = ( params.global_size_[0]+1 );
@@ -2793,8 +2783,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
 
             // Exchange Ap_ (intra & extra MPI)
-            SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Ap_AM_, *this, smpi );
-            SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ap_AM_, *this );
+            SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listAp_AM, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listAp_AM, *this );
 
 
             // scalar product p.Ap
@@ -2869,12 +2859,12 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             emAM->initE_relativistic_Poisson_AM( gamma_mean, imode );
         } // end loop on patches
 
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( El_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( El_rel_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Er_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Er_rel_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Et_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Et_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listEl_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listEl_rel, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listEr_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listEr_rel, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listEt_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listEt_rel, *this );
 
         // compute B and sync
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2883,12 +2873,12 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             emAM->initB_relativistic_Poisson_AM( gamma_mean );
         } // end loop on patches
 
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBl_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBl_rel, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBr_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBr_rel, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBt_rel, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBt_rel, *this );
 
 
         // Proper spatial centering of the B fields in the Yee Cell through interpolation
@@ -2900,19 +2890,19 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         } // end loop on patches
 
         // Re-exchange the properly spatially centered B field
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_t_plus_halfdt_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_t_plus_halfdt_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBl_rel_t_plus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBl_rel_t_plus_halfdt, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBr_rel_t_plus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBr_rel_t_plus_halfdt, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBt_rel_t_plus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBt_rel_t_plus_halfdt, *this );
 
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_t_minus_halfdt_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_t_minus_halfdt_, *this );
-        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBl_rel_t_minus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBl_rel_t_minus_halfdt, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBr_rel_t_minus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBr_rel_t_minus_halfdt, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBt_rel_t_minus_halfdt, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBt_rel_t_minus_halfdt, *this );
 
 
         MESSAGE( 0, "Summing fields of relativistic species to the grid fields" );
@@ -2926,37 +2916,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             emAM->sum_rel_fields_to_em_fields_AM( params, imode );
         } // end loop on patches
-
-
-        // clean the auxiliary vectors for the present azimuthal mode
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-
-            El_.pop_back();
-            Er_.pop_back();
-            Et_.pop_back();
-            Bl_.pop_back();
-            Br_.pop_back();
-            Bt_.pop_back();
-            Bl_m.pop_back();
-            Br_m.pop_back();
-            Bt_m.pop_back();
-            El_rel_.pop_back();
-            Er_rel_.pop_back();
-            Et_rel_.pop_back();
-            Bl_rel_.pop_back();
-            Br_rel_.pop_back();
-            Bt_rel_.pop_back();
-            Bl_rel_t_plus_halfdt_.pop_back();
-            Br_rel_t_plus_halfdt_.pop_back();
-            Bt_rel_t_plus_halfdt_.pop_back();
-            Bl_rel_t_minus_halfdt_.pop_back();
-            Br_rel_t_minus_halfdt_.pop_back();
-            Bt_rel_t_minus_halfdt_.pop_back();
-
-            Ap_AM_.pop_back();
-
-        }
-
     }  // end loop on the modes
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
