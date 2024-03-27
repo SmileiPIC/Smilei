@@ -2653,23 +2653,27 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     // for the traditional Poisson problem
 
     // compute gamma_mean for the species for which the field is initialized
-    double s_gamma( 0. );
-    uint64_t nparticles( 0 );
+    double s_gamma( 0. ), sign( 1. );
+    uint64_t nparticles_mpi( 0 ), nparticles_patch;
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
-                    nparticles += species( ipatch, ispec )->getNbrOfParticles();
+                    nparticles_patch = species( ipatch, ispec )->getNbrOfParticles();
+                    nparticles_mpi += nparticles_patch;
+                    // s_gamma   is signed with respect to the direction of propagation of the species
+                    if(nparticles_patch > 0) sign = copysign( 1., species( ipatch, ispec )->particles->momentum(0,0)); 
                 }
             }
-        }
+	}
     }
+    s_gamma *= sign;
     double gamma_global( 0. );
     MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     uint64_t nparticles_global( 0 );
-    MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
-    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
+    MPI_Allreduce( &nparticles_mpi, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global << " gamma_global = " << gamma_global << " nparticles_global= " << nparticles_global  );
 
     //Timer ptimer("global");
     //ptimer.init(smpi);
