@@ -341,13 +341,13 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX_DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 # Calculate dependencies: special for Params.cpp which needs pyh files
 $(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX_DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
@@ -527,7 +527,7 @@ help:
 	@echo
 	@echo 'Environment variables needed for compilation:'
 	@echo '  SMILEICXX         : mpi c++ compiler (possibly GPU-aware) [mpicxx]'
-	@echo '  SMILEICXX.DEPS    : c++ compiler for calculating dependencies [$$SMILEICXX]'
+	@echo '  SMILEICXX_DEPS    : c++ compiler for calculating dependencies [$$SMILEICXX]'
 	@echo '  CXXFLAGS          : FLAGS for $$SMILEICXX []'
 	@echo '  LDFLAGS           : FLAGS for the linker []'
 	@echo '  HDF5_ROOT_DIR     : folder where the HDF5 library was installed [$$HDF5_ROOT_DIR]'
