@@ -805,20 +805,17 @@ void VectorPatch::computeCharge(bool old /*=false*/)
 
 } // END computeRho
 
-void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &params )
+void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &params, unsigned int ispec )
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
-        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            // project only if species needs relativistic initialization and it is the right time to initialize its fields
-            if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                    species( ipatch, ispec )->computeCharge( emfields( ipatch ) );
-                } else {
-                    species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ) );
-                }
+        // project only if it is the right time to initialize its fields
+        if( ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) { 
+            if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
+                species( ipatch, ispec )->computeCharge( emfields( ipatch ) );
+            } else {
+                species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ) );
             }
         }
     }
@@ -2151,8 +2148,8 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
 
 void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers & )
 {
-    // at this point the charge should be projected on the grid
 
+    // at this point the charge should be projected on the grid
     #pragma omp master
     {
         // Initialize the fields for these species
@@ -2171,30 +2168,35 @@ void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* sm
 
 void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers & )
 {
-    // Compute rho only for species needing relativistic field Initialization
-    computeChargeRelativisticSpecies( time_prim, params );
+    //Evaluate inital fields for each species separately and sum them
+    for (unsigned int ispec=0; ispec < (*this)(0)->vecSpecies.size(); ispec ++ ){
+        if( species( 0, ispec )->relativistic_field_initialization_ ) {
+            // Compute rho only for species needing relativistic field Initialization
+            computeChargeRelativisticSpecies( time_prim, params, ispec );
 
-    if (params.geometry != "AMcylindrical"){
-        SyncVectorPatch::sum<double,Field>( listrho_, (*this), smpi );
-    } else {
-        for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
-            SyncVectorPatch::sumRhoJ( params, (*this), imode, smpi );
-        }
-    }
-
-    #pragma omp master
-    {
-        // Initialize the fields for these species
-        if( !isRhoNull( smpi ) ) {
-            TITLE( "Initializing relativistic species fields" );
             if (params.geometry != "AMcylindrical"){
-                solveRelativisticPoisson( params, smpi, time_prim );
+                SyncVectorPatch::sum<double,Field>( listrho_, (*this), smpi );
             } else {
-                solveRelativisticPoissonAM( params, smpi, time_prim );
+                for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+                    SyncVectorPatch::sumRhoJ( params, (*this), imode, smpi );
+                }
             }
+
+            #pragma omp master
+            {
+                // Initialize the fields for these species
+                if( !isRhoNull( smpi ) ) {
+                    TITLE( "Initializing relativistic species fields" );
+                    if (params.geometry != "AMcylindrical"){
+                        solveRelativisticPoisson( params, smpi, time_prim );
+                    } else {
+                        solveRelativisticPoissonAM( params, smpi, time_prim, ispec );
+                    }
+                }
+            }
+            #pragma omp barrier
         }
     }
-    #pragma omp barrier
 
     // Reset rho and J and return to PIC loop
     resetRhoJ();
@@ -2632,7 +2634,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
 
 
 
-void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal )
+void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal, unsigned int ispec )
 {
 
     //Timer ptimer("global");
@@ -2655,18 +2657,16 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     // compute gamma_mean for the species for which the field is initialized
     double s_gamma( 0. ), sign( 1. );
     uint64_t nparticles_mpi( 0 ), nparticles_patch;
-    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
-        if( species( 0, ispec )->relativistic_field_initialization_ ) {
-            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
-                    s_gamma += species( ipatch, ispec )->sumGamma();
-                    nparticles_patch = species( ipatch, ispec )->getNbrOfParticles();
-                    nparticles_mpi += nparticles_patch;
-                    // s_gamma   is signed with respect to the direction of propagation of the species
-                    if(nparticles_patch > 0) sign = copysign( 1., species( ipatch, ispec )->particles->momentum(0,0)); 
-                }
+    if( species( 0, ispec )->relativistic_field_initialization_ ) {
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
+                s_gamma += species( ipatch, ispec )->sumGamma();
+                nparticles_patch = species( ipatch, ispec )->getNbrOfParticles();
+                nparticles_mpi += nparticles_patch;
+                // s_gamma   is signed with respect to the direction of propagation of the species
+                if(nparticles_patch > 0) sign = copysign( 1., species( ipatch, ispec )->particles->momentum(0,0)); 
             }
-	}
+        }
     }
     s_gamma *= sign;
     double gamma_global( 0. );
@@ -2718,8 +2718,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
     for( unsigned int imode=0 ; imode<params.nmodes_rel_field_init ; imode++ ) {
-
-        //std::vector<Field *> El_ = listEl_[imode];
 
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2937,6 +2935,13 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
         // SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }
+    // Exchange B_m
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBl_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBl_m, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBr_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBr_m, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( listBt_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( listBt_m, *this );
 
     MESSAGE( 0, "Fields of relativistic species initialized" );
     //!\todo Reduce to find global max

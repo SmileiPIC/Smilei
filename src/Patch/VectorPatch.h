@@ -182,7 +182,7 @@ public :
                                Timers &timers, int itime );
                                
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies( double time_primal, Params &params );
+    void computeChargeRelativisticSpecies( double time_primal, Params &params, unsigned int ispec );
     
     // run particles ponderomptive dynamics, envelope's solver
     void runEnvelopeModule( Params &params,
@@ -251,7 +251,7 @@ public :
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
     void runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers );
     void solveRelativisticPoisson( Params &params, SmileiMPI *smpi, double time_primal );
-    void solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal );
+    void solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal, unsigned int ispec );
     
     //! For all patch initialize the externals (lasers, fields, antennas)
     void initExternals( Params &params );
