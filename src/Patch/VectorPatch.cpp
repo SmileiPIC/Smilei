@@ -2289,8 +2289,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     std::vector<Field *> listBy_rel_t_minus_halfdt(this->size());
     std::vector<Field *> listBz_rel_t_minus_halfdt(this->size());
 
-
-    std::vector<Field *> listAp;
+    std::vector<Field *> listAp(this->size());
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         //Ex_.push_back( ( *this )( ipatch )->EMfields->Ex_ );
