@@ -1052,13 +1052,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
         for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
-            SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
-            //SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
-            //SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
-            // if (params.use_BTIS3){
-            //     SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
-            // }
         }
     }
     timers.syncField.update( params.printNow( itime ) );
