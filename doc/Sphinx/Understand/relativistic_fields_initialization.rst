@@ -125,11 +125,8 @@ This means that for highly relativistic particles, you will need to use a transv
 A complete absence of boundary effects in this case would be provided by perfectly absorbing boundary conditions, which are not implemented yet in the code. 
 If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
 
-A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
-The procedure could be extended to non-monoenergetic species, dividing the species macro-particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
-At the moment, this energy binning technique is not available in :program:`Smilei`.  
-
-
+A relativistic mean velocity in the :math:`x` or :math:`-x` direction and a negligible energy spread are assumed for each species in the hypotheses of this procedure. In particular it is assumed that all :math:`p_x` of the macro-particles of a species are of the same sign. The user must ensure these conditions when defining the species requiring field initialization in the namelist. 
+In order to describe a non-monoenergetic species, it is necessary to divide it into into several sub-species for which the assumptions hold.
 
 ----
 
