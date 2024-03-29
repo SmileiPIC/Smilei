@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of March 2024, 179 papers have been published covering a broad range of topics:
+As of March 2024, 180 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -49,6 +49,12 @@ Following is the distribution of these topics in the listed publications up to N
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
+
+.. [Krafft2024]
+
+    C. Krafft and P. Savoini,
+    `Electrostatic Wave Decay in the Randomly Inhomogeneous Solar Wind`,
+    `The Astrophysical Journal Letters, 964, L30 (2024) <https://doi.org/10.3847/2041-8213/ad3449>`_
 
 .. [Yu2024]
 
