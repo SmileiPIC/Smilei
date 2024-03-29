@@ -1046,19 +1046,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 
     timers.syncField.restart();
     if( params.geometry != "AMcylindrical" ) {
-        if( params.is_spectral ) {
-            SyncVectorPatch::exchangeE( params, ( *this ), smpi );
-        }
+        if( params.is_spectral ) SyncVectorPatch::exchangeE( params, ( *this ), smpi );
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
         for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
-            SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
-            //SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+            if( params.is_spectral ) SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
-            //SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
-            // if (params.use_BTIS3){
-            //     SyncVectorPatch::exchangeBmBTIS3( params, ( *this ), imode, smpi );
-            // }
         }
     }
     timers.syncField.update( params.printNow( itime ) );
@@ -1072,9 +1065,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 
         if( params.geometry != "AMcylindrical" ){
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
-            // if (params.use_BTIS3){
-            //     SyncVectorPatch::finalizeexchangeBmBTIS3( params, ( *this ) );
-            // }
         }
         timers.syncField.update( params.printNow( itime ) );
 
