@@ -518,7 +518,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
                     // for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                    //     if ( particles->cell_keys[iPart] != -1 ) {
+                    //     if ( particles->cell_keys[iPart] >= 0 ) {
                     //         //Compute cell_keys of remaining particles
                     //         for( unsigned int i = 0 ; i<nDim_field; i++ ) {
                     //             particles->cell_keys[iPart] *= length_[i];
@@ -552,7 +552,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             //    if( mass_>0 ) {
 
             //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //            if ( particles->cell_keys[iPart] >= 0 ) {
             //                //Compute cell_keys of remaining particles
             //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
             //                    particles->cell_keys[iPart] *= this->length_[i];
@@ -564,7 +564,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             //        }
 
             //        for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-            //            if ( particles->cell_keys[iPart] != -1 ) {
+            //            if ( particles->cell_keys[iPart] >= 0 ) {
             //                //Compute cell_keys of remaining particles
             //                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
             //                    particles->cell_keys[iPart] *= this->length_[i];
@@ -1053,7 +1053,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             if( mass_>0 ) {
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                     for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
+                        if ( particles->cell_keys[iPart] >= 0 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= this->length_[i];
@@ -1067,7 +1067,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             } else if( mass_==0 ) {
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                     for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
+                        if ( particles->cell_keys[iPart] >= 0 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= length[i];
@@ -1366,27 +1366,27 @@ void SpeciesV::sortParticles( Params &params )
     //Loop over just arrived particles to compute their cell keys and contribution to count
     for( unsigned int idim=0; idim < nDim_field ; idim++ ) {
         for( unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++ ) {
-            buf_cell_keys[idim][ineighbor].resize( MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
+            buf_cell_keys[idim][ineighbor].resize( MPI_buffer_.partRecv[idim][ineighbor]->size() );
 
             // #pragma omp simd
-            // for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            // for( unsigned int ip=0; ip < MPI_buffer_.partRecv[idim][ineighbor]->size(); ip++ ) {
             //     for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-            //         double X = ((this)->*(distance[ipos]))(&MPI_buffer_.partRecv[idim][ineighbor], ipos, ip);
+            //         double X = ((this)->*(distance[ipos]))(MPI_buffer_.partRecv[idim][ineighbor], ipos, ip);
             //         int IX = round( X * dx_inv_[ipos] );
             //         buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length_[ipos] + IX;
             //     }
             // }
             // // not vectorizable because random access to count
-            // for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            // for( unsigned int ip=0; ip < MPI_buffer_.partRecv[idim][ineighbor]->size(); ip++ ) {
             //     count[buf_cell_keys[idim][ineighbor][ip]] ++;
             // }
 
             computeParticleCellKeys( params,
-                                     &MPI_buffer_.partRecv[idim][ineighbor],
+                                     MPI_buffer_.partRecv[idim][ineighbor],
                                      &buf_cell_keys[idim][ineighbor][0],
                                      &count[0],
                                      0,
-                                     MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
+                                     MPI_buffer_.partRecv[idim][ineighbor]->size() );
 
         }
     }
@@ -1403,8 +1403,8 @@ void SpeciesV::sortParticles( Params &params )
 
     //Now proceed to the cycle sort
 
-    if( MPI_buffer_.partRecv[0][0].size() == 0 ) {
-        MPI_buffer_.partRecv[0][0].initialize( 0, *particles );    //Is this correct ?
+    if( MPI_buffer_.partRecv[0][0]->size() == 0 ) {
+        MPI_buffer_.partRecv[0][0]->initialize( 0, *particles );    //Is this correct ?
     }
 
     // Resize the particle vector
@@ -1418,7 +1418,7 @@ void SpeciesV::sortParticles( Params &params )
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
     for( unsigned int idim=0; idim < nDim_field ; idim++ ) {
         for( unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++ ) {
-            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            for( unsigned int ip=0; ip < MPI_buffer_.partRecv[idim][ineighbor]->size(); ip++ ) {
                 cycle.resize( 1 );
                 cell_target = buf_cell_keys[idim][ineighbor][ip];
                 ip_dest = particles->first_index[cell_target];
@@ -1429,7 +1429,7 @@ void SpeciesV::sortParticles( Params &params )
                 cycle[0] = ip_dest;
                 cell_target = particles->cell_keys[ip_dest];
                 //As long as the particle is not erased, we can build up the cycle.
-                while( cell_target != -1 ) {
+                while( cell_target >= 0 ) {
                     ip_dest = particles->first_index[cell_target];
                     while( particles->cell_keys[ip_dest] == cell_target ) {
                         ip_dest++;
@@ -1441,7 +1441,7 @@ void SpeciesV::sortParticles( Params &params )
                 //Last target_cell is -1, the particle must be erased:
                 particles->translateParticles( cycle );
                 //Eventually copy particle from the MPI buffer into the particle vector.
-                MPI_buffer_.partRecv[idim][ineighbor].overwriteParticle( ip, *particles, cycle[0] );
+                MPI_buffer_.partRecv[idim][ineighbor]->overwriteParticle( ip, *particles, cycle[0] );
             }
         }
     }
@@ -1450,14 +1450,14 @@ void SpeciesV::sortParticles( Params &params )
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
 
-        if( cell_target == -1 ) {
+        if( cell_target < 0 ) {
             continue;
         }
         cycle.resize( 0 );
         cycle.push_back( ip );
 
         //As long as the particle is not erased, we can build up the cycle.
-        while( cell_target != -1 ) {
+        while( cell_target >= 0 ) {
 
             ip_dest = particles->first_index[cell_target];
 
@@ -1533,7 +1533,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++ ) {
-            if ( cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] >= 0 ) {
                 //Compute cell_keys particles
                 cell_keys[iPart]  = std::round( position_x[iPart] * dx_inv_[0]) - min_loc_l ;
                 cell_keys[iPart] *= length_[1];
@@ -1553,7 +1553,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
-            if ( cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] >= 0 ) {
                 //Compute cell_keys of remaining particles
                 cell_keys[iPart]  = std::round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
                 cell_keys[iPart] *= length_[1];
@@ -1573,7 +1573,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
-            if ( cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] >= 0 ) {
                 //Compute cell_keys of remaining particles
                 cell_keys[iPart]  = std::round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
                 cell_keys[iPart] *= length_[1];
@@ -1589,7 +1589,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
-            if ( cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] >= 0 ) {
                 //Compute cell_keys of remaining particles
                 cell_keys[iPart]  = round(position_x[iPart] * dx_inv_[0] )- min_loc_x ;
             }
@@ -1598,7 +1598,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
     }
 
     for( iPart=istart; iPart < iend ; iPart++  ) {
-        if ( cell_keys[iPart] != -1 ) {
+        if ( cell_keys[iPart] >= 0 ) {
             count[cell_keys[iPart]] ++;
         }
     }
@@ -2526,7 +2526,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
                 for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
+                    if ( particles->cell_keys[iPart] >= 0 ) {
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         for( int i = 0 ; i<( int )nDim_field; i++ ) {
                             particles->cell_keys[iPart] *= length_[i];

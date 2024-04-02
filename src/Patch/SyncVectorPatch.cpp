@@ -24,26 +24,15 @@ template void SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField
 template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
-void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi )
+void SyncVectorPatch::initExchParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi )
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        Species *spec = vecPatches.species( ipatch, ispec );
-        // Leaving particles are put in a buffer called particle_to_move
-        // On GPU, particle_to_move is built and bring back to the CPU here
-        spec->extractParticles();
-        vecPatches( ipatch )->initExchParticles( ispec, params );
+        vecPatches( ipatch )->copyExchParticlesToBuffers( ispec, params );
     }
-
-    // Init comm in direction 0
-#ifndef _NO_MPI_TM
-    #pragma omp for schedule(runtime)
-#else
-    #pragma omp single
-#endif
-    for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->exchNbrOfParticles( smpi, ispec, params, 0, &vecPatches );
-    }
+    
+    // Start exchange along dimension 0 only
+    SyncVectorPatch::initExchParticlesAlongDimension( vecPatches, ispec, 0, params, smpi );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -52,24 +41,17 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
 //! - the importation of the new particles in the particle property arrays
 //! - the sorting of particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi )
+void SyncVectorPatch::finalizeExchParticlesAndSort( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi )
 {
-    SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi );
-
-    // Per direction
+    // finish exchange along dimension 0 only
+    SyncVectorPatch::finalizeExchParticlesAlongDimension( vecPatches, ispec, 0, params, smpi );
+    
+    // Other directions
     for( unsigned int iDim=1 ; iDim<params.nDim_field ; iDim++ ) {
-#ifndef _NO_MPI_TM
-        #pragma omp for schedule(runtime)
-#else
-        #pragma omp single
-#endif
-        for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-            vecPatches( ipatch )->exchNbrOfParticles( smpi, ispec, params, iDim, &vecPatches );
-        }
-
-        SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, iDim, params, smpi );
+        SyncVectorPatch::initExchParticlesAlongDimension( vecPatches, ispec, iDim, params, smpi );
+        SyncVectorPatch::finalizeExchParticlesAlongDimension( vecPatches, ispec, iDim, params, smpi );
     }
-
+    
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
         vecPatches( ipatch )->importAndSortParticles( ispec, params );
@@ -108,8 +90,20 @@ void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int isp
 
 }
 
+void SyncVectorPatch::initExchParticlesAlongDimension( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi )
+{
+    // Exchange numbers of particles in direction 0 only
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+        vecPatches( ipatch )->exchNbrOfParticles( smpi, ispec, params, iDim, &vecPatches );
+    }
+}
 
-void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi )
+void SyncVectorPatch::finalizeExchParticlesAlongDimension( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(runtime)
@@ -140,7 +134,7 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->finalizeExchParticles( ispec, iDim );
+        vecPatches( ipatch )->waitExchParticles( ispec, iDim );
     }
 
     #pragma omp for schedule(runtime)

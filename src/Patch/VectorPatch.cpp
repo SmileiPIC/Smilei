@@ -322,7 +322,7 @@ void VectorPatch::initialParticleSorting( Params &params )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all patches, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+// For all patches, move particles (restartRhoJ(s), dynamics and initExchParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::dynamics( Params &params,
                             SmileiMPI *smpi,
@@ -402,7 +402,7 @@ void VectorPatch::dynamics( Params &params,
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         Species *spec = species( 0, ispec );
         if ( (!params.Laser_Envelope_model) && (spec->isProj( time_dual, simWindow )) ){
-            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
+            SyncVectorPatch::initExchParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
         } // end condition on Species and on envelope model
     } // end loop on species
     //MESSAGE("exchange particles");
@@ -460,7 +460,7 @@ void VectorPatch::projectionForDiags( Params &params,
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all patches, exchange particles and sort them.
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+void VectorPatch::finalizeExchParticlesAndSort( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
     timers.syncPart.restart();
@@ -471,7 +471,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
 
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-            SyncVectorPatch::finalizeAndSortParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
+            SyncVectorPatch::finalizeExchParticlesAndSort( ( *this ), ispec, params, smpi ); // Included sortParticles
         }
 
     }
@@ -491,7 +491,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
 
     timers.syncPart.update( params.printNow( itime ) );
 
-} // END finalizeAndSortParticles
+} // END finalizeExchParticlesAndSort
 
 
 //! Perform the particles merging on all patches
@@ -3030,7 +3030,7 @@ void VectorPatch::createPatches( Params &params, SmileiMPI *smpi, SimWindow *sim
 
     // Set Index of the 1st patch of the vector yet on current MPI rank
     // Is this really necessary ? It should be done already ...
-    refHindex_ = ( *this )( 0 )->Hindex();
+    setRefHindex();
 
     // Current number of patch
     int nPatches_now = this->size() ;
@@ -4645,7 +4645,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     timers.syncPart.restart();
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
+            SyncVectorPatch::initExchParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
         } // end condition on species
     } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
@@ -5421,7 +5421,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                    if ( spec_task->particles->cell_keys[iPart] >= 0 ) {
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
                     }
@@ -5437,7 +5437,7 @@ void VectorPatch::dynamicsWithTasks( Params &params,
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                    if ( spec_task->particles->cell_keys[iPart] >= 0 ) {
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
                     }
@@ -5657,7 +5657,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                 Species *spec_task = species( ipatch, ispec );
                 for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                     for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                        if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                        if ( spec_task->particles->cell_keys[iPart] >= 0 ) {
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
                         }
@@ -5675,7 +5675,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &param
                     Species *spec_task = species( ipatch, ispec );
                     for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                         for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                            if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                            if ( spec_task->particles->cell_keys[iPart] >= 0 ) {
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
                             }

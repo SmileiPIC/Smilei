@@ -17,9 +17,10 @@ class SyncVectorPatch
 public :
 
     //! Particles synchronization
-    static void exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
-    static void finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
-    static void finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi );
+    static void initExchParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
+    static void finalizeExchParticlesAndSort( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi );
+    static void initExchParticlesAlongDimension( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi );
+    static void finalizeExchParticlesAlongDimension( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi );
 
     //! Densities synchronization
     static void sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );

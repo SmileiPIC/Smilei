@@ -414,6 +414,50 @@ void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! Copy particles indexed by array 'indices' to dest_id in dest_parts
+//! The array 'indices' must be sorted in increasing order
+//! cell keys not affected
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::copyParticles( vector<size_t> indices, Particles &dest_parts, int dest_id )
+{
+    const size_t transfer_size = indices.size();
+    const size_t dest_new_size = dest_parts.size() + transfer_size;
+    
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        // Make space in dest array
+        dest_parts.double_prop_[iprop]->resize( dest_new_size );
+        auto loc = dest_parts.double_prop_[iprop]->begin() + dest_id;
+        move_backward( loc, loc + transfer_size, dest_parts.double_prop_[iprop]->end() );
+        // Copy data
+        for( size_t i = 0; i < transfer_size; i++ ) {
+            ( *dest_parts.double_prop_[iprop] )[dest_id+i] = ( *double_prop_[iprop] )[indices[i]];
+        }
+    }
+    
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        // Make space in dest array
+        dest_parts.short_prop_[iprop]->resize( dest_new_size );
+        auto loc = dest_parts.short_prop_[iprop]->begin() + dest_id;
+        move_backward( loc, loc + transfer_size, dest_parts.short_prop_[iprop]->end() );
+        // Copy data
+        for( size_t i = 0; i < transfer_size; i++ ) {
+            ( *dest_parts.short_prop_[iprop] )[dest_id+i] = ( *short_prop_[iprop] )[indices[i]];
+        }
+    }
+    
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        // Make space in dest array
+        dest_parts.uint64_prop_[iprop]->resize( dest_new_size );
+        auto loc = dest_parts.uint64_prop_[iprop]->begin() + dest_id;
+        move_backward( loc, loc + transfer_size, dest_parts.uint64_prop_[iprop]->end() );
+        // Copy data
+        for( size_t i = 0; i < transfer_size; i++ ) {
+            ( *dest_parts.uint64_prop_[iprop] )[dest_id+i] = ( *uint64_prop_[iprop] )[indices[i]];
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! Make a new particle at the position of another
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
@@ -527,6 +571,70 @@ void Particles::eraseParticle( unsigned int ipart, unsigned int npart, bool comp
         cell_keys.erase( cell_keys.begin()+ipart, cell_keys.begin()+ipart+npart );
     }
 
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Erase particles indexed by array 'indices' to dest_id in dest_parts
+//! The array 'indices' must be sorted in increasing order
+//! cell keys not affected
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::eraseParticles( vector<size_t> indices )
+{
+    const size_t indices_size = indices.size();
+    const size_t initial_size = size();
+    
+    if( indices_size > 0 ) {
+        
+        for( auto prop : double_prop_ ) {
+            // Relocate data to fill erased space
+            size_t j = 1, stop = ( 1 == indices_size ) ? initial_size : indices[1], to = indices[0];
+            for( size_t from = indices[0]+1; from < initial_size; from++ ) {
+                if( from < stop ) {
+                    ( *prop )[to] = ( *prop )[from];
+                    to++;
+                } else {
+                    j++;
+                    stop = ( j == indices_size ) ? initial_size : indices[j];
+                }
+            }
+            // Resize
+            prop->resize( initial_size - indices_size );
+        }
+        
+        for( auto prop : short_prop_ ) {
+            // Relocate data to fill erased space
+            size_t j = 1, stop = ( 1 == indices_size ) ? initial_size : indices[1], to = indices[0];
+            for( size_t from = indices[0]+1; from < initial_size; from++ ) {
+                if( from < stop ) {
+                    ( *prop )[to] = ( *prop )[from];
+                    to++;
+                } else {
+                    j++;
+                    stop = ( j == indices_size ) ? initial_size : indices[j];
+                }
+            }
+            // Resize
+            prop->resize( initial_size - indices_size );
+        }
+        
+        for( auto prop : uint64_prop_ ) {
+            // Relocate data to fill erased space
+            size_t j = 1, stop = ( 1 == indices_size ) ? initial_size : indices[1], to = indices[0];
+            for( size_t from = indices[0]+1; from < initial_size; from++ ) {
+                if( from < stop ) {
+                    ( *prop )[to] = ( *prop )[from];
+                    to++;
+                } else {
+                    j++;
+                    stop = ( j == indices_size ) ? initial_size : indices[j];
+                }
+            }
+            // Resize
+            prop->resize( initial_size - indices_size );
+        }
+        
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1198,11 +1306,11 @@ void Particles::copyFromDeviceToHost()
 void Particles::extractParticles( Particles* particles_to_move )
 {
     particles_to_move->clear();
-    for ( int ipart=0 ; ipart<size() ; ipart++ ) {
-        if ( cell_keys[ipart] == -1 ) {
-            copyParticle( ipart, *particles_to_move );
-        }
-    }
+    // for ( int ipart=0 ; ipart<size() ; ipart++ ) {
+    //     if ( cell_keys[ipart] == -1 ) {
+    //         copyParticle( ipart, *particles_to_move );
+    //     }
+    // }
 }
 
 void Particles::savePositions() {

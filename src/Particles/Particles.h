@@ -143,6 +143,8 @@ public:
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
+    //! Transfer particles indexed by array indices to dest_id in dest_parts
+    void copyParticles( std::vector<size_t> indices, Particles &dest_parts, int dest_id );
 
     //! Make a new particle at the position of another
     void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
@@ -151,6 +153,8 @@ public:
     void eraseParticle( unsigned int iPart, bool compute_cell_keys = false );
     //! Suppress nPart particles from iPart
     void eraseParticle( unsigned int iPart, unsigned int nPart, bool compute_cell_keys = false );
+    //! Suppress indexed particles
+    void eraseParticles( std::vector<size_t> indices );
 
     //! Suppress all particles from iPart to the end of particle array
     void eraseParticleTrail( unsigned int iPart, bool compute_cell_keys = false );

@@ -66,6 +66,12 @@ SpeciesMPIbuffers::SpeciesMPIbuffers()
 
 SpeciesMPIbuffers::~SpeciesMPIbuffers()
 {
+    for( size_t i=0 ; i<partRecv.size() ; i++ ) {
+        delete partRecv[i][0];
+        delete partRecv[i][1];
+        delete partSend[i][0];
+        delete partSend[i][1];
+    }
 }
 
 
@@ -77,19 +83,21 @@ void SpeciesMPIbuffers::allocate( unsigned int ndims )
     partRecv.resize( ndims );
     partSend.resize( ndims );
     
-    part_index_send.resize( ndims );
-    part_index_send_sz.resize( ndims );
-    part_index_recv_sz.resize( ndims );
+    partSendSize.resize( ndims );
+    partRecvSize.resize( ndims );
     
     for( unsigned int i=0 ; i<ndims ; i++ ) {
         srequest[i].resize( 2 );
         rrequest[i].resize( 2 );
         partRecv[i].resize( 2 );
         partSend[i].resize( 2 );
-        part_index_send[i].resize( 2 );
-        part_index_send_sz[i].resize( 2 );
-        part_index_recv_sz[i].resize( 2 );
+        partSendSize[i].resize( 2 );
+        partRecvSize[i].resize( 2 );
+        
+        partRecv[i][0] = new Particles();
+        partRecv[i][1] = new Particles();
+        partSend[i][0] = new Particles();
+        partSend[i][1] = new Particles();
     }
-    
 }
 

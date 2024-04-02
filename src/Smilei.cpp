@@ -629,7 +629,7 @@ int main( int argc, char *argv[] )
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
         {
             // finalize particle exchanges and sort particles
-            vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
+            vecPatches.finalizeExchParticlesAndSort( params, &smpi, simWindow,
                                                  time_dual, timers, itime );
 
             // Particle merging
