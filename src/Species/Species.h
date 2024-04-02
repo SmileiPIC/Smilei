@@ -482,12 +482,6 @@ public:
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge( ElectroMagn *EMfields, bool old=false );
 
-    //! Method used to select particles which will change of patches
-    virtual void extractParticles();
-
-    //! Method used to integrate particles which come from another patches
-    // virtual void injectParticles( Params &params );
-
     //! Method used to inject and sort particles
     virtual void sortParticles( Params &param );
 

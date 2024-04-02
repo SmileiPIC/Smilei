@@ -476,7 +476,7 @@ public:
     //! Extract particles from the Particles object and put
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( Particles *particles_to_move );
+    virtual void extractParticles( const bool copy[], Particles* buffer[] );
 
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device

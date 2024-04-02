@@ -539,48 +539,21 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
     
     cleanMPIBuffers( ispec, params );
     
-    vector<vector<bool>> copy( 3 );
-    copy[0] = { neighbor_[0][0] != MPI_PROC_NULL, neighbor_[0][1] != MPI_PROC_NULL };
-    copy[1] = { neighbor_[1][0] != MPI_PROC_NULL, neighbor_[1][1] != MPI_PROC_NULL };
-    if( params.nDim_field > 2 ) {
-        copy[2] = { neighbor_[2][0] != MPI_PROC_NULL, neighbor_[2][1] != MPI_PROC_NULL };
+    bool copy[params.nDim_field*2];
+    Particles* sendBuffer[params.nDim_field*2];
+    for( size_t iDim = 0; iDim < params.nDim_field; iDim++ ) {
+        copy[2*iDim+0] = neighbor_[iDim][0] != MPI_PROC_NULL;
+        copy[2*iDim+1] = neighbor_[iDim][1] != MPI_PROC_NULL;
+        sendBuffer[2*iDim+0] = buffer.partSend[iDim][0];
+        sendBuffer[2*iDim+1] = buffer.partSend[iDim][1];
     }
     if( params.geometry == "AMcylindrical" ) {
-        copy[0][0] = copy[0][0] && ( Pcoordinates[0]!=0 || vecSpecies[ispec]->boundary_conditions_[0][0]=="periodic" );
-        copy[0][1] = copy[0][1] && ( Pcoordinates[0]!=params.number_of_patches[0]-1 || vecSpecies[ispec]->boundary_conditions_[0][1]=="periodic" );
+        copy[0] = copy[0] && ( Pcoordinates[0]!=0 || vecSpecies[ispec]->boundary_conditions_[0][0]=="periodic" );
+        copy[1] = copy[1] && ( Pcoordinates[0]!=params.number_of_patches[0]-1 || vecSpecies[ispec]->boundary_conditions_[0][1]=="periodic" );
     }
     
-    // Loop all particles and count the outgoing ones
-    for( size_t ipart = 0; ipart < part.size(); ipart++ ) {
-        if( part.cell_keys[ipart] < -1 ) {
-            if( part.cell_keys[ipart] == -2 ) {
-                if( copy[0][0] ) {
-                    part.copyParticle( ipart, *buffer.partSend[0][0] );
-                }
-            } else if( part.cell_keys[ipart] == -3 ) {
-                if( copy[0][1] ) {
-                    part.copyParticle( ipart, *buffer.partSend[0][1] );
-                }
-            } else if( part.cell_keys[ipart] == -4 ) {
-                if( copy[1][0] ) {
-                    part.copyParticle( ipart, *buffer.partSend[1][0] );
-                }
-            } else if( part.cell_keys[ipart] == -5 ) {
-                if( copy[1][1] ) {
-                    part.copyParticle( ipart, *buffer.partSend[1][1] );
-                }
-            } else if( part.cell_keys[ipart] == -6 ) {
-                if( copy[2][0] ) {
-                    part.copyParticle( ipart, *buffer.partSend[2][0] );
-                }
-            } else if( part.cell_keys[ipart] == -7 ) {
-                if( copy[2][1] ) {
-                    part.copyParticle( ipart, *buffer.partSend[2][1] );
-                }
-            }
-        }
-    }
-
+    part.extractParticles( copy, sendBuffer );
+    
 } // copyExchParticlesToBuffers(... iDim)
 
 
@@ -706,7 +679,6 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &, int iDim, Vecto
     
     for( int iNeighbor=0; iNeighbor<nbNeighbors_; iNeighbor++ ) {
         
-        // MESSAGEALL("      Patch "<<hindex<<"  dimension "<<iDim<<"    neighbor "<<iNeighbor<<"   n_send "<<buffer.partSend[iDim][iNeighbor]->size()<<"   n_recv "<<buffer.partRecv[iDim][iNeighbor]->size());
         // Send
         Particles &partSend = *buffer.partSend[iDim][iNeighbor];
         if( partSend.size() != 0 && is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -720,7 +692,6 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &, int iDim, Vecto
         int iOppositeNeighbor = ( iNeighbor+1 )%2;
         Particles &partRecv = *buffer.partRecv[iDim][iOppositeNeighbor];
         if( partRecv.size() != 0 && is_a_MPI_neighbor( iDim, iOppositeNeighbor ) ) {
-            // MESSAGE("                  patch "<<hindex<<"   dimension "<<iDim<<" receives from neighbor "<<iOppositeNeighbor<<"  nrecv "<<partRecv.size());
             vecSpecies[ispec]->typePartRecv[( iDim*2 )+iNeighbor] = smpi->createMPIparticles( &partRecv );
             int local_hindex = neighbor_[iDim][iOppositeNeighbor] - smpi->patch_refHindexes[ MPI_neighbor_[iDim][iOppositeNeighbor] ];
             int tag = buildtag( local_hindex, iDim+1, iNeighbor+3 );

@@ -1303,14 +1303,17 @@ void Particles::copyFromDeviceToHost()
     ERROR( "Device only feature, should not have come here!" );
 }
 
-void Particles::extractParticles( Particles* particles_to_move )
+// Loop all particles and copy the outgoing ones to buffers
+void Particles::extractParticles( const bool copy[], Particles* buffer[] )
 {
-    particles_to_move->clear();
-    // for ( int ipart=0 ; ipart<size() ; ipart++ ) {
-    //     if ( cell_keys[ipart] == -1 ) {
-    //         copyParticle( ipart, *particles_to_move );
-    //     }
-    // }
+    for( size_t ipart = 0; ipart < size(); ipart++ ) {
+        if( cell_keys[ipart] < -1 ) {
+            int direction = -cell_keys[ipart] - 2;
+            if( copy[direction] ) {
+                copyParticle( ipart, *buffer[direction] );
+            }
+        }
+    }
 }
 
 void Particles::savePositions() {

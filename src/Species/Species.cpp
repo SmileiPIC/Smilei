@@ -1744,16 +1744,6 @@ void Species::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 }//END computeCharge
 
 
-void Species::extractParticles()
-{
-    particles->extractParticles( particles_to_move );
-}
-
-// void Species::injectParticles( Params &params )
-// {
-// }
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
