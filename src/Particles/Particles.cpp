@@ -422,12 +422,13 @@ void Particles::copyParticles( vector<size_t> indices, Particles &dest_parts, in
 {
     const size_t transfer_size = indices.size();
     const size_t dest_new_size = dest_parts.size() + transfer_size;
+    const size_t displaced_size = dest_parts.size() - dest_id;
     
     for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
         // Make space in dest array
         dest_parts.double_prop_[iprop]->resize( dest_new_size );
         auto loc = dest_parts.double_prop_[iprop]->begin() + dest_id;
-        move_backward( loc, loc + transfer_size, dest_parts.double_prop_[iprop]->end() );
+        move_backward( loc, loc + displaced_size, dest_parts.double_prop_[iprop]->end() );
         // Copy data
         for( size_t i = 0; i < transfer_size; i++ ) {
             ( *dest_parts.double_prop_[iprop] )[dest_id+i] = ( *double_prop_[iprop] )[indices[i]];
@@ -438,7 +439,7 @@ void Particles::copyParticles( vector<size_t> indices, Particles &dest_parts, in
         // Make space in dest array
         dest_parts.short_prop_[iprop]->resize( dest_new_size );
         auto loc = dest_parts.short_prop_[iprop]->begin() + dest_id;
-        move_backward( loc, loc + transfer_size, dest_parts.short_prop_[iprop]->end() );
+        move_backward( loc, loc + displaced_size, dest_parts.short_prop_[iprop]->end() );
         // Copy data
         for( size_t i = 0; i < transfer_size; i++ ) {
             ( *dest_parts.short_prop_[iprop] )[dest_id+i] = ( *short_prop_[iprop] )[indices[i]];
@@ -449,7 +450,7 @@ void Particles::copyParticles( vector<size_t> indices, Particles &dest_parts, in
         // Make space in dest array
         dest_parts.uint64_prop_[iprop]->resize( dest_new_size );
         auto loc = dest_parts.uint64_prop_[iprop]->begin() + dest_id;
-        move_backward( loc, loc + transfer_size, dest_parts.uint64_prop_[iprop]->end() );
+        move_backward( loc, loc + displaced_size, dest_parts.uint64_prop_[iprop]->end() );
         // Copy data
         for( size_t i = 0; i < transfer_size; i++ ) {
             ( *dest_parts.uint64_prop_[iprop] )[dest_id+i] = ( *uint64_prop_[iprop] )[indices[i]];

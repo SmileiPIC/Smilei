@@ -634,8 +634,8 @@ void Patch::prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
         Particles &partSend = *buffer.partSend[iDim][iNeighbor];
         
         // Enabled periodicity
-        if( neighbor_[iDim][iNeighbor] != MPI_PROC_NULL && partSend.size() != 0 ) {
-            if( smpi->periods_[iDim]==1 ) {
+        if( neighbor_[iDim][iNeighbor] != MPI_PROC_NULL ) { 
+            if( partSend.size() > 0 && smpi->periods_[iDim]==1 ) {
                 if( iNeighbor == 0 && Pcoordinates[iDim] == 0 ) {
                     for( size_t iPart=0; iPart < partSend.size(); iPart++ ) {
                         if( partSend.position( iDim, iPart ) < 0. ) {
@@ -651,17 +651,14 @@ void Patch::prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                     }
                 }
             }
-        }
-        
-        if( neighbor_[iDim][iNeighbor] != MPI_PROC_NULL ) {
+            
             // Initialize receive buffer with the appropriate size
             if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
                 if( buffer.partRecvSize[iDim][iNeighbor]!=0 ) {
                     buffer.partRecv[iDim][iNeighbor]->initialize( buffer.partRecvSize[iDim][iNeighbor], *vecSpecies[ispec]->particles );
                 }
-            }
             // Swap particles to other patch directly if it belongs to the same MPI
-            else {
+            } else {
                 int iOppositeNeighbor = ( iNeighbor+1 )%2;
                 SpeciesMPIbuffers &neighbor_buffer = ( *vecPatch )( neighbor_[iDim][iNeighbor]- vecPatch->refHindex_ )->vecSpecies[ispec]->MPI_buffer_;
                 swap( buffer.partSend[iDim][iNeighbor], neighbor_buffer.partRecv[iDim][iOppositeNeighbor] );
