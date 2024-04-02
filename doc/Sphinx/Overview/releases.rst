@@ -27,6 +27,10 @@ Changes made in the repository (not released)
 
   * Compilation simplified and better documented.
 
+* Features:
+
+  * Relativistic field initialization now supports multiple species and both direction propagations.
+
 * Happi:
 
   * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
