@@ -2255,12 +2255,6 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     }
     MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-    //std::vector<Field *> Ex_;
-    //std::vector<Field *> Ey_;
-    //std::vector<Field *> Ez_;
-    //std::vector<Field *> Bx_;
-    //std::vector<Field *> By_;
-    //std::vector<Field *> Bz_;
     std::vector<Field *> listBx_m(this->size());
     std::vector<Field *> listBy_m(this->size());
     std::vector<Field *> listBz_m(this->size());
@@ -2282,12 +2276,6 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     std::vector<Field *> listAp(this->size());
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //Ex_.push_back( ( *this )( ipatch )->EMfields->Ex_ );
-        //Ey_.push_back( ( *this )( ipatch )->EMfields->Ey_ );
-        //Ez_.push_back( ( *this )( ipatch )->EMfields->Ez_ );
-        //Bx_.push_back( ( *this )( ipatch )->EMfields->Bx_ );
-        //By_.push_back( ( *this )( ipatch )->EMfields->By_ );
-        //Bz_.push_back( ( *this )( ipatch )->EMfields->Bz_ );
         listBx_m[ipatch] = ( *this )( ipatch )->EMfields->Bx_m ;
         listBy_m[ipatch] = ( *this )( ipatch )->EMfields->By_m ;
         listBz_m[ipatch] = ( *this )( ipatch )->EMfields->Bz_m ;
