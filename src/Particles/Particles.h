@@ -473,10 +473,9 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put
-    //! them in the Particles object `particles_to_move`
+    //! Extract particles escaping the box to buffers
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( const bool copy[], Particles* buffer[] );
+    virtual void extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] );
 
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
@@ -484,7 +483,7 @@ public:
     virtual int eraseLeavingParticles();
 
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put
+    //! Inject particles from particles_to_inject object and put
     //! them in the Particles object
     //! \param[in,out] particles_to_inject Particles object containing particles to inject
     virtual int injectParticles( Particles *particles_to_inject );

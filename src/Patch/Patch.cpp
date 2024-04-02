@@ -552,7 +552,7 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
         copy[1] = copy[1] && ( Pcoordinates[0]!=params.number_of_patches[0]-1 || vecSpecies[ispec]->boundary_conditions_[0][1]=="periodic" );
     }
     
-    part.extractParticles( copy, sendBuffer );
+    part.extractParticles( params.nDim_field, copy, sendBuffer );
     
 } // copyExchParticlesToBuffers(... iDim)
 

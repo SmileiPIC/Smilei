@@ -1304,7 +1304,7 @@ void Particles::copyFromDeviceToHost()
 }
 
 // Loop all particles and copy the outgoing ones to buffers
-void Particles::extractParticles( const bool copy[], Particles* buffer[] )
+void Particles::extractParticles( const size_t /* ndim */, const bool copy[], Particles* buffer[] )
 {
     for( size_t ipart = 0; ipart < size(); ipart++ ) {
         if( cell_keys[ipart] < -1 ) {
