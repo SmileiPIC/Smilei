@@ -38,7 +38,7 @@ public:
     SpeciesMPIbuffers();
     ~SpeciesMPIbuffers();
     
-    void allocate( unsigned int nDim_field ) ;
+    void allocate( Params &params, Patch *patch ) ;
     
     //! ndim vectors of 2 sent packets of particles (1 per direction)
     std::vector< std::vector<Particles* > > partRecv;

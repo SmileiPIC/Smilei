@@ -784,10 +784,10 @@ void Patch::cornersParticles( int ispec, Params &params, int iDim )
                 
             }
             
-            // Copy corner particles to the start or the end of the particles to be sent for the following dimension
+            // Copy corner particles to the end of the particles to be sent for the following dimension
             for( size_t otherDim = iDim+1; otherDim < (size_t) ndim; otherDim++ ) {
                 if( indices_corner_min[otherDim-iDim-1].size() > 0 && neighbor_[otherDim][0] != MPI_PROC_NULL ) {
-                    partRecv.copyParticles( indices_corner_min[otherDim-iDim-1], *buffer.partSend[otherDim][0], 0 );
+                    partRecv.copyParticles( indices_corner_min[otherDim-iDim-1], *buffer.partSend[otherDim][0], buffer.partSend[otherDim][0]->size() );
                 }
                 if( indices_corner_max[otherDim-iDim-1].size() > 0 && neighbor_[otherDim][1] != MPI_PROC_NULL ) {
                     partRecv.copyParticles( indices_corner_max[otherDim-iDim-1], *buffer.partSend[otherDim][1], buffer.partSend[otherDim][1]->size() );
@@ -1310,7 +1310,6 @@ void Patch::deleteFieldsOnDevice()
 //        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
 //            Species *spec = species( ipatch, ispec );
 //            spec->particles->initializeDataOnDevice();
-//            spec->particles_to_move->initializeDataOnDevice();
 //            //#pragma acc enter data copyin(spec->nrj_radiation)
 //        }
 

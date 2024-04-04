@@ -33,14 +33,24 @@
 // Cell key manipulation functor definition
 ////////////////////////////////////////////////////////////////////////////////
 
-//! Structure with specific function count_if_out for thrust::tuple operator
-//! Return True if the entry is -1 as in the cell keys vector for instance
-struct count_if_out
+//! Predicate for cell_keys
+//! Return True if the entry is equal to `code`
+template<int code>
+struct cellKeyEquals
 {
     constexpr __host__ __device__ bool
     operator()( const int& x ) const
     {
-        return x == -1;
+        return x == code;
+    }
+};
+
+struct cellKeyNegative
+{
+    constexpr __host__ __device__ bool
+    operator()( const int& x ) const
+    {
+        return x < 0;
     }
 };
 
@@ -250,7 +260,7 @@ namespace detail {
     };
 
 
-    //! This functor assign a cluster key to a_particle.
+    //! This functor checks the cluster key of a_particle.
     //!
     template <typename ClusterType>
     struct OutOfClusterPredicate
@@ -286,7 +296,7 @@ namespace detail {
         __host__ __device__ bool
         operator()( const Tuple& a_particle ) const
         {
-            return thrust::get<0>( a_particle ) /* cluster key */ == -1;
+            return thrust::get<0>( a_particle ) /* cluster key */ < 0;
         }
     };
 
@@ -467,34 +477,34 @@ namespace detail {
         //         - compute bins
         // NOTE: This method consumes a lot of memory ! O(N)
 
-        const auto new_particle_to_inject_count  = particle_to_inject.deviceSize();
-        const auto current_local_particles_count = std::distance( first_particle, last_particle );
-        const auto new_particle_count            = new_particle_to_inject_count + current_local_particles_count;
+        const auto initial_count = std::distance( first_particle, last_particle );
+        const auto inject_count  = particle_to_inject.deviceSize();
+        const auto new_count     = initial_count + inject_count;
 
         // NOTE: We really want a non-initializing vector here!
         // It's possible to give a custom allocator to thrust::device_vector.
         // Create one with construct(<>) as a noop and derive from
         // thrust::device_malloc_allocator. For now we do an explicit resize.
-        particle_to_inject.softReserve( new_particle_count );
-        particle_to_inject.resize( new_particle_count ); // We probably invalidated the iterators
+        particle_to_inject.softReserve( new_count );
+        particle_to_inject.resize( new_count ); // We probably invalidated the iterators
 
         // Copy out of cluster/tile/chunk particles
         // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
         // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
 
-        const auto first_particle_to_inject = particle_iterator_provider( particle_to_inject );
+        const auto first_to_inject = particle_iterator_provider( particle_to_inject );
+        const auto first_to_reorder = first_to_inject + inject_count;
 
         // NOTE: copy_if/remove_copy_if are stable.
-        const auto partitioned_particles_bounds_true  = thrust::copy_if( thrust::device,
+        // First, copy particles that are not in their own cluster anymore
+        const auto first_already_ordered = thrust::copy_if( thrust::device,
                                                                          first_particle, last_particle,
-                                                                         // Dont overwrite the particle_to_inject (at the start of the array)
-                                                                         first_particle_to_inject + new_particle_to_inject_count,
+                                                            first_to_reorder,
                                                                          OutOfClusterPredicate<ClusterType>{ cluster_type } );
-        const auto partitioned_particles_bounds_false = thrust::remove_copy_if( thrust::device,
+        // Then, copy particles that are still in their own cluster
+        const auto end = thrust::remove_copy_if( thrust::device,
                                                                                 first_particle, last_particle,
-                                                                                // Do the copy with a destination
-                                                                                // starting from partitioned_particles_bounds_true
-                                                                                partitioned_particles_bounds_true,
+                                                 first_already_ordered,
                                                                                 OutOfClusterPredicate<ClusterType>{ cluster_type } );
 
         // Compute or recompute the cluster index of the particle_to_inject
@@ -502,23 +512,23 @@ namespace detail {
         // - we can "save" some work here if cluster index is already computed
         // for the new particles to inject (not the one we got with copy_if).
         //
-        doComputeParticleClusterKey( first_particle_to_inject,
-                                     partitioned_particles_bounds_true,
+        doComputeParticleClusterKey( first_to_inject,
+                                     first_already_ordered,
                                      cluster_type );
 
-        const auto first_particle_to_inject_no_key = particle_no_key_iterator_provider( particle_to_inject );
-        const auto particle_to_rekey_count         = std::distance( first_particle_to_inject,
-                                                                    partitioned_particles_bounds_true );
+        const auto first_to_inject_no_key  = particle_no_key_iterator_provider( particle_to_inject );
+        const auto particle_to_rekey_count = std::distance( first_to_inject,
+                                                            first_already_ordered );
 
         doSortParticleByKey( particle_to_inject.getPtrCellKeys(),
                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,
-                             first_particle_to_inject_no_key );
+                             first_to_inject_no_key );
 
         // This free generates a lot of memory fragmentation.
         // particle_container.free();
         // Same as for particle_to_inject, non-initializing vector is best.
-        particle_container.softReserve( new_particle_count );
-        particle_container.resize( new_particle_count );
+        particle_container.softReserve( new_count );
+        particle_container.resize( new_count );
 
         // Merge by key
         // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
@@ -527,9 +537,9 @@ namespace detail {
                               particle_to_inject.getPtrCellKeys(),                           // Input range 1, first key
                               particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 1, last key
                               particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 2, first key
-                              particle_to_inject.getPtrCellKeys() + new_particle_count,      // Input range 2, last key
-                              first_particle_to_inject_no_key,                               // Input range 1, first value
-                              first_particle_to_inject_no_key + particle_to_rekey_count,     // Input range 2, first value
+                              particle_to_inject.getPtrCellKeys() + new_count,      // Input range 2, last key
+                              first_to_inject_no_key,                               // Input range 1, first value
+                              first_to_inject_no_key + particle_to_rekey_count,     // Input range 2, first value
                               particle_container.getPtrCellKeys(),                           // Output range first key
                               particle_no_key_iterator_provider( particle_container ) );     // Output range first value
 
@@ -1365,38 +1375,61 @@ unsigned int nvidiaParticles::deviceCapacity() const
 }
 
 // -----------------------------------------------------------------------------
-//! Extract particles from the Particles object and put
-//! them in the Particles object `particles_to_move`
+//! Move escaping particles to the buffers
 // -----------------------------------------------------------------------------
-void nvidiaParticles::extractParticles( Particles* particles_to_move )
+void nvidiaParticles::extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] )
+{
+    // Escaping particles have a cell_key equal to -2-direction
+    // where direction goes from 0 to 6 and tells which way the particle escapes.
+    // If the cell_key is -1, the particle must be destroyed so it is not extracted.
+    
+    extractParticlesByKey<-2>( copy[0], buffer[0] ); // x_min
+    extractParticlesByKey<-3>( copy[1], buffer[1] ); // x_max
+    if( ndim > 1 ) {
+        extractParticlesByKey<-4>( copy[2], buffer[2] ); // y_min
+        extractParticlesByKey<-5>( copy[3], buffer[3] ); // y_max
+        if( ndim > 2 ) {
+            extractParticlesByKey<-6>( copy[4], buffer[4] ); // z_min
+            extractParticlesByKey<-7>( copy[5], buffer[5] ); // z_max
+        }
+    }
+}
+
+
+//! Copy particles which have cell_key = key
+template< const int key>
+void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
 {
     // TODO(Etienne M): We are doing extra work. We could use something like
-    // std::partition to output the invalidated particles in particles_to_move
+    // std::partition to output the invalidated particles in buffer
     // and keep the good ones. This would help us avoid the std::remove_if in
     // the particle injection and sorting algorithm.
-
-    // Manage the send data structure
-    nvidiaParticles* const cp_parts                 = static_cast<nvidiaParticles*>( particles_to_move );
-    const int              nparts                   = gpu_nparts_;
-    const int              position_dimension_count = nvidia_position_.size();
-
-    const int nparts_to_move = thrust::count_if( thrust::device,
-                                                 nvidia_cell_keys_.cbegin(),
-                                                 nvidia_cell_keys_.cbegin() + nparts,
-                                                 count_if_out() );
-
-    // Resize it, if too small (copy_if do not resize)
-    cp_parts->resize( nparts_to_move );
-
+    
+    if( ! copy ) {
+        return;
+    }
+    
+    const int nparts = gpu_nparts_;
     // Iterator of the main data structure
     // NOTE: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
-    const auto source_iterator_first      = thrust::make_zip_iterator( thrust::make_tuple( nvidia_position_[0].begin(),
+    const auto source_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( nvidia_position_[0].begin(),
                                                                                            nvidia_momentum_[0].begin(),
                                                                                            nvidia_momentum_[1].begin(),
                                                                                            nvidia_momentum_[2].begin(),
                                                                                            nvidia_weight_.begin(),
                                                                                            nvidia_charge_.begin() ) );
-    const auto source_iterator_last       = source_iterator_first + nparts; // std::advance
+    const auto source_iterator_last  = source_iterator_first + nparts; // std::advance
+    
+    nvidiaParticles* const cp_parts = static_cast<nvidiaParticles*>( buffer );
+    
+    const int nparts_to_copy = thrust::count_if( thrust::device,
+                                                 nvidia_cell_keys_.cbegin(),
+                                                 nvidia_cell_keys_.cbegin() + nparts,
+                                                 cellKeyEquals<key>() );
+
+    // Resize it, if too small (copy_if do not resize)
+    cp_parts->resize( nparts_to_copy );
+
     const auto destination_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( cp_parts->nvidia_position_[0].begin(),
                                                                                            cp_parts->nvidia_momentum_[0].begin(),
                                                                                            cp_parts->nvidia_momentum_[1].begin(),
@@ -1404,24 +1437,23 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                                                                                            cp_parts->nvidia_weight_.begin(),
                                                                                            cp_parts->nvidia_charge_.begin() ) );
 
-    // Copy send particles in dedicated data structure if nvidia_cell_keys_=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
+    // Copy send particles in dedicated data structure
     thrust::copy_if( thrust::device,
                      source_iterator_first,
                      source_iterator_last,
-                     // Copy depending on count_if_out()(nvidia_cell_keys_[i])
                      nvidia_cell_keys_.cbegin(),
                      destination_iterator_first,
-                     count_if_out() );
+                    cellKeyEquals<key>() );
 
-    // Copy the other position values depending on the simulation's grid
-    // dimensions
-    for( int i = 1; i < position_dimension_count; ++i ) {
+    // Copy the other position values depending on the simulation's grid dimensions
+    const int ndim_particles = nvidia_position_.size();
+    for( int i = 1; i < ndim_particles; ++i ) {
         thrust::copy_if( thrust::device,
                          nvidia_position_[i].cbegin(),
                          nvidia_position_[i].cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_position_[i].begin(),
-                         count_if_out() );
+                        cellKeyEquals<key>() );
     }
 
     // Special treatment for chi if radiation emission
@@ -1431,7 +1463,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          nvidia_chi_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_chi_.begin(),
-                         count_if_out() );
+                        cellKeyEquals<key>() );
     }
 
     if( has_Monte_Carlo_process ) {
@@ -1440,7 +1472,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          nvidia_tau_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_tau_.begin(),
-                         count_if_out() );
+                        cellKeyEquals<key>() );
     }
 
     if( tracked ) {
@@ -1449,10 +1481,10 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                          nvidia_id_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_id_.begin(),
-                         count_if_out() );
+                        cellKeyEquals<key>() );
     }
 
-    particles_to_move->copyFromDeviceToHost();
+    buffer->copyFromDeviceToHost();
 }
 
 
@@ -1475,7 +1507,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 //                           std::begin( nvidia_position_[i] ),
 //                           std::begin( nvidia_position_[i] ) + nparts,
 //                           std::cbegin( nvidia_cell_keys_ ),
-//                           count_if_out() );
+//                           cellKeyEquals<-1>() );
 //    }
 //
 //}
@@ -1490,7 +1522,7 @@ int nvidiaParticles::eraseLeavingParticles()
     const int nparts_to_remove         = thrust::count_if( thrust::device,
                                                            nvidia_cell_keys_.begin(),
                                                            nvidia_cell_keys_.begin() + nparts,
-                                                           count_if_out() );
+                                                           cellKeyNegative() );
 
 
     if( nparts_to_remove > 0 ) {
@@ -1508,7 +1540,7 @@ int nvidiaParticles::eraseLeavingParticles()
                            first_particle,
                            last_particle,
                            nvidia_cell_keys_.cbegin(),
-                           count_if_out() );
+                           cellKeyNegative() );
 
         // Remove the other position values depending on the simulation's grid
         // dimensions
@@ -1517,7 +1549,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_position_[i].begin(),
                                nvidia_position_[i].begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               count_if_out() );
+                               cellKeyNegative() );
         }
 
         if( has_quantum_parameter ) {
@@ -1525,7 +1557,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_chi_.begin(),
                                nvidia_chi_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               count_if_out() );
+                               cellKeyNegative() );
         }
 
         if( has_Monte_Carlo_process ) {
@@ -1533,7 +1565,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_tau_.begin(),
                                nvidia_tau_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               count_if_out() );
+                               cellKeyNegative() );
         }
 
         if( tracked ) {
@@ -1541,7 +1573,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_id_.begin(),
                                nvidia_id_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               count_if_out() );
+                               cellKeyNegative() );
         }
 
         // Update current number of particles
@@ -1679,8 +1711,7 @@ void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
 int nvidiaParticles::prepareBinIndex()
 {
     if( first_index.size() == 0 ) {
-        // Some Particles object like particles_to_move do not have allocated
-        // bins, we skip theses.
+        // Some Particles object do not have allocated bins, we skip theses.
         return -1;
     }
 

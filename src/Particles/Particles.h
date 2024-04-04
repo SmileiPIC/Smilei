@@ -476,7 +476,7 @@ public:
     //! Extract particles escaping the box to buffers
     // -----------------------------------------------------------------------------
     virtual void extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] );
-
+virtual void extractParticles( Particles* particles_to_move );
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
     // -----------------------------------------------------------------------------

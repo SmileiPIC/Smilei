@@ -4671,86 +4671,22 @@ void VectorPatch::allocateDataOnDevice(Params &params,
                                        RadiationTables *radiation_tables,
                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
-                                         
+
 #if defined( SMILEI_ACCELERATOR_MODE )
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
 
-    const int npatches = this->size();
-
-    // const int sizeofJx  = patches_[0]->EMfields->Jx_->size();
-    // const int sizeofJy  = patches_[0]->EMfields->Jy_->size();
-    // const int sizeofJz  = patches_[0]->EMfields->Jz_->size();
-    // const int sizeofRho = patches_[0]->EMfields->rho_->size();
-
-    // const int sizeofEx = patches_[0]->EMfields->Ex_->size();
-    // const int sizeofEy = patches_[0]->EMfields->Ey_->size();
-    // const int sizeofEz = patches_[0]->EMfields->Ez_->size();
-
-    // const int sizeofBx = patches_[0]->EMfields->Bx_->size();
-    // const int sizeofBy = patches_[0]->EMfields->By_->size();
-    // const int sizeofBz = patches_[0]->EMfields->Bz_->size();
-
-    for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+    for( auto patch: patches_ ) {
 
         // Initialize particles data structures on GPU, and synchronize it
-        for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
-            Species *spec = species( ipatch, ispec );
-            spec->particles->initializeDataOnDevice();
-            spec->particles_to_move->initializeDataOnDevice();
-
-            // Create photon species on the device
-            if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
-                spec->radiated_photons_->initializeDataOnDevice();
-            }
-
-            // Create pair species on the device
-            if ( spec->mBW_pair_species_[0] && spec->mBW_pair_species_[1]) {
-                 spec->mBW_pair_particles_[0]->initializeDataOnDevice();
-                 spec->mBW_pair_particles_[1]->initializeDataOnDevice();
-            }
-
-            //#pragma acc enter data copyin(spec->nrj_radiation)
+        for( auto spec: patch->vecSpecies ) {
+            spec->allocateParticlesOnDevice();
         }
 
         // Allocate field data structures on GPU
-        patches_[ipatch]->allocateFieldsOnDevice();
+        patch->allocateFieldsOnDevice();
 
-        // const double *const Jx  = patches_[ipatch]->EMfields->Jx_->data();
-        // const double *const Jy  = patches_[ipatch]->EMfields->Jy_->data();
-        // const double *const Jz  = patches_[ipatch]->EMfields->Jz_->data();
-        // const double *const Rho = patches_[ipatch]->EMfields->rho_->data();
-
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jx, sizeofJx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jy, sizeofJy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Jz, sizeofJz );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Rho, sizeofRho );
-
-        // const double *const Ex = patches_[ipatch]->EMfields->Ex_->data();
-        // const double *const Ey = patches_[ipatch]->EMfields->Ey_->data();
-        // const double *const Ez = patches_[ipatch]->EMfields->Ez_->data();
-
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ex, sizeofEx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ey, sizeofEy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Ez, sizeofEz );
-
-        // const double *const Bmx = patches_[ipatch]->EMfields->Bx_m->data();
-        // const double *const Bmy = patches_[ipatch]->EMfields->By_m->data();
-        // const double *const Bmz = patches_[ipatch]->EMfields->Bz_m->data();
-
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmx, sizeofBx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmy, sizeofBy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( Bmz, sizeofBz );
-
-        // const double *const Bx = patches_[ipatch]->EMfields->Bx_->data();
-        // const double *const By = patches_[ipatch]->EMfields->By_->data();
-        // const double *const Bz = patches_[ipatch]->EMfields->Bz_->data();
-
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
-        // smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
-        
     } // end patch loop
 
     // TODO(Etienne M): We should create a function that does the copy of the radiation table.

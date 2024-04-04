@@ -46,7 +46,7 @@ using namespace std;
 SpeciesV::SpeciesV( Params &params, Patch *patch ) :
     Species( params, patch )
 {
-    initCluster( params );
+    initCluster( params, patch );
     npack_ = 0 ;
     packsize_ = 0;
 
@@ -106,7 +106,7 @@ SpeciesV::~SpeciesV()
 }
 
 
-void SpeciesV::initCluster( Params &params )
+void SpeciesV::initCluster( Params &params, Patch *patch )
 {
     int ncells = 1;
     for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
@@ -224,7 +224,7 @@ void SpeciesV::initCluster( Params &params )
 #endif
 
     //Initialize specMPI
-    MPI_buffer_.allocate( nDim_field );
+    MPI_buffer_.allocate( params, patch );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;

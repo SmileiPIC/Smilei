@@ -147,8 +147,6 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
-    //! Data structure through which passes particles which move from one patch to another
-    Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
 
@@ -344,7 +342,7 @@ public:
     // -----------------------------------------------------------------------------
     //  5. Methods
 
-    virtual void initCluster( Params & );
+    virtual void initCluster( Params &, Patch * );
 
     virtual void resizeCluster( Params & );
 
@@ -385,6 +383,8 @@ public:
     }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
+
+    void allocateParticlesOnDevice();
 
     //! Copy particles from host to device
     void

@@ -1,5 +1,6 @@
 
 #include "AsyncMPIbuffers.h"
+#include "ParticlesFactory.h"
 #include "Field.h"
 #include "Patch.h"
 
@@ -75,29 +76,29 @@ SpeciesMPIbuffers::~SpeciesMPIbuffers()
 }
 
 
-void SpeciesMPIbuffers::allocate( unsigned int ndims )
+void SpeciesMPIbuffers::allocate( Params &params, Patch *patch )
 {
-    srequest.resize( ndims );
-    rrequest.resize( ndims );
+    srequest.resize( params.nDim_field );
+    rrequest.resize( params.nDim_field );
     
-    partRecv.resize( ndims );
-    partSend.resize( ndims );
+    partRecv.resize( params.nDim_field );
+    partSend.resize( params.nDim_field );
     
-    partSendSize.resize( ndims );
-    partRecvSize.resize( ndims );
+    partSendSize.resize( params.nDim_field );
+    partRecvSize.resize( params.nDim_field );
     
-    for( unsigned int i=0 ; i<ndims ; i++ ) {
+    for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
         srequest[i].resize( 2 );
         rrequest[i].resize( 2 );
-        partRecv[i].resize( 2 );
-        partSend[i].resize( 2 );
-        partSendSize[i].resize( 2 );
         partRecvSize[i].resize( 2 );
+        partSendSize[i].resize( 2 );
         
-        partRecv[i][0] = new Particles();
-        partRecv[i][1] = new Particles();
-        partSend[i][0] = new Particles();
-        partSend[i][1] = new Particles();
+        partRecv[i].resize( 2 );
+        partRecv[i][0] = ParticlesFactory::create( params, *patch );;
+        partRecv[i][1] = ParticlesFactory::create( params, *patch );;
+        partSend[i].resize( 2 );
+        partSend[i][0] = ParticlesFactory::create( params, *patch );;
+        partSend[i][1] = ParticlesFactory::create( params, *patch );;
     }
 }
 
