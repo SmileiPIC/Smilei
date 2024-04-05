@@ -70,7 +70,7 @@ Following is the distribution of these topics in the listed publications up to N
 
 .. [Ehret2024]
 
-    M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, José Antonio Pérez-Hernández, J. J. Santos, and G. Gatti, 
+    M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, J. A. Pérez-Hernández, J. J. Santos, and G. Gatti, 
     `High-repetition-rate source of nanosecond duration kA-current pulses driven by relativistic laser pulses`,
     `High Power Laser Science and Engineering (2024) <https://doi.org/10.1017/hpl.2024.14>`_
        
