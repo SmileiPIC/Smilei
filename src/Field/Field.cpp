@@ -46,13 +46,13 @@ void Field::put_to( double val )
         }
     };
 
-    //! allocate and copy from Device to Host
+    //! allocate and copy from Host to Device
     void Field::allocateAndCopyFromHostToDevice()
     {
         if (!isOnDevice()) {
             smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( data_, number_of_points_ );
         } else {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( data_, number_of_points_ );
+            smilei::tools::gpu::HostDeviceMemoryManagement::CopyHostToDevice( data_, number_of_points_ );
         }
     };
 
