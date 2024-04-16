@@ -916,7 +916,8 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( double gamma_mean )
     // Compute the field Bl, Br, Bt
     // ------------------------------------------
 
-    double beta_mean = sqrt( 1.-1./gamma_mean/gamma_mean );
+    //The sign of gamma_mean here indicates the direction of propagation hence the sign of beta.
+    double beta_mean = copysign(sqrt( 1.-1./gamma_mean/gamma_mean ), gamma_mean);
     MESSAGE( 0, "In relativistic Poisson solver, gamma_mean = " << gamma_mean );
 
     // Bl^(p,d) is identically zero

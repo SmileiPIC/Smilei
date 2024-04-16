@@ -190,6 +190,9 @@ Typically ``CXXFLAGS += -ta=tesla:cc80`` for ``nvhpc`` <23.4 and
   * The hdf5 module should be compiled with the nvidia/cray compiler;
     openmpi as well, but depending on the nvhpc module it might not be needed as it can be included in the nvhpc module.
 
+For testing purposes, Smilei can be run on a linux PC with a good
+GPU. As a guidance, read these :doc:`instructions for GPU on linux<install_linux_GPU>`.
+
 ----
 
 .. _vectorization_flags:

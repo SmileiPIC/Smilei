@@ -23,6 +23,7 @@ Unreferenced pages
   /Use/install_linux
   /Use/install_macos
   /Use/install_supercomputer
+  /Use/install_linux_GPU
   /Use/laser_offset
   /Use/maxwell-juttner
   /Use/particle_initialization

@@ -7,7 +7,7 @@
 
 # Compile command: make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp detailed_timers verbose"
 
-SMILEICXX.DEPS = g++ #nvcc -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/openmpi-4.1.5-ckfuippq6gf6qsilwitd7d2zyd5bng32/include/ -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/include/
+SMILEICXX_DEPS = g++ #nvcc -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/openmpi-4.1.5-ckfuippq6gf6qsilwitd7d2zyd5bng32/include/ -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/include/
 
 GPU_COMPILER = nvcc -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/openmpi-4.1.5-ckfuippq6gf6qsilwitd7d2zyd5bng32/include/ -I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/include/
 

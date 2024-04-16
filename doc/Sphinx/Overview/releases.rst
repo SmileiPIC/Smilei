@@ -27,6 +27,10 @@ Changes made in the repository (not released)
 
   * Compilation simplified and better documented.
 
+* Features:
+
+  * Relativistic field initialization now supports multiple species and both direction propagations.
+
 * Happi:
 
   * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
@@ -43,6 +47,7 @@ Changes made in the repository (not released)
 * Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
 * The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
   (the transverse coordinate of the focus in this geometry is zero).
+* Small improvements in PML for envelope model (AM and 2D).
 
 * Bug fixes:
 
