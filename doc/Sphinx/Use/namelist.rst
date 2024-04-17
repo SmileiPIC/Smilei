@@ -2860,6 +2860,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 A *particle binning diagnostic* collects data from the macro-particles and processes them during runtime.
 It does not provide information on individual particles: instead, it produces
 **averaged quantities** like the particle density, currents, etc.
+The raw data and how it is post-processed by happi is described :doc:`here <binning_units>`.
 
 The data is discretized inside a "grid" chosen by the user. This grid may be of any dimension.
 
