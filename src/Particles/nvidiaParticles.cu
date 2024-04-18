@@ -12,10 +12,9 @@
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
-#include <thrust/count.h>
-#include <thrust/remove.h>
-#include <thrust/sort.h>
-
+#include <thrust/remove.h> // pour thrust::remove_if
+#include <thrust/sort.h> // pour thrust::sort_by_key
+#include <thrust/count.h> // pour thrust::count_if
 
 #include "Patch.h"
 #include "gpu.h"
@@ -125,11 +124,46 @@ namespace detail {
                                   ParticleNoKeyIteratorProvider particle_no_key_iterator_provider );
     };
 
+    template <Cluster::DifferenceType kClusterWidth>
+    struct Cluster1D : public Cluster
+    {
+    public:
+        Cluster1D( double   inverse_x_cell_dimension,
+                   SizeType local_x_dimension_in_cell,
+		   int CellStartingGlobalIndex_for_x);
+
+        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
+        //! zipiterator).
+        //! The first value of a_particle is the cell key value, the other values are
+        //! the positions x 
+        template <typename Tuple>
+        __host__ __device__ IDType
+        Index( const Tuple& a_particle ) const;
+
+        //! Compute the cell key of a particle range.
+        //!
+        static void
+        computeParticleClusterKey( nvidiaParticles& particle_container,
+                                   const Params&    parameters,
+                                   const Patch&     a_parent_patch );
+
+        static void
+        sortParticleByKey( nvidiaParticles& particle_container,
+                           const Params&    parameters );
+
+        static void
+        importAndSortParticles( nvidiaParticles& particle_container,
+                                nvidiaParticles& particle_to_inject,
+                                const Params&    parameters,
+                                const Patch&     a_parent_patch );
+
+        double   inverse_of_x_cell_dimension_;
+	    int CellStartingGlobalIndex_for_x_;
+    };
 
     template <Cluster::DifferenceType kClusterWidth>
     struct Cluster2D : public Cluster
     {
-    public:
     public:
         Cluster2D( double   inverse_x_cell_dimension,
                    double   inverse_y_cell_dimension,
@@ -164,11 +198,10 @@ namespace detail {
                                 const Params&    parameters,
                                 const Patch&     a_parent_patch );
 
-    public:
         double   inverse_of_x_cell_dimension_;
         double   inverse_of_y_cell_dimension_;
         SizeType local_y_dimension_in_cluster_;
-	int CellStartingGlobalIndex_for_x_;
+	    int CellStartingGlobalIndex_for_x_;
         int CellStartingGlobalIndex_for_y_;
     };
 
@@ -176,14 +209,13 @@ namespace detail {
     struct Cluster3D : public Cluster
     {
     public:
-    public:
         Cluster3D( double   inverse_x_cell_dimension,
                    double   inverse_y_cell_dimension,
                    double   inverse_z_cell_dimension,
                    SizeType local_x_dimension_in_cell,
                    SizeType local_y_dimension_in_cell,
                    SizeType local_z_dimension_in_cell,
-		   int CellStartingGlobalIndex_for_x,
+		           int CellStartingGlobalIndex_for_x,
                    int CellStartingGlobalIndex_for_y,
                    int CellStartingGlobalIndex_for_z);
 
@@ -213,14 +245,13 @@ namespace detail {
                                 const Params&    parameters,
                                 const Patch&     a_parent_patch );
 
-    public:
         double   inverse_of_x_cell_dimension_;
         double   inverse_of_y_cell_dimension_;
         double   inverse_of_z_cell_dimension_;
         SizeType local_y_dimension_in_cluster_;
         SizeType local_z_dimension_in_cluster_;
         int CellStartingGlobalIndex_for_x_;
-	int CellStartingGlobalIndex_for_y_;
+	    int CellStartingGlobalIndex_for_y_;
         int CellStartingGlobalIndex_for_z_;
     };
 
@@ -231,18 +262,16 @@ namespace detail {
     class AssignClusterIndex
     {
     public:
-    public:
         AssignClusterIndex( ClusterType cluster_type )
             : cluster_type_{ cluster_type }
         {
-            // EMPTY
         }
 
         template <typename Tuple>
         __host__ __device__ void
         operator()( Tuple& a_particle ) const
         {
-            thrust::get<0>( a_particle ) /* cluster key */ = cluster_type_.Index( a_particle );
+            thrust::get<0>( a_particle )  = cluster_type_.Index( a_particle ); //cluster key 
         }
 
     protected:
@@ -251,16 +280,13 @@ namespace detail {
 
 
     //! This functor assign a cluster key to a_particle.
-    //!
     template <typename ClusterType>
     struct OutOfClusterPredicate
     {
     public:
-    public:
         OutOfClusterPredicate( ClusterType cluster_type )
             : cluster_type_{ cluster_type }
         {
-            // EMPTY
         }
 
         template <typename Tuple>
@@ -269,7 +295,7 @@ namespace detail {
         {
             // NOTE: its ub to set the cluster key to wrongly keyed particles
             // now..
-            return thrust::get<0>( a_particle ) /* cluster key */ != cluster_type_.Index( a_particle );
+            return thrust::get<0>( a_particle ) != cluster_type_.Index( a_particle );//cluster key 
         }
 
     protected:
@@ -286,7 +312,7 @@ namespace detail {
         __host__ __device__ bool
         operator()( const Tuple& a_particle ) const
         {
-            return thrust::get<0>( a_particle ) /* cluster key */ == -1;
+            return thrust::get<0>( a_particle )  == -1;//cluster key 
         }
     };
 
@@ -304,6 +330,12 @@ namespace detail {
         // dimensions.
 
         switch( particle_container.dimension() ) {
+            case 1: {
+                Cluster1D<Params::getGPUClusterWidth( 1 )>::computeParticleClusterKey( particle_container,
+                                                                                                parameters,
+                                                                                                a_parent_patch );
+                break;
+            }
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
                                                                                                 parameters,
@@ -317,7 +349,7 @@ namespace detail {
                 break;
             }
             default:
-                // Not implemented, only Cartesian 2D or 3D for the moment
+                // Not implemented, only Cartesian 1D, 2D or 3D for the moment
                 SMILEI_ASSERT( false );
                 break;
         }
@@ -331,6 +363,11 @@ namespace detail {
         // dimensions.
 
         switch( particle_container.dimension() ) {
+            case 1: {
+                Cluster1D<Params::getGPUClusterWidth( 1 )>::sortParticleByKey( particle_container,
+                                                                                        parameters );
+                break;
+            }
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 )>::sortParticleByKey( particle_container,
                                                                                         parameters );
@@ -342,7 +379,7 @@ namespace detail {
                 break;
             }
             default:
-                // Not implemented, only Cartesian 2D or 3D for the moment
+                // Not implemented, only Cartesian 1D, 2D or 3D for the moment
                 SMILEI_ASSERT( false );
                 break;
         }
@@ -392,15 +429,22 @@ namespace detail {
         // dimensions.
 
         switch( particle_container.dimension() ) {
+            case 1: {
+                Cluster1D<Params::getGPUClusterWidth( 1 )>::importAndSortParticles( particle_container,
+                                                                                             particle_to_inject,
+                                                                                             parameters,
+                                                                                             a_parent_patch );
+                break;
+            }
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 /* 2D */ )>::importAndSortParticles( particle_container,
+                Cluster2D<Params::getGPUClusterWidth( 2 )>::importAndSortParticles( particle_container,
                                                                                              particle_to_inject,
                                                                                              parameters,
                                                                                              a_parent_patch );
                 break;
             }
             case 3: {
-                Cluster3D<Params::getGPUClusterWidth( 3 /* 2D */ )>::importAndSortParticles( particle_container,
+                Cluster3D<Params::getGPUClusterWidth( 3 )>::importAndSortParticles( particle_container,
                                                                                              particle_to_inject,
                                                                                              parameters,
                                                                                              a_parent_patch );
@@ -408,7 +452,7 @@ namespace detail {
             }
 
             default:
-                // Not implemented, only 2D for the moment
+                // Not implemented, only Cartesian 1D, 2D or 3D for the moment
                 SMILEI_ASSERT( false );
                 break;
         }
@@ -546,8 +590,17 @@ namespace detail {
 
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Cluster2D method definitions
+    // Cluster method definitions
     ////////////////////////////////////////////////////////////////////////////////
+
+    template <Cluster::DifferenceType kClusterWidth>
+    Cluster1D<kClusterWidth>::Cluster1D( double   inverse_x_cell_dimension,
+                                         SizeType local_x_dimension_in_cell,
+					                     int CellStartingGlobalIndex_for_x)
+        : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
+        , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
+    {
+    }
 
     template <Cluster::DifferenceType kClusterWidth>
     Cluster2D<kClusterWidth>::Cluster2D( double   inverse_x_cell_dimension,
@@ -561,7 +614,6 @@ namespace detail {
         , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
 	, CellStartingGlobalIndex_for_y_{CellStartingGlobalIndex_for_y}
     {
-        // EMPTY
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -571,7 +623,7 @@ namespace detail {
                                          SizeType local_x_dimension_in_cell,
                                          SizeType local_y_dimension_in_cell,
                                          SizeType local_z_dimension_in_cell,
-					 int CellStartingGlobalIndex_for_x,
+					                     int CellStartingGlobalIndex_for_x,
                                          int CellStartingGlobalIndex_for_y, int CellStartingGlobalIndex_for_z )
         : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
         , inverse_of_y_cell_dimension_{ inverse_y_cell_dimension }
@@ -582,7 +634,30 @@ namespace detail {
         , CellStartingGlobalIndex_for_y_{CellStartingGlobalIndex_for_y}
         , CellStartingGlobalIndex_for_z_{CellStartingGlobalIndex_for_z}
     {
-        // EMPTY
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ typename Cluster1D<kClusterWidth>::IDType
+    Cluster1D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    {
+        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                                                    inverse_of_x_cell_dimension_ ) -
+                                                             CellStartingGlobalIndex_for_x_;
+
+        // These divisions will be optimized.
+        // The integer division rounding behavior is expected.
+
+        // NOTE: Flat tiles have been studied but were not as efficient for the
+        // projection. The square provides the minimal perimeter (and thus ghost
+        // cell amount) for a given area.
+        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
+
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+
+        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster;
+
+        return static_cast<IDType>( cluster_index );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -660,6 +735,23 @@ namespace detail {
 
     template <Cluster::DifferenceType kClusterWidth>
     void
+    Cluster1D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
+                                                         const Params&    parameters,
+                                                         const Patch&     a_parent_patch )
+    {
+        const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          static_cast<const double*>( particle_container.getPtrPosition( 0 ) ) ) );
+        const auto last  = first + particle_container.deviceSize();
+        int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
+        printf ( "CellStartingGlobalIndex_for_x %d res %f patch size %d \n",CellStartingGlobalIndex_for_x,parameters.res_space[0], parameters.patch_size_[0]  );
+	    doComputeParticleClusterKey( first, last,
+                                     Cluster1D<Params::getGPUClusterWidth( 1 )>{ parameters.res_space[0],
+                                                                                          parameters.patch_size_[0],
+                                                                                          CellStartingGlobalIndex_for_x} );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    void
     Cluster2D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
                                                          const Params&    parameters,
                                                          const Patch&     a_parent_patch )
@@ -670,7 +762,7 @@ namespace detail {
         const auto last  = first + particle_container.deviceSize();
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
-	doComputeParticleClusterKey( first, last,
+	    doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.res_space[0],
                                                                                           parameters.res_space[1],
                                                                                           parameters.patch_size_[0],
@@ -693,7 +785,7 @@ namespace detail {
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
         int CellStartingGlobalIndex_for_z = a_parent_patch.getCellStartingGlobalIndex_noGC(2);
-	doComputeParticleClusterKey( first, last,
+	    doComputeParticleClusterKey( first, last,
                                      Cluster3D<Params::getGPUClusterWidth( 3 )>{ parameters.res_space[0],
                                                                                           parameters.res_space[1],
                                                                                           parameters.res_space[2],
@@ -705,6 +797,51 @@ namespace detail {
                                                                                           CellStartingGlobalIndex_for_z } );
     }
 
+    template <Cluster::DifferenceType kClusterWidth>
+    void
+    Cluster1D<kClusterWidth>::sortParticleByKey( nvidiaParticles& particle_container,
+                                                 const Params& )
+    {
+
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
+                SMILEI_ASSERT( false );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+        } else {
+            if( particle_container.has_Monte_Carlo_process ) {
+                SMILEI_ASSERT( false );
+            } else {
+                // The appropriate thrust::zip_iterator for the current
+                // simulation's parameters
+
+                if (particle_container.tracked) {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge(),
+                                                                                            particle_container.getPtrId() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
+                }
+                else {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
+                }
+            }
+        }
+    }
     template <Cluster::DifferenceType kClusterWidth>
     void
     Cluster2D<kClusterWidth>::sortParticleByKey( nvidiaParticles& particle_container,
@@ -732,17 +869,30 @@ namespace detail {
                 // The appropriate thrust::zip_iterator for the current
                 // simulation's parameters
 
-                const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
-                                                                                        particle_container.getPtrPosition( 1 ),
-                                                                                        particle_container.getPtrMomentum( 0 ),
-                                                                                        particle_container.getPtrMomentum( 1 ),
-                                                                                        particle_container.getPtrMomentum( 2 ),
-                                                                                        particle_container.getPtrWeight(),
-                                                                                        particle_container.getPtrCharge() ) );
-
-                doSortParticleByKey( particle_container.getPtrCellKeys(),
-                                     particle_container.getPtrCellKeys() + particle_container.deviceSize(),
-                                     value_first );
+                if (particle_container.tracked) {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrPosition( 1 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
+                                                                                        }
+                else {
+                    const auto value_first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                                            particle_container.getPtrPosition( 1 ),
+                                                                                            particle_container.getPtrMomentum( 0 ),
+                                                                                            particle_container.getPtrMomentum( 1 ),
+                                                                                            particle_container.getPtrMomentum( 2 ),
+                                                                                            particle_container.getPtrWeight(),
+                                                                                            particle_container.getPtrCharge() ) );
+                    doSortParticleByKey( particle_container.getPtrCellKeys(),
+                                         particle_container.getPtrCellKeys() + particle_container.deviceSize(),
+                                         value_first );
+                }
             }
         }
     }
@@ -805,6 +955,67 @@ namespace detail {
             }
         }
     }
+    template <Cluster::DifferenceType kClusterWidth>
+    void
+    Cluster1D<kClusterWidth>::importAndSortParticles( nvidiaParticles& particle_container,
+                                                      nvidiaParticles& particle_to_inject,
+                                                      const Params&    parameters,
+                                                      const Patch&     a_parent_patch )
+    {
+        // This is where we do a runtime dispatch depending on the simulation's
+        // qed/radiation settings.
+
+        // NOTE: For now we support dont support qed/radiations. Performance
+        // comes from specialization.
+
+        // TODO(Etienne M): Find a better way to dispatch at runtime. This is
+        // complex to read and to maintain.
+        int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
+        printf("CellStartingGlobalIndex_for_x %d \n" , CellStartingGlobalIndex_for_x );
+
+        const Cluster1D cluster_manipulator{ parameters.res_space[0],
+                                             parameters.patch_size_[0],
+                                             CellStartingGlobalIndex_for_x};
+
+        if( particle_container.has_quantum_parameter ) {
+            if( particle_container.has_Monte_Carlo_process ) {
+                SMILEI_ASSERT( false );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+        } else {
+            if( particle_container.has_Monte_Carlo_process ) {
+                SMILEI_ASSERT( false );
+            } else {
+                // Returns the appropriate thrust::zip_iterator for the
+                // current simulation's parameters
+                const auto particle_iterator_provider = []( nvidiaParticles& particle_container ) {
+                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge() ) );
+                };
+
+                const auto particle_no_key_iterator_provider = []( nvidiaParticles& particle_container ) {
+                    return thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrPosition( 0 ),
+                                                                          particle_container.getPtrMomentum( 0 ),
+                                                                          particle_container.getPtrMomentum( 1 ),
+                                                                          particle_container.getPtrMomentum( 2 ),
+                                                                          particle_container.getPtrWeight(),
+                                                                          particle_container.getPtrCharge() ) );
+                };
+
+                doImportAndSortParticles( particle_container,
+                                          particle_to_inject,
+                                          cluster_manipulator,
+                                          particle_iterator_provider,
+                                          particle_no_key_iterator_provider );
+            }
+        }
+    }
 
     template <Cluster::DifferenceType kClusterWidth>
     void
@@ -824,6 +1035,7 @@ namespace detail {
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
 
+        printf("CellStartingGlobalIndex_for_x %d \n" , CellStartingGlobalIndex_for_x );
         const Cluster2D cluster_manipulator{ parameters.res_space[0],
                                              parameters.res_space[1],
                                              parameters.patch_size_[0],
@@ -990,7 +1202,6 @@ nvidiaParticles::nvidiaParticles( const Params& parameters,
     , parent_patch_{ &a_parent_patch }
     , gpu_nparts_{}
 {
-    // EMPTY
 }
 
 nvidiaParticles::~nvidiaParticles() {
@@ -1271,10 +1482,9 @@ void nvidiaParticles::initializeDataOnDevice()
 
         // setHostBinIndex();
     } else {
-
+        printf( " parent patch %p cells starting global index %d \n", parent_patch_, parent_patch_->getCellStartingGlobalIndex_noGC(0) );
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
-
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
 
         // The particles are not correctly sorted when created.
@@ -1380,13 +1590,13 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     const int              nparts                   = gpu_nparts_;
     const int              position_dimension_count = nvidia_position_.size();
 
-    const int nparts_to_move = thrust::count_if( thrust::device,
+    const int number_of_particules_to_move = thrust::count_if( thrust::device,
                                                  nvidia_cell_keys_.cbegin(),
                                                  nvidia_cell_keys_.cbegin() + nparts,
                                                  count_if_out() );
 
     // Resize it, if too small (copy_if do not resize)
-    cp_parts->resize( nparts_to_move );
+    cp_parts->resize( number_of_particules_to_move );
 
     // Iterator of the main data structure
     // NOTE: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
@@ -1404,7 +1614,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                                                                                            cp_parts->nvidia_weight_.begin(),
                                                                                            cp_parts->nvidia_charge_.begin() ) );
 
-    // Copy send particles in dedicated data structure if nvidia_cell_keys_=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
+    // Copy send particles in dedicated data structure if nvidia_cell_keys_=0 (currently = 1 if kept, new PartBoundCond::apply(...))
     thrust::copy_if( thrust::device,
                      source_iterator_first,
                      source_iterator_last,
@@ -1653,7 +1863,6 @@ void nvidiaParticles::createParticles( int n_additional_particles )
         nvidia_id_.resize( new_size );
         thrust::fill( nvidia_id_.begin() + n_particles, nvidia_id_.begin() + new_size, 0 );
     }
-
     nvidia_cell_keys_.resize( new_size );
     thrust::fill( nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, -1 );
 
@@ -1747,6 +1956,9 @@ extern "C"
 {
     void* CreateGPUParticles( const void* parameters, const void* a_parent_patch )
     {
+        const Patch *temp = static_cast<const Patch*>( a_parent_patch );
+        
+        printf( " in create GPU parent patch %p cells starting global index %d \n", a_parent_patch, temp->getCellStartingGlobalIndex_noGC(0) );
         return new nvidiaParticles{ *static_cast<const Params*>( parameters ),
                                     *static_cast<const Patch*>( a_parent_patch ) };
     }

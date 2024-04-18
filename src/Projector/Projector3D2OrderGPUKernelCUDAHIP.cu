@@ -162,7 +162,7 @@ namespace cudahip {
                                          int          k_domain_begin,
                                          int          nprimy,
                                          int          nprimz,
-                                         int          not_spectral )
+                                         int          not_spectral_ )
         {
             // Potential future work for optimization: Break the kernel into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -501,8 +501,8 @@ namespace cudahip {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
             }
         } // end DepositCurrent
 
@@ -536,7 +536,7 @@ namespace cudahip {
                                             int          k_domain_begin,
                                             int          nprimy,
                                             int          nprimz,
-                                            int          not_spectral )
+                                            int          not_spectral_ )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -716,7 +716,7 @@ namespace cudahip {
                                int    k_domain_begin,
                                int    nprimy,
                                int    nprimz,
-                               int    not_spectral )
+                               int    not_spectral_ )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -767,7 +767,7 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral 
+                            not_spectral_ 
                         );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
@@ -799,7 +799,7 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral
+                            not_spectral_
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
@@ -836,7 +836,7 @@ namespace cudahip {
                                 int    k_domain_begin,
                                 int    nprimy,
                                 int    nprimz,
-                                int    not_spectral )
+                                int    not_spectral_ )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -886,7 +886,7 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral );
+                            not_spectral_ );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
@@ -914,7 +914,7 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral
+                            not_spectral_
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif

@@ -407,7 +407,7 @@ public:
     //#if defined( SMILEI_ACCELERATOR_GPU_OMP )
         switch( dimension_id ) {
             case 1:
-                return -1;
+                return 4; // check for optimal value
             case 2:
                 return 4;
             case 3:

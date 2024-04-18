@@ -18,21 +18,19 @@ public:
     virtual ~Projector1D() {};
     virtual void mv_win( unsigned int shift )
     {
-        index_domain_begin+=shift;
+        i_domain_begin_ += shift;
     }
     virtual void setMvWinLimits( unsigned int shift )
     {
-        index_domain_begin = shift;
+        i_domain_begin_ = shift;
     }
     
 protected:
     //! Inverse of the spatial step 1/dx
     double dx_inv_;
-    int index_domain_begin;
+    double dx_ov_dt_;
+    int i_domain_begin_;
     double *Jx_, *Jy_, *Jz_, *rho_;
-    
-private:
-
 };
 
 #endif

@@ -25,7 +25,7 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
-    not_spectral  = !parameters.is_pxr;
+    not_spectral_  = !parameters.is_pxr;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
@@ -83,7 +83,7 @@ currentDeposition3DOnDevice( double *__restrict__ Jx,
                          int    k_domain_begin,
                          int    nprimy,
                          int    nprimz,
-                         int    not_spectral );
+                         int    not_spectral_ );
 
 extern "C" void
 densityDeposition3DOnDevice( 
@@ -114,7 +114,7 @@ densityDeposition3DOnDevice(
                          int    k_domain_begin,
                          int    nprimy, 
                          int    nprimz,
-                         int    not_spectral );
+                         int    not_spectral_ );
 #endif
 
 namespace { // Unnamed namespace == static == internal linkage == no exported symbols
@@ -148,7 +148,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int    nprimy, 
               int    nprimz,
               double,
-              int not_spectral )
+              int not_spectral_ )
     {
 #if defined( SMILEI_ACCELERATOR_MODE )
         currentDeposition3DOnDevice( Jx,
@@ -181,7 +181,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  k_domain_begin,
                                  nprimy, nprimz,
-                                 not_spectral );
+                                 not_spectral_ );
 #else
         SMILEI_ASSERT( false );
 #endif
@@ -213,7 +213,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int    nprimy,
                         int    nprimz,
                         double,
-                        int not_spectral )
+                        int not_spectral_ )
     {
 #if defined( SMILEI_ACCELERATOR_MODE )
         densityDeposition3DOnDevice( 
@@ -243,7 +243,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  k_domain_begin,
                                  nprimy, nprimz,
-                                 not_spectral );
+                                 not_spectral_ );
 #else
         SMILEI_ASSERT( false );
 #endif
@@ -401,7 +401,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
 
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
@@ -416,7 +416,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   i_domain_begin_, j_domain_begin_, k_domain_begin_,
                   nprimy, nprimz,
                   one_third,
-                  not_spectral );
+                  not_spectral_ );
 
     // If requested performs then the charge density deposition
     } else {
@@ -440,7 +440,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
     }
 
         // TODO(Etienne M): DIAGS. Find a way to get rho. We could:

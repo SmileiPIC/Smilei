@@ -478,8 +478,8 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                b.attr( "By_val", embc->By_val );
-                b.attr( "Bz_val", embc->Bz_val );
+                b.attr( "By_val", embc->By_val_ );
+                b.attr( "Bz_val", embc->Bz_val_ );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
@@ -889,8 +889,8 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                b.attr( "By_val", embc->By_val );
-                b.attr( "Bz_val", embc->Bz_val );
+                b.attr( "By_val", embc->By_val_ );
+                b.attr( "Bz_val", embc->Bz_val_ );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );

@@ -48,7 +48,7 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This function performs:
-//! - the exhcange of particles for each direction using the diagonal trick.
+//! - the exchange of particles for each direction using the diagonal trick.
 //! - the importation of the new particles in the particle property arrays
 //! - the sorting of particles
 // ---------------------------------------------------------------------------------------------------------------------

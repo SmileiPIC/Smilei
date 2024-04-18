@@ -33,7 +33,7 @@ currentDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                          int    i_domain_begin,
                          int    j_domain_begin,
                          int    nprimy,
-                         int    not_spectral )
+                         int    not_spectral_ )
 {
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -56,14 +56,14 @@ currentDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                                  dx_ov_dt, dy_ov_dt,
                                  i_domain_begin, j_domain_begin,
                                  nprimy,
-                                 not_spectral );
+                                 not_spectral_ );
 }
 
 
 //! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
 //!
 extern "C" void
-currentAndDensityDepositionKernelOnDevice( double *__restrict__ host_Jx,
+currentAndDensityDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                                    double *__restrict__ host_Jy,
                                    double *__restrict__ host_Jz,
                                    double *__restrict__ host_rho,
@@ -90,14 +90,14 @@ currentAndDensityDepositionKernelOnDevice( double *__restrict__ host_Jx,
                                    int    i_domain_begin,
                                    int    j_domain_begin,
                                    int    nprimy,
-                                   int    not_spectral )
+                                   int    not_spectral_ )
 {
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //naive:: // the naive, OMP version serves as a reference along with the CPU version
     //#else
     cudahip2d::
     //#endif
-        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
+        currentAndDensityDepositionKernel2D( host_Jx, host_Jy, host_Jz, host_rho,
                                            Jx_size, Jy_size, Jz_size, rho_size,
                                            device_particle_position_x, device_particle_position_y,
                                            device_particle_momentum_z,
@@ -113,7 +113,7 @@ currentAndDensityDepositionKernelOnDevice( double *__restrict__ host_Jx,
                                            dx_ov_dt, dy_ov_dt,
                                            i_domain_begin, j_domain_begin,
                                            nprimy,
-                                           not_spectral );
+                                           not_spectral_ );
 }
 #endif
 
