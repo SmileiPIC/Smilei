@@ -124,7 +124,7 @@ int main( int argc, char *argv[] )
         // oblivious to the program (only one, the one by default).
         // This could be a missed but very advanced optimization for some
         // kernels/exchange.
-        ERROR( "Simlei needs only one accelerator (GPU). Look for HIP_VISIBLE_DEVICES or 'gpu-bind=closest' in your SLURM script or use a custom binding script." );
+        ERROR( "Smilei needs only one accelerator (GPU). Look for HIP_VISIBLE_DEVICES or 'gpu-bind=closest' in your SLURM script or use a custom binding script." );
     } else {
         // ::omp_set_default_device(0);
     }

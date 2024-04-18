@@ -539,6 +539,7 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
     
     cleanMPIBuffers( ispec, params );
     
+    // Make a list of buffers
     bool copy[params.nDim_field*2];
     Particles* sendBuffer[params.nDim_field*2];
     for( size_t iDim = 0; iDim < params.nDim_field; iDim++ ) {
@@ -552,7 +553,7 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
         copy[1] = copy[1] && ( Pcoordinates[0]!=params.number_of_patches[0]-1 || vecSpecies[ispec]->boundary_conditions_[0][1]=="periodic" );
     }
     
-    part.extractParticles( params.nDim_field, copy, sendBuffer );
+    part.copyLeavingParticlesToBuffers( copy, sendBuffer );
     
 } // copyExchParticlesToBuffers(... iDim)
 

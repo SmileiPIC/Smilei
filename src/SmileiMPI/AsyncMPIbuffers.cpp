@@ -93,12 +93,21 @@ void SpeciesMPIbuffers::allocate( Params &params, Patch *patch )
         partRecvSize[i].resize( 2 );
         partSendSize[i].resize( 2 );
         
+        // NOTE: send/recv buffers on xmin / xmax use a different constructor because
+        //       they must be sent on GPU for exchanging particles
         partRecv[i].resize( 2 );
-        partRecv[i][0] = ParticlesFactory::create( params, *patch );;
-        partRecv[i][1] = ParticlesFactory::create( params, *patch );;
         partSend[i].resize( 2 );
-        partSend[i][0] = ParticlesFactory::create( params, *patch );;
-        partSend[i][1] = ParticlesFactory::create( params, *patch );;
+        if( i == 0 ) {
+            partRecv[i][0] = ParticlesFactory::create( params, *patch );
+            partRecv[i][1] = ParticlesFactory::create( params, *patch );
+            partSend[i][0] = ParticlesFactory::create( params, *patch );
+            partSend[i][1] = ParticlesFactory::create( params, *patch );
+        } else {
+            partRecv[i][0] = new Particles();
+            partRecv[i][1] = new Particles();
+            partSend[i][0] = new Particles();
+            partSend[i][1] = new Particles();
+        }
     }
 }
 

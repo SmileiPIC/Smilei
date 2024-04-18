@@ -113,17 +113,20 @@ public:
     };
 
     // -----------------------------------------------------------------------------
-    //! Move escaping particles to the buffers
+    //! Move leaving particles to the buffers
     // -----------------------------------------------------------------------------
-    void extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] ) override;
+    void copyLeavingParticlesToBuffer( Particles* buffer ) override;
     
-    template< const int key>
-    void extractParticlesByKey( bool copy, Particles* buffer );
+    template<typename Predicate>
+    void copyParticlesByPredicate( Particles* buffer, Predicate pred );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
     // -----------------------------------------------------------------------------
     int eraseLeavingParticles() override;
+    
+    template<typename Predicate>
+    int eraseParticlesByPredicate( Predicate pred );
     
     // -----------------------------------------------------------------------------
     //! Inject particles from particles_to_inject into *this and return the number of particle added

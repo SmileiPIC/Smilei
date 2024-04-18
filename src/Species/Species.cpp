@@ -632,16 +632,12 @@ Species::deleteSpeciesCurrentAndChargeOnDevice(
 void Species::allocateParticlesOnDevice()
 {
     particles->initializeDataOnDevice();
-    for( auto partSends: MPI_buffer_.partSend ) {
-        for( auto partSend: partSends ) {
-            partSend->initializeDataOnDevice();
-        }
-    }
-    for( auto partRecvs: MPI_buffer_.partRecv ) {
-        for( auto partRecv: partRecvs ) {
-            partRecv->initializeDataOnDevice();
-        }
-    }
+    
+    // The first send/recv buffers are also on device
+    MPI_buffer_.partSend[0][0]->initializeDataOnDevice();
+    MPI_buffer_.partSend[0][1]->initializeDataOnDevice();
+    MPI_buffer_.partRecv[0][0]->initializeDataOnDevice();
+    MPI_buffer_.partRecv[0][1]->initializeDataOnDevice();
 
     // Create photon species on the device
     if( radiation_model_ == "mc" && photon_species_ ) {

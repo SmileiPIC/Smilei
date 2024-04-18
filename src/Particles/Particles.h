@@ -473,9 +473,10 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles escaping the box to buffers
+    //! Extract particles leaving the box to buffers
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] );
+    void copyLeavingParticlesToBuffers( const bool copy[], Particles* buffer[] );
+    virtual void copyLeavingParticlesToBuffer( Particles* buffer );
 
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device

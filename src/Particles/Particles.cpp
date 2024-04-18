@@ -1305,8 +1305,37 @@ void Particles::copyFromDeviceToHost()
 }
 
 // Loop all particles and copy the outgoing ones to buffers
-void Particles::extractParticles( const size_t /* ndim */, const bool copy[], Particles* buffer[] )
+void Particles::copyLeavingParticlesToBuffers( const bool copy[], Particles* buffer[] )
 {
+    // Leaving particles have a cell_key equal to -2-direction
+    // where direction goes from 0 to 6 and tells which way the particle escapes.
+    // If the cell_key is -1, the particle must be destroyed so it is not extracted.
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+
+    // GPU
+    
+    // Copy leaving particles to buffer[0] on the GPU
+    copyLeavingParticlesToBuffer( buffer[0] );
+    
+    // Dispatch between the different buffers on the CPU
+    // (doing this on the GPU is slower; maybe replacing thrust operations with pure cuda would work)
+    vector<size_t> indices;
+    for( size_t ipart = 0; ipart < buffer[0]->size(); ipart++ ) {
+        int direction = -buffer[0]->cell_keys[ipart] - 2;
+        if( direction > 0 ) {
+            if( copy[direction] ) {
+                buffer[0]->copyParticle( ipart, *buffer[direction] );
+            }
+            indices.push_back( ipart );
+        }
+    }
+    buffer[0]->eraseParticles( indices );
+
+#else
+
+    // CPU
+    
     for( size_t ipart = 0; ipart < size(); ipart++ ) {
         if( cell_keys[ipart] < -1 ) {
             int direction = -cell_keys[ipart] - 2;
@@ -1315,7 +1344,15 @@ void Particles::extractParticles( const size_t /* ndim */, const bool copy[], Pa
             }
         }
     }
+    
+#endif
 }
+
+void Particles::copyLeavingParticlesToBuffer( Particles* )
+{
+    ERROR( "Device only feature, should not have come here!" );
+}
+
 
 void Particles::savePositions() {
     unsigned int ndim = Position.size(), npart = size();

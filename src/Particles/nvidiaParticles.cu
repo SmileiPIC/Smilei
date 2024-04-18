@@ -54,6 +54,15 @@ struct cellKeyNegative
     }
 };
 
+struct cellKeyBelowMinus1
+{
+    constexpr __host__ __device__ bool
+    operator()( const int& x ) const
+    {
+        return x < -1;
+    }
+};
+
 namespace detail {
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -1375,49 +1384,33 @@ unsigned int nvidiaParticles::deviceCapacity() const
 }
 
 // -----------------------------------------------------------------------------
-//! Move escaping particles to the buffers
+//! Move leaving particles to the buffer
 // -----------------------------------------------------------------------------
-void nvidiaParticles::extractParticles( const size_t ndim, const bool copy[], Particles* buffer[] )
+void nvidiaParticles::copyLeavingParticlesToBuffer( Particles* buffer )
 {
-    // Escaping particles have a cell_key equal to -2-direction
-    // where direction goes from 0 to 6 and tells which way the particle escapes.
-    // If the cell_key is -1, the particle must be destroyed so it is not extracted.
-    
-    extractParticlesByKey<-2>( copy[0], buffer[0] ); // x_min
-    extractParticlesByKey<-3>( copy[1], buffer[1] ); // x_max
-    if( ndim > 1 ) {
-        extractParticlesByKey<-4>( copy[2], buffer[2] ); // y_min
-        extractParticlesByKey<-5>( copy[3], buffer[3] ); // y_max
-        if( ndim > 2 ) {
-            extractParticlesByKey<-6>( copy[4], buffer[4] ); // z_min
-            extractParticlesByKey<-7>( copy[5], buffer[5] ); // z_max
-        }
-    }
+    copyParticlesByPredicate( buffer, cellKeyBelowMinus1() );
+    buffer->copyFromDeviceToHost();
 }
 
 
-//! Copy particles which have cell_key = key
-template< const int key>
-void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
+//! Copy particles which statisfy some predicate
+template<typename Predicate>
+void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pred )
 {
     // TODO(Etienne M): We are doing extra work. We could use something like
     // std::partition to output the invalidated particles in buffer
     // and keep the good ones. This would help us avoid the std::remove_if in
     // the particle injection and sorting algorithm.
     
-    if( ! copy ) {
-        return;
-    }
-    
     const int nparts = gpu_nparts_;
     // Iterator of the main data structure
     // NOTE: https://nvidia.github.io/thrust/api/classes/classthrust_1_1zip__iterator.html#class-thrustzip_iterator
     const auto source_iterator_first = thrust::make_zip_iterator( thrust::make_tuple( nvidia_position_[0].begin(),
-                                                                                           nvidia_momentum_[0].begin(),
-                                                                                           nvidia_momentum_[1].begin(),
-                                                                                           nvidia_momentum_[2].begin(),
-                                                                                           nvidia_weight_.begin(),
-                                                                                           nvidia_charge_.begin() ) );
+                                                                                      nvidia_momentum_[0].begin(),
+                                                                                      nvidia_momentum_[1].begin(),
+                                                                                      nvidia_momentum_[2].begin(),
+                                                                                      nvidia_weight_.begin(),
+                                                                                      nvidia_charge_.begin() ) );
     const auto source_iterator_last  = source_iterator_first + nparts; // std::advance
     
     nvidiaParticles* const cp_parts = static_cast<nvidiaParticles*>( buffer );
@@ -1425,7 +1418,7 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
     const int nparts_to_copy = thrust::count_if( thrust::device,
                                                  nvidia_cell_keys_.cbegin(),
                                                  nvidia_cell_keys_.cbegin() + nparts,
-                                                 cellKeyEquals<key>() );
+                                                 pred );
 
     // Resize it, if too small (copy_if do not resize)
     cp_parts->resize( nparts_to_copy );
@@ -1443,7 +1436,7 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
                      source_iterator_last,
                      nvidia_cell_keys_.cbegin(),
                      destination_iterator_first,
-                    cellKeyEquals<key>() );
+                     pred );
 
     // Copy the other position values depending on the simulation's grid dimensions
     const int ndim_particles = nvidia_position_.size();
@@ -1453,7 +1446,7 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
                          nvidia_position_[i].cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_position_[i].begin(),
-                        cellKeyEquals<key>() );
+                         pred );
     }
 
     // Special treatment for chi if radiation emission
@@ -1463,7 +1456,7 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
                          nvidia_chi_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_chi_.begin(),
-                        cellKeyEquals<key>() );
+                         pred );
     }
 
     if( has_Monte_Carlo_process ) {
@@ -1472,7 +1465,7 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
                          nvidia_tau_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_tau_.begin(),
-                        cellKeyEquals<key>() );
+                         pred );
     }
 
     if( tracked ) {
@@ -1481,10 +1474,9 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
                          nvidia_id_.cbegin() + nparts,
                          nvidia_cell_keys_.cbegin(),
                          cp_parts->nvidia_id_.begin(),
-                        cellKeyEquals<key>() );
+                         pred );
     }
 
-    buffer->copyFromDeviceToHost();
 }
 
 
@@ -1517,13 +1509,18 @@ void nvidiaParticles::extractParticlesByKey( bool copy, Particles* buffer )
 // -----------------------------------------------------------------------------
 int nvidiaParticles::eraseLeavingParticles()
 {
+    return eraseParticlesByPredicate( cellKeyNegative() );
+}
+
+template<typename Predicate>
+int nvidiaParticles::eraseParticlesByPredicate( Predicate pred )
+{
     const int position_dimension_count = nvidia_position_.size();
     const int nparts                   = gpu_nparts_;
     const int nparts_to_remove         = thrust::count_if( thrust::device,
                                                            nvidia_cell_keys_.begin(),
                                                            nvidia_cell_keys_.begin() + nparts,
-                                                           cellKeyNegative() );
-
+                                                           pred );
 
     if( nparts_to_remove > 0 ) {
         const auto first_particle = thrust::make_zip_iterator( thrust::make_tuple( nvidia_position_[0].begin(),
@@ -1540,7 +1537,7 @@ int nvidiaParticles::eraseLeavingParticles()
                            first_particle,
                            last_particle,
                            nvidia_cell_keys_.cbegin(),
-                           cellKeyNegative() );
+                           pred );
 
         // Remove the other position values depending on the simulation's grid
         // dimensions
@@ -1549,7 +1546,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_position_[i].begin(),
                                nvidia_position_[i].begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               cellKeyNegative() );
+                               pred );
         }
 
         if( has_quantum_parameter ) {
@@ -1557,7 +1554,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_chi_.begin(),
                                nvidia_chi_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               cellKeyNegative() );
+                               pred );
         }
 
         if( has_Monte_Carlo_process ) {
@@ -1565,7 +1562,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_tau_.begin(),
                                nvidia_tau_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               cellKeyNegative() );
+                               pred );
         }
 
         if( tracked ) {
@@ -1573,7 +1570,7 @@ int nvidiaParticles::eraseLeavingParticles()
                                nvidia_id_.begin(),
                                nvidia_id_.begin() + nparts,
                                nvidia_cell_keys_.cbegin(),
-                               cellKeyNegative() );
+                               pred );
         }
 
         // Update current number of particles
