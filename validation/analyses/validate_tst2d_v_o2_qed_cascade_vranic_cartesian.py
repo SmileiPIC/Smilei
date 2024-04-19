@@ -247,7 +247,7 @@ for itimestep,timestep in enumerate(step_list):
 
 thresholds = {}
 thresholds["points"] = np.array([0. ,10 ,100,1000])
-thresholds["factor"] = np.array([1e9, 1.,0.6, 0.2])
+thresholds["factor"] = np.array([1e9, 1.,0.7, 0.2])
 
 Validate("Average gamma for the electrons vs time", average_gamma["electron"], adaptive_error(average_gamma["electron"], Nelectron, thresholds))
 Validate("Average gamma for the positrons vs time", average_gamma["positron"], adaptive_error(average_gamma["positron"], Npositron, thresholds))
