@@ -196,13 +196,10 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       int  icell,
                                                       int  ipart_ref )
 {
-{
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
     std::vector<double> &invgf = smpi->dynamics_invgf[ithread];
 
-        EMfields->rho_->copyFromDeviceToHost();
-        EMfields->rho_s[ispec]->copyFromDeviceToHost();
     if( diag_flag ) {
 
         double *const __restrict__ b_Jx = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
@@ -220,20 +217,6 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         // Does not compute Rho !
 
 #if defined( SMILEI_ACCELERATOR_MODE )
-        /*currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho,
-                            Jx_size, Jy_size, Jz_size, rho_size,
-                            particles, x_dimension_bin_count_,
-                            invgf.data(), iold.data(), delta.data(),
-                            inv_cell_volume,
-                            dx_inv_,
-                            dx_ov_dt_,
-                            i_domain_begin_,
-                            not_spectral_ );*/
-    // to be deleted
-	std::cout<<"in projector1D2orderGPUKernel.cpp l229: rho_size= "<<rho_size << std::endl;
-	for( int ipart=0 ; ipart<rho_size; ipart++ )
-	    std::cout<< std::setprecision (15)<<b_rho[ipart]<<std::endl;
-
 
         currentAndDensityDepositionKernel1DOnDevice( b_Jx,b_Jy,b_Jz,b_rho,
                             Jx_size, Jy_size, Jz_size, rho_size,
@@ -252,17 +235,6 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                             dx_ov_dt_,
                             i_domain_begin_,
                             not_spectral_ );
-        EMfields->rho_->copyFromDeviceToHost();
-        EMfields->rho_s[ispec]->copyFromDeviceToHost();
-        EMfields->Jx_->copyFromDeviceToHost();
-        EMfields->Jx_s[ispec]->copyFromDeviceToHost();
-        EMfields->Jy_->copyFromDeviceToHost();
-        EMfields->Jy_s[ispec]->copyFromDeviceToHost();
-        EMfields->Jz_->copyFromDeviceToHost();
-        EMfields->Jz_s[ispec]->copyFromDeviceToHost();
-        std::cout<<"in projector1D2orderGPUKernel.cpp l251 after projection: rho_size= "<<rho_size << std::endl;
-        for( int ipart=0 ; ipart<rho_size; ipart++ )
-            std::cout<<b_rho[ipart]<<std::endl;
 
 #else
         SMILEI_ASSERT( false );
@@ -270,53 +242,11 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     } else {
         if( is_spectral ) {
             ERROR( "Not implemented on GPU" );
-            // }
         }
         else{
 
-            Jx_                        = EMfields->Jx_->data();
-            Jy_                        = EMfields->Jy_->data();
-            Jz_                        = EMfields->Jz_->data();
-            rho_                       = EMfields->rho_->data();
-
-            /*currents( Jx_, Jy_, Jz_,
-                      EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
-                      particles, x_dimension_bin_count_, y_dimension_bin_count_,
-                      invgf.data(), iold.data(), delta.data(),
-                      inv_cell_volume,
-                      dx_inv_, dy_inv_,
-                      dx_ov_dt_, dy_ov_dt_,
-                      i_domain_begin_, j_domain_begin_,
-                      nprimy,
-                      one_third,
-                      not_spectral_ );
-        }
-            double *const __restrict__ b_Jx = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
-            unsigned int Jx_size            = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
-
-            double *const __restrict__ b_Jy = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
-            unsigned int Jy_size            = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
-
-            double *const __restrict__ b_Jz = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
-            unsigned int Jz_size            = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();//*/
-            /*Jx_                        = EMfields->Jx_->data();
-            Jy_                        = EMfields->Jy_->data();
-            Jz_                        = EMfields->Jz_->data();*/
-
-            /*currents( Jx_, Jy_, Jz_,
-                      EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
-                      particles, x_dimension_bin_count_,
-                      invgf.data(), iold.data(), delta.data(),
-                      inv_cell_volume,
-                      dx_inv_,
-                      dx_ov_dt_,
-                      i_domain_begin_,
-                      not_spectral_ );*/
 #if defined( SMILEI_ACCELERATOR_MODE )
-    //double *device_Jx = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( b_Jx ) ; 
-    //printf("testing device Jx:, %p \n", device_Jx);
-            currentDepositionKernel1DOnDevice(Jx_, Jy_, Jz_, //b_Jx,b_Jy,b_Jz,
-                    //Jx_size, Jy_size, Jz_size,
+            currentDepositionKernel1DOnDevice(Jx_, Jy_, Jz_,
                     EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
                     particles.getPtrPosition( 0 ),
                     particles.getPtrMomentum( 1 ),
@@ -338,27 +268,6 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
 #endif
         }
     }
-}
-// to be deleted
-{
-        double *const __restrict__ b_Jx = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->data() : EMfields->Jx_->data();
-        unsigned int Jx_size            = EMfields->Jx_s[ispec] ? EMfields->Jx_s[ispec]->size() : EMfields->Jx_->size();
-
-        double *const __restrict__ b_Jy = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->data() : EMfields->Jy_->data();
-        unsigned int Jy_size            = EMfields->Jy_s[ispec] ? EMfields->Jy_s[ispec]->size() : EMfields->Jy_->size();
-
-        double *const __restrict__ b_Jz = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->data() : EMfields->Jz_->data();
-        unsigned int Jz_size            = EMfields->Jz_s[ispec] ? EMfields->Jz_s[ispec]->size() : EMfields->Jz_->size();
-
-        double *const __restrict__ b_rho = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
-        unsigned int rho_size            = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
-
-        std::cout<<"in projector1D2orderGPUKernel.cpp l336: rho_size= "<<rho_size << " EMfields->rho_s[ispec] ? " 
-            << EMfields->rho_s[ispec] << " Jx_size " << Jx_size<< " Jy_size " << Jy_size<< " Jz_size " << Jz_size<< std::endl;
-        for( int ipart=0 ; ipart<rho_size; ipart++ )
-            std::cout<< std::setprecision (15)<<b_rho[ipart] << " " << b_Jx[ipart] << " "<< b_Jy[ipart] << " "<< b_Jz[ipart]<<std::endl;
-}
-
 }
 
 void Projector1D2OrderGPU::ionizationCurrents( Field      *Jx,

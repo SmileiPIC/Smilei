@@ -127,12 +127,11 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
                                           Particles &particles, SmileiMPI *smpi,
                                           int *istart, int *iend, int ithread, unsigned int, int )
 {
-    {
-    double *const __restrict__ ELoc = smpi->dynamics_Epart[ithread].data();//&( smpi->dynamics_Epart[ithread][0] );
-    double *const __restrict__ BLoc = smpi->dynamics_Bpart[ithread].data();//&( smpi->dynamics_Bpart[ithread][0] );
+    double *const __restrict__ ELoc = smpi->dynamics_Epart[ithread].data();
+    double *const __restrict__ BLoc = smpi->dynamics_Bpart[ithread].data();
 
-    int    *const __restrict__ iold  = smpi->dynamics_iold[ithread].data();//&( smpi->dynamics_iold[ithread][0] );
-    double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();//&( smpi->dynamics_deltaold[ithread][0] );
+    int    *const __restrict__ iold  = smpi->dynamics_iold[ithread].data();
+    double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();
 
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
 
@@ -159,53 +158,8 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
     const int last_index  = *iend;
     double accdx_inv[2];
     accdx_inv[0]= dx_inv_;
-    /*std::cout<< "printing before in interpolator ex, ey and ez then bx,by,bz" <<std::endl;
-    for( unsigned int ix=first_index ; ix<last_index; ++ix ) {
-        std::cout<< std::setprecision (15)<<Ex1D[ix] << " " <<Ey1D[ix] << " "<<Ez1D[ix] << " " 
-        << Bx1D[ix] << " " <<By1D[ix] << " "<<Bz1D[ix] << " " << iold[ix] << " " <<delta[ix] <<std::endl;
-    }
-
-    
-        EMfields->Ex_->copyFromDeviceToHost();
-        EMfields->Ey_->copyFromDeviceToHost();
-        EMfields->Ez_->copyFromDeviceToHost();
-        EMfields->Jx_->copyFromDeviceToHost();
-        EMfields->Jy_->copyFromDeviceToHost();
-        EMfields->Jz_->copyFromDeviceToHost();
-    }
-    std::cout<< "printing before in interpolator after copyFromDeviceToHost ex, ey and ez then bx,by,bz" <<std::endl;
-    for( unsigned int ix=first_index ; ix<last_index; ++ix ) {
-        std::cout<< std::setprecision (15)<<Ex1D[ix] << " " <<Ey1D[ix] << " "<<Ez1D[ix] << " " << Bx1D[ix] << " " <<By1D[ix] << " "<<Bz1D[ix]<<std::endl;
-    }
-
-
-    std::cout<<"print in interpolator fields wrapper eloc before computation and  CopyDeviceToHost"<<std::endl;
-    for (int ipart=*istart; ipart < *iend; ipart++){
-        std::cout<<ELoc[0*nparts+ipart]<< " " << ELoc[1*nparts+ipart]<< " " << ELoc[2*nparts+ipart]<< std::endl;
-    }
-
-
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[0*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[1*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[2*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[0*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[1*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[2*nparts] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_iold[ithread] )[0] ), nparts );
-    smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_deltaold[ithread] )[0]), nparts );
-
-
-
-    std::cout<<"print in interpolator fields wrapper eloc before computation and after CopyDeviceToHost"<<std::endl;
-    for (int ipart=*istart; ipart < *iend; ipart++){
-        std::cout<<ELoc[0*nparts+ipart]<< " " << ELoc[1*nparts+ipart]<< " " << ELoc[2*nparts+ipart]<< " " << iold[ipart] << " " <<delta[ipart]<< std::endl;
-    }
-
-    */
-
 
     if (!smpi->use_BTIS3){
-        //for (int ipart=*istart; ipart < *iend; ipart++){
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target map( to : i_domain_begin_) is_device_ptr (position_x)
     #pragma omp teams distribute parallel for
@@ -229,7 +183,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
 #endif
     for( int ipart = first_index; ipart < last_index; ipart++ ) {
             // Normalized particle position
-            //double xpn = position_x[ipart] * dx_inv_;//particles.position( 0, ipart )*dx_inv_;
             const double xpn = position_x[ipart] *  accdx_inv[0];
             // Calculate coeffs
             int idx_p[1], idx_d[1];
@@ -297,11 +250,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
                                  BzpartBTIS3 [first_index:interpolation_range_size],\
         // ?
 
-       /* Field1D *By1D_mBTIS3 = static_cast<Field1D *>( EMfields->By_mBTIS3 );
-        Field1D *Bz1D_mBTIS3 = static_cast<Field1D *>( EMfields->Bz_mBTIS3 );
-        double  *BypartBTIS3 = &( smpi->dynamics_Bpart_yBTIS3[ithread][0]  );
-        double  *BzpartBTIS3 = &( smpi->dynamics_Bpart_zBTIS3[ithread][0]  );*/
-        
         for (int ipart=*istart; ipart < *iend; ipart++){
 
             // Normalized particle position
@@ -342,39 +290,6 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
         #pragma acc exit data delete(this)
     #endif
     } // end with B-TIS interpolation
-
-    /*{
-        EMfields->Ex_->copyFromDeviceToHost();
-        EMfields->Ey_->copyFromDeviceToHost();
-        EMfields->Ez_->copyFromDeviceToHost();
-    }
-    double *const __restrict__ ELoc = smpi->dynamics_Epart[ithread].data();//&( smpi->dynamics_Epart[ithread][0] );
-    double *const __restrict__ BLoc = smpi->dynamics_Bpart[ithread].data();//&( smpi->dynamics_Bpart[ithread][0] );
-*/ 
-    }
-    // to be deleted
-    {
-        const int nparts = particles.numberOfParticles();
-        double *const __restrict__ ELoc = smpi->dynamics_Epart[ithread].data();//&( smpi->dynamics_Epart[ithread][0] );
-        double *const __restrict__ BLoc = smpi->dynamics_Bpart[ithread].data();//&( smpi->dynamics_Bpart[ithread][0] );
-        std::cout<< std::setprecision (15)<<"print in interpolator fields wrapper eloc before CopyDeviceToHost"<<std::endl;
-        for (int ipart=*istart; ipart < *iend; ipart++){
-            std::cout<<ELoc[0*nparts+ipart]<< " " << ELoc[1*nparts+ipart]<< " " << ELoc[2*nparts+ipart]<< std::endl;
-        }
-        {
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[0*nparts] ), nparts );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[1*nparts] ), nparts );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Epart[ithread] )[2*nparts] ), nparts );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[0*nparts] ), nparts );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[1*nparts] ), nparts );
-            smilei::tools::gpu::HostDeviceMemoryManagement::CopyDeviceToHost( &( ( smpi->dynamics_Bpart[ithread] )[2*nparts] ), nparts );
-
-        }
-        std::cout<<"print in interpolator fields wrapper eloc after CopyDeviceToHost"<<std::endl;
-        for (int ipart=*istart; ipart < *iend; ipart++){
-            std::cout<<ELoc[0*nparts+ipart]<< " " << ELoc[1*nparts+ipart]<< " " << ELoc[2*nparts+ipart]<< std::endl;
-        }
-    }
 
 }
 

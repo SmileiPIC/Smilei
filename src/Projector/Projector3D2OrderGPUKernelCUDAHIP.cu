@@ -238,9 +238,6 @@ namespace cudahip {
                                                                                      device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-//std::cout << first_particle << std::endl;
-//printf("%d \n",first_particle);
-
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {

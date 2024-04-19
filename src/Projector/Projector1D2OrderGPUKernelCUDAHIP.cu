@@ -480,17 +480,6 @@ namespace cudahip1d {
                                          int          i_domain_begin,
                                          int          not_spectral_ )
         {
- /*printf(" Hallooo \n");
-            for (int i=0; i<Jx_size; ++i){
-                printf("i %d / %d  device_Jx[i] = %f \n", i, Jx_size,device_Jx[i] );
-            }
-            for (int i=0; i<Jy_size; ++i){
-                printf("i %d / %d  device_Jy[i] = %f \n", i, Jy_size,device_Jy[i] );
-            }
-            for (int i=0; i<Jz_size; ++i){
-                printf("i %d / %d  device_Jz[i] = %f \n", i, Jz_size,device_Jz[i] );
-            }//*/
-
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
             // TODO(Etienne M): __ldg could be used to slightly improve GDS load
@@ -517,7 +506,6 @@ namespace cudahip1d {
 
             static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 1 /* 1D */, 2 /* 2nd order interpolation */ );
 
-            //printf("kWorkgroupSize %d  bin_count %d loop_stride %d, x_cluster_coordinate %d, workgroup_dedicated_bin_index %d, thread_index_offset %d, getGPUClusterWidth %d, GPUClusterWithGCWidth %d, kFieldScratchSpaceSize %d, global_x_scratch_space_coordinate_offset %d\n",
             //    kWorkgroupSize, bin_count, loop_stride, x_cluster_coordinate, workgroup_dedicated_bin_index, thread_index_offset, Params::getGPUClusterWidth(1), GPUClusterWithGCWidth, kFieldScratchSpaceSize, global_x_scratch_space_coordinate_offset);
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
@@ -544,8 +532,6 @@ namespace cudahip1d {
             // first_particle) particles
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
-
-            //printf("first_particle %d last_particle %d particle_count %d\n", first_particle, last_particle, particle_count);
 
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
@@ -639,8 +625,6 @@ namespace cudahip1d {
                 const unsigned int global_memory_index = global_x_scratch_space_coordinate;
                 const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * GPUClusterWithGCWidth + local_y_scratch_space_coordinate;
 
-                //printf("field_index %d, thread_index_offset %d, kFieldScratchSpaceSize %d, workgroup_size %d, GPUClusterWithGCWidth %d, global_x_scratch_space_coordinate_offset %d, global_memory_index %d, Jx_size %d\n",field_index, thread_index_offset, kFieldScratchSpaceSize, workgroup_size, GPUClusterWithGCWidth, global_x_scratch_space_coordinate_offset, global_memory_index, Jx_size);
-
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jy[global_memory_index +  not_spectral_ * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) ); //  We handle the FTDT/picsar 
@@ -731,18 +715,12 @@ namespace cudahip1d {
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            //printf(" first_particle %d last_particle %d loopstride %d \n",first_particle, last_particle, loop_stride);
-
             for( unsigned int particle_index = first_particle + thread_index_offset;
                  particle_index < last_particle;
                  particle_index += loop_stride ) {
                 const ComputeFloat                  invgf = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__        iold = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
-
-                //printf("in projector cuda l735: particle charge= %f weight %f position_x= %f, momentum y = %f, momentum z = %f, charge*sqrt(2) %+4.15e \n", static_cast<ComputeFloat>( device_particle_charge[particle_index]) , static_cast<ComputeFloat>( device_particle_weight[particle_index]),
-		//	       	static_cast<ComputeFloat>( device_particle_position_x[particle_index] ), static_cast<ComputeFloat>( device_particle_momentum_y[particle_index] ), 
-		//     		static_cast<ComputeFloat>( device_particle_momentum_z[particle_index] ), static_cast<ComputeFloat>( device_particle_charge[particle_index]) * static_cast<ComputeFloat>(sqrt(2.0)));
 
                 ComputeFloat Sx0[5];
                 ComputeFloat Sx1[5];
@@ -954,12 +932,6 @@ namespace cudahip1d {
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-    //double *device_Jx = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ) ; 
-    //printf("testing device Jx:, %p \n", device_Jx);
-    /*for (int i=0; i<Jx_size ; ++i){
-        printf("device_Jx[i] = %Lf \n", device_Jx[i]);
-    }//*/
-
 	KernelFunction <<<
                             kGridDimension,
                             kBlockDimension,
@@ -1025,8 +997,6 @@ namespace cudahip1d {
         static constexpr std::size_t kWorkgroupSize = 128;
         const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
 
-        //printf("ClusterWidth %d clusterGhostCellBorderWidth %d x_dimension_bin_count %d \n",Params::getGPUClusterWidth( 1), Params::getGPUClusterGhostCellBorderWidth( 2),  x_dimension_bin_count);
-
         // NOTE: On cards lacking hardware backed Binary64 atomic operations,
         // falling back to Binary32 (supposing hardware support for atomic
         // operations) can lead to drastic performance improvement.
@@ -1064,9 +1034,6 @@ namespace cudahip1d {
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-	//printf("device bin index in projector cuda: %d \n",*host_bin_index);
-	//for(int i=0; i<*host_bin_index;++i)
-	//    std::cout<<"in projector cuda, device_particle_position_x[i]"<< device_particle_position_x[i]<<std::endl;
         KernelFunction <<<                                                                                                             
                             kGridDimension,                                                                                            
                             kBlockDimension,                                                                                           

@@ -743,8 +743,7 @@ namespace detail {
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ) ) );
         const auto last  = first + particle_container.deviceSize();
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
-        printf ( "CellStartingGlobalIndex_for_x %d res %f patch size %d \n",CellStartingGlobalIndex_for_x,parameters.res_space[0], parameters.patch_size_[0]  );
-	    doComputeParticleClusterKey( first, last,
+	doComputeParticleClusterKey( first, last,
                                      Cluster1D<Params::getGPUClusterWidth( 1 )>{ parameters.res_space[0],
                                                                                           parameters.patch_size_[0],
                                                                                           CellStartingGlobalIndex_for_x} );
@@ -762,7 +761,7 @@ namespace detail {
         const auto last  = first + particle_container.deviceSize();
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
-	    doComputeParticleClusterKey( first, last,
+	doComputeParticleClusterKey( first, last,
                                      Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.res_space[0],
                                                                                           parameters.res_space[1],
                                                                                           parameters.patch_size_[0],
@@ -785,7 +784,7 @@ namespace detail {
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
         int CellStartingGlobalIndex_for_z = a_parent_patch.getCellStartingGlobalIndex_noGC(2);
-	    doComputeParticleClusterKey( first, last,
+	doComputeParticleClusterKey( first, last,
                                      Cluster3D<Params::getGPUClusterWidth( 3 )>{ parameters.res_space[0],
                                                                                           parameters.res_space[1],
                                                                                           parameters.res_space[2],
@@ -971,7 +970,6 @@ namespace detail {
         // TODO(Etienne M): Find a better way to dispatch at runtime. This is
         // complex to read and to maintain.
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
-        printf("CellStartingGlobalIndex_for_x %d \n" , CellStartingGlobalIndex_for_x );
 
         const Cluster1D cluster_manipulator{ parameters.res_space[0],
                                              parameters.patch_size_[0],
@@ -1035,7 +1033,6 @@ namespace detail {
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
 
-        printf("CellStartingGlobalIndex_for_x %d \n" , CellStartingGlobalIndex_for_x );
         const Cluster2D cluster_manipulator{ parameters.res_space[0],
                                              parameters.res_space[1],
                                              parameters.patch_size_[0],
@@ -1482,7 +1479,6 @@ void nvidiaParticles::initializeDataOnDevice()
 
         // setHostBinIndex();
     } else {
-        printf( " parent patch %p cells starting global index %d \n", parent_patch_, parent_patch_->getCellStartingGlobalIndex_noGC(0) );
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
@@ -1956,9 +1952,6 @@ extern "C"
 {
     void* CreateGPUParticles( const void* parameters, const void* a_parent_patch )
     {
-        const Patch *temp = static_cast<const Patch*>( a_parent_patch );
-        
-        printf( " in create GPU parent patch %p cells starting global index %d \n", a_parent_patch, temp->getCellStartingGlobalIndex_noGC(0) );
         return new nvidiaParticles{ *static_cast<const Params*>( parameters ),
                                     *static_cast<const Patch*>( a_parent_patch ) };
     }

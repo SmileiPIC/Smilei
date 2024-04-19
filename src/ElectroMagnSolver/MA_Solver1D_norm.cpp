@@ -15,17 +15,8 @@ MA_Solver1D_norm::~MA_Solver1D_norm()
 
 void MA_Solver1D_norm::operator()( ElectroMagn *fields )
 {
-    {
     const unsigned int nx_p = fields->dimPrim[0];
     const unsigned int nx_d = fields->dimDual[0];
-    /*Field1D *Ex1D = static_cast<Field1D *>( fields->Ex_ );
-    Field1D *Ey1D = static_cast<Field1D *>( fields->Ey_ );
-    Field1D *Ez1D = static_cast<Field1D *>( fields->Ez_ );
-    Field1D *By1D = static_cast<Field1D *>( fields->By_ );
-    Field1D *Bz1D = static_cast<Field1D *>( fields->Bz_ );
-    Field1D *Jx1D = static_cast<Field1D *>( fields->Jx_ );
-    Field1D *Jy1D = static_cast<Field1D *>( fields->Jy_ );
-    Field1D *Jz1D = static_cast<Field1D *>( fields->Jz_ );*/
 
     double *const __restrict__ Ex1D       = fields->Ex_->data(); // [x] : dual in x   primal in y,z
     double *const __restrict__ Ey1D       = fields->Ey_->data(); // [x] : dual in y   primal in x,z
@@ -37,18 +28,6 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
     const double *const __restrict__ Jy1D = fields->Jy_->data(); // [x] : dual in y   primal in x,z
     const double *const __restrict__ Jz1D = fields->Jz_->data(); // [x] : dual in z   primal in x,y 
 
-    {
-        fields->Ex_->copyFromDeviceToHost();
-        fields->Ey_->copyFromDeviceToHost();
-        fields->Ez_->copyFromDeviceToHost();
-        fields->Jx_->copyFromDeviceToHost();
-        fields->Jy_->copyFromDeviceToHost();
-        fields->Jz_->copyFromDeviceToHost();
-    }
-    std::cout<< "printing before in MA solver ex, ey and ez for nx_d="<<nx_d<< "then jx,jy,jz" <<std::endl;
-    for( unsigned int ix=0 ; ix<std::min(nx_d,nx_p) ; ++ix ) {
-        std::cout<< std::setprecision (15)<<Ex1D[ix] << " " <<Ey1D[ix] << " "<<Ez1D[ix] << " " << Jx1D[ix] << " " <<Jy1D[ix] << " "<<Jz1D[ix]<<std::endl;
-    }
     // --------------------
     // Solve Maxwell-Ampere
     // --------------------
@@ -88,28 +67,6 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
     for( unsigned int ix=0 ; ix<nx_p ; ++ix ) {
         Ey1D[ix] -= dt_ov_dx * Bz1D[ix+1] - Bz1D[ix] - dt * Jy1D[ix];
         Ez1D[ix] += dt_ov_dx * By1D[ix+1] - By1D[ix] - dt * Jz1D[ix];
-        //( *Ey1D )( ix )= ( *Ey1D )( ix ) - dt_ov_dx * ( ( *Bz1D )( ix+1 ) - ( *Bz1D )( ix ) ) - dt * ( *Jy1D )( ix ) ;
-        //( *Ez1D )( ix )= ( *Ez1D )( ix ) + dt_ov_dx * ( ( *By1D )( ix+1 ) - ( *By1D )( ix ) ) - dt * ( *Jz1D )( ix ) ;
-    }
-
-    {
-        fields->Ex_->copyFromDeviceToHost();
-        fields->Ey_->copyFromDeviceToHost();
-        fields->Ez_->copyFromDeviceToHost();
-    }
-    }
-    // to be deleted
-    {
-        const unsigned int nx_p = fields->dimPrim[0];
-        const unsigned int nx_d = fields->dimDual[0];
-        double *const __restrict__ Ex1D       = fields->Ex_->data(); // [x] : dual in x   primal in y,z
-        double *const __restrict__ Ey1D       = fields->Ey_->data(); // [x] : dual in y   primal in x,z
-        double *const __restrict__ Ez1D       = fields->Ez_->data(); // [x] : dual in z   primal in x,y
-
-        std::cout<< "printing after in MA solver ex, ey and ez for nx_d="<<nx_d<< "nx_p = "<< nx_p<<std::endl;
-        for( unsigned int ix=0 ; ix<std::min(nx_d,nx_p) ; ++ix ) {
-            std::cout<< std::setprecision (15)<<Ex1D[ix] << " " <<Ey1D[ix] << " "<<Ez1D[ix] << " " <<std::endl;
-        }
     }
 }
 
