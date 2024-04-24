@@ -238,22 +238,26 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         if( shuffle1 ) {
             swap( npartmin, npartmax );
         }
-        // skip to next bin if no particles
-        if( npartmax == 0 ) {
+        
+        // skip to next bin if not enough pairs
+        if( npartmin == 0 || ( intra_ && npartmin < 2 ) ) {
             continue;
         }
         
-        size_t npairs, N2max;
+        size_t npairs, npairs_not_repeated;
+        double weight_correction_1, weight_correction_2;
         if( intra_ ) { // In the case of pairing within one species
-            if( npartmax < 2 ) {
-                continue;
-            }
             npairs = ( npartmax + 1 ) / 2; // half as many pairs as macro-particles
-            N2max = npartmax - npairs; // number of not-repeated particles (in group with less particles)
+            npairs_not_repeated = npartmax - npairs;
+            weight_correction_1 = 1.;
+            weight_correction_2 = 0.5;
         } else { // In the case of pairing between two species
-            npairs = npartmax; // as many pairs as macro-particles (in group with more particles)
-            N2max = npartmin; // number of not-repeated particles (in group with less particles)
+            npairs = npartmax; // as many pairs as macro-particles in group with more particles
+            npairs_not_repeated = npartmin;
+            weight_correction_1 = 1. / (double)( npairs / npairs_not_repeated );
+            weight_correction_2 = 1. / (double)( npairs / npairs_not_repeated + 1 );
         }
+        
         RandomShuffle shuffler( *patch->rand_, npartmax );
         
         // Calculate the densities
@@ -286,8 +290,6 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_ ? 2*npairs-1 : npairs;
         double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
-        double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
-        double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1 );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
         D.n123 = pow( n1, 2./3. );
@@ -343,7 +345,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             
             // Calculate the timestep correction
             D.dt_correction = D.maxW * dt_corr;
-            if( i % N2max <= (npairs-1) % N2max ) {
+            if( i % npairs_not_repeated < npairs % npairs_not_repeated ) {
                 D.dt_correction *= weight_correction_2 ;
             } else {
                 D.dt_correction *= weight_correction_1;
