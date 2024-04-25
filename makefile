@@ -52,7 +52,7 @@ DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
+SITEDIR = $(shell d=`$(PYTHONEXE) -m site --user-site` && echo $$d || $(PYTHONEXE) -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 # Smilei tools
 TABLES_DIR := tools/tables
