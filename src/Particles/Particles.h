@@ -435,7 +435,7 @@ public:
     virtual void initializeDataOnDevice();
     virtual void initializeIDsOnDevice();
     virtual void copyFromHostToDevice();
-    virtual void copyFromDeviceToHost();
+    virtual void copyFromDeviceToHost( bool copy_keys = false );
 
     //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {
@@ -475,7 +475,7 @@ public:
     // -----------------------------------------------------------------------------
     //! Extract particles leaving the box to buffers
     // -----------------------------------------------------------------------------
-    void copyLeavingParticlesToBuffers( const bool copy[], Particles* buffer[] );
+    void copyLeavingParticlesToBuffers( const std::vector<bool> copy, const std::vector<Particles*> buffer );
     virtual void copyLeavingParticlesToBuffer( Particles* buffer );
 
     // -----------------------------------------------------------------------------

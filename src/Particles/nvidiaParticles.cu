@@ -1348,7 +1348,7 @@ void nvidiaParticles::copyFromHostToDevice()
 // -------------------------------------------------------------------------------------------------
 //! Copy device to host
 // -------------------------------------------------------------------------------------------------
-void nvidiaParticles::copyFromDeviceToHost()
+void nvidiaParticles::copyFromDeviceToHost( bool copy_keys )
 {
     for (int idim=0;idim<Position.size();idim++) {
         Position[idim].resize( gpu_nparts_ );
@@ -1374,6 +1374,10 @@ void nvidiaParticles::copyFromDeviceToHost()
         Id.resize( gpu_nparts_ );
         thrust::copy((nvidia_id_).begin(), (nvidia_id_).begin()+gpu_nparts_, (Id).begin());
     }
+    if (copy_keys) {
+        cell_keys.resize( gpu_nparts_ );
+        thrust::copy((nvidia_cell_keys_).begin(), (nvidia_cell_keys_).begin()+gpu_nparts_, (cell_keys).begin());
+    }
 }
 
 unsigned int nvidiaParticles::deviceCapacity() const
@@ -1389,7 +1393,7 @@ unsigned int nvidiaParticles::deviceCapacity() const
 void nvidiaParticles::copyLeavingParticlesToBuffer( Particles* buffer )
 {
     copyParticlesByPredicate( buffer, cellKeyBelowMinus1() );
-    buffer->copyFromDeviceToHost();
+    buffer->copyFromDeviceToHost( true );
 }
 
 
@@ -1410,7 +1414,8 @@ void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pre
                                                                                       nvidia_momentum_[1].begin(),
                                                                                       nvidia_momentum_[2].begin(),
                                                                                       nvidia_weight_.begin(),
-                                                                                      nvidia_charge_.begin() ) );
+                                                                                      nvidia_charge_.begin(),
+                                                                                      nvidia_cell_keys_.begin() ) );
     const auto source_iterator_last  = source_iterator_first + nparts; // std::advance
     
     nvidiaParticles* const cp_parts = static_cast<nvidiaParticles*>( buffer );
@@ -1428,7 +1433,8 @@ void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pre
                                                                                            cp_parts->nvidia_momentum_[1].begin(),
                                                                                            cp_parts->nvidia_momentum_[2].begin(),
                                                                                            cp_parts->nvidia_weight_.begin(),
-                                                                                           cp_parts->nvidia_charge_.begin() ) );
+                                                                                           cp_parts->nvidia_charge_.begin(),
+                                                                                           cp_parts->nvidia_cell_keys_.begin() ) );
 
     // Copy send particles in dedicated data structure
     thrust::copy_if( thrust::device,

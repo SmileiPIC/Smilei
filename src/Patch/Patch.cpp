@@ -540,8 +540,8 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
     cleanMPIBuffers( ispec, params );
     
     // Make a list of buffers
-    bool copy[params.nDim_field*2];
-    Particles* sendBuffer[params.nDim_field*2];
+    vector<bool> copy( params.nDim_field*2, false );
+    vector<Particles*> sendBuffer( params.nDim_field*2, nullptr );
     for( size_t iDim = 0; iDim < params.nDim_field; iDim++ ) {
         copy[2*iDim+0] = neighbor_[iDim][0] != MPI_PROC_NULL;
         copy[2*iDim+1] = neighbor_[iDim][1] != MPI_PROC_NULL;

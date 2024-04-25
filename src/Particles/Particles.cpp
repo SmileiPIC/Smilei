@@ -1299,13 +1299,13 @@ void Particles::copyFromHostToDevice()
 {
     ERROR( "Device only feature, should not have come here!" );
 }
-void Particles::copyFromDeviceToHost()
+void Particles::copyFromDeviceToHost( bool )
 {
     ERROR( "Device only feature, should not have come here!" );
 }
 
 // Loop all particles and copy the outgoing ones to buffers
-void Particles::copyLeavingParticlesToBuffers( const bool copy[], Particles* buffer[] )
+void Particles::copyLeavingParticlesToBuffers( const vector<bool> copy, const vector<Particles*> buffer )
 {
     // Leaving particles have a cell_key equal to -2-direction
     // where direction goes from 0 to 6 and tells which way the particle escapes.

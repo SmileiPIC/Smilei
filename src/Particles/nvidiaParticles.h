@@ -78,7 +78,7 @@ public:
     void copyFromHostToDevice() override;
     
     //! Update the particles from device to host
-    void copyFromDeviceToHost() override;
+    void copyFromDeviceToHost( bool copy_keys = false ) override;
 
     unsigned int deviceCapacity() const override;
 
