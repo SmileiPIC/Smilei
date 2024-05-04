@@ -25,7 +25,6 @@ Main(
                               ['PML','PML'],
                              ],
     number_of_pml_cells             = [[10,10],[10,10]],
-    random_seed = smilei_mpi_rank
 )
 
 Antenna(

@@ -387,28 +387,22 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.box_size_[1]   = params.patch_size_[1];
                             init_space.box_size_[2]   = params.patch_size_[2];
                             
-			    nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
+                            nbr_new_particles[ispec] = particle_creator.create( init_space, params, mypatch, 0 );
 
                         } // end loop nSpecies
 
-                    mypatch->EMfields->applyExternalFields( mypatch );
-                    if( params.save_magnectic_fields_for_SM ) {
-                        mypatch->EMfields->saveExternalFields( mypatch );
-                    }
+                        mypatch->EMfields->applyExternalFields( mypatch );
+                        if( params.save_magnectic_fields_for_SM ) {
+                            mypatch->EMfields->saveExternalFields( mypatch );
+                        }
 
 #if defined ( SMILEI_ACCELERATOR_MODE )
-                    //Initialize fields of new patch on GPU
-                    mypatch->copyFieldsFromHostToDevice();
-                    // ADD NEW PARTS ON GPU
-                    for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                      mypatch->vecSpecies[ispec]->particles_to_move->clear();
-                    //   mypatch->vecSpecies[ispec]->particles->copyParticles( 0, mypatch->vecSpecies[ispec]->getNbrOfParticles(),
-                    //                                                         *mypatch->vecSpecies[ispec]->particles_to_move, 0 );
-                      mypatch->vecSpecies[ispec]->particles->initializeDataOnDevice();
-                      mypatch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
-                    }
+                        // Initialize fields and particles of new patch on GPU
+                        mypatch->copyFieldsFromHostToDevice();
+                        for( auto spec: mypatch->vecSpecies ) {
+                            spec->allocateParticlesOnDevice();
+                        }
 #endif
-
                         
                     } // end test patch_particle_created[ithread][j]
 

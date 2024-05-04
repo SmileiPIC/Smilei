@@ -28,8 +28,6 @@ Main(
         ['silver-muller'],
         ['periodic'],
     ],
-
-    random_seed = smilei_mpi_rank
 )
 
 Vectorization(

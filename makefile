@@ -52,7 +52,7 @@ DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
+SITEDIR = $(shell d=`$(PYTHONEXE) -m site --user-site` && echo $$d || $(PYTHONEXE) -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 # Smilei tools
 TABLES_DIR := tools/tables
@@ -216,7 +216,7 @@ endif
 ifneq (,$(call parse_config,gpu_amd))
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE
 	GPU_COMPILER ?= $(CC)
-	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%) #$(PY_FLAGS)
+	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%)
 	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))

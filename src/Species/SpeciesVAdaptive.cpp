@@ -46,7 +46,7 @@ using namespace std;
 SpeciesVAdaptive::SpeciesVAdaptive( Params &params, Patch *patch ) :
     SpeciesV( params, patch )
 {
-    initCluster( params );
+    initCluster( params, patch );
     npack_ = 0 ;
     packsize_ = 0;
 }//END SpeciesVAdaptive creator
@@ -275,7 +275,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             //     if( mass_>0 ) {
             //
             //         for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-            //             if ( particles->cell_keys[iPart] != -1 ) {
+            //             if ( particles->cell_keys[iPart] >= 0 ) {
             //                 //Compute cell_keys of remaining particles
             //                 for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
             //                     particles->cell_keys[iPart] *= this->length_[i];
@@ -289,7 +289,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             //     } else if( mass_==0 ) {
             //
             //         for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-            //             if ( particles->cell_keys[iPart] != -1 ) {
+            //             if ( particles->cell_keys[iPart] >= 0 ) {
             //                  //Compute cell_keys of remaining particles
             //                 for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
             //                     particles->cell_keys[iPart] *= this->length_[i];
@@ -754,7 +754,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 if( mass_>0 ) {
 
                     for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
+                        if ( particles->cell_keys[iPart] >= 0 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= this->length_[i];
@@ -768,7 +768,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 } else if( mass_==0 ) {
 
                     for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
+                        if ( particles->cell_keys[iPart] >= 0 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= length[i];
@@ -1662,7 +1662,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
 
                 smpi->traceEventIfDiagTracing(diag_PartEventTracing, Tools::getOMPThreadNum(),0,11);
                 for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
+                    if ( particles->cell_keys[iPart] >= 0 ) {
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         for( int i = 0 ; i<( int )nDim_field; i++ ) {
                             particles->cell_keys[iPart] *= length_[i];

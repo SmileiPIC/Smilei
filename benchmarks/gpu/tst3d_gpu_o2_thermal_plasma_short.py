@@ -61,7 +61,6 @@ Main(
     gpu_computing = True,
 
     # random_seed = 0xDEADBEEF,
-    random_seed = smilei_mpi_rank,
 )
 
 Vectorization(
