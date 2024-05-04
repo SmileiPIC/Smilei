@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of March 2024, 177 papers have been published covering a broad range of topics:
+As of April 2024, 183 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,16 +50,45 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+.. [Pan2024]
 
+    Z. Pan, J. Liu, P. Wang, Z. Mei, Z. Cao, D. Kong, S. Xu, Z. Liu, Y. Liang, Z. Peng, T. Xu, T. Song, X. Chen, Q. Wu, Y. Zhang, Q. Han, H. Chen, J. Zhao, Y. Gao, S. Chen, Y. Zhao, X. Yan, Y. Shou, W. Ma,
+    `Electron acceleration and x-ray generation from near-critical-density carbon nanotube foams driven by moderately relativistic lasers`,
+    `Physics of Plasmas 31, 043108 (2024) <https://doi.org/10.1063/5.0202843>`_
+
+.. [Yao2024]
+
+    W. Yao, M. Nakatsutsumi, S. Buffechoux, P. Antici, M. Borghesi, A. Ciardi, S. N. Chen, E. d’Humières, L. Gremillet, R. Heathcote, V. Horný, P. McKenna, M. N. Quinn, L. Romagnani, R. Royle,  G. Sarri, Y. Sentoku, H.-P. Schlenvoigt, T. Toncian, O. Tresca, L. Vassura, O. Willi, J. Fuchs,
+    `Optimizing laser coupling, matter heating, and particle acceleration from solids using multiplexed ultraintense lasers`,
+    `Matter and Radiation at Extremes 9, 047202 (2024) <https://doi.org/10.1063/5.0184919>`_
+
+.. [Luo2024]
+
+    M. Luo, C. Riconda, I. Pusztai, A. Grassi, J. S. Wurtele, and T. Fülöp,
+    `Control of autoresonant plasma beat-wave wakefield excitation`,
+    `Phys. Rev. Research 6, 013338 (2024) <https://doi.org/10.1103/PhysRevResearch.6.013338>`_
+
+.. [Krafft2024]
+
+    C. Krafft and P. Savoini,
+    `Electrostatic Wave Decay in the Randomly Inhomogeneous Solar Wind`,
+    `The Astrophysical Journal Letters, 964, L30 (2024) <https://doi.org/10.3847/2041-8213/ad3449>`_
+
+.. [Yu2024]
+
+     J. Yu, J. Zhong, Y. Ping, and W. An, 
+     `Numerical study of the suppression of magnetic reconnection onset with injected plasma`,
+     `Physics of Plasmas 31, 032111 (2024) <https://doi.org/10.1063/5.0186879>`_
+       
 .. [Kumar2024]
 
      R. Y. Kumar, R. Sabui, R. Gopal, F. Li, S. Sarkar, W. Trickey, M. Anand, J. Pasley, Z.-M. Sheng, R. M. G. M. Trines, R. H. H. Scott, A. P. L. Robinson, V. Sharma, and M. Krishnamurthy, 
-    `Tailored mesoscopic plasma accelerates electrons exploiting parametric instability`,
-    `New Journal of Physics 26, 033027 (2024) <https://doi.org/10.1088/1367-2630/ad2ffc>`_
+     `Tailored mesoscopic plasma accelerates electrons exploiting parametric instability`,
+     `New Journal of Physics 26, 033027 (2024) <https://doi.org/10.1088/1367-2630/ad2ffc>`_
 
 .. [Ehret2024]
 
-    M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, José Antonio Pérez-Hernández, J. J. Santos, and G. Gatti, 
+    M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, J. A. Pérez-Hernández, J. J. Santos, and G. Gatti, 
     `High-repetition-rate source of nanosecond duration kA-current pulses driven by relativistic laser pulses`,
     `High Power Laser Science and Engineering (2024) <https://doi.org/10.1017/hpl.2024.14>`_
        

@@ -1,5 +1,6 @@
 
 #include "AsyncMPIbuffers.h"
+#include "ParticlesFactory.h"
 #include "Field.h"
 #include "Patch.h"
 
@@ -66,30 +67,47 @@ SpeciesMPIbuffers::SpeciesMPIbuffers()
 
 SpeciesMPIbuffers::~SpeciesMPIbuffers()
 {
+    for( size_t i=0 ; i<partRecv.size() ; i++ ) {
+        delete partRecv[i][0];
+        delete partRecv[i][1];
+        delete partSend[i][0];
+        delete partSend[i][1];
+    }
 }
 
 
-void SpeciesMPIbuffers::allocate( unsigned int ndims )
+void SpeciesMPIbuffers::allocate( Params &params, Patch *patch )
 {
-    srequest.resize( ndims );
-    rrequest.resize( ndims );
+    srequest.resize( params.nDim_field );
+    rrequest.resize( params.nDim_field );
     
-    partRecv.resize( ndims );
-    partSend.resize( ndims );
+    partRecv.resize( params.nDim_field );
+    partSend.resize( params.nDim_field );
     
-    part_index_send.resize( ndims );
-    part_index_send_sz.resize( ndims );
-    part_index_recv_sz.resize( ndims );
+    partSendSize.resize( params.nDim_field );
+    partRecvSize.resize( params.nDim_field );
     
-    for( unsigned int i=0 ; i<ndims ; i++ ) {
+    for( unsigned int i=0 ; i<params.nDim_field ; i++ ) {
         srequest[i].resize( 2 );
         rrequest[i].resize( 2 );
+        partRecvSize[i].resize( 2 );
+        partSendSize[i].resize( 2 );
+        
+        // NOTE: send/recv buffers on xmin / xmax use a different constructor because
+        //       they must be sent on GPU for exchanging particles
         partRecv[i].resize( 2 );
         partSend[i].resize( 2 );
-        part_index_send[i].resize( 2 );
-        part_index_send_sz[i].resize( 2 );
-        part_index_recv_sz[i].resize( 2 );
+        if( i == 0 ) {
+            partRecv[i][0] = ParticlesFactory::create( params, *patch );
+            partRecv[i][1] = ParticlesFactory::create( params, *patch );
+            partSend[i][0] = ParticlesFactory::create( params, *patch );
+            partSend[i][1] = ParticlesFactory::create( params, *patch );
+        } else {
+            partRecv[i][0] = new Particles();
+            partRecv[i][1] = new Particles();
+            partSend[i][0] = new Particles();
+            partSend[i][1] = new Particles();
+        }
     }
-    
 }
 

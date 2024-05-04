@@ -27,6 +27,16 @@ Changes made in the repository (not released)
 
   * Compilation simplified and better documented.
 
+* Features:
+
+  * Relativistic field initialization now supports multiple species and both direction propagations.
+  * Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
+  * The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
+    (the transverse coordinate of the focus in this geometry is zero).
+  * Small improvements in PML for envelope model (AM and 2D).
+  * Deprecated ``smilei_rand_max``.
+  * New namelist variables ``smilei_omp_threads`` and ``smilei_total_cores``.
+
 * Happi:
 
   * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
@@ -39,10 +49,6 @@ Changes made in the repository (not released)
 * Documentation:
 
   * Dark theme (click the switch on the bottom left, or set browser preferences).
-
-* Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
-* The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
-  (the transverse coordinate of the focus in this geometry is zero).
 
 * Bug fixes:
 

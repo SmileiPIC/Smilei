@@ -28,9 +28,9 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
                        cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf) {
-            cell_keys[ ipart ] = -1;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( cell_keys[ ipart ] >= 0 && position[ ipart ] < limit_inf ) {
+            cell_keys[ ipart ] = -2 - 2 * direction;
         }
     }
 }
@@ -50,9 +50,9 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
                        cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] >= limit_sup) {
-            cell_keys[ ipart ] = -1;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( cell_keys[ ipart ] >= 0 && position[ ipart ] >= limit_sup ) {
+            cell_keys[ ipart ] = -3 - 2 * direction;
         }
     }
 }
@@ -63,10 +63,11 @@ void internal_inf_AM( Species *species, int imin, int imax, int /*direction*/, d
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
     int* cell_keys = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+    double limit_inf2 = limit_inf*limit_inf;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
         double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
-        if ( distance2ToAxis < limit_inf*limit_inf ) {
-            cell_keys[ ipart ] = -1;
+        if( cell_keys[ ipart ] >= 0 && distance2ToAxis < limit_inf2 ) {
+            cell_keys[ ipart ] = -4;
         }
     }
 }
@@ -77,10 +78,11 @@ void internal_sup_AM( Species *species, int imin, int imax, int /*direction*/, d
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
     int* cell_keys = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+    double limit_sup2 = limit_sup*limit_sup;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
         double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
-        if ( distance2ToAxis >= limit_sup*limit_sup ) {
-            cell_keys[ ipart ] = -1;
+        if( cell_keys[ ipart ] >= 0 && distance2ToAxis >= limit_sup2 ) {
+            cell_keys[ ipart ] = -5;
         }
     }
 }
@@ -97,8 +99,8 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     #pragma omp target is_device_ptr( position, momentum )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf ) {
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( position[ ipart ] < limit_inf ) {
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
             momentum[ ipart ] = -momentum[ ipart ];
         }

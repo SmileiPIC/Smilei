@@ -60,7 +60,8 @@ for each MPI process). The following steps are executed:
 
    * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
    * The total number of MPI processes as :py:data:`smilei_mpi_size`.
-   * The maximum random integer as :py:data:`smilei_rand_max`.
+   * The number of OpenMP threads per MPI :py:data:`smilei_omp_threads`.
+   * The total number of cores :py:data:`smilei_total_cores`.
 
 #. The namelist(s) is executed.
 
@@ -2860,6 +2861,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 A *particle binning diagnostic* collects data from the macro-particles and processes them during runtime.
 It does not provide information on individual particles: instead, it produces
 **averaged quantities** like the particle density, currents, etc.
+The raw data and how it is post-processed by happi is described :doc:`here <binning_units>`.
 
 The data is discretized inside a "grid" chosen by the user. This grid may be of any dimension.
 
@@ -3618,9 +3620,15 @@ namelist. They should not be re-defined by the user!
 
   The total number of MPI processes.
 
-..
-  <<Not showing this anymore because of new rand system>>
-  .. py:data:: smilei_rand_max
+.. py:data:: smilei_omp_threads
 
-    The largest random integer.
+  The number of OpenMP threads per MPI.
 
+.. py:data:: smilei_total_cores
+
+  The total number of cores.
+
+.. note::
+  
+  These variables can be access during ``happi`` post-processing, e.g.
+  ``S.namelist.smilei_mpi_size``.

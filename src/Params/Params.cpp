@@ -129,16 +129,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyObject_SetAttrString( Py_main, "_test_mode", Py_False );
     PyTools::checkPyError();
 
-    // here we add the rank, in case some script need it
+    // we add the rank, in case some script needs it
     PyModule_AddIntConstant( Py_main, "smilei_mpi_rank", smpi->getRank() );
 
-    // here we add the MPI size, in case some script need it
+    // we add the MPI size, in case some script needs it
     PyModule_AddIntConstant( Py_main, "smilei_mpi_size", smpi->getSize() );
     namelist += string( "smilei_mpi_size = " ) + to_string( smpi->getSize() ) + "\n";
 
-    // here we add the larget int, important to get a valid seed for randomization
-    PyModule_AddIntConstant( Py_main, "smilei_rand_max", RAND_MAX );
-    namelist += string( "smilei_rand_max = " ) + to_string( RAND_MAX ) + "\n\n";
+    // we add the openMP size, in case some script needs it
+    PyModule_AddIntConstant( Py_main, "smilei_omp_threads", smpi->getOMPMaxThreads() );
+    namelist += string( "smilei_omp_threads = " ) + to_string( smpi->getOMPMaxThreads() ) + "\n";
+
+    // we add the total number of cores, in case some script needs it
+    PyModule_AddIntConstant( Py_main, "smilei_total_cores", smpi->getGlobalNumCores() );
+    namelist += string( "smilei_total_cores = " ) + to_string( smpi->getGlobalNumCores() ) + "\n";
 
     // Running pyprofiles.py
     runScript( string( reinterpret_cast<const char *>( pyprofiles_py ), pyprofiles_py_len ), "pyprofiles.py", globals );

@@ -124,7 +124,7 @@ int main( int argc, char *argv[] )
         // oblivious to the program (only one, the one by default).
         // This could be a missed but very advanced optimization for some
         // kernels/exchange.
-        ERROR( "Simlei needs only one accelerator (GPU). Look for HIP_VISIBLE_DEVICES or 'gpu-bind=closest' in your SLURM script or use a custom binding script." );
+        ERROR( "Smilei needs only one accelerator (GPU). Look for HIP_VISIBLE_DEVICES or 'gpu-bind=closest' in your SLURM script or use a custom binding script." );
     } else {
         // ::omp_set_default_device(0);
     }
@@ -629,7 +629,7 @@ int main( int argc, char *argv[] )
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
         {
             // finalize particle exchanges and sort particles
-            vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
+            vecPatches.finalizeExchParticlesAndSort( params, &smpi, simWindow,
                                                  time_dual, timers, itime );
 
             // Particle merging

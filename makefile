@@ -52,7 +52,7 @@ DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
-SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
+SITEDIR = $(shell d=`$(PYTHONEXE) -m site --user-site` && echo $$d || $(PYTHONEXE) -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 # Smilei tools
 TABLES_DIR := tools/tables
@@ -216,7 +216,7 @@ endif
 ifneq (,$(call parse_config,gpu_amd))
 	CXXFLAGS += -DSMILEI_ACCELERATOR_MODE
 	GPU_COMPILER ?= $(CC)
-	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%) #$(PY_FLAGS)
+	GPU_COMPILER_FLAGS += -x hip -DSMILEI_ACCELERATOR_MODE -std=c++14 $(DIRS:%=-I%)
 	GPU_COMPILER_FLAGS += -I$(BUILD_DIR)/src/Python $(PY_CXXFLAGS)
 	GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
 	GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
@@ -289,7 +289,7 @@ ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
 endif
 
-SMILEICXX.DEPS ?= $(SMILEICXX)
+SMILEICXX_DEPS ?= $(SMILEICXX)
 
 #-----------------------------------------------------
 # Rules for building the excutable smilei
@@ -341,13 +341,13 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX_DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 # Calculate dependencies: special for Params.cpp which needs pyh files
 $(BUILD_DIR)/src/Params/Params.d: src/Params/Params.cpp $(PYHEADERS)
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX.DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX_DEPS) $(DEPSFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
@@ -449,7 +449,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-COMPILER_INFO
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS print-GPU_COMPILER print-GPU_COMPILER_FLAGS print-COMPILER_INFO
 
 #-----------------------------------------------------
 # Smilei tables
@@ -527,7 +527,7 @@ help:
 	@echo
 	@echo 'Environment variables needed for compilation:'
 	@echo '  SMILEICXX         : mpi c++ compiler (possibly GPU-aware) [mpicxx]'
-	@echo '  SMILEICXX.DEPS    : c++ compiler for calculating dependencies [$$SMILEICXX]'
+	@echo '  SMILEICXX_DEPS    : c++ compiler for calculating dependencies [$$SMILEICXX]'
 	@echo '  CXXFLAGS          : FLAGS for $$SMILEICXX []'
 	@echo '  LDFLAGS           : FLAGS for the linker []'
 	@echo '  HDF5_ROOT_DIR     : folder where the HDF5 library was installed [$$HDF5_ROOT_DIR]'

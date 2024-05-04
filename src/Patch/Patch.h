@@ -174,7 +174,7 @@ public:
     //! Clean the MPI buffers for communications
     void cleanMPIBuffers( int ispec, Params &params );
     //! manage Idx of particles per direction,
-    void initExchParticles( int ispec, Params &params );
+    void copyExchParticlesToBuffers( int ispec, Params &params );
     //! init comm  nbr of particles
     void exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize comm / nbr of particles, init exch / particles
@@ -184,7 +184,7 @@ public:
     //! effective exchange of particles
     void exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize exch / particles
-    void finalizeExchParticles( int ispec, int iDim );
+    void waitExchParticles( int ispec, int iDim );
     //! Treat diagonalParticles
     void cornersParticles( int ispec, Params &params, int iDim );
     //! inject particles received in main data structure and particles sorting
@@ -195,20 +195,24 @@ public:
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
 
 #ifdef SMILEI_ACCELERATOR_MODE
-    //! Allocate and copy all the field grids on device
+    //! Allocate and copy all the fields on device
     void allocateAndCopyFieldsOnDevice();
 
-    //! Allocate all field grids on device
+    //! Allocate all fields on device
     void allocateFieldsOnDevice();
 
-    //! Copy All field grids from device to host
+    //! Copy All fields from device to host
     void copyFieldsFromDeviceToHost();
 
     //! Copy All fields from host to device
     void copyFieldsFromHostToDevice();
 
-    //! Deallocate field grids on device
+    //! Deallocate fields on device
     void deleteFieldsOnDevice();
+
+    //! Reset fields on device
+    //Not used for the moment
+    //void ResetFieldsOnDevice();
 #endif
 
     //! init comm / sum densities

@@ -32,8 +32,6 @@ Main(
     ],
 
     EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[0.,1.],[0.,-1.]],
-
-    random_seed = smilei_mpi_rank
 )
 
 Vectorization(

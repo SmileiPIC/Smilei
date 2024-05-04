@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#ifdef SMILEI_OPENACC_MODE
+#include <openacc.h>
+#endif
+
 #include "Params.h"
 #include "Patch.h"
 #include "SmileiMPI.h"
@@ -90,6 +94,7 @@ Field2D::~Field2D()
         }
     }
     if( data_!=NULL ) {
+        #pragma acc exit data delete (data_[0:number_of_points_]) if (acc_deviceptr(data_) != NULL)
         delete [] data_;
         delete [] data_2D;
     }

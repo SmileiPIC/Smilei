@@ -67,7 +67,7 @@ Main(gpu_computing = False,
      number_of_patches = kPatchPerGridDimension,
      EM_boundary_conditions = [ ["periodic"] ],
      print_every = 10,
-     random_seed = smilei_mpi_rank)
+     )
 
 Vectorization(mode = "on")
 
