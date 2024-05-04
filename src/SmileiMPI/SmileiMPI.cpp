@@ -929,8 +929,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
             recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
             MPI_Type_free( &( recvParts ) );
         }
-        patch->vecSpecies[ispec]->particles->initializeDataOnDevice();
-        patch->vecSpecies[ispec]->particles_to_move->initializeDataOnDevice();
+        patch->vecSpecies[ispec]->allocateParticlesOnDevice();
 
     }
 

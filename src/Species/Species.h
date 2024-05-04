@@ -147,8 +147,6 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
-    //! Data structure through which passes particles which move from one patch to another
-    Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
 
@@ -344,7 +342,7 @@ public:
     // -----------------------------------------------------------------------------
     //  5. Methods
 
-    virtual void initCluster( Params & );
+    virtual void initCluster( Params &, Patch * );
 
     virtual void resizeCluster( Params & );
 
@@ -385,6 +383,8 @@ public:
     }
 
 #if defined( SMILEI_ACCELERATOR_MODE )
+
+    void allocateParticlesOnDevice();
 
     //! Copy particles from host to device
     void
@@ -481,12 +481,6 @@ public:
 
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge( ElectroMagn *EMfields, bool old=false );
-
-    //! Method used to select particles which will change of patches
-    virtual void extractParticles();
-
-    //! Method used to integrate particles which come from another patches
-    // virtual void injectParticles( Params &params );
 
     //! Method used to inject and sort particles
     virtual void sortParticles( Params &param );

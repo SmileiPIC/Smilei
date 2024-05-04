@@ -90,7 +90,6 @@ Species::Species( Params &params, Patch *patch ) :
 {
     // &particles_sorted[0]
     particles         = ParticlesFactory::create( params, *patch );
-    particles_to_move = ParticlesFactory::create( params, *patch );
 
     regular_number_array_.clear();
     partBoundCond = NULL;
@@ -104,7 +103,7 @@ Species::Species( Params &params, Patch *patch ) :
     dx_inv_[1] = 1./cell_length[1];
     dx_inv_[2] = 1./cell_length[2];
 
-    initCluster( params );
+    initCluster( params, patch );
     inv_nDim_particles = 1./( ( double )nDim_particle );
 
     length_[0]=0;
@@ -123,7 +122,7 @@ Species::Species( Params &params, Patch *patch ) :
 
 }//END Species creator
 
-void Species::initCluster( Params &params )
+void Species::initCluster( Params &params, Patch *patch )
 {
     // NOTE: On GPU we dont use first_index, it would contain redundant data but
     // we are forced to initialize it due to ParticleCreator::create() and the
@@ -252,7 +251,7 @@ void Species::initCluster( Params &params )
 #endif
 
     //Initialize specMPI
-    MPI_buffer_.allocate( nDim_field );
+    MPI_buffer_.allocate( params, patch );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -378,18 +377,14 @@ void Species::initOperators( Params &params, Patch *patch )
     partBoundCond = new PartBoundCond( params, this, patch );
     for( unsigned int iDim=0 ; iDim < nDim_field ; iDim++ ) {
         for( unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-            MPI_buffer_.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPI_buffer_.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPI_buffer_.part_index_send[iDim][iNeighbor].resize( 0 );
-            MPI_buffer_.part_index_recv_sz[iDim][iNeighbor] = 0;
-            MPI_buffer_.part_index_send_sz[iDim][iNeighbor] = 0;
+            MPI_buffer_.partRecv[iDim][iNeighbor]->initialize( 0, ( *particles ) );
+            MPI_buffer_.partSend[iDim][iNeighbor]->initialize( 0, ( *particles ) );
         }
     }
     typePartSend.resize( nDim_field*2, MPI_DATATYPE_NULL );
     typePartRecv.resize( nDim_field*2, MPI_DATATYPE_NULL );
     exchangePatch = MPI_DATATYPE_NULL;
 
-    particles_to_move->initialize( 0, *particles );
 
 }
 
@@ -399,7 +394,6 @@ void Species::initOperators( Params &params, Patch *patch )
 Species::~Species()
 {
     delete particles;
-    delete particles_to_move;
     
     delete Push;
     delete Interp;
@@ -633,6 +627,30 @@ Species::deleteSpeciesCurrentAndChargeOnDevice(
         EMfields->rho_s[ispec]->deleteOnDevice();
     }
 }
+
+
+void Species::allocateParticlesOnDevice()
+{
+    particles->initializeDataOnDevice();
+    
+    // The first send/recv buffers are also on device
+    MPI_buffer_.partSend[0][0]->initializeDataOnDevice();
+    MPI_buffer_.partSend[0][1]->initializeDataOnDevice();
+    MPI_buffer_.partRecv[0][0]->initializeDataOnDevice();
+    MPI_buffer_.partRecv[0][1]->initializeDataOnDevice();
+
+    // Create photon species on the device
+    if( radiation_model_ == "mc" && photon_species_ ) {
+        radiated_photons_->initializeDataOnDevice();
+    }
+
+    // Create pair species on the device
+    if( mBW_pair_species_[0] && mBW_pair_species_[1] ) {
+        mBW_pair_particles_[0]->initializeDataOnDevice();
+        mBW_pair_particles_[1]->initializeDataOnDevice();
+    }
+}
+
 
 //! Copy particles from host to device
 void
@@ -1747,16 +1765,6 @@ void Species::computeCharge( ElectroMagn *EMfields, bool old /*=false*/ )
 }//END computeCharge
 
 
-void Species::extractParticles()
-{
-    particles->extractParticles( particles_to_move );
-}
-
-// void Species::injectParticles( Params &params )
-// {
-// }
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1767,33 +1775,22 @@ void Species::sortParticles( Params &params )
 
     // -----------------------------
     // GPU version
-
-    // particles_to_move contains, up to here, send particles
-    //   clean it to manage recv particles
-    particles_to_move->clear(); // Clear on the host
-    // Merge all MPI_buffer_.partRecv in particles_to_move
-    for( int idim = 0; idim < params.nDim_field; idim++ ) {
-        for( int iNeighbor = 0; iNeighbor < 2; iNeighbor++ ) {
-            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-            if( ( n_part_recv != 0 ) ) {
-                // insert n_part_recv in particles_to_move from 0
-                MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0,
-                                                                     n_part_recv,
-                                                                     *particles_to_move,
-                                                                     particles_to_move->size() );
+    
+    // Merge all MPI_buffer_.partRecv in the first one
+    Particles * first_buffer = MPI_buffer_.partRecv[0][0];
+    for( auto &partRecvs: MPI_buffer_.partRecv ) {
+        for( auto partRecv: partRecvs ) {
+            if( partRecv != first_buffer && partRecv->size() > 0 ) {
+                partRecv->copyParticles( 0, partRecv->size(), *first_buffer, first_buffer->size() );
+                partRecv->clear();
             }
         }
     }
-
-    particles_to_move->copyFromHostToDevice();
-
-    // // Erase particles that leaves this patch
-    // particles->last_index[0] = particles->eraseLeavingParticles();
-    //
-    // // Inject newly arrived particles in particles_to_move
-    // particles->last_index[0] += particles->injectParticles( particles_to_move );
-
-    particles->importAndSortParticles( particles_to_move );
+    
+    first_buffer->copyFromHostToDevice();
+    
+    particles->importAndSortParticles( first_buffer );
+    
 #else
 
     // --------------------------
@@ -1804,28 +1801,10 @@ void Species::sortParticles( Params &params )
     int ndim = params.nDim_field;
     int idim;
 
-    // Compute total number of particles received
-    // int total_number_part_recv = 0;
-    //Merge all MPI_buffer_.partRecv in particles_to_move
-    // for( int idim = 0; idim < ndim; idim++ ) {
-    //     for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-    //         int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-    //         if( ( n_part_recv!=0 ) ) {
-    //              // insert n_part_recv in particles_to_move from 0
-    //             //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-    //             total_number_part_recv += n_part_recv;
-    //             //particles->last_index[particles->last_index.size()-1] += n_part_recv;
-    //             //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
-    //         }
-    //     }
-    // }
-    //cout << "\t Species id : " << species_number_ << " - nparticles recv : " << blabla << endl;
-
-
     // Sort to adapt do cell_keys usage
     std::vector<int> indexes_of_particles_to_exchange;
     for ( int ipart=0 ; ipart< (int)(getNbrOfParticles()) ; ipart++ ) {
-        if ( particles->cell_keys[ipart] == -1 ) {
+        if ( particles->cell_keys[ipart] < 0 ) {
             indexes_of_particles_to_exchange.push_back( ipart );
         }
     }
@@ -1900,15 +1879,15 @@ void Species::sortParticles( Params &params )
 
     //Evaluation of the necessary shift of all bins.2
     //idim=0
-    shift[1] += MPI_buffer_.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
-    shift[particles->last_index.size()] += MPI_buffer_.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    shift[1] += MPI_buffer_.partRecv[0][0]->size();//Particles coming from xmin all go to bin 0 and shift all the other bins.
+    shift[particles->last_index.size()] += MPI_buffer_.partRecv[0][1]->size();//Used only to count the total number of particles arrived.
     //idim>0
     for( idim = 1; idim < ndim; idim++ ) {
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.partRecv[idim][iNeighbor]->size();
             for( unsigned int j=0; j<( unsigned int )n_part_recv ; j++ ) {
                 //We first evaluate how many particles arrive in each bin.
-                ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor]->position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
                 shift[ii+1]++; // It makes the next bins shift.
             }
         }
@@ -1943,11 +1922,11 @@ void Species::sortParticles( Params &params )
     //Space has been made now to write the arriving particles into the correct bins
     //idim == 0  is the easy case, when particles arrive either in first or last bin.
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        n_part_recv = MPI_buffer_.part_index_recv_sz[0][iNeighbor];
+        n_part_recv = MPI_buffer_.partRecv[0][iNeighbor]->size();
         //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
         if( ( n_part_recv!=0 ) ) {
             ii = iNeighbor*( particles->last_index.size()-1 ); //0 if iNeighbor=0(particles coming from Xmin) and particles->last_index.size()-1 otherwise.
-            MPI_buffer_.partRecv[0][iNeighbor].overwriteParticle( 0, *particles, particles->last_index[ii], n_part_recv );
+            MPI_buffer_.partRecv[0][iNeighbor]->overwriteParticle( 0, *particles, particles->last_index[ii], n_part_recv );
             particles->last_index[ii] += n_part_recv ;
         }
     }
@@ -1955,12 +1934,12 @@ void Species::sortParticles( Params &params )
     for( idim = 1; idim < ndim; idim++ ) {
         //if (idim!=iDim) continue;
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.partRecv[idim][iNeighbor]->size();
             //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             if( ( n_part_recv!=0 ) ) {
                 for( unsigned int j=0; j<( unsigned int )n_part_recv; j++ ) {
-                    ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
-                    MPI_buffer_.partRecv[idim][iNeighbor].overwriteParticle( j, *particles, particles->last_index[ii] );
+                    ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor]->position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                    MPI_buffer_.partRecv[idim][iNeighbor]->overwriteParticle( j, *particles, particles->last_index[ii] );
                     particles->last_index[ii] ++ ;
                 }
             }
