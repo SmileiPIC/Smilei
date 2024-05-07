@@ -10,7 +10,7 @@ MF_SolverAM_Terzani::MF_SolverAM_Terzani( Params &params )
     : SolverAM( params )
 {
     isEFilterApplied = params.Friedman_filter;
-    delta = ( pow(dt_ov_dl,2)-1.) / 12. ;
+    delta = ( pow(dt_ov_dl,2)-1.) / 24. ;
     // this coefficient and the associated solver are defined in 
     // D. Terzani and P. Londrillo, Computer Physics Communications 242 (2019)
     // https://doi.org/10.1016/j.cpc.2019.04.007
