@@ -112,6 +112,32 @@ public:
         return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
 
+    void swapPosition( int idim, thrust::device_vector<double> &new_vector ) {
+        nvidia_position_[idim].swap( new_vector );
+    };
+    void swapMomentum( int idim, thrust::device_vector<double> &new_vector ) {
+        nvidia_momentum_[idim].swap( new_vector );
+    };
+    void swapWeight( thrust::device_vector<double> &new_vector ) {
+        nvidia_weight_.swap( new_vector );
+    };
+    void swapChi( thrust::device_vector<double> &new_vector ) {
+        nvidia_chi_.swap( new_vector );
+    };
+    void swapCharge( thrust::device_vector<short> &new_vector ) {
+        nvidia_charge_.swap( new_vector );
+    };
+    void swapTau( thrust::device_vector<double> &new_vector ) {
+        nvidia_tau_.swap( new_vector );
+    };
+    void swapCellKeys( thrust::device_vector<int> &new_vector ) {
+        nvidia_cell_keys_.swap( new_vector );
+    };
+    void swapId( thrust::device_vector<uint64_t> &new_vector ) {
+        nvidia_id_.swap( new_vector );
+    };
+    
+
     // -----------------------------------------------------------------------------
     //! Move leaving particles to the buffers
     // -----------------------------------------------------------------------------

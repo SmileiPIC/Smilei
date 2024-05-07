@@ -15,6 +15,7 @@
 #include <thrust/count.h>
 #include <thrust/remove.h>
 #include <thrust/sort.h>
+#include <thrust/gather.h>
 
 
 #include "Patch.h"
@@ -468,10 +469,8 @@ namespace detail {
                                        ParticleNoKeyIteratorProvider particle_no_key_iterator_provider )
     {
         const auto first_particle = particle_iterator_provider( particle_container );
-
-        auto last_particle = first_particle +
-                             particle_container.deviceSize(); // Obviously, we use half open ranges
-
+        auto last_particle = first_particle + particle_container.deviceSize();
+        
         // Remove out of bound particles
         // Using more memory, we could use the faster remove_copy_if
         // NOTE: remove_if is stable.
@@ -479,82 +478,86 @@ namespace detail {
                                            first_particle,
                                            last_particle,
                                            OutOfBoundaryPredicate{} );
-
-        // Idea 1: - remove_copy_if instead of copy_if
-        //         - sort(the_particles_to_inject)
-        //         - merge
-        //         - compute bins
-        // NOTE: This method consumes a lot of memory ! O(N)
-
+        
         const auto initial_count = std::distance( first_particle, last_particle );
         const auto inject_count  = particle_to_inject.deviceSize();
         const auto new_count     = initial_count + inject_count;
-
+        
+        // Resize particles
         // NOTE: We really want a non-initializing vector here!
         // It's possible to give a custom allocator to thrust::device_vector.
         // Create one with construct(<>) as a noop and derive from
         // thrust::device_malloc_allocator. For now we do an explicit resize.
-        particle_to_inject.softReserve( new_count );
-        particle_to_inject.resize( new_count ); // We probably invalidated the iterators
-
-        // Copy out of cluster/tile/chunk particles
-        // partition_copy is way slower than copy_if/remove_copy_if on rocthrust
-        // https://github.com/ROCmSoftwarePlatform/rocThrust/issues/247
-
-        const auto first_to_inject = particle_iterator_provider( particle_to_inject );
-        const auto first_to_reorder = first_to_inject + inject_count;
-
-        // NOTE: copy_if/remove_copy_if are stable.
-        // First, copy particles that are not in their own cluster anymore
-        const auto first_already_ordered = thrust::copy_if( thrust::device,
-                                                                         first_particle, last_particle,
-                                                            first_to_reorder,
-                                                                         OutOfClusterPredicate<ClusterType>{ cluster_type } );
-        // Then, copy particles that are still in their own cluster
-        const auto end = thrust::remove_copy_if( thrust::device,
-                                                                                first_particle, last_particle,
-                                                 first_already_ordered,
-                                                                                OutOfClusterPredicate<ClusterType>{ cluster_type } );
-
-        // Compute or recompute the cluster index of the particle_to_inject
-        // NOTE:
-        // - we can "save" some work here if cluster index is already computed
-        // for the new particles to inject (not the one we got with copy_if).
-        //
-        doComputeParticleClusterKey( first_to_inject,
-                                     first_already_ordered,
-                                     cluster_type );
-
-        const auto first_to_inject_no_key  = particle_no_key_iterator_provider( particle_to_inject );
-        const auto particle_to_rekey_count = std::distance( first_to_inject,
-                                                            first_already_ordered );
-
-        doSortParticleByKey( particle_to_inject.getPtrCellKeys(),
-                             particle_to_inject.getPtrCellKeys() + particle_to_rekey_count,
-                             first_to_inject_no_key );
-
-        // This free generates a lot of memory fragmentation.
-        // particle_container.free();
-        // Same as for particle_to_inject, non-initializing vector is best.
         particle_container.softReserve( new_count );
         particle_container.resize( new_count );
-
-        // Merge by key
-        // NOTE: Dont merge in place on GPU. That means we need an other large buffer!
-        //
-        thrust::merge_by_key( thrust::device,
-                              particle_to_inject.getPtrCellKeys(),                           // Input range 1, first key
-                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 1, last key
-                              particle_to_inject.getPtrCellKeys() + particle_to_rekey_count, // Input range 2, first key
-                              particle_to_inject.getPtrCellKeys() + new_count,      // Input range 2, last key
-                              first_to_inject_no_key,                               // Input range 1, first value
-                              first_to_inject_no_key + particle_to_rekey_count,     // Input range 2, first value
-                              particle_container.getPtrCellKeys(),                           // Output range first key
-                              particle_no_key_iterator_provider( particle_container ) );     // Output range first value
-
+        
+        // Combine imported particles to main particles
+        const auto first = particle_no_key_iterator_provider( particle_container );
+        const auto first_to_inject = particle_no_key_iterator_provider( particle_to_inject );
+        thrust::copy( thrust::device,
+                      first_to_inject,
+                      first_to_inject + inject_count,
+                      first + initial_count );
+        
+        // Compute keys of imported particles
+        const auto first_new = particle_iterator_provider( particle_container );
+        doComputeParticleClusterKey( first_new, first_new + new_count, cluster_type );
+        
+        // Make a sorting map using the cell keys (like numpy.argsort)
+        thrust::device_vector<int> particle_index( new_count );
+        thrust::counting_iterator<int> iter( 0 );
+        thrust::copy(iter, iter + new_count, particle_index.begin());
+        thrust::sort_by_key( thrust::device,
+                             particle_container.getPtrCellKeys(),
+                             particle_container.getPtrCellKeys() + new_count,
+                             particle_index.begin() );
+        
+        // Make a buffer
+        thrust::device_vector<double> buffer( new_count );
+        
+        // Sort particles using thrust::gather, according to the sorting map
+        for( int idim = 0; idim < particle_container.dimension(); idim++ ) {
+            thrust::gather( thrust::device,
+                            particle_index.begin(), particle_index.end(),
+                            particle_container.getPtrPosition( idim ),
+                            buffer.begin() );
+            particle_container.swapPosition( idim, buffer );
+        }
+        for( int idim = 0; idim < 3; idim++ ) {
+            thrust::gather( thrust::device,
+                            particle_index.begin(), particle_index.end(),
+                            particle_container.getPtrMomentum( idim ),
+                            buffer.begin() );
+            particle_container.swapMomentum( idim, buffer );
+        }
+        thrust::gather( thrust::device,
+                        particle_index.begin(), particle_index.end(),
+                        particle_container.getPtrWeight(),
+                        buffer.begin() );
+        particle_container.swapWeight( buffer );
+        buffer.resize( 0 );
+        
+        thrust::device_vector<short> buffer_short( new_count );
+        thrust::gather( thrust::device,
+                        particle_index.begin(), particle_index.end(),
+                        particle_container.getPtrCharge(),
+                        buffer_short.begin() );
+        particle_container.swapCharge( buffer_short );
+        buffer_short.resize( 0 );
+        
+        if( particle_container.tracked ) {
+            thrust::device_vector<uint64_t> buffer_uint64( new_count );
+            thrust::gather( thrust::device,
+                            particle_index.begin(), particle_index.end(),
+                            particle_container.getPtrId(),
+                            buffer_uint64.begin() );
+            particle_container.swapId( buffer_uint64 );
+            buffer_uint64.resize( 0 );
+        }
+        
         // Recompute bins
         computeBinIndex( particle_container );
-
+        
         // This free generates a lot of memory fragmentation. If we enable it we
         // reduce significantly the memory usage over time but a memory spike
         // will still be present. Unfortunately, this free generates soo much
