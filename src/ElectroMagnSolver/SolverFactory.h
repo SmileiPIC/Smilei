@@ -9,7 +9,6 @@
 #include "MA_Solver3D_Friedman.h"
 #include "MA_SolverAM_norm.h"
 #include "MA_SolverAM_Friedman.h"
-#include "MA_SolverAM_Terzani.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
@@ -110,11 +109,7 @@ public:
                     if (params.maxwell_sol != "Yee") ERROR( "Only Yee Maxwell solver is compatible with Friedman filter in AMcylindrical geometry" );
                     solver = new MA_SolverAM_Friedman( params );
                 } else {
-                    if (params.maxwell_sol == "Yee"){
-                        solver = new MA_SolverAM_norm( params );
-                    } else if (params.maxwell_sol == "Terzani"){
-                        solver = new MA_SolverAM_Terzani( params );
-                    }
+                    solver = new MA_SolverAM_norm( params );
                 }
 
             }
