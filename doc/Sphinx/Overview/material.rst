@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of May 2024, 185 papers have been published covering a broad range of topics:
+As of May 2024, 186 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,6 +50,12 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Timmis2024]
+
+    R. J. L. Timmis, R. W. Paddock, I. Ouatu, J. Lee, S. Howard, E. Atonga, R. T. Ruskov, H. Martin, R. H. W. Wang, R. Aboushelbaya, M. W. von der Leyen, E. Gumbrell and P. A. Norreys,
+    `Attosecond and nano‐Coulomb electron bunches via the Zero Vector Potential mechanism`,
+    `Scientific Reports volume 14, 10805 (2024) <https://doi.org/10.1038/s41598-024-61041-2>`_
 
 .. [Azamoum2024]
 
