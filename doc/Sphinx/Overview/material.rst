@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of April 2024, 183 papers have been published covering a broad range of topics:
+As of May 2024, 186 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -49,6 +49,19 @@ Following is the distribution of these topics in the listed publications up to N
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
+
+
+.. [Timmis2024]
+
+    R. J. L. Timmis, R. W. Paddock, I. Ouatu, J. Lee, S. Howard, E. Atonga, R. T. Ruskov, H. Martin, R. H. W. Wang, R. Aboushelbaya, M. W. von der Leyen, E. Gumbrell and P. A. Norreys,
+    `Attosecond and nano‐Coulomb electron bunches via the Zero Vector Potential mechanism`,
+    `Scientific Reports volume 14, 10805 (2024) <https://doi.org/10.1038/s41598-024-61041-2>`_
+
+.. [Azamoum2024]
+
+    Y. Azamoum, G. A. Becker, S. Keppler, G. Duchateau, S. Skupin, M. Grech, F. Catoire, S. Hell, I. Tamer, M. Hornung, M. Hellwing, A. Kessler, F. Schorcht, and M. C. Kaluza,
+    `Optical probing of ultrafast laser-induced solid-to-overdense-plasma transitions`,
+    `Light: Science & Applications 13, 109 (2024) <https://doi.org/10.1038/s41377-024-01444-y>`_
 
 .. [Pan2024]
 
@@ -139,7 +152,13 @@ Following is the distribution of these topics in the listed publications up to N
     A. Seidel, B. Lei, C. Zepter, M. C. Kaluza, A. Sävert, M. Zepf, and D. Seipt,
     `Polarization and CEP dependence of the transverse phase space in laser driven accelerators`,
     `Physical Review Research 6, 013056 (2024) <https://doi.org/10.1103/PhysRevResearch.6.013056>`_
-    
+
+.. [Krishnamurthy2023]
+
+    S. Krishnamurthy, S. Chintalwad, A. P. L. Robinson, R. M. G. M. Trines, and B. Ramakrishna,
+    `Observation of proton modulations in laser–solid interaction`,
+    `Plasma Physics and Controlled Fusion 65 085020 (2023) <https://doi.org/10.1088/1361-6587/ace4f1>`_
+            
 .. [Gao2023b]
 
     X. Gao,
