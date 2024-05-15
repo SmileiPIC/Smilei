@@ -137,6 +137,19 @@ public:
         nvidia_id_.swap( new_vector );
     };
     
+    void swap( nvidiaParticles &p ) {
+        for( int idim = 0; idim < dimension(); idim++ ) {
+            swapPosition( idim, p.nvidia_position_[idim] );
+        }
+        for( int idim = 0; idim < 3; idim++ ) {
+            swapMomentum( idim, p.nvidia_momentum_[idim] );
+        }
+        swapWeight( p.nvidia_weight_ );
+        swapCharge( p.nvidia_charge_ );
+        if( tracked ) {
+            swapId( p.nvidia_id_ );
+        }
+    };
 
     // -----------------------------------------------------------------------------
     //! Move leaving particles to the buffers

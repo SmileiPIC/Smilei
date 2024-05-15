@@ -512,48 +512,18 @@ namespace detail {
                              particle_container.getPtrCellKeys() + new_count,
                              particle_index.begin() );
         
-        // Make a buffer
-        thrust::device_vector<double> buffer( new_count );
+	
+        particle_to_inject.softReserve( new_count );
+        particle_to_inject.resize( new_count );
         
-        // Sort particles using thrust::gather, according to the sorting map
-        for( int idim = 0; idim < particle_container.dimension(); idim++ ) {
-            thrust::gather( thrust::device,
-                            particle_index.begin(), particle_index.end(),
-                            particle_container.getPtrPosition( idim ),
-                            buffer.begin() );
-            particle_container.swapPosition( idim, buffer );
-        }
-        for( int idim = 0; idim < 3; idim++ ) {
-            thrust::gather( thrust::device,
-                            particle_index.begin(), particle_index.end(),
-                            particle_container.getPtrMomentum( idim ),
-                            buffer.begin() );
-            particle_container.swapMomentum( idim, buffer );
-        }
+        const auto first_unsorted = particle_no_key_iterator_provider( particle_container );
+        const auto first_buffer = particle_no_key_iterator_provider( particle_to_inject );
         thrust::gather( thrust::device,
                         particle_index.begin(), particle_index.end(),
-                        particle_container.getPtrWeight(),
-                        buffer.begin() );
-        particle_container.swapWeight( buffer );
-        buffer.resize( 0 );
+                        first_unsorted,
+                        first_buffer );
         
-        thrust::device_vector<short> buffer_short( new_count );
-        thrust::gather( thrust::device,
-                        particle_index.begin(), particle_index.end(),
-                        particle_container.getPtrCharge(),
-                        buffer_short.begin() );
-        particle_container.swapCharge( buffer_short );
-        buffer_short.resize( 0 );
-        
-        if( particle_container.tracked ) {
-            thrust::device_vector<uint64_t> buffer_uint64( new_count );
-            thrust::gather( thrust::device,
-                            particle_index.begin(), particle_index.end(),
-                            particle_container.getPtrId(),
-                            buffer_uint64.begin() );
-            particle_container.swapId( buffer_uint64 );
-            buffer_uint64.resize( 0 );
-        }
+        particle_container.swap( particle_to_inject );
         
         // Recompute bins
         computeBinIndex( particle_container );
