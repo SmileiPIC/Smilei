@@ -2103,8 +2103,10 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     // Warning: the current GPU version does not handle tracked particles
 
     // Inject particles from source_particles
-    particles->last_index.back() += particles->injectParticles( &source_particles );
+    particles->copyParticles( &source_particles );
+    particles->last_index.back() += source_particles.size();
     particles->last_index[0] = particles->last_index.back();
+    source_particles.clear();
     
 #else
     // ---------------------------------------------------

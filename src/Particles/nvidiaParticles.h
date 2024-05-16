@@ -111,45 +111,42 @@ public:
     uint64_t * getPtrId() override {
         return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
-
-    void swapPosition( int idim, thrust::device_vector<double> &new_vector ) {
-        nvidia_position_[idim].swap( new_vector );
+    
+    size_t getNDoubleProp() {
+        return nvidia_double_prop_.size();
     };
-    void swapMomentum( int idim, thrust::device_vector<double> &new_vector ) {
-        nvidia_momentum_[idim].swap( new_vector );
+    size_t getNShortProp() {
+        return nvidia_short_prop_.size();
     };
-    void swapWeight( thrust::device_vector<double> &new_vector ) {
-        nvidia_weight_.swap( new_vector );
+    
+    double * getPtrDoubleProp( int iprop ) {
+        return thrust::raw_pointer_cast( nvidia_double_prop_[iprop]->data() );
     };
-    void swapChi( thrust::device_vector<double> &new_vector ) {
-        nvidia_chi_.swap( new_vector );
+    short * getPtrShortProp( int iprop ) {
+        return thrust::raw_pointer_cast( nvidia_short_prop_[iprop]->data() );
     };
-    void swapCharge( thrust::device_vector<short> &new_vector ) {
-        nvidia_charge_.swap( new_vector );
+    
+    void swapDoubleProp( int iprop, thrust::device_vector<double> &new_vector ) {
+        nvidia_double_prop_[iprop]->swap( new_vector );
     };
-    void swapTau( thrust::device_vector<double> &new_vector ) {
-        nvidia_tau_.swap( new_vector );
-    };
-    void swapCellKeys( thrust::device_vector<int> &new_vector ) {
-        nvidia_cell_keys_.swap( new_vector );
+    void swapShortProp( int iprop, thrust::device_vector<short> &new_vector ) {
+        nvidia_short_prop_[iprop]->swap( new_vector );
     };
     void swapId( thrust::device_vector<uint64_t> &new_vector ) {
         nvidia_id_.swap( new_vector );
     };
     
-    void swap( nvidiaParticles &p ) {
-        for( int idim = 0; idim < dimension(); idim++ ) {
-            swapPosition( idim, p.nvidia_position_[idim] );
+    void swap( nvidiaParticles & p ) {
+        for( int iprop = 0; iprop < getNDoubleProp(); iprop++ ) {
+            nvidia_double_prop_[iprop]->swap( *p.nvidia_double_prop_[iprop] );
         }
-        for( int idim = 0; idim < 3; idim++ ) {
-            swapMomentum( idim, p.nvidia_momentum_[idim] );
+        for( int iprop = 0; iprop < getNShortProp(); iprop++ ) {
+            nvidia_short_prop_[iprop]->swap( *p.nvidia_short_prop_[iprop] );
         }
-        swapWeight( p.nvidia_weight_ );
-        swapCharge( p.nvidia_charge_ );
         if( tracked ) {
-            swapId( p.nvidia_id_ );
+            nvidia_id_.swap( p.nvidia_id_ );
         }
-    };
+    }
 
     // -----------------------------------------------------------------------------
     //! Move leaving particles to the buffers
@@ -158,6 +155,12 @@ public:
     
     template<typename Predicate>
     void copyParticlesByPredicate( Particles* buffer, Predicate pred );
+
+    //! Resize & Copy particles from particles_to_inject to end of vectors
+    void copyParticles( Particles* particles_to_inject ) override;
+    
+    //! Copy particles from particles_to_inject to specific offset
+    void copyParticles( nvidiaParticles* particles_to_inject, size_t offset );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
@@ -167,11 +170,6 @@ public:
     template<typename Predicate>
     int eraseParticlesByPredicate( Predicate pred );
     
-    // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_inject into *this and return the number of particle added
-    // -----------------------------------------------------------------------------
-    int injectParticles( Particles* particles_to_inject ) override;
-
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors
     //! Fill the new elements with 0
@@ -180,6 +178,12 @@ public:
 
     //! See the Particles class for documentation.
     void importAndSortParticles( Particles* particles_to_inject ) override;
+
+    //! Sort by cell_keys_
+    //! This version synchronizes for every vector, but uses less buffers
+    void sortParticleByKey();
+    //! This version is asynchronous, but requires a buffer of equal size to be provided
+    void sortParticleByKey( nvidiaParticles& buffer );
 
 protected:
     //! Redefine first_index and last_index according to the binning algorithm
