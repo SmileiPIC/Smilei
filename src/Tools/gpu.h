@@ -19,10 +19,14 @@ namespace smilei {
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE     _Pragma( "omp declare target" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END _Pragma( "omp end declare target" )
     #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "omp atomic update" )
+    #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::hip::par_nosync
+    #define SMILEI_ACCELERATOR_DEVICE_SYNC() hipDeviceSynchronize()
 #elif defined( SMILEI_OPENACC_MODE )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "acc atomic" )
+    #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::cuda::par_nosync
+    #define SMILEI_ACCELERATOR_DEVICE_SYNC() cudaDeviceSynchronize()
 #else
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END

@@ -16,6 +16,7 @@
 #include <thrust/remove.h>
 #include <thrust/sort.h>
 #include <thrust/gather.h>
+#include <thrust/sequence.h>
 
 
 #include "Patch.h"
@@ -308,7 +309,7 @@ namespace detail {
         particle_container.resize( new_count );
         
         // Combine imported particles to main particles
-        particle_container.copyParticles( &particle_to_inject, initial_count );
+        particle_container.pasteParticles( &particle_to_inject, initial_count );
         
         // Compute keys of particles
         computeParticleClusterKey( particle_container, parameters, a_parent_patch );
@@ -924,52 +925,58 @@ void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pre
     
     if( nparts_to_copy ) {
         // Copy the particles to the destination
-        for( int ip = 0; ip < getNDoubleProp(); ip++ ) {
-            const auto in = getPtrDoubleProp( ip );
-            const auto out = dest->getPtrDoubleProp( ip );
-            thrust::copy_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, out, pred );
+        for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
+            const auto in = nvidia_double_prop_[ip]->begin();
+            const auto out = dest->nvidia_double_prop_[ip]->begin();
+            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
         }
-        for( int ip = 0; ip < getNShortProp(); ip++ ) {
-            const auto in = getPtrShortProp( ip );
-            const auto out = dest->getPtrShortProp( ip );
-            thrust::copy_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, out, pred );
+        for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
+            const auto in = nvidia_short_prop_[ip]->begin();
+            const auto out = dest->nvidia_short_prop_[ip]->begin();
+            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
         }
         if( tracked ) {
-            const auto in = getPtrId();
-            const auto out = dest->getPtrId();
-            thrust::copy_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, out, pred );
+            const auto in = nvidia_id_.begin();
+            const auto out = dest->nvidia_id_.begin();
+            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
         }
-        cudaDeviceSynchronize();
+        const auto in = nvidia_cell_keys_.begin();
+        const auto out = dest->nvidia_cell_keys_.begin();
+        thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
+        SMILEI_ACCELERATOR_DEVICE_SYNC();
+        ::hipDeviceSynchronize();
     }
 }
 
-void nvidiaParticles::copyParticles( Particles* particles_to_inject )
+int nvidiaParticles::addParticles( Particles* particles_to_inject )
 {
     const auto nparts = gpu_nparts_;
     nvidiaParticles* to_inject = static_cast<nvidiaParticles*>( particles_to_inject );
     resize( nparts + to_inject->gpu_nparts_ );
-    copyParticles( to_inject, nparts );
+    pasteParticles( to_inject, nparts );
+    return to_inject->gpu_nparts_;
 }
 
-void nvidiaParticles::copyParticles( nvidiaParticles* particles_to_inject, size_t offset )
+void nvidiaParticles::pasteParticles( nvidiaParticles* particles_to_inject, size_t offset )
 {
     // Copy the particles to the destination
-    for( int ip = 0; ip < getNDoubleProp(); ip++ ) {
-        const auto in = particles_to_inject->getPtrDoubleProp( ip );
-        const auto out = getPtrDoubleProp( ip );
-        thrust::copy_n( thrust::cuda::par_nosync, in, particles_to_inject->gpu_nparts_, out + offset );
+    for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
+        const auto in = particles_to_inject->nvidia_double_prop_[ip]->begin();
+        const auto out = nvidia_double_prop_[ip]->begin();
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
     }
-    for( int ip = 0; ip < getNShortProp(); ip++ ) {
-        const auto in = particles_to_inject->getPtrShortProp( ip );
-        const auto out = getPtrShortProp( ip );
-        thrust::copy_n( thrust::cuda::par_nosync, in, particles_to_inject->gpu_nparts_, out + offset );
+    for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
+        const auto in = particles_to_inject->nvidia_short_prop_[ip]->begin();
+        const auto out = nvidia_short_prop_[ip]->begin();
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
     }
     if( tracked ) {
-        const auto in = particles_to_inject->getPtrId();
-        const auto out = getPtrId();
-        thrust::copy_n( thrust::cuda::par_nosync, in, particles_to_inject->gpu_nparts_, out + offset );
+        const auto in = particles_to_inject->nvidia_id_.begin();
+        const auto out = nvidia_id_.begin();
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
     }
-    cudaDeviceSynchronize();
+    SMILEI_ACCELERATOR_DEVICE_SYNC();
+    ::hipDeviceSynchronize();
 }
 
 // -----------------------------------------------------------------------------
@@ -1016,20 +1023,21 @@ int nvidiaParticles::eraseParticlesByPredicate( Predicate pred )
     // Copy the particles to the destination
     // Using more memory, we could use the faster remove_copy_if
     // NOTE: remove_if is stable.
-    for( int ip = 0; ip < getNDoubleProp(); ip++ ) {
-        const auto in = getPtrDoubleProp( ip );
-        thrust::remove_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, pred );
+    for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
+        const auto in = nvidia_double_prop_[ip]->begin();
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
     }
-    for( int ip = 0; ip < getNShortProp(); ip++ ) {
-        const auto in = getPtrShortProp( ip );
-        thrust::remove_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, pred );
+    for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
+        const auto in = nvidia_short_prop_[ip]->begin();
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
     }
     if( tracked ) {
-        const auto in = getPtrId();
-        thrust::remove_if( thrust::cuda::par_nosync, in, in + gpu_nparts_, keys, pred );
+        const auto in = nvidia_id_.begin();
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
     }
-    cudaDeviceSynchronize();
-    
+    SMILEI_ACCELERATOR_DEVICE_SYNC();
+    ::hipDeviceSynchronize();
+
     return nparts_to_remove;
 }
 
@@ -1094,21 +1102,21 @@ void nvidiaParticles::sortParticleByKey()
     
     // Sort particles using thrust::gather, according to the sorting map
     thrust::device_vector<double> buffer( gpu_nparts_ );
-    for( int ip = 0; ip < getNDoubleProp(); ip++ ) {
-        thrust::gather( thrust::device, index.begin(), index.end(), getPtrDoubleProp( ip ), buffer.begin() );
-        swapDoubleProp( ip, buffer );
+    for( auto prop: nvidia_double_prop_ ) {
+        thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer.begin() );
+        prop->swap( buffer );
     }
     buffer.clear();
     thrust::device_vector<short> buffer_short( gpu_nparts_ );
-    for( int ip = 0; ip < getNShortProp(); ip++ ) {
-        thrust::gather( thrust::device, index.begin(), index.end(), getPtrShortProp( ip ), buffer_short.begin() );
-        swapShortProp( ip, buffer_short );
+    for( auto prop: nvidia_short_prop_ ) {
+        thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer_short.begin() );
+        prop->swap( buffer_short );
     }
     buffer_short.clear();
     if( tracked ) {
         thrust::device_vector<uint64_t> buffer_uint64( gpu_nparts_ );
-        thrust::gather( thrust::device, index.begin(), index.end(), getPtrId(), buffer_uint64.begin() );
-        swapId( buffer_uint64 );
+        thrust::gather( thrust::device, index.begin(), index.end(), nvidia_id_.begin(), buffer_uint64.begin() );
+        nvidia_id_.swap( buffer_uint64 );
         buffer_uint64.clear();
     }
 }
@@ -1123,16 +1131,17 @@ void nvidiaParticles::sortParticleByKey( nvidiaParticles& buffer )
     thrust::sort_by_key( thrust::device, nvidia_cell_keys_.begin(), nvidia_cell_keys_.end(), index.begin() );
     
     // Sort particles using thrust::gather, according to the sorting map
-    for( int ip = 0; ip < getNDoubleProp(); ip++ ) {
-        thrust::gather( thrust::cuda::par_nosync, index.begin(), index.end(), getPtrDoubleProp( ip ), buffer.getPtrDoubleProp( ip ) );
+    for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_double_prop_[ip]->begin(), buffer.nvidia_double_prop_[ip]->begin() );
     }
-    for( int ip = 0; ip < getNShortProp(); ip++ ) {
-        thrust::gather( thrust::cuda::par_nosync, index.begin(), index.end(), getPtrShortProp( ip ), buffer.getPtrShortProp( ip ) );
+    for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_short_prop_[ip]->begin(), buffer.nvidia_short_prop_[ip]->begin() );
     }
     if( tracked ) {
-        thrust::gather( thrust::cuda::par_nosync, index.begin(), index.end(), getPtrId(), buffer.getPtrId() );
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_id_.begin(), buffer.nvidia_id_.begin() );
     }
-    cudaDeviceSynchronize();
+    SMILEI_ACCELERATOR_DEVICE_SYNC();
+    ::hipDeviceSynchronize();
     
     swap( buffer );
 }
@@ -1202,7 +1211,7 @@ void nvidiaParticles::naiveImportAndSortParticles( nvidiaParticles* particles_to
     // Inject newly arrived particles in particles_to_inject
     const size_t current_size = gpu_nparts_;
     resize( current_size + particles_to_inject->size() );
-    copyParticles( particles_to_inject, current_size );
+    pasteParticles( particles_to_inject, current_size );
     particles_to_inject->clear();
 }
 

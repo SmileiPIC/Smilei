@@ -485,7 +485,7 @@ public:
 
     // -----------------------------------------------------------------------------
     //! Resize & Copy particles from particles_to_inject to the end of the vectors
-    virtual void copyParticles( Particles* particles_to_inject  );
+    virtual int addParticles( Particles* particles_to_inject  );
     
     //! Implementation of a somewhat efficient particle injection, sorting
     //! (including removing leaving particles) and binning for GPU if

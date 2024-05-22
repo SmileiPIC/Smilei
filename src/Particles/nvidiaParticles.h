@@ -111,36 +111,12 @@ public:
     uint64_t * getPtrId() override {
         return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
-    
-    size_t getNDoubleProp() {
-        return nvidia_double_prop_.size();
-    };
-    size_t getNShortProp() {
-        return nvidia_short_prop_.size();
-    };
-    
-    double * getPtrDoubleProp( int iprop ) {
-        return thrust::raw_pointer_cast( nvidia_double_prop_[iprop]->data() );
-    };
-    short * getPtrShortProp( int iprop ) {
-        return thrust::raw_pointer_cast( nvidia_short_prop_[iprop]->data() );
-    };
-    
-    void swapDoubleProp( int iprop, thrust::device_vector<double> &new_vector ) {
-        nvidia_double_prop_[iprop]->swap( new_vector );
-    };
-    void swapShortProp( int iprop, thrust::device_vector<short> &new_vector ) {
-        nvidia_short_prop_[iprop]->swap( new_vector );
-    };
-    void swapId( thrust::device_vector<uint64_t> &new_vector ) {
-        nvidia_id_.swap( new_vector );
-    };
-    
+
     void swap( nvidiaParticles & p ) {
-        for( int iprop = 0; iprop < getNDoubleProp(); iprop++ ) {
+        for( int iprop = 0; iprop < nvidia_double_prop_.size(); iprop++ ) {
             nvidia_double_prop_[iprop]->swap( *p.nvidia_double_prop_[iprop] );
         }
-        for( int iprop = 0; iprop < getNShortProp(); iprop++ ) {
+        for( int iprop = 0; iprop < nvidia_short_prop_.size(); iprop++ ) {
             nvidia_short_prop_[iprop]->swap( *p.nvidia_short_prop_[iprop] );
         }
         if( tracked ) {
@@ -157,10 +133,10 @@ public:
     void copyParticlesByPredicate( Particles* buffer, Predicate pred );
 
     //! Resize & Copy particles from particles_to_inject to end of vectors
-    void copyParticles( Particles* particles_to_inject ) override;
+    int addParticles( Particles* particles_to_inject ) override;
     
     //! Copy particles from particles_to_inject to specific offset
-    void copyParticles( nvidiaParticles* particles_to_inject, size_t offset );
+    void pasteParticles( nvidiaParticles* particles_to_inject, size_t offset );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
