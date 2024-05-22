@@ -944,7 +944,6 @@ void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pre
         const auto out = dest->nvidia_cell_keys_.begin();
         thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
         SMILEI_ACCELERATOR_DEVICE_SYNC();
-        ::hipDeviceSynchronize();
     }
 }
 
@@ -976,7 +975,6 @@ void nvidiaParticles::pasteParticles( nvidiaParticles* particles_to_inject, size
         thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
-    ::hipDeviceSynchronize();
 }
 
 // -----------------------------------------------------------------------------
@@ -1036,7 +1034,6 @@ int nvidiaParticles::eraseParticlesByPredicate( Predicate pred )
         thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
-    ::hipDeviceSynchronize();
 
     return nparts_to_remove;
 }
@@ -1141,7 +1138,6 @@ void nvidiaParticles::sortParticleByKey( nvidiaParticles& buffer )
         thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_id_.begin(), buffer.nvidia_id_.begin() );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
-    ::hipDeviceSynchronize();
     
     swap( buffer );
 }
