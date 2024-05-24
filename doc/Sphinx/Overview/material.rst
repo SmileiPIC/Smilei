@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of May 2024, 188 papers have been published covering a broad range of topics:
+As of May 2024, 189 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -49,6 +49,12 @@ Following is the distribution of these topics in the listed publications up to N
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
+
+.. [Krafft2024b]
+
+    C. Krafft, P. Savoini, and F. J. Polanco-Rodríguez,
+    `Mechanisms of Fundamental Electromagnetic Wave Radiation in the Solar Wind`,
+    `The Astrophysical Journal Letters 967, 2 (2024) <https://doi.org/10.3847/2041-8213/ad47b5>`_
 
 .. [Salgado2024]
 
@@ -92,7 +98,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Control of autoresonant plasma beat-wave wakefield excitation`,
     `Physical Review Research 6, 013338 (2024) <https://doi.org/10.1103/PhysRevResearch.6.013338>`_
 
-.. [Krafft2024]
+.. [Krafft2024a]
 
     C. Krafft and P. Savoini,
     `Electrostatic Wave Decay in the Randomly Inhomogeneous Solar Wind`,
@@ -532,7 +538,7 @@ Following is the distribution of these topics in the listed publications up to N
 
 .. [Pae2022]
 
-    K. . Pae, C. M. Kim, V. B. Pathak, C.-M. Ryu and C. H. Nam,
+    K. H. Pae, C. M. Kim, V. B. Pathak, C.-M. Ryu and C. H. Nam,
     `Direct laser acceleration of electrons from a plasma mirror by an intense few-cycle Laguerre–Gaussian laser and its dependence on the carrier-envelope phase`,
     `Plasma Physics and Controlled Fusion 64, 055013 (2022) <http://dx.doi.org/10.1088/1361-6587/ac5a0a>`_
 
@@ -769,7 +775,7 @@ Following is the distribution of these topics in the listed publications up to N
 
 .. [Psikal2021]
 
-  J Psikal,
+  J. Psikal,
   `Laser-driven ion acceleration from near-critical Gaussian plasma density profile`,
   `Plasma Physics and Controlled Fusion 63, 064002 (2021) <http://dx.doi.org/10.1088/1361-6587/abf448>`_
 
@@ -787,7 +793,7 @@ Following is the distribution of these topics in the listed publications up to N
 
 .. [Golovanov2021]
 
-  A A Golovanov, I Yu Kostyukov, L Reichwein, J Thomas and A Pukhov,
+  A. A. Golovanov, I. Y. Kostyukov, L. Reichwein, J. Thomas and A. Pukhov,
   `Excitation of strongly nonlinear plasma wakefield by electron bunches`,
   `Plasma Physics and Controlled Fusion 63, 085004 (2021) <http://dx.doi.org/10.1088/1361-6587/ac0352>`_
 
