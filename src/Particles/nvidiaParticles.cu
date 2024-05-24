@@ -293,23 +293,34 @@ namespace detail {
                                      const Params&    parameters,
                                      const Patch&     a_parent_patch )
     {
-        // Remove out of bound particles
-        const auto erased_count = particle_container.eraseParticlesByPredicate( cellKeyBelow<0>() );
-        
-        const auto initial_count = particle_container.deviceSize() - erased_count;
+        const auto initial_count = particle_container.deviceSize();
         const auto inject_count  = particle_to_inject.deviceSize();
-        const auto new_count     = initial_count + inject_count;
+
+        // Locate out-of-bounds particles in array "available_places"
+        const auto keys = particle_container.getPtrCellKeys();
+        const auto erased_count = thrust::count_if( thrust::device, keys, keys + initial_count, cellKeyBelow<0>() );
+        thrust::device_vector<int> available_places( erased_count );
+        thrust::copy_if( thrust::device,
+                         thrust::counting_iterator<int>{0},
+                         thrust::counting_iterator<int>{ (int) initial_count },
+                         keys,
+                         available_places.begin(),
+                         cellKeyBelow<0>() );
         
-        // Resize particles
-        // NOTE: We really want a non-initializing vector here!
-        // It's possible to give a custom allocator to thrust::device_vector.
-        // Create one with construct(<>) as a noop and derive from
-        // thrust::device_malloc_allocator. For now we do an explicit resize.
-        particle_container.softReserve( new_count );
-        particle_container.resize( new_count );
+        const auto new_count = initial_count + inject_count - erased_count;
         
-        // Combine imported particles to main particles
-        particle_container.pasteParticles( &particle_to_inject, initial_count );
+        // Copy the imported particles to available places
+        particle_to_inject.scatterParticles( particle_container, available_places );
+        // If there are more imported particles than places, copy the remaining imported particles at the end
+        if( inject_count >= erased_count ) {
+            particle_container.resize( new_count );
+            particle_container.pasteParticles( &particle_to_inject, initial_count, erased_count );
+        // If there are more places than imported particles, the remaining places should be filled
+        } else {
+            const auto last_filled = available_places[inject_count];
+            particle_container.eraseParticlesByPredicate( cellKeyBelow<0>(), last_filled );
+            particle_container.resize( new_count );
+        }
         
         // Compute keys of particles
         computeParticleClusterKey( particle_container, parameters, a_parent_patch );
@@ -319,17 +330,11 @@ namespace detail {
         particle_to_inject.resize( new_count );
         
         // Sort particles using thrust::gather, according to the sorting map
+        // (particle_to_inject serves as a buffer)
         particle_container.sortParticleByKey( particle_to_inject );
         
         // Recompute bins
         computeBinIndex( particle_container );
-        
-        // This free generates a lot of memory fragmentation. If we enable it we
-        // reduce significantly the memory usage over time but a memory spike
-        // will still be present. Unfortunately, this free generates soo much
-        // fragmentation (like the one above) that at some point the GPU memory
-        // allocator will fail!
-        // particle_to_inject.free();
     }
 
     template <typename InputIterator,
@@ -910,11 +915,6 @@ void nvidiaParticles::copyLeavingParticlesToBuffer( Particles* buffer )
 template<typename Predicate>
 void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pred )
 {
-    // TODO(Etienne M): We are doing extra work. We could use something like
-    // std::partition to output the invalidated particles in buffer
-    // and keep the good ones. This would help us avoid the std::remove_if in
-    // the particle injection and sorting algorithm.
-    
     // Count particles satisfying the predicate
     const auto keys = getPtrCellKeys();
     const int nparts_to_copy = thrust::count_if( thrust::device, keys, keys + gpu_nparts_, pred );
@@ -952,27 +952,29 @@ int nvidiaParticles::addParticles( Particles* particles_to_inject )
     const auto nparts = gpu_nparts_;
     nvidiaParticles* to_inject = static_cast<nvidiaParticles*>( particles_to_inject );
     resize( nparts + to_inject->gpu_nparts_ );
-    pasteParticles( to_inject, nparts );
+    pasteParticles( to_inject, nparts, 0 );
     return to_inject->gpu_nparts_;
 }
 
-void nvidiaParticles::pasteParticles( nvidiaParticles* particles_to_inject, size_t offset )
+void nvidiaParticles::pasteParticles( nvidiaParticles* particles_to_inject, size_t offset_in_output, size_t offset_in_input )
 {
+    const auto n = particles_to_inject->gpu_nparts_ - (int) offset_in_input;
+    
     // Copy the particles to the destination
     for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
-        const auto in = particles_to_inject->nvidia_double_prop_[ip]->begin();
-        const auto out = nvidia_double_prop_[ip]->begin();
-        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
+        const auto in = particles_to_inject->nvidia_double_prop_[ip]->begin() + offset_in_input;
+        const auto out = nvidia_double_prop_[ip]->begin() + offset_in_output;
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, n, out );
     }
     for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
-        const auto in = particles_to_inject->nvidia_short_prop_[ip]->begin();
-        const auto out = nvidia_short_prop_[ip]->begin();
-        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
+        const auto in = particles_to_inject->nvidia_short_prop_[ip]->begin() + offset_in_input;
+        const auto out = nvidia_short_prop_[ip]->begin() + offset_in_output;
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, n, out );
     }
     if( tracked ) {
-        const auto in = particles_to_inject->nvidia_id_.begin();
-        const auto out = nvidia_id_.begin();
-        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, particles_to_inject->gpu_nparts_, out + offset );
+        const auto in = particles_to_inject->nvidia_id_.begin() + offset_in_input;
+        const auto out = nvidia_id_.begin() + offset_in_output;
+        thrust::copy_n( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, n, out );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
 }
@@ -1006,32 +1008,32 @@ void nvidiaParticles::pasteParticles( nvidiaParticles* particles_to_inject, size
 // -----------------------------------------------------------------------------
 int nvidiaParticles::eraseLeavingParticles()
 {
-    const auto nremoved = eraseParticlesByPredicate( cellKeyBelow<0>() );
+    const auto nremoved = eraseParticlesByPredicate( cellKeyBelow<0>(), 0 );
     resize( gpu_nparts_ - nremoved );
     return nremoved;
 }
 
 //! "Erase" particles but does not resize the arrays!
 template<typename Predicate>
-int nvidiaParticles::eraseParticlesByPredicate( Predicate pred )
+int nvidiaParticles::eraseParticlesByPredicate( Predicate pred, size_t offset )
 {
     const auto keys = getPtrCellKeys();
-    const int nparts_to_remove = thrust::count_if( thrust::device, keys, keys + gpu_nparts_, pred );
+    const int nparts_to_remove = thrust::count_if( thrust::device, keys + offset, keys + gpu_nparts_, pred );
     
     // Copy the particles to the destination
     // Using more memory, we could use the faster remove_copy_if
     // NOTE: remove_if is stable.
     for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
         const auto in = nvidia_double_prop_[ip]->begin();
-        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in + offset, in + gpu_nparts_, keys + offset, pred );
     }
     for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
         const auto in = nvidia_short_prop_[ip]->begin();
-        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in + offset, in + gpu_nparts_, keys + offset, pred );
     }
     if( tracked ) {
         const auto in = nvidia_id_.begin();
-        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, pred );
+        thrust::remove_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in + offset, in + gpu_nparts_, keys + offset, pred );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
 
@@ -1142,6 +1144,25 @@ void nvidiaParticles::sortParticleByKey( nvidiaParticles& buffer )
     swap( buffer );
 }
 
+
+void nvidiaParticles::scatterParticles( nvidiaParticles &dest, const thrust::device_vector<int> &index )
+{
+    const auto n = std::min( (int) index.size(), gpu_nparts_ );
+    for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
+        const auto in = nvidia_double_prop_[ip]->begin();
+        thrust::scatter( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + n, index.begin(), dest.nvidia_double_prop_[ip]->begin() );
+    }
+    for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
+        const auto in = nvidia_short_prop_[ip]->begin();
+        thrust::scatter( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + n, index.begin(), dest.nvidia_short_prop_[ip]->begin() );
+    }
+    if( tracked ) {
+        const auto in = nvidia_id_.begin();
+        thrust::scatter( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + n, index.begin(), dest.nvidia_id_.begin() );
+    }
+    SMILEI_ACCELERATOR_DEVICE_SYNC();
+}
+
 int nvidiaParticles::prepareBinIndex()
 {
     if( first_index.size() == 0 ) {
@@ -1207,7 +1228,7 @@ void nvidiaParticles::naiveImportAndSortParticles( nvidiaParticles* particles_to
     // Inject newly arrived particles in particles_to_inject
     const size_t current_size = gpu_nparts_;
     resize( current_size + particles_to_inject->size() );
-    pasteParticles( particles_to_inject, current_size );
+    pasteParticles( particles_to_inject, current_size, 0 );
     particles_to_inject->clear();
 }
 

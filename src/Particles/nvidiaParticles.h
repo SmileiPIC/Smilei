@@ -136,7 +136,7 @@ public:
     int addParticles( Particles* particles_to_inject ) override;
     
     //! Copy particles from particles_to_inject to specific offset
-    void pasteParticles( nvidiaParticles* particles_to_inject, size_t offset );
+    void pasteParticles( nvidiaParticles* particles_to_inject, size_t offset_out, size_t offset_in );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
@@ -144,7 +144,7 @@ public:
     int eraseLeavingParticles() override;
     
     template<typename Predicate>
-    int eraseParticlesByPredicate( Predicate pred );
+    int eraseParticlesByPredicate( Predicate pred, size_t offset );
     
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors
@@ -160,6 +160,8 @@ public:
     void sortParticleByKey();
     //! This version is asynchronous, but requires a buffer of equal size to be provided
     void sortParticleByKey( nvidiaParticles& buffer );
+
+    void scatterParticles( nvidiaParticles &particles_to_import, const thrust::device_vector<int> &index );
 
 protected:
     //! Redefine first_index and last_index according to the binning algorithm
