@@ -455,8 +455,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ----
                     // dA/dx = dA/dx + ik0 A
                     std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
-                    std::complex<double> dA_over_dx = dA_over_dx_fdtd
-                                                      + i1*k0*( *A_n_pml )( i, j ) ;
+                    // std::complex<double> dA_over_dx = dA_over_dx_fdtd
+                    //                                   + i1*k0*( *A_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
                     std::complex<double> d2A_over_dx2_fdtd = ( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
                     std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
@@ -590,8 +590,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ----
                     // dA/dx = dA/dx + ik0 A
                     std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
-                    std::complex<double> dA_over_dx = dA_over_dx_fdtd
-                                                      + i1*k0*( *A_n_pml )( i, j ) ;
+                    // std::complex<double> dA_over_dx = dA_over_dx_fdtd
+                    //                                   + i1*k0*( *A_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
                     std::complex<double> d2A_over_dx2_fdtd = ( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
                     std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd

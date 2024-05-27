@@ -2,7 +2,7 @@
 #include "SyncVectorPatch.h"
 
 #include <vector>
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #include <openacc.h>
 #endif
 #include "Params.h"
@@ -269,7 +269,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches.densitiesMPIx[ifield             ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->extract_fields_sum( 0, iNeighbor, oversize[0] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                 Field* field = vecPatches.densitiesMPIx[ifield      ];
 //                 double* Jx   = field->sendFields_[iNeighbor]->data_;
 //                 int sizeofJx = field->sendFields_[iNeighbor]->size();
@@ -291,7 +291,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
     // iDim = 0, local
     const int nFieldLocalx = vecPatches.densitiesLocalx.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
     const bool is_memory_on_device = vecPatches.densitiesLocalx.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalx[0]->data() );
@@ -324,9 +324,9 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 pt2 = &( vecPatches.densitiesLocalx[ifield]->data_[0] );
                 //Sum 2 ==> 1
 
-                const int last = gsp[0] * ny_ * nz_;
+                const unsigned int last = gsp[0] * ny_ * nz_;
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->size();
                 int nspace0 = size[0];
                 #pragma acc parallel if ( is_memory_on_device) present(pt1[0-nspace0*ny_*nz_:ptsize],pt2[0:ptsize])
@@ -358,7 +358,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                 Field* field = vecPatches.densitiesMPIx[ifield      ];
 //                 double* Jx   = field->recvFields_[(iNeighbor+1)%2]->data_;
 //                 int sizeofJx = field->recvFields_[(iNeighbor+1)%2]->size();
@@ -402,7 +402,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     vecPatches.densitiesMPIy[ifield             ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->extract_fields_sum( 1, iNeighbor, oversize[1] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                     Field* field = vecPatches.densitiesMPIy[ifield      ];
 //                     double* Jx   = field->sendFields_[iNeighbor+2]->data_;
 //                     int sizeofJx = field->sendFields_[iNeighbor+2]->size();
@@ -424,7 +424,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         // iDim = 1,
         const int nFieldLocaly = vecPatches.densitiesLocaly.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
         const bool is_memory_on_device = vecPatches.densitiesLocaly.size() > 0 &&
                                          smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocaly[0]->data() );
 #endif
@@ -457,11 +457,11 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     pt1 = &( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches]->data_[size[1]*nz_] );
                     pt2 = &( vecPatches.densitiesLocaly[ifield]->data_[0] );
 
-                    const int outer_last   = nx_ * ny_ * nz_;
-                    const int outer_stride = ny_ * nz_;
-                    const int inner_last   = gsp[1] * nz_;
+                    const unsigned int outer_last   = nx_ * ny_ * nz_;
+                    const unsigned int outer_stride = ny_ * nz_;
+                    const unsigned int inner_last   = gsp[1] * nz_;
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->size();
                     int blabla = size[1];
                     #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
@@ -496,7 +496,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                     Field* field = vecPatches.densitiesMPIy[ifield      ];
 //                     double* Jx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
 //                     int sizeofJx = field->recvFields_[(iNeighbor+1)%2+2]->size();
@@ -538,7 +538,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         vecPatches.densitiesMPIz[ifield             ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->extract_fields_sum( 2, iNeighbor, oversize[2] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                         Field* field = vecPatches.densitiesMPIz[ifield      ];
 //                         double* Jx   = field->sendFields_[iNeighbor+4]->data_;
 //                         int sizeofJx = field->sendFields_[iNeighbor+4]->size();
@@ -560,7 +560,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             // iDim = 2 local
             const int nFieldLocalz = vecPatches.densitiesLocalz.size() / 3;
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
             const bool is_memory_on_device = vecPatches.densitiesLocalz.size() > 0 &&
                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( vecPatches.densitiesLocalz[0]->data() );
 #endif
@@ -594,11 +594,11 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         pt1 = &( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches]->data_[size[2]] );
                         pt2 = &( vecPatches.densitiesLocalz[ifield]->data_[0] );
 
-                        const int outer_last   = nx_ * ny_ * nz_;
-                        const int outer_stride = nz_;
-                        const int inner_last   = gsp[2];
+                        const unsigned int outer_last   = nx_ * ny_ * nz_;
+                        const unsigned int outer_stride = nz_;
+                        const unsigned int inner_last   = gsp[2];
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                         int ptsize = vecPatches.densitiesLocalz[ifield]->size();
                         int blabla = size[2];
                         #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])
@@ -630,7 +630,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2 ); // Jz
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                         Field* field = vecPatches.densitiesMPIz[ifield      ];
 //                         double* Jx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
 //                         int sizeofJx = field->recvFields_[(iNeighbor+1)%2+4]->size();
@@ -797,7 +797,7 @@ void SyncVectorPatch::exchangeE( Params &, VectorPatch &vecPatches, int imode, S
     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEt_[imode], vecPatches );
 }
 
-void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeBmBTIS3( Params &/*params*/, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
 {
     SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBr_mBTIS3[imode], vecPatches, smpi );
     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBr_mBTIS3[imode], vecPatches );
@@ -881,7 +881,7 @@ void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, Sm
     }
 }
 
-void SyncVectorPatch::exchangeBmBTIS3( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeBmBTIS3( Params &/*params*/, VectorPatch &vecPatches, SmileiMPI *smpi )
 {   // exchange BmBTIS3 in Cartesian geometries
 
     // exchange ByBTIS3 
@@ -1487,7 +1487,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 vecPatches.B_MPIx[ifield      ]->extract_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->create_sub_fields  ( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->extract_fields_exch( 0, iNeighbor, oversize );
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B_MPIx[ifield      ];
                 double* By   = field->sendFields_[iNeighbor]->data_;
                 int sizeofBy = field->sendFields_[iNeighbor]->size();
@@ -1580,7 +1580,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( VectorPatch &vecPatch
         vecPatches( ipatch )->finalizeExchange( vecPatches.B_MPIx[ifield+nMPIx], 0 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B_MPIx[ifield      ];
                 double* By   = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofBy = field->recvFields_[(iNeighbor+1)%2]->size();
@@ -1623,7 +1623,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 vecPatches.B1_MPIy[ifield      ]->extract_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->create_sub_fields  ( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->extract_fields_exch( 1, iNeighbor, oversize );
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B1_MPIy[ifield      ];
                 double* Bx   = field->sendFields_[iNeighbor+2]->data_;
                 int sizeofBx = field->sendFields_[iNeighbor+2]->size();
@@ -1671,7 +1671,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
                 pt1 = &( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches]->data_[size*nz_] );
                 pt2 = &( vecPatches.B1_localy[ifield]->data_[0] );
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 int ptsize = vecPatches.B1_localy[ifield]->size();
                 #pragma acc parallel present(pt1[0-size*nz_:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
@@ -1711,7 +1711,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( VectorPatch &vecPatch
         vecPatches( ipatch )->finalizeExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B1_MPIy[ifield      ];
                 double* Bx   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                 int sizeofBx = field->recvFields_[(iNeighbor+1)%2+2]->size();
@@ -1754,7 +1754,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 vecPatches.B2_MPIz[ifield      ]->extract_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->create_sub_fields  ( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->extract_fields_exch( 2, iNeighbor, oversize );
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B2_MPIz[ifield      ];
                 double* Bx   = field->sendFields_[iNeighbor+4]->data_;
                 int sizeofBx = field->sendFields_[iNeighbor+4]->size();
@@ -1799,7 +1799,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
                 pt1 = &( fields[vecPatches( ipatch )->neighbor_[2][0]-h0+icomp*nPatches]->data_[size] );
                 pt2 = &( vecPatches.B2_localz[ifield]->data_[0] );
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 int ptsize = vecPatches.B2_localz[ifield]->size();
                 #pragma acc parallel present(pt1[0-size:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
@@ -1839,7 +1839,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( VectorPatch &vecPatch
         vecPatches( ipatch )->finalizeExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2 ); // By
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 Field* field = vecPatches.B2_MPIz[ifield      ];
                 double* Bx   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                 int sizeofBx = field->recvFields_[(iNeighbor+1)%2+4]->size();

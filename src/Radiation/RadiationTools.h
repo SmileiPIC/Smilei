@@ -32,7 +32,7 @@ class RadiationTools {
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) getHNielFitOrder10(double particle_chi)
@@ -62,7 +62,7 @@ class RadiationTools {
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) getHNielFitOrder5(double particle_chi)
@@ -86,7 +86,7 @@ class RadiationTools {
         //! Ridgers et al., ArXiv 1708.04511 (2017)
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) getHNielFitRidgers(double particle_chi)
@@ -104,7 +104,7 @@ class RadiationTools {
         //! approximation formulae
         //! \param particle_chi particle quantum parameter
         //#pragma omp declare simd
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) computeGRidgers(double particle_chi)
@@ -117,7 +117,7 @@ class RadiationTools {
         //! Return f1(nu) = Int_nu^\infty K_{5/3}(y) dy
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) computeF1Nu(double nu)
@@ -155,7 +155,7 @@ class RadiationTools {
         //! Return f2(nu) = BesselK_{2/3}(nu)
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) computeF2Nu(double nu)
@@ -194,7 +194,7 @@ class RadiationTools {
         //! = Int_nu^\infty K_{5/3}(y) dy + cst * BesselK_{2/3}(nu)
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc routine seq
 #endif
         static inline double __attribute__((always_inline)) computeBesselPartsRadiatedPower(double nu, double cst)

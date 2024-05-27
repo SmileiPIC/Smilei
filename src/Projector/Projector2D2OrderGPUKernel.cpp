@@ -1,4 +1,4 @@
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 #include "Projector2D2OrderGPUKernelCUDAHIP.h"
 #include <cmath>

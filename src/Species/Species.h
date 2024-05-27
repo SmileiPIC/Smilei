@@ -6,7 +6,7 @@
 // #include "PyTools.h"
 
 #include "Particles.h"
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 #include "nvidiaParticles.h"
 #endif
 #include "Params.h"
@@ -382,7 +382,7 @@ public:
         return particles->capacity();
     }
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
     void allocateParticlesOnDevice();
 
@@ -566,12 +566,14 @@ public:
 
     //! This method removes particles with a negative weight
     //! when a single bin is used
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     void removeTaggedParticles(
         SmileiMPI *smpi,
         int *const first_index,
         int *const last_index,
         int ithread,
         bool compute_cell_keys = false);
+#endif
 
     //! Moving window boundary conditions managment
     void disableXmax();

@@ -16,7 +16,7 @@
 #include "Radiation.h"
 #include "userFunctions.h"
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 #include <openacc.h>
 // This is wrong. Dont include nvidiaParticles, it may cause problem!
 // See particle factory.

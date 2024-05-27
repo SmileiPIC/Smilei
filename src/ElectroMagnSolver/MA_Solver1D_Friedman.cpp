@@ -28,7 +28,7 @@ void MA_Solver1D_Friedman::operator()( ElectroMagn *fields )
     Field1D *Ex1D   = static_cast<Field1D *>( fields->Ex_ );
     Field1D *Ey1D   = static_cast<Field1D *>( fields->Ey_ );
     Field1D *Ez1D   = static_cast<Field1D *>( fields->Ez_ );
-    Field1D *Bx1D   = static_cast<Field1D *>( fields->Bx_ );
+    // Field1D *Bx1D   = static_cast<Field1D *>( fields->Bx_ );
     Field1D *By1D   = static_cast<Field1D *>( fields->By_ );
     Field1D *Bz1D   = static_cast<Field1D *>( fields->Bz_ );
     Field1D *Jx1D   = static_cast<Field1D *>( fields->Jx_ );

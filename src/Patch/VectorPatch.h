@@ -510,7 +510,7 @@ public :
                             RadiationTables * radiation_tables,
                             MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
-#if defined( SMILEI_ACCELERATOR_MODE)
+#if defined( SMILEI_ACCELERATOR_GPU)
 
     //! Field Synchronization from the GPU (Device) to the host (CPU)
 

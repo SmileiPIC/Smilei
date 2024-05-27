@@ -386,7 +386,7 @@ public:
     //!
     bool isGPUParticleBinningAvailable() const;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
 
     //! Given dimension_id in [0, 3), return for dimension_id == :
     //! 1: the 1D value (not implemented)
