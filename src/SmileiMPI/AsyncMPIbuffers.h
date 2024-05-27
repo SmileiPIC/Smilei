@@ -17,7 +17,7 @@ public:
     AsyncMPIbuffers();
     ~AsyncMPIbuffers();
     
-    virtual void allocate( unsigned int nDim_field );
+    void allocate( unsigned int nDim_field );
     
     void defineTags( Patch *patch, SmileiMPI *smpi, int tag ) ;
     

@@ -398,7 +398,11 @@ class Operation(object):
 							raise Exception("Quantity "+q+" not understood")
 			# Calculate the total units and its inverse
 			locals().update(self.imports)
-			units = eval("".join(basic_op)).units
+			units = eval("".join(basic_op))
+			if isinstance(units, (int, float)):
+				units = ureg.Quantity(1) # dimensionless
+			else:
+				units = units.units
 			self.translated_units = units.format_babel(locale="en")
 			# Make the operation string
 			self.translated_operation = "".join(full_op)

@@ -1148,6 +1148,9 @@ Each species has to be defined in a ``Species`` block::
   :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
   ``"Bx"``, ``"By"`` and ``"Bz"``.
   
+  Note that magnetic field components, as they originate from the interpolator,
+  are shifted by half a timestep compared to those from the *Fields* diagnostics.
+  
   Additionally, the work done by each component of the electric field is available as
   ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
   are accumulated over time.
@@ -2716,7 +2719,8 @@ or several points arranged in a 2-D or 3-D grid.
   * **In "AMcylindrical" geometry**, probes are defined with 3D Cartesian coordinates
     and cannot be separated per mode. Use Field diagnostics for cylindrical coordinates and
     information per mode.
-
+  * **Probes rely on the particle interpolator to compute fields** so that the
+    magnetic field is shifted by half a timestep compared to that of *Fields* diagnostics.
 
 To add one probe diagnostic, include the block ``DiagProbe``::
 
@@ -3343,7 +3347,7 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
+.. Note:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
   They are actually the velocities multiplied by the lorentz factor, i.e.,
   :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
   inside the ``filter`` function (not for the output of the diagnostic).
