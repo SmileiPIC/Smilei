@@ -3347,19 +3347,20 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Note:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
-  They are actually the velocities multiplied by the lorentz factor, i.e.,
-  :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
-  inside the ``filter`` function (not for the output of the diagnostic).
-
-.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
-  This number is set to 0 at the beginning of the simulation. **Only after particles have
-  passed the filter**, they acquire a positive ``id``.
-
-.. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
-  accessible within the ``filter`` function. Its value is always equal to the current
-  iteration number of the PIC loop. The current time of the simulation is thus
-  ``Main.iteration * Main.timestep``.
+.. Note::
+  
+  * In the ``filter`` function only, the ``px``, ``py`` and ``pz`` quantities
+    are not exactly the momenta.
+    They are actually the velocities multiplied by the lorentz factor, i.e.,
+    :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`.
+    This is *not* true for the output of the diagnostic.
+  * The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+    This number is set to 0 at the beginning of the simulation. **Only after particles have
+    passed the filter**, they acquire a positive ``id``.
+  * For advanced filtration, Smilei provides the quantity ``Main.iteration``,
+    accessible within the ``filter`` function. Its value is always equal to the current
+    iteration number of the PIC loop. The current time of the simulation is thus
+    ``Main.iteration * Main.timestep``.
 
 .. py:data:: attributes
 
@@ -3371,6 +3372,11 @@ for instance::
   their statistical weight (``"w"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
+
+.. Note:: Here, interpolated fields are normally computed after the Maxwell solver.
+  They may thus differ by half a timestep from those computed at the middle of the
+  timestep to push particles. When exact values are needed, use the option
+  :py:data:`keep_interpolated_fields`.
 
 ----
 
