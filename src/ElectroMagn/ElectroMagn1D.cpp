@@ -559,34 +559,65 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
 void ElectroMagn1D::centerMagneticFields()
 {
     // Static cast of the fields
-    Field1D *Bx1D   = static_cast<Field1D *>( Bx_ );
-    Field1D *By1D   = static_cast<Field1D *>( By_ );
-    Field1D *Bz1D   = static_cast<Field1D *>( Bz_ );
-    Field1D *Bx1D_m = static_cast<Field1D *>( Bx_m );
-    Field1D *By1D_m = static_cast<Field1D *>( By_m );
-    Field1D *Bz1D_m = static_cast<Field1D *>( Bz_m );
+    const double *const __restrict__ Bx1D = Bx_->data();
+    const double *const __restrict__ By1D = By_->data();
+    const double *const __restrict__ Bz1D = Bz_->data();
+    double *const __restrict__ Bx1D_m     = Bx_m->data();
+    double *const __restrict__ By1D_m     = By_m->data();
+    double *const __restrict__ Bz1D_m     = Bz_m->data();
+    const unsigned int nx_p = dimPrim[0];
+    const unsigned int nx_d = dimDual[0];
+
 
     // for Bx^(p)
-    for( unsigned int i=0 ; i<dimPrim[0] ; i++ ) {
-        ( *Bx1D_m )( i ) = ( ( *Bx1D )( i )+ ( *Bx1D_m )( i ) )*0.5 ;
+#if defined( SMILEI_OPENACC_MODE )
+    const int sizeofBx = Bx_->size();
+    const int sizeofBy = By_->size();
+    const int sizeofBz = Bz_->size();
+
+    #pragma acc parallel present(Bx1D[0:sizeofBx],Bx1D_m[0:sizeofBx])
+    #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for //simd
+#endif
+    for( unsigned int i=0 ; i<nx_p ; i++ ) {
+        Bx1D_m[i] = ( Bx1D[i] + Bx1D_m[i] ) * 0.5;
     }
 
     // for By^(d) & Bz^(d)
-    for( unsigned int i=0 ; i<dimDual[0] ; i++ ) {
-        ( *By1D_m )( i )= ( ( *By1D )( i )+( *By1D_m )( i ) )*0.5 ;
-        ( *Bz1D_m )( i )= ( ( *Bz1D )( i )+( *Bz1D_m )( i ) )*0.5 ;
+#if defined( SMILEI_OPENACC_MODE )
+    #pragma acc parallel present(Bz1D[0:sizeofBz],Bz1D_m[0:sizeofBz],By1D[0:sizeofBy],By1D_m[0:sizeofBy])
+    #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for //simd
+#endif
+    for( unsigned int i=0 ; i<nx_d ; i++ ) {
+        By1D_m[i] = ( By1D[i] + By1D_m[i] ) * 0.5;
+        Bz1D_m[i] = ( Bz1D[i] + Bz1D_m[i] ) * 0.5;
     }
     
     if (use_BTIS3){
-        // Static-cast of the fields
-        Field1D *By_oldBTIS3 = static_cast<Field1D *>( By_mBTIS3 );
-        Field1D *Bz_oldBTIS3 = static_cast<Field1D *>( Bz_mBTIS3 );
-
-        for( unsigned int i=0 ; i<dimPrim[0]-1 ; i++ ) {
+        double *const By1D_oldBTIS3 = By_mBTIS3->data();
+        double *const Bz1D_oldBTIS3 = Bz_mBTIS3->data();
+#if defined( SMILEI_OPENACC_MODE )
+    const int sizeofByBTIS3 = By_mBTIS3->size();
+    const int sizeofBzBTIS3 = Bz_mBTIS3->size();
+    #pragma acc parallel present(By1D_oldBTIS3[0:sizeofByBTIS3],By1D[0:sizeofBy],Bz1D_oldBTIS3[0:sizeofBzBTIS3],Bz1D[0:sizeofBz])
+    #pragma acc loop gang vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for
+#endif
+#if !defined( SMILEI_ACCELERATOR_MODE )
+        #pragma omp simd
+#endif
+        for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
             // Magnetic field By^(p) for BTIS3 interpolation
-            ( *By_oldBTIS3 )( i ) = ( ( *By1D )( i+1 ) + ( *By_oldBTIS3 )( i ) )*0.5;
+            By1D_oldBTIS3[i] = By1D[i+1] + By1D_oldBTIS3[i] * 0.5;
             // Magnetic field Bz^(p) for BTIS3 interpolation
-            ( *Bz_oldBTIS3 )( i ) = ( ( *Bz1D )( i+1 ) + ( *Bz_oldBTIS3 )( i ) )*0.5;
+            Bz1D_oldBTIS3[i] = Bz1D[i+1] + Bz1D_oldBTIS3[i] * 0.5;
         }
     }
     

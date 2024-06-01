@@ -25,7 +25,7 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
-    not_spectral  = !parameters.is_pxr;
+    not_spectral_  = !parameters.is_pxr;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
@@ -414,7 +414,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
 
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
@@ -429,7 +429,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   i_domain_begin_, j_domain_begin_, k_domain_begin_,
                   nprimy, nprimz,
                   one_third,
-                  not_spectral );
+                  not_spectral_ );
 
     // If requested performs then the charge density deposition
     } else {
@@ -453,7 +453,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
     }
 
         // TODO(Etienne M): DIAGS. Find a way to get rho. We could:

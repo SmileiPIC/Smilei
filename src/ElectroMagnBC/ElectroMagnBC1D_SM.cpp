@@ -17,23 +17,23 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch *patch, unsigned i
     : ElectroMagnBC1D( params, patch, i_boundary )
 {
     // Parameters for the Silver-Mueller boundary conditions
-    Alpha = 2./( 1.+dt_ov_d[0] );
-    Beta  = ( dt_ov_d[0]-1. )/( 1.+dt_ov_d[0] );
-    Gamma = 4./( 1.+dt_ov_d[0] );
+    Alpha_ = 2. / ( 1. + dt_ov_d[0] );
+    Beta_  = ( dt_ov_d[0] - 1. ) / ( 1. + dt_ov_d[0] );
+    Gamma_ = 4. / ( 1. + dt_ov_d[0] );
     
-    By_val = 0.;
-    Bz_val = 0.;
+    By_val_ = 0.;
+    Bz_val_ = 0.;
     
     sign_ = (double) (i_boundary_ % 2) *2 - 1.; // -1 or 1 for min or max
     
     if( i_boundary == 0 ) {
-        iE = 0;
-        iB = 0;
-        iB_old = 1;
+        iE_ = 0;
+        iB_ = 0;
+        iB_old_ = 1;
     } else {
-        iE = n_p[0] - 1;
-        iB = n_d[0] - 1;
-        iB_old = iB - 1;
+        iE_ = n_p[0] - 1;
+        iB_ = n_d[0] - 1;
+        iB_old_ = iB_ - 1;
     }
     
 }
@@ -50,15 +50,15 @@ void ElectroMagnBC1D_SM::save_fields( Field *my_field, Patch *patch )
     
     if( i_boundary_ == 0 && patch->isXmin() ) {
         if( field1D->name=="By" ) {
-            By_val = ( *my_field )( 0 );
+            By_val_ = ( *my_field )( 0 );
         } else if( field1D->name=="Bz" ) {
-            Bz_val = ( *my_field )( 0 );
+            Bz_val_ = ( *my_field )( 0 );
         }
     } else if( i_boundary_ == 1 && patch->isXmax() ) {
         if( field1D->name=="By" ) {
-            By_val = ( *my_field )( field1D->dims()[0]-1 );
+            By_val_ = ( *my_field )( field1D->dims()[0]-1 );
         } else if( field1D->name=="Bz" ) {
-            Bz_val = ( *my_field )( field1D->dims()[0]-1 );
+            Bz_val_ = ( *my_field )( field1D->dims()[0]-1 );
         }
         
     }
@@ -74,11 +74,17 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
     if( patch->isBoundary( i_boundary_ ) ) {
     
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
-        Field1D *Ey1D   = static_cast<Field1D *>( EMfields->Ey_ );
+        /*Field1D *Ey1D   = static_cast<Field1D *>( EMfields->Ey_ );
         Field1D *Ez1D   = static_cast<Field1D *>( EMfields->Ez_ );
         Field1D *By1D   = static_cast<Field1D *>( EMfields->By_ );
-        Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
+        Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );*/
         
+        const Field  *E[3]{ EMfields->Ex_, EMfields->Ey_, EMfields->Ez_ };
+        const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+        const double *const __restrict__ E1 = E[1]->data_;
+        const double *const __restrict__ E2 = E[2]->data_;
+        double *const __restrict__ B1       = B[1]->data_;
+        double *const __restrict__ B2       = B[2]->data_;
         // Lasers
         double by = 0., bz = 0.;
         vector<double> pos( 1 );
@@ -88,11 +94,25 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             bz += vecLaser[ilaser]->getAmplitude1( pos, time_dual, 0, 0 );
         }
         
+#ifdef SMILEI_OPENACC_MODE
+        const int sizeofE1 = E[1]->number_of_points_;
+        const int sizeofE2 = E[2]->number_of_points_;
+        const int sizeofB1 = B[1]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
         // Apply Silver-Mueller EM boundary condition at x=xmin or xmax
         
-        ( *By1D )( iB ) = -sign_*Alpha*( *Ez1D )( iE ) + Beta*( ( *By1D )( iB_old )-By_val ) + Gamma*by + By_val;
-        ( *Bz1D )( iB ) =  sign_*Alpha*( *Ey1D )( iE ) + Beta*( ( *Bz1D )( iB_old )-Bz_val ) + Gamma*bz + Bz_val;
-        
+#ifdef SMILEI_OPENACC_MODE
+        #pragma acc parallel present(E1[0:sizeofE1],E2[0:sizeofE2],B1[0:sizeofB1],B2[0:sizeofB2])
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+#endif
+        {
+            //( *By1D )( iB_ ) = -sign_*Alpha_*( *Ez1D )( iE_ ) + Beta_*( ( *By1D )( iB_old_ )-By_val_ ) + Gamma_*by + By_val_;
+            //( *Bz1D )( iB_ ) =  sign_*Alpha_*( *Ey1D )( iE_ ) + Beta_*( ( *Bz1D )( iB_old_ )-Bz_val_ ) + Gamma_*bz + Bz_val_;
+            B1[ iB_ ] = -sign_ * Alpha_ * E2[iE_] + Beta_ * ( B1[iB_old_] - By_val_) + Gamma_ * by + By_val_;
+            B2[ iB_ ] = -sign_ * Alpha_ * E1[iE_] + Beta_ * ( B2[iB_old_] - Bz_val_) + Gamma_ * bz + Bz_val_;
+        }
     }
     
 }

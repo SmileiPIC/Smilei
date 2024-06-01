@@ -3,6 +3,7 @@
 
 #include "Projector.h"
 #include "Projector1D2Order.h"
+#include "Projector1D2OrderGPU.h"
 #include "Projector1D4Order.h"
 #include "Projector2D2Order.h"
 #include "Projector2D2OrderGPU.h"
@@ -33,7 +34,11 @@ public:
         // 1Dcartesian simulation
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
-            Proj = new Projector1D2Order( params, patch );
+            #if defined( SMILEI_ACCELERATOR_MODE )
+                Proj = new Projector1D2OrderGPU( params, patch );
+            #else
+                Proj = new Projector1D2Order( params, patch );
+            #endif
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
             Proj = new Projector1D4Order( params, patch );
         }

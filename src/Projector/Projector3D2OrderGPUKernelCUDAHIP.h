@@ -17,9 +17,8 @@
 #include "gpu.h"
 
 namespace cudahip {
-//static
-inline void
-    currentDepositionKernel3D( double *__restrict__ host_Jx,
+//static inline
+void currentDepositionKernel3D( double *__restrict__ host_Jx,
                                double *__restrict__ host_Jy,
                                double *__restrict__ host_Jz,
                                int Jx_size,
@@ -50,11 +49,10 @@ inline void
                                int    k_domain_begin,
                                int    nprimy,
                                int    nprimz,
-                               int    not_spectral );
+                               int    not_spectral_ );
 
-//static 
-inline void
-    densityDepositionKernel3D(
+//static inline
+void densityDepositionKernel3D(
                                 double *__restrict__ host_rho,
                                 int rho_size,
                                 const double *__restrict__ device_particle_position_x,
@@ -82,7 +80,7 @@ inline void
                                 int    k_domain_begin,
                                 int    nprimy,
                                 int    nprimz,
-                                int    not_spectral );
+                                int    not_spectral_ );
 
 } // namespace cudahip
 
