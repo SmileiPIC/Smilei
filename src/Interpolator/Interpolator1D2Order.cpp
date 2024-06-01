@@ -143,7 +143,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
     const double *const __restrict__ By1D = static_cast<Field1D *>( EMfields->By_m )->data();
     const double *const __restrict__ Bz1D = static_cast<Field1D *>( EMfields->Bz_m )->data();
 
-#if defined(SMILEI_OPENACC_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU_OACC)
     const int sizeofEx = EMfields->Ex_->size();
     const int sizeofEy = EMfields->Ey_->size();
     const int sizeofEz = EMfields->Ez_->size();
@@ -163,7 +163,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target map( to : i_domain_begin_) is_device_ptr (position_x)
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc enter data create(this)
     #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 0 * nparts ) - first_index;
@@ -210,7 +210,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
             delta[0*nparts+ipart] = delta_p[0];
 
     } // end ipart loop
-    #if defined(SMILEI_OPENACC_MODE)
+    #if defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc exit data delete(this)
     #endif
 
@@ -222,7 +222,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp target map( to : i_domain_begin_) is_device_ptr ( position_x)
         #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc enter data create(this)
         #pragma acc update device(this)
         size_t interpolation_range_size = ( last_index + 1 * nparts ) - first_index;
@@ -286,7 +286,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
             delta[0*nparts+ipart] = delta_p[0];
 
         } // end ipart loop
-    #if defined(SMILEI_OPENACC_MODE)
+    #if defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc exit data delete(this)
     #endif
     } // end with B-TIS interpolation

@@ -200,7 +200,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         double,
                         int not_spectral )
     {
-        currentAndDensityDepositionKernelOnDevice( Jx,
+        currentAndDensityDepositionKernel2DOnDevice( Jx,
                                            Jy,
                                            Jz,
                                            rho,

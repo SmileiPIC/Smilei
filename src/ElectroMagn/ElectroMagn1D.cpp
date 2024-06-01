@@ -570,7 +570,7 @@ void ElectroMagn1D::centerMagneticFields()
 
 
     // for Bx^(p)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofBx = Bx_->size();
     const int sizeofBy = By_->size();
     const int sizeofBz = Bz_->size();
@@ -586,7 +586,7 @@ void ElectroMagn1D::centerMagneticFields()
     }
 
     // for By^(d) & Bz^(d)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(Bz1D[0:sizeofBz],Bz1D_m[0:sizeofBz],By1D[0:sizeofBy],By1D_m[0:sizeofBy])
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -601,7 +601,7 @@ void ElectroMagn1D::centerMagneticFields()
     if (use_BTIS3){
         double *const By1D_oldBTIS3 = By_mBTIS3->data();
         double *const Bz1D_oldBTIS3 = Bz_mBTIS3->data();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofByBTIS3 = By_mBTIS3->size();
     const int sizeofBzBTIS3 = Bz_mBTIS3->size();
     #pragma acc parallel present(By1D_oldBTIS3[0:sizeofByBTIS3],By1D[0:sizeofBy],Bz1D_oldBTIS3[0:sizeofBzBTIS3],Bz1D[0:sizeofBz])
@@ -610,7 +610,7 @@ void ElectroMagn1D::centerMagneticFields()
     #pragma omp target
     #pragma omp teams distribute parallel for
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
         for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {

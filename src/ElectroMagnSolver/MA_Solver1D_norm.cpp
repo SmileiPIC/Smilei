@@ -32,7 +32,7 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
     // Solve Maxwell-Ampere
     // --------------------
     // Calculate the electrostatic field ex on the dual grid
-#if defined( SMILEI_OPENACC_MODE )                                                                                                     
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )                                                                                                     
     const int sizeofEx = fields->Ex_->number_of_points_;                                                                               
     const int sizeofEy = fields->Ey_->number_of_points_;                                                                               
     const int sizeofEz = fields->Ez_->number_of_points_;                                                                               
@@ -45,7 +45,7 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
     #pragma omp target
     #pragma omp teams distribute parallel for
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
     for( unsigned int ix=0 ; ix<nx_d ; ++ix ) {
@@ -54,14 +54,14 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
     }
     // Transverse fields ey, ez  are defined on the primal grid    #pragma acc parallel present( Ex1D[0:sizeofEx], Jx1D[0:sizeofEx], Bx1D[0:sizeofBz],Ey1D[0:sizeofEx], Jy1D[0:sizeofEx], By1D[0:sizeofBz],Ez1D[0:sizeofEx], Jz1D[0:sizeofEx], Bz1D[0:sizeofBz]  )                             
 
-#if defined( SMILEI_OPENACC_MODE )                    
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )                    
     #pragma acc parallel present(Ey1D[0:sizeofEy], Jy1D[0:sizeofEy], By1D[0:sizeofBy],Ez1D[0:sizeofEz], Jz1D[0:sizeofEz], Bz1D[0:sizeofBz])
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target
     #pragma omp teams distribute parallel for
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
     for( unsigned int ix=0 ; ix<nx_p ; ++ix ) {

@@ -64,7 +64,7 @@ public:
                                              int ispec,
                                              int icell = 0,
                                              int ipart_ref = 0 ) override {};
-/*#if defined( SMILEI_ACCELERATOR_MODE )
+/*#if defined( SMILEI_ACCELERATOR_GPU )
 
 extern "C" void
 currentDepositionKernel1DOnDevice( double *__restrict__ Jx,

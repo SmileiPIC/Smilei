@@ -3,7 +3,6 @@
 #ifndef Projector2D2OrderGPUKernelCUDAHIP_H
 #define Projector2D2OrderGPUKernelCUDAHIP_H
 
-
 #if defined( SMILEI_ACCELERATOR_GPU )
 
 #if defined( __HIP__ )

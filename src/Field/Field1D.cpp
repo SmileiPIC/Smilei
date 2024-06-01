@@ -208,7 +208,7 @@ double Field1D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
                       map(to: idxlocalstart[0]) \
 		      /* is_device_ptr( data_ )*/ \
 		      reduction(+:nrj) 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(field) //deviceptr( data_ )
     #pragma acc loop gang worker vector reduction(+:nrj)
 #endif
@@ -271,7 +271,7 @@ void Field1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field1D(size);
         recvFields_[iDim*2+iNeighbor] = new Field1D(size);
-#if defined( SMILEI_ACCELERATOR_MODE ) 
+#if defined( SMILEI_ACCELERATOR_GPU ) 
        if( ( name[0] == 'B' ) || ( name[0] == 'J' || name[0] == 'R' ) ) {
            sendFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
            recvFields_[iDim * 2 + iNeighbor]->allocateAndCopyFromHostToDevice();
@@ -279,7 +279,7 @@ void Field1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 #endif
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
-#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU )
         ERROR( "To Do GPU : envelope" );
 #endif
         delete sendFields_[iDim*2+iNeighbor];
@@ -313,7 +313,7 @@ void Field1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     const unsigned field_last  = ix + NX - 1;
     #pragma omp target if( should_manipulate_gpu_memory )
     #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
     bool fieldName( (name.substr(0,1) == "B") );
@@ -348,7 +348,7 @@ void Field1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( tofrom : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
     const int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "B" );
@@ -384,7 +384,7 @@ void Field1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( to : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
     bool fieldName( ((name.substr(0,1) == "J") || (name.substr(0,1) == "R") ) && smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( sub ));
@@ -419,7 +419,7 @@ void Field1D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma omp target if( should_manipulate_gpu_memory ) \
         map( tofrom : field [field_first:field_last - field_first] )
     #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
     int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "J" || name.substr(0,1) == "R");

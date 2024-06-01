@@ -1,6 +1,6 @@
 
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 #include "Projector1D2OrderGPUKernelCUDAHIP.h"
 #include <cmath>
 #include "Tools.h"
@@ -23,7 +23,7 @@ Projector1D2OrderGPU::Projector1D2OrderGPU( Params &parameters, Patch *a_patch )
     not_spectral_  = !parameters.is_pxr;
     dts2_ = parameters.timestep / 2.0;
     dts4_ = dts2_ / 2.0;
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_OPENACC_MODE ) 
+#if defined( SMILEI_ACCELERATOR_GPU ) 
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
 #else
     ERROR( "Only usable in GPU mode! " );
@@ -33,7 +33,7 @@ Projector1D2OrderGPU::Projector1D2OrderGPU( Params &parameters, Patch *a_patch )
 Projector1D2OrderGPU::~Projector1D2OrderGPU()
 {
 }
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 
 //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
@@ -216,7 +216,7 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
 
         // Does not compute Rho !
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
         currentAndDensityDepositionKernel1DOnDevice( b_Jx,b_Jy,b_Jz,b_rho,
                             Jx_size, Jy_size, Jz_size, rho_size,
@@ -245,7 +245,7 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         }
         else{
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
             currentDepositionKernel1DOnDevice(Jx_, Jy_, Jz_,
                     EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
                     particles.getPtrPosition( 0 ),

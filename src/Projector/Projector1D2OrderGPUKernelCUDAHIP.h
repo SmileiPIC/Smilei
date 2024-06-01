@@ -3,7 +3,7 @@
 #ifndef Projector1D2OrderGPUKernelCUDAHIP_H
 #define Projector1D2OrderGPUKernelCUDAHIP_H
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 #if defined( __HIP__ )
     #include <hip/hip_runtime.h>

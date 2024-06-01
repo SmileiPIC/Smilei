@@ -94,7 +94,7 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             bz += vecLaser[ilaser]->getAmplitude1( pos, time_dual, 0, 0 );
         }
         
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         const int sizeofE1 = E[1]->number_of_points_;
         const int sizeofE2 = E[2]->number_of_points_;
         const int sizeofB1 = B[1]->number_of_points_;
@@ -102,7 +102,7 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
 #endif
         // Apply Silver-Mueller EM boundary condition at x=xmin or xmax
         
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc parallel present(E1[0:sizeofE1],E2[0:sizeofE2],B1[0:sizeofB1],B2[0:sizeofB2])
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp target

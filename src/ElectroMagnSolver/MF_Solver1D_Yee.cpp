@@ -32,7 +32,7 @@ void MF_Solver1D_Yee::operator()( ElectroMagn *fields )
     // ---------------------
     // NB: bx is given in 1d and defined when initializing the fields (here put to 0)
     // Transverse fields  by & bz are defined on the dual grid
-#if defined( SMILEI_OPENACC_MODE )                                                                                                    
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )                                                                                                    
     const int sizeofEy = fields->Ey_->number_of_points_;
     const int sizeofEz = fields->Ez_->number_of_points_;
     const int sizeofBy = fields->By_->number_of_points_;
@@ -43,7 +43,7 @@ void MF_Solver1D_Yee::operator()( ElectroMagn *fields )
     #pragma omp target
     #pragma omp teams distribute parallel for
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
     #pragma omp simd
 #endif
     for( unsigned int ix=1 ; ix<nx_d-1 ; ix++ ) {
