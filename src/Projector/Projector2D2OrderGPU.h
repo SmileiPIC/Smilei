@@ -46,21 +46,21 @@ public:
                                     int          ipart_ref = 0 ) override;
 
     //!Wrapper for task-based implementation of Smilei
-    void currentsAndDensityWrapperOnBuffers( double *b_Jx,
-                                             double *b_Jy,
-                                             double *b_Jz,
-                                             double *b_rho,
-                                             int bin_width,
-                                             Particles &particles,
-                                             SmileiMPI *smpi,
-                                             int istart,
-                                             int iend,
-                                             int ithread,
-                                             bool diag_flag,
-                                             bool is_spectral,
-                                             int ispec,
-                                             int icell = 0,
-                                             int ipart_ref = 0 ) override {};
+    void currentsAndDensityWrapperOnBuffers( double *   /*b_Jx*/,
+                                             double *   /*b_Jy*/,
+                                             double *   /*b_Jz*/,
+                                             double *   /*b_rho*/,
+                                             int        /*bin_width*/,
+                                             Particles &/*particles*/,
+                                             SmileiMPI */*smpi*/,
+                                             int        /*istart*/,
+                                             int        /*iend*/,
+                                             int        /*ithread*/,
+                                             bool       /*diag_flag*/,
+                                             bool       /*is_spectral*/,
+                                             int        /*ispec*/,
+                                             int        /*icell*/ = 0,
+                                             int        /*ipart_ref*/ = 0 ) override {};
 
     /// Project susceptibility, used as source term in envelope equation
     ///

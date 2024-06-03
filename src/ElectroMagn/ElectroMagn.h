@@ -325,7 +325,7 @@ public:
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     //! This function is valid wathever the geometry
     virtual void computeTotalRhoJOnDevice();

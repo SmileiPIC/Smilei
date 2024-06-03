@@ -31,7 +31,6 @@ void PusherPonderomotiveBorisBTIS3::operator()( Particles &particles, SmileiMPI 
     double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4;
     double umx, umy, umz, upx, upy, upz;
     double alpha;
-    double TxTy, TyTz, TzTx;
     double pxsm, pysm, pzsm;
     //double one_ov_gamma_ponderomotive;
     

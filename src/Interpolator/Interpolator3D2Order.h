@@ -59,7 +59,7 @@ public:
         int idx, 
         int idy, 
         int idz, 
-        int nx, 
+        int /*nx*/, 
         int ny, 
         int nz )
     {

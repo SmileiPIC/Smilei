@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 #include <openacc.h>
 #endif
 
@@ -81,7 +81,7 @@ Field3D::~Field3D()
     for( unsigned int iside=0 ; iside<sendFields_.size() ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
 
-#if defined ( SMILEI_ACCELERATOR_MODE )
+#if defined ( SMILEI_ACCELERATOR_GPU )
 
             if ( sendFields_[iside]->isOnDevice() )
             {
@@ -102,7 +102,9 @@ Field3D::~Field3D()
         }
     }
     if( data_!=NULL ) {
+#if defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc exit data delete (data_[0:number_of_points_]) if (acc_deviceptr(data_) != NULL)
+#endif
         delete [] data_;
         for( unsigned int i=0; i<dims_[0]; i++ ) {
             delete [] this->data_3D[i];
@@ -248,7 +250,7 @@ double Field3D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 }
 
 // Perform the norm2 on Device
-#if defined(SMILEI_ACCELERATOR_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU)
 double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 {
     double nrj( 0. );
@@ -277,7 +279,7 @@ double Field3D::norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3
               map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) \
 	      /*is_device_ptr( data_ ) */           \
 	      reduction(+:nrj) 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(field[0:number_of_points_]) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3) reduction(+:nrj)
 #endif
@@ -405,7 +407,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field3D(size);
         recvFields_[iDim*2+iNeighbor] = new Field3D(size);
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
         if( ( name[0] == 'B' ) || ( name[0] == 'J' || name[0] == 'R' ) ) {
 
@@ -427,7 +429,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 
     }
     else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
-#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         ERROR( "To Do GPU : envelope" );
 #endif
         delete sendFields_[iDim*2+iNeighbor];
@@ -463,7 +465,7 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     #pragma omp target if( is_the_right_field )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
     bool fieldName( (name.substr(0,1) == "B") );
@@ -471,11 +473,11 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -514,7 +516,7 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
     const int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "B" );
@@ -522,11 +524,11 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -566,7 +568,7 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
         map( to                                 \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int subSize = sendFields_[iDim*2+iNeighbor]->size();
     const int fSize = number_of_points_;
     bool fieldName( (name.substr(0,1) == "J") || (name.substr(0,1) == "R"));
@@ -575,11 +577,11 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
@@ -618,7 +620,7 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
         map( tofrom                             \
              : field [0:fSize] )
     #pragma omp teams distribute parallel for collapse( 3 )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->size();
     int fSize = number_of_points_;
     bool fieldName( name.substr(0,1) == "J" || name.substr(0,1) == "R");
@@ -627,11 +629,11 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	#pragma acc loop worker
 #endif
         for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 	    #pragma acc loop vector
 #endif
             for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {

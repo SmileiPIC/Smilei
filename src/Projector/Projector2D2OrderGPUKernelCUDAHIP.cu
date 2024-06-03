@@ -81,7 +81,7 @@
 //                                                         device_particle_charge /* [0:particle_count] */,     \
 //                                                         device_particle_weight /* [0:particle_count] */ )
 //            #pragma omp teams thread_limit( 64 ) distribute parallel for
-//        #elif defined( SMILEI_OPENACC_MODE )
+//        #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
 //            #pragma acc parallel                      \
 //            deviceptr( device_particle_position_x,    \
 //                       device_particle_position_y,    \
@@ -264,7 +264,7 @@
 //                                                         device_particle_charge /* [0:particle_count] */,     \
 //                                                         device_particle_weight /* [0:particle_count] */ )
 //            #pragma omp teams thread_limit( 64 ) distribute parallel for
-//        #elif defined( SMILEI_OPENACC_MODE )
+//        #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
 //            #pragma acc parallel                      \
 //            deviceptr( device_particle_position_x,    \
 //                       device_particle_position_y,    \

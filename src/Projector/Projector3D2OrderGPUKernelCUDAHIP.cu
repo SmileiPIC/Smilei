@@ -1,6 +1,6 @@
 //! HIP CUDA implementation
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 //#include "Projector3D2OrderGPUKernelCUDAHIP.h"
 

@@ -26,7 +26,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_OPENACC_MODE ) 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_ACCELERATOR_GPU_OACC ) 
     // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
@@ -41,7 +41,7 @@ Projector2D2OrderGPU::~Projector2D2OrderGPU()
     // EMPTY
 }
 
-#if defined( SMILEI_ACCELERATOR_MODE )    //SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU )    //SMILEI_ACCELERATOR_GPU_OMP )
 
 extern "C" void
 currentDepositionKernel2DOnDevice( double *__restrict__ Jx,
@@ -109,6 +109,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     /// Project global current densities (EMfields->Jx_/Jy_/Jz_)
     ///
     /* inline */ void
+#if defined( SMILEI_ACCELERATOR_GPU )//SMILEI_ACCELERATOR_GPU_OMP )
     currents( double *__restrict__ Jx,
               double *__restrict__ Jy,
               double *__restrict__ Jz,
@@ -132,7 +133,6 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               double,
               int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_MODE )//SMILEI_ACCELERATOR_GPU_OMP )
         currentDepositionKernel2DOnDevice( Jx,
                                  Jy,
                                  Jz,
@@ -159,15 +159,22 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  nprimy,
                                  not_spectral );
-#else
-        SMILEI_ASSERT( false );
-#endif
     }
+#else
+    currents( double *__restrict__ , double *__restrict__ , double *__restrict__ , int, int, int,
+              Particles   &, unsigned int , unsigned int ,const double *__restrict__ ,
+              const int    *__restrict__ , const double *__restrict__ , double , double , double ,
+              double , double , int    , int    , int    , double, int )
+    {
+        SMILEI_ASSERT( false );
+    }
+#endif
 
     /// Like currents(), project the particle current on the grid (Jx_/Jy_/Jz_)
     /// but also compute global current densities rho used for diagFields timestep
     ///
     /* inline */ void
+#if defined( SMILEI_ACCELERATOR_GPU )//SMILEI_ACCELERATOR_GPU_OMP )
     currentsAndDensity( double *__restrict__ Jx,
                         double *__restrict__ Jy,
                         double *__restrict__ Jz,
@@ -193,7 +200,6 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         double,
                         int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_MODE )//SMILEI_ACCELERATOR_GPU_OMP )
         currentAndDensityDepositionKernelOnDevice( Jx,
                                            Jy,
                                            Jz,
@@ -222,10 +228,16 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                            j_domain_begin,
                                            nprimy,
                                            not_spectral );
-#else
-        SMILEI_ASSERT( false );
-#endif
     }
+#else
+    currentsAndDensity( double *__restrict__ , double *__restrict__ , double *__restrict__ , double *__restrict__ ,
+                        int , int , int , int , Particles   &, unsigned int , unsigned int ,
+                        const double *__restrict__ , const int *__restrict__ , const double *__restrict__ ,
+                        double , double , double , double , double , int    , int    , int    , double, int  )
+    {
+        SMILEI_ASSERT( false );
+    }
+#endif
 
 } // namespace
 
@@ -233,7 +245,7 @@ void Projector2D2OrderGPU::basic( double      *rhoj,
                                   Particles   &particles,
                                   unsigned int ipart,
                                   unsigned int type,
-                                  int          bin_shift )
+                                  int          /*bin_shift*/ )
 {
     // Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
@@ -306,12 +318,12 @@ void Projector2D2OrderGPU::basic( double      *rhoj,
     }
 }
 
-void Projector2D2OrderGPU::ionizationCurrents( Field      *Jx,
-                                               Field      *Jy,
-                                               Field      *Jz,
-                                               Particles  &particles,
-                                               int         ipart,
-                                               LocalFields Jion )
+void Projector2D2OrderGPU::ionizationCurrents( Field      */*Jx*/,
+                                               Field      */*Jy*/,
+                                               Field      */*Jz*/,
+                                               Particles  &/*particles*/,
+                                               int         /*ipart*/,
+                                               LocalFields /*Jion */)
 {
     ERROR( "Projector2D2OrderGPU::ionizationCurrents(): Not implemented !" );
 }
@@ -325,8 +337,8 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       bool diag_flag,
                                                       bool is_spectral,
                                                       int  ispec,
-                                                      int  icell,
-                                                      int  ipart_ref )
+                                                      int  /*icell*/,
+                                                      int  /*ipart_ref */)
 {
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
@@ -425,20 +437,20 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
     }
 }
 
-void Projector2D2OrderGPU::susceptibility( ElectroMagn *EMfields,
-                                           Particles   &particles,
-                                           double       species_mass,
-                                           SmileiMPI   *smpi,
-                                           int          istart,
-                                           int          iend,
-                                           int          ithread,
-                                           int          icell,
-                                           int          ipart_ref )
+void Projector2D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
+                                           Particles   &/*particles*/,
+                                           double       /*species_mass*/,
+                                           SmileiMPI   */*smpi*/,
+                                           int          /*istart*/,
+                                           int          /*iend*/,
+                                           int          /*ithread*/,
+                                           int          /*icell*/,
+                                           int          /*ipart_ref */)
 {
     ERROR( "Projector2D2OrderGPU::susceptibility(): Not implemented !" );
 }
 
-//#if defined( SMILEI_ACCELERATOR_MODE )
+//#if defined( SMILEI_ACCELERATOR_GPU )
 ////! Project global current densities (EMfields->Jx_/Jy_/Jz_)
 ////!
 //extern "C" void

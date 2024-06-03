@@ -5,7 +5,7 @@
 // issues (!).
 
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
     //! Simple switch to jump between the reference (omp) implementation and the
     //! hip one.

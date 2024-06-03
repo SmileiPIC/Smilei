@@ -78,7 +78,7 @@ public:
     void copyFromHostToDevice() override;
     
     //! Update the particles from device to host
-    void copyFromDeviceToHost() override;
+    void copyFromDeviceToHost( bool copy_keys = false ) override;
 
     unsigned int deviceCapacity() const override;
 
@@ -113,18 +113,23 @@ public:
     };
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put
-    //! them in the Particles object `particles_to_move`
+    //! Move leaving particles to the buffers
     // -----------------------------------------------------------------------------
-    void extractParticles( Particles* particles_to_move ) override;
+    void copyLeavingParticlesToBuffer( Particles* buffer ) override;
+    
+    template<typename Predicate>
+    void copyParticlesByPredicate( Particles* buffer, Predicate pred );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
     // -----------------------------------------------------------------------------
     int eraseLeavingParticles() override;
     
+    template<typename Predicate>
+    int eraseParticlesByPredicate( Predicate pred );
+    
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move into *this and return he number of particle added
+    //! Inject particles from particles_to_inject into *this and return the number of particle added
     // -----------------------------------------------------------------------------
     int injectParticles( Particles* particles_to_inject ) override;
 

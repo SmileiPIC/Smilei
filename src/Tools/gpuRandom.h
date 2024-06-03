@@ -1,7 +1,7 @@
 #ifndef GPU_RANDOM
 #define GPU_RANDOM
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     // #include <openacc_curand.h>
     #include "curand_kernel.h"
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -29,7 +29,7 @@ namespace smilei {
             {
             protected:
                 using State =
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                     ::curandState_t;
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     // TODO
@@ -42,7 +42,7 @@ namespace smilei {
 
             public:
                 Random()
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     : a_state_{ 0xDEADBEEFU }
 #else
@@ -53,26 +53,36 @@ namespace smilei {
                 }
 
                 // Initialization
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                 void init( unsigned long long seed,
                            unsigned long long seq,
                            unsigned long long offset )
                 {
-#if defined( SMILEI_OPENACC_MODE )
                     // Cuda generator initialization
                     ::curand_init( seed, seq, offset, &a_state_ );
+                }
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                void init( unsigned long long seed,
+                           unsigned long long ,
+                           unsigned long long  )
+                {
                     // Hip generator initialization
                     // ::hiprand_init( seed, seq, offset, &state );
                     a_state_ = State{ static_cast<unsigned int>( seed ) };
-#else
-                    a_state_ = State{ static_cast<unsigned int>( seed ) };
-#endif
                 }
+#else
+                void init( unsigned long long seed,
+                           unsigned long long ,
+                           unsigned long long  )
+                {
+                    a_state_ = State{ static_cast<unsigned int>( seed ) };
+                }
+#endif
 
                 // Initialization
                 double uniform()
                 {
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                     return ::curand_uniform( &a_state_ );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                     // TODO

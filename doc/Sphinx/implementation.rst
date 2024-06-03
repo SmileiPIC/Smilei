@@ -547,7 +547,7 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
 
 .. code-block:: c++
 
-    vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
+    vecPatches.finalizeExchParticlesAndSort( params, &smpi, simWindow,
                                                  time_dual, timers, itime );
 
 * **Particle merging**: merging process for particles (still experimental)

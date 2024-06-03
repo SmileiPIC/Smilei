@@ -1730,7 +1730,7 @@ void ElectroMagnAM::computeTotalRhoJ()
     }//END loop on mmodes
 } //END computeTotalRhoJ
 
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
 // //! Method used to compute the total charge density and currents by summing over all species on Device
 // void ElectroMagnAM::computeTotalRhoJOnDevice()
 // {
@@ -1891,7 +1891,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
         if (input[1] && copy[1]) Br_m[imode]->copyFrom( Br_[imode] );
         if (input[2] && copy[2]) Bt_m[imode]->copyFrom( Bt_[imode] );
     }
-    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
+    // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
     //emAM->compute_B_m_fromEB();
 }
 
@@ -1900,7 +1900,7 @@ void ElectroMagnAM::compute_B_m_fromEB()
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nl_d = dimDual[0];
-    const unsigned int nr_p = dimPrim[1];
+    // const unsigned int nr_p = dimPrim[1];
     const unsigned int nr_d = dimDual[1];
     const unsigned int Nmodes = El_.size();
 

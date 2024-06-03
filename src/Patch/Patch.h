@@ -174,7 +174,7 @@ public:
     //! Clean the MPI buffers for communications
     void cleanMPIBuffers( int ispec, Params &params );
     //! manage Idx of particles per direction,
-    void initExchParticles( int ispec, Params &params );
+    void copyExchParticlesToBuffers( int ispec, Params &params );
     //! init comm  nbr of particles
     void exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize comm / nbr of particles, init exch / particles
@@ -184,7 +184,7 @@ public:
     //! effective exchange of particles
     void exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! finalize exch / particles
-    void finalizeExchParticles( int ispec, int iDim );
+    void waitExchParticles( int ispec, int iDim );
     //! Treat diagonalParticles
     void cornersParticles( int ispec, Params &params, int iDim );
     //! inject particles received in main data structure and particles sorting
@@ -194,7 +194,7 @@ public:
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
 
-#ifdef SMILEI_ACCELERATOR_MODE
+#ifdef SMILEI_ACCELERATOR_GPU
     //! Allocate and copy all the field grids on device
     void allocateAndCopyFieldsOnDevice();
 
