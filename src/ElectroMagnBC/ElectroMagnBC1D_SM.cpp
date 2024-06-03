@@ -111,7 +111,7 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             //( *By1D )( iB_ ) = -sign_*Alpha_*( *Ez1D )( iE_ ) + Beta_*( ( *By1D )( iB_old_ )-By_val_ ) + Gamma_*by + By_val_;
             //( *Bz1D )( iB_ ) =  sign_*Alpha_*( *Ey1D )( iE_ ) + Beta_*( ( *Bz1D )( iB_old_ )-Bz_val_ ) + Gamma_*bz + Bz_val_;
             B1[ iB_ ] = -sign_ * Alpha_ * E2[iE_] + Beta_ * ( B1[iB_old_] - By_val_) + Gamma_ * by + By_val_;
-            B2[ iB_ ] = -sign_ * Alpha_ * E1[iE_] + Beta_ * ( B2[iB_old_] - Bz_val_) + Gamma_ * bz + Bz_val_;
+            B2[ iB_ ] =  sign_ * Alpha_ * E1[iE_] + Beta_ * ( B2[iB_old_] - Bz_val_) + Gamma_ * bz + Bz_val_;
         }
     }
     
