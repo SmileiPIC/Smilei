@@ -65,8 +65,8 @@ void MA_Solver1D_norm::operator()( ElectroMagn *fields )
         #pragma omp simd
 #endif
     for( unsigned int ix=0 ; ix<nx_p ; ++ix ) {
-        Ey1D[ix] -= dt_ov_dx * Bz1D[ix+1] - Bz1D[ix] - dt * Jy1D[ix];
-        Ez1D[ix] += dt_ov_dx * By1D[ix+1] - By1D[ix] - dt * Jz1D[ix];
+        Ey1D[ix] += -dt_ov_dx * ( Bz1D[ix+1] - Bz1D[ix] ) - dt * Jy1D[ix];
+        Ez1D[ix] +=  dt_ov_dx * ( By1D[ix+1] - By1D[ix] ) - dt * Jz1D[ix];
     }
 }
 
