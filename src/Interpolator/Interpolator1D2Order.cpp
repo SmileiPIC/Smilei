@@ -8,7 +8,6 @@
 #include "Particles.h"
 #include "LaserEnvelope.h"
 
-
 using namespace std;
 
 Interpolator1D2Order::Interpolator1D2Order( Params &params, Patch *patch ) : Interpolator1D( patch )
@@ -30,18 +29,6 @@ void Interpolator1D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field1D *Bz1D = static_cast<Field1D *>( EMfields->Bz_m );
     // Particle position (in units of the spatial-step)
     double xpn = particles.position( 0, ipart ) * dx_inv_;
-    // Calculate coeffs
-    /*coeffs( xjn );
-
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
-
-    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );*/
 
     int idx_p[1], idx_d[1];
     double delta_p[1];
@@ -61,7 +48,18 @@ void Interpolator1D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     // Interpolation of By^(d)
     BLoc[1*nparts+ipart] = compute( &coeffxd[0], By1D, idx_d[0] );
     // Interpolation of Bz^(d)
-    BLoc[2*nparts+ipart] = compute( &coeffxd[0], Bz1D, idx_d[0] );
+    BLoc[2*nparts+ipart] = compute( &coeffxd[0], Bz1D, idx_d[0] );//*/
+
+/*
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D,   idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D, idx_d[0] );
+
+    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D,   idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D,   idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D, idx_p[0] );*/
 
 }//END Interpolator1D2Order
 
@@ -79,16 +77,16 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     }
 
     // Static cast of the electromagnetic fields
-    Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
-    Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
-    Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
-    Field1D *Bx1D   = static_cast<Field1D *>( EMfields->Bx_m );
-    Field1D *By1D   = static_cast<Field1D *>( EMfields->By_m );
-    Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_m );
-    Field1D *Jx1D     = static_cast<Field1D *>( EMfields->Jx_ );
-    Field1D *Jy1D     = static_cast<Field1D *>( EMfields->Jy_ );
-    Field1D *Jz1D     = static_cast<Field1D *>( EMfields->Jz_ );
-    Field1D *Rho1D    = static_cast<Field1D *>( EMfields->rho_ );
+    Field1D *Ex1D  = static_cast<Field1D *>( EMfields->Ex_ );
+    Field1D *Ey1D  = static_cast<Field1D *>( EMfields->Ey_ );
+    Field1D *Ez1D  = static_cast<Field1D *>( EMfields->Ez_ );
+    Field1D *Bx1D  = static_cast<Field1D *>( EMfields->Bx_m );
+    Field1D *By1D  = static_cast<Field1D *>( EMfields->By_m );
+    Field1D *Bz1D  = static_cast<Field1D *>( EMfields->Bz_m );
+    Field1D *Jx1D  = static_cast<Field1D *>( EMfields->Jx_ );
+    Field1D *Jy1D  = static_cast<Field1D *>( EMfields->Jy_ );
+    Field1D *Jz1D  = static_cast<Field1D *>( EMfields->Jz_ );
+    Field1D *Rho1D = static_cast<Field1D *>( EMfields->rho_ );
     Field1D *By1DBTIS3;
     Field1D *Bz1DBTIS3;
     if (smpi->use_BTIS3){
@@ -99,21 +97,6 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     // Particle position (in units of the spatial-step)
     double xpn = particles.position( 0, ipart )*dx_inv_;
     // Calculate coeffs
-    //coeffs( xjn );
-
-    int nparts( particles.numberOfParticles() );
-
-    /*
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
-    *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
-    *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
-    *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
-
-    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
-    *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
-    *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );*/
-
     int idx_p[1], idx_d[1];
     double delta_p[1];
     double coeffxp[3];
@@ -121,47 +104,33 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 
     coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
-    // Interpolation of Ex^(d)
-    ELoc[0*nparts+ipart] = compute( &coeffxd[0], Ex1D, idx_d[0] );
-    // Interpolation of Ey^(p)
-    ELoc[1*nparts+ipart] = compute( &coeffxp[0], Ey1D, idx_p[0] );
-    // Interpolation of Ez^(p)
-    ELoc[2*nparts+ipart] = compute( &coeffxp[0], Ez1D, idx_p[0] );
-    // Interpolation of Bx^(p)
-    BLoc[0*nparts+ipart] = compute( &coeffxp[0], Bx1D, idx_p[0] );
-    // Interpolation of By^(d)
-    BLoc[1*nparts+ipart] = compute( &coeffxd[0], By1D, idx_d[0] );
-    // Interpolation of Bz^(d)
-    BLoc[2*nparts+ipart] = compute( &coeffxd[0], Bz1D, idx_d[0] );
+    int nparts( particles.numberOfParticles() );
 
-    // Interpolation of Jx^(d,p)
-    JLoc->x = compute( &coeffxd[1], Jx1D, idx_d[0] );
-    // Interpolation of Jy^(p,d)
-    JLoc->y = compute( &coeffxp[1], Jy1D, idx_p[0] );
-    // Interpolation of Jz^(p,p)
-    JLoc->z = compute( &coeffxp[1], Jz1D, idx_p[0] );
-    // Interpolation of Rho^(p,p)
-    ( *RhoLoc ) = compute( &coeffxp[1], Rho1D, idx_p[0]);
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    *( ELoc+0*nparts ) = compute( coeffxd, Ex1D, idx_d[0] );
+    *( BLoc+1*nparts ) = compute( coeffxd, By1D, idx_d[0] );
+    *( BLoc+2*nparts ) = compute( coeffxd, Bz1D, idx_d[0] );
+
+    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    *( ELoc+1*nparts ) = compute( coeffxp, Ey1D, idx_p[0] );
+    *( ELoc+2*nparts ) = compute( coeffxp, Ez1D, idx_p[0] );
+    *( BLoc+0*nparts ) = compute( coeffxp, Bx1D, idx_p[0] );//*/
+
+    // Interpolate the fields from the Primal grid : Jy, Jz, Rho
+    JLoc->y     = compute( coeffxp, Jy1D,  idx_p[0] );
+    JLoc->z     = compute( coeffxp, Jz1D,  idx_p[0] );
+    ( *RhoLoc ) = compute( coeffxp, Rho1D, idx_p[0] );
+
+    // Interpolate the fields from the Dual grid : Jx
+    JLoc->x = compute( coeffxd, Jx1D,  idx_d[0] );
     
     if (smpi->use_BTIS3){
         // Interpolation of ByBTIS3^(p,p)
-        *( BLocyBTIS3+0*nparts ) = compute( &coeffxp[1], By1DBTIS3, idx_p[0]);
+        *( BLocyBTIS3+0*nparts ) = compute( &coeffxp[0], By1DBTIS3, idx_p[0]);
         // Interpolation of BzBTIS3^(p,d)
-        *( BLoczBTIS3+0*nparts ) = compute( &coeffxp[1], Bz1DBTIS3, idx_p[0]);
+        *( BLoczBTIS3+0*nparts ) = compute( &coeffxp[0], Bz1DBTIS3, idx_p[0]);
     }
 
-    // Interpolate the fields from the Primal grid : Jy, Jz, Rho
-    /*JLoc->y = compute( coeffp_, Jy1D,  ip_ );
-    JLoc->z = compute( coeffp_, Jz1D,  ip_ );
-    ( *RhoLoc ) = compute( coeffp_, Rho1D, ip_ );
-
-    // Interpolate the fields from the Dual grid : Jx
-    JLoc->x = compute( coeffd_, Jx1D,  id_ );
-    
-    if (smpi->use_BTIS3){
-        *( BLocyBTIS3+0*nparts ) = compute( &coeffp_[1], By1DBTIS3, ip_ );
-        *( BLoczBTIS3+0*nparts ) = compute( &coeffp_[1], Bz1DBTIS3, ip_ );
-    }*/
 
 }
 
@@ -169,13 +138,11 @@ void Interpolator1D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *, double *, double * )
 {
     Field1D *F = static_cast<Field1D *>( *field );
-
     int idx_p[1], idx_d[1];
     double delta_p[1];
     double coeffxp[3];
     double coeffxd[3];
-
-    double *coeff = F->isDual( 0 ) ? &coeffxd[1] : &coeffxp[1];//coeffd_ : coeffp_;
+    double *coeff = F->isDual( 0 ) ? coeffxd : coeffxp;
     int    *i     = F->isDual( 0 ) ? &idx_d[0]   : &idx_p[0];  //&id_ : &ip_;
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
@@ -288,9 +255,7 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
         const double *const __restrict__ By1D_mBTIS3 = static_cast<Field1D *>( EMfields->By_mBTIS3 )->data();
         const double *const __restrict__ Bz1D_mBTIS3 = static_cast<Field1D *>( EMfields->Bz_mBTIS3 )->data();
             
-        //double *const __restrict__ ELoc = smpi->dynamics_Epart[ithread].data();
-
-
+/*
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp target map( to : i_domain_begin_) is_device_ptr ( position_x)
         #pragma omp teams distribute parallel for
