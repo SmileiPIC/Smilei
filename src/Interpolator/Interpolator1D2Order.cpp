@@ -132,7 +132,7 @@ void Interpolator1D2Order::oneField( Field **field, Particles &particles, int *i
     double delta_p[1];
     double coeffxp[3];
     double coeffxd[3];
-    double *coeff = F->isDual( 0 ) ? coeffxd : coeffxp;
+    double *coeff = F->isDual( 0 ) ? &coeffxd[0] : &coeffxp[0];
     int    *i     = F->isDual( 0 ) ? &idx_d[0] : &idx_p[0];  //&id_ : &ip_;
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
