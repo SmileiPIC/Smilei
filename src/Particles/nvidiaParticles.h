@@ -34,33 +34,20 @@ public:
     //! Destructor for nvidiaParticles
     ~nvidiaParticles();
 
-    //! Allocate the right amount of position and momentum dimensions
-    void resizeDimensions( unsigned int nDim );
-
     //! Reserve space for (particle_count * growth_factor) particles only if 
     //! particle_count >= deviceCapacity(). Must be called after
     //! allocateDimensions()
-    void softReserve( unsigned int particle_count, float growth_factor = 1.3F );
-
-    //! Reserve space for particle_count particles. Must be called after
-    //! allocateDimensions()
-    void reserve( unsigned int particle_count );
-
-    //! Allocate particle_count particles. Must be called after
-    //! allocateDimensions()
-    //! Set the size (deviceSize) of nvidiaParticles to particle_count.
-    //!
-    void resize( unsigned int particle_count );
+    void deviceReserve( unsigned int particle_count, float growth_factor = 1.3F );
 
     //! Assures that the memory holden by the nvidia_[position|momentum|weight|
     //! charge|chi|tau|cell_keys]_ is freed. This is not something you can
     //! achieve via a naive resize.
     //! The pointers in nvidia_[double|short]_prop_ are not invalidated.
     //!
-    void free();
+    void deviceFree();
 
     //! Resize Particle vectors on device
-    void deviceResize(unsigned int new_size);
+    void deviceResize( unsigned int new_size );
 
     //! Remove all particles
     void deviceClear();
@@ -111,18 +98,6 @@ public:
     uint64_t * getPtrId() override {
         return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
-
-    void swap( nvidiaParticles & p ) {
-        for( int iprop = 0; iprop < nvidia_double_prop_.size(); iprop++ ) {
-            nvidia_double_prop_[iprop]->swap( *p.nvidia_double_prop_[iprop] );
-        }
-        for( int iprop = 0; iprop < nvidia_short_prop_.size(); iprop++ ) {
-            nvidia_short_prop_[iprop]->swap( *p.nvidia_short_prop_[iprop] );
-        }
-        if( tracked ) {
-            nvidia_id_.swap( p.nvidia_id_ );
-        }
-    }
 
     // -----------------------------------------------------------------------------
     //! Move leaving particles to the buffers
@@ -252,6 +227,11 @@ protected:
 
     //! List of short* arrays
     std::vector<thrust::device_vector<short>*> nvidia_short_prop_;
+
+    //! Buffers for sorting particles
+    std::vector<thrust::device_vector<double>> double_buffers_;
+    std::vector<thrust::device_vector<short>> short_buffers_;
+    std::vector<thrust::device_vector<uint64_t>> uint64_buffers_;
 
     const Params* parameters_;
     //! We are interested in having the patch coordinates. This allows us to
