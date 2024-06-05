@@ -315,9 +315,9 @@ void Interpolator1D2Order::fieldsWrapper( ElectroMagn *EMfields,
             // Interpolation of Bz^(d)
             BLoc[2*nparts+ipart] = compute( coeffxd, Bz1D, idx_d[0] );
             // Interpolation of ByBTIS3^(p)
-            *( BypartBTIS3+0*nparts )  = compute( coeffxp, By1D_mBTIS3, idx_p[0] );
+            *( BypartBTIS3+0*nparts+ipart )  = compute( coeffxp, By1D_mBTIS3, idx_p[0] );
             // Interpolation of BzBTIS3^(p)
-            *( BzpartBTIS3+0*nparts )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
+            *( BzpartBTIS3+0*nparts+ipart )  = compute( coeffxp, Bz1D_mBTIS3, idx_p[0] );
             // Interpolation of ByBTIS3^(p)
             //BypartBTIS3[0*nparts+ipart ]  = compute( coeffxp, By1D_mBTIS3, idx_p[0] );
             // Interpolation of BzBTIS3^(p)

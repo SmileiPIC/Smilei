@@ -615,9 +615,9 @@ void ElectroMagn1D::centerMagneticFields()
 #endif
         for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
             // Magnetic field By^(p) for BTIS3 interpolation
-            By1D_oldBTIS3[i] = By1D[i+1] + By1D_oldBTIS3[i] * 0.5;
+            By1D_oldBTIS3[i] = ( By1D[i+1] + By1D_oldBTIS3[i] ) * 0.5;
             // Magnetic field Bz^(p) for BTIS3 interpolation
-            Bz1D_oldBTIS3[i] = Bz1D[i+1] + Bz1D_oldBTIS3[i] * 0.5;
+            Bz1D_oldBTIS3[i] = ( Bz1D[i+1] + Bz1D_oldBTIS3[i] ) * 0.5;
         }
     }
     
