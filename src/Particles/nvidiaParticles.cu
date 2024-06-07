@@ -321,13 +321,15 @@ namespace detail {
             particle_container.eraseParticlesByPredicate( cellKeyBelow<0>(), last_filled );
             particle_container.deviceResize( new_count );
         }
-        particle_to_inject.deviceFree();
         
         // Compute keys of particles
         computeParticleClusterKey( particle_container, parameters, a_parent_patch );
         
-        // Sort particles by keys
-        particle_container.sortParticleByKey();
+        // Sort particles by keys 
+        // using particle_to_inject as a buffer (it is swapped with particle_container after sorting)
+        particle_to_inject.deviceReserve( new_count ); // reserve a bit more memory for the final arrays
+        particle_to_inject.deviceResize( new_count );
+        particle_container.sortParticleByKey( particle_to_inject );
         
         // Recompute bin locations
         computeBinIndex( particle_container );
@@ -538,7 +540,7 @@ void nvidiaParticles::deviceReserve( unsigned int particle_count, float growth_f
 
     const unsigned int new_capacity = static_cast<unsigned int>( particle_count * growth_factor );
 
-    for( auto prop: nvidia_double_prop_) {
+    for( auto prop: nvidia_double_prop_ ) {
         prop->reserve( new_capacity );
     }
 
@@ -551,22 +553,11 @@ void nvidiaParticles::deviceReserve( unsigned int particle_count, float growth_f
     }
 
     nvidia_cell_keys_.reserve( new_capacity );
-
-    for( auto &v: double_buffers_ ) {
-        v.reserve( new_capacity );
-    }
-    for( auto &v: short_buffers_ ) {
-        v.reserve( new_capacity );
-    }
-    for( auto &v: uint64_buffers_ ) {
-        v.reserve( new_capacity );
-    }
-
 }
 
 void nvidiaParticles::deviceFree()
 {
-    for( auto prop: nvidia_double_prop_) {
+    for( auto prop: nvidia_double_prop_ ) {
         thrust::device_vector<double>().swap( *prop );
     }
 
@@ -579,16 +570,6 @@ void nvidiaParticles::deviceFree()
     }
 
     thrust::device_vector<int>().swap( nvidia_cell_keys_ );
-
-    for( auto &v: double_buffers_ ) {
-        thrust::device_vector<double>().swap( v );
-    }
-    for( auto &v: short_buffers_ ) {
-        thrust::device_vector<short>().swap( v );
-    }
-    for( auto &v: uint64_buffers_ ) {
-        thrust::device_vector<uint64_t>().swap( v );
-    }
 
     gpu_nparts_ = 0;
 }
@@ -606,18 +587,9 @@ void nvidiaParticles::deviceResize( unsigned int new_size )
     if( tracked ) {
         nvidia_id_.resize( new_size );
     }
-
+    
     nvidia_cell_keys_.resize( new_size );
-    for( auto &v: double_buffers_ ) {
-        v.resize( new_size );
-    }
-    for( auto &v: short_buffers_ ) {
-        v.resize( new_size );
-    }
-    for( auto &v: uint64_buffers_ ) {
-        v.resize( new_size );
-    }
-
+    
     gpu_nparts_ = new_size;
 }
 
@@ -639,16 +611,6 @@ void nvidiaParticles::deviceClear()
 
     if( tracked ) {
         nvidia_id_.clear();
-    }
-
-    for( auto &v: double_buffers_ ) {
-        v.clear();
-    }
-    for( auto &v: short_buffers_ ) {
-        v.clear();
-    }
-    for( auto &v: uint64_buffers_ ) {
-        v.clear();
     }
     
     gpu_nparts_ = 0;
@@ -722,12 +684,6 @@ void nvidiaParticles::initializeDataOnDevice()
 
         // setHostBinIndex();
     } else {
-
-        // Allocate buffers that are necessary for sorting particles with binning
-        double_buffers_.resize( nvidia_double_prop_.size() );
-        short_buffers_ .resize( nvidia_short_prop_ .size() );
-        uint64_buffers_.resize( 2 );
-        deviceResize( gpu_nparts_ ); // resizes the buffers
         
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
@@ -1006,66 +962,66 @@ void nvidiaParticles::importAndSortParticles( Particles* particles_to_inject )
     setHostBinIndex();
 }
 
-// //! Sort by cell_keys_
-// //! This version synchronizes for every vector, but uses less buffers
-// void nvidiaParticles::sortParticleByKey()
-// {
-//     // Make a sorting map using the cell keys (like numpy.argsort)
-//     thrust::device_vector<int> index( gpu_nparts_ );
-//     thrust::sequence( thrust::device, index.begin(), index.end() );
-//     thrust::sort_by_key( thrust::device, nvidia_cell_keys_.begin(), nvidia_cell_keys_.end(), index.begin() );
-//     
-//     // Sort particles using thrust::gather, according to the sorting map
-//     thrust::device_vector<double> buffer( gpu_nparts_ );
-//     for( auto prop: nvidia_double_prop_ ) {
-//         thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer.begin() );
-//         prop->swap( buffer );
-//     }
-//     buffer.clear();
-//     thrust::device_vector<short> buffer_short( gpu_nparts_ );
-//     for( auto prop: nvidia_short_prop_ ) {
-//         thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer_short.begin() );
-//         prop->swap( buffer_short );
-//     }
-//     buffer_short.clear();
-//     if( tracked ) {
-//         thrust::device_vector<uint64_t> buffer_uint64( gpu_nparts_ );
-//         thrust::gather( thrust::device, index.begin(), index.end(), nvidia_id_.begin(), buffer_uint64.begin() );
-//         nvidia_id_.swap( buffer_uint64 );
-//         buffer_uint64.clear();
-//     }
-// }
-
 //! Sort by cell_keys_
-//! This version is asynchronous, but requires a buffer of equal size to be provided
+//! This version synchronizes for every vector, but uses less buffers
 void nvidiaParticles::sortParticleByKey()
 {
     // Make a sorting map using the cell keys (like numpy.argsort)
-    thrust::device_vector<uint64_t> & index = uint64_buffers_[1];
+    thrust::device_vector<int> index( gpu_nparts_ );
+    thrust::sequence( thrust::device, index.begin(), index.end() );
+    thrust::sort_by_key( thrust::device, nvidia_cell_keys_.begin(), nvidia_cell_keys_.end(), index.begin() );
+    
+    // Sort particles using thrust::gather, according to the sorting map
+    thrust::device_vector<double> buffer( gpu_nparts_ );
+    for( auto prop: nvidia_double_prop_ ) {
+        thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer.begin() );
+        prop->swap( buffer );
+    }
+    buffer.clear();
+    thrust::device_vector<short> buffer_short( gpu_nparts_ );
+    for( auto prop: nvidia_short_prop_ ) {
+        thrust::gather( thrust::device, index.begin(), index.end(), prop->begin(), buffer_short.begin() );
+        prop->swap( buffer_short );
+    }
+    buffer_short.clear();
+    if( tracked ) {
+        thrust::device_vector<uint64_t> buffer_uint64( gpu_nparts_ );
+        thrust::gather( thrust::device, index.begin(), index.end(), nvidia_id_.begin(), buffer_uint64.begin() );
+        nvidia_id_.swap( buffer_uint64 );
+        buffer_uint64.clear();
+    }
+}
+
+//! Sort by cell_keys_
+//! This version is asynchronous, but requires a buffer of equal size to be provided
+void nvidiaParticles::sortParticleByKey( nvidiaParticles &buffer )
+{
+    // Make a sorting map using the cell keys (like numpy.argsort)
+    thrust::device_vector<int> index( gpu_nparts_ );
     thrust::sequence( thrust::device, index.begin(), index.end() );
     thrust::sort_by_key( thrust::device, nvidia_cell_keys_.begin(), nvidia_cell_keys_.end(), index.begin() );
     
     // Sort particles using thrust::gather, according to the sorting map
     for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
-        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_double_prop_[ip]->begin(), double_buffers_[ip].begin() );
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_double_prop_[ip]->begin(), buffer.nvidia_double_prop_[ip]->begin() );
     }
     for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
-        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_short_prop_[ip]->begin(), short_buffers_[ip].begin() );
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_short_prop_[ip]->begin(), buffer.nvidia_short_prop_[ip]->begin() );
     }
     if( tracked ) {
-        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_id_.begin(), uint64_buffers_[0].begin() );
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, index.begin(), index.end(), nvidia_id_.begin(), buffer.nvidia_id_.begin() );
     }
     SMILEI_ACCELERATOR_DEVICE_SYNC();
     
     // Swap properties with their buffer
     for( int iprop = 0; iprop < nvidia_double_prop_.size(); iprop++ ) {
-        nvidia_double_prop_[iprop]->swap( double_buffers_[iprop] );
+        nvidia_double_prop_[iprop]->swap( *buffer.nvidia_double_prop_[iprop] );
     }
     for( int iprop = 0; iprop < nvidia_short_prop_.size(); iprop++ ) {
-        nvidia_short_prop_[iprop]->swap( short_buffers_[iprop] );
+        nvidia_short_prop_[iprop]->swap( *buffer.nvidia_short_prop_[iprop] );
     }
     if( tracked ) {
-        nvidia_id_.swap( uint64_buffers_[0] );
+        nvidia_id_.swap( buffer.nvidia_id_ );
     }
 }
 

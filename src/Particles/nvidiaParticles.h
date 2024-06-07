@@ -228,11 +228,6 @@ protected:
     //! List of short* arrays
     std::vector<thrust::device_vector<short>*> nvidia_short_prop_;
 
-    //! Buffers for sorting particles
-    std::vector<thrust::device_vector<double>> double_buffers_;
-    std::vector<thrust::device_vector<short>> short_buffers_;
-    std::vector<thrust::device_vector<uint64_t>> uint64_buffers_;
-
     const Params* parameters_;
     //! We are interested in having the patch coordinates. This allows us to
     //! compute a bin index relative to the patch which in turns, makes the bin
