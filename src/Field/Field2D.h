@@ -97,7 +97,7 @@ public:
 
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
 
-#if defined(SMILEI_ACCELERATOR_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU)
     //! Compute the norm 2 on device
     virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override final;
 #endif

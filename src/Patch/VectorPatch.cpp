@@ -301,7 +301,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::initialParticleSorting( Params &params )
 {
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE)
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC)
     // Initially I wanted to control the GPU particle sorting/bin initialization
     // here. In the end it was put in initializeDataOnDevice which is more
     // meaningful.
@@ -853,7 +853,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Per species in global, Attention if output -> Sync / per species fields
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
             // At itime == 0, data is still located on the Host
             if (itime == 0) {
                 ( *this )( ipatch )->EMfields->computeTotalRhoJ();
@@ -1269,7 +1269,7 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     bool data_on_cpu_updated = false;
 #endif
 
@@ -1277,7 +1277,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     timers.diags.restart();
 
     // Determine which data is required from the device
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     bool need_particles = false;
     bool need_fields    = false;
 
@@ -1346,7 +1346,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers_[idiag]->restart();
 
-// #if defined( SMILEI_ACCELERATOR_MODE)
+// #if defined( SMILEI_ACCELERATOR_GPU)
 //         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
 //             !data_on_cpu_updated &&
 //             ( itime > 0 ) ) {
@@ -1462,7 +1462,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers_[globalDiags.size()+idiag]->restart();
 
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
 //         if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
 //             !data_on_cpu_updated &&
 //             ( itime > 0 ) ) {
@@ -1496,7 +1496,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->restartRhoJs();
 
-#if defined (SMILEI_ACCELERATOR_MODE)
+#if defined (SMILEI_ACCELERATOR_GPU)
             // Delete species current and rho grids from device 
             for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 ( *this )( ipatch )->vecSpecies[ispec]->Species::deleteSpeciesCurrentAndChargeOnDevice(ispec, ( *this )( ipatch )->EMfields);
@@ -4402,8 +4402,7 @@ void VectorPatch::moveWindow(
     // Bring all particles and field grids to the Host (except species grids)
     // This part can be optimized by copying only the patch to be destructed
 
-
-#if defined( SMILEI_ACCELERATOR_MODE)
+#if defined( SMILEI_ACCELERATOR_GPU )
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
         //copyParticlesFromDeviceToHost();
         //copyFieldsFromDeviceToHost();
@@ -4413,10 +4412,11 @@ void VectorPatch::moveWindow(
 
     simWindow->shift( (*this), smpi, params, itime, time_dual, region );
 
-    if (itime == simWindow->getAdditionalShiftsIteration() ) {
+    if( itime == (int) simWindow->getAdditionalShiftsIteration() ) {
         int adjust = simWindow->isMoving(time_dual)?0:1;
-        for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
+        for( unsigned int n=0; n < simWindow->getNumberOfAdditionalShifts()-adjust; n++ ) {
             simWindow->shift( (*this), smpi, params, itime, time_dual, region );
+        }
     }
 
     // Copy all Fields and Particles to the device
@@ -4424,7 +4424,7 @@ void VectorPatch::moveWindow(
 
 
 // let's try initialising like we do at the start:
-/*#if defined( SMILEI_ACCELERATOR_MODE )
+/*#if defined( SMILEI_ACCELERATOR_GPU )
     // Allocate particle and field arrays
     // Also copy particle array content on device
     vecPatches.allocateDataOnDevice( params, &smpi,
@@ -4435,7 +4435,7 @@ void VectorPatch::moveWindow(
 #endif*/
 
 // does not do anything?
- /*#if defined( SMILEI_ACCELERATOR_MODE)
+ /*#if defined( SMILEI_ACCELERATOR_GPU)
      if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
         copyFieldsFromHostToDevice();
         copyParticlesFromHostToDevice();
@@ -4610,13 +4610,12 @@ void VectorPatch::initNewEnvelope( Params & )
 } // END initNewEnvelope
 
 
+#if defined( SMILEI_ACCELERATOR_GPU )
 void VectorPatch::allocateDataOnDevice(Params &params,
                                        SmileiMPI *smpi,
                                        RadiationTables *radiation_tables,
                                        MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
-
-#if defined( SMILEI_ACCELERATOR_MODE )
     // TODO(Etienne M): FREE. If we have load balancing or other patch
     // creation/destruction available (which is not the case on GPU ATM),
     // we should be taking care of freeing this GPU memory.
@@ -4682,17 +4681,24 @@ void VectorPatch::allocateDataOnDevice(Params &params,
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( min_particle_chi_table, min_particle_chi_size );
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( xi_table, xi_table_size );
     }
-#else
-    ERROR( "GPU related code should not be reached in CPU mode!" );
-#endif
 }
+#else
+void VectorPatch::allocateDataOnDevice(Params &,
+                                       SmileiMPI *,
+                                       RadiationTables *,
+                                       MultiphotonBreitWheelerTables *)
+{
+    ERROR( "GPU related code should not be reached in CPU mode!" );
+}
+#endif
+
 
 //! Clean data allocated on device
+#if defined( SMILEI_ACCELERATOR_GPU )
 void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
                                     RadiationTables *radiation_tables,
                                     MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables)
 {
-#if defined( SMILEI_OPENACC_MODE ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
 
     const int npatches = this->size();
 
@@ -4802,12 +4808,17 @@ void VectorPatch::cleanDataOnDevice( Params &params, SmileiMPI *smpi,
         smilei::tools::gpu::HostDeviceMemoryManagement::DeviceFree( xi_table, xi_table_size );
 
     }
-#else
-    ERROR( "GPU related code should not be reached in CPU mode!" );
-#endif
 }
+#else
+void VectorPatch::cleanDataOnDevice( Params &, SmileiMPI *,
+                                     RadiationTables *,
+                                     MultiphotonBreitWheelerTables *)
+{
+    ERROR( "GPU related code should not be reached in CPU mode!" );
+}
+#endif
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
@@ -4847,9 +4858,7 @@ void VectorPatch::copyFieldsFromHostToDevice()
 
     }
 }
-#endif
 
-#if defined( SMILEI_ACCELERATOR_MODE)
 //! Sync all fields from device to host
 void
 VectorPatch::copyFieldsFromDeviceToHost()
@@ -4862,10 +4871,6 @@ VectorPatch::copyFieldsFromDeviceToHost()
 
     }
 }
-#endif
-
-
-#if defined( SMILEI_ACCELERATOR_MODE)
 
 //! Copy all species particles from  Host to devices
 void VectorPatch::copyParticlesFromHostToDevice()
@@ -4877,9 +4882,6 @@ void VectorPatch::copyParticlesFromHostToDevice()
         }
     }
 }
-#endif
-
-#if defined( SMILEI_ACCELERATOR_MODE)
 
 //! copy all patch Particles from device to Host
 void
@@ -4892,9 +4894,7 @@ VectorPatch::copyParticlesFromDeviceToHost()
     for( int ipatch = 0; ipatch < npatches; ipatch++ ) {
         for( unsigned int ispec = 0; ispec < ( *this )( ipatch )->vecSpecies.size(); ispec++ ) {
                 species( ipatch, ispec )->particles->copyFromDeviceToHost();
-#if defined ( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_ACCELERATOR_MODE )
                 species( ipatch, ispec )->particles->setHostBinIndex();
-#endif
                 // std::cerr 
                 // << "ipatch: " << ipatch
                 // << " ispec: "  << ispec
@@ -4907,9 +4907,6 @@ VectorPatch::copyParticlesFromDeviceToHost()
     }
 }
 
-#endif
-
-#if defined( SMILEI_ACCELERATOR_MODE)
 //! Sync all fields from device to host
 void
 VectorPatch::copySpeciesFieldsFromDeviceToHost()
@@ -4989,7 +4986,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
 
                 if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
                     if (diag_flag) {
                         spec->Species::prepareSpeciesCurrentAndChargeOnDevice(
                             ispec,

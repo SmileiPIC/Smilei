@@ -48,12 +48,22 @@ public:
         // 1Dcartesian simulation
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+            if( !vectorization ) {
+                if ( params.interpolator_ == "momentum-conserving" ) {
+                    Interp = new Interpolator1D2Order( params, patch );
+                }
+                else if ( params.interpolator_ == "wt" ) {
+                    Interp = new Interpolator1DWT2Order( params, patch );
+                }
+            }
+            else {
                 if ( params.interpolator_ == "momentum-conserving" ) {
                     Interp = new Interpolator1D2OrderV( params, patch );
                 }
                 else if ( params.interpolator_ == "wt" ) {
                     Interp = new Interpolator1DWT2OrderV( params, patch );
                 }
+            }
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             if( params.interpolator_ == "momentum-conserving" ) {
                 Interp = new Interpolator1D4Order( params, patch );

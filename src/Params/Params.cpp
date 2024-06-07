@@ -833,7 +833,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
     if( gpu_computing ) {
-#if( defined( SMILEI_OPENACC_MODE ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if( defined( SMILEI_ACCELERATOR_GPU_OACC ) && defined( _OPENACC ) ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // If compiled for GPU and asking for GPU
         MESSAGE( 1, "Smilei will run on GPU devices" );
 #else
@@ -1050,27 +1050,26 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             // Extract the list of profiles and verify their content
             PyObject *p = PyTools::extract_py( "_profiles", "Laser", i_laser );
             vector<PyObject *> profiles;
-            vector<int> profiles_n = {1, 2};
             if( ! PyTools::py2pyvector( p, profiles ) ) {
                 ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles",  LINK_NAMELIST + std::string("#lasers") );
             }
             Py_DECREF( p );
-            if( profiles.size()!=2 ) {
+            if( profiles.size() != 2 ) {
                 ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.",  LINK_NAMELIST + std::string("#lasers") );
             }
-            if( profiles[1] == Py_None ) {
-                profiles  .pop_back();
-                profiles_n.pop_back();
+            vector<int> profiles_n;
+            vector<PyObject *> profiles_kept;
+            for( unsigned int i = 0; i < 2; i++ ) {
+                if( profiles[i] != Py_None ) {
+                    profiles_kept.push_back( profiles[i] );
+                    profiles_n.push_back( i + 1 );
+                }
             }
-            if( profiles[0] == Py_None ) {
-                profiles  .erase( profiles  .begin() );
-                profiles_n.erase( profiles_n.begin() );
-            }
-            if( profiles.size() == 0 ) {
+            if( profiles_kept.size() == 0 ) {
                 ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]", LINK_NAMELIST + std::string("#lasers") );
             }
-            for( unsigned int i=0; i<profiles.size(); i++ ) {
-                int nargs = PyTools::function_nargs( profiles[i] );
+            for( unsigned int i=0; i<profiles_kept.size(); i++ ) {
+                int nargs = PyTools::function_nargs( profiles_kept[i] );
                 if( nargs == -2 ) {
                     ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable", LINK_NAMELIST + std::string("#lasers") );
                 }
@@ -1116,10 +1115,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode ) {
-                    propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+                    propagateX( profiles_kept, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
                 }
             }
-
+            
+            for( auto p: profiles ) {
+                Py_DECREF( p );
+            }
+            
             n_laser_offset ++;
         }
     }
@@ -1222,7 +1225,7 @@ void Params::compute()
 
     // Set cluster_width_ if not set by the user
     if( cluster_width_ == -1 ) {
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
         cluster_width_ = patch_size_[0];
         // On GPU, dont do the CPU automatic cluster_width computation, only one
         // bin is expected.
@@ -1271,7 +1274,7 @@ void Params::compute()
 
 
     // Verify that cluster_width_ divides patch_size_[0] or patch_size_[n] in GPU mode
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int kClusterWidth = getGPUClusterWidth();
 
     if( kClusterWidth < 0 ) {
@@ -1881,7 +1884,7 @@ string Params::speciesField( string field_name )
     return "";
 }
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
 
 bool Params::isGPUParticleBinningAvailable() const
 {
@@ -1898,7 +1901,7 @@ bool Params::isGPUParticleBinningAvailable() const
 
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
 
 int Params::getGPUClusterWidth() const
 {

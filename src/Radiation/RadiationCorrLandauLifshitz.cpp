@@ -96,7 +96,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // cumulative Radiated energy from istart to iend
     double radiated_energy_loc = 0;
 
-#ifndef SMILEI_OPENACC_MODE
+#ifndef SMILEI_ACCELERATOR_GPU_OACC
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
     // double * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
@@ -112,7 +112,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // Computation
 
     // NVIDIA GPUs
-    #if defined (SMILEI_OPENACC_MODE)
+    #if defined (SMILEI_ACCELERATOR_GPU_OACC)
         const int istart_offset   = istart - ipart_ref;
         const int np = iend-istart;
         #pragma acc parallel \
@@ -185,7 +185,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-#ifndef SMILEI_OPENACC_MODE
+#ifndef SMILEI_ACCELERATOR_GPU_OACC
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
@@ -210,7 +210,7 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Update of the quantum parameter
     
-#ifndef SMILEI_OPENACC_MODE
+#ifndef SMILEI_ACCELERATOR_GPU_OACC
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 #endif
@@ -229,7 +229,7 @@ void RadiationCorrLandauLifshitz::operator()(
                        Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
                        Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-    #ifndef SMILEI_OPENACC_MODE
+    #ifndef SMILEI_ACCELERATOR_GPU_OACC
     } // end loop ipart
     #else
             } // end if
@@ -241,7 +241,7 @@ void RadiationCorrLandauLifshitz::operator()(
     radiated_energy += radiated_energy_loc;
 
 
-#ifndef SMILEI_OPENACC_MODE
+#ifndef SMILEI_ACCELERATOR_GPU_OACC
     // _______________________________________________________________
     // Cleaning
 

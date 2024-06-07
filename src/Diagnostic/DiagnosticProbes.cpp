@@ -740,7 +740,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         // Interpolate all usual fields on probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int maxPart_MPI = offset_in_MPI[ipatch] + npart;
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
         smpi->resizeDeviceBuffers( ithread,
                                    nDim_particle,
                                    npart );

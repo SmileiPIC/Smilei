@@ -53,7 +53,7 @@ private:
         coeffxp[3] = dble_19_ov_96   + dble_11_ov_24 * delta_p[0]  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
         coeffxp[4] = dble_1_ov_384   + dble_1_ov_48  * delta_p[0]  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
         
-        idx_p[0]  -= index_domain_begin;
+        idx_p[0]  -= i_domain_begin_;
 
         if(idx_d){   
             // Dual
@@ -70,7 +70,7 @@ private:
             coeffxd[3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             coeffxd[4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
             
-            idx_d[0]  -= index_domain_begin;
+            idx_d[0]  -= i_domain_begin_;
         }
     }
     

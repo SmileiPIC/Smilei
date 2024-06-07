@@ -55,7 +55,7 @@ private:
         coeffd_[3] = dble_19_ov_96 + var1 + var3 * ( 1.5-xjmxi -var2 );
         coeffd_[4] = dble_1_ov_24 * var5 * var5;
 
-        id_ -= index_domain_begin;
+        id_ -= i_domain_begin_;
 
         // Primal
         ip_      = round( xjn );    // index of the central point
@@ -94,7 +94,7 @@ private:
         coeffpt_[4] = var3 + var2 - var1;
         
         
-        ip_ -= index_domain_begin;
+        ip_ -= i_domain_begin_;
     }
 
     double dble_1_ov_6 ;

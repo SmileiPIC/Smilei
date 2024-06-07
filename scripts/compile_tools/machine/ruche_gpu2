@@ -26,7 +26,7 @@ GPU_COMPILER_FLAGS += -arch=sm_80 #sm_89 # first compile completely with sm_80 t
 CXXFLAGS        += -Minfo=accel # what is offloaded/copied
 # CXXFLAGS        += -Minfo=all   # very verbose output
 
-# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_OPENACC_MODE'
+# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_ACCELERATOR_GPU_OACC'
 # CXXFLAGS        += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
 # GPU_COMPILER_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
 # LDFLAGS                      += -mp=gpu

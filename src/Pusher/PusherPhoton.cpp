@@ -53,7 +53,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
                        position_y /* [istart:particle_number] */,             \
                        position_z /* [istart:particle_number] */ )
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     const int istart_offset   = istart - ipart_ref;
     const int particle_number = iend - istart;
 

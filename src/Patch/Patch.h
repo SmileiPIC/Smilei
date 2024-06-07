@@ -194,8 +194,8 @@ public:
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
 
-#ifdef SMILEI_ACCELERATOR_MODE
-    //! Allocate and copy all the fields on device
+#ifdef SMILEI_ACCELERATOR_GPU
+    //! Allocate and copy all the field grids on device
     void allocateAndCopyFieldsOnDevice();
 
     //! Allocate all fields on device
