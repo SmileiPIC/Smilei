@@ -383,7 +383,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 
                         } // end loop nSpecies
 
-#if defined ( SMILEI_ACCELERATOR_MODE )
+#if defined ( SMILEI_ACCELERATOR_GPU )
                         if( params.gpu_computing ) {
                             for( auto spec: mypatch->vecSpecies ) {
                                 spec->allocateParticlesOnDevice();
@@ -398,7 +398,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         
                     } // end test patch_particle_created[ithread][j]
 
-#if defined ( SMILEI_ACCELERATOR_MODE )
+#if defined ( SMILEI_ACCELERATOR_GPU )
                     // if ( params.gpu_computing ) {
                         // Initializes only field data structures, particle data structure are initialized separately
                         mypatch->allocateAndCopyFieldsOnDevice();

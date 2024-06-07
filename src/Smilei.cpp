@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 #include <omp.h>
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 #include <openacc.h>
 #endif
 
@@ -44,7 +44,7 @@ using namespace std;
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #ifdef _OPENACC
     void initialization_openacc()
     {
@@ -80,7 +80,7 @@ int main( int argc, char *argv[] )
     // -------------------------
 
     // Create the OpenACC environment
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     initialization_openacc();
 #endif
 
@@ -248,7 +248,7 @@ int main( int argc, char *argv[] )
 
         checkpoint.restartAll( vecPatches, region, &smpi, params );
 
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -271,7 +271,7 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
 
-#if !(defined( SMILEI_ACCELERATOR_MODE ))
+#if !(defined( SMILEI_ACCELERATOR_GPU ))
         // CPU only, its too early to sort on GPU
         vecPatches.initialParticleSorting( params );
 #endif
@@ -407,7 +407,7 @@ int main( int argc, char *argv[] )
         }
     }
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     TITLE( "GPU allocation and copy of the fields and particles" );
     // Allocate particle and field arrays
     // Also copy particle array content on device
@@ -685,7 +685,7 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
 
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
 //             ERROR( "Load balancing not tested on GPU !" );
 // #endif
             count_dlb++;
@@ -777,7 +777,7 @@ int main( int argc, char *argv[] )
         region.clean();
     }
     
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     vecPatches.cleanDataOnDevice( params, &smpi, &radiation_tables_, &multiphoton_Breit_Wheeler_tables_ );
 #endif
     

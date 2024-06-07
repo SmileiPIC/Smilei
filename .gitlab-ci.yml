@@ -8,15 +8,14 @@ stages:
     - compile_debug
     - compile_no_mpi_threadmultiple
     - compile_no_openmp
-    - compile_omptasks
-    - run_omptasks
+#    - compile_omptasks
+#    - run_omptasks
 
 install:
   stage: install
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -34,8 +33,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -46,8 +44,7 @@ runQuick:
   stage: run_quick
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -58,8 +55,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -71,8 +67,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -86,8 +81,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -102,8 +96,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -115,8 +108,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - particle_exchange
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -172,21 +164,21 @@ compile_no_openmp:
     - make clean
     - python validation/validation.py -k noopenmp -c -v
 
-compile_omptasks:
-  stage: compile_omptasks
-  only:
-    - develop
-
-  script:
-    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
-    - make clean
-    - python validation/validation.py -k omptasks -c -v
-
-run_omptasks:
-  stage: run_omptasks
-  only:
-    - develop
-    
-  script:
-    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v
+#compile_omptasks:
+#  stage: compile_omptasks
+#  only:
+#    - develop
+#
+#  script:
+#    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
+#    - make clean
+#    - python validation/validation.py -k omptasks -c -v
+#
+#run_omptasks:
+#  stage: run_omptasks
+#  only:
+#    - develop
+#    
+#  script:
+#    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v

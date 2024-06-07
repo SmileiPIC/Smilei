@@ -447,8 +447,9 @@ class TrackParticles(ParticleList):
 						for k, name in self._short_properties_from_raw.items():
 							if k not in group: continue
 							ordered = self._np.empty((nparticles_to_write, ), dtype=group[k].dtype)
-							if k == "id": ordered.fill(0)
-							else        : ordered.fill(self._np.nan)
+							if k == "id"      : ordered.fill(0)
+							elif k == "charge": ordered.fill(9999)
+							else              : ordered.fill(self._np.nan)
 							ordered[locs] = group[k][()][selectedIndices]
 							f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 				
@@ -461,8 +462,9 @@ class TrackParticles(ParticleList):
 					for first_o, last_o, npart_o in ChunkedRange(nparticles_to_write, chunksize):
 						for k, name in self._short_properties_from_raw.items():
 							if k not in group: continue
-							if k == "id": data[k].fill(0)
-							else        : data[k].fill(self._np.nan)
+							if k == "id"      : data[k].fill(0)
+							elif k == "charge": data[k].fill(9999)
+							else              : data[k].fill(self._np.nan)
 						# Loop chunks of the input
 						for first_i, last_i, npart_i in ChunkedRange(nparticles, chunksize):
 							# Obtain IDs
@@ -538,7 +540,10 @@ class TrackParticles(ParticleList):
 								data[it,:] -= self._XmovedForTime[time]
 						else:
 							data = self._readUnstructuredH5(self._h5items[axis], self.selectedParticles, first_time, last_time)
-						data[deadParticles] = self._np.nan
+						if data.dtype == float:
+							data[deadParticles] = self._np.nan
+						else:
+							data[deadParticles] = 9999
 						self._rawData[axis] = data
 
 				if self._verbose: print("Process broken lines ...")

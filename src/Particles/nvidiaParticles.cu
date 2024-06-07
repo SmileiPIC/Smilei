@@ -116,11 +116,36 @@ namespace detail {
 
     };
 
+    template <Cluster::DifferenceType kClusterWidth>
+    struct Cluster1D : public Cluster
+    {
+    public:
+        Cluster1D( double   inverse_x_cell_dimension,
+                   SizeType local_x_dimension_in_cell,
+        int CellStartingGlobalIndex_for_x);
+
+        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
+        //! zipiterator).
+        //! The first value of a_particle is the cell key value, the other values are
+        //! the positions x 
+        template <typename Tuple>
+        __host__ __device__ IDType
+        Index( const Tuple& a_particle ) const;
+
+        //! Compute the cell key of a particle range.
+        //!
+        static void
+        computeParticleClusterKey( nvidiaParticles& particle_container,
+                                   const Params&    parameters,
+                                   const Patch&     a_parent_patch );
+
+        double   inverse_of_x_cell_dimension_;
+        int CellStartingGlobalIndex_for_x_;
+    };
 
     template <Cluster::DifferenceType kClusterWidth>
     struct Cluster2D : public Cluster
     {
-    public:
     public:
         Cluster2D( double   inverse_x_cell_dimension,
                    double   inverse_y_cell_dimension,
@@ -156,7 +181,6 @@ namespace detail {
     template <Cluster::DifferenceType kClusterWidth>
     struct Cluster3D : public Cluster
     {
-    public:
     public:
         Cluster3D( double   inverse_x_cell_dimension,
                    double   inverse_y_cell_dimension,
@@ -202,18 +226,16 @@ namespace detail {
     class AssignClusterIndex
     {
     public:
-    public:
         AssignClusterIndex( ClusterType cluster_type )
             : cluster_type_{ cluster_type }
         {
-            // EMPTY
         }
 
         template <typename Tuple>
         __host__ __device__ void
         operator()( Tuple& a_particle ) const
         {
-            thrust::get<0>( a_particle ) /* cluster key */ = cluster_type_.Index( a_particle );
+            thrust::get<0>( a_particle ) = cluster_type_.Index( a_particle ); //cluster key 
         }
 
     protected:
@@ -234,6 +256,12 @@ namespace detail {
         // dimensions.
 
         switch( particle_container.dimension() ) {
+            case 1: {
+                Cluster1D<Params::getGPUClusterWidth( 1 )>::computeParticleClusterKey( particle_container,
+                                                                                                parameters,
+                                                                                                a_parent_patch );
+                break;
+            }
             case 2: {
                 Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
                                                                                                 parameters,
@@ -247,7 +275,7 @@ namespace detail {
                 break;
             }
             default:
-                // Not implemented, only Cartesian 2D or 3D for the moment
+                // Not implemented, only Cartesian 1D, 2D or 3D for the moment
                 SMILEI_ASSERT( false );
                 break;
         }
@@ -348,8 +376,17 @@ namespace detail {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Cluster2D method definitions
+    // Cluster method definitions
     ////////////////////////////////////////////////////////////////////////////////
+
+    template <Cluster::DifferenceType kClusterWidth>
+    Cluster1D<kClusterWidth>::Cluster1D( double   inverse_x_cell_dimension,
+                                         SizeType local_x_dimension_in_cell,
+                                         int CellStartingGlobalIndex_for_x)
+        : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
+        , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
+    {
+    }
 
     template <Cluster::DifferenceType kClusterWidth>
     Cluster2D<kClusterWidth>::Cluster2D( double   inverse_x_cell_dimension,
@@ -363,7 +400,6 @@ namespace detail {
         , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
         , CellStartingGlobalIndex_for_y_{CellStartingGlobalIndex_for_y}
     {
-        // EMPTY
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -384,7 +420,30 @@ namespace detail {
         , CellStartingGlobalIndex_for_y_{CellStartingGlobalIndex_for_y}
         , CellStartingGlobalIndex_for_z_{CellStartingGlobalIndex_for_z}
     {
-        // EMPTY
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ typename Cluster1D<kClusterWidth>::IDType
+    Cluster1D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    {
+        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                                                    inverse_of_x_cell_dimension_ ) -
+                                                             CellStartingGlobalIndex_for_x_;
+
+        // These divisions will be optimized.
+        // The integer division rounding behavior is expected.
+
+        // NOTE: Flat tiles have been studied but were not as efficient for the
+        // projection. The square provides the minimal perimeter (and thus ghost
+        // cell amount) for a given area.
+        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
+
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+
+        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster;
+
+        return static_cast<IDType>( cluster_index );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -462,6 +521,22 @@ namespace detail {
 
     template <Cluster::DifferenceType kClusterWidth>
     void
+    Cluster1D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
+                                                         const Params&    parameters,
+                                                         const Patch&     a_parent_patch )
+    {
+        const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
+                                                                          static_cast<const double*>( particle_container.getPtrPosition( 0 ) ) ) );
+        const auto last  = first + particle_container.deviceSize();
+        int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
+        doComputeParticleClusterKey( first, last,
+                                     Cluster1D<Params::getGPUClusterWidth( 1 )>{ parameters.res_space[0],
+                                                                                          parameters.patch_size_[0],
+                                                                                          CellStartingGlobalIndex_for_x} );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    void
     Cluster2D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
                                                          const Params&    parameters,
                                                          const Patch&     a_parent_patch )
@@ -521,7 +596,6 @@ nvidiaParticles::nvidiaParticles( const Params& parameters,
     , parent_patch_{ &a_parent_patch }
     , gpu_nparts_{}
 {
-    // EMPTY
 }
 
 nvidiaParticles::~nvidiaParticles() {
@@ -687,7 +761,6 @@ void nvidiaParticles::initializeDataOnDevice()
         
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
-
         detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
 
         // The particles are not correctly sorted when created.

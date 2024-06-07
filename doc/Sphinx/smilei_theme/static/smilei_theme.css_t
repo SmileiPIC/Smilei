@@ -172,6 +172,10 @@ a:hover {
 	text-decoration: underline;
 }
 
+a:visited {
+	color:{{ theme_main_color_bold }}; color: var(--main_bold);
+}
+
 div.body h1,
 div.body h2,
 div.body h3,
@@ -400,6 +404,14 @@ table.footnote td.label {
 
 table.footnote td {
 	padding: 0.3em 0.5em;
+}
+
+table.noborder {
+  width: 100%;
+}
+
+table.noborder tr:first-child td:first-child {
+  width: 7em;
 }
 
 table.noborder, table.noborder td {

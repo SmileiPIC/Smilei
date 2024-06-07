@@ -22,7 +22,7 @@
 #include "RadiationTools.h"
 #include "userFunctions.h"
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
 #include <openacc.h>
 #endif
 

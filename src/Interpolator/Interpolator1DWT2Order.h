@@ -47,7 +47,7 @@ private:
         coeffd_[1] = ( 0.75-var1 );
         coeffd_[2] = 0.5 * ( var1+xjmxi+0.25 );
 
-        id_ -= index_domain_begin;
+        id_ -= i_domain_begin_;
 
         // Primal
         ip_      = round( xjn );    // index of the central point
@@ -65,7 +65,7 @@ private:
         coeffpt_[1] = 1.0 - 2.0 * var1;
         coeffpt_[2] = var1 + 0.5 * xjmxi;
         
-        ip_ -= index_domain_begin;
+        ip_ -= i_domain_begin_;
     }
 
     // Coefficients for WT

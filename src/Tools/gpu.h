@@ -21,7 +21,7 @@ namespace smilei {
     #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "omp atomic update" )
     #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::hip::par_nosync
     #define SMILEI_ACCELERATOR_DEVICE_SYNC() hipDeviceSynchronize()
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "acc atomic" )

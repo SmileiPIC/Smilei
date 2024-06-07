@@ -42,7 +42,10 @@ def updateMatplotLibColormaps():
 	if "smilei" in matplotlib.pyplot.colormaps(): return
 	def register(name, d):
 		cmap = matplotlib.colors.LinearSegmentedColormap(name, d, N=256, gamma=1.0)
-		matplotlib.pyplot.register_cmap(cmap=cmap)
+		try:
+			matplotlib.pyplot.register_cmap(cmap=cmap)
+		except Exception as e:
+			matplotlib.colormaps.register(cmap)
 	register(u"smilei", {
 			'red'  :((0., 0., 0.), (0.0625 , 0.091, 0.091), (0.09375, 0.118, 0.118), (0.125 , 0.127, 0.127), (0.1875 , 0.135, 0.135), (0.21875, 0.125, 0.125), (0.28125, 0.034, 0.034), (0.3125 , 0.010, 0.010), (0.34375, 0.009, 0.009), (0.4375 , 0.049, 0.049), (0.46875, 0.057, 0.057), (0.5 , 0.058, 0.058), (0.59375, 0.031, 0.031), (0.625 , 0.028, 0.028), (0.65625, 0.047, 0.047), (0.71875, 0.143, 0.143), (0.78125, 0.294, 0.294), (0.84375, 0.519, 0.519), (0.90625, 0.664, 0.664), (0.9375 , 0.760, 0.760), (0.96875, 0.880, 0.880), (1., 1., 1. )),
 			'green':((0., 0., 0.), (0.21875, 0.228, 0.228), (0.78125, 0.827, 0.827), (0.8125 , 0.852, 0.852), (0.84375, 0.869, 0.869), (0.9375 , 0.937, 0.937), (0.96875, 0.967, 0.967), (1. , 1. , 1. )),
@@ -398,7 +401,11 @@ class Operation(object):
 							raise Exception("Quantity "+q+" not understood")
 			# Calculate the total units and its inverse
 			locals().update(self.imports)
-			units = eval("".join(basic_op)).units
+			units = eval("".join(basic_op))
+			if isinstance(units, (int, float)):
+				units = ureg.Quantity(1) # dimensionless
+			else:
+				units = units.units
 			self.translated_units = units.format_babel(locale="en")
 			# Make the operation string
 			self.translated_operation = "".join(full_op)

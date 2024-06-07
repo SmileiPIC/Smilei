@@ -1311,7 +1311,7 @@ void Particles::copyLeavingParticlesToBuffers( const vector<bool> copy, const ve
     // where direction goes from 0 to 6 and tells which way the particle escapes.
     // If the cell_key is -1, the particle must be destroyed so it is not extracted.
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
 
     // GPU
     
@@ -1403,7 +1403,7 @@ int Particles::addParticles( Particles* particles_to_inject )
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
 }
 
-void Particles::importAndSortParticles( Particles *particles_to_inject )
+void Particles::importAndSortParticles( Particles */*particles_to_inject*/ )
 {
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
 }

@@ -18,7 +18,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -40,7 +40,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -92,7 +92,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -112,7 +112,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -189,9 +189,9 @@ void remove_particle_inf( Species* species,
                           int imin, int imax, 
                           int direction, 
                           double limit_inf, 
-                          double dt, 
-                          std::vector<double>& invgf, 
-                          Random* rand, 
+                          double /*dt*/, 
+                          std::vector<double>& /*invgf*/, 
+                          Random* /*rand*/, 
                           double& energy_change )
 {
 
@@ -210,7 +210,7 @@ void remove_particle_inf( Species* species,
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
     #pragma acc loop gang worker vector reduction(+ : change_in_energy)
 #else
@@ -235,9 +235,9 @@ void remove_particle_sup( Species* species,
                           int imin, int imax, 
                           int direction, 
                           double limit_sup, 
-                          double dt, 
-                          std::vector<double>& invgf, 
-                          Random* rand, 
+                          double /*dt*/, 
+                          std::vector<double>& /*invgf*/, 
+                          Random* /*rand*/, 
                           double& energy_change )
 {
 
@@ -256,7 +256,7 @@ void remove_particle_sup( Species* species,
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
     #pragma acc loop gang worker vector reduction(+ : change_in_energy)
 #else

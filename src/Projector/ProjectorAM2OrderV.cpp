@@ -673,10 +673,6 @@ void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     // double r_bar[8] __attribute__( ( aligned( 64 ) ) );
 
-    //double *invR_local = &(invR_[jpom2]);
-    // double *invRd_local = &(invRd_[jpom2]);
-
-    double *invR_local = &(invR_[jpom2]);
     // Pointer for GPU and vectorization on ARM processors
     double * __restrict__ position_x = particles.getPtrPosition(0);
     double * __restrict__ position_y = particles.getPtrPosition(1);

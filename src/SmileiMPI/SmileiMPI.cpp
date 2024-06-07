@@ -763,7 +763,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
         irequest ++;
     }
 
-#if defined( SMILEI_ACCELERATOR_MODE) 
+#if defined( SMILEI_ACCELERATOR_GPU) 
 
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
@@ -904,7 +904,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         }
     }
 
-#if defined( SMILEI_ACCELERATOR_MODE) 
+#if defined( SMILEI_ACCELERATOR_GPU) 
 
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
 
@@ -1209,7 +1209,7 @@ void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &ire
 void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc )
 {
 
-// #if defined (SMILEI_ACCELERATOR_MODE)
+// #if defined (SMILEI_ACCELERATOR_GPU)
 
 //     isendOnDevice( EM->Ex_, to, tag+irequest, requests[irequest] );
 //     irequest++;
@@ -1318,9 +1318,9 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
 
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
-                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                MPI_Isend( &( embc->By_val_ ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
                 irequest++;
-                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                MPI_Isend( &( embc->Bz_val_ ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
                 irequest++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border
@@ -1745,7 +1745,7 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
 void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, bool recv_xmin_bc )
 {
 
-// #if defined (SMILEI_ACCELERATOR_MODE)
+// #if defined (SMILEI_ACCELERATOR_GPU)
 
 //      recvOnDevice( EM->Ex_, from, tag );
 //      tag++;
@@ -1854,9 +1854,9 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, bool recv_xmin_bc )
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
                 MPI_Status status;
-                MPI_Recv( &( embc->By_val ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+                MPI_Recv( &( embc->By_val_ ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
                 tag++;
-                MPI_Recv( &( embc->Bz_val ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+                MPI_Recv( &( embc->Bz_val_ ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
                 tag++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border
@@ -2121,7 +2121,7 @@ void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 } // End isend ( Field )
 
 
-#if defined (SMILEI_ACCELERATOR_MODE)
+#if defined (SMILEI_ACCELERATOR_GPU)
 //! Sends the whole Field Device to Device (assuming MPI enables it)
 void SmileiMPI::isendOnDevice( Field *field, int to, int tag, MPI_Request &request )
 {
@@ -2194,7 +2194,7 @@ void SmileiMPI::recv( Field *field, int from, int tag )
 
 } // End recv ( Field )
 
-#if defined (SMILEI_ACCELERATOR_MODE) 
+#if defined (SMILEI_ACCELERATOR_GPU) 
 void SmileiMPI::recvOnDevice( Field *field, int from, int tag )
 {
 
@@ -2524,7 +2524,7 @@ void SmileiMPI::eraseBufferParticleTrail( const int ndim, const int istart, cons
 }
 
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
 
 template <typename Container>
 static inline void

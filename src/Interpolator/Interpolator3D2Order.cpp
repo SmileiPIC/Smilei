@@ -185,8 +185,6 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     int *const __restrict__ iold     = smpi->dynamics_iold[ithread].data();
     double *const __restrict__ delta = smpi->dynamics_deltaold[ithread].data();
 
-    unsigned int buffer_size = smpi->dynamics_Epart[ithread].size();
-
     const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
     const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
@@ -198,7 +196,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const double *const __restrict__ By3D = EMfields->By_m->data_;
     const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-#if defined(SMILEI_OPENACC_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU_OACC)
     const int sizeofEx = EMfields->Ex_->size();
     const int sizeofEy = EMfields->Ey_->size();
     const int sizeofEz = EMfields->Ez_->size();
@@ -224,7 +222,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_y /* [first_index:npart_range_size] */,        \
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc enter data create(this)
     #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
@@ -282,7 +280,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
             delta[1*nparts+ipart] = delta_p[1];
             delta[2*nparts+ipart] = delta_p[2];
         }
-        #if defined(SMILEI_OPENACC_MODE)
+        #if defined(SMILEI_ACCELERATOR_GPU_OACC)
             #pragma acc exit data delete(this)
         #endif
     } else { // with B-TIS3 interpolation
@@ -302,7 +300,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                        position_y /* [first_index:npart_range_size] */,        \
                        position_z /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc enter data create(this)
     #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
@@ -368,7 +366,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
             delta[ipart+0*nparts] = delta_p[0];
             delta[ipart+1*nparts] = delta_p[1];
             delta[ipart+2*nparts] = delta_p[2];
-            #if defined(SMILEI_OPENACC_MODE)
+            #if defined(SMILEI_ACCELERATOR_GPU_OACC)
                 #pragma acc exit data delete(this)
             #endif
         } // end ipart loop

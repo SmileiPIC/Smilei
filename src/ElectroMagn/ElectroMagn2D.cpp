@@ -1217,7 +1217,7 @@ void ElectroMagn2D::centerMagneticFields()
     double *const __restrict__ Bz2D_m     = Bz_m->data();
 
 // Magnetic field Bx^(p,d)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofBx = Bx_->size();
     const int sizeofBy = By_->size();
     const int sizeofBz = Bz_->size();
@@ -1229,10 +1229,10 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < nx_p; ++x ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop vector
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
         for( unsigned int y = 0; y < ny_d; ++y ) {
@@ -1241,7 +1241,7 @@ void ElectroMagn2D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(By2D[0:sizeofBy],By2D_m[0:sizeofBy])
     #pragma acc loop gang worker
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1249,10 +1249,10 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop vector
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
         for( unsigned int y = 0; y < ny_p; ++y ) {
@@ -1260,7 +1260,7 @@ void ElectroMagn2D::centerMagneticFields()
         }
     }
     // Magnetic field Bz^(d,d)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(Bz2D[0:sizeofBz],Bz2D_m[0:sizeofBz])
     #pragma acc loop gang worker
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1268,10 +1268,10 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
     for( unsigned int x = 0; x < ( nx_p + 1 ); ++x ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop vector
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
         for( unsigned int y = 0; y < ny_d; ++y ) {
@@ -1282,7 +1282,7 @@ void ElectroMagn2D::centerMagneticFields()
         double *const             By2D_oldBTIS3 = By_mBTIS3->data();
         double *const             Bz2D_oldBTIS3 = Bz_mBTIS3->data();
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofByBTIS3 = By_mBTIS3->size();
     #pragma acc parallel present(By2D_oldBTIS3[0:sizeofByBTIS3],By2D[0:sizeofBy])
     #pragma acc loop gang
@@ -1291,17 +1291,17 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
         for( unsigned int x = 0; x < ( nx_p - 1 ); ++x ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop vector
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
             for( unsigned int y = 0; y < ny_p; ++y ) {
                 By2D_oldBTIS3[x * ny_p + y] = ( By2D[(x+1) * ny_p + y] + By2D_oldBTIS3[x * ny_p + y] ) * 0.5;
             }
         }
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofBzBTIS3 = Bz_mBTIS3->size();
     #pragma acc parallel present(Bz2D_oldBTIS3[0:sizeofBz],Bz2D[0:sizeofBz])
     #pragma acc loop gang
@@ -1310,10 +1310,10 @@ void ElectroMagn2D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 2 )
 #endif
         for( unsigned int x = 0; x < ( nx_p - 1 ); ++x ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop vector
 #endif
-#if !defined( SMILEI_ACCELERATOR_MODE )
+#if !defined( SMILEI_ACCELERATOR_GPU )
         #pragma omp simd
 #endif
             for( unsigned int y = 0; y < ny_d; ++y ) {
@@ -1392,7 +1392,7 @@ void ElectroMagn2D::computeTotalRhoJ()
 //END computeTotalRhoJ
 }
 
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
 // //! Method used to compute the total charge density and currents by summing over all species on Device
 // void ElectroMagn2D::computeTotalRhoJOnDevice()
 // {

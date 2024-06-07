@@ -445,7 +445,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 Patch::~Patch()
 {
 
-#ifdef SMILEI_ACCELERATOR_MODE
+#ifdef SMILEI_ACCELERATOR_GPU
     deleteFieldsOnDevice();
 #endif
 
@@ -1153,7 +1153,7 @@ void Patch::computePoynting() {
     }
 }
 
-#ifdef SMILEI_ACCELERATOR_MODE
+#ifdef SMILEI_ACCELERATOR_GPU
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Allocate data on device
