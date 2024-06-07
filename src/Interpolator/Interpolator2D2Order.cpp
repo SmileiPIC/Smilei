@@ -180,7 +180,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
     const double *const __restrict__ By2D = static_cast<Field2D *>( EMfields->By_m )->data();
     const double *const __restrict__ Bz2D = static_cast<Field2D *>( EMfields->Bz_m )->data();
 
-#if defined(SMILEI_OPENACC_MODE)    
+#if defined(SMILEI_ACCELERATOR_GPU_OACC)    
     const int sizeofEx = EMfields->Ex_->size();
     const int sizeofEy = EMfields->Ey_->size();
     const int sizeofEz = EMfields->Ez_->size();
@@ -207,7 +207,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                   position_x /* [first_index:npart_range_size] */, \
                                   position_y /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc enter data create(this)
     #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 1 * nparts ) - first_index;
@@ -260,7 +260,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
         delta[1*nparts+ipart] = delta_p[1];
         
     }
-    #if defined(SMILEI_OPENACC_MODE)
+    #if defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc exit data delete(this)
     #endif
     } else{ // with B-TIS3 interpolation
@@ -276,7 +276,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                   position_x /* [first_index:npart_range_size] */, \
                                   position_y /* [first_index:npart_range_size] */ )
     #pragma omp teams distribute parallel for
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc enter data create(this)
     #pragma acc update device(this)
     size_t interpolation_range_size = ( last_index + 1 * nparts ) - first_index;
@@ -337,7 +337,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
             delta[1*nparts+ipart] = delta_p[1];
 
         } // end ipart loop
-    #if defined(SMILEI_OPENACC_MODE)
+    #if defined(SMILEI_ACCELERATOR_GPU_OACC)
         #pragma acc exit data delete(this)
     #endif
     } // end with B-TIS interpolation

@@ -73,7 +73,7 @@ public :
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                     fields[ifield]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+fields[ifield]->isDual_[0] );
                     fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                     double * pointer = fields[ifield]->sendFields_[iNeighbor]->data_;
 //                     int size = fields[ifield]->size();
 // #endif
@@ -87,7 +87,7 @@ public :
 
         // iDim = 0, local
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
     // At initialization, we may get a CPU buffer than needs to be handled on the host.
         const bool is_memory_on_device = fields.size() > 0 &&
                                      smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
@@ -123,7 +123,7 @@ public :
 
                     const unsigned int last = gsp[0] * ny_ * nz_;
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                     int ptsize = fields[ifield]->size();
                     int nspace0 = size[0];
                     #pragma acc parallel if ( is_memory_on_device) present(pt1[0-nspace0*ny_*nz_:ptsize],pt2[0:ptsize])
@@ -177,7 +177,7 @@ public :
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                         fields[ifield]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+fields[ifield]->isDual_[1] );
                         fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                 double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2]->data_;
 //                 int size = fields[ifield]->recvFields_[(iNeighbor+1)%2]->size();
 //                 //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
@@ -192,7 +192,7 @@ public :
 
             // iDim = 1, local
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
             const bool is_memory_on_device = fields.size() > 0 &&
                 smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -220,11 +220,11 @@ public :
                         pt1 = &( *field1 )( size[1]*nz_ );
                         pt2 = &( *field2 )( 0 );
 
-                        const int outer_last   = nx_ * ny_ * nz_;
-                        const int outer_stride = ny_ * nz_;
-                        const int inner_last   = gsp[1] * nz_;
+                        const unsigned int outer_last   = nx_ * ny_ * nz_;
+                        const unsigned int outer_stride = ny_ * nz_;
+                        const unsigned int inner_last   = gsp[1] * nz_;
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                         int ptsize = fields[ifield]->size();
                         int blabla = size[1];
                         #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
@@ -282,7 +282,7 @@ public :
                         if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                             fields[ifield]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+fields[ifield]->isDual_[2] );
                             fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
-// #ifdef SMILEI_OPENACC_MODE
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC
 //                             double* pointer   = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->data_;
 //                             int size = fields[ifield]->recvFields_[(iNeighbor+1)%2+2]->size();
 // #endif                       
@@ -293,7 +293,7 @@ public :
 
                 // iDim = 2 local
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
                 const bool is_memory_on_device = fields.size() > 0 &&
                                              smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( fields[0]->data() );
 #endif
@@ -321,11 +321,11 @@ public :
                             pt1 = &( *field1 )( size[2] );
                             pt2 = &( *field2 )( 0 );
 
-                            const int outer_last   = nx_ * ny_ * nz_;
-                            const int outer_stride = nz_;
-                            const int inner_last = gsp[2];
+                            const unsigned int outer_last   = nx_ * ny_ * nz_;
+                            const unsigned int outer_stride = nz_;
+                            const unsigned int inner_last = gsp[2];
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
                             int ptsize = fields[ifield]->size();
                             int blabla = size[2];
                             #pragma acc parallel if (is_memory_on_device) present(pt1[0-blabla:ptsize],pt2[0:ptsize])

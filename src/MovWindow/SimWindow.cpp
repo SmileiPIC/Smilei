@@ -174,7 +174,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
                         // The tag is the patch number in the receiver vector of patches 
                         // in order to avoid too large tags not supported by some MPI versions.
-#if defined ( SMILEI_ACCELERATOR_MODE )
+#if defined ( SMILEI_ACCELERATOR_GPU )
                         for( unsigned int ispec = 0; ispec < mypatch->vecSpecies.size(); ispec++ ) {
                             mypatch->vecSpecies[ispec]->copyParticlesFromDeviceToHost();
                         }
@@ -231,7 +231,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 mypatch->finalizeMPIenvironment( params );
                 //Position new patch
                 vecPatches.patches_[patch_to_be_created[thread][j]] = mypatch ;
- #if defined ( SMILEI_ACCELERATOR_MODE )
+#if defined ( SMILEI_ACCELERATOR_GPU )
                 mypatch->allocateFieldsOnDevice();
 #endif
                 //Receive Patch if necessary
@@ -391,21 +391,23 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 
                         } // end loop nSpecies
 
-                        mypatch->EMfields->applyExternalFields( mypatch );
-                        if( params.save_magnectic_fields_for_SM ) {
-                            mypatch->EMfields->saveExternalFields( mypatch );
-                        }
-
-#if defined ( SMILEI_ACCELERATOR_MODE )
-                        // Initialize fields and particles of new patch on GPU
-                        mypatch->copyFieldsFromHostToDevice();
+#if defined ( SMILEI_ACCELERATOR_GPU )
                         for( auto spec: mypatch->vecSpecies ) {
                             spec->allocateParticlesOnDevice();
                         }
 #endif
+
+                        mypatch->EMfields->applyExternalFields( mypatch );
+                        if( params.save_magnectic_fields_for_SM ) {
+                            mypatch->EMfields->saveExternalFields( mypatch );
+                        }
                         
                     } // end test patch_particle_created[ithread][j]
 
+#if defined ( SMILEI_ACCELERATOR_GPU )
+                    // Initializes only field data structures, particle data structure are initialized separately
+                    mypatch->allocateAndCopyFieldsOnDevice();
+#endif
 
                 } // end j loop
             } // End ithread loop

@@ -555,7 +555,7 @@ void ElectroMagn::applyAntenna( unsigned int iAntenna, double intensity )
 //! Compute the total density and currents from species density and currents on Device
 //! This function is valid wathever the geometry
 // ---------------------------------------------------------------------------------------------------------------------
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 void ElectroMagn::computeTotalRhoJOnDevice()
 {
 
@@ -577,7 +577,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
         double *const __restrict__ rhosp = rho_s[ispec] ? rho_s[ispec]->data() : nullptr;
 
 
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
             #pragma acc parallel present( \
                                           Jxp[0:Jx_size],     \
                                           Jyp[0:Jy_size],     \
@@ -594,7 +594,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
             #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jx_size; i++ ) {
@@ -605,7 +605,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
             #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jy_size; i++ ) {
@@ -616,7 +616,7 @@ void ElectroMagn::computeTotalRhoJOnDevice()
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
             #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<Jz_size; i++ ) {
@@ -627,14 +627,14 @@ void ElectroMagn::computeTotalRhoJOnDevice()
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
             #pragma omp target
             #pragma omp teams distribute parallel for
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
             #pragma acc loop gang worker vector
 #endif
             for( unsigned int i=0 ; i<rho_size; i++ ) {
                 rhop[i] += rhosp[i];
             }
         }
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
         } // end parallel region
 #endif
 

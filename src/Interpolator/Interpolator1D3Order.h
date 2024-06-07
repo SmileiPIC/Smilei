@@ -42,7 +42,7 @@ private:
         coeffd_[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
         coeffd_[3]  = xi3*dble_1ov6;
 
-        id_ -= index_domain_begin;
+        id_ -= i_domain_begin_;
 
         // Primal
         ip_ = ( int )xjn;          // index of the 2nd node
@@ -56,7 +56,7 @@ private:
         coeffp_[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
         coeffp_[3]  = xi3*dble_1ov6;
 
-        ip_ -= index_domain_begin;
+        ip_ -= i_domain_begin_;
     }
 
     inline void coeffs( double xpn, int* idx_p, int* idx_d,
@@ -77,7 +77,7 @@ private:
         coeffxd[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
         coeffxd[3]  = xi3*dble_1ov6;
 
-        idx_d[0] -= index_domain_begin;
+        idx_d[0] -= i_domain_begin_;
 
         // Primal
         idx_p[0] = ( int )xpn;          // index of the 2nd node
@@ -92,7 +92,7 @@ private:
         coeffxp[2]  = dble_1ov6 + 0.5*( xi+xi2-xi3 );
         coeffxp[3]  = xi3*dble_1ov6;
 
-        idx_p[0] -= index_domain_begin;
+        idx_p[0] -= i_domain_begin_;
             
     }    
     // Last prim index computed
