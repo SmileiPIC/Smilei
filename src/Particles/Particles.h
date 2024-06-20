@@ -484,11 +484,9 @@ public:
     virtual int eraseLeavingParticles();
 
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_inject object and put
-    //! them in the Particles object
-    //! \param[in,out] particles_to_inject Particles object containing particles to inject
-    virtual int injectParticles( Particles *particles_to_inject );
-
+    //! Resize & Copy particles from particles_to_inject to the end of the vectors
+    virtual int addParticles( Particles* particles_to_inject  );
+    
     //! Implementation of a somewhat efficient particle injection, sorting
     //! (including removing leaving particles) and binning for GPU if
     //! available for the configuration of offloading technology

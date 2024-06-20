@@ -5,12 +5,25 @@
 # Documentation:
 # http://www.idris.fr/jean-zay
 #
+# Use the following commented commands to have the proper environment for compilation and running 
+#
+# module purge
+# module load anaconda-py3/2020.11
+# module load nvidia-compilers/23.11
+# module load cuda/12.2.0
+# module load openmpi/4.1.5-cuda
+# module load hdf5/1.12.0-mpi-cuda
+# export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.12.0/nvhpc-23.11-i5lyakq3iu254ru3eqe2yukvg7airopl
+# export I_MPI_CXX=pgc++
+# export SMILEICXX=mpic++
+# export CICCFLAG="--c++14"
+
 
 SMILEICXX_DEPS = g++
 #GPU_COMPILER = nvcc
 
 CXXFLAGS += -w
-CXXFLAGS += -acc=gpu -gpu=cc70 -std=c++14 -Minfo=accel # what is offloaded/copied
+CXXFLAGS += -acc=gpu -gpu=cc70 -std=c++14 -lcurand -Minfo=accel # what is offloaded/copied
 # CXXFLAGS += -Minfo=all   # very verbose output
 CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 
@@ -18,4 +31,4 @@ CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_70 
 GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
 
-LDFLAGS += -acc=gpu -gpu=cc70 -std=c++14 -lcudart -lcurand
+LDFLAGS += -acc=gpu -gpu=cc70 -std=c++14 -cudalib=curand -lcudart -lcurand -lacccuda
