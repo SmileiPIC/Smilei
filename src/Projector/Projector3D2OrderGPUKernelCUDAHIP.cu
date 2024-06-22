@@ -162,7 +162,8 @@ namespace cudahip {
                                          int          k_domain_begin,
                                          int          nprimy,
                                          int          nprimz,
-                                         int          not_spectral_ )
+                                         int          not_spectral,
+                                         bool         cell_sorting )
         {
             // Potential future work for optimization: Break the kernel into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -170,13 +171,11 @@ namespace cudahip {
             // speed. This would only have an effect on Nvidia cards as this operation is a no op on AMD. (not good)
             const unsigned int workgroup_size = 128 ;// value confirmed by the nsight-cu with profiling //kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y * gridDim.z;
-            const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
             const unsigned int z_cluster_coordinate          = blockIdx.z;
             const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y * gridDim.z + y_cluster_coordinate * gridDim.z + z_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-            const unsigned int thread_index_offset           = threadIdx.x;
 
 //#if defined (  __NVCC__ )
 //// For the moment on NVIDIA GPU we don't use the Params:: static constexpr methods such as Params::getGPUClusterWidth
@@ -220,7 +219,7 @@ namespace cudahip {
 
             // Init the shared memory
 
-            for( unsigned int field_index = thread_index_offset;
+            for( unsigned int field_index = threadIdx.x;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
                 Jx_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
@@ -232,15 +231,28 @@ namespace cudahip {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 :
                                                                                      device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            // The loop order is different depending on cell sorting
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                // With cell sorting, each thread should process close-by particles
+                // to reduce atomics. This uses more cache, but is still better
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                // Without cell sorting, we keep the standard loops as particles
+                // are not ordered so that atomics are naturally rare
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
@@ -286,7 +298,7 @@ namespace cudahip {
                 const int kpo = iold[2 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
                                 global_z_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
-                //if (particle_index==first_particle + thread_index_offset) printf("ipo : %d\n",ipo); 
+                //if (particle_index==first_particle + threadIdx.x) printf("ipo : %d\n",ipo); 
                 // Jx
                 //j=0
                 //k=0
@@ -480,7 +492,7 @@ namespace cudahip {
 
             __syncthreads();
 
-            for( unsigned int field_index = thread_index_offset;
+            for( unsigned int field_index = threadIdx.x;
                  field_index < kFieldScratchSpaceSize;
                  field_index += workgroup_size ) {
 
@@ -498,8 +510,8 @@ namespace cudahip {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index],                                                                                             static_cast<double>( Jx_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate * nprimz], static_cast<double>( Jy_scratch_space[field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * (global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate)],                                                                                             static_cast<double>(  Jz_scratch_space[field_index] ) );
             }
         } // end DepositCurrent
 
@@ -509,7 +521,7 @@ namespace cudahip {
                   std::size_t kWorkgroupSize>
         __global__ void
         // __launch_bounds__(kWorkgroupSize, 1)
-        DepositDensity_3D_Order2( 
+        DepositDensity_3D_Order2(
                                             double *__restrict__ device_rho,
                                             int rho_size,
                                             const double *__restrict__ device_particle_position_x,
@@ -533,7 +545,8 @@ namespace cudahip {
                                             int          k_domain_begin,
                                             int          nprimy,
                                             int          nprimz,
-                                            int          not_spectral_ )
+                                            int          not_spectral,
+                                            bool         cell_sorting )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -542,7 +555,6 @@ namespace cudahip {
             // operation is a no op on AMD.
             const unsigned int workgroup_size = 128 ;//kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y * gridDim.z;
-            const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
@@ -584,18 +596,26 @@ namespace cudahip {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 :
                                                                                      device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
-
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold[particle_index];
-                const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
+                // const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
 
 
                 ComputeFloat Sx1[5];
@@ -713,7 +733,8 @@ namespace cudahip {
                                int    k_domain_begin,
                                int    nprimy,
                                int    nprimz,
-                               int    not_spectral_ )
+                               int    not_spectral,
+                               bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -734,7 +755,6 @@ namespace cudahip {
         //
         using ComputeFloat   = double;
         using ReductionFloat = double;
-
 
 #if defined ( __HIP__ )
         auto KernelFunction = kernel::DepositCurrentDensity_3D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
@@ -764,7 +784,8 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral_ 
+                            not_spectral,
+                            cell_sorting 
                         );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
@@ -796,7 +817,8 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral_
+                            not_spectral,
+                            cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
@@ -833,7 +855,8 @@ namespace cudahip {
                                 int    k_domain_begin,
                                 int    nprimy,
                                 int    nprimz,
-                                int    not_spectral_ )
+                                int    not_spectral,
+                                bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 3 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -883,7 +906,7 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral_ );
+                            not_spectral );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
@@ -911,7 +934,8 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral_
+                            not_spectral,
+                            cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
