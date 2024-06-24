@@ -79,6 +79,9 @@ public:
     //! maximum charge state
     unsigned int maximum_charge_state_;
 
+    //! alpha parameter in the Tong-Lin ionization model
+    double ionization_tl_parameter_;
+
     //! user defined ionization rate profile
     PyObject *ionization_rate_;
 
