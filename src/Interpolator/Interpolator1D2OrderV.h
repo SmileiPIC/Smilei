@@ -48,7 +48,7 @@ private:
         coeffd_[1] = ( 0.75-xjmxi2 );
         coeffd_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        id_ -= index_domain_begin;
+        id_ -= i_domain_begin_;
 
         // Primal
         ip_      = round( xjn );    // index of the central point
@@ -60,7 +60,7 @@ private:
         coeffp_[1] = ( 0.75-xjmxi2 );
         coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        ip_ -= index_domain_begin;
+        ip_ -= i_domain_begin_;
     }
 
     // Last prim index computed

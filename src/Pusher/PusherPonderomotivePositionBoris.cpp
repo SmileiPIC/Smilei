@@ -52,7 +52,7 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     const double *const __restrict__ GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
     const double *const __restrict__ GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
     
-    #ifndef SMILEI_OPENACC_MODE
+    #ifndef SMILEI_ACCELERATOR_GPU_OACC
         #pragma omp simd
     #else
         int np = iend-istart;

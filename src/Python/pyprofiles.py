@@ -702,7 +702,7 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
         print("ERROR: focus should be a list of length 1")
         exit(1)
     elif (len(focus)==2):
-        print("WARNING: deprecated focus in LaserEnvelopeGaussianAM should be a list of length 1")
+        print("WARNING: deprecated focus in LaserGaussianAM should be a list of length 1")
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega

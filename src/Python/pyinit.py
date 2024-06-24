@@ -646,7 +646,8 @@ class MultiphotonBreitWheeler(SmileiComponent):
 # Smilei-defined
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
-smilei_rand_max = 2**31-1
+smilei_omp_threads = 1
+smilei_total_cores = 1
 
 # Variable to set to False for the actual run (useful for the test mode)
 _test_mode = True

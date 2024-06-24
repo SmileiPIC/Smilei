@@ -115,7 +115,7 @@ public:
     //! \param bmin        Pointer toward the first particle index of the bin in the Particles object
     //! \param bmax        Pointer toward the last particle index of the bin in the Particles object
     //! \param ithread     Thread index
-//#ifdef SMILEI_OPENACC_MODE
+//#ifdef SMILEI_ACCELERATOR_GPU_OACC
 //    #pragma acc routine seq
 //#endif
     void removeDecayedPhotonsWithoutBinCompression(

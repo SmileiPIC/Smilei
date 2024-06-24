@@ -34,33 +34,20 @@ public:
     //! Destructor for nvidiaParticles
     ~nvidiaParticles();
 
-    //! Allocate the right amount of position and momentum dimensions
-    void resizeDimensions( unsigned int nDim );
-
     //! Reserve space for (particle_count * growth_factor) particles only if 
     //! particle_count >= deviceCapacity(). Must be called after
     //! allocateDimensions()
-    void softReserve( unsigned int particle_count, float growth_factor = 1.3F );
-
-    //! Reserve space for particle_count particles. Must be called after
-    //! allocateDimensions()
-    void reserve( unsigned int particle_count );
-
-    //! Allocate particle_count particles. Must be called after
-    //! allocateDimensions()
-    //! Set the size (deviceSize) of nvidiaParticles to particle_count.
-    //!
-    void resize( unsigned int particle_count );
+    void deviceReserve( unsigned int particle_count, float growth_factor = 1.3F );
 
     //! Assures that the memory holden by the nvidia_[position|momentum|weight|
     //! charge|chi|tau|cell_keys]_ is freed. This is not something you can
     //! achieve via a naive resize.
     //! The pointers in nvidia_[double|short]_prop_ are not invalidated.
     //!
-    void free();
+    void deviceFree();
 
     //! Resize Particle vectors on device
-    void deviceResize(unsigned int new_size);
+    void deviceResize( unsigned int new_size );
 
     //! Remove all particles
     void deviceClear();
@@ -78,7 +65,7 @@ public:
     void copyFromHostToDevice() override;
     
     //! Update the particles from device to host
-    void copyFromDeviceToHost() override;
+    void copyFromDeviceToHost( bool copy_keys = false ) override;
 
     unsigned int deviceCapacity() const override;
 
@@ -113,21 +100,27 @@ public:
     };
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put
-    //! them in the Particles object `particles_to_move`
+    //! Move leaving particles to the buffers
     // -----------------------------------------------------------------------------
-    void extractParticles( Particles* particles_to_move ) override;
+    void copyLeavingParticlesToBuffer( Particles* buffer ) override;
+    
+    template<typename Predicate>
+    void copyParticlesByPredicate( Particles* buffer, Predicate pred );
+
+    //! Resize & Copy particles from particles_to_inject to end of vectors
+    int addParticles( Particles* particles_to_inject ) override;
+    
+    //! Copy particles from particles_to_inject to specific offset
+    void pasteParticles( nvidiaParticles* particles_to_inject, size_t offset_out, size_t offset_in );
     
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device and returns the number of particle removed
     // -----------------------------------------------------------------------------
     int eraseLeavingParticles() override;
     
-    // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move into *this and return he number of particle added
-    // -----------------------------------------------------------------------------
-    int injectParticles( Particles* particles_to_inject ) override;
-
+    template<typename Predicate>
+    int eraseParticlesByPredicate( Predicate pred, size_t offset );
+    
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors
     //! Fill the new elements with 0
@@ -136,6 +129,14 @@ public:
 
     //! See the Particles class for documentation.
     void importAndSortParticles( Particles* particles_to_inject ) override;
+
+    //! Sort by cell_keys_
+    //! This version synchronizes for every vector, but uses less buffers
+    void sortParticleByKey();
+    //! This version is asynchronous, but requires a buffer of equal size to be provided
+    void sortParticleByKey( nvidiaParticles& buffer );
+
+    void scatterParticles( nvidiaParticles &particles_to_import, const thrust::device_vector<int> &index );
 
 protected:
     //! Redefine first_index and last_index according to the binning algorithm

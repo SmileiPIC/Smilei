@@ -39,7 +39,6 @@ Main(
         ['periodic'],
     ],
     cluster_width = 16,
-    random_seed = smilei_mpi_rank
 )
 
 

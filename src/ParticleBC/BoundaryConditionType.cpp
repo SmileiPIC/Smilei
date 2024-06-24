@@ -18,7 +18,7 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -28,9 +28,9 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
                        cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf) {
-            cell_keys[ ipart ] = -1;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( cell_keys[ ipart ] >= 0 && position[ ipart ] < limit_inf ) {
+            cell_keys[ ipart ] = -2 - 2 * direction;
         }
     }
 }
@@ -40,7 +40,7 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     energy_change = 0.;     // no energy loss during exchange
     const double* const position  = species->particles->getPtrPosition( direction );
     int* const          cell_keys = species->particles->getPtrCellKeys();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -50,9 +50,9 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
                        cell_keys /* [imin:imax - imin] */ )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] >= limit_sup) {
-            cell_keys[ ipart ] = -1;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( cell_keys[ ipart ] >= 0 && position[ ipart ] >= limit_sup ) {
+            cell_keys[ ipart ] = -3 - 2 * direction;
         }
     }
 }
@@ -63,10 +63,11 @@ void internal_inf_AM( Species *species, int imin, int imax, int /*direction*/, d
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
     int* cell_keys = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+    double limit_inf2 = limit_inf*limit_inf;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
         double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
-        if ( distance2ToAxis < limit_inf*limit_inf ) {
-            cell_keys[ ipart ] = -1;
+        if( cell_keys[ ipart ] >= 0 && distance2ToAxis < limit_inf2 ) {
+            cell_keys[ ipart ] = -4;
         }
     }
 }
@@ -77,10 +78,11 @@ void internal_sup_AM( Species *species, int imin, int imax, int /*direction*/, d
     double* position_y = species->particles->getPtrPosition(1);
     double* position_z = species->particles->getPtrPosition(2);
     int* cell_keys = species->particles->getPtrCellKeys();
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+    double limit_sup2 = limit_sup*limit_sup;
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
         double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
-        if ( distance2ToAxis >= limit_sup*limit_sup ) {
-            cell_keys[ ipart ] = -1;
+        if( cell_keys[ ipart ] >= 0 && distance2ToAxis >= limit_sup2 ) {
+            cell_keys[ ipart ] = -5;
         }
     }
 }
@@ -90,15 +92,15 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum )
     #pragma omp teams distribute parallel for
 #endif
-    for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( position[ ipart ] < limit_inf ) {
+    for( int ipart=imin ; ipart<imax ; ipart++ ) {
+        if( position[ ipart ] < limit_inf ) {
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
             momentum[ ipart ] = -momentum[ ipart ];
         }
@@ -110,7 +112,7 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -187,9 +189,9 @@ void remove_particle_inf( Species* species,
                           int imin, int imax, 
                           int direction, 
                           double limit_inf, 
-                          double dt, 
-                          std::vector<double>& invgf, 
-                          Random* rand, 
+                          double /*dt*/, 
+                          std::vector<double>& /*invgf*/, 
+                          Random* /*rand*/, 
                           double& energy_change )
 {
 
@@ -208,7 +210,7 @@ void remove_particle_inf( Species* species,
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
     #pragma acc loop gang worker vector reduction(+ : change_in_energy)
 #else
@@ -233,9 +235,9 @@ void remove_particle_sup( Species* species,
                           int imin, int imax, 
                           int direction, 
                           double limit_sup, 
-                          double dt, 
-                          std::vector<double>& invgf, 
-                          Random* rand, 
+                          double /*dt*/, 
+                          std::vector<double>& /*invgf*/, 
+                          Random* /*rand*/, 
                           double& energy_change )
 {
 
@@ -254,7 +256,7 @@ void remove_particle_sup( Species* species,
                                                                                                                                : change_in_energy )
     #pragma omp teams distribute parallel for reduction( + \
                                                          : change_in_energy )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(position,momentum_x,momentum_y,momentum_z,weight,charge,cell_keys)
     #pragma acc loop gang worker vector reduction(+ : change_in_energy)
 #else

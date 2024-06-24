@@ -143,6 +143,8 @@ public:
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
+    //! Transfer particles indexed by array indices to dest_id in dest_parts
+    void copyParticles( std::vector<size_t> indices, Particles &dest_parts, int dest_id );
 
     //! Make a new particle at the position of another
     void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
@@ -151,6 +153,8 @@ public:
     void eraseParticle( unsigned int iPart, bool compute_cell_keys = false );
     //! Suppress nPart particles from iPart
     void eraseParticle( unsigned int iPart, unsigned int nPart, bool compute_cell_keys = false );
+    //! Suppress indexed particles
+    void eraseParticles( std::vector<size_t> indices );
 
     //! Suppress all particles from iPart to the end of particle array
     void eraseParticleTrail( unsigned int iPart, bool compute_cell_keys = false );
@@ -431,7 +435,7 @@ public:
     virtual void initializeDataOnDevice();
     virtual void initializeIDsOnDevice();
     virtual void copyFromHostToDevice();
-    virtual void copyFromDeviceToHost();
+    virtual void copyFromDeviceToHost( bool copy_keys = false );
 
     //! Return the pointer toward the Position[idim] vector
     virtual double* getPtrPosition( int idim ) {
@@ -469,10 +473,10 @@ public:
     // Accelerator specific virtual functions
 
     // -----------------------------------------------------------------------------
-    //! Extract particles from the Particles object and put
-    //! them in the Particles object `particles_to_move`
+    //! Extract particles leaving the box to buffers
     // -----------------------------------------------------------------------------
-    virtual void extractParticles( Particles *particles_to_move );
+    void copyLeavingParticlesToBuffers( const std::vector<bool> copy, const std::vector<Particles*> buffer );
+    virtual void copyLeavingParticlesToBuffer( Particles* buffer );
 
     // -----------------------------------------------------------------------------
     //! Erase particles leaving the patch object on device
@@ -480,11 +484,9 @@ public:
     virtual int eraseLeavingParticles();
 
     // -----------------------------------------------------------------------------
-    //! Inject particles from particles_to_move object and put
-    //! them in the Particles object
-    //! \param[in,out] particles_to_inject Particles object containing particles to inject
-    virtual int injectParticles( Particles *particles_to_inject );
-
+    //! Resize & Copy particles from particles_to_inject to the end of the vectors
+    virtual int addParticles( Particles* particles_to_inject  );
+    
     //! Implementation of a somewhat efficient particle injection, sorting
     //! (including removing leaving particles) and binning for GPU if
     //! available for the configuration of offloading technology

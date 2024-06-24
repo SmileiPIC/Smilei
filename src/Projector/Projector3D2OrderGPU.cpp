@@ -25,18 +25,18 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
-    not_spectral  = !parameters.is_pxr;
+    not_spectral_  = !parameters.is_pxr;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined ( SMILEI_ACCELERATOR_GPU_OACC )
     // When sorting is disabled, these values are invalid (-1) and the HIP
     // implementation can't be used.
     x_dimension_bin_count_ = parameters.getGPUBinCount( 1 );
     y_dimension_bin_count_ = parameters.getGPUBinCount( 2 );
     z_dimension_bin_count_ = parameters.getGPUBinCount( 3 );
-//#elif defined( SMILEI_OPENACC_MODE )
+//#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
 //    x_dimension_bin_count_ = 1;
 //    y_dimension_bin_count_ = 1;
 //    z_dimension_bin_count_ = 1;
@@ -50,7 +50,7 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
     // EMPTY
 }
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 extern "C" void
 currentDeposition3DOnDevice( double *__restrict__ Jx,
                          double *__restrict__ Jy,
@@ -122,6 +122,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     /// Project global current densities (EMfields->Jx_/Jy_/Jz_)
     ///
     /* inline */ void
+
+#if defined( SMILEI_ACCELERATOR_GPU )
     currents( double *__restrict__ Jx,
               double *__restrict__ Jy,
               double *__restrict__ Jz,
@@ -150,72 +152,77 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               double,
               int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_MODE )
         currentDeposition3DOnDevice( Jx,
-                                 Jy,
-                                 Jz,
-                                 Jx_size,
-                                 Jy_size,
-                                 Jz_size,
-                                 particles.getPtrPosition( 0 ),
-                                 particles.getPtrPosition( 1 ),
-                                 particles.getPtrPosition( 2 ),
-                                 particles.getPtrCharge(),
-                                 particles.getPtrWeight(),
-                                 particles.last_index.data(),
-                                 x_dimension_bin_count,
-                                 y_dimension_bin_count,
-                                 z_dimension_bin_count,
-                                 invgf_,
-                                 iold_,
-                                 deltaold_,
-                                 particles.deviceSize(),
-                                 inv_cell_volume,
-                                 dx_inv,
-                                 dy_inv,
-                                 dz_inv,
-                                 dx_ov_dt,
-                                 dy_ov_dt,
-                                 dz_ov_dt,
-                                 i_domain_begin,
-                                 j_domain_begin,
-                                 k_domain_begin,
-                                 nprimy, nprimz,
-                                 not_spectral );
-#else
-        SMILEI_ASSERT( false );
-#endif
+                                     Jy,
+                                     Jz,
+                                     Jx_size,
+                                     Jy_size,
+                                     Jz_size,
+                                     particles.getPtrPosition( 0 ),
+                                     particles.getPtrPosition( 1 ),
+                                     particles.getPtrPosition( 2 ),
+                                     particles.getPtrCharge(),
+                                     particles.getPtrWeight(),
+                                     particles.last_index.data(),
+                                     x_dimension_bin_count,
+                                     y_dimension_bin_count,
+                                     z_dimension_bin_count,
+                                     invgf_,
+                                     iold_,
+                                     deltaold_,
+                                     particles.deviceSize(),
+                                     inv_cell_volume,
+                                     dx_inv,
+                                     dy_inv,
+                                     dz_inv,
+                                     dx_ov_dt,
+                                     dy_ov_dt,
+                                     dz_ov_dt,
+                                     i_domain_begin,
+                                     j_domain_begin,
+                                     k_domain_begin,
+                                     nprimy, nprimz,
+                                     not_spectral );
     }
+#else
+    currents( double *__restrict__ , double *__restrict__ , double *__restrict__ , int, int, int,
+              Particles   &, unsigned int , unsigned int , unsigned int , const double *__restrict__ ,
+              const int    *__restrict__ , const double *__restrict__ , double , double , double , double ,
+              double , double , double , int    , int    , int    , int    ,  int    , double, int )
+    {
+        SMILEI_ASSERT( false );
+    }
+#endif
 
 
     //! Project density
     /* inline */ void
+#if defined( SMILEI_ACCELERATOR_GPU )
     density( 
-                        double *__restrict__ rho,
-                        int rho_size,
-                        Particles   &particles,
-                        unsigned int x_dimension_bin_count,
-                        unsigned int y_dimension_bin_count,
-                        unsigned int z_dimension_bin_count,
-                        const double *__restrict__ invgf_,
-                        const int *__restrict__ iold_,
-                        const double *__restrict__ deltaold_,
-                        double inv_cell_volume,
-                        double dx_inv,
-                        double dy_inv,
-                        double dz_inv,
-                        double dx_ov_dt,
-                        double dy_ov_dt,
-                        double dz_ov_dt,
-                        int    i_domain_begin,
-                        int    j_domain_begin,
-                        int    k_domain_begin,
-                        int    nprimy,
-                        int    nprimz,
-                        double,
-                        int not_spectral )
+        double *__restrict__ rho,
+        int rho_size,
+        Particles   &particles,
+        unsigned int x_dimension_bin_count,
+        unsigned int y_dimension_bin_count,
+        unsigned int z_dimension_bin_count,
+        const double *__restrict__ invgf_,
+        const int *__restrict__ iold_,
+        const double *__restrict__ deltaold_,
+        double inv_cell_volume,
+        double dx_inv,
+        double dy_inv,
+        double dz_inv,
+        double dx_ov_dt,
+        double dy_ov_dt,
+        double dz_ov_dt,
+        int    i_domain_begin,
+        int    j_domain_begin,
+        int    k_domain_begin,
+        int    nprimy,
+        int    nprimz,
+        double,
+        int not_spectral )
     {
-#if defined( SMILEI_ACCELERATOR_MODE )
         densityDeposition3DOnDevice( 
                                  rho,
                                  rho_size,
@@ -244,10 +251,16 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  k_domain_begin,
                                  nprimy, nprimz,
                                  not_spectral );
-#else
-        SMILEI_ASSERT( false );
-#endif
     }
+#else
+    density( double *__restrict__ , int , Particles   &, unsigned int , unsigned int , unsigned int ,
+             const double *__restrict__ , const int *__restrict__ , const double *__restrict__ ,
+             double , double , double , double , double , double , double ,
+             int, int, int, int, int, double, int )
+    {
+        SMILEI_ASSERT( false );
+    }
+#endif
 
 } // namespace
 
@@ -255,7 +268,7 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
                                   Particles   &particles,
                                   unsigned int ipart,
                                   unsigned int type,
-                                  int bin_shift )
+                                  int /*bin_shift*/ )
 {
 
 
@@ -347,12 +360,12 @@ void Projector3D2OrderGPU::basic( double      *rhoj,
     }
 }
 
-void Projector3D2OrderGPU::ionizationCurrents( Field      *Jx,
-                                               Field      *Jy,
-                                               Field      *Jz,
-                                               Particles  &particles,
-                                               int         ipart,
-                                               LocalFields Jion )
+void Projector3D2OrderGPU::ionizationCurrents( Field      */*Jx*/,
+                                               Field      */*Jy*/,
+                                               Field      */*Jz*/,
+                                               Particles  &/*particles*/,
+                                               int         /*ipart*/,
+                                               LocalFields /*Jion */)
 {
     ERROR( "Projector3D2OrderGPU::ionizationCurrents(): Not implemented !" );
 }
@@ -366,8 +379,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       bool diag_flag,
                                                       bool is_spectral,
                                                       int  ispec,
-                                                      int  icell,
-                                                      int  ipart_ref )
+                                                      int  /*icell*/,
+                                                      int  /*ipart_ref*/ )
 {
 
     if( is_spectral ) {
@@ -401,7 +414,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
 
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
@@ -416,7 +429,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   i_domain_begin_, j_domain_begin_, k_domain_begin_,
                   nprimy, nprimz,
                   one_third,
-                  not_spectral );
+                  not_spectral_ );
 
     // If requested performs then the charge density deposition
     } else {
@@ -440,7 +453,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral );
+                not_spectral_ );
     }
 
         // TODO(Etienne M): DIAGS. Find a way to get rho. We could:
@@ -463,15 +476,15 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
        //std::cerr << sum << " " << sum2 << " " << sum_Jxs << " " << sum_Jx << std::endl;
 }
 
-void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields,
-                                           Particles   &particles,
-                                           double       species_mass,
-                                           SmileiMPI   *smpi,
-                                           int          istart,
-                                           int          iend,
-                                           int          ithread,
-                                           int          icell,
-                                           int          ipart_ref )
+void Projector3D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
+                                           Particles   &/*particles*/,
+                                           double       /*species_mass*/,
+                                           SmileiMPI   */*smpi*/,
+                                           int          /*istart*/,
+                                           int          /*iend*/,
+                                           int          /*ithread*/,
+                                           int          /*icell*/,
+                                           int          /*ipart_ref */)
 {
     ERROR( "Projector3D2OrderGPU::susceptibility(): Not implemented !" );
 }

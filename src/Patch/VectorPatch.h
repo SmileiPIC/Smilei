@@ -138,7 +138,7 @@ public :
     //! Particle sorting for all patches. This is done at initialization time.
     void initialParticleSorting( Params &params );
     
-    //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+    //! For all patch, move particles (restartRhoJ(s), dynamics and initExchParticles)
     void dynamics( Params &params,
                    SmileiMPI *smpi,
                    SimWindow *simWindow,
@@ -157,7 +157,7 @@ public :
                    Timers &timers, int itime );
     
     //! For all patches, exchange particles and sort them.
-    void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+    void finalizeExchParticlesAndSort( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
     void finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
@@ -510,7 +510,7 @@ public :
                             RadiationTables * radiation_tables,
                             MultiphotonBreitWheelerTables *multiphoton_Breit_Wheeler_tables );
     
-#if defined( SMILEI_ACCELERATOR_MODE)
+#if defined( SMILEI_ACCELERATOR_GPU)
 
     //! Field Synchronization from the GPU (Device) to the host (CPU)
 

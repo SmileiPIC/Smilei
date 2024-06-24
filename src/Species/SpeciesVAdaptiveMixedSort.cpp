@@ -46,7 +46,7 @@ using namespace std;
 SpeciesVAdaptiveMixedSort::SpeciesVAdaptiveMixedSort( Params &params, Patch *patch ) :
     SpeciesV( params, patch )
 {
-    initCluster( params );
+    initCluster( params, patch );
     npack_ = 0 ;
     packsize_ = 0;
 
