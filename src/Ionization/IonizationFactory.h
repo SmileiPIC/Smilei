@@ -5,6 +5,9 @@
 #include "IonizationTunnel.h"
 #include "IonizationFromRate.h"
 #include "IonizationTunnelEnvelopeAveraged.h"
+#include "IonizationTunnelBSI.h"
+#include "IonizationTunnelTL.h"
+#include "IonizationTunnelFullPPT.h"
 
 #include "Params.h"
 
@@ -54,7 +57,41 @@ public:
             }
             
             Ionize = new IonizationFromRate( params, species );
-            
+  
+        } else if(model == "tunnel_BSI") { // added by I. Ouatu.  Put keyword "tunnel_BSI" for the 
+                                           // Tong-Lin ionization model in the species description in your namelist. 
+
+            if (species->max_charge_ > (int) species->atomic_number_) { // same as for simple Tunnel Ionization.
+                ERROR( "Charge > atomic_number for species " << species->name_);
+            }
+            if( (params.Laser_Envelope_model) ) { // same as for simple Tunnel Ionziation
+                ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
+            }
+
+            Ionize = new IonizationTunnelBSI(params, species);
+
+        } else if(model == "tunnel_TL") { // added by Arseny Mironov. Put keyword "tunnel_TL" for the Tong-Lin ionization model
+                                          // in the species description in your namelist.
+            if (species->max_charge_ > (int) species->atomic_number_) {
+                ERROR( "Charge > atomic_number for species " << species->name_);
+            }
+            if( (params.Laser_Envelope_model) ) { // same as for simple Tunnel Ionziation
+                ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
+            }
+            Ionize = new IonizationTunnelTL(params, species);    
+
+        } else if(model == "tunnel_full_PPT") { // added by Arseny Mironov. Put keyword "tunnel_full_PPT" for the tunneling ionization model 
+                                                // with account for the magnetic quantum number in the species description in your namelist.
+                                          
+            if( species->max_charge_ > ( int )species->atomic_number_ ) {
+                ERROR( "Charge > atomic_number for species " << species->name_ );
+            }
+
+            if( params.Laser_Envelope_model ) {
+                ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
+            }
+
+            Ionize = new IonizationTunnelFullPPT( params, species );
         }
         
         return Ionize;

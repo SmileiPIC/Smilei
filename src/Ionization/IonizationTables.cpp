@@ -12,6 +12,12 @@ int IonizationTables::azimuthal_atomic_number( int atomic_number, int Zstar )
     return ( int )azimuthalQuantumNumber[( atomic_number*( atomic_number-1 ) )/2 + Zstar];
 }
 
+// Gets the magnetic atomic number of a given ion
+int IonizationTables::magnetic_atomic_number( int atomic_number, int Zstar )
+{
+    return ( int )magneticQuantumNumber[( atomic_number*( atomic_number-1 ) )/2 + Zstar];
+}
+
 // Gets the k-th binding energy in any neutral or ionized atom with atomic number Z and charge Zstar
 // We use the formula by Carlson et al., At. Data Nucl. Data Tables 2, 63 (1970)
 double IonizationTables::binding_energy( int atomic_number, int Zstar, int k )
