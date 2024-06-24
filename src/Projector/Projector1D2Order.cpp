@@ -18,14 +18,12 @@ using namespace std;
 Projector1D2Order::Projector1D2Order( Params &params, Patch *patch ) : Projector1D( params, patch )
 {
     dx_inv_  = 1.0/params.cell_length[0];
-    dx_ov_dt = params.cell_length[0] / params.timestep;
+    dx_ov_dt_ = params.cell_length[0] / params.timestep;
     
-    index_domain_begin = patch->getCellStartingGlobalIndex( 0 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     
-    dt             = params.timestep;
-    dts2           = params.timestep/2.;
-    dts4           = params.timestep/4.;
-    
+    dts2_           = params.timestep/2.;
+    dts4_           = params.timestep/4.;
 }
 
 
@@ -43,7 +41,7 @@ void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     int ip_m_ipo;
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
+    double crx_p = charge_weight*dx_ov_dt_;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
     double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
@@ -76,7 +74,7 @@ void Projector1D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     
     // coefficients 2nd order interpolation on 3 nodes
     ipo        = *iold;                          // index of the central node
-    ip_m_ipo = ip-ipo-index_domain_begin;
+    ip_m_ipo = ip-ipo-i_domain_begin_;
     S1[ip_m_ipo+1] = 0.5 * ( xj_m_xip2-xj_m_xip+0.25 );
     S1[ip_m_ipo+2] = ( 0.75-xj_m_xip2 );
     S1[ip_m_ipo+3] = 0.5 * ( xj_m_xip2+xj_m_xip+0.25 );
@@ -115,7 +113,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     int ip_m_ipo;
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
-    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
+    double crx_p = charge_weight*dx_ov_dt_;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
     double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
     double S0[5], S1[5], Wl[5], Wt[5], Jx_p[5];            // arrays used for the Esirkepov projection method
@@ -132,7 +130,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     
     // Locate particle old position on the primal grid
     xj_m_xipo  = *deltaold;                   // normalized distance to the nearest grid point
-    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo*xj_m_xipo;         // square of the normalized distance to the nearest grid point
     
     // Locate particle new position on the primal grid
     xjn       = particles.position( 0, ipart ) * dx_inv_;
@@ -142,16 +140,16 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     
     
     // coefficients 2nd order interpolation on 3 nodes
-    S0[1] = 0.5 * ( xj_m_xipo2-xj_m_xipo+0.25 );
-    S0[2] = ( 0.75-xj_m_xipo2 );
-    S0[3] = 0.5 * ( xj_m_xipo2+xj_m_xipo+0.25 );
+    S0[1] = 0.5 * ( xj_m_xipo2 - xj_m_xipo + 0.25 );
+    S0[2] = ( 0.75 - xj_m_xipo2 );
+    S0[3] = 0.5 * ( xj_m_xipo2 + xj_m_xipo + 0.25 );
     
     // coefficients 2nd order interpolation on 3 nodes
     ipo = *iold;
-    ip_m_ipo = ip-ipo-index_domain_begin;
-    S1[ip_m_ipo+1] = 0.5 * ( xj_m_xip2-xj_m_xip+0.25 );
-    S1[ip_m_ipo+2] = ( 0.75-xj_m_xip2 );
-    S1[ip_m_ipo+3] = 0.5 * ( xj_m_xip2+xj_m_xip+0.25 );
+    ip_m_ipo = ip-ipo-i_domain_begin_;
+    S1[ip_m_ipo+1] = 0.5 * ( xj_m_xip2 - xj_m_xip + 0.25 );
+    S1[ip_m_ipo+2] = ( 0.75 - xj_m_xip2 );
+    S1[ip_m_ipo+3] = 0.5 * ( xj_m_xip2 + xj_m_xip + 0.25 );
     
     // coefficients used in the Esirkepov method
     for( unsigned int i=0; i<5; i++ ) {
@@ -228,7 +226,7 @@ void Projector1D2Order::basic( double *rhoj, Particles &particles, unsigned int 
     S1[2] = ( 0.75-xj_m_xip2 );
     S1[3] = 0.5 * ( xj_m_xip2+xj_m_xip+0.25 );
     
-    ip -= index_domain_begin + 2 + bin_shift;
+    ip -= i_domain_begin_ + 2 + bin_shift;
     
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
@@ -270,7 +268,7 @@ void Projector1D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     xjmxi  = xjn - ( double )i + 0.5;      // normalized distance to the nearest grid point
     xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
     
-    i  -= index_domain_begin;
+    i  -= i_domain_begin_;
     im1 = i-1;
     ip1 = i+1;
     
@@ -291,7 +289,7 @@ void Projector1D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     xjmxi  = xjn - ( double )i;            // normalized distance to the nearest grid point
     xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
     
-    i  -= index_domain_begin;
+    i  -= i_domain_begin_;
     im1 = i-1;
     ip1 = i+1;
     
@@ -377,9 +375,9 @@ void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
     for( int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
     
     
-        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2*one_over_mass;
+        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2_*one_over_mass;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4*one_over_mass*one_over_mass;
+        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4_*one_over_mass*one_over_mass;
         // (charge over mass)^2
         charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
         
@@ -430,7 +428,7 @@ void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         // ---------------------------
         // Calculate the total susceptibility
         // ---------------------------
-        ip -= index_domain_begin + 2;
+        ip -= i_domain_begin_ + 2;
         
         for( unsigned int i=0 ; i<5 ; i++ ) {
             iloc = ( i+ip );
@@ -472,9 +470,9 @@ void Projector1D2Order::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, doubl
     for( int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
     
     
-        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2*one_over_mass;
+        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2_*one_over_mass;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4*one_over_mass*one_over_mass;
+        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4_*one_over_mass*one_over_mass;
         // (charge over mass)^2
         charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
         
@@ -525,7 +523,7 @@ void Projector1D2Order::susceptibilityOnBuffer( ElectroMagn */*EMfields*/, doubl
         // ---------------------------
         // Calculate the total susceptibility
         // ---------------------------
-        ip -= index_domain_begin + 2;
+        ip -= i_domain_begin_ + 2;
         
         for( unsigned int i=0 ; i<5 ; i++ ) {
             iloc = ( i+ip );
@@ -609,7 +607,7 @@ void Projector1D2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
     Sxd[1] = ( 0.75-xpmxid2 );
     Sxd[2] = 0.5 * ( xpmxid2+xpmxid+0.25 );
     
-    ip  -= index_domain_begin+bin_shift;
+    ip  -= i_domain_begin_+bin_shift;
     //id  -= i_domain_begin+bin_shift;
     
     

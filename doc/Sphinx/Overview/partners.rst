@@ -52,11 +52,11 @@ Partners
 |            |   `Maison de la Simulation <https://mdls.fr/>`_ (MdlS), USR 3441                                        |
 |            |                                                                                                         |
 +            +---------------------------------------------------------------------------------------------------------+
-|            |   * `Olga Abramkina <olga.abramkina@idriss.fr>`_                                                        |
-|            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
+|            |   * `Olga Abramkina <olga.abramkina@idris.fr>`_ (Developer)                                             |
+|            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_ (Cofounder)                                         |
 |            |   * `Haithem Kallala <haithem.kallala@cea.fr>`_                                                         |
-|            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_                                                             |
-|            |   * `Charles Prouveur <charles.prouveur@cea.fr>`_                                                       |
+|            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_ (Developer)                                                 |
+|            |   * `Charles Prouveur <charles.prouveur@cea.fr>`_ (Architect)                                           |
 |            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
 
@@ -67,11 +67,11 @@ Partners
 |            |   `Laboratoire pour l'Utilisation des Lasers Intenses <https://luli.ip-paris.fr/>`_ (LULI), UMR 7605        |
 |            |                                                                                                             |
 +            +-------------------------------------------------------------------------------------------------------------+
-|            |   * `Mickael Grech <mickael.grech@polytechnique.edu>`_                                                      |
-|            |   * `Tommaso Vinci <tommaso.vinci@polytechnique.edu>`_                                                      |
+|            |   * `Mickael Grech <mickael.grech@polytechnique.edu>`_ (Founder)                                            |
+|            |   * `Tommaso Vinci <tommaso.vinci@polytechnique.edu>`_ (Developer)                                          |
 |            |   * `Marco Chiaramello <marco.chiaramello@polytechnique.edu>`_                                              |
 |            |   * `Anna Grassi <anna.grassi@polytechnique.edu>`_                                                          |
-|            |   * `Frédéric Pérez <frederic.perez@polytechnique.edu>`_                                                    |
+|            |   * `Frédéric Pérez <frederic.perez@polytechnique.edu>`_ (Community manager, Developer)                     |
 |            |   * `Caterina Riconda <caterina.riconda@upmc.fr>`_                                                          |
 |            |                                                                                                             |
 +------------+-------------------------------------------------------------------------------------------------------------+
@@ -83,9 +83,9 @@ Partners
 |            |   `Laboratoire Leprince-Ringuet <https://llr.in2p3.fr>`_ (LLR), UMR 7638                                |
 +            +---------------------------------------------------------------------------------------------------------+
 |            |                                                                                                         |
-|            |   * `Arnaud Beck <beck@llr.in2p3.fr>`_                                                                  |
+|            |   * `Arnaud Beck <beck@llr.in2p3.fr>`_ (Project Coordinator, Cofounder, Developer)                      |
 |            |   * `Imen Zemzemi <zemzemi@llr.in2p3.fr>`_                                                              |
-|            |   * `Guillaume Bouchard <bouchard@llr.in2p3.fr>`_                                                       |
+|            |   * `Guillaume Bouchard <bouchard@llr.in2p3.fr>`_ (Developer)                                           |
 +------------+---------------------------------------------------------------------------------------------------------+
 
 .. rst-class:: noborder
@@ -95,7 +95,7 @@ Partners
 |            |   `Laboratoire de Physique des Gaz et des Plasmas <https://www.lpgp.universite-paris-saclay.fr>`_ (LPGP), UMR 8578   |
 +            +----------------------------------------------------------------------------------------------------------------------+
 |            |                                                                                                                      |
-|            |   * `Francesco Massimo <francesco.massimo@universite-paris-saclay.fr>`_                                              |
+|            |   * `Francesco Massimo <francesco.massimo@universite-paris-saclay.fr>`_ (Developer)                                  |
 +------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. rst-class:: noborder
@@ -105,7 +105,7 @@ Partners
 |            |   `Institut du developpement et des ressources en informatique scientifique <http://www.idris.fr>`_ (IDRIS), UPS 851 |
 +            +----------------------------------------------------------------------------------------------------------------------+
 |            |                                                                                                                      |
-|            |   * `Olga Abramkina <olga.abramkina@idriss.fr>`_                                                                     |
+|            |   * `Olga Abramkina <olga.abramkina@idris.fr>`_ (Developer)                                                          |
 |            |   * `Marie Flé <marie.fle@idris.fr>`_                                                                                |
 +------------+----------------------------------------------------------------------------------------------------------------------+
 

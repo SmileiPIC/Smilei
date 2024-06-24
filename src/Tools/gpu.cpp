@@ -1,6 +1,6 @@
 #include "gpu.h"
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) && defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) && defined( SMILEI_ACCELERATOR_GPU_OACC )
     #error "You can not enable both OpenACC and OpenMP GPU support"
 #endif
 
@@ -29,7 +29,7 @@
     #else
         #error "Asking for OpenMP support without enabling compiler support for OpenMP"
     #endif
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #if defined( _OPENACC )
         #include <openacc.h>
     #else
@@ -46,11 +46,12 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( alloc \
                                        : byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc enter data create( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -61,11 +62,12 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( to \
                                        : byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc enter data copyin( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -75,11 +77,12 @@ namespace smilei {
                 const unsigned char* byte_array = static_cast<const unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target update to( byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc update device( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -89,11 +92,12 @@ namespace smilei {
                 unsigned char* byte_array = static_cast<unsigned char*>( a_host_pointer );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target update from( byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc update host( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -104,11 +108,12 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( from \
                                       : byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc exit data copyout( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -119,11 +124,12 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( delete \
                                       : byte_array [0:a_count * an_object_size] )
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc exit data delete( byte_array [0:a_count * an_object_size] )
 #else
                 SMILEI_UNUSED( a_host_pointer );
                 SMILEI_UNUSED( a_count );
+                SMILEI_UNUSED( an_object_size );
                 SMILEI_UNUSED( byte_array );
 #endif
             }
@@ -154,7 +160,7 @@ namespace smilei {
                 SMILEI_ASSERT( a_device_pointer != nullptr );
 
                 return const_cast<void*>( a_device_pointer );
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
                 //return const_cast<void*>( ::acc_deviceptr( a_host_pointer ) );
                 return ::acc_deviceptr( const_cast<void*>(a_host_pointer) ) ;
 #else
@@ -171,7 +177,7 @@ namespace smilei {
                                          a_count * an_object_size, 0, 0, device_num, device_num ) != 0 ) {
                     ERROR( "omp_target_memcpy failed" );
                 }
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
                 // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
                 // https://www.openacc.org/sites/default/files/inline-files/OpenACC.2.7.pdf
                 // void acc_memcpy_device( d_void* dest, d_void* src, size_t bytes );

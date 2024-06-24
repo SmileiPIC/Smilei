@@ -60,7 +60,8 @@ for each MPI process). The following steps are executed:
 
    * The rank of the current MPI process as :py:data:`smilei_mpi_rank`.
    * The total number of MPI processes as :py:data:`smilei_mpi_size`.
-   * The maximum random integer as :py:data:`smilei_rand_max`.
+   * The number of OpenMP threads per MPI :py:data:`smilei_omp_threads`.
+   * The total number of cores :py:data:`smilei_total_cores`.
 
 #. The namelist(s) is executed.
 
@@ -1146,6 +1147,9 @@ Each species has to be defined in a ``Species`` block::
   be accessed in some diagnostics such as :ref:`particle binning <DiagParticleBinning>` or
   :ref:`tracking <DiagTrackParticles>`. The available fields are ``"Ex"``, ``"Ey"``, ``"Ez"``, 
   ``"Bx"``, ``"By"`` and ``"Bz"``.
+  
+  Note that magnetic field components, as they originate from the interpolator,
+  are shifted by half a timestep compared to those from the *Fields* diagnostics.
   
   Additionally, the work done by each component of the electric field is available as
   ``"Wx"``, ``"Wy"`` and ``"Wz"``. Contrary to the other interpolated fields, these quantities
@@ -2715,7 +2719,8 @@ or several points arranged in a 2-D or 3-D grid.
   * **In "AMcylindrical" geometry**, probes are defined with 3D Cartesian coordinates
     and cannot be separated per mode. Use Field diagnostics for cylindrical coordinates and
     information per mode.
-
+  * **Probes rely on the particle interpolator to compute fields** so that the
+    magnetic field is shifted by half a timestep compared to that of *Fields* diagnostics.
 
 To add one probe diagnostic, include the block ``DiagProbe``::
 
@@ -3342,19 +3347,20 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
-  They are actually the velocities multiplied by the lorentz factor, i.e.,
-  :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
-  inside the ``filter`` function (not for the output of the diagnostic).
-
-.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
-  This number is set to 0 at the beginning of the simulation. **Only after particles have
-  passed the filter**, they acquire a positive ``id``.
-
-.. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
-  accessible within the ``filter`` function. Its value is always equal to the current
-  iteration number of the PIC loop. The current time of the simulation is thus
-  ``Main.iteration * Main.timestep``.
+.. Note::
+  
+  * In the ``filter`` function only, the ``px``, ``py`` and ``pz`` quantities
+    are not exactly the momenta.
+    They are actually the velocities multiplied by the lorentz factor, i.e.,
+    :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`.
+    This is *not* true for the output of the diagnostic.
+  * The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+    This number is set to 0 at the beginning of the simulation. **Only after particles have
+    passed the filter**, they acquire a positive ``id``.
+  * For advanced filtration, Smilei provides the quantity ``Main.iteration``,
+    accessible within the ``filter`` function. Its value is always equal to the current
+    iteration number of the PIC loop. The current time of the simulation is thus
+    ``Main.iteration * Main.timestep``.
 
 .. py:data:: attributes
 
@@ -3366,6 +3372,11 @@ for instance::
   their statistical weight (``"w"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
+
+.. Note:: Here, interpolated fields are normally computed after the Maxwell solver.
+  They may thus differ by half a timestep from those computed at the middle of the
+  timestep to push particles. When exact values are needed, use the option
+  :py:data:`keep_interpolated_fields`.
 
 ----
 
@@ -3619,9 +3630,15 @@ namelist. They should not be re-defined by the user!
 
   The total number of MPI processes.
 
-..
-  <<Not showing this anymore because of new rand system>>
-  .. py:data:: smilei_rand_max
+.. py:data:: smilei_omp_threads
 
-    The largest random integer.
+  The number of OpenMP threads per MPI.
 
+.. py:data:: smilei_total_cores
+
+  The total number of cores.
+
+.. note::
+  
+  These variables can be access during ``happi`` post-processing, e.g.
+  ``S.namelist.smilei_mpi_size``.

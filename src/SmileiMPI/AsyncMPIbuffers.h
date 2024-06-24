@@ -17,7 +17,7 @@ public:
     AsyncMPIbuffers();
     ~AsyncMPIbuffers();
     
-    virtual void allocate( unsigned int nDim_field );
+    void allocate( unsigned int nDim_field );
     
     void defineTags( Patch *patch, SmileiMPI *smpi, int tag ) ;
     
@@ -38,21 +38,17 @@ public:
     SpeciesMPIbuffers();
     ~SpeciesMPIbuffers();
     
-    void allocate( unsigned int nDim_field ) ;
+    void allocate( Params &params, Patch *patch ) ;
     
     //! ndim vectors of 2 sent packets of particles (1 per direction)
-    std::vector< std::vector<Particles > > partRecv;
+    std::vector< std::vector<Particles* > > partRecv;
     //! ndim vectors of 2 received packets of particles (1 per direction)
-    std::vector< std::vector<Particles > > partSend;
+    std::vector< std::vector<Particles* > > partSend;
     
-    //! ndim vectors of 2 vectors of index particles to send (1 per direction)
-    //!   - not sent
-    //    - used to sort Species::indexes_of_particles_to_exchange built in Species::dynamics
-    std::vector< std::vector< std::vector<int> > > part_index_send;
     //! ndim vectors of 2 numbers of particles to send (1 per direction)
-    std::vector< std::vector< unsigned int > > part_index_send_sz;
+    std::vector< std::vector< unsigned int > > partSendSize;
     //! ndim vectors of 2 numbers of particles to receive (1 per direction)
-    std::vector< std::vector< unsigned int > > part_index_recv_sz;
+    std::vector< std::vector< unsigned int > > partRecvSize;
     
 };
 

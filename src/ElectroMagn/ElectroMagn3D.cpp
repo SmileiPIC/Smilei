@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
     #include <openacc.h>
 #endif
 
@@ -1207,7 +1207,7 @@ void ElectroMagn3D::centerMagneticFields()
     double *const __restrict__ Bz3D_m     = Bz_m->data();
 
     // Magnetic field Bx^(p,d,d)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofBx = Bx_->size();
     const int sizeofBy = By_->size();
     const int sizeofBz = Bz_->size();
@@ -1219,11 +1219,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1240,7 +1240,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1248,12 +1248,12 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1267,7 +1267,7 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field Bz^(d,d,p)
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -1275,11 +1275,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1296,7 +1296,7 @@ void ElectroMagn3D::centerMagneticFields()
         // Static-cast of the fields
         double *const __restrict__ BymBTIS3 = By_mBTIS3->data();
         double *const __restrict__ BzmBTIS3 = Bz_mBTIS3->data();
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofByBTIS3 = By_mBTIS3->size();
     #pragma acc parallel present(By3D[0:sizeofBy],BymBTIS3[0:sizeofByBTIS3])
     #pragma acc loop gang
@@ -1305,11 +1305,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
         for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop worker
 #endif
             for( unsigned int j=0 ; j<ny_p ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY
@@ -1323,7 +1323,7 @@ void ElectroMagn3D::centerMagneticFields()
                 }
             }
          }
-#if defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
     const int sizeofBzBTIS3 = Bz_mBTIS3->size();
     #pragma acc parallel present(Bz3D[0:sizeofBz],BzmBTIS3[0:sizeofBzBTIS3])
     #pragma acc loop gang
@@ -1332,11 +1332,11 @@ void ElectroMagn3D::centerMagneticFields()
     #pragma omp teams distribute parallel for collapse( 3 )
 #endif
         for( unsigned int i=0 ; i<nx_p-1 ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         #pragma acc loop worker
 #endif
             for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
             // EMPTY

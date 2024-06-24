@@ -436,7 +436,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             
             const unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
 
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
             const double *const __restrict__ weight_ptr = vecSpecies[ispec]->particles->getPtrWeight();
             const short  *const __restrict__ charge_ptr = vecSpecies[ispec]->particles->getPtrCharge();
             const double *const __restrict__ momentum_x = vecSpecies[ispec]->particles->getPtrMomentum(0);
@@ -447,14 +447,14 @@ void DiagnosticScalar::compute( Patch *patch, int )
             if( vecSpecies[ispec]->mass_ > 0 ) {
 
 // GPU mode
-#ifdef SMILEI_ACCELERATOR_MODE
+#ifdef SMILEI_ACCELERATOR_GPU
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target teams distribute parallel for \
 		      map(tofrom: density)  \
 		      is_device_ptr(weight_ptr) \
 		      reduction(+:density) 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(weight_ptr)
     #pragma acc loop gang worker vector reduction(+:density) 
 #endif
@@ -468,7 +468,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
 		      map(tofrom: charge)  \
 		      is_device_ptr( charge_ptr, weight_ptr) \
                       reduction(+:charge)  
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(weight_ptr, charge_ptr)
     #pragma acc loop gang worker vector reduction(+:charge)
 #endif
@@ -484,7 +484,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
                       momentum_y /* [istart:particle_number] */,             \
                       momentum_z /* [istart:particle_number] */)             \
                       reduction(+:ener_tot) 
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc parallel deviceptr(weight_ptr, \
                   momentum_x,                                           \
                   momentum_y,                                           \
@@ -525,14 +525,14 @@ void DiagnosticScalar::compute( Patch *patch, int )
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
 
 // GPU mode
-#ifdef SMILEI_ACCELERATOR_MODE
+#ifdef SMILEI_ACCELERATOR_GPU
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target teams distribute parallel for \
 		      map(tofrom: density)  \
 		      is_device_ptr(weight_ptr) \
 		      reduction(+:density) 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel deviceptr(weight_ptr)
     #pragma acc loop gang worker vector reduction(+:density) 
 #endif
@@ -548,7 +548,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
                       momentum_y /* [istart:particle_number] */,             \
                       momentum_z /* [istart:particle_number] */)             \
                       reduction(+:ener_tot) 
-#elif defined(SMILEI_OPENACC_MODE)
+#elif defined(SMILEI_ACCELERATOR_GPU_OACC)
     #pragma acc parallel deviceptr(weight_ptr, \
                   momentum_x,                                           \
                   momentum_y,                                           \
@@ -667,7 +667,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             // total energy in current field
             double Uem = 0.;
             if( ! AM ) {
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
                 Uem = field->norm2OnDevice( EMfields->istart, EMfields->bufsize );
 #else
                 Uem = field->norm2( EMfields->istart, EMfields->bufsize );
@@ -751,7 +751,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
             j_max = iFieldStart[1];
             k_max = iFieldStart[2];
 
-#if defined( SMILEI_ACCELERATOR_MODE)
+#if defined( SMILEI_ACCELERATOR_GPU)
             // We use scalar rather than arrays because omp target 
             // sometime fails to pass them to the device
             const unsigned int ixstart = iFieldStart[0];
@@ -776,7 +776,7 @@ void DiagnosticScalar::compute( Patch *patch, int )
 		        map(tofrom: minval, maxval, i_min, i_max, j_min, j_max, k_min, k_max)  \
                 map(to: ny, nz, ixstart, ixend, iystart, iyend, izstart, izend) 
 	        //reduction(min:minval)
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(field_data) //deviceptr( data_ )
     #pragma acc loop gang worker vector collapse(3)
 #endif

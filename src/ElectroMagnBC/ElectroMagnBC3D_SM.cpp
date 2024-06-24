@@ -186,7 +186,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         const int isBoundary2min = patch->isBoundary( axis2_, 0 );
         const int isBoundary2max = patch->isBoundary( axis2_, 1 );
 
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
         const int sizeofE0 = E[axis0_]->number_of_points_;
         const int sizeofE1 = E[axis1_]->number_of_points_;
         const int sizeofE2 = E[axis2_]->number_of_points_;
@@ -217,7 +217,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
 
         // B1
         if( axis0_ == 0 ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -225,7 +225,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int j=isBoundary1min; j<n1p-isBoundary1max ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop worker vector
 #endif
                 for( unsigned int k=isBoundary2min ; k<n2d-isBoundary2max ; k++ ) {
@@ -239,7 +239,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         } else if( axis0_ == 1 ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -247,7 +247,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop worker vector
 #endif
                 for( unsigned int k=isBoundary2min ; k<n2d-isBoundary2max ; k++ ) {
@@ -261,7 +261,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         } else {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0],db1[0:b1_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -269,7 +269,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc loop worker vector
 #endif
                 for( unsigned int j=isBoundary2min ; j<n2d-isBoundary2max ; j++ ) {
@@ -304,7 +304,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
 
         // B2
         if( axis0_ == 0 ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -312,7 +312,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int j=isBoundary1min; j<n1d-isBoundary1max ; j++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 #pragma acc loop worker vector
 #endif
                 for( unsigned int k=isBoundary2min; k<n2p-isBoundary2max ; k++ ) {
@@ -326,7 +326,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         } else if( axis0_ == 1 ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -334,7 +334,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 #pragma acc loop worker vector
 #endif
                 for( unsigned int k=isBoundary2min; k<n2p-isBoundary2max ; k++ ) {
@@ -348,7 +348,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         } else {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
             #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0],db2[0:b2_size])
             #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
@@ -356,7 +356,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma omp teams distribute parallel for collapse( 2 )
 #endif
             for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
-#ifdef SMILEI_OPENACC_MODE
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
                 #pragma acc loop worker vector
 #endif
                 for( unsigned int j=isBoundary2min; j<n2p-isBoundary2max ; j++ ) {

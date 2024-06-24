@@ -103,7 +103,7 @@ public:
     //! Sends the whole Field
     void isend( Field *field, int to, int tag, MPI_Request &request );
     //! Sends the whole Field Device to Device (assuming MPI enables it)
-#if defined (SMILEI_ACCELERATOR_MODE)
+#if defined (SMILEI_ACCELERATOR_GPU)
     void isendOnDevice( Field *field, int to, int tag, MPI_Request &request );
 #endif
 
@@ -114,7 +114,7 @@ public:
     //! Receives the whole Field
     void recv( Field *field, int from, int tag);     
     //! Receives the whole Field Device to Device (assuming MPI enables it)
-#if defined (SMILEI_ACCELERATOR_MODE)
+#if defined (SMILEI_ACCELERATOR_GPU)
     void recvOnDevice( Field *field, int from, int tag);     
 #endif
 
@@ -248,7 +248,7 @@ public:
     //! Erase Particles from istart ot the end in the buffers of thread ithread
     void eraseBufferParticleTrail( const int ndim, const int istart, const int ithread, bool isAM = false );
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
     //! Map CPU buffers onto the GPU to at least accommodate particle_count
     //! particles. This method tries to reduce the number of
     //! allocation/deallocation which produces a lot of fragmentation on some

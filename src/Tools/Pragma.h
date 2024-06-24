@@ -31,7 +31,7 @@
 #if defined ( SMILEI_ACCELERATOR_GPU_OMP )
     #define ATOMIC(mode) \
     _Pragma( TOSTRING(omp atomic mode))
-#elif defined ( SMILEI_OPENACC_MODE )
+#elif defined ( SMILEI_ACCELERATOR_GPU_OACC )
     #define ATOMIC(mode) \
     _Pragma( TOSTRING(acc atomic mode))
 #endif

@@ -95,9 +95,6 @@ Main(
     simulation_time = Tsim,
 
     EM_boundary_conditions = [field_cond, field_cond],
-
-    random_seed = smilei_mpi_rank,
-
     reference_angular_frequency_SI = wr
 )
 

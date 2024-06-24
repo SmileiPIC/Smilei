@@ -188,7 +188,7 @@ public:
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
 
 
-#if defined(SMILEI_ACCELERATOR_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU)
     //! Compute the norm2OnDevice of the field
     virtual double norm2OnDevice( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
 #endif
@@ -234,7 +234,7 @@ public:
         return sum;
     }
 
-#if defined( SMILEI_ACCELERATOR_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
     inline double __attribute__((always_inline)) normOnDevice()
     {
@@ -245,7 +245,7 @@ public:
     #pragma omp target teams distribute parallel for \
 		      map(tofrom: sum)  map(to: number_of_points_) \
 		      reduction(+:sum) 
-#elif defined( SMILEI_OPENACC_MODE )
+#elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel present(field) //deviceptr( data_ )
     #pragma acc loop gang worker vector reduction(+:sum)
 #endif
@@ -279,7 +279,7 @@ public:
     virtual void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) = 0;
     virtual void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) = 0;
 
-#if defined(SMILEI_ACCELERATOR_MODE)
+#if defined(SMILEI_ACCELERATOR_GPU)
 
     //! copy the field from Host to Device
     void copyFromHostToDevice();
