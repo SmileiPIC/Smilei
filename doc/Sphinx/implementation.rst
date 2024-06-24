@@ -10,10 +10,10 @@ and conveniency for non-advanced C++ users.
 The repository is composed of the following directories:
 
 - ``Licence``: contains code licence information
-- ``doc``: conatins the Sphinx doc files
+- ``doc``: contains the Sphinx doc files
 - ``src``: contains all source files
 - ``happi``: contains the sources of the happi Python tool for visualization
-- ``benchmarks``: contains the benchmarks used by the validation process. these becnhamrks are also examples for users.
+- ``benchmarks``: contains the benchmarks used by the validation process, these benchmarks are also examples for users.
 - ``scripts``: contains multiple tool scripts for compilation and more
 
   - ``compile_tools``: contains scripts and machine files used by the makefile for compilation
@@ -23,7 +23,7 @@ The repository is composed of the following directories:
 
 The source files directory is as well composed of several sub-directories to organise the `.cpp` and `.h` files by related thematics.
 The main is the file `Smilei.cpp`.
-There is always only one class definition per file and the file name correcponds to the class name.
+There is always only one class definition per file and the file name corresponds to the class name.
 
 The general implementation is later summarized in :numref:`smilei_main_loop`
 
@@ -54,10 +54,10 @@ Notion of operators
 An operator is a class that operates on input data to provide a processed information.
 Input data can be parameters and data containers.
 Output data can be processed data from data containers or updated data containers.
-An operator is a class functor (overloadind of the ``()`` ).
-Sometime, operator provides additional methods called wrappers to provide differents simplified or adapted interfaces.
-An operator do not store data or temporarely.
-for instance, the particle interpolation, push and proection are operators.
+An operator is a class functor (overloading of the ``()`` ).
+Sometime, operator provides additional methods called wrappers to provide different simplified or adapted interfaces.
+An operator do not store data or temporarily.
+for instance, the particle interpolation, push and protection are operators.
 
 .. _operator:
 
@@ -71,7 +71,7 @@ Notion of domain parts
 
 Domain parts are classes that represents some specific levels of the domain decomposition.
 They can be seen as high-level data container or container of data container.
-They contain some methods to handle, manange and access the local data.
+They contain some methods to handle, manage and access the local data.
 For instance, patches and ``Species`` are domain parts:
 
 - ``Species`` contains the particles.
@@ -80,10 +80,10 @@ For instance, patches and ``Species`` are domain parts:
 Notion of factory
 ------------------------------------
 
-Some objects such as operators or data containers have sereral variations.
+Some objects such as operators or data containers have several variations.
 For this we use inheritance.
 A base class is used for common parameters and methods and derived classes are used for all variations.
-The factory uses user-defined input parameters to determine the right derive class to choose and initiate them as shown in :numref:`factory`.
+The factory uses user-defined input parameters to determine the right derived class to choose and initiate them as shown in :numref:`factory`.
 For instance, there are several ``push`` operators implemented all derived from a base ``push`` class.
 The ``push`` factory will determine the right one to use.
 
@@ -97,7 +97,7 @@ The ``push`` factory will determine the right one to use.
 Other
 ------------------------------------
 
-Some classes are used for specific actions in the code such as the initilization process.
+Some classes are used for specific actions in the code such as the initialization process.
 
 -----------------------------------------------------------------
 
@@ -106,7 +106,7 @@ III. Domain decomposition and parallelism
 
 The simulation domain is divided multiple times following a succession of decomposition levels.
 The whole domain is the superimposition of different grids for each electromagnetic field component
-and macro-particules.
+and macro-particles.
 Let us represent schematically the domain as an array of cells as in Fig. :numref:`full_domain`.
 Each cell contains a certain population of particles (that can differ from cell to cell).
 
@@ -127,8 +127,8 @@ The domain becomes a collection of patches as shown in :numref:`patch_domain_dec
 
   The domain in :program:`Smilei` is a collection of patches.
 
-A patch is an independant piece of the whole simulation domain.
-It therefore owns local electrmognatic grids and list of macro-particles.
+A patch is an independent piece of the whole simulation domain.
+It therefore owns the local electromagnetic grids and list of macro-particles.
 Electromagnetic grids have ghost cells that represent the information located in the neighboring patches (not shown in :numref:`patch_domain_decomposition`).
 All patches have the same spatial size .i.e. the same number of cells.
 The size of a patch is calculated so that all local field grids (ghost cells included) can fit in L2 cache.
@@ -144,7 +144,7 @@ The distribution can be ensured in an equal cartesian way or using a load balanc
   Patches are then distributed among MPI processes in so-called MPI patch collections.
 
 Inside MPI patch collection, OpenMP loop directives are used to distribute the computation of the patches among the available threads.
-Since each patch have a different number of particles, this approach enables a dynamic scheduling depending on the specified OpenMP scheduler.
+Since each patch has a different number of particles, this approach enables a dynamic scheduling depending on the specified OpenMP scheduler.
 As shown in :numref:`smilei_main_loop`, a synchronization step is required to exchange grid ghost cells and particles traveling from patch to patch.
 
 The patch granularity is used for:
@@ -163,7 +163,7 @@ The patch can be decomposed into bins as shown in :numref:`bin_decomposition`.
 
   Bin decomposition.
 
-Contrary to patch, a bin is not an independant data structure with its own arrays.
+Contrary to patch, a bin is not an independent data structure with its own arrays.
 It represents a smaller portion of the patch grids through specific start and end indexes.
 For the macro-particles, a sorting algorithm is used to ensure that in the macro-particles
 located in the same bin are grouped and contiguous in memory.
@@ -288,7 +288,7 @@ located in the file `src/Tools.h`.
 - `ERROR_NAMELIST`: this function should be used for namelist error. It takes in argument a simple message and a link to the documentation. It throws as well a SIGABRT signal.
 - `MESSAGE`: this function should be used to output an information message (it uses `std::cout`).
 - `DEBUG` : should be used for debugging messages (for the so-called DEBUG mode)
-- `WARNING` : should be used to thrown a warning. A warning alerts the users of a possible issue or to be carreful with some parameters without stoping the program.
+- `WARNING` : should be used to thrown a warning. A warning alerts the users of a possible issue or to be careful with some parameters without stopping the program.
 
 --------------------------------------------------------------------------------
 
@@ -618,7 +618,7 @@ We first loop on the patches and then the species of
 each patch ``ipatch``: ``(*this )( ipatch )->vecSpecies.size()``.
 For each species, the method ``Species::dynamics`` is called to perform the
 dynamic step of the respective particles.
-The OpenMP parallelism is explicitely applied in ``vecPatches::dynamics`` on the patch loop as shown
+The OpenMP parallelism is explicitly applied in ``vecPatches::dynamics`` on the patch loop as shown
 in the following pieces of code.
 
 .. code-block:: c++
