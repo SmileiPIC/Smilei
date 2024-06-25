@@ -38,10 +38,9 @@ IonizationTunnelFullPPT::IonizationTunnelFullPPT( Params &params, Species *speci
 
     for( unsigned int Z=0 ; Z<atomic_number_ ; Z++ ) {
         DEBUG( "Z : " << Z );
-        double nst      = ( ( double )Z+1.0 ) * sqrt( 0.5/Potential[Z] );
         double cst      = ( ( double )Z+1.0 ) * sqrt( 2.0/Potential[Z] );
         double abs_m    = abs(Magnetic_quantum_number[Z]);
-        alpha_tunnel[Z] = 2.0*nst-1.0-abs_m;
+        alpha_tunnel[Z] = cst-1.0-abs_m;
         beta_tunnel[Z]  = pow( 2, alpha_tunnel[Z] ) * ( 8.*Azimuthal_quantum_number[Z]+4.0 ) / ( cst*tgamma( cst ) ) * Potential[Z] * au_to_w0 \
                          * tgamma(Azimuthal_quantum_number[Z]+abs_m+1) / ( tgamma(abs_m+1)*tgamma(Azimuthal_quantum_number[Z]-abs_m+1) );
         gamma_tunnel[Z] = 2.0 * pow( 2.0*Potential[Z], 1.5 );
