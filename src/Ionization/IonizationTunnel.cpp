@@ -129,7 +129,7 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
                     D_sum += Dnom_tunnel[i];
                     P_sum += exp( -IonizRate_tunnel[Z+i]*dt )*Dnom_tunnel[i];
                 }
-                Dnom_tunnel[k_times+1] -= D_sum;
+                Dnom_tunnel[k_times+1]  = -D_sum; // bug fix
                 P_sum                   = P_sum + Dnom_tunnel[k_times+1]*exp( -IonizRate_tunnel[newZ]*dt );
                 Pint_tunnel             = Pint_tunnel + P_sum*Mult;
                 
@@ -264,7 +264,7 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
                     D_sum += Dnom_tunnel[i];
                     P_sum += exp( -IonizRate_tunnel[Z+i]*dt )*Dnom_tunnel[i];
                 }
-                Dnom_tunnel[k_times+1] -= D_sum;
+                Dnom_tunnel[k_times+1]  = -D_sum;  //bug fix
                 P_sum                   = P_sum + Dnom_tunnel[k_times+1]*exp( -IonizRate_tunnel[newZ]*dt );
                 Pint_tunnel             = Pint_tunnel + P_sum*Mult;
         
