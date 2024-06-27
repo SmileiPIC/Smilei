@@ -40,6 +40,15 @@ Ongoing projects
 
   * Spectral solvers
 
+----
+
+New release
+^^^^^^^^^^^^^^^^^^^^^
+
+* **Bug fixes** :
+
+  * Fixed a bug which made tunnel ionization wrong in some cases for high atomic numbers.
+  * Fixed species specific diagnostics in AM geometry with Vectorization.
 
 ----
 
