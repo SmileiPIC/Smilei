@@ -2056,11 +2056,14 @@ This feature is accessible using the ``PrescribedField`` block::
 .. py:data:: field
 
   Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  AM field name: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"`` or ``"Bt_m_mode_m"``.
 
 .. warning::
 
   When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
   These fields are those used in the particle pusher, and are defined at integer time-steps.
+  When prescribing a field in AM geometry, the mode "m" must be specified explicitly in the name of the field and the profile
+  must return a complex value.
 
 .. py:data:: profile
 

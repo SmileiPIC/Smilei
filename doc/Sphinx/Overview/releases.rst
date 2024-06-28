@@ -27,7 +27,8 @@ Changes made in the repository (not released)
 
   * Tunnel ionization was wrong in some cases for high atomic numbers.
   * Species-specific diagnostics in AM geometry with vectorization.
-  * Custom functions in ``ParticleBinning`` with python 3.12
+  * Custom functions in ``ParticleBinning`` with python 3.12.
+  * Handle prescribed fields in AM.
 
 
 ----
