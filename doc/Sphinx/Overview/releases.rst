@@ -16,13 +16,19 @@ Get Smilei
 
 You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>`_
 
-..
-.. ----
+----
 
-.. .. _latestVersion:
+.. _latestVersion:
 
-.. Changes made in the repository (not released)
-.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changes made in the repository (not released)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **Bug fixes** :
+
+  * Tunnel ionization was wrong in some cases for high atomic numbers.
+  * Species-specific diagnostics in AM geometry with vectorization.
+  * Custom functions in ``ParticleBinning`` with python 3.12
+
 
 ----
 
@@ -40,15 +46,6 @@ Ongoing projects
 
   * Spectral solvers
 
-----
-
-New release
-^^^^^^^^^^^^^^^^^^^^^
-
-* **Bug fixes** :
-
-  * Fixed a bug which made tunnel ionization wrong in some cases for high atomic numbers.
-  * Fixed species specific diagnostics in AM geometry with Vectorization.
 
 ----
 

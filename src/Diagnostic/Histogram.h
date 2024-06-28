@@ -578,25 +578,24 @@ public:
 private:
     void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
-        #pragma omp critical
+        SMILEI_PY_ACQUIRE_GIL
+        // Expose particle data as numpy arrays
+        particleData.resize( npart );
+        particleData.set( s->particles );
+        // run the function
+        PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
+        particleData.clear();
+        // Copy the result to "array"
+        double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ )
         {
-            // Expose particle data as numpy arrays
-            particleData.resize( npart );
-            particleData.set( s->particles );
-            // run the function
-            PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
-            particleData.clear();
-            // Copy the result to "array"
-            double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
-            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ )
-            {
-                if( index[ipart]<0 ) {
-                    continue;
-                }
-                array[ipart] = arr[ipart];
+            if( index[ipart]<0 ) {
+                continue;
             }
-            Py_DECREF( ret );
+            array[ipart] = arr[ipart];
         }
+        Py_DECREF( ret );
+        SMILEI_PY_RELEASE_GIL
     };
 
     PyObject *function;
@@ -1167,26 +1166,25 @@ private:
     void valuate( Species *s, double *array, int *index )
     {
         unsigned int npart = s->getNbrOfParticles();
-        #pragma omp critical
-        {
-            // Expose particle data as numpy arrays
-            particleData.resize( npart );
-            particleData.set( s->particles );
-            // run the function
-            PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
-            particleData.clear();
-            // Copy the result to "array"
-            double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
-            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
-                if( index[ipart]<0 ) {
-                    continue;
-                }
-                array[ipart] = arr[ipart];
+        SMILEI_PY_ACQUIRE_GIL
+        // Expose particle data as numpy arrays
+        particleData.resize( npart );
+        particleData.set( s->particles );
+        // run the function
+        PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
+        particleData.clear();
+        // Copy the result to "array"
+        double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
             }
-            Py_DECREF( ret );
+            array[ipart] = arr[ipart];
         }
+        Py_DECREF( ret );
+        SMILEI_PY_RELEASE_GIL
     };
-
+    
     PyObject *function;
     ParticleData particleData;
 };

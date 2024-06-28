@@ -32,6 +32,28 @@
 #include <numpy/arrayobject.h>
 #endif
 
+// The following definitions are required for some interaction between python and openmp
+// Specifically, it is needed for an openmp loop that includes calls to python
+// Usage:
+//  SMILEI_PY_SAVE_MASTER_THREAD
+//  #pragma omp for
+//  for(....) {
+//      SMILEI_PY_ACQUIRE_GIL
+//      python calls
+//      SMILEI_PY_RELEASE_GIL
+//  }
+//  SMILEI_PY_RESTORE_MASTER_THREAD
+#define SMILEI_PY_SAVE_MASTER_THREAD \
+    PyThreadState *_save = NULL; \
+    _Pragma("omp master") \
+    _save = PyEval_SaveThread();
+#define SMILEI_PY_RESTORE_MASTER_THREAD \
+    _Pragma("omp master") \
+    PyEval_RestoreThread( _save );
+#define SMILEI_PY_ACQUIRE_GIL PyGILState_STATE _state = PyGILState_Ensure();
+#define SMILEI_PY_RELEASE_GIL PyGILState_Release( _state );
+
+
 
 //! tools to query python nemlist and get back C++ values and vectors
 class PyTools

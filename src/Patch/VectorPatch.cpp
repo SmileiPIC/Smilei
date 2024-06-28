@@ -1443,10 +1443,12 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
         if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
+            SMILEI_PY_SAVE_MASTER_THREAD
             #pragma omp for schedule(runtime)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 globalDiags[idiag]->run( ( *this )( ipatch ), itime, simWindow );
             }
+            SMILEI_PY_RESTORE_MASTER_THREAD
             // MPI procs gather the data and compute
             #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime );
