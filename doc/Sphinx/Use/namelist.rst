@@ -2009,8 +2009,8 @@ at the beginning of the simulation using the ``ExternalField`` block::
 
 .. py:data:: field
 
-  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
-  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_mode_m"``, ``"Br_mode_m"``, ``"Bt_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"``, ``"Bt_m_mode_m"``, ``"A_mode_1"``, ``"A0_mode_1"`` .
 
 .. py:data:: profile
 
@@ -2055,13 +2055,16 @@ This feature is accessible using the ``PrescribedField`` block::
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
-  AM field name: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"`` or ``"Bt_m_mode_m"``.
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"`` or ``"Bt_m_mode_m"``.
 
 .. warning::
 
   When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
   These fields are those used in the particle pusher, and are defined at integer time-steps.
+
+.. warning::
+
   When prescribing a field in AM geometry, the mode "m" must be specified explicitly in the name of the field and the profile
   must return a complex value.
 
