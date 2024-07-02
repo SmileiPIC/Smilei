@@ -578,8 +578,8 @@ class Diagnostic(object):
 					info = operation+" for "+axisname+" from "+axismin+" to "+axismax
 				else:
 					info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
-				selection = slice(indices[0],indices[-1])
-				finalShape = indices[-1] - indices[0]
+				selection = slice(indices[0], indices[-1] + 1)
+				finalShape = indices[-1] - indices[0] + 1
 		return info, selection, finalShape
 
 	# Method to prepare some data before plotting

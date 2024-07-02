@@ -23,13 +23,17 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **Bug fixes** :
+* **Features**:
+
+  * Prescribed fields in AM geometry.
+  * Particle reflective boundary conditions at Rmax in AM geometry.
+
+* **Bug fixes**:
 
   * Tunnel ionization was wrong in some cases for high atomic numbers.
+  * Custom functions in ``ParticleBinning`` crashed with python 3.12.
   * Species-specific diagnostics in AM geometry with vectorization.
-  * Custom functions in ``ParticleBinning`` with python 3.12.
-  * Handle prescribed fields in AM.
-  * Handle species reflective boundary conditions on Rmax in AM.
+  * Happi's ``average`` argument would sometimes be missing the last bin.
 
 
 ----
