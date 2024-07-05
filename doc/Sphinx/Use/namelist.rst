@@ -2068,6 +2068,12 @@ This feature is accessible using the ``PrescribedField`` block::
   When prescribing a field in AM geometry, the mode "m" must be specified explicitly in the name of the field and the profile
   must return a complex value.
 
+.. warning::
+
+  ``PrescribedFields`` are not visible in the ``Field`` diagnostic, 
+  but can be visualised through ``Probes`` and with the fields attributes of ``TrackParticles`` 
+  (since they sample the total field acting on the macro-particles).
+
 .. py:data:: profile
 
   :type: float or :doc:`profile <profiles>`
