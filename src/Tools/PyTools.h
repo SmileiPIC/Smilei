@@ -44,8 +44,8 @@
 //  }
 //  SMILEI_PY_RESTORE_MASTER_THREAD
 #if PY_MAJOR_VERSION > 2 && PY_MINOR_VERSION > 11 
-    #define SMILEI_PY_SAVE_MASTER_THREAD PyThreadState *_save = NULL; _Pragma("omp master") { _save = PyEval_SaveThread(); }
-    #define SMILEI_PY_RESTORE_MASTER_THREAD _Pragma("omp master") PyEval_RestoreThread( _save );
+    #define SMILEI_PY_SAVE_MASTER_THREAD  PyThreadState *_save = NULL; _Pragma("omp master") if( Py_IsInitialized() ) _save = PyEval_SaveThread();
+    #define SMILEI_PY_RESTORE_MASTER_THREAD _Pragma("omp master") if( Py_IsInitialized() ) PyEval_RestoreThread( _save );
     #define SMILEI_PY_ACQUIRE_GIL PyGILState_STATE _state = PyGILState_Ensure();
     #define SMILEI_PY_RELEASE_GIL PyGILState_Release( _state );
 #else
