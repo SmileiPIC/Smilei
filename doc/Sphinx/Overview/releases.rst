@@ -27,6 +27,7 @@ Changes made in the repository (not released)
 
   * Prescribed fields in AM geometry.
   * Particle reflective boundary conditions at Rmax in AM geometry.
+  * 1st order Ruyten shape function in AM geometry.
 
 * **Bug fixes**:
 

@@ -143,8 +143,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Interpolation order, defines particle shape function:
 
+  * ``1``  : 2 points stencil in r with Ruyten correction, 3 points stencil in x. Supported only in AM geometry.
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
+
+  The Ruyten correction is the scheme described bu equation 4.2 in `this paper <https://www.sciencedirect.com/science/article/abs/pii/S0021999183710703>`_ .
+  It allows for a more accurate description on axis at the cost of a higher statistic noise so it often requires the use of more macro-particles.
 
 .. py:data:: interpolator
 
