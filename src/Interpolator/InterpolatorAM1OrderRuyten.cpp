@@ -80,12 +80,12 @@ void InterpolatorAM1OrderRuyten::fields( ElectroMagn *EMfields, Particles &parti
 
         exp_mm_theta *= exp_m_theta_ ;
 
-        *( ELoc+0*nparts ) += std::real( compute( &coeffxd[1], &coeffyp[1], El, idx_d[0], idx_p[1] )* exp_mm_theta ) ;
-        *( ELoc+1*nparts ) += std::real( compute( &coeffxp[1], &coeffyd[1], Er, idx_p[0], idx_d[1] )* exp_mm_theta ) ;
-        *( ELoc+2*nparts ) += std::real( compute( &coeffxp[1], &coeffyp[1], Et, idx_p[0], idx_p[1] )* exp_mm_theta ) ;
-        *( BLoc+0*nparts ) += std::real( compute( &coeffxp[1], &coeffyd[1], Bl, idx_p[0], idx_d[1] )* exp_mm_theta ) ;
-        *( BLoc+1*nparts ) += std::real( compute( &coeffxd[1], &coeffyp[1], Br, idx_d[0], idx_p[1] )* exp_mm_theta ) ;
-        *( BLoc+2*nparts ) += std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] )* exp_mm_theta ) ;
+        *( ELoc+0*nparts ) += std::real( compute( &coeffxd[1], &coeffyp[0], El, idx_d[0], idx_p[1] )* exp_mm_theta ) ;
+        *( ELoc+1*nparts ) += std::real( compute( &coeffxp[1], &coeffyd[0], Er, idx_p[0], idx_d[1] )* exp_mm_theta ) ;
+        *( ELoc+2*nparts ) += std::real( compute( &coeffxp[1], &coeffyp[0], Et, idx_p[0], idx_p[1] )* exp_mm_theta ) ;
+        *( BLoc+0*nparts ) += std::real( compute( &coeffxp[1], &coeffyd[0], Bl, idx_p[0], idx_d[1] )* exp_mm_theta ) ;
+        *( BLoc+1*nparts ) += std::real( compute( &coeffxd[1], &coeffyp[0], Br, idx_d[0], idx_p[1] )* exp_mm_theta ) ;
+        *( BLoc+2*nparts ) += std::real( compute( &coeffxd[1], &coeffyd[0], Bt, idx_d[0], idx_d[1] )* exp_mm_theta ) ;
     }
 
     //Translate field into the cartesian y,z coordinates
