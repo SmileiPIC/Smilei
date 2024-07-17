@@ -233,7 +233,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     MESSAGE( " Checkpoint #" << num_dump << " at iteration " << itime << " dumped" );
 #endif
 
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_OPENACC_MODE )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
     MESSAGE( " Copying device data in main memory" );
     // TODO(Etienne M): This may very well be redundant if we did a diagnostic
     // during the last iteration. Indeed, we copy everything from the device to
@@ -478,8 +478,8 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                b.attr( "By_val", embc->By_val );
-                b.attr( "Bz_val", embc->Bz_val );
+                b.attr( "By_val", embc->By_val_ );
+                b.attr( "Bz_val", embc->Bz_val_ );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
@@ -889,8 +889,8 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                b.attr( "By_val", embc->By_val );
-                b.attr( "Bz_val", embc->Bz_val );
+                b.attr( "By_val", embc->By_val_ );
+                b.attr( "Bz_val", embc->Bz_val_ );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );

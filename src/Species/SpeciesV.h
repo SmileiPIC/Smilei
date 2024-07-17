@@ -26,7 +26,7 @@ public:
     //! Species destructor
     virtual ~SpeciesV();
 
-    void initCluster( Params &params ) override;
+    void initCluster( Params &params, Patch *patch ) override;
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     void dynamics( double time, unsigned int ispec,

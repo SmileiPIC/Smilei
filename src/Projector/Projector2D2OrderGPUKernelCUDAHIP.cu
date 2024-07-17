@@ -20,20 +20,20 @@
 
 #if defined( __HIP__ )
   // HIP compiler support enabled (for .cu files)
-    #else
-        #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
-    #endif
+#else
+    #define PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION 1
+#endif
 
-   #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-        #include <cmath>
+#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
+    #include <cmath>
 
-        #include "Tools.h"
-    #else
-        #include <hip/hip_runtime.h>
+    #include "Tools.h"
+#else
+    #include <hip/hip_runtime.h>
 
-        #include "Params.h"
-        #include "gpu.h"
-    #endif
+    #include "Params.h"
+    #include "gpu.h"
+#endif
 
 //    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 
@@ -65,7 +65,7 @@
 //                             int    i_domain_begin,
 //                             int    j_domain_begin,
 //                             int    nprimy,
-//                             int    not_spectral )
+//                             int    not_spectral_ )
 //    {
 //        // The OMP implementation is NOT bin aware. As per the precondition on
 //        // host_bin_index, index zero always contains the number of particles.
@@ -81,7 +81,7 @@
 //                                                         device_particle_charge /* [0:particle_count] */,     \
 //                                                         device_particle_weight /* [0:particle_count] */ )
 //            #pragma omp teams thread_limit( 64 ) distribute parallel for
-//        #elif defined( SMILEI_OPENACC_MODE )
+//        #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
 //            #pragma acc parallel                      \
 //            deviceptr( device_particle_position_x,    \
 //                       device_particle_position_y,    \
@@ -185,7 +185,7 @@
 //                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
-//                    Jy[iloc + j + not_spectral * ( /* i + */ ipo )] += tmp;
+//                    Jy[iloc + j + not_spectral_ * ( /* i + */ ipo )] += tmp;
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
 //                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
@@ -209,7 +209,7 @@
 //                    Jx[iloc + j] += tmpJx[j];
 //                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
 //                    SMILEI_ACCELERATOR_ATOMIC
-//                    Jy[iloc + j + not_spectral * ( i + ipo )] += tmp;
+//                    Jy[iloc + j + not_spectral_ * ( i + ipo )] += tmp;
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
 //                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
@@ -248,7 +248,7 @@
 //                                       int    i_domain_begin,
 //                                       int    j_domain_begin,
 //                                       int    nprimy,
-//                                       int    not_spectral )
+//                                       int    not_spectral_ )
 //    {
 //        // The OMP implementation is NOT bin aware. As per the precondition on
 //        // host_bin_index, index zero always contains the number of particles.
@@ -264,7 +264,7 @@
 //                                                         device_particle_charge /* [0:particle_count] */,     \
 //                                                         device_particle_weight /* [0:particle_count] */ )
 //            #pragma omp teams thread_limit( 64 ) distribute parallel for
-//        #elif defined( SMILEI_OPENACC_MODE )
+//        #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
 //            #pragma acc parallel                      \
 //            deviceptr( device_particle_position_x,    \
 //                       device_particle_position_y,    \
@@ -372,7 +372,7 @@
 //                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
-//                    Jy[iloc + j + not_spectral * ( /* i + */ ipo )] += tmp;
+//                    Jy[iloc + j + not_spectral_ * ( /* i + */ ipo )] += tmp;
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
 //                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] /* + Sx0[i] */ ) +
@@ -407,7 +407,7 @@
 //                    tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + 0.5 * ( Sx1[i] - Sx0[i] ) );
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
-//                    Jy[iloc + j + not_spectral * ( i + ipo )] += tmp;
+//                    Jy[iloc + j + not_spectral_ * ( i + ipo )] += tmp;
 //
 //                    SMILEI_ACCELERATOR_ATOMIC
 //                    Jz[iloc + j] += crz_p * ( Sy0[j] * ( 0.5 * Sx1[i] + Sx0[i] ) +
@@ -567,7 +567,7 @@ namespace cudahip2d {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          nprimy,
-                                         int          not_spectral )
+                                         int          not_spectral_ )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -867,7 +867,7 @@ namespace cudahip2d {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
             }
         } // end DepositCurrent
@@ -903,7 +903,7 @@ namespace cudahip2d {
                                             int          i_domain_begin,
                                             int          j_domain_begin,
                                             int          nprimy,
-                                            int          not_spectral )
+                                            int          not_spectral_ )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -1146,7 +1146,7 @@ namespace cudahip2d {
 
                 // These atomics are basically free (very few of them).
                 atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
                 atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[scratch_space_index] ) );
             }
@@ -1181,7 +1181,7 @@ namespace cudahip2d {
                              int    i_domain_begin,
                              int    j_domain_begin,
                              int    nprimy,
-                             int    not_spectral )
+                             int    not_spectral_ )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1229,7 +1229,7 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral );
+                            not_spectral_ );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
@@ -1258,7 +1258,7 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral
+                            not_spectral_
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
@@ -1266,7 +1266,7 @@ namespace cudahip2d {
 
     //static inline 
     void
-    currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
+    currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
                                        double *__restrict__ host_Jy,
                                        double *__restrict__ host_Jz,
                                        double *__restrict__ host_rho,
@@ -1293,7 +1293,7 @@ namespace cudahip2d {
                                        int    i_domain_begin,
                                        int    j_domain_begin,
                                        int    nprimy,
-                                       int    not_spectral )
+                                       int    not_spectral_ )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1341,7 +1341,7 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral );
+                            not_spectral_ );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
@@ -1371,7 +1371,7 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,                                                                                        
                             i_domain_begin, j_domain_begin,                                                                            
                             nprimy,                                                                                                    
-                            not_spectral                                                                                               
+                            not_spectral_                                                                                               
                        );                                                                                                              
         checkHIPErrors( ::cudaDeviceSynchronize() );  
 #endif 
@@ -1409,7 +1409,7 @@ namespace cudahip2d {
 //                         int    i_domain_begin,
 //                         int    j_domain_begin,
 //                         int    nprimy,
-//                         int    not_spectral )
+//                         int    not_spectral_ )
 //{
 //    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 //    naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -1432,7 +1432,7 @@ namespace cudahip2d {
 //                                 dx_ov_dt, dy_ov_dt,
 //                                 i_domain_begin, j_domain_begin,
 //                                 nprimy,
-//                                 not_spectral );
+//                                 not_spectral_ );
 //}
 //
 ////! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
@@ -1465,7 +1465,7 @@ namespace cudahip2d {
 //                                   int    i_domain_begin,
 //                                   int    j_domain_begin,
 //                                   int    nprimy,
-//                                   int    not_spectral )
+//                                   int    not_spectral_ )
 //{
 //    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 //    naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -1488,6 +1488,6 @@ namespace cudahip2d {
 //                                           dx_ov_dt, dy_ov_dt,
 //                                           i_domain_begin, j_domain_begin,
 //                                           nprimy,
-//                                           not_spectral );
+//                                           not_spectral_ );
 //}
 

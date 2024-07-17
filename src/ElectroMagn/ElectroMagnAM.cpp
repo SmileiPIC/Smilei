@@ -1730,7 +1730,7 @@ void ElectroMagnAM::computeTotalRhoJ()
     }//END loop on mmodes
 } //END computeTotalRhoJ
 
-// #if defined( SMILEI_ACCELERATOR_MODE )
+// #if defined( SMILEI_ACCELERATOR_GPU )
 // //! Method used to compute the total charge density and currents by summing over all species on Device
 // void ElectroMagnAM::computeTotalRhoJOnDevice()
 // {
@@ -1891,7 +1891,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
         if (input[1] && copy[1]) Br_m[imode]->copyFrom( Br_[imode] );
         if (input[2] && copy[2]) Bt_m[imode]->copyFrom( Bt_[imode] );
     }
-    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
+    // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( patch->EMfields );
     //emAM->compute_B_m_fromEB();
 }
 
@@ -1900,7 +1900,7 @@ void ElectroMagnAM::compute_B_m_fromEB()
 {
     const unsigned int nl_p = dimPrim[0];
     const unsigned int nl_d = dimDual[0];
-    const unsigned int nr_p = dimPrim[1];
+    // const unsigned int nr_p = dimPrim[1];
     const unsigned int nr_d = dimDual[1];
     const unsigned int Nmodes = El_.size();
 
@@ -1957,44 +1957,6 @@ void ElectroMagnAM::compute_B_m_fromEB()
             }
         }
 
-    }
-
-}
-
-
-
-void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
-{
-
-#ifdef _TODO_AM
-#endif
-    int Nmodes = El_.size();
-
-    Field *field;
-
-    for (int imode=0;imode<Nmodes;imode++){
-        for( vector<PrescribedField>::iterator extfield=prescribedFields.begin(); extfield!=prescribedFields.end(); extfield++ ) {
-			string name = LowerCase( extfield->savedField->name );
-			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-				field = El_[imode];
-			} else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-				field = Er_[imode];
-			} else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-				field = Et_[imode];
-			} else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-				field = Bl_[imode];
-			} else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-				field = Br_[imode];
-			} else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-				field = Bt_[imode];
-			} else {
-				field = NULL;
-			}
-
-			if( field ){
-				applyPrescribedField( field, extfield->profile, patch, time );
-			}
-        }
     }
 
 }

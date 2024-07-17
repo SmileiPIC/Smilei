@@ -17,16 +17,16 @@ public:
     
     void save_fields( Field *, Patch *patch ) override;
     
-    double By_val, Bz_val;
+    double By_val_, Bz_val_;
     
     
 private:
 
     //! Constants used for the Silver-Mueller boundary conditions
-    double Alpha, Beta, Gamma;
+    double Alpha_, Beta_, Gamma_;
     
     //! Locations to apply the profile
-    unsigned int iE, iB, iB_old;
+    unsigned int iE_, iB_, iB_old_;
     int sign_;
     
 };

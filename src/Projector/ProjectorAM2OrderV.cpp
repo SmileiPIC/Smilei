@@ -69,10 +69,11 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
                                    double * __restrict__ deltaold,
                                    std::complex<double> * __restrict__ array_eitheta_old,
                                    int npart_total,
-                                   int ipart_ref )
+                                   int ipart_ref,
+                                   int ispec )
 {
 
-    currents( emAM, particles,  istart, iend, invgf, iold, deltaold, array_eitheta_old, npart_total, ipart_ref );
+    currents( emAM, particles,  istart, iend, invgf, iold, deltaold, array_eitheta_old, npart_total, ipart_ref, ispec+1 ); //ispec+1 is passed as a marker of diag
 
     int ipo = iold[0];
     int jpo = iold[1];
@@ -131,6 +132,9 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
     int iloc0 = ipom2*nprimr_+jpom2;
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
         rho =  &( *emAM->rho_AM_[imode] )( 0 );
+        unsigned int n_species = emAM->rho_AM_s.size() / Nmode_;
+        unsigned int ifield = imode*n_species+ispec;
+        rho  = emAM->rho_AM_s    [ifield] ? &( * ( emAM->rho_AM_s    [ifield] ) )( 0 ) : &( *emAM->rho_AM_    [imode] )( 0 ) ;
         int iloc = iloc0;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             #pragma omp simd
@@ -451,7 +455,8 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
                                    double * __restrict__ deltaold,
                                    std::complex<double> * __restrict__ array_eitheta_old,
                                    int npart_total,
-                                   int ipart_ref )
+                                   int ipart_ref,
+                                   int ispec )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -533,7 +538,13 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     int iloc0 = ipom2*nprimr_+jpom2;
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
-        Jl =  &( *emAM->Jl_[imode] )( 0 );
+        if (ispec == 0) { // When diags are not needed ispec is always 0.
+            Jl =  &( *emAM->Jl_[imode] )( 0 );
+        } else { // When diags are needed ispec+1 is passed.
+            unsigned int n_species = emAM->Jl_s.size() / Nmode_;
+            unsigned int ifield = imode*n_species+ispec-1;
+            Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
+        }
         int iloc = iloc0;
         for( unsigned int i=1 ; i<5 ; i++ ) {
             iloc += nprimr_;
@@ -552,7 +563,14 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
 
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
-        Jr =  &( *emAM->Jr_[imode] )( 0 );
+        if (ispec == 0) { // When diags are not needed ispec is always 0.
+            Jr =  &( *emAM->Jr_[imode] )( 0 );
+        } else { // When diags are needed ispec+1 is passed.
+            unsigned int n_species = emAM->Jr_s.size() / Nmode_;
+            unsigned int ifield = imode*n_species+ispec-1;
+            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
+        }
+
         int iloc = iloc0 + ipom2 + 1;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             #pragma omp simd
@@ -570,7 +588,13 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     }
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
-        Jt =  &( *emAM->Jt_[imode] )( 0 );
+        if (ispec == 0) { // When diags are not needed ispec is always 0.
+            Jt =  &( *emAM->Jt_[imode] )( 0 );
+        } else { // When diags are needed ispec+1 is passed.
+            unsigned int n_species = emAM->Jt_s.size() / Nmode_;
+            unsigned int ifield = imode*n_species+ispec-1;
+            Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
+        }
         int iloc = iloc0;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             #pragma omp simd
@@ -592,7 +616,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -626,7 +650,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         //double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         //double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         //double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( emAM, particles, istart, iend, invgf->data(), iold, delta->data(), array_eitheta_old->data(), invgf->size(), ipart_ref );
+        currentsAndDensity( emAM, particles, istart, iend, invgf->data(), iold, delta->data(), array_eitheta_old->data(), invgf->size(), ipart_ref, ispec );
     }
 }
 
@@ -673,10 +697,6 @@ void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     // double r_bar[8] __attribute__( ( aligned( 64 ) ) );
 
-    //double *invR_local = &(invR_[jpom2]);
-    // double *invRd_local = &(invRd_[jpom2]);
-
-    double *invR_local = &(invR_[jpom2]);
     // Pointer for GPU and vectorization on ARM processors
     double * __restrict__ position_x = particles.getPtrPosition(0);
     double * __restrict__ position_y = particles.getPtrPosition(1);

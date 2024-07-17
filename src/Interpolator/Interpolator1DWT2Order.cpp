@@ -239,7 +239,7 @@ void Interpolator1DWT2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Partic
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
-        ip_ = ip_ - index_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
 
         // -------------------------
         // Interpolation of Phiold^(p)
@@ -298,7 +298,7 @@ void Interpolator1DWT2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, P
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    ip_ = ip_ - index_domain_begin;
+    ip_ = ip_ - i_domain_begin_;
 
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
@@ -351,7 +351,7 @@ void Interpolator1DWT2Order::envelopeFieldForIonization( ElectroMagn *EMfields, 
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
-        ip_ = ip_ - index_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
 
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)
