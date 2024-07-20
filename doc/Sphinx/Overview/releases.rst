@@ -28,6 +28,7 @@ Changes made in the repository (not released)
   * Prescribed fields in AM geometry.
   * Particle reflective boundary conditions at Rmax in AM geometry.
   * 1st order Ruyten shape function in AM geometry.
+  * Maxwell solver ``"Terzani"`` from `this article <https://doi.org/10.1016/j.cpc.2019.04.007>`_ available in ``"AMcylindrical"`` geometry.
 
 * **Bug fixes**:
 

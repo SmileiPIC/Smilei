@@ -117,7 +117,7 @@ public:
         }
 
         if( !solver ) {
-            ERROR( "Unknwon Maxwell-Ampere solver " );
+            ERROR( "Unknown Maxwell-Ampere solver " );
         }
 
         return solver;

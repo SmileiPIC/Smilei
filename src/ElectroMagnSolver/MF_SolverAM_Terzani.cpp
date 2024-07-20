@@ -10,6 +10,7 @@ MF_SolverAM_Terzani::MF_SolverAM_Terzani( Params &params )
     : SolverAM( params )
 {
     isEFilterApplied = params.Friedman_filter;
+    
     delta = ( pow(dt_ov_dl,2)-1.) / 12. ;
     // this coefficient and the associated solver are defined in 
     // D. Terzani and P. Londrillo, Computer Physics Communications 242 (2019)
@@ -48,6 +49,8 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
         cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
         int  j_glob = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
+        bool isXmin = ( static_cast<ElectroMagnAM *>( fields ) )->isXmin;
+        bool isXmax = ( static_cast<ElectroMagnAM *>( fields ) )->isXmax;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
 
         // Magnetic field Bl^(p,d)
@@ -67,19 +70,25 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
                                 +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
-        // Magnetic field Br^(d,p), left border: evolve as in Yee solver
-        int i=1;
-        #pragma omp simd 
-        for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
-            ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-                             +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+        
+        if (isXmin){
+            // Magnetic field Br^(d,p), left border: evolve as in Yee solver
+            int i=1;
+            #pragma omp simd 
+            for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
+                ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
+                                 +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+            }
         }
-        // Magnetic field Br^(d,p), right border: evolve as in Yee solver
-        i=nl_d-2;
-        #pragma omp simd 
-        for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
-            ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-                             +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+        
+        if (isXmax){
+            // Magnetic field Br^(d,p), right border: evolve as in Yee solver
+            int i=nl_d-2;
+            #pragma omp simd 
+            for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
+                ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
+                                 +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+            }
         }
         
         
@@ -92,19 +101,24 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
                                   -dt_ov_dl * delta        * ( ( *Er )( i+1, j ) - ( *Er )( i-2, j ) );
             }
         }
-        // Magnetic field Bt^(d,d), left border: evolve as in Yee solver
-        i=1;
-        #pragma omp simd 
-        for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
-            ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
-                               -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+        
+        if (isXmin){
+            // Magnetic field Bt^(d,d), left border: evolve as in Yee solver
+            int i=1;
+            #pragma omp simd 
+            for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
+                ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
+                                   -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+            }
         }
-        // Magnetic field Bt^(d,d), right border: evolve as in Yee solver
-        i=nl_d-2;
-        #pragma omp simd 
-        for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
-            ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
-                               -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+        if (isXmax){
+            // Magnetic field Bt^(d,d), right border: evolve as in Yee solver
+            int i=nl_d-2;
+            #pragma omp simd 
+            for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
+                ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
+                                   -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+            }
         }
 
         // On axis conditions
@@ -134,14 +148,19 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
                                     +   delta       * dt_ov_dl*( ( *Et )( i+1, j )-( *Et )( i-2, j ) );
                     ( *Br )( i, 1 )=( *Br )( i, 3 );
                 }
-                // left border: as in Yee solver
-                ( *Br )( 1, j )+=  Icpx*dt_ov_dr*( *El )( 1, j+1 )
-                                   +	dt_ov_dl*( ( *Et )( 1, j   )-( *Et )( 0, j ) );
-                ( *Br )( 1, 1 )=( *Br )( 1, 3 );         
-                // right border
-                ( *Br )( nl_d-2, j )+=  Icpx*dt_ov_dr*( *El )( nl_d-2, j+1 )
-                                    +	dt_ov_dl*( ( *Et )( nl_d-2, j   )-( *Et )( nl_d-3, j ) );
-                ( *Br )( nl_d-2, 1 )=( *Br )( nl_d-2, 3 );  
+                
+                if (isXmin){
+                    // left border: as in Yee solver
+                    ( *Br )( 1, j )+=  Icpx*dt_ov_dr*( *El )( 1, j+1 )
+                                       +	dt_ov_dl*( ( *Et )( 1, j   )-( *Et )( 0, j ) );
+                    ( *Br )( 1, 1 )=( *Br )( 1, 3 );
+                }
+                if (isXmax){        
+                    // right border
+                    ( *Br )( nl_d-2, j )+=  Icpx*dt_ov_dr*( *El )( nl_d-2, j+1 )
+                                        +	dt_ov_dl*( ( *Et )( nl_d-2, j   )-( *Et )( nl_d-3, j ) );
+                    ( *Br )( nl_d-2, 1 )=( *Br )( nl_d-2, 3 );
+                } 
                 
                 for( unsigned int i=0; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= ( *Bt )( i, j+1 ); // Non zero Bt mode 1 on axis.

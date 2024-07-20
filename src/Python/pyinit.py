@@ -238,7 +238,7 @@ class Main(SmileiSingleton):
                     raise Exception("Need cell_length to calculate timestep")
 
                 # Yee solver
-                if Main.maxwell_solver == 'Yee':
+                if ((Main.maxwell_solver == 'Yee') or (Main.maxwell_solver == 'Terzani')):
                     if (Main.geometry=="AMcylindrical"):
                         alpha = [0.210486, 0.591305, 3.5234, 8.51041, 15.5059]
                         if (Main.number_of_AM < 6):
@@ -251,6 +251,8 @@ class Main(SmileiSingleton):
                         if dim<1 or dim>3:
                             raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                         Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
+                    if (Main.maxwell_solver == "Terzani"):
+                        print("CFL: the maximum stable timestep for the Terzani solver may be slightly smaller.")
 
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
