@@ -52,7 +52,7 @@ npatch_x                           = 128                       # patches in the 
 Main(
     geometry                       = "AMcylindrical",
 
-    interpolation_order            = 2,
+    interpolation_order            = 1,
 
     timestep                       = dt,
     simulation_time                = T_sim,
