@@ -17,9 +17,11 @@ the announced exaflopic supercomputers will include GPUs.
 * Currently supported features:
 
   * Both AMD's GPUs and Nvidia's GPUs are supported
-  * Cartesian geometry in 2D and in 3D
+  * Cartesian geometry in 1D, 2D and in 3D , for order 2
   * Diagnostics: Field, Probes, Scalar, ParticleBinning, TrackParticles
-  * Moving Window.
+  * Moving Window
 
 * A few key features remain to be implemented (AM geometry, ionization, PML, envelope,
   additional physics), but the fundamentals of the code are ported.
+
+* Short term roadmap We are currently working on porting on GPU the following features: AM geometry (order 2) and collisions
