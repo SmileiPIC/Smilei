@@ -1,8 +1,8 @@
 #include "IonizationTunnelBSI.h"
 #include "IonizationTables.h"
-#include "continuity_tool.h"
 
 #include <cmath>
+#include <vector>
 
 #include "Particles.h"
 #include "Species.h"
@@ -379,3 +379,76 @@ void IonizationTunnelBSI::operator()( Particles *particles, unsigned int ipart_m
     } // END loop on particles
 
 } // void IonizationTunnelBSI::operator()(arg1, arg2, ...) scope end.
+
+
+int IonizationTunnelBSI::continuity_tool(unsigned int Zp1, double E, double alpha, double beta, double gamma, double E_cr, double Potential, unsigned int atomic_number_, double au_to_w0) {
+    // returns:
+    // 0 for when it chooses Tunnel ADK-PPT Ionization Rate, 
+    // 1 for when it chooses the BSI-Quadratic Ionization Rate, 
+    // 2 for when it chooses BSI-Linear Ionization Rate
+
+    // Aim is to implement the 3-piece general rate, so a method to choose between Tunnel or BSI linear or BSI quadratic.
+    // E_cr from the arguments of this function is useless at the moment. 
+    // alpha, beta, gamma coefficients are single numbers, for ion with charge state Z = Zp1 - 1, for a fixed atomic number (of the species under consideration). Z=0 is a neutral atom, Z=1 is singly ionized ion, i.e. Na^{+1}.
+    // alpha = alpha_tunnel[Z], beta = beta_tunnel[Z], gamma = gamma_tunnel[Z], where Z = Zp1 - 1 and 
+    // where alpha_tunnel[Z] uses Z and Potential[Z] (IonizationPotential (in AtomicUnits) of Element with atomic number = atomic_number_ and charge state Z (Z=0 means neutral atom))
+    // (double) Potential from arguments is the IP in AtomicUnits for current charge state Z (Z=0 is neutral atom) for a fixed atomic no = atomic_number_.
+    // Potential from the arguments is not actually needed!!! 
+    unsigned int Z = Zp1 - 1;
+
+    double Potential_in_eV = Potential * au_to_eV; // AtomicUnits to eV conversion on Potential from arguments of this function.  // not actually needed !!
+    // Potential_in_eV will be used for BSI linear rate implemented below. There we need the ratio of Potential_in_eV[] and 13.6 eV  
+    // not actually needed anymore!
+    
+    double BSI_rate_quadratic = BSI_rate_quadratic_function(Zp1, E, atomic_number_, au_to_w0); // returns rate for charge state Z and atomic_number=atomic_number_
+    double BSI_rate_linear = BSI_rate_linear_function(Zp1, E, atomic_number_, au_to_w0); // returns rate for charge state Z and atomic_number=atomic_number_
+    double Tunnel_rate = Tunnel_rate_function(Z, E, alpha, beta, gamma); // Z = Zp1 - 1;
+
+    if (BSI_rate_quadratic >= BSI_rate_linear) { // all these rates which are compared here are in SMILEI units
+        return 2; // 2 means return BSI-Linear rate
+    }
+    else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) { // this returns min(Tunnel, BSI-Quadratic)
+        return 1; // 1 means return BSI-Quadratic rate
+    }
+    else return 0; // 0 means return Tunnel rate. The min is Tunnel rate
+    
+}
+
+   
+// TUNNEL Ionization Rates
+// #############################################################
+// 1) ADK-PPT static rate in units of atomic_unit_of_freq, all physical quantities inside rate formula are in atomic units.
+double IonizationTunnelBSI::Tunnel_rate_function(unsigned int Z, double E, double alpha, double beta, double gamma) { // E is in Atomic Units
+    // Z from arguments is useless here as alpha, beta, gamma are for that Z already.
+    double one_third = 1.0/3.0;
+    double invE = 1./E ;
+    double delta = gamma * invE;
+    
+    double Tunnel_rate = beta * exp( -delta*one_third + alpha*log(delta) ); // E depenedency comes through delta
+    return Tunnel_rate; // returned rate is in SMILEI UNITS due to beta from above
+}
+
+// BSI rates
+// ##############################################################################
+// BSI rates below are calculated in atomic units, for both the Quadratic rate and the Linear rate.
+double IonizationTunnelBSI::BSI_rate_quadratic_function(unsigned int Zp1, double E, unsigned int atomic_number_, double au_to_w0) { // E-field E from arguments has to be in AtomicUnits.
+    double Z = Zp1 - 1;
+    double IH = 13.598434005136; // IP of atomic Hydrogen H, in eV.
+    double Ii = IonizationTables::ionization_energy(atomic_number_, Z);
+    double ratio_of_IPs = IH / Ii;
+    
+    double BSI_rate_quadratic = 2.4 * (pow(E,2)) * pow(ratio_of_IPs,2); // E is in atomic units here, rate is calculated in atomic units
+    return (BSI_rate_quadratic * au_to_w0); // in SMILEI UNITS
+}
+
+double IonizationTunnelBSI::BSI_rate_linear_function(unsigned int Zp1, double E, unsigned int atomic_number_, double au_to_w0) { // E-field E from arguments has to be in AtomicUnits. 
+        double Z = Zp1 - 1;
+        double IH = 13.598434005136; // IP of atomic Hydrogen H, in eV.
+        double Ii = IonizationTables::ionization_energy(atomic_number_, Z); // Ii shall be the IP of atom/ion. Instr. on RSH of equal sign returns IP of element with atomic no = atomic_number_ and charge state Z (Z=0 is neutral atom).
+        double ratio_of_IPs = IH / Ii;
+        
+        double BSI_rate_linear = 0.8 * E * pow(ratio_of_IPs, 0.5); // E is in atomic units, rate is computed in Atomic units.
+        // return BSI_rate_linear; // Returns BSI linear rate in AtomicUnits (i.e. normalized to atomic_unit_of_frequency)
+        return (BSI_rate_linear * au_to_w0); // in SMILEI units.
+}
+
