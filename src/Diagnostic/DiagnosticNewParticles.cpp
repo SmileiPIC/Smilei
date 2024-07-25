@@ -93,8 +93,8 @@ void DiagnosticNewParticles::openFile( Params &params, SmileiMPI *smpi )
         }
     }
     if( write_weight_ ) {
-        loc_weight_ = newDataset( species_group, "weight", H5T_NATIVE_DOUBLE, file_space, SMILEI_UNIT_DENSITY );
-        openPMD_->writeRecordAttributes( *loc_weight_, SMILEI_UNIT_DENSITY );
+        loc_weight_ = newDataset( species_group, "weight", H5T_NATIVE_DOUBLE, file_space, SMILEI_UNIT_WEIGHT );
+        openPMD_->writeRecordAttributes( *loc_weight_, SMILEI_UNIT_WEIGHT );
     }
     if( write_chi_ ) {
         loc_chi_ = newDataset( species_group, "chi", H5T_NATIVE_DOUBLE, file_space, SMILEI_UNIT_NONE );

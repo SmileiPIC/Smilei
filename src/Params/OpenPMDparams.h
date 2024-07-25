@@ -15,6 +15,7 @@
 #define SMILEI_UNIT_CHARGE   7
 #define SMILEI_UNIT_TIME     8
 #define SMILEI_UNIT_ENERGY   9
+#define SMILEI_UNIT_WEIGHT   10
 
 class OpenPMDparams
 {
