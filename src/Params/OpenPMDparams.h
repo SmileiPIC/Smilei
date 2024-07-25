@@ -4,7 +4,7 @@
 #include "Params.h"
 #include "H5.h"
 
-#define SMILEI_NUNITS 10
+#define SMILEI_NUNITS 11
 #define SMILEI_UNIT_NONE     0
 #define SMILEI_UNIT_EFIELD   1
 #define SMILEI_UNIT_BFIELD   2
