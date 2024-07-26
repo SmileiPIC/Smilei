@@ -1,3 +1,4 @@
+
 stages:
     - install
     - compile_default
@@ -10,11 +11,38 @@ stages:
     - compile_no_openmp
     - compile_omptasks
     - run_omptasks
+    - install_gpu
+    - test_gpu
+
+install_gpu:
+  stage: install_gpu
+  tags:
+    - ruche-ci-gpu
+  only: 
+    - ci_gpu
+  script:
+    source env_gpu_A100.sh # à faire / adapter / tester
+    # adapt script tornado -> ruche
+    # Move in test dir
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00" # generates  make -j 10 machine="cp_laptop" config="gpu_nvidia noopenmp detailed_timers verbose"
+    # create a ruche_gpu.py 
+
+# GITLAB_RUNNER_WORKDIR
+test_gpu:
+  stage: test_gpu
+  tags:
+    - ruche-ci-gpu
+  only: 
+    - ci_gpu
+
 
 install:
   stage: install
   only:
     - develop
+    - ci_gpu
  
   script:
     # Force workdir cleaning in case of retried
@@ -33,6 +61,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
+    - ci_gpu
  
   script:
     # Move in test dir
