@@ -282,10 +282,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver",
             LINK_NAMELIST + std::string("#main-variables") );
         }
-        if( interpolation_order != 2 && !is_spectral ){
-            ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 for FDTD solver.",
-            LINK_NAMELIST + std::string("#main-variables"));
-        }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
         LINK_NAMELIST + std::string("#main-variables"));
@@ -554,8 +550,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // This method is detailed in P.-L. Bourgeois and X. Davoine (2023) https://doi.org/10.1017/S0022377823000223
     use_BTIS3 = false;
     PyTools::extract( "use_BTIS3_interpolation", use_BTIS3, "Main"   );
-    if (use_BTIS3 && interpolation_order != 2 ){
-        ERROR("B-TIS3 interpolation implemented only at order 2.");
+    if (use_BTIS3 && interpolation_order != 2 && (interpolation_order != 1 || geometry != "AMcylindrical" || is_spectral==true )){
+        if (geometry=="AMcylindrical"){
+            ERROR("B-TIS3 interpolation is not implemented for PSATD solver.");
+        } else {
+            ERROR("B-TIS3 interpolation is implemented only at order 2 for Cartesian geometries.");
+        }
     }
     
     // Current filter properties
@@ -1063,19 +1063,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.",  LINK_NAMELIST + std::string("#lasers") );
             }
             vector<int> profiles_n;
+            vector<PyObject *> profiles_kept;
             for( unsigned int i = 0; i < 2; i++ ) {
-                if( profiles[i]  == Py_None ) {
-                    Py_DECREF( profiles[i] );
-                    profiles.erase( profiles.begin() );
-                } else {
-                    profiles_n.push_back( i );
+                if( profiles[i] != Py_None ) {
+                    profiles_kept.push_back( profiles[i] );
+                    profiles_n.push_back( i + 1 );
                 }
             }
-            if( profiles.size() == 0 ) {
+            if( profiles_kept.size() == 0 ) {
                 ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]", LINK_NAMELIST + std::string("#lasers") );
             }
-            for( unsigned int i=0; i<profiles.size(); i++ ) {
-                int nargs = PyTools::function_nargs( profiles[i] );
+            for( unsigned int i=0; i<profiles_kept.size(); i++ ) {
+                int nargs = PyTools::function_nargs( profiles_kept[i] );
                 if( nargs == -2 ) {
                     ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable", LINK_NAMELIST + std::string("#lasers") );
                 }
@@ -1121,7 +1120,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode ) {
-                    propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+                    propagateX( profiles_kept, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
                 }
             }
             
@@ -1362,6 +1361,9 @@ void Params::print_init()
 
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
+    if (use_BTIS3){
+        MESSAGE(1, "B-TIS3 interpolation scheme activated")
+    }
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
     MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
     MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);

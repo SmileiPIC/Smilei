@@ -548,10 +548,6 @@ void Patch::copyExchParticlesToBuffers( int ispec, Params &params )
         sendBuffer[2*iDim+0] = buffer.partSend[iDim][0];
         sendBuffer[2*iDim+1] = buffer.partSend[iDim][1];
     }
-    if( params.geometry == "AMcylindrical" ) {
-        copy[0] = copy[0] && ( Pcoordinates[0]!=0 || vecSpecies[ispec]->boundary_conditions_[0][0]=="periodic" );
-        copy[1] = copy[1] && ( Pcoordinates[0]!=params.number_of_patches[0]-1 || vecSpecies[ispec]->boundary_conditions_[0][1]=="periodic" );
-    }
     
     part.copyLeavingParticlesToBuffers( copy, sendBuffer );
     

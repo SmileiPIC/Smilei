@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of May 2024, 189 papers have been published covering a broad range of topics:
+As of May 2024, at least 192 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,6 +50,25 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Sikorski2024]
+
+    P. Sikorski, A. G. R. Thomas, S. S. Bulanov, M. Zepf and D. Seipt,
+    `Novel signatures of radiation reaction in electron–laser sidescattering`,
+    `New Journal of Physics 26 063011 (2024) <https://doi.org/10.1088/1367-2630/ad4f06>`_
+
+.. [Ivanov2024b]
+
+    K. A. Ivanov, S. A. Shulyapov, D. A. Gorlova, I. P. Tsygvintsev, M. S. Krivokorytov, I. N. Tsymbalov, R. V. Volkov and A. B. Savelev,
+    `Laser-accelerated MeV-scale collimated electron bunch from a near-critical plasma of a liquid jet target`,
+    `Laser Physics Letters 21, 7 (2024) <https://doi.org/10.1088/1612-202X/ad4bb8>`_
+
+.. [Malik2024]
+
+    H. K. Malik, S. Kumar, and D. K. Singh,
+    `Effect of trapezoidal plasma density region in bubble wakefield acceleration`,
+    `Physica Scripta 99, 075601 (2024) <https://doi.org/10.1088/1402-4896/ad4fe7>`_
+
 .. [Krafft2024b]
 
     C. Krafft, P. Savoini, and F. J. Polanco-Rodríguez,
@@ -62,7 +81,7 @@ Following is the distribution of these topics in the listed publications up to N
     `All-optical source size and emittance measurements of laser-accelerated electron beams`,
     `Physical Review Accelerators and Beams 27, 052803 (2024) <https://doi.org/10.1103/PhysRevAccelBeams.27.052803>`_
 
-.. [Ivanov2024]
+.. [Ivanov2024a]
 
     K. A. Ivanov, D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev, S. A. Shulyapov, R. V. Volkov, and A. B. Savel’ev,
     `Laser-driven pointed acceleration of electrons with preformed plasma lens`,

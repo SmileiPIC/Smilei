@@ -11,7 +11,7 @@ Interpolator1D::Interpolator1D( Patch *patch )
     : Interpolator()
 {
 
-    index_domain_begin =  patch->getCellStartingGlobalIndex( 0 );
+    i_domain_begin_ =  patch->getCellStartingGlobalIndex( 0 );
     
 }
 

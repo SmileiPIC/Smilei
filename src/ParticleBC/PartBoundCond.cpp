@@ -246,7 +246,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
         
     }//nDim_particle>1
     else if( isAM ) {
-        
+       
         // Ymax
         bc_ymin = &internal_inf_AM;
         bc_ymax = &internal_sup_AM;

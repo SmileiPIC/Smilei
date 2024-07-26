@@ -22,7 +22,7 @@ public:
 protected:
     //! Inverse of the spatial-step
     double dx_inv_;
-    unsigned int index_domain_begin;
+    unsigned int i_domain_begin_;
 };
 
 #endif

@@ -21,7 +21,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     // initialize it's member variable) we better initialize
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
-    not_spectral  = !parameters.is_pxr;
+    not_spectral_  = !parameters.is_pxr;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
@@ -72,7 +72,7 @@ currentDepositionKernel2DOnDevice( double *__restrict__ Jx,
                          int    not_spectral );
 
 extern "C" void
-currentAndDensityDepositionKernelOnDevice( double *__restrict__ Jx,
+currentAndDensityDepositionKernel2DOnDevice( double *__restrict__ Jx,
                                    double *__restrict__ Jy,
                                    double *__restrict__ Jz,
                                    double *__restrict__ rho,
@@ -200,7 +200,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         double,
                         int not_spectral )
     {
-        currentAndDensityDepositionKernelOnDevice( Jx,
+        currentAndDensityDepositionKernel2DOnDevice( Jx,
                                            Jy,
                                            Jz,
                                            rho,
@@ -380,7 +380,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         //                         i_domain_begin_, j_domain_begin_,
         //                         nprimy,
         //                         one_third,
-        //                         not_spectral );
+        //                         not_spectral_ );
         // }
 
         // Does not compute Rho !
@@ -397,7 +397,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                             i_domain_begin_, j_domain_begin_,
                             nprimy,
                             one_third,
-                            not_spectral );
+                            not_spectral_ );
 
     } else {
         // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -413,7 +413,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
             //                         i_domain_begin_, j_domain_begin_,
             //                         nprimy,
             //                         one_third,
-            //                         not_spectral );
+            //                         not_spectral_ );
             // }
         } else {
 
@@ -432,7 +432,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                       i_domain_begin_, j_domain_begin_,
                       nprimy,
                       one_third,
-                      not_spectral );
+                      not_spectral_ );
         }
     }
 }
@@ -479,7 +479,7 @@ void Projector2D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
 //                         int    i_domain_begin,
 //                         int    j_domain_begin,
 //                         int    nprimy,
-//                         int    not_spectral )
+//                         int    not_spectral_ )
 //{
 //    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 //    naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -502,7 +502,7 @@ void Projector2D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
 //                                 dx_ov_dt, dy_ov_dt,
 //                                 i_domain_begin, j_domain_begin,
 //                                 nprimy,
-//                                 not_spectral );
+//                                 not_spectral_ );
 //}
 //
 //
@@ -536,7 +536,7 @@ void Projector2D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
 //                                   int    i_domain_begin,
 //                                   int    j_domain_begin,
 //                                   int    nprimy,
-//                                   int    not_spectral )
+//                                   int    not_spectral_ )
 //{
 //    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
 //    naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -559,7 +559,7 @@ void Projector2D2OrderGPU::susceptibility( ElectroMagn */*EMfields*/,
 //                                           dx_ov_dt, dy_ov_dt,
 //                                           i_domain_begin, j_domain_begin,
 //                                           nprimy,
-//                                           not_spectral );
+//                                           not_spectral_ );
 //}
 //#endif
 

@@ -1961,44 +1961,6 @@ void ElectroMagnAM::compute_B_m_fromEB()
 
 }
 
-
-
-void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
-{
-
-#ifdef _TODO_AM
-#endif
-    int Nmodes = El_.size();
-
-    Field *field;
-
-    for (int imode=0;imode<Nmodes;imode++){
-        for( vector<PrescribedField>::iterator extfield=prescribedFields.begin(); extfield!=prescribedFields.end(); extfield++ ) {
-			string name = LowerCase( extfield->savedField->name );
-			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-				field = El_[imode];
-			} else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-				field = Er_[imode];
-			} else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-				field = Et_[imode];
-			} else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-				field = Bl_[imode];
-			} else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-				field = Br_[imode];
-			} else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-				field = Bt_[imode];
-			} else {
-				field = NULL;
-			}
-
-			if( field ){
-				applyPrescribedField( field, extfield->profile, patch, time );
-			}
-        }
-    }
-
-}
-
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
      cField2D *field2D=static_cast<cField2D *>( my_field );

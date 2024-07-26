@@ -3,6 +3,7 @@
 
 #include "Projector.h"
 #include "Projector1D2Order.h"
+#include "Projector1D2OrderGPU.h"
 #include "Projector1D4Order.h"
 #include "Projector2D2Order.h"
 #include "Projector2D2OrderGPU.h"
@@ -11,6 +12,7 @@
 #include "Projector3D2OrderGPU.h"
 #include "Projector3D4Order.h"
 #include "ProjectorAM1Order.h"
+#include "ProjectorAM1OrderRuyten.h"
 #include "ProjectorAM2Order.h"
 
 #include "Projector2D2OrderV.h"
@@ -18,6 +20,7 @@
 #include "Projector3D2OrderV.h"
 #include "Projector3D4OrderV.h"
 #include "ProjectorAM2OrderV.h"
+#include "ProjectorAM1OrderRuytenV.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -33,7 +36,11 @@ public:
         // 1Dcartesian simulation
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
-            Proj = new Projector1D2Order( params, patch );
+            #if defined( SMILEI_ACCELERATOR_GPU )
+                Proj = new Projector1D2OrderGPU( params, patch );
+            #else
+                Proj = new Projector1D2Order( params, patch );
+            #endif
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
             Proj = new Projector1D4Order( params, patch );
         }
@@ -42,7 +49,7 @@ public:
         // ---------------
         else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #if defined( SMILEI_ACCELERATOR_GPU )
                     Proj = new Projector2D2OrderGPU( params, patch );
                 #else
                     Proj = new Projector2D2Order( params, patch );
@@ -64,7 +71,7 @@ public:
         // ---------------
         else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                #if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #if defined( SMILEI_ACCELERATOR_GPU )
                     Proj = new Projector3D2OrderGPU( params, patch );
                 #else
                     Proj = new Projector3D2Order( params, patch );
@@ -89,10 +96,18 @@ public:
                 Proj = new ProjectorAM1Order( params, patch );
             } else {
                 if( !vectorization ) {
-                    Proj = new ProjectorAM2Order( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Proj = new ProjectorAM1OrderRuyten( params, patch );
+                    } else {
+                        Proj = new ProjectorAM2Order( params, patch );
+                    }
                 }
                 else {
-                    Proj = new ProjectorAM2OrderV( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Proj = new ProjectorAM1OrderRuytenV( params, patch );
+                    } else {
+                        Proj = new ProjectorAM2OrderV( params, patch );
+                    }
                 }
             }
         } else {

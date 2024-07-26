@@ -521,7 +521,9 @@ int main( int argc, char *argv[] )
             if( params.Laser_Envelope_model ) {
                 vecPatches.runEnvelopeModule( params, &smpi, simWindow, time_dual, timers, itime );
             } // end condition if Laser Envelope Model is used
-
+            
+            vecPatches.initExchParticles( params, &smpi, simWindow, time_dual, timers, itime );
+            
             // Sum densities
             vecPatches.sumDensities( params, time_dual, timers, itime, simWindow, &smpi );
 
@@ -629,8 +631,7 @@ int main( int argc, char *argv[] )
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
         {
             // finalize particle exchanges and sort particles
-            vecPatches.finalizeExchParticlesAndSort( params, &smpi, simWindow,
-                                                 time_dual, timers, itime );
+            vecPatches.finalizeExchParticlesAndSort( params, &smpi, simWindow, time_dual, timers, itime );
 
             // Particle merging
             vecPatches.mergeParticles(params, time_dual,timers, itime );

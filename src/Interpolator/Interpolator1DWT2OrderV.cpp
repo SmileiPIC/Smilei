@@ -178,7 +178,7 @@ void Interpolator1DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &p
         coeffd[1] = ( 0.75-var1 );
         coeffd[2] = 0.5 * ( var1+xjmxi+0.25 );
 
-        idx -= index_domain_begin;
+        idx -= i_domain_begin_;
 
         // Primal
         ipx      = round( xjn );    // index of the central point
@@ -190,7 +190,7 @@ void Interpolator1DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &p
         coeffpt[1] = 1.0 - 2.0 * var1;
         coeffpt[2] = var1 + 0.5 * xjmxi;
 
-        ipx -= index_domain_begin;
+        ipx -= i_domain_begin_;
 
         // // Interpolate the fields from the Dual grid : Ex, By, Bz
         Epart_x[ipart] = coeffd[0] * Ex[idx-1]   + coeffd[1] * Ex[idx]   + coeffd[2] * Ex[idx+1];
@@ -331,7 +331,7 @@ void Interpolator1DWT2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Parti
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
-        ip_ = ip_ - index_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
 
         // -------------------------
         // Interpolation of Phiold^(p)
@@ -390,7 +390,7 @@ void Interpolator1DWT2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, 
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
-    ip_ = ip_ - index_domain_begin;
+    ip_ = ip_ - i_domain_begin_;
 
     // -------------------------
     // Interpolation of Env_A_abs_^(p)
@@ -443,7 +443,7 @@ void Interpolator1DWT2OrderV::envelopeFieldForIonization( ElectroMagn *EMfields,
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
-        ip_ = ip_ - index_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
 
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)

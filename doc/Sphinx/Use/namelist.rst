@@ -143,8 +143,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Interpolation order, defines particle shape function:
 
+  * ``1``  : 2 points stencil in r with Ruyten correction, 3 points stencil in x. Supported only in AM geometry.
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
+
+  The Ruyten correction is the scheme described bu equation 4.2 in `this paper <https://www.sciencedirect.com/science/article/abs/pii/S0021999183710703>`_ .
+  It allows for a more accurate description on axis at the cost of a higher statistic noise so it often requires the use of more macro-particles.
 
 .. py:data:: interpolator
 
@@ -2009,8 +2013,8 @@ at the beginning of the simulation using the ``ExternalField`` block::
 
 .. py:data:: field
 
-  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
-  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_mode_m"``, ``"Br_mode_m"``, ``"Bt_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"``, ``"Bt_m_mode_m"``, ``"A_mode_1"``, ``"A0_mode_1"`` .
 
 .. py:data:: profile
 
@@ -2055,12 +2059,24 @@ This feature is accessible using the ``PrescribedField`` block::
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"`` or ``"Bt_m_mode_m"``.
 
 .. warning::
 
   When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
   These fields are those used in the particle pusher, and are defined at integer time-steps.
+
+.. warning::
+
+  When prescribing a field in AM geometry, the mode "m" must be specified explicitly in the name of the field and the profile
+  must return a complex value.
+
+.. warning::
+
+  ``PrescribedFields`` are not visible in the ``Field`` diagnostic, 
+  but can be visualised through ``Probes`` and with the fields attributes of ``TrackParticles`` 
+  (since they sample the total field acting on the macro-particles).
 
 .. py:data:: profile
 
@@ -3347,19 +3363,20 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Note:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
-  They are actually the velocities multiplied by the lorentz factor, i.e.,
-  :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
-  inside the ``filter`` function (not for the output of the diagnostic).
-
-.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
-  This number is set to 0 at the beginning of the simulation. **Only after particles have
-  passed the filter**, they acquire a positive ``id``.
-
-.. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
-  accessible within the ``filter`` function. Its value is always equal to the current
-  iteration number of the PIC loop. The current time of the simulation is thus
-  ``Main.iteration * Main.timestep``.
+.. Note::
+  
+  * In the ``filter`` function only, the ``px``, ``py`` and ``pz`` quantities
+    are not exactly the momenta.
+    They are actually the velocities multiplied by the lorentz factor, i.e.,
+    :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`.
+    This is *not* true for the output of the diagnostic.
+  * The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+    This number is set to 0 at the beginning of the simulation. **Only after particles have
+    passed the filter**, they acquire a positive ``id``.
+  * For advanced filtration, Smilei provides the quantity ``Main.iteration``,
+    accessible within the ``filter`` function. Its value is always equal to the current
+    iteration number of the PIC loop. The current time of the simulation is thus
+    ``Main.iteration * Main.timestep``.
 
 .. py:data:: attributes
 
@@ -3371,6 +3388,11 @@ for instance::
   their statistical weight (``"w"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
+
+.. Note:: Here, interpolated fields are normally computed after the Maxwell solver.
+  They may thus differ by half a timestep from those computed at the middle of the
+  timestep to push particles. When exact values are needed, use the option
+  :py:data:`keep_interpolated_fields`.
 
 ----
 

@@ -23,42 +23,23 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* GPU:
+* **Features**:
 
-  * Compilation simplified and better documented.
+  * Prescribed fields in AM geometry.
+  * Particle reflective boundary conditions at Rmax in AM geometry.
+  * 1st order Ruyten shape function in AM geometry.
 
-* Features:
+* **Bug fixes**:
 
-  * Relativistic field initialization now supports multiple species and both direction propagations.
-  * Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
-  * The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
-    (the transverse coordinate of the focus in this geometry is zero).
-  * Small improvements in PML for envelope model (AM and 2D).
-  * Deprecated ``smilei_rand_max``.
-  * New namelist variables ``smilei_omp_threads`` and ``smilei_total_cores``.
+  * Tunnel ionization was wrong in some cases for high atomic numbers.
+  * Custom functions in ``ParticleBinning`` crashed with python 3.12.
+  * Species-specific diagnostics in AM geometry with vectorization.
+  * Happi's ``average`` argument would sometimes be missing the last bin.
 
-* Happi:
-
-  * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
-  * The list of available scalars can be obtained from ``getScalars()``.
-  * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
-  * New argument ``timestep_indices`` as an alternative to ``timesteps``.
-  * Changed coordinate reference for 2D probe in 3D or AM geometry
-    (zero is the box origin projected orthogonally on the probe plane).
-
-* Documentation:
-
-  * Dark theme (click the switch on the bottom left, or set browser preferences).
-
-* Bug fixes:
-
-  * ``dump_minutes`` often failed to write some checkpoint files.
-  * ``"auto"`` limits in ``ParticleBinning`` could fail with only one side on ``"auto"``.
-  * CFL condition is more accurately determined in ``AMcylindrical`` and the feature ``timestep_over_CFL`` should be more reliable in that geometry.
 
 ----
 
-Projects
+Ongoing projects
 ^^^^^^^^^^^^^^^^
 
 * Already available, but experimental:
@@ -72,6 +53,46 @@ Projects
 
   * Spectral solvers
 
+
+----
+
+Release 5.1
+^^^^^^^^^^^^^^^^^^^^^
+
+* **GPU**:
+
+  * ``1Dcartesian`` geometry now available.
+  * Compilation simplified and better documented.
+  * Improved performance of particle sorting.
+
+* **Features**:
+
+  * Relativistic field initialization now supports multiple species and both direction propagations.
+  * Added the argument ``phase_offset`` in laser definitions such as ``LaserGaussian2D``.
+  * The ``LaserGaussianAM`` definition will only use one coordinate for its ``focus`` argument 
+    (the transverse coordinate of the focus in this geometry is zero).
+  * Small improvements in PML for envelope model (AM and 2D).
+  * Deprecated ``smilei_rand_max``.
+  * New namelist variables ``smilei_omp_threads`` and ``smilei_total_cores``.
+
+* **Happi**:
+
+  * In ``Scalar``, it is now possible to make an operation on scalars such as ``"Uelm+Ukin"``.
+  * The list of available scalars can be obtained from ``getScalars()``.
+  * New arguments ``xoffset`` and ``yoffset`` to shift plot coordinates.
+  * New argument ``timestep_indices`` as an alternative to ``timesteps``.
+  * Changed coordinate reference for 2D probe in 3D or AM geometry
+    (zero is the box origin projected orthogonally on the probe plane).
+
+* **Documentation**:
+
+  * Dark theme (click the switch on the bottom left, or set browser preferences).
+
+* **Bug fixes** :
+
+  * ``dump_minutes`` often failed to write some checkpoint files.
+  * ``"auto"`` limits in ``ParticleBinning`` could fail with only one side on ``"auto"``.
+  * CFL condition is more accurately determined in ``AMcylindrical`` and the feature ``timestep_over_CFL`` should be more reliable in that geometry.
 
 ----
 

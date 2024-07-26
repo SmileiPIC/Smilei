@@ -3,7 +3,6 @@
 #ifndef Projector2D2OrderGPUKernelCUDAHIP_H
 #define Projector2D2OrderGPUKernelCUDAHIP_H
 
-
 #if defined( SMILEI_ACCELERATOR_GPU )
 
 #if defined( __HIP__ )
@@ -20,8 +19,7 @@
 
 namespace cudahip2d {
 //static
-void
-    currentDepositionKernel2D( double *__restrict__ host_Jx,
+void currentDepositionKernel2D( double *__restrict__ host_Jx,
                                double *__restrict__ host_Jy,
                                double *__restrict__ host_Jz,
                                int Jx_size,
@@ -46,11 +44,10 @@ void
                                int    i_domain_begin,
                                int    j_domain_begin,
                                int    nprimy,
-                               int    not_spectral );
+                               int    not_spectral_ );
 
 //static 
-inline void
-    currentAndDensityDepositionKernel(
+void currentAndDensityDepositionKernel2D(
                                 double *__restrict__ host_Jx,
                                 double *__restrict__ host_Jy,
                                 double *__restrict__ host_Jz,
@@ -78,7 +75,7 @@ inline void
                                 int    i_domain_begin,
                                 int    j_domain_begin,
                                 int    nprimy,
-                                int    not_spectral );
+                                int    not_spectral_ );
 
 } // namespace cudahip2d
 

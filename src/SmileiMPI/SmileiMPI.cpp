@@ -1318,9 +1318,9 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
 
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
-                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                MPI_Isend( &( embc->By_val_ ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
                 irequest++;
-                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                MPI_Isend( &( embc->Bz_val_ ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
                 irequest++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border
@@ -1854,9 +1854,9 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, bool recv_xmin_bc )
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
                 MPI_Status status;
-                MPI_Recv( &( embc->By_val ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+                MPI_Recv( &( embc->By_val_ ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
                 tag++;
-                MPI_Recv( &( embc->Bz_val ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+                MPI_Recv( &( embc->Bz_val_ ), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
                 tag++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border

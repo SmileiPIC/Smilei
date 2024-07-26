@@ -1398,10 +1398,9 @@ int Particles::eraseLeavingParticles()
     return 0;
 }
 
-int Particles::injectParticles( Particles */*particles_to_inject*/ )
+int Particles::addParticles( Particles* particles_to_inject )
 {
     ERROR( "Device only feature, should not have come here! On CPU it's done in sortParticles." );
-    return 0;
 }
 
 void Particles::importAndSortParticles( Particles */*particles_to_inject*/ )

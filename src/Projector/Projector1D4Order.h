@@ -33,7 +33,6 @@ public:
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
 
 private:
-    double dx_ov_dt;
     static constexpr double dble_1_ov_384   = 1.0/384.0;
     static constexpr double dble_1_ov_48    = 1.0/48.0 ;
     static constexpr double dble_1_ov_16    = 1.0/16.0 ;
