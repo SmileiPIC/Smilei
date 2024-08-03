@@ -2,35 +2,30 @@
 #define IONIZATIONTUNNEL_H
 
 #include <cmath>
-
+#include <functional>
 #include <vector>
 
 #include "Ionization.h"
 #include "Tools.h"
 
 class Particles;
+struct electricFields;
 
 //! calculate the particle tunnel ionization
 class IonizationTunnel : public Ionization
 {
+   public:
+    IonizationTunnel(Params &params, Species *species);
 
-public:
-    //! Constructor for IonizationTunnel: with no input argument
-    IonizationTunnel( Params &params, Species *species );
-    
-    //! apply the Tunnel Ionization model to the species (with ionization current)
-    void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
+    void operator()(Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *,
+                    int ipart_ref = 0) override;
+
     //! method for tunnel ionization with tasks
-    void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0 ) override;
-    
-private:
-    unsigned int atomic_number_;
-    std::vector<double> Potential;
-    std::vector<double> Azimuthal_quantum_number;
-    
-    double one_third;
-    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
-};
+    void ionizationTunnelWithTasks(Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *,
+                                   int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0) override;
 
+   private:
+    double ionizationRateTunnel(const int Z, const electricFields E);
+};
 
 #endif
