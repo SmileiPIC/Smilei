@@ -315,20 +315,20 @@ void Projector1D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     
-    Jx_  =  &( *EMfields->Jx_ )( 0 );
-    Jy_  =  &( *EMfields->Jy_ )( 0 );
-    Jz_  =  &( *EMfields->Jz_ )( 0 );
-    rho_ =  &( *EMfields->rho_ )( 0 );
+    double *Jx  =  &( *EMfields->Jx_ )( 0 );
+    double *Jy  =  &( *EMfields->Jy_ )( 0 );
+    double *Jz  =  &( *EMfields->Jz_ )( 0 );
+    double *rho =  &( *EMfields->rho_ )( 0 );
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currents( Jx_, Jy_, Jz_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+                currents( Jx, Jy, Jz, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
             }
         } else {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
-                currentsAndDensity( Jx_, Jy_, Jz_, rho_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+                currentsAndDensity( Jx, Jy, Jz, rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
             }
         }
         // Otherwise, the projection may apply to the species-specific arrays
