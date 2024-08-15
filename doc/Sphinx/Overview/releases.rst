@@ -16,13 +16,27 @@ Get Smilei
 
 You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smilei/releases>`_
 
-..
-.. ----
+----
 
-.. .. _latestVersion:
+.. _latestVersion:
 
-.. Changes made in the repository (not released)
-.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changes made in the repository (not released)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **Features**:
+
+  * Prescribed fields in AM geometry.
+  * Particle reflective boundary conditions at Rmax in AM geometry.
+  * 1st order Ruyten shape function in AM geometry.
+
+* **Bug fixes**:
+
+  * Tunnel ionization was wrong in some cases for high atomic numbers.
+  * Custom functions in ``ParticleBinning`` crashed with python 3.12.
+  * Species-specific diagnostics in AM geometry with vectorization.
+  * Happi's ``average`` argument would sometimes be missing the last bin.
+  * 1D projector on GPU without diagnostics
+
 
 ----
 

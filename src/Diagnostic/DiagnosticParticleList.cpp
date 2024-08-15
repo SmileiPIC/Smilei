@@ -299,7 +299,7 @@ void DiagnosticParticleList::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
     if( write_weight_ ) {
         fill_buffer( vecPatches, iprop, data_double );
         #pragma omp master
-        write_scalar_double( loc_weight_, "weight", data_double[0], file_space, mem_space, SMILEI_UNIT_DENSITY );
+        write_scalar_double( loc_weight_, "weight", data_double[0], file_space, mem_space, SMILEI_UNIT_WEIGHT );
     }
     
     iprop++;

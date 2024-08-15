@@ -12,6 +12,7 @@
 #include "Projector3D2OrderGPU.h"
 #include "Projector3D4Order.h"
 #include "ProjectorAM1Order.h"
+#include "ProjectorAM1OrderRuyten.h"
 #include "ProjectorAM2Order.h"
 
 #include "Projector2D2OrderV.h"
@@ -19,6 +20,7 @@
 #include "Projector3D2OrderV.h"
 #include "Projector3D4OrderV.h"
 #include "ProjectorAM2OrderV.h"
+#include "ProjectorAM1OrderRuytenV.h"
 
 #include "Params.h"
 #include "Patch.h"
@@ -94,10 +96,18 @@ public:
                 Proj = new ProjectorAM1Order( params, patch );
             } else {
                 if( !vectorization ) {
-                    Proj = new ProjectorAM2Order( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Proj = new ProjectorAM1OrderRuyten( params, patch );
+                    } else {
+                        Proj = new ProjectorAM2Order( params, patch );
+                    }
                 }
                 else {
-                    Proj = new ProjectorAM2OrderV( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Proj = new ProjectorAM1OrderRuytenV( params, patch );
+                    } else {
+                        Proj = new ProjectorAM2OrderV( params, patch );
+                    }
                 }
             }
         } else {

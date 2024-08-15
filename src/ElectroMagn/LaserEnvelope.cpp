@@ -48,7 +48,14 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch ) :
     if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
         ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
-
+    WARNING("CFL: no general CFL condition is available for the envelope solvers. The maximum stable timestep may be lower than the CFL limit of the electromagnetic solver.");
+    if (envelope_solver == "explicit"){
+        WARNING("Envelope solver: more accurate results (albeit at a slightly higher computational cost), expecially at longer distances, require the 'explicit_reduced_dispersion' envelope solver.")
+    }
+    if (envelope_solver == "explicit_reduced_dispersion"){
+        WARNING("CFL: The maximum stable timestep of the 'explicit_reduced_dispersion' envelope solver may be lower than the one of the 'explicit' solver.")
+    }
+    
     PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
     PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
     if ((ellipticity != 0.) and (ellipticity != 1.)){

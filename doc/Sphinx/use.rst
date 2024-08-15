@@ -12,3 +12,4 @@ Use
    Use/post-processing
    Use/contribute
    Use/troubleshoot
+   Use/GPU_version

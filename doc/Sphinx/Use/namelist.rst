@@ -143,8 +143,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Interpolation order, defines particle shape function:
 
+  * ``1``  : 2 points stencil in r with Ruyten correction, 3 points stencil in x. Supported only in AM geometry.
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
+
+  The Ruyten correction is the scheme described bu equation 4.2 in `this paper <https://www.sciencedirect.com/science/article/abs/pii/S0021999183710703>`_ .
+  It allows for a more accurate description on axis at the cost of a higher statistic noise so it often requires the use of more macro-particles.
 
 .. py:data:: interpolator
 
@@ -2009,8 +2013,8 @@ at the beginning of the simulation using the ``ExternalField`` block::
 
 .. py:data:: field
 
-  Field name in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``
-  Field name in AM geometry: ``"El"``, ``"Er"``, ``"Et"``, ``"Bl"``, ``"Br"``, ``"Bt"``, ``"Bl_m"``, ``"Br_m"``, ``"Bt_m"``, ``"A"``, ``"A0"`` .
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``, ``"Bx_m"``, ``"By_m"``, ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_mode_m"``, ``"Br_mode_m"``, ``"Bt_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"``, ``"Bt_m_mode_m"``, ``"A_mode_1"``, ``"A0_mode_1"`` .
 
 .. py:data:: profile
 
@@ -2055,12 +2059,24 @@ This feature is accessible using the ``PrescribedField`` block::
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  Field names in Cartesian geometries: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  Field names in AM geometry: ``"El_mode_m"``, ``"Er_mode_m"``, ``"Et_mode_m"``, ``"Bl_m_mode_m"``, ``"Br_m_mode_m"`` or ``"Bt_m_mode_m"``.
 
 .. warning::
 
   When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
   These fields are those used in the particle pusher, and are defined at integer time-steps.
+
+.. warning::
+
+  When prescribing a field in AM geometry, the mode "m" must be specified explicitly in the name of the field and the profile
+  must return a complex value.
+
+.. warning::
+
+  ``PrescribedFields`` are not visible in the ``Field`` diagnostic, 
+  but can be visualised through ``Probes`` and with the fields attributes of ``TrackParticles`` 
+  (since they sample the total field acting on the macro-particles).
 
 .. py:data:: profile
 
