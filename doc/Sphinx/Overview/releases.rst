@@ -35,6 +35,7 @@ Changes made in the repository (not released)
   * Custom functions in ``ParticleBinning`` crashed with python 3.12.
   * Species-specific diagnostics in AM geometry with vectorization.
   * Happi's ``average`` argument would sometimes be missing the last bin.
+  * 1D projector on GPU without diagnostics
 
 
 ----
