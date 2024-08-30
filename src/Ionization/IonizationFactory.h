@@ -57,19 +57,19 @@ class IonizationFactory
     }
            
   private:
-    inline static void checkMaxCharge(const Species *species) {
+    static void checkMaxCharge(const Species *species) {
         if ( species->max_charge_ > ( int )species->atomic_number_ ) {
             ERROR( "Charge > atomic_number for species " << species->name_ );
         }
     }
 
-    inline static void checkTestParticle(const Species *species) {
+    static void checkTestParticle(const Species *species) {
         if( species->particles->is_test ) {
             ERROR( "Cannot ionize test species " << species->name_ );
         }
     }
 
-    inline static void checkNotLaserEnvelopeModel(const Params &params) {
+    static void checkNotLaserEnvelopeModel(const Params &params) {
         if ( params.Laser_Envelope_model ) {
             ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
         }
