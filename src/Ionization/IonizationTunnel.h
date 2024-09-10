@@ -1,5 +1,5 @@
-#ifndef TEMPLATE_H
-#define TEMPLATE_H
+#ifndef IONIZATIONTUNNEL_H
+#define IONIZATIONTUNNEL_H
 
 #include <cmath>
 #include <functional>
