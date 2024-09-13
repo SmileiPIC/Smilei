@@ -503,7 +503,7 @@ inline double IonizationTunnel<3>::ionizationRate<1>(const int Z, const electric
     return au_to_w0 * (0.8 * E.abs * pow(ratio_of_IPs, 0.5));
 }
 
-// BSI Linear
+// BSI Quadratic 
 template <>
 template <>
 inline double IonizationTunnel<3>::ionizationRate<2>(const int Z, const electricFields E)
