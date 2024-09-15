@@ -8,8 +8,6 @@
 #include "Ionization.h"
 #include "Tools.h"
 
-// because defining in header
-#include "IonizationTables.h"
 #include "Particles.h"
 #include "Species.h"
 
@@ -203,9 +201,6 @@ IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species);
 
 template <>
 double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const double oldZ);
-
-
-
 
 template <int Model>
 void IonizationTunnel<Model>::ionizationTunnelWithTasks( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, 
