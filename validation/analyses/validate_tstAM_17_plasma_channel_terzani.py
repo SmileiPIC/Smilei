@@ -10,7 +10,7 @@ Validate("Ey field at last iteration", Ey, 0.01)
 
 # COMPARE THE Ex FIELD in polarization plane
 Ex      = S.Probe(1, "Ex",timestep_indices=-1).getData()[0][::4,::4]
-Validate("Ey field at last iteration", Ex, 0.01)
+Validate("Ex field at last iteration", Ex, 0.01)
 
 # COMPARE THE BzBTIS3 FIELD in polarization plane
 BzBTIS3 = S.Probe(1, "BzBTIS3",timestep_indices=-1).getData()[0][::4,::4]
