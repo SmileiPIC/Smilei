@@ -82,6 +82,8 @@ void ProjectorAM1OrderRuyten::currents(   ElectroMagnAM *emAM,
 
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
+    }
+    for( unsigned int i=0; i<4; i++ ) {
         Sr1[i] = 0.;
     }
     Sl0[0] = 0.;

@@ -185,8 +185,6 @@ Typically ``CXXFLAGS += -ta=tesla:cc80`` for ``nvhpc`` <23.4 and
 
 .. warning::
   
-  * We are aware of issues with CUDA >12.0, fixes are being tested but are not deployed yet.
-    We recommend CUDA 11.x at the moment.
   * The hdf5 module should be compiled with the nvidia/cray compiler;
     openmpi as well, but depending on the nvhpc module it might not be needed as it can be included in the nvhpc module.
 

@@ -868,7 +868,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
-            ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            //ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            WARNING( "Collisions in AM geometry is experimental and valid only with a single mode" );
         }
 
     }
@@ -1361,6 +1362,9 @@ void Params::print_init()
 
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
+    if (use_BTIS3){
+        MESSAGE(1, "B-TIS3 interpolation scheme activated")
+    }
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
     MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
     MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);
