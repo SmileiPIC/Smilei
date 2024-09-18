@@ -42,7 +42,13 @@ struct BinaryProcessData
     double vrel, vrel_corr;
     
     //! Debye length squared
-    double debye2;
+    double debye;
+    
+    //! Thomas-Fermi length
+    double lTF;
+    
+    //! Product of atomic numbers (for e-i screening)
+    double Z1Z2;
     
     double term1, term3, term5, n123, n223;
 };

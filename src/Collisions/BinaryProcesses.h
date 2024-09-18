@@ -15,6 +15,7 @@ public:
         std::vector<unsigned int> species_group1,
         std::vector<unsigned int> species_group2,
         bool intra,
+        int screening_group,
         std::vector<BinaryProcess*> processes,
         int every,
         int debug_every,
@@ -53,6 +54,9 @@ private:
     
     //! Whether the two groups are the same
     bool intra_;
+    
+    //! Group that makes atomic screening (e-i collisions)
+    int screening_group_;
     
     //! Number of timesteps between each pairing
     unsigned int every_;

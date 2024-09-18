@@ -51,6 +51,28 @@ public:
             intra = false;
         }
         
+        // Extract atomic numbers
+        std::vector<unsigned int> Z0( sgroup[0].size() );
+        std::vector<unsigned int> Z1( sgroup[1].size() );
+        for(  unsigned int i0=0; i0<sgroup[0].size(); i0++ ) {
+            Z0[i0] = vecSpecies[sgroup[0][i0]]->atomic_number_;
+        }
+        for(  unsigned int i1=0; i1<sgroup[1].size(); i1++ ) {
+            Z1[i1] = vecSpecies[sgroup[1][i1]]->atomic_number_;
+        }
+        
+        // Figure out if there should be atomic screening (Thomas-Fermi)
+        // If all electrons, or all ions, or all unknown, there is no screening
+        std::vector<double> lTF; // Thomas-Fermi length
+        bool anyZ0 = any_of( Z0.begin(), Z0.end(), []( double z ) { return z > 0.; } );
+        bool anyZ1 = any_of( Z1.begin(), Z1.end(), []( double z ) { return z > 0.; } );
+        int screening_group = 0; // no screening
+        if( anyZ0 && !anyZ1 ) {
+            screening_group = 1;
+        } else if( !anyZ0 && anyZ1 ) {
+            screening_group = 2;
+        }
+        
         // Number of timesteps between each binary processes
         int every = 1; // default
         PyTools::extract( "every", every, "Collisions", n_binary_processes );
@@ -313,6 +335,7 @@ public:
             sgroup[0],
             sgroup[1],
             intra,
+            screening_group,
             processes,
             every,
             debug_every,

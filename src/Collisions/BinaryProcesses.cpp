@@ -25,6 +25,7 @@ BinaryProcesses::BinaryProcesses(
     vector<unsigned int> species_group1,
     vector<unsigned int> species_group2,
     bool intra,
+    int screening_group,
     vector<BinaryProcess*> processes,
     int every,
     int debug_every,
@@ -35,6 +36,7 @@ BinaryProcesses::BinaryProcesses(
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     intra_( intra ),
+    screening_group_( screening_group ),
     every_( every ),
     debug_every_( debug_every ),
     filename_( filename )
@@ -55,6 +57,7 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs )
     species_group1_     = BPs->species_group1_    ;
     species_group2_     = BPs->species_group2_    ;
     intra_              = BPs->intra_             ;
+    screening_group_    = BPs->screening_group_   ;
     every_              = BPs->every_             ;
     debug_every_        = BPs->debug_every_       ;
     timesteps_frozen_   = BPs->timesteps_frozen_  ;
@@ -216,6 +219,20 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     // Info for ionization
     D.electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
     
+    // Store info for screening (e-i collisions)
+    vector<double> screening_Z; // atomic number
+    vector<double> lTF; // thomas-fermi length
+    if( screening_group_ > 0 ) {
+        auto &sg = screening_group_ == 1 ? species_group1_ : species_group2_;
+        screening_Z.resize( sg.size() );
+        lTF.resize( sg.size() );
+        for( size_t i = 0; i < sg.size(); i++ ) {
+            screening_Z[i] = (double) patch->vecSpecies[sg[i]]->atomic_number_;
+            lTF[i] = 3.1255e-19 // (9*pi^2/16)^(1/3) * a0 /c
+                *params.reference_angular_frequency_SI * pow( screening_Z[i], -1/3 );
+        }
+    }
+    
     // Loop bins of particles
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
@@ -284,7 +301,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         
         // Set the debye length
         if( BinaryProcesses::debye_length_required_ ) {
-            D.debye2 = patch->debye_length_squared[ibin];
+            D.debye = sqrt( patch->debye_length_squared[ibin] );
         }
         
         // Pre-calculate some numbers before the big loop
@@ -342,6 +359,17 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             D.m1 = mass1[ispec1];
             D.m2 = mass2[ispec2];
             D.m12 = D.m1 / D.m2;
+            
+            // Get screening length
+            if( screening_group_ == 0 ) {
+                D.lTF = 0.;
+            } else if( screening_group_ == 1 ) {
+                D.lTF = lTF[ispec1];
+                D.Z1Z2 = screening_Z[ispec1];
+            } else {
+                D.lTF = lTF[ispec2];
+                D.Z1Z2 = screening_Z[ispec2];
+            }
             
             // Calculate the timestep correction
             D.dt_correction = D.maxW * dt_corr;
