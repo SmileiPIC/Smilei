@@ -51,21 +51,10 @@ public:
             intra = false;
         }
         
-        // Extract atomic numbers
-        std::vector<unsigned int> Z0( sgroup[0].size() );
-        std::vector<unsigned int> Z1( sgroup[1].size() );
-        for(  unsigned int i0=0; i0<sgroup[0].size(); i0++ ) {
-            Z0[i0] = vecSpecies[sgroup[0][i0]]->atomic_number_;
-        }
-        for(  unsigned int i1=0; i1<sgroup[1].size(); i1++ ) {
-            Z1[i1] = vecSpecies[sgroup[1][i1]]->atomic_number_;
-        }
-        
         // Figure out if there should be atomic screening (Thomas-Fermi)
         // If all electrons, or all ions, or all unknown, there is no screening
-        std::vector<double> lTF; // Thomas-Fermi length
-        bool anyZ0 = any_of( Z0.begin(), Z0.end(), []( double z ) { return z > 0.; } );
-        bool anyZ1 = any_of( Z1.begin(), Z1.end(), []( double z ) { return z > 0.; } );
+        bool anyZ0 = any_of( sgroup[0].begin(), sgroup[0].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
+        bool anyZ1 = any_of( sgroup[1].begin(), sgroup[1].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
         int screening_group = 0; // no screening
         if( anyZ0 && !anyZ1 ) {
             screening_group = 1;
