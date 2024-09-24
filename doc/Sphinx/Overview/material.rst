@@ -50,6 +50,12 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+.. [Yao2024]
+
+  Weipeng Yao, Ronan Lelièvre, Tessa Waltenspiel, Itamar Cohen, Amokrane Allaoua, Patrizio Antici, Arie Beck, Erez Cohen, Xavier Davoine, Emmanuel d’Humières, Quentin Ducasse, Evgeny Filippov, Cort Gautier, Laurent Gremillet, Pavlos Koseoglou, David Michaeli, Dimitrios Papadopoulos, Sergey Pikuz, Ishay Pomerantz, Francois Trompier, Yuran Yuan, Francois Mathieu and Julien Fuchs,
+  `Enhanced Energy, Conversion Efficiency and Collimation of Protons Driven by High-Contrast and Ultrashort Laser Pulses`,
+  `Applied Sciences 14, 6101 (2024) <http://dx.doi.org/10.3390/app14146101>`_
+
 
 .. [Sikorski2024]
 
