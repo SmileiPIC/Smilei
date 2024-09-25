@@ -9,6 +9,8 @@ Relativistic binary collisions between particles have been implemented in
 * [Nanbu1997]_ and [Nanbu1998]_: the original approach.
 * [Sentoku2008]_, [Lee1984]_ and [Frankel1979]_: additional information.
 * The correction suggested in [Higginson2020]_ has been applied since v4.5.
+* [to be published] A correction for the screening of bound electrons.
+  This makes a significant difference for weakly-ionized atoms.
 
 This collision scheme can host reactions between the colliding
 macro-particles, when requested:
@@ -418,6 +420,48 @@ approximation, and is particularly questionable for low temperatures or high Z.
 We observe that Smilei's approach for impact ionization provides decent estimates
 of the ionization state. Detailed comparison to atomic codes has not been done yet.
 
+----
+
+.. _BoundElectronScreening:
+
+Bound electron screening
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Coulomb potential that is assumed in the collision theory of Nanbu does not
+correctly apply to neutral atoms or weakly-ionized ions. Indeed, in addition
+to the screening caused by free electrons (Debye screening), the potential
+must account for the bound-electron screening.
+
+In Smilei, a simple model is available in the case of electron-ion collisions.
+It relies on the Thomas-Fermi characteristic length
+:math:`\lambda_{TF} = (9\pi^2/16Z)^{1/3}a_0`,
+where :math:`a_0` is the Bohr radius, to describe the extent of the screening
+aroud the nucleus. With a few approximations, the model suggests to replace,
+in the collisional frequency, the term :math:`Z^{\star 2}\ln\Lambda_D` by
+
+.. math::
+  
+  Z^2\ln\Lambda_{TFD} = Z^{\star 2} \ln\Lambda_D + (Z^2-Z^{\star 2})\ln\Lambda_{TF}
+
+where :math:`\ln\Lambda_D` is the usual (Debye-screening) Coulomb logarithm,
+and :math:`\Lambda_{TF} = \lambda_{TF}\Lambda_D /\lambda_D`. This approach is
+basic but captures the essential trend. Little data for comparison is available
+for weakly-ionized atoms, but the collision cross-sections are well-known
+for neutral atoms. :numref:`ELSEPAtest` shows a comparison between the model
+implemented in Smilei and the theoretical cross-sections calculated by the code
+ELSEPA [Salvat2005]_.
+
+
+.. _ELSEPAtest:
+
+.. figure:: /_static/elsepa.png
+  :width: 14cm
+  
+  Average deflection angle vs. time for collisions between electrons and neutral
+  atoms. The lines correspond to Smilei simulations with various electron
+  beam energy, and the dots are calculated from the theoretical code ELSEPA.
+
+
 
 ----
 
@@ -580,6 +624,8 @@ References
 .. [Perez2012] `F. Pérez et al., Phys. Plasmas 19, 083104 (2012) <http://dx.doi.org/10.1063/1.4742167>`_
 
 .. [Rohrlich1954] `F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954) <http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38>`_
+
+.. [Salvat2005] `F. Salvat, A. Jablonski and C. J. Powell, Comput. Phys. Comm. 165, 157 (2005) <https://doi.org/10.1016/j.cpc.2004.09.006>`_
 
 .. [Sentoku2008] `Y. Sentoku and A. J. Kemp, J. Comput. Phys. 227, 6846 (2008) <http://dx.doi.org/10.1016/j.jcp.2008.03.043>`_
 
