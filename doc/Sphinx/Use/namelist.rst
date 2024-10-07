@@ -1440,10 +1440,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. py:data:: space_time_profile_AM
 
-    :type: A list of maximum 2 x ``number_of_AM`` *python* functions.
+    :type: A list of maximum 2 x ``number_of_AM`` complex valued *python* functions.
 
-    These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
-    order shown in the above example. Undefined modes are considered zero.
+    These profiles define the first modes of :math:`B_r` and :math:`B_\theta` of the laser in the
+    order shown in the above example. Higher undefined modes are considered zero.
     This can be used only in ``AMcylindrical`` geometry. In this
     geometry a two-dimensional :math:`(x,r)` grid is used and the laser is injected from a
     :math:`x` boundary, thus the provided profiles must be a function of :math:`(r,t)`.
