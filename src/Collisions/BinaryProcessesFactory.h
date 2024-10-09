@@ -51,6 +51,17 @@ public:
             intra = false;
         }
         
+        // Figure out if there should be atomic screening (Thomas-Fermi)
+        // If all electrons, or all ions, or all unknown, there is no screening
+        bool anyZ0 = any_of( sgroup[0].begin(), sgroup[0].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
+        bool anyZ1 = any_of( sgroup[1].begin(), sgroup[1].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
+        int screening_group = 0; // no screening
+        if( anyZ0 && !anyZ1 ) {
+            screening_group = 1;
+        } else if( !anyZ0 && anyZ1 ) {
+            screening_group = 2;
+        }
+        
         // Number of timesteps between each binary processes
         int every = 1; // default
         PyTools::extract( "every", every, "Collisions", n_binary_processes );
@@ -313,6 +324,7 @@ public:
             sgroup[0],
             sgroup[1],
             intra,
+            screening_group,
             processes,
             every,
             debug_every,

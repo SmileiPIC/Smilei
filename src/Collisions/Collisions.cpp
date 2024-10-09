@@ -51,25 +51,42 @@ void Collisions::prepare()
 
 void Collisions::apply( Random *random, BinaryProcessData &D )
 {
-    double qqm  = D.p1->charge( D.i1 ) * D.p2->charge( D.i2 ) / D.m1;
-    double qqm2 = qqm * qqm;
+    double qq = D.p1->charge( D.i1 ) * D.p2->charge( D.i2 );
     
     double inv_p_COM = 1./( D.p_COM );
     double E0_p = D.E0 * inv_p_COM;
     
     // Calculate coulomb log if necessary
-    double logL = coulomb_log_;
-    if( logL <= 0. ) { // if auto-calculation requested
+    double logL;
+    double q2q2logL; // q1^2 q2^2 logL
+    if( coulomb_log_ <= 0. ) { // if auto-calculation requested
         // Note : 0.00232282 is coeff2 / coeff1
-        double bmin = coeff1_ * std::max( inv_p_COM / D.m1, std::abs( 0.00232282*qqm*E0_p/D.p_gamma_COM ) ); // min impact parameter
-        logL = 0.5*log( 1. + D.debye2/( bmin*bmin ) );
-        if( logL < 2. ) {
-            logL = 2.;
+        double bmin = coeff1_ * std::max( inv_p_COM, std::abs( 0.00232282*qq*E0_p/D.p_gamma_COM ) ) / D.m1; // min impact parameter
+        // Debye screening
+        double lnLD = D.debye > 7.839*bmin ? log( D.debye / bmin ) : 2.;
+        // For e-i collisions, consider the bound-electron screening
+        if( D.lTF > 0. ) {
+            if( D.debye > D.lTF ) {
+                // Bound-electron (Thomas-Fermi) screening
+                double lnLTF = D.lTF > 7.839*bmin ? log( D.lTF / bmin ) : 2.;
+                // Total screening
+                q2q2logL = qq * qq * lnLD + ( D.Z1Z2 * D.Z1Z2 - qq * qq ) * lnLTF;
+                logL = q2q2logL / ( D.Z1Z2 * D.Z1Z2 );
+            } else {
+                logL = lnLD;
+                q2q2logL = D.Z1Z2 * D.Z1Z2 * lnLD;
+            }
+        } else {
+            logL = lnLD;
+            q2q2logL = qq * qq * lnLD;
         }
+    } else {
+        logL = coulomb_log_;
+        q2q2logL = qq * qq * coulomb_log_;
     }
     
     // Calculate the collision parameter s12 (similar to number of real collisions)
-    double s = coeff3_ * logL * qqm2 * E0_p *E0_p / ( D.m21 * D.gamma1 * D.gamma2 * D.p_gamma_COM );
+    double s = coeff3_ * q2q2logL * E0_p *E0_p / ( D.m1 * D.m2 * D.gamma1 * D.gamma2 * D.p_gamma_COM );
     
     // Low-temperature correction
     double smax = coeff4_ * ( 1. + D.m21 ) * D.vrel / std::max( D.n123, D.m21 * D.n223 );
