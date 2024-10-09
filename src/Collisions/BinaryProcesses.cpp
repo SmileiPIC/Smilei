@@ -341,7 +341,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Get masses
             D.m1 = mass1[ispec1];
             D.m2 = mass2[ispec2];
-            D.m12 = D.m1 / D.m2;
+            D.m21 = D.m2 / D.m1;
             
             // Calculate the timestep correction
             D.dt_correction = D.maxW * dt_corr;
@@ -354,49 +354,41 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Calculate gammas
             D.gamma1 = D.p1->LorentzFactor( D.i1 );
             D.gamma2 = D.p2->LorentzFactor( D.i2 );
-            double gamma12 = D.m12 * D.gamma1 + D.gamma2;
-            double gamma12_inv = 1./gamma12;
-
-            // Calculate the center-of-mass (COM) frame
-            // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
-            // They are NOT quantities relative to the COM.
-            D.COM_vx = ( D.m12 * ( D.p1->momentum( 0, D.i1 ) ) + D.p2->momentum( 0, D.i2 ) ) * gamma12_inv;
-            D.COM_vy = ( D.m12 * ( D.p1->momentum( 1, D.i1 ) ) + D.p2->momentum( 1, D.i2 ) ) * gamma12_inv;
-            D.COM_vz = ( D.m12 * ( D.p1->momentum( 2, D.i1 ) ) + D.p2->momentum( 2, D.i2 ) ) * gamma12_inv;
-            double COM_vsquare = D.COM_vx*D.COM_vx + D.COM_vy*D.COM_vy + D.COM_vz*D.COM_vz;
-
-            // Change the momentum to the COM frame (we work only on particle 1)
-            // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-            if( COM_vsquare < 1e-6 ) {
-                D.COM_gamma = 1. +0.5 * COM_vsquare;
-                D.term1 = 0.5;
-            } else {
-                D.COM_gamma = 1./sqrt( 1.-COM_vsquare );
-                D.term1 = ( D.COM_gamma - 1. ) / COM_vsquare;
-            }
-
-            double vcv1g1  = D.COM_vx*( D.p1->momentum( 0, D.i1 ) ) + D.COM_vy*( D.p1->momentum( 1, D.i1 ) ) + D.COM_vz*( D.p1->momentum( 2, D.i1 ) );
-            double vcv2g2  = D.COM_vx*( D.p2->momentum( 0, D.i2 ) ) + D.COM_vy*( D.p2->momentum( 1, D.i2 ) ) + D.COM_vz*( D.p2->momentum( 2, D.i2 ) );
-            D.gamma1_COM = ( D.gamma1-vcv1g1 )*D.COM_gamma;
-            D.gamma2_COM = ( D.gamma2-vcv2g2 )*D.COM_gamma;
-            double term2 = D.term1*vcv1g1 - D.COM_gamma * D.gamma1;
-            D.px_COM = D.p1->momentum( 0, D.i1 ) + term2*D.COM_vx;
-            D.py_COM = D.p1->momentum( 1, D.i1 ) + term2*D.COM_vy;
-            D.pz_COM = D.p1->momentum( 2, D.i1 ) + term2*D.COM_vz;
-            double p2_COM = D.px_COM*D.px_COM + D.py_COM*D.py_COM + D.pz_COM*D.pz_COM;
-            D.p_COM  = sqrt( p2_COM );
-
+            D.gamma_tot = D.gamma1 + D.m21 * D.gamma2;
+            
+            // Calculate the total momentum
+            D.px_tot = D.p1->momentum( 0, D.i1 ) + D.m21 * D.p2->momentum( 0, D.i2 );
+            D.py_tot = D.p1->momentum( 1, D.i1 ) + D.m21 * D.p2->momentum( 1, D.i2 );
+            D.pz_tot = D.p1->momentum( 2, D.i1 ) + D.m21 * D.p2->momentum( 2, D.i2 );
+            
+            // Calculate the Lorentz invariant E1 E2 - p1.p2
+            // It is equal to the energy of one particle in the frame of the other
+            D.E0 = D.m21 * ( D.gamma1 * D.gamma2
+                - D.p1->momentum( 0, D.i1 ) * D.p2->momentum( 0, D.i2 )
+                - D.p1->momentum( 1, D.i1 ) * D.p2->momentum( 1, D.i2 )
+                - D.p1->momentum( 2, D.i1 ) * D.p2->momentum( 2, D.i2 ) );
+            
+            // Now we calculate quantities in the center-of-mass frame
+            // denoted by the suffix _COM
+            D.gamma_tot_COM = sqrt( 2*D.E0 + D.m21 * D.m21 + 1 );
+            D.gamma1_COM = ( D.E0 + 1 ) / D.gamma_tot_COM;
+            D.gamma2_COM = ( D.E0 + D.m21 * D.m21 ) / ( D.m21 * D.gamma_tot_COM );
+            double gg = ( D.gamma1 + D.gamma1_COM ) / ( D.gamma_tot + D.gamma_tot_COM );
+            D.px_COM = D.p1->momentum( 0, D.i1 ) - gg * D.px_tot;
+            D.py_COM = D.p1->momentum( 1, D.i1 ) - gg * D.py_tot;
+            D.pz_COM = D.p1->momentum( 2, D.i1 ) - gg * D.pz_tot;
+            D.p2_COM = D.px_COM*D.px_COM + D.py_COM*D.py_COM + D.pz_COM*D.pz_COM;
+            D.p_COM = sqrt( D.p2_COM );
+            
             // Calculate some intermediate quantities
-            D.term3 = D.COM_gamma * gamma12_inv;
-            double term4 = D.gamma1_COM * D.gamma2_COM;
-            D.term5 = term4/p2_COM + D.m12;
-            D.vrel = D.p_COM / ( D.term3 * term4 ); // | v2_COM - v1_COM |
-            D.vrel_corr = D.p_COM / ( D.term3 * D.gamma1 * D.gamma2 );
-
+            D.p_gamma_COM = D.p_COM * D.gamma_tot_COM;
+            D.vrel = D.p_gamma_COM / ( D.gamma1_COM * D.gamma2_COM ); // | v2_COM - v1_COM |
+            D.vrel_corr = D.p_gamma_COM / ( D.gamma1 * D.gamma2 );
+            
             for( unsigned int i=0; i<processes_.size(); i++ ) {
                 processes_[i]->apply( patch->rand_, D );
             }
-
+            
         } // end loop on pairs of particles
 
     } // end loop on bins

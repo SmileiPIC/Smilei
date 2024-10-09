@@ -123,13 +123,18 @@ void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
                 newpy_COM = newpy_COM * products.sinX[iproduct] + D.py_COM *products.cosX[iproduct];
                 newpz_COM = newpz_COM * products.sinX[iproduct] + D.pz_COM *products.cosX[iproduct];
             }
-            // Go back to the lab frame and store the results in the particle array
-            double vcp = D.COM_vx * newpx_COM + D.COM_vy * newpy_COM + D.COM_vz * newpz_COM;
+            // Rescale by the new momentum magnitude
             double momentum_ratio = products.new_p_COM[iproduct] / D.p_COM;
-            double term6 = momentum_ratio*D.term1*vcp + sqrt( products.new_p_COM[iproduct]*products.new_p_COM[iproduct] + 1. ) * D.COM_gamma;
-            double newpx = momentum_ratio * newpx_COM + D.COM_vx * term6;
-            double newpy = momentum_ratio * newpy_COM + D.COM_vy * term6;
-            double newpz = momentum_ratio * newpz_COM + D.COM_vz * term6;
+            double new_gamma_COM = sqrt( products.new_p_COM[iproduct]*products.new_p_COM[iproduct] + 1. );
+            newpx_COM *= momentum_ratio;
+            newpy_COM *= momentum_ratio;
+            newpz_COM *= momentum_ratio;
+            // Go back to the lab frame and store the results in the particle array
+            double pp = ( D.px_tot * newpx_COM + D.py_tot * newpy_COM + D.pz_tot * newpz_COM ) / ( D.gamma_tot + D.gamma_tot_COM );
+            double f = ( new_gamma_COM + pp ) / D.gamma_tot_COM;
+            double newpx = newpx_COM + f * D.px_tot;
+            double newpy = newpy_COM + f * D.py_tot;
+            double newpz = newpz_COM + f * D.pz_tot;
             // Make new particle at position of particle 1
             if( newW1 > 0. ) {
                 products.particles[iproduct]->makeParticleAt( *D.p1, D.i1, newW1, products.q[iproduct], newpx, newpy, newpz );

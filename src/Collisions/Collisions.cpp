@@ -54,11 +54,14 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     double qqm  = D.p1->charge( D.i1 ) * D.p2->charge( D.i2 ) / D.m1;
     double qqm2 = qqm * qqm;
     
+    double inv_p_COM = 1./( D.p_COM );
+    double E0_p = D.E0 * inv_p_COM;
+    
     // Calculate coulomb log if necessary
     double logL = coulomb_log_;
     if( logL <= 0. ) { // if auto-calculation requested
         // Note : 0.00232282 is coeff2 / coeff1
-        double bmin = coeff1_ * std::max( 1./(D.m1*D.p_COM), std::abs( 0.00232282*qqm*D.term3*D.term5 ) ); // min impact parameter
+        double bmin = coeff1_ * std::max( inv_p_COM / D.m1, std::abs( 0.00232282*qqm*E0_p/D.p_gamma_COM ) ); // min impact parameter
         logL = 0.5*log( 1. + D.debye2/( bmin*bmin ) );
         if( logL < 2. ) {
             logL = 2.;
@@ -66,10 +69,10 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     }
     
     // Calculate the collision parameter s12 (similar to number of real collisions)
-    double s = coeff3_ * logL * qqm2 * D.term3 * D.p_COM * D.term5*D.term5 / ( D.gamma1*D.gamma2 );
+    double s = coeff3_ * logL * qqm2 * E0_p *E0_p / ( D.m21 * D.gamma1 * D.gamma2 * D.p_gamma_COM );
     
     // Low-temperature correction
-    double smax = coeff4_ * ( D.m12+1. ) * D.vrel / std::max( D.m12*D.n123, D.n223 );
+    double smax = coeff4_ * ( 1. + D.m21 ) * D.vrel / std::max( D.n123, D.m21 * D.n223 );
     if( s>smax ) {
         s = smax;
     }
@@ -113,19 +116,19 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     }
     
     // Go back to the lab frame and store the results in the particle array
-    double vcp = D.COM_vx * newpx_COM + D.COM_vy * newpy_COM + D.COM_vz * newpz_COM;
+    double pp = ( D.px_tot * newpx_COM + D.py_tot * newpy_COM + D.pz_tot * newpz_COM ) / ( D.gamma_tot + D.gamma_tot_COM );
+    double f = ( D.gamma1_COM + pp ) / D.gamma_tot_COM;
     double U2 = random->uniform();
     if( U2 * D.p1->weight( D.i1 ) < D.p2->weight( D.i2 ) ) { // deflect particle 1 only with some probability
-        double term6 = D.term1*vcp + D.gamma1_COM * D.COM_gamma;
-        D.p1->momentum( 0, D.i1 ) = newpx_COM + D.COM_vx * term6;
-        D.p1->momentum( 1, D.i1 ) = newpy_COM + D.COM_vy * term6;
-        D.p1->momentum( 2, D.i1 ) = newpz_COM + D.COM_vz * term6;
+        D.p1->momentum( 0, D.i1 ) = newpx_COM + f * D.px_tot;
+        D.p1->momentum( 1, D.i1 ) = newpy_COM + f * D.py_tot;
+        D.p1->momentum( 2, D.i1 ) = newpz_COM + f * D.pz_tot;
     }
     if( U2 * D.p2->weight( D.i2 ) < D.p1->weight( D.i1 ) ) { // deflect particle 2 only with some probability
-        double term6 = -D.m12 * D.term1*vcp + D.gamma2_COM * D.COM_gamma;
-        D.p2->momentum( 0, D.i2 ) = -D.m12 * newpx_COM + D.COM_vx * term6;
-        D.p2->momentum( 1, D.i2 ) = -D.m12 * newpy_COM + D.COM_vy * term6;
-        D.p2->momentum( 2, D.i2 ) = -D.m12 * newpz_COM + D.COM_vz * term6;
+        double m12 = 1. / D.m21;
+        D.p2->momentum( 0, D.i2 ) = ( -newpx_COM + ( 1 - f ) * D.px_tot ) * m12;
+        D.p2->momentum( 1, D.i2 ) = ( -newpy_COM + ( 1 - f ) * D.py_tot ) * m12;
+        D.p2->momentum( 2, D.i2 ) = ( -newpz_COM + ( 1 - f ) * D.pz_tot ) * m12;
     }
     
     npairs_tot_ ++;

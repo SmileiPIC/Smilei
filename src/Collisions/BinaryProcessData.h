@@ -13,7 +13,7 @@ struct BinaryProcessData
     unsigned int i1, i2;
     
     //! Masses
-    double m1, m2, m12;
+    double m1, m2, m21;
     
     //! Minimum / maximum weight
     double minW, maxW;
@@ -24,27 +24,28 @@ struct BinaryProcessData
     //! Correction to apply to the cross-sections due to the difference in weight
     double dt_correction;
     
-    //! Velocity of the Center-Of-Mass, expressed in the lab frame
-    double COM_vx, COM_vy, COM_vz;
+    //! Sum of both momenta
+    double px_tot, py_tot, pz_tot;
     
-    //! Lorentz factor of the COM, expressed in the lab frame
-    double COM_gamma;
+    //! Lorentz invariant = energy of one particle in the frame of the other
+    double E0;
     
     //! Momentum of the particles expressed in the COM frame
-    double px_COM, py_COM, pz_COM, p_COM;
+    double px_COM, py_COM, pz_COM;
+    double p2_COM, p_COM;
     
     //! Lorentz factors
-    double gamma1, gamma2;
+    double gamma1, gamma2, gamma_tot;
     //! Lorentz factors expressed in the COM frame
-    double gamma1_COM, gamma2_COM;
+    double gamma1_COM, gamma2_COM, gamma_tot_COM;
     
     //! Relative velocity
-    double vrel, vrel_corr;
+    double vrel, vrel_corr, p_gamma_COM;
     
     //! Debye length squared
     double debye2;
     
-    double term1, term3, term5, n123, n223;
+    double n123, n223;
 };
 
 #endif
