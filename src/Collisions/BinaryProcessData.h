@@ -6,47 +6,49 @@
 //! Contains the relativistic kinematic quantities associated to the collision of two particles noted 1 and 2
 struct BinaryProcessData
 {
+    static constexpr size_t max_buffer_size_ = 1;
+    
     //! Number of particles in buffer
     size_t n;
     
     //! Indices of both particles in their Particles object
-    std::vector<size_t> i[2];
+    size_t i[2][max_buffer_size_];
     
     //! Particles objects of both particles
-    std::vector<Particles *> p[2];
+    Particles * p[2][max_buffer_size_];
     
     //! Masses
-    std::vector<double> m[2];
+    double m[2][max_buffer_size_];
     
     //! Weights
-    std::vector<double> W[2];
+    double W[2][max_buffer_size_];
 
     //! Charges
-    std::vector<short> q[2];
+    short q[2][max_buffer_size_];
     
     //! Correction to apply to the cross-sections due to the difference in weight
-    std::vector<double> dt_correction;
+    double dt_correction[max_buffer_size_];
     
     //! Momenta
-    std::vector<double> px[2], py[2], pz[2];
+    double px[2][max_buffer_size_], py[2][max_buffer_size_], pz[2][max_buffer_size_];
     
     //! Sum of both momenta
-    std::vector<double> px_tot, py_tot, pz_tot;
+    double px_tot[max_buffer_size_], py_tot[max_buffer_size_], pz_tot[max_buffer_size_];
     
     //! Lorentz invariant = energy of one particle in the frame of the other
-    std::vector<double> gamma0;
+    double gamma0[max_buffer_size_];
     
     //! Momentum of the particles expressed in the COM frame
-    std::vector<double> px_COM, py_COM, pz_COM;
-    std::vector<double> p_COM;
+    double px_COM[max_buffer_size_], py_COM[max_buffer_size_], pz_COM[max_buffer_size_];
+    double p_COM[max_buffer_size_];
     
     //! Lorentz factors
-    std::vector<double> gamma[2], gamma_tot;
+    double gamma[2][max_buffer_size_], gamma_tot[max_buffer_size_];
     //! Lorentz factors expressed in the COM frame
-    std::vector<double> gamma_COM0, gamma_tot_COM;
+    double gamma_COM0[max_buffer_size_], gamma_tot_COM[max_buffer_size_];
     
     //! Relative velocity
-    std::vector<double> vrel, vrel_corr;
+    double vrel[max_buffer_size_], vrel_corr[max_buffer_size_];
     
     //! Whether the first species is electron
     bool electronFirst;
@@ -55,32 +57,12 @@ struct BinaryProcessData
     double debye;
     
     //! Thomas-Fermi length
-    std::vector<double> lTF;
+    double lTF[max_buffer_size_];
     
     //! Product of atomic numbers (for e-i screening)
-    std::vector<double> Z1Z2;
+    double Z1Z2[max_buffer_size_];
     
     double n123, n223;
-    
-    void resize( size_t N ) {
-        i[0].resize( N ); i[1].resize( N );
-        p[0].resize( N ); p[1].resize( N );
-        m[0].resize( N ); m[1].resize( N );
-        W[0].resize( N ); W[1].resize( N );
-        q[0].resize( N ); q[1].resize( N );
-        px[0].resize( N ); py[0].resize( N ); pz[0].resize( N );
-        px[1].resize( N ); py[1].resize( N ); pz[1].resize( N );
-        dt_correction.resize( N );
-        px_tot.resize( N ); py_tot.resize( N ); pz_tot.resize( N );
-        gamma0.resize( N );
-        px_COM.resize( N ); py_COM.resize( N ); pz_COM.resize( N );
-        p_COM.resize( N );
-        gamma[0].resize( N ); gamma[1].resize( N ); gamma_tot.resize( N );
-        gamma_COM0.resize( N ); gamma_tot_COM.resize( N );
-        vrel.resize( N ); vrel_corr.resize( N );
-        lTF.resize( N );
-        Z1Z2.resize( N );
-    }
 };
 
 #endif

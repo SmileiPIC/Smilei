@@ -194,25 +194,10 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     }
     
     BinaryProcessData D;
-    constexpr size_t max_buffer_size = 4;
-    D.resize( max_buffer_size );
     
     // numbers of species in each group
     size_t nspec1 = species_group1_.size();
     size_t nspec2 = species_group1_.size();
-    // Get the lists of particle pointers and masses
-    vector<Particles*> pg1( nspec1 ), pg2( nspec2 );
-    vector<double> mass1( nspec1 ), mass2( nspec2 );
-    for( size_t i = 0; i < nspec1; i++ ) {
-        pg1[i] = patch->vecSpecies[species_group1_[i]]->particles;
-        mass1[i] = patch->vecSpecies[species_group1_[i]]->mass_;
-    }
-    for( size_t i = 0; i < nspec2; i++ ) {
-        pg2[i] = patch->vecSpecies[species_group2_[i]]->particles;
-        mass2[i] = patch->vecSpecies[species_group2_[i]]->mass_;
-    }
-    // numbers of macro-particles in each species, in each group
-    vector<size_t> np1( nspec1 ), np2( nspec2 );
     
     for( unsigned int i=0; i<processes_.size(); i++ ) {
         processes_[i]->prepare();
@@ -242,14 +227,17 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
         
         // get number of particles for all necessary species
+        vector<size_t> np1( nspec1 ), np2( nspec2 );
         size_t npart1 = 0;
         for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            np1[ispec1] = pg1[ispec1]->last_index[ibin] - pg1[ispec1]->first_index[ibin];
+            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
+            np1[ispec1] = p->last_index[ibin] - p->first_index[ibin];
             npart1 += np1[ispec1];
         }
         size_t npart2 = 0;
         for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            np2[ispec2] = pg2[ispec2]->last_index[ibin] - pg2[ispec2]->first_index[ibin];
+            Particles * p = patch->vecSpecies[species_group2_[ispec2]]->particles;
+            np2[ispec2] = p->last_index[ibin] - p->first_index[ibin];
             npart2 += np2[ispec2];
         }
         // We need to shuffle the group that has most particles
@@ -284,21 +272,24 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         // Calculate the densities
         double n1  = 0., n2 = 0.;
         for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            for( int i = pg1[ispec1]->first_index[ibin]; i < pg1[ispec1]->last_index[ibin]; i++ ) {
-                n1 += pg1[ispec1]->weight( i );
+            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
+            for( int i = p->first_index[ibin]; i < p->last_index[ibin]; i++ ) {
+                n1 += p->weight( i );
             }
         }
         for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            for( int i = pg2[ispec2]->first_index[ibin]; i < pg2[ispec2]->last_index[ibin]; i++ ) {
-                n2 += pg2[ispec2]->weight( i );
+            Particles * p = patch->vecSpecies[species_group2_[ispec2]]->particles;
+            for( int i = p->first_index[ibin]; i < p->last_index[ibin]; i++ ) {
+                n2 += p->weight( i );
             }
         }
         
         // Get cell volume
         double inv_cell_volume = 0.;
         for( size_t ispec1 = 0; ispec1 < nspec1; ispec1++ ) {
-            if( pg1[ispec1]->first_index[ibin] < pg1[ispec1]->last_index[ibin] ) {
-                inv_cell_volume = 1./patch->getPrimalCellVolume( pg1[ispec1], pg1[ispec1]->first_index[ibin], params );
+            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
+            if( p->first_index[ibin] < p->last_index[ibin] ) {
+                inv_cell_volume = 1./patch->getPrimalCellVolume( p, p->first_index[ibin], params );
                 break;
             }
         }
@@ -317,8 +308,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         D.n223 = pow( n2, 2./3. );
         
         // Prepare buffers
-        size_t buffer_size = std::min( max_buffer_size, npairs );
-        size_t nbuffers = npairs / ( max_buffer_size + 1 ) + 1;
+        size_t buffer_size = std::min( D.max_buffer_size_, npairs );
+        size_t nbuffers = npairs / ( D.max_buffer_size_ + 1 ) + 1;
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -359,27 +350,27 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                     D.i[1][i] -= np2[ispec[2]];
                 }
                 // p1 and p2 are the pointers to Particles
-                D.p[0][i] = pg1[ispec[1]];
-                D.p[1][i] = pg2[ispec[2]];
+                D.p[0][i] = patch->vecSpecies[species_group1_[ispec[1]]]->particles;
+                D.p[1][i] = patch->vecSpecies[species_group2_[ispec[2]]]->particles;
                 // i1 and i2 are particle indices in this bin
                 D.i[0][i] += D.p[0][i]->first_index[ibin];
                 D.i[1][i] += D.p[1][i]->first_index[ibin];
+                // Get masses
+                D.m[0][i] = patch->vecSpecies[species_group1_[ispec[1]]]->mass_;
+                D.m[1][i] = patch->vecSpecies[species_group2_[ispec[2]]]->mass_;
+                // Get screening length
+                D.lTF[i] = lTF[ispec[screening_group_]];
+                D.Z1Z2[i] = screening_Z[ispec[screening_group_]];
                 // Get Weights
                 D.W[0][i] = D.p[0][i]->weight( D.i[0][i] );
                 D.W[1][i] = D.p[1][i]->weight( D.i[1][i] );
                 // Get charges
                 D.q[0][i] = D.p[0][i]->charge( D.i[0][i] );
                 D.q[1][i] = D.p[1][i]->charge( D.i[1][i] );
-                // Get masses
-                D.m[0][i] = mass1[ispec[1]];
-                D.m[1][i] = mass2[ispec[2]];
                 // Get momenta
                 D.px[0][i] = D.p[0][i]->momentum( 0, D.i[0][i] ); D.px[1][i] = D.p[1][i]->momentum( 0, D.i[1][i] );
                 D.py[0][i] = D.p[0][i]->momentum( 1, D.i[0][i] ); D.py[1][i] = D.p[1][i]->momentum( 1, D.i[1][i] );
                 D.pz[0][i] = D.p[0][i]->momentum( 2, D.i[0][i] ); D.pz[1][i] = D.p[1][i]->momentum( 2, D.i[1][i] );
-                // Get screening length
-                D.lTF[i] = lTF[ispec[screening_group_]];
-                D.Z1Z2[i] = screening_Z[ispec[screening_group_]];
             }
             
             for( size_t i = 0; i<D.n; i++ ) {
