@@ -6,7 +6,7 @@
 //! Contains the relativistic kinematic quantities associated to the collision of two particles noted 1 and 2
 struct BinaryProcessData
 {
-    static constexpr size_t max_buffer_size_ = 1;
+    static constexpr size_t max_buffer_size_ = 8;
     
     //! Number of particles in buffer
     size_t n;

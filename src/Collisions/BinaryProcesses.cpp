@@ -309,7 +309,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         
         // Prepare buffers
         size_t buffer_size = std::min( D.max_buffer_size_, npairs );
-        size_t nbuffers = npairs / ( D.max_buffer_size_ + 1 ) + 1;
+        size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
