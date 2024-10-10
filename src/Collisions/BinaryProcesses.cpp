@@ -194,6 +194,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     }
     
     BinaryProcessData D;
+    constexpr size_t max_buffer_size = 4;
+    D.resize( max_buffer_size );
     
     // numbers of species in each group
     size_t nspec1 = species_group1_.size();
@@ -232,6 +234,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                 *params.reference_angular_frequency_SI * pow( screening_Z[i], -1/3 );
         }
     }
+    screening_Z.push_back( 0. ); // placeholder for no screening
+    lTF.push_back( 0. );
     
     // Loop bins of particles
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
@@ -312,112 +316,133 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         D.n123 = pow( n1, 2./3. );
         D.n223 = pow( n2, 2./3. );
         
+        // Prepare buffers
+        size_t buffer_size = std::min( max_buffer_size, npairs );
+        size_t nbuffers = npairs / ( max_buffer_size + 1 ) + 1;
+        
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
-        for( unsigned int i = 0; i<npairs; i++ ) {
+        
+        // Loop on buffers
+        for( size_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
+            
+            size_t start = ibuffer * buffer_size;
+            size_t stop = std::min( start + buffer_size, npairs );
+            D.n = stop - start;
             
             // Determine the shuffled indices in the whole groups of species
             if( intra_ ) {
-                D.i1 = shuffler.next();
-                D.i2 = shuffler.next();
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.i[0][i] = shuffler.next();
+                    D.i[1][i] = shuffler.next();
+                }
+            } else if( shuffle1 ) {
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.i[0][i] = shuffler.next();
+                    D.i[1][i] = ( i + start ) % npart2;
+                }
             } else {
-                if( shuffle1 ) {
-                    D.i1 = shuffler.next();
-                    D.i2 = i % npart2;
-                } else {
-                    D.i1 = i % npart1;
-                    D.i2 = shuffler.next();
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.i[0][i] = ( i + start ) % npart1;
+                    D.i[1][i] = shuffler.next();
                 }
             }
             
-            // find species and indices of particles
-            size_t ispec1, ispec2;
-            for( ispec1=0 ; D.i1>=np1[ispec1]; ispec1++ ) {
-                D.i1 -= np1[ispec1];
-            }
-            for( ispec2=0 ; D.i2>=np2[ispec2]; ispec2++ ) {
-                D.i2 -= np2[ispec2];
-            }
-            // p1 and p2 are the pointers to Particles
-            D.p1 = pg1[ispec1];
-            D.p2 = pg2[ispec2];
-            // i1 and i2 are particle indices in this bin
-            D.i1 += D.p1->first_index[ibin];
-            D.i2 += D.p2->first_index[ibin];
-            
-            // Get Weights
-            D.minW = D.p1->weight(D.i1);
-            D.maxW = D.p2->weight(D.i2);
-            if( D.minW > D.maxW ) {
-                swap( D.minW, D.maxW );
-            }
-            // If one weight is zero, then skip. Can happen after nuclear reaction
-            if( D.minW <= 0. ) continue;
-            
-            // Get masses
-            D.m1 = mass1[ispec1];
-            D.m2 = mass2[ispec2];
-            D.m21 = D.m2 / D.m1;
-            
-            // Get screening length
-            if( screening_group_ == 0 ) {
-                D.lTF = 0.;
-            } else if( screening_group_ == 1 ) {
-                D.lTF = lTF[ispec1];
-                D.Z1Z2 = screening_Z[ispec1];
-            } else {
-                D.lTF = lTF[ispec2];
-                D.Z1Z2 = screening_Z[ispec2];
+            for( size_t i = 0; i<D.n; i++ ) {
+                // find species and indices of particles
+                size_t ispec[3] = { lTF.size() - 1, 0, 0 };
+                for( ; D.i[0][i]>=np1[ispec[1]]; ispec[1]++ ) {
+                    D.i[0][i] -= np1[ispec[1]];
+                }
+                for( ; D.i[1][i]>=np2[ispec[2]]; ispec[2]++ ) {
+                    D.i[1][i] -= np2[ispec[2]];
+                }
+                // p1 and p2 are the pointers to Particles
+                D.p[0][i] = pg1[ispec[1]];
+                D.p[1][i] = pg2[ispec[2]];
+                // i1 and i2 are particle indices in this bin
+                D.i[0][i] += D.p[0][i]->first_index[ibin];
+                D.i[1][i] += D.p[1][i]->first_index[ibin];
+                // Get Weights
+                D.W[0][i] = D.p[0][i]->weight( D.i[0][i] );
+                D.W[1][i] = D.p[1][i]->weight( D.i[1][i] );
+                // Get charges
+                D.q[0][i] = D.p[0][i]->charge( D.i[0][i] );
+                D.q[1][i] = D.p[1][i]->charge( D.i[1][i] );
+                // Get masses
+                D.m[0][i] = mass1[ispec[1]];
+                D.m[1][i] = mass2[ispec[2]];
+                // Get momenta
+                D.px[0][i] = D.p[0][i]->momentum( 0, D.i[0][i] ); D.px[1][i] = D.p[1][i]->momentum( 0, D.i[1][i] );
+                D.py[0][i] = D.p[0][i]->momentum( 1, D.i[0][i] ); D.py[1][i] = D.p[1][i]->momentum( 1, D.i[1][i] );
+                D.pz[0][i] = D.p[0][i]->momentum( 2, D.i[0][i] ); D.pz[1][i] = D.p[1][i]->momentum( 2, D.i[1][i] );
+                // Get screening length
+                D.lTF[i] = lTF[ispec[screening_group_]];
+                D.Z1Z2[i] = screening_Z[ispec[screening_group_]];
             }
             
-            // Calculate the timestep correction
-            D.dt_correction = D.maxW * dt_corr;
-            if( i % npairs_not_repeated < npairs % npairs_not_repeated ) {
-                D.dt_correction *= weight_correction_2 ;
-            } else {
-                D.dt_correction *= weight_correction_1;
+            for( size_t i = 0; i<D.n; i++ ) {
+                // Calculate the timestep correction
+                D.dt_correction[i] = max( D.W[0][i], D.W[1][i] ) * dt_corr;
+                double corr2 = ( i + start ) % npairs_not_repeated < npairs % npairs_not_repeated;
+                double corr1 = 1. - corr2;
+                D.dt_correction[i] *= corr1 * weight_correction_1 + corr2 * weight_correction_2;
             }
             
-            // Calculate gammas
-            D.gamma1 = D.p1->LorentzFactor( D.i1 );
-            D.gamma2 = D.p2->LorentzFactor( D.i2 );
-            D.gamma_tot = D.gamma1 + D.m21 * D.gamma2;
+            for( size_t i = 0; i<D.n; i++ ) {
+                double m21 = D.m[1][i] / D.m[0][i];
+                
+                // Calculate gammas
+                D.gamma[0][i] = sqrt( 1 + D.px[0][i]*D.px[0][i] + D.py[0][i]*D.py[0][i] + D.pz[0][i]*D.pz[0][i] );
+                D.gamma[1][i] = sqrt( 1 + D.px[1][i]*D.px[1][i] + D.py[1][i]*D.py[1][i] + D.pz[1][i]*D.pz[1][i] );
+                D.gamma_tot[i] = D.gamma[0][i] + m21 * D.gamma[1][i];
+                
+                // Calculate the total momentum
+                D.px_tot[i] = D.px[0][i] + m21 * D.px[1][i];
+                D.py_tot[i] = D.py[0][i] + m21 * D.py[1][i];
+                D.pz_tot[i] = D.pz[0][i] + m21 * D.pz[1][i];
+                
+                // Calculate the Lorentz invariant gamma1 gamma2 - u1.u2
+                // It is equal to the gamma of one particle in the rest frame of the other particle
+                D.gamma0[i] = D.gamma[0][i] * D.gamma[1][i] - D.px[0][i] * D.px[1][i] - D.py[0][i] * D.py[1][i] - D.pz[0][i] * D.pz[1][i];
+                
+                // Now we calculate quantities in the center-of-mass frame
+                // denoted by the suffix _COM
+                D.gamma_tot_COM[i] = sqrt( 2*m21*D.gamma0[i] + m21 * m21 + 1 );
+                D.gamma_COM0[i] = ( m21 * D.gamma0[i] + 1 ) / D.gamma_tot_COM[i];
+                double gg = ( D.gamma[0][i] + D.gamma_COM0[i] ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
+                D.px_COM[i] = D.px[0][i] - gg * D.px_tot[i];
+                D.py_COM[i] = D.py[0][i] - gg * D.py_tot[i];
+                D.pz_COM[i] = D.pz[0][i] - gg * D.pz_tot[i];
+                D.p_COM[i] = sqrt( D.px_COM[i]*D.px_COM[i] + D.py_COM[i]*D.py_COM[i] + D.pz_COM[i]*D.pz_COM[i] );
+                
+                // Calculate some intermediate quantities
+                double p_gamma_COM = D.p_COM[i] * D.gamma_tot_COM[i];
+                D.vrel[i] = p_gamma_COM / ( D.gamma_COM0[i] * ( D.gamma_tot_COM[i] - D.gamma_COM0[i] ) ); // | v2_COM - v1_COM |
+                D.vrel_corr[i] = p_gamma_COM / ( m21 * D.gamma[0][i] * D.gamma[1][i] );
+            }
             
-            // Calculate the total momentum
-            D.px_tot = D.p1->momentum( 0, D.i1 ) + D.m21 * D.p2->momentum( 0, D.i2 );
-            D.py_tot = D.p1->momentum( 1, D.i1 ) + D.m21 * D.p2->momentum( 1, D.i2 );
-            D.pz_tot = D.p1->momentum( 2, D.i1 ) + D.m21 * D.p2->momentum( 2, D.i2 );
-            
-            // Calculate the Lorentz invariant E1 E2 - p1.p2
-            // It is equal to the energy of one particle in the frame of the other
-            D.E0 = D.m21 * ( D.gamma1 * D.gamma2
-                - D.p1->momentum( 0, D.i1 ) * D.p2->momentum( 0, D.i2 )
-                - D.p1->momentum( 1, D.i1 ) * D.p2->momentum( 1, D.i2 )
-                - D.p1->momentum( 2, D.i1 ) * D.p2->momentum( 2, D.i2 ) );
-            
-            // Now we calculate quantities in the center-of-mass frame
-            // denoted by the suffix _COM
-            D.gamma_tot_COM = sqrt( 2*D.E0 + D.m21 * D.m21 + 1 );
-            D.gamma1_COM = ( D.E0 + 1 ) / D.gamma_tot_COM;
-            D.gamma2_COM = ( D.E0 + D.m21 * D.m21 ) / ( D.m21 * D.gamma_tot_COM );
-            double gg = ( D.gamma1 + D.gamma1_COM ) / ( D.gamma_tot + D.gamma_tot_COM );
-            D.px_COM = D.p1->momentum( 0, D.i1 ) - gg * D.px_tot;
-            D.py_COM = D.p1->momentum( 1, D.i1 ) - gg * D.py_tot;
-            D.pz_COM = D.p1->momentum( 2, D.i1 ) - gg * D.pz_tot;
-            D.p2_COM = D.px_COM*D.px_COM + D.py_COM*D.py_COM + D.pz_COM*D.pz_COM;
-            D.p_COM = sqrt( D.p2_COM );
-            
-            // Calculate some intermediate quantities
-            D.p_gamma_COM = D.p_COM * D.gamma_tot_COM;
-            D.vrel = D.p_gamma_COM / ( D.gamma1_COM * D.gamma2_COM ); // | v2_COM - v1_COM |
-            D.vrel_corr = D.p_gamma_COM / ( D.gamma1 * D.gamma2 );
-            
+            // Apply all processes (collisions, ionization, ...)
             for( unsigned int i=0; i<processes_.size(); i++ ) {
                 processes_[i]->apply( patch->rand_, D );
             }
             
-        } // end loop on pairs of particles
+            // Update the particle arrays from the buffers
+            for( size_t i = 0; i<D.n; i++ ) {
+                // Store Weights
+                D.p[0][i]->weight( D.i[0][i] ) = D.W[0][i];
+                D.p[1][i]->weight( D.i[1][i] ) = D.W[1][i];
+                // Store charges
+                D.p[0][i]->charge( D.i[0][i] ) = D.q[0][i];
+                D.p[1][i]->charge( D.i[1][i] ) = D.q[1][i];
+                // Store momenta
+                D.p[0][i]->momentum( 0, D.i[0][i] ) = D.px[0][i]; D.p[1][i]->momentum( 0, D.i[1][i] ) = D.px[1][i];
+                D.p[0][i]->momentum( 1, D.i[0][i] ) = D.py[0][i]; D.p[1][i]->momentum( 1, D.i[1][i] ) = D.py[1][i];
+                D.p[0][i]->momentum( 2, D.i[0][i] ) = D.pz[0][i]; D.p[1][i]->momentum( 2, D.i[1][i] ) = D.pz[1][i];
+            }
+        }
+         // end loop on pairs of particles
 
     } // end loop on bins
 

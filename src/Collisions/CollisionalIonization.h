@@ -77,9 +77,6 @@ private:
     //! Current ionization probability array (one cell per number of ionization events)
     std::vector<double> prob;
     
-    //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
-    void calculate( double, double, double, Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff );
-    
 };
 
 #endif

@@ -63,90 +63,92 @@ CollisionalNuclearReaction::~CollisionalNuclearReaction()
 
 void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
 {
-    double ekin = D.m1 * (D.gamma1_COM-1.) + D.m2 * (D.gamma2_COM-1.);
-    double log_ekin = log( ekin );
-    
-    // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
-    double cs = crossSection( log_ekin );
-    
-    // Calculate probability for reaction
-    double prob = coeff2_ * D.vrel_corr * D.dt_correction * cs * rate_multiplier_;
-    tot_probability_ += prob;
-    npairs_tot_ ++;
-    if( random->uniform() > exp( -prob ) ) {
+    for( size_t i = 0; i<D.n; i++ ) {
         
-        // Reaction occurs
+        double ekin = D.m[0][i] * D.gamma_tot_COM[i] - D.m[0][i] - D.m[1][i];
+        double log_ekin = log( ekin );
         
-        double W = D.minW / rate_multiplier_;
+        // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
+        double cs = crossSection( log_ekin );
         
-        // Reduce the weight of both reactants
-        // If becomes zero, then the particle will be discarded later
-        D.p1->weight( D.i1 ) -= W;
-        D.p2->weight( D.i2 ) -= W;
-        D.minW -= 0.;
-        D.maxW -= 0.;
+        // Calculate probability for reaction
+        double prob = coeff2_ * D.vrel_corr[i] * D.dt_correction[i] * cs * rate_multiplier_;
+        tot_probability_ += prob;
         
-        // Get the magnitude and the angle of the outgoing products in the COM frame
-        NuclearReactionProducts products;
-        double tot_charge = D.p1->charge( D.i1 ) + D.p2->charge( D.i2 );
-        makeProducts( random, ekin, log_ekin, tot_charge, products );
-        
-        // Calculate new weights
-        double newW1, newW2;
-        if( tot_charge != 0. ) {
-            double weight_factor = W / tot_charge;
-            newW1 = D.p1->charge( D.i1 ) * weight_factor;
-            newW2 = D.p2->charge( D.i2 ) * weight_factor;
-        } else {
-            newW1 = W;
-            newW2 = 0.;
-        }
-        
-        // For each product
-        double p_perp = sqrt( D.px_COM*D.px_COM + D.py_COM*D.py_COM );
-        double newpx_COM=0, newpy_COM=0, newpz_COM=0;
-        for( unsigned int iproduct=0; iproduct<products.particles.size(); iproduct++ ){
-            // Calculate the deflection in the COM frame
-            if( iproduct < products.cosPhi.size() ) { // do not recalculate if all products have same axis
-                if( p_perp > 1.e-10*D.p_COM ) { // make sure p_perp is not too small
-                    double inv_p_perp = 1./p_perp;
-                    newpx_COM = ( D.px_COM * D.pz_COM * products.cosPhi[iproduct] - D.py_COM * D.p_COM * products.sinPhi[iproduct] ) * inv_p_perp;
-                    newpy_COM = ( D.py_COM * D.pz_COM * products.cosPhi[iproduct] + D.px_COM * D.p_COM * products.sinPhi[iproduct] ) * inv_p_perp;
-                    newpz_COM = -p_perp * products.cosPhi[iproduct];
-                } else { // if p_perp is too small, we use the limit px->0, py=0
-                    newpx_COM = D.p_COM * products.cosPhi[iproduct];
-                    newpy_COM = D.p_COM * products.sinPhi[iproduct];
-                    newpz_COM = 0.;
-                }
+        if( random->uniform() > exp( -prob ) ) {
+            
+            // Reaction occurs
+            
+            double W = min( D.W[0][i], D.W[1][i] ) / rate_multiplier_;
+            
+            // Reduce the weight of both reactants
+            // If becomes zero, then the particle will be discarded later
+            D.W[0][i] -= W;
+            D.W[1][i] -= W;
+            
+            // Get the magnitude and the angle of the outgoing products in the COM frame
+            NuclearReactionProducts products;
+            double tot_charge = D.q[0][i] + D.q[1][i];
+            makeProducts( random, ekin, log_ekin, tot_charge, products );
+            
+            // Calculate new weights
+            double newW1, newW2;
+            if( tot_charge != 0. ) {
+                double weight_factor = W / tot_charge;
+                newW1 = D.q[0][i] * weight_factor;
+                newW2 = D.q[1][i] * weight_factor;
+            } else {
+                newW1 = W;
+                newW2 = 0.;
+            }
+            
+            // For each product
+            double p_perp = sqrt( D.px_COM[i]*D.px_COM[i] + D.py_COM[i]*D.py_COM[i] );
+            double newpx_COM=0, newpy_COM=0, newpz_COM=0;
+            for( unsigned int iproduct=0; iproduct<products.particles.size(); iproduct++ ){
                 // Calculate the deflection in the COM frame
-                newpx_COM = newpx_COM * products.sinX[iproduct] + D.px_COM *products.cosX[iproduct];
-                newpy_COM = newpy_COM * products.sinX[iproduct] + D.py_COM *products.cosX[iproduct];
-                newpz_COM = newpz_COM * products.sinX[iproduct] + D.pz_COM *products.cosX[iproduct];
+                if( iproduct < products.cosPhi.size() ) { // do not recalculate if all products have same axis
+                    if( p_perp > 1.e-10*D.p_COM[i] ) { // make sure p_perp is not too small
+                        double inv_p_perp = 1./p_perp;
+                        newpx_COM = ( D.px_COM[i] * D.pz_COM[i] * products.cosPhi[iproduct] - D.py_COM[i] * D.p_COM[i] * products.sinPhi[iproduct] ) * inv_p_perp;
+                        newpy_COM = ( D.py_COM[i] * D.pz_COM[i] * products.cosPhi[iproduct] + D.px_COM[i] * D.p_COM[i] * products.sinPhi[iproduct] ) * inv_p_perp;
+                        newpz_COM = -p_perp * products.cosPhi[iproduct];
+                    } else { // if p_perp is too small, we use the limit px->0, py=0
+                        newpx_COM = D.p_COM[i] * products.cosPhi[iproduct];
+                        newpy_COM = D.p_COM[i] * products.sinPhi[iproduct];
+                        newpz_COM = 0.;
+                    }
+                    // Calculate the deflection in the COM frame
+                    newpx_COM = newpx_COM * products.sinX[iproduct] + D.px_COM[i] *products.cosX[iproduct];
+                    newpy_COM = newpy_COM * products.sinX[iproduct] + D.py_COM[i] *products.cosX[iproduct];
+                    newpz_COM = newpz_COM * products.sinX[iproduct] + D.pz_COM[i] *products.cosX[iproduct];
+                }
+                // Rescale by the new momentum magnitude
+                double momentum_ratio = products.new_p_COM[iproduct] / D.p_COM[i];
+                double new_gamma_COM = sqrt( products.new_p_COM[iproduct]*products.new_p_COM[iproduct] + 1. );
+                newpx_COM *= momentum_ratio;
+                newpy_COM *= momentum_ratio;
+                newpz_COM *= momentum_ratio;
+                // Go back to the lab frame and store the results in the particle array
+                double pp = ( D.px_tot[i] * newpx_COM + D.py_tot[i] * newpy_COM + D.pz_tot[i] * newpz_COM ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
+                double f = ( new_gamma_COM + pp ) / D.gamma_tot_COM[i];
+                double newpx = newpx_COM + f * D.px_tot[i];
+                double newpy = newpy_COM + f * D.py_tot[i];
+                double newpz = newpz_COM + f * D.pz_tot[i];
+                // Make new particle at position of particle 1
+                if( newW1 > 0. ) {
+                    products.particles[iproduct]->makeParticleAt( *D.p[0][i], D.i[0][i], newW1, products.q[iproduct], newpx, newpy, newpz );
+                }
+                // Make new particle at position of particle 2
+                if( newW2 > 0. ) {
+                    products.particles[iproduct]->makeParticleAt( *D.p[1][i], D.i[1][i], newW2, products.q[iproduct], newpx, newpy, newpz );
+                }
             }
-            // Rescale by the new momentum magnitude
-            double momentum_ratio = products.new_p_COM[iproduct] / D.p_COM;
-            double new_gamma_COM = sqrt( products.new_p_COM[iproduct]*products.new_p_COM[iproduct] + 1. );
-            newpx_COM *= momentum_ratio;
-            newpy_COM *= momentum_ratio;
-            newpz_COM *= momentum_ratio;
-            // Go back to the lab frame and store the results in the particle array
-            double pp = ( D.px_tot * newpx_COM + D.py_tot * newpy_COM + D.pz_tot * newpz_COM ) / ( D.gamma_tot + D.gamma_tot_COM );
-            double f = ( new_gamma_COM + pp ) / D.gamma_tot_COM;
-            double newpx = newpx_COM + f * D.px_tot;
-            double newpy = newpy_COM + f * D.py_tot;
-            double newpz = newpz_COM + f * D.pz_tot;
-            // Make new particle at position of particle 1
-            if( newW1 > 0. ) {
-                products.particles[iproduct]->makeParticleAt( *D.p1, D.i1, newW1, products.q[iproduct], newpx, newpy, newpz );
-            }
-            // Make new particle at position of particle 2
-            if( newW2 > 0. ) {
-                products.particles[iproduct]->makeParticleAt( *D.p2, D.i2, newW2, products.q[iproduct], newpx, newpy, newpz );
-            }
-        }
-        
-    } // end nuclear reaction
-
+            
+        } // end nuclear reaction
+    }
+    
+    npairs_tot_ += D.n;
 }
 
 
