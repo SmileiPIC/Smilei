@@ -207,6 +207,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     D.electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
     
     // Store info for screening (e-i collisions)
+    D.screening_group = screening_group_;
     vector<double> screening_Z; // atomic number
     vector<double> lTF; // thomas-fermi length
     if( screening_group_ > 0 ) {
@@ -381,37 +382,60 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                 D.dt_correction[i] *= corr1 * weight_correction_1 + corr2 * weight_correction_2;
             }
             
+            // Calculate gammas
             for( size_t i = 0; i<D.n; i++ ) {
-                double m21 = D.m[1][i] / D.m[0][i];
-                
-                // Calculate gammas
                 D.gamma[0][i] = sqrt( 1 + D.px[0][i]*D.px[0][i] + D.py[0][i]*D.py[0][i] + D.pz[0][i]*D.pz[0][i] );
+            }
+            for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma[1][i] = sqrt( 1 + D.px[1][i]*D.px[1][i] + D.py[1][i]*D.py[1][i] + D.pz[1][i]*D.pz[1][i] );
-                D.gamma_tot[i] = D.gamma[0][i] + m21 * D.gamma[1][i];
-                
-                // Calculate the total momentum
-                D.px_tot[i] = D.px[0][i] + m21 * D.px[1][i];
-                D.py_tot[i] = D.py[0][i] + m21 * D.py[1][i];
-                D.pz_tot[i] = D.pz[0][i] + m21 * D.pz[1][i];
-                
-                // Calculate the Lorentz invariant gamma1 gamma2 - u1.u2
-                // It is equal to the gamma of one particle in the rest frame of the other particle
+            }
+            
+            // Calculate the mass ratio
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.R[i] = D.m[1][i] / D.m[0][i];
+            }
+            
+            // Calculate the total gamma
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.gamma_tot[i] = D.gamma[0][i] + D.R[i] * D.gamma[1][i];
+            }
+            
+            // Calculate the total momentum
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.px_tot[i] = D.px[0][i] + D.R[i] * D.px[1][i];
+            }
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.py_tot[i] = D.py[0][i] + D.R[i] * D.py[1][i];
+            }
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.pz_tot[i] = D.pz[0][i] + D.R[i] * D.pz[1][i];
+            }
+            
+            // Calculate the Lorentz invariant gamma1 gamma2 - u1.u2
+            // It is equal to the gamma of one particle in the rest frame of the other particle
+            for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma0[i] = D.gamma[0][i] * D.gamma[1][i] - D.px[0][i] * D.px[1][i] - D.py[0][i] * D.py[1][i] - D.pz[0][i] * D.pz[1][i];
-                
-                // Now we calculate quantities in the center-of-mass frame
-                // denoted by the suffix _COM
-                D.gamma_tot_COM[i] = sqrt( 2*m21*D.gamma0[i] + m21 * m21 + 1 );
-                D.gamma_COM0[i] = ( m21 * D.gamma0[i] + 1 ) / D.gamma_tot_COM[i];
+            }
+            
+            // Now we calculate quantities in the center-of-mass frame
+            // denoted by the suffix _COM
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.gamma_tot_COM[i] = sqrt( 2*D.R[i]*D.gamma0[i] + D.R[i] * D.R[i] + 1 );
+                D.gamma_COM0[i] = ( D.R[i] * D.gamma0[i] + 1 ) / D.gamma_tot_COM[i];
+            }
+            
+            for( size_t i = 0; i<D.n; i++ ) {
                 double gg = ( D.gamma[0][i] + D.gamma_COM0[i] ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
                 D.px_COM[i] = D.px[0][i] - gg * D.px_tot[i];
                 D.py_COM[i] = D.py[0][i] - gg * D.py_tot[i];
                 D.pz_COM[i] = D.pz[0][i] - gg * D.pz_tot[i];
                 D.p_COM[i] = sqrt( D.px_COM[i]*D.px_COM[i] + D.py_COM[i]*D.py_COM[i] + D.pz_COM[i]*D.pz_COM[i] );
-                
+            }
+            
+            for( size_t i = 0; i<D.n; i++ ) {
                 // Calculate some intermediate quantities
                 double p_gamma_COM = D.p_COM[i] * D.gamma_tot_COM[i];
                 D.vrel[i] = p_gamma_COM / ( D.gamma_COM0[i] * ( D.gamma_tot_COM[i] - D.gamma_COM0[i] ) ); // | v2_COM - v1_COM |
-                D.vrel_corr[i] = p_gamma_COM / ( m21 * D.gamma[0][i] * D.gamma[1][i] );
             }
             
             // Apply all processes (collisions, ionization, ...)

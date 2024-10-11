@@ -178,11 +178,11 @@ void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
                 break;    // if energy below Emin, do nothing
             }
             if( x < npointsm1 ) { // if energy within table range, interpolate
-                const int i = int( x );
-                const double a = x - ( double )i;
-                cs = ( crossSection[Zstar][i+1]-crossSection[Zstar][i] )*a + crossSection[Zstar][i];
-                w  = ( transferredEnergy[Zstar][i+1]-transferredEnergy[Zstar][i] )*a + transferredEnergy[Zstar][i];
-                e  = ( lostEnergy[Zstar][i+1]-lostEnergy[Zstar][i] )*a + lostEnergy[Zstar][i];
+                const int j = int( x );
+                const double a = x - ( double )j;
+                cs = ( crossSection[Zstar][j+1]-crossSection[Zstar][j] )*a + crossSection[Zstar][j];
+                w  = ( transferredEnergy[Zstar][j+1]-transferredEnergy[Zstar][j] )*a + transferredEnergy[Zstar][j];
+                e  = ( lostEnergy[Zstar][j+1]-lostEnergy[Zstar][j] )*a + lostEnergy[Zstar][j];
             } else { // if energy above table range, extrapolate
                 const double a = x - npointsm1;
                 cs = ( crossSection[Zstar][npoints-1]-crossSection[Zstar][npoints-2] )*a + crossSection[Zstar][npoints-1];

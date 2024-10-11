@@ -17,8 +17,8 @@ struct BinaryProcessData
     //! Particles objects of both particles
     Particles * p[2][max_buffer_size_];
     
-    //! Masses
-    double m[2][max_buffer_size_];
+    //! Masses and mass ratio
+    double m[2][max_buffer_size_], R[max_buffer_size_];
     
     //! Weights
     double W[2][max_buffer_size_];
@@ -48,7 +48,7 @@ struct BinaryProcessData
     double gamma_COM0[max_buffer_size_], gamma_tot_COM[max_buffer_size_];
     
     //! Relative velocity
-    double vrel[max_buffer_size_], vrel_corr[max_buffer_size_];
+    double vrel[max_buffer_size_];
     
     //! Whether the first species is electron
     bool electronFirst;
@@ -61,6 +61,9 @@ struct BinaryProcessData
     
     //! Product of atomic numbers (for e-i screening)
     double Z1Z2[max_buffer_size_];
+    
+    //! Which group of species may be the screened species
+    int screening_group;
     
     double n123, n223;
 };

@@ -72,7 +72,8 @@ void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
         double cs = crossSection( log_ekin );
         
         // Calculate probability for reaction
-        double prob = coeff2_ * D.vrel_corr[i] * D.dt_correction[i] * cs * rate_multiplier_;
+        double vrel_corr = D.p_COM[i] * D.gamma_tot_COM[i] / ( D.R[i]* D.gamma[0][i] * D.gamma[1][i] );
+        double prob = coeff2_ * vrel_corr * D.dt_correction[i] * cs * rate_multiplier_;
         tot_probability_ += prob;
         
         if( random->uniform() > exp( -prob ) ) {
