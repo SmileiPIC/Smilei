@@ -143,7 +143,7 @@ void reflect_particle_wall( Species *species, int imin, int imax, int direction,
 }
 
 // direction not used below, direction is "r"
-void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * /*rand*/, double &energy_change )
+void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, double limit_sup, double /*dt*/, std::vector<double> &invgf, Random * /*rand*/, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during reflection
     
@@ -151,36 +151,44 @@ void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, 
     double* position_z = species->particles->getPtrPosition(2);
     double* momentum_y = species->particles->getPtrMomentum(1);
     double* momentum_z = species->particles->getPtrMomentum(2);
-    //limite_sup = 2*Rmax.
-    //We look for the coordiunate of the point at which the particle crossed the boundary
-    //We need to fine the parameter t at which (y + py*t)+(z+pz*t) = Rmax^2
+    //We look for the coordinate of the point at which the particle crossed the boundary
+    //We need to fine the parameter t at which (y - vy*t)^2+(z-vz*t)^2 = Rmax^2
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
-        if ( distance2ToAxis >= limit_sup*limit_sup ) {
-            limit_sup *= 2.;
-            double b = 2*( position_y[ ipart ]*momentum_y[ ipart ] + position_z[ ipart ]*momentum_z[ ipart ] );
-            double r2 = ( position_y[ ipart ]*position_y[ ipart ] + position_z[ ipart ]*position_z[ ipart ] );
-            double pr2 = ( momentum_y[ ipart ]*momentum_y[ ipart ] + momentum_z[ ipart ]*momentum_z[ ipart ] );
-            double delta = b*b - pr2*( 4*r2 - limit_sup*limit_sup );
+        double r2 = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( r2 >= limit_sup*limit_sup ) {
+            //solving v2*t2 + b*t + r2-rmax^2 = 0
+            double b = -2.*( position_y[ ipart ]*momentum_y[ ipart ] + position_z[ ipart ]*momentum_z[ ipart ] )*invgf[ipart];
+            double p2 = ( momentum_y[ ipart ]*momentum_y[ ipart ] + momentum_z[ ipart ]*momentum_z[ ipart ] );
+            double v2 = p2 * invgf[ipart]*invgf[ipart];
+            double delta = b*b - 4.*v2*( r2 - limit_sup*limit_sup );
             
-            //b and delta are neceseraliy >=0 otherwise there are no solution which means that something unsual happened
-            if( b < 0 || delta < 0 ) {
+            //delta is neceseraliy >=0 otherwise there are no solution which means that something unsual happened
+            if( delta < 0 ) {
                 ERROR( "There are no solution to reflexion. This should never happen" );
             }
     
-            double t = ( -b + sqrt( delta ) )/pr2*0.5;
+            double t = ( -b - sqrt( delta ) )/v2*0.5;
     
             double y0, z0; //Coordinates of the crossing point 0
-            y0 =  position_y[ ipart ] + momentum_y[ ipart ]*t ;
-            z0 =  position_z[ ipart ] + momentum_z[ ipart ]*t ;
+            y0 =  position_y[ ipart ] - momentum_y[ ipart ]*t*invgf[ipart] ;
+            z0 =  position_z[ ipart ] - momentum_z[ ipart ]*t*invgf[ipart] ;
+   
+            //Update momentum after reflexion at crossing point
+            //pr = p.er
+            //pt = p.et
+            //er = (y0/limit_sup, z0/limit_sup)
+            //et = (-z0/limit_sup, y0/limit_sup)
+            double pr = ( momentum_y[ ipart ]*y0 + momentum_z[ ipart ]*z0) / limit_sup;
+            double pt = (-momentum_y[ ipart ]*z0 + momentum_z[ ipart ]*y0) / limit_sup;
+           
+            // New p = -pr.er + pt.et 
+            momentum_y[ipart] = (-pr*y0 - pt*z0)/limit_sup;
+            momentum_z[ipart] = (-pr*z0 + pt*y0)/limit_sup;
+ 
+            //Update new particle position as a movement from (y0,z0) with new momentum during time t:
     
-            //Update new particle position as a reflexion to the plane tangent to the circle at 0.
-    
-            position_y[ ipart ] -= 4*( position_y[ ipart ]-y0 )*y0/limit_sup ;
-            position_z[ ipart ] -= 4*( position_z[ ipart ]-z0 )*z0/limit_sup ;
-            
-            momentum_y[ ipart ] *= 1 - 2*y0/limit_sup ;
-            momentum_z[ ipart ] *= 1 - 2*z0/limit_sup ;
+            position_y[ ipart ] = y0 + momentum_y[ipart]*invgf[ipart]*t ;
+            position_z[ ipart ] = z0 + momentum_z[ipart]*invgf[ipart]*t ;
         }
     }    
 }

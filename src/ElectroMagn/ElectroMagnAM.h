@@ -196,8 +196,6 @@ public:
     void computePoynting( unsigned int axis, unsigned int side ) override;
     //! Method used to impose external fields
     void applyExternalFields( Patch *patch ) override;
-    //! Method used to impose external time fields
-    void applyPrescribedFields( Patch *patch, double time ) override;
     //! Method used to impose one external field
     void applyExternalField( Field *, Profile *, Patch * ) override;
     //! Method used to impose one external time field

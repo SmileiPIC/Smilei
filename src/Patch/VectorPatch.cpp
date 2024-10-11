@@ -398,19 +398,6 @@ void VectorPatch::dynamics( Params &params,
     timers.multiphoton_Breit_Wheeler_timer.updateThreaded( *this, params.printNow( itime ) );
 #endif
 
-    timers.syncPart.restart();
-    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        Species *spec = species( 0, ispec );
-        if ( (!params.Laser_Envelope_model) && (spec->isProj( time_dual, simWindow )) ){
-            SyncVectorPatch::initExchParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
-        } // end condition on Species and on envelope model
-    } // end loop on species
-    //MESSAGE("exchange particles");
-    timers.syncPart.update( params.printNow( itime ) );
-
-#ifdef __DETAILED_TIMERS
-    timers.sorting.update( *this, params.printNow( itime ) );
-#endif
 } // END dynamics
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -456,6 +443,18 @@ void VectorPatch::projectionForDiags( Params &params,
     }
 
 } // END projection for diags
+
+void VectorPatch::initExchParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+        double time_dual, Timers &timers, int itime )
+{
+    timers.syncPart.restart();
+    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
+        if( species( 0, ispec )->isProj( time_dual, simWindow ) ) {
+            SyncVectorPatch::initExchParticles( *this, ispec, params, smpi );
+        }
+    }
+    timers.syncPart.update( params.printNow( itime ) );
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all patches, exchange particles and sort them.
@@ -1443,10 +1442,12 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
         if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
+            SMILEI_PY_SAVE_MASTER_THREAD
             #pragma omp for schedule(runtime)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
                 globalDiags[idiag]->run( ( *this )( ipatch ), itime, simWindow );
             }
+            SMILEI_PY_RESTORE_MASTER_THREAD
             // MPI procs gather the data and compute
             #pragma omp single
             smpi->computeGlobalDiags( globalDiags[idiag], itime );
@@ -4585,16 +4586,6 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     timers.push_pos.update( *this, params.printNow( itime ) );
     timers.cell_keys.update( *this, params.printNow( itime ) );
 #endif
-
-    timers.syncPart.restart();
-    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-            SyncVectorPatch::initExchParticles( ( *this ), ispec, params, smpi ); // Included sortParticles
-        } // end condition on species
-    } // end loop on species
-    timers.syncPart.update( params.printNow( itime ) );
-
-
 
 } // END ponderomotiveUpdatePositionAndCurrents
 

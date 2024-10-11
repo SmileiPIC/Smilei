@@ -1,5 +1,5 @@
-#ifndef PROJECTORAM2ORDERV_H
-#define PROJECTORAM2ORDERV_H
+#ifndef ProjectorAM1OrderRuytenV_H
+#define ProjectorAM1OrderRuytenV_H
 
 #include <cmath>
 #include "ProjectorAM.h"
@@ -10,11 +10,11 @@
 
 using namespace std;
 
-class ProjectorAM2OrderV : public ProjectorAM
+class ProjectorAM1OrderRuytenV : public ProjectorAM
 {
 public:
-    ProjectorAM2OrderV( Params &, Patch *patch );
-    ~ProjectorAM2OrderV();
+    ProjectorAM1OrderRuytenV( Params &, Patch *patch );
+    ~ProjectorAM1OrderRuytenV();
     
     //! Project global current densities (EMfields->Jl_/Jr_/Jt_)
     void currents(ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, double *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int npart_total, int ipart_ref = 0, int ispec =0 );
@@ -72,17 +72,20 @@ private:
         Sl0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
         Sl0[3*vecSize+ipart] = 0.;
         //                            R                                 //
-        delta = deltaold[istart+ipart-ipart_ref+npart_total];
-        delta2 = delta*delta;
-        Sr0[          ipart] = 0.5 * ( delta2-delta+0.25 );
-        Sr0[  vecSize+ipart] = 0.75-delta2;
-        Sr0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+        delta = deltaold[istart+ipart-ipart_ref+npart_total]; // delta = x - x_n si delta > 0 et delta = x - x_n -1 si delta < 0. 
+        double pos = (double)jpo + j_domain_begin_ + delta; 
+        double x_n = floor(pos);
+        double coeff0 = (x_n+1-pos)*(5*x_n + 2 - pos)/(4.*x_n + 2.);
+    
+        Sr0[          ipart] =      coeff0 * (delta < 0.     );
+        Sr0[2*vecSize+ipart] = (1.-coeff0) * (delta >= 0.    );
+        Sr0[  vecSize+ipart] = 1. - Sr0[ipart] - Sr0[2*vecSize+ipart];
         Sr0[3*vecSize+ipart] = 0.;
 
 
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         //                            L                                 //
-        double pos = position_x[istart + ipart] * dl_inv_;
+        pos = position_x[istart + ipart] * dl_inv_;
         int cell = round( pos );
         int cell_shift = cell-ipo-i_domain_begin_;
         delta  = pos - ( double )cell;
@@ -101,13 +104,16 @@ private:
         
         double rp = sqrt( position_y[istart+ipart]*position_y[istart+ipart] +  position_z[istart+ipart]*position_z[istart+ipart] );
         pos = rp * dr_inv_;
+
+        x_n = floor(pos);
+        coeff0 = (x_n+1-pos)*(5*x_n + 2 - pos)/(4.*x_n + 2.);
+
         cell = round( pos );
         cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
-        delta2 = delta*delta;
-        deltam =  0.5 * ( delta2-delta+0.25 );
-        deltap =  0.5 * ( delta2+delta+0.25 );
-        delta2 = 0.75 - delta2;
+        deltam =           coeff0 * (double)(delta < 0  );
+        deltap =       (1.-coeff0) * (double)(delta >= 0 );
+        delta2 =       1. - deltam - deltap;
         m1 = ( cell_shift == -1 );
         c0 = ( cell_shift ==  0 );
         p1 = ( cell_shift ==  1 );

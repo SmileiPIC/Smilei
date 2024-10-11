@@ -74,6 +74,10 @@ OpenPMDparams::OpenPMDparams( Params &p ):
         } else if( unit_type == SMILEI_UNIT_ENERGY ) {
             unitDimension[unit_type] = { 2., 1., -2., 0., 0., 0., 0. };
             unitSI[unit_type] = 8.187104382e-14; // me * c^2
+        } else if( unit_type == SMILEI_UNIT_WEIGHT ) {
+            const auto &n = params->nDim_particle;
+            unitDimension[unit_type] = { -3. + n, 0., 1., 1., 0., 0., 0. };
+            unitSI[unit_type] = 5.034163 * Wr*Wr * pow( 299792458. / Wr, n ); // Nr * Lr^n
         }
     }
     

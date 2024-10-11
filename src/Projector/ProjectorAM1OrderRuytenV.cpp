@@ -1,4 +1,4 @@
-#include "ProjectorAM2OrderV.h"
+#include "ProjectorAM1OrderRuytenV.h"
 
 #include <cmath>
 #include <iostream>
@@ -15,9 +15,9 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for ProjectorAM2OrderV
+// Constructor for ProjectorAM1OrderRuytenV
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : ProjectorAM( params, patch )
+ProjectorAM1OrderRuytenV::ProjectorAM1OrderRuytenV( Params &params, Patch *patch ) : ProjectorAM( params, patch )
 {
     dt = params.timestep;
     dr = params.cell_length[1];
@@ -49,9 +49,9 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for ProjectorAM2OrderV
+// Destructor for ProjectorAM1OrderRuytenV
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorAM2OrderV::~ProjectorAM2OrderV()
+ProjectorAM1OrderRuytenV::~ProjectorAM1OrderRuytenV()
 {
 }
 
@@ -60,7 +60,7 @@ ProjectorAM2OrderV::~ProjectorAM2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
+void ProjectorAM1OrderRuytenV::currentsAndDensity( ElectroMagnAM *emAM,
                                    Particles &particles,
                                    unsigned int istart,
                                    unsigned int iend,
@@ -156,7 +156,7 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species -
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
+void ProjectorAM1OrderRuytenV::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     //Warning : this function is not charge conserving.
     // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
@@ -243,7 +243,7 @@ void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &part
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for currents and densities
-void ProjectorAM2OrderV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
+void ProjectorAM1OrderRuytenV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
 
    for (unsigned int imode=0; imode < Nmode_; imode++){
@@ -271,7 +271,7 @@ void ProjectorAM2OrderV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
    }
 }
 
-void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
+void ProjectorAM1OrderRuytenV::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
 {
    // Mode 0 contribution "below axis" is added.
    // Non zero modes are substracted because a particle sitting exactly on axis has a non defined theta and can not contribute to a theta dependent mode. 
@@ -334,7 +334,7 @@ void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<do
    }
 }
 
-void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
+void ProjectorAM1OrderRuytenV::axisBCEnvChi( double *EnvChi )
 {
     double sign = 1.;
     int imode = 0;
@@ -360,7 +360,7 @@ void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization (WARNING: Not Vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::ionizationCurrents( Field */*Jx*/, Field */*Jy*/, Field */*Jz*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
+void ProjectorAM1OrderRuytenV::ionizationCurrents( Field */*Jx*/, Field */*Jy*/, Field */*Jz*/, Particles &/*particles*/, int /*ipart*/, LocalFields /*Jion*/ )
 {
 /*    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
     Field2D *Jy2D  = static_cast<Field2D *>( Jy );
@@ -446,7 +446,7 @@ void ProjectorAM2OrderV::ionizationCurrents( Field */*Jx*/, Field */*Jy*/, Field
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
+void ProjectorAM1OrderRuytenV::currents( ElectroMagnAM *emAM,
                                    Particles &particles,
                                    unsigned int istart,
                                    unsigned int iend,
@@ -616,7 +616,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
+void ProjectorAM1OrderRuytenV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -655,7 +655,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
 }
 
 // Project susceptibility
-void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM1OrderRuytenV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     double dts2 = dt/2.;
     double dts4 = dt/4.;
@@ -788,16 +788,23 @@ void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
           Sl1[1*vecSize+ipart] = 0.75-delta2;
           Sl1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
 
-          rpn = position_y[istart0+ipart-ipart_ref] * dr_inv_ * position_y[istart0+ipart-ipart_ref] * dr_inv_;
-          rpn += position_z[istart0+ipart-ipart_ref] * dr_inv_ * position_z[istart0+ipart-ipart_ref] * dr_inv_;
-          rpn = sqrt(rpn);
+          rpn = position_y[istart0+ipart-ipart_ref] * position_y[istart0+ipart-ipart_ref] ;
+          rpn += position_z[istart0+ipart-ipart_ref] * position_z[istart0+ipart-ipart_ref] ;
+          rpn = sqrt(rpn) * dr_inv_ ;
           int jp = round( rpn );
           delta  = rpn - ( double )jp;
-          delta2 = delta*delta;
+
+          double x_n = floor(rpn);
+          double coeff0 = (x_n+1-rpn)*(5*x_n + 2 - rpn)/(4.*x_n + 2.);
+
           jp -= j_domain_begin_ + 2;
-          Sr1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 ) * invR_[1+jp];
-          Sr1[1*vecSize+ipart] = (0.75-delta2)               * invR_[2+jp];
-          Sr1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 ) * invR_[3+jp];
+          Sr1[0*vecSize+ipart] = coeff0 * (double)(delta < 0.);
+          Sr1[2*vecSize+ipart] = (1.-coeff0) * (double)(delta >= 0.);
+          Sr1[1*vecSize+ipart] = 1. - Sr1[0*vecSize+ipart] - Sr1[2*vecSize+ipart];
+
+          Sr1[0*vecSize+ipart] *=  invR_[1+jp];
+          Sr1[1*vecSize+ipart] *=  invR_[2+jp];
+          Sr1[2*vecSize+ipart] *=  invR_[3+jp];
 
       } // end ipart loop
 
@@ -814,7 +821,7 @@ void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
       } // end ipart loop
 
       // ---------------------------
-      // Calculate the total charge
+      // Compute the total charge
       // ---------------------------
       int iloc0 = ipom2*nprimr_+jpom2;
       int iloc = iloc0;
@@ -834,4 +841,4 @@ void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 
     } // end ivect
 
-} // end ProjectorAM2OrderV::susceptibility
+} // end ProjectorAM1OrderRuytenV::susceptibility

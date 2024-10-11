@@ -193,8 +193,8 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                                                       bool diag_flag,
                                                       bool is_spectral,
                                                       int  ispec,
-                                                      int  icell,
-                                                      int  ipart_ref )
+                                                      int  icell, 
+                                                      int  ipart_ref ) // icell and ipart_ref unused
 {
     std::vector<int>    &iold  = smpi->dynamics_iold[ithread];
     std::vector<double> &delta = smpi->dynamics_deltaold[ithread];
@@ -246,7 +246,7 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
         else{
 
 #if defined( SMILEI_ACCELERATOR_GPU )
-            currentDepositionKernel1DOnDevice(Jx_, Jy_, Jz_,
+            currentDepositionKernel1DOnDevice(EMfields->Jx_->data(), EMfields->Jz_->data(), EMfields->Jz_->data(),
                     EMfields->Jx_->size(), EMfields->Jy_->size(), EMfields->Jz_->size(),
                     particles.getPtrPosition( 0 ),
                     particles.getPtrMomentum( 1 ),

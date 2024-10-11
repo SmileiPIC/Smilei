@@ -10,6 +10,7 @@
 #include "Interpolator3D2Order.h"
 #include "Interpolator3D4Order.h"
 #include "InterpolatorAM1Order.h"
+#include "InterpolatorAM1OrderRuyten.h"
 #include "InterpolatorAM2Order.h"
 #include "Interpolator1DWT2Order.h"
 #include "Interpolator1DWT4Order.h"
@@ -24,6 +25,7 @@
 #include "Interpolator3D2OrderV.h"
 #include "Interpolator3D4OrderV.h"
 #include "InterpolatorAM2OrderV.h"
+#include "InterpolatorAM1OrderRuytenV.h"
 
 #include "Interpolator1DWT2OrderV.h"
 #include "Interpolator2DWT2OrderV.h"
@@ -154,12 +156,20 @@ public:
         else if( params.geometry == "AMcylindrical" ) {
             if ( !params.is_spectral){
                 if( !vectorization ) {
-                    Interp = new InterpolatorAM2Order( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Interp = new InterpolatorAM1OrderRuyten( params, patch );
+                    } else {
+                        Interp = new InterpolatorAM2Order( params, patch ); // default
+                    }
                 }
                 else {
-                    Interp = new InterpolatorAM2OrderV( params, patch );
+                    if ( params.interpolation_order == 1 ) {
+                        Interp = new InterpolatorAM1OrderRuytenV( params, patch );
+                    } else {
+                        Interp = new InterpolatorAM2OrderV( params, patch );
+                    }
                 }
-            } else {
+            } else { // Spectral
                 Interp = new InterpolatorAM1Order( params, patch );
             }
         }

@@ -157,9 +157,10 @@ public :
                    Timers &timers, int itime );
     
     //! For all patches, exchange particles and sort them.
+    void initExchParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+                                  double time_dual, Timers &timers, int itime );
     void finalizeExchParticlesAndSort( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
-                                  double time_dual,
-                                  Timers &timers, int itime );
+                                  double time_dual, Timers &timers, int itime );
     void finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
 

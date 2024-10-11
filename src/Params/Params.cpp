@@ -103,6 +103,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     string seterr( "seterr" );
     string sChar( "s" );
     Py_DECREF( PyObject_CallMethod( numpy, &seterr[0], &sChar[0], "ignore" ) );
+    string numpy_version = "";
+    PyTools::getAttr( numpy, "__version__", numpy_version );
+    MESSAGE( "Numpy version " << numpy_version );
     Py_DECREF( numpy );
 #else
     WARNING("Numpy not found. Some options will not be available");
@@ -281,10 +284,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( interpolation_order != 1 && is_spectral ) {
             ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver",
             LINK_NAMELIST + std::string("#main-variables") );
-        }
-        if( interpolation_order != 2 && !is_spectral ){
-            ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 for FDTD solver.",
-            LINK_NAMELIST + std::string("#main-variables"));
         }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
@@ -554,8 +553,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // This method is detailed in P.-L. Bourgeois and X. Davoine (2023) https://doi.org/10.1017/S0022377823000223
     use_BTIS3 = false;
     PyTools::extract( "use_BTIS3_interpolation", use_BTIS3, "Main"   );
-    if (use_BTIS3 && interpolation_order != 2 ){
-        ERROR("B-TIS3 interpolation implemented only at order 2.");
+    if (use_BTIS3 && interpolation_order != 2 && (interpolation_order != 1 || geometry != "AMcylindrical" || is_spectral==true )){
+        if (geometry=="AMcylindrical"){
+            ERROR("B-TIS3 interpolation is not implemented for PSATD solver.");
+        } else {
+            ERROR("B-TIS3 interpolation is implemented only at order 2 for Cartesian geometries.");
+        }
     }
     
     // Current filter properties
@@ -864,7 +867,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
-            ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            //ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            WARNING( "Collisions in AM geometry is experimental and valid only with a single mode" );
         }
 
     }
@@ -1356,6 +1360,9 @@ void Params::print_init()
 
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
+    if (use_BTIS3){
+        MESSAGE(1, "B-TIS3 interpolation scheme activated")
+    }
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
     MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
     MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);
