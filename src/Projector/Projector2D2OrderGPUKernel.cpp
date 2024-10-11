@@ -33,7 +33,8 @@ currentDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                          int    i_domain_begin,
                          int    j_domain_begin,
                          int    nprimy,
-                         int    not_spectral_ )
+                         int    not_spectral_,
+                         bool   cell_sorting )
 {
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -56,7 +57,8 @@ currentDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                                  dx_ov_dt, dy_ov_dt,
                                  i_domain_begin, j_domain_begin,
                                  nprimy,
-                                 not_spectral_ );
+                                 not_spectral_,
+                                 cell_sorting );
 }
 
 
@@ -90,7 +92,8 @@ currentAndDensityDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                                    int    i_domain_begin,
                                    int    j_domain_begin,
                                    int    nprimy,
-                                   int    not_spectral_ )
+                                   int    not_spectral_,
+                                   bool   cell_sorting )
 {
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //naive:: // the naive, OMP version serves as a reference along with the CPU version
@@ -113,7 +116,8 @@ currentAndDensityDepositionKernel2DOnDevice( double *__restrict__ host_Jx,
                                            dx_ov_dt, dy_ov_dt,
                                            i_domain_begin, j_domain_begin,
                                            nprimy,
-                                           not_spectral_ );
+                                           not_spectral_,
+                                           cell_sorting );
 }
 #endif
 

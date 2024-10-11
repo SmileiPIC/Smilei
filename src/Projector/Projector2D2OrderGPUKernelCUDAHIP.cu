@@ -4,7 +4,7 @@
 // includes, you must `touch` this file. IF you dont do that you'll have ABI/ODR
 // issues (!).
 
-//#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU )
 
 
 #if defined( __HIP__ ) 
@@ -567,7 +567,8 @@ namespace cudahip2d {
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          nprimy,
-                                         int          not_spectral_ )
+                                         int          not_spectral_,
+                                         bool         cell_sorting )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -576,7 +577,6 @@ namespace cudahip2d {
             // operation is a no op on AMD.
             const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
-            const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
@@ -619,15 +619,26 @@ namespace cudahip2d {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
-            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 :
-                                                                                     device_bin_index[workgroup_dedicated_bin_index - 1];
+            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            // The loop order is different depending on cell sorting
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                // With cell sorting, each thread should process close-by particles
+                // to reduce atomics. This uses more cache, but is still better
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                // Without cell sorting, we keep the standard loops as particles
+                // are not ordered so that atomics are naturally rare
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
@@ -903,7 +914,8 @@ namespace cudahip2d {
                                             int          i_domain_begin,
                                             int          j_domain_begin,
                                             int          nprimy,
-                                            int          not_spectral_ )
+                                            int          not_spectral_,
+                                            bool         cell_sorting )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -912,7 +924,6 @@ namespace cudahip2d {
             // operation is a no op on AMD.
             const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
-            const unsigned int loop_stride    = workgroup_size; // This stride should enable better memory access coalescing
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
@@ -955,15 +966,22 @@ namespace cudahip2d {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
-            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 :
-                                                                                     device_bin_index[workgroup_dedicated_bin_index - 1];
+            const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
@@ -1181,7 +1199,8 @@ namespace cudahip2d {
                              int    i_domain_begin,
                              int    j_domain_begin,
                              int    nprimy,
-                             int    not_spectral_ )
+                             int    not_spectral_,
+                             bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1203,7 +1222,7 @@ namespace cudahip2d {
         using ComputeFloat   = double;
         using ReductionFloat = double;
 
-	auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
 #if defined ( __HIP__ ) 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
@@ -1229,11 +1248,12 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-	KernelFunction <<<
+        KernelFunction <<<
                             kGridDimension,
                             kBlockDimension,
                             0, // Shared memory
@@ -1258,7 +1278,8 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral_
+                            not_spectral_,
+                            cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
@@ -1293,7 +1314,8 @@ namespace cudahip2d {
                                        int    i_domain_begin,
                                        int    j_domain_begin,
                                        int    nprimy,
-                                       int    not_spectral_ )
+                                       int    not_spectral_,
+                                       bool cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -1345,149 +1367,39 @@ namespace cudahip2d {
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-        KernelFunction <<<                                                                                                             
-                            kGridDimension,                                                                                            
-                            kBlockDimension,                                                                                           
-                            0, // Shared memory                                                                                        
-                            0 // Stream                                                                                                
-                       >>>                                                                                                             
-                       (                                                                                                               
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),                               
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),                               
+        KernelFunction <<<
+                            kGridDimension,
+                            kBlockDimension,
+                            0, // Shared memory
+                            0 // Stream
+                       >>>
+                       (
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_rho ),
                             Jx_size, Jy_size, Jz_size, rho_size,
-                            device_particle_position_x,                                                                                
-                            device_particle_position_y,                                                                                
-                            device_particle_momentum_z,                                                                                
-                            device_particle_charge,                                                                                    
-                            device_particle_weight,                                                                                    
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),                        
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),                           
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),                            
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),                        
-                            inv_cell_volume,                                                                                           
-                            dx_inv, dy_inv,                                                                                            
-                            dx_ov_dt, dy_ov_dt,                                                                                        
-                            i_domain_begin, j_domain_begin,                                                                            
-                            nprimy,                                                                                                    
-                            not_spectral_                                                                                               
-                       );                                                                                                              
-        checkHIPErrors( ::cudaDeviceSynchronize() );  
+                            device_particle_position_x,
+                            device_particle_position_y,
+                            device_particle_momentum_z,
+                            device_particle_charge,
+                            device_particle_weight,
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
+                            inv_cell_volume,
+                            dx_inv, dy_inv,
+                            dx_ov_dt, dy_ov_dt,
+                            i_domain_begin, j_domain_begin,
+                            nprimy,
+                            not_spectral_,
+                            cell_sorting
+                       );
+        checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif 
     }
 
 } // namespace hipcuda
 
-//#endif
-
-//! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-//!
-//extern "C" void
-//currentDepositionKernel2D( double *__restrict__ host_Jx,
-//                         double *__restrict__ host_Jy,
-//                         double *__restrict__ host_Jz,
-//                         int Jx_size,
-//                         int Jy_size,
-//                         int Jz_size,
-//                         const double *__restrict__ device_particle_position_x,
-//                         const double *__restrict__ device_particle_position_y,
-//                         const double *__restrict__ device_particle_momentum_z,
-//                         const short *__restrict__ device_particle_charge,
-//                         const double *__restrict__ device_particle_weight,
-//                         const int *__restrict__ host_bin_index,
-//                         unsigned int x_dimension_bin_count,
-//                         unsigned int y_dimension_bin_count,
-//                         const double *__restrict__ host_invgf_,
-//                         const int *__restrict__ host_iold_,
-//                         const double *__restrict__ host_deltaold_,
-//                         double inv_cell_volume,
-//                         double dx_inv,
-//                         double dy_inv,
-//                         double dx_ov_dt,
-//                         double dy_ov_dt,
-//                         int    i_domain_begin,
-//                         int    j_domain_begin,
-//                         int    nprimy,
-//                         int    not_spectral_ )
-//{
-//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-//    naive:: // the naive, OMP version serves as a reference along with the CPU version
-//    #else
-//    cudahip::
-//    #endif
-//        currentDepositionKernel2D( host_Jx, host_Jy, host_Jz,
-//                                 Jx_size, Jy_size, Jz_size,
-//                                 device_particle_position_x, device_particle_position_y,
-//                                 device_particle_momentum_z,
-//                                 device_particle_charge,
-//                                 device_particle_weight,
-//                                 host_bin_index,
-//                                 x_dimension_bin_count,
-//                                 y_dimension_bin_count,
-//                                 host_invgf_,
-//                                 host_iold_, host_deltaold_,
-//                                 inv_cell_volume,
-//                                 dx_inv, dy_inv,
-//                                 dx_ov_dt, dy_ov_dt,
-//                                 i_domain_begin, j_domain_begin,
-//                                 nprimy,
-//                                 not_spectral_ );
-//}
-//
-////! Project global current and charge densities (EMfields->Jx_/Jy_/Jz_/rho_)
-////!
-//extern "C" void
-//currentAndDensityDepositionKernel( double *__restrict__ host_Jx,
-//                                   double *__restrict__ host_Jy,
-//                                   double *__restrict__ host_Jz,
-//                                   double *__restrict__ host_rho,
-//                                   int Jx_size,
-//                                   int Jy_size,
-//                                   int Jz_size,
-//                                   int rho_size,
-//                                   const double *__restrict__ device_particle_position_x,
-//                                   const double *__restrict__ device_particle_position_y,
-//                                   const double *__restrict__ device_particle_momentum_z,
-//                                   const short *__restrict__ device_particle_charge,
-//                                   const double *__restrict__ device_particle_weight,
-//                                   const int *__restrict__ host_bin_index,
-//                                   unsigned int x_dimension_bin_count,
-//                                   unsigned int y_dimension_bin_count,
-//                                   const double *__restrict__ host_invgf_,
-//                                   const int *__restrict__ host_iold_,
-//                                   const double *__restrict__ host_deltaold_,
-//                                   double inv_cell_volume,
-//                                   double dx_inv,
-//                                   double dy_inv,
-//                                   double dx_ov_dt,
-//                                   double dy_ov_dt,
-//                                   int    i_domain_begin,
-//                                   int    j_domain_begin,
-//                                   int    nprimy,
-//                                   int    not_spectral_ )
-//{
-//    #if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
-//    naive:: // the naive, OMP version serves as a reference along with the CPU version
-//    #else
-//    cudahip::
-//    #endif
-//        currentAndDensityDepositionKernel( host_Jx, host_Jy, host_Jz, host_rho,
-//                                           Jx_size, Jy_size, Jz_size, rho_size,
-//                                           device_particle_position_x, device_particle_position_y,
-//                                           device_particle_momentum_z,
-//                                           device_particle_charge,
-//                                           device_particle_weight,
-//                                           host_bin_index,
-//                                           x_dimension_bin_count,
-//                                           y_dimension_bin_count,
-//                                           host_invgf_,
-//                                           host_iold_, host_deltaold_,
-//                                           inv_cell_volume,
-//                                           dx_inv, dy_inv,
-//                                           dx_ov_dt, dy_ov_dt,
-//                                           i_domain_begin, j_domain_begin,
-//                                           nprimy,
-//                                           not_spectral_ );
-//}
-
+#endif

@@ -193,7 +193,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     currents( double *__restrict__ , double *__restrict__ , double *__restrict__ , int, int, int,
               Particles   &, unsigned int , unsigned int , unsigned int , const double *__restrict__ ,
               const int    *__restrict__ , const double *__restrict__ , double , double , double , double ,
-              double , double , double , int    , int    , int    , int    ,  int    , double, int )
+              double , double , double , int    , int    , int    , int    ,  int    , double, int, bool )
     {
         SMILEI_ASSERT( false );
     }
@@ -263,7 +263,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
     density( double *__restrict__ , int , Particles   &, unsigned int , unsigned int , unsigned int ,
              const double *__restrict__ , const int *__restrict__ , const double *__restrict__ ,
              double , double , double , double , double , double , double ,
-             int, int, int, int, int, double, int )
+             int, int, int, int, int, double, int, bool )
     {
         SMILEI_ASSERT( false );
     }
