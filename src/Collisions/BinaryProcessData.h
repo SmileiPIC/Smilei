@@ -6,45 +6,66 @@
 //! Contains the relativistic kinematic quantities associated to the collision of two particles noted 1 and 2
 struct BinaryProcessData
 {
-    //! Particles objects for both macro-particles
-    Particles *p1, *p2;
+    static constexpr size_t max_buffer_size_ = 8;
     
-    //! Indices of both particles
-    unsigned int i1, i2;
+    //! Number of particles in buffer
+    size_t n;
     
-    //! Masses
-    double m1, m2, m12;
+    //! Indices of both particles in their Particles object
+    size_t i[2][max_buffer_size_];
     
-    //! Minimum / maximum weight
-    double minW, maxW;
+    //! Particles objects of both particles
+    Particles * p[2][max_buffer_size_];
+    
+    //! Masses and mass ratio
+    double m[2][max_buffer_size_], R[max_buffer_size_];
+    
+    //! Weights
+    double W[2][max_buffer_size_];
+
+    //! Charges
+    short q[2][max_buffer_size_];
+    
+    //! Correction to apply to the cross-sections due to the difference in weight
+    double dt_correction[max_buffer_size_];
+    
+    //! Momenta
+    double px[2][max_buffer_size_], py[2][max_buffer_size_], pz[2][max_buffer_size_];
+    
+    //! Sum of both momenta
+    double px_tot[max_buffer_size_], py_tot[max_buffer_size_], pz_tot[max_buffer_size_];
+    
+    //! Lorentz invariant = energy of one particle in the frame of the other
+    double gamma0[max_buffer_size_];
+    
+    //! Momentum of the particles expressed in the COM frame
+    double px_COM[max_buffer_size_], py_COM[max_buffer_size_], pz_COM[max_buffer_size_];
+    double p_COM[max_buffer_size_];
+    
+    //! Lorentz factors
+    double gamma[2][max_buffer_size_], gamma_tot[max_buffer_size_];
+    //! Lorentz factors expressed in the COM frame
+    double gamma_COM0[max_buffer_size_], gamma_tot_COM[max_buffer_size_];
+    
+    //! Relative velocity
+    double vrel[max_buffer_size_];
     
     //! Whether the first species is electron
     bool electronFirst;
     
-    //! Correction to apply to the cross-sections due to the difference in weight
-    double dt_correction;
-    
-    //! Velocity of the Center-Of-Mass, expressed in the lab frame
-    double COM_vx, COM_vy, COM_vz;
-    
-    //! Lorentz factor of the COM, expressed in the lab frame
-    double COM_gamma;
-    
-    //! Momentum of the particles expressed in the COM frame
-    double px_COM, py_COM, pz_COM, p_COM;
-    
-    //! Lorentz factors
-    double gamma1, gamma2;
-    //! Lorentz factors expressed in the COM frame
-    double gamma1_COM, gamma2_COM;
-    
-    //! Relative velocity
-    double vrel, vrel_corr;
-    
     //! Debye length squared
-    double debye2;
+    double debye;
     
-    double term1, term3, term5, n123, n223;
+    //! Thomas-Fermi length
+    double lTF[max_buffer_size_];
+    
+    //! Product of atomic numbers (for e-i screening)
+    double Z1Z2[max_buffer_size_];
+    
+    //! Which group of species may be the screened species
+    int screening_group;
+    
+    double n123, n223;
 };
 
 #endif
