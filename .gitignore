@@ -33,3 +33,4 @@ exec_script.sh.*
 .DS_Store
 tables/*
 *.stats*
+.venv*
