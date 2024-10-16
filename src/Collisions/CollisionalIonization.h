@@ -7,11 +7,11 @@
 #include "Tools.h"
 #include "Species.h"
 #include "Params.h"
-#include "BinaryProcess.h"
+#include "BinaryProcessData.h"
 
 class Patch;
 
-class CollisionalIonization : public BinaryProcess
+class CollisionalIonization
 {
 
 public:
@@ -22,7 +22,7 @@ public:
     //! destructor
     ~CollisionalIonization() {};
     
-    void prepare() {};
+    #pragma acc routine vector nohost
     void apply( Random *random, BinaryProcessData &D );
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     std::string name() {
@@ -32,7 +32,7 @@ public:
     };
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
-    virtual unsigned int createDatabase( double );
+    unsigned int createDatabase( double );
     
     //! Coefficients used for interpolating the energy over a given initial list
     static const double a1, a2, npointsm1;

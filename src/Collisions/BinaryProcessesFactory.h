@@ -2,7 +2,6 @@
 #define BINARYPROCESSESFACTORY_H
 
 #include "BinaryProcesses.h"
-#include "BinaryProcess.h"
 #include "Collisions.h"
 #include "CollisionalIonization.h"
 #include "CollisionalFusionDD.h"
@@ -75,11 +74,12 @@ public:
         PyTools::extract( "time_frozen", time_frozen, "Collisions", n_binary_processes );
         
         // Now make all the binary processes
-        std::vector<BinaryProcess*> processes;
+        CollisionalNuclearReaction * collisional_nuclear_reaction = nullptr;
+        Collisions * collisions = nullptr;
+        CollisionalIonization * collisional_ionization = nullptr;
         
         // Nuclear reactions
         PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_binary_processes );
-        std::string nuclear_reaction_name = "";
         // If fusion, verify parameters
         if( py_nuclear_reaction != Py_None ) {
             
@@ -135,9 +135,7 @@ public:
                 std::vector<std::string> name = {"helium3", "neutron"};
                 findProducts( vecSpecies, products, Z, A, name, product_species, n_binary_processes );
                 
-                processes.push_back( new CollisionalFusionDD( params, product_species, rate_multiplier ) );
-                
-                nuclear_reaction_name = "D-D fusion";
+                collisional_nuclear_reaction = new CollisionalFusionDD( params, product_species, rate_multiplier );
                 
             // Unknown types
             } else {
@@ -165,7 +163,7 @@ public:
                     LINK_NAMELIST + std::string("#collisions-reactions") );
             }
             
-            processes.push_back( new Collisions( params, clog, clog_factor ) );
+            collisions = new Collisions( params, clog, clog_factor );
         }
         
         // Collisional ionization
@@ -258,7 +256,7 @@ public:
             ionization_particles = vecSpecies[ionization_electrons]->particles;
             
             // Create the ionization object
-            processes.push_back( new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles ) );
+            collisional_ionization = new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles );
             
         }
         
@@ -279,8 +277,18 @@ public:
             MESSAGE( 1, "Binary processes #" << n_binary_processes << " between species " << t.str() << ")" );
         }
         
-        for( unsigned int iBP=0; iBP<processes.size(); iBP++ ) {
-            MESSAGE( 2, (iBP+1)<<". "<<processes[iBP]->name() );
+        int number = 1;
+        if( collisional_nuclear_reaction ) {
+            MESSAGE( 2, number << ". "<< collisional_nuclear_reaction->name() );
+            number++;
+        }
+        if( collisions ) {
+            MESSAGE( 2, number << ". "<< collisions->name() );
+            number++;
+        }
+        if( collisional_nuclear_reaction ) {
+            MESSAGE( 2, number << ". "<< collisional_ionization->name() );
+            number++;
         }
         
         if( debug_every>0 ) {
@@ -325,7 +333,9 @@ public:
             sgroup[1],
             intra,
             screening_group,
-            processes,
+            collisional_nuclear_reaction,
+            collisions,
+            collisional_ionization,
             every,
             debug_every,
             time_frozen,

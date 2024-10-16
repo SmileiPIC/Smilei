@@ -13,10 +13,23 @@ public:
         xorshift32_state = seed;
         // zero is not acceptable for xorshift
         if( xorshift32_state==0 ) {
-            xorshift32_state = 1073741824;
+            xorshift32_state = -1;
         }
     }
-
+    
+    Random( Random * rand ) {
+        xorshift32_state = rand->xorshift32_state;
+    }
+    
+    //! add n to the seed
+    inline void add( uint32_t n ) {
+        xorshift32_state += n;
+        // zero is not acceptable for xorshift
+        if( xorshift32_state==0 ) {
+            xorshift32_state = -1;
+        }
+    }
+    
     //! random integer
     inline uint32_t integer() {
         return xorshift32();
@@ -77,13 +90,13 @@ private:
         return xorshift32_state;
     }
     //! Inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax = 1./4294967296.;
+    static constexpr double xorshift32_invmax = 1./4294967295.;
     //! Almost inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
+    static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967295.;
     //! Twice inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax2 = 2./4294967296.;
+    static constexpr double xorshift32_invmax2 = 2./4294967295.;
      //! two pi * inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967296.;
+    static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967295.;
     
 };
 

@@ -63,6 +63,9 @@ CollisionalNuclearReaction::~CollisionalNuclearReaction()
 
 void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
 {
+    
+// Not ported to GPU yet
+#ifndef SMILEI_ACCELERATOR_GPU
     for( size_t i = 0; i<D.n; i++ ) {
         
         double ekin = D.m[0][i] * D.gamma_tot_COM[i] - D.m[0][i] - D.m[1][i];
@@ -150,6 +153,7 @@ void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D )
     }
     
     npairs_tot_ += D.n;
+#endif
 }
 
 

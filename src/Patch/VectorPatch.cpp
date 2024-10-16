@@ -60,9 +60,7 @@ void VectorPatch::close( SmileiMPI *smpiData )
 {
     // Close collision debug files
     for( unsigned int icoll = 0; icoll < patches_[0]->vecBPs.size(); icoll++ ) {
-        if( patches_[0]->vecBPs[icoll]->debug_file_ ) {
-            delete patches_[0]->vecBPs[icoll]->debug_file_;
-        }
+        delete patches_[0]->vecBPs[icoll]->debug_file_;
     }
 
     // Close diagnostics

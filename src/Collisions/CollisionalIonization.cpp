@@ -134,6 +134,10 @@ unsigned int CollisionalIonization::createDatabase( double reference_angular_fre
 // Method to apply the ionization
 void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
 {
+
+// Not ported to GPU yet
+#ifndef SMILEI_ACCELERATOR_GPU
+
     for( size_t i = 0; i<D.n; i++ ) {
         // Random numbers
         double U1 = random->uniform();
@@ -259,6 +263,7 @@ void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
             
         }
     }
+#endif
 }
 
 

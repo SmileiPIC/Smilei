@@ -6,7 +6,6 @@
 #include <fstream>
 
 #include "BinaryProcesses.h"
-#include "BinaryProcess.h"
 #include "Collisions.h"
 #include "CollisionalNuclearReaction.h"
 #include "CollisionalFusionDD.h"
@@ -26,24 +25,28 @@ BinaryProcesses::BinaryProcesses(
     vector<unsigned int> species_group2,
     bool intra,
     int screening_group,
-    vector<BinaryProcess*> processes,
+    CollisionalNuclearReaction * nuclear_reactions,
+    Collisions * collisions,
+    CollisionalIonization * collisional_ionization,
     int every,
     int debug_every,
     double time_frozen,
     string filename
 ) :
-    processes_( processes ),
+    nuclear_reactions_( nuclear_reactions ),
+    collisions_( collisions ),
+    collisional_ionization_( collisional_ionization ),
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     intra_( intra ),
     screening_group_( screening_group ),
     every_( every ),
     debug_every_( debug_every ),
-    filename_( filename )
+    timesteps_frozen_( time_frozen / params.timestep ),
+    filename_( filename ),
+    debug_file_( NULL )
 {
-    timesteps_frozen_ = time_frozen / params.timestep;
     // Open the HDF5 file
-    debug_file_ = NULL;
     if( debug_every > 0 ) {
         MPI_Comm comm = MPI_COMM_WORLD;
         debug_file_ = new H5Write( filename_, &comm );
@@ -52,40 +55,28 @@ BinaryProcesses::BinaryProcesses(
 
 
 // Cloning Constructor
-BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs )
+BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs ) :
+    nuclear_reactions_      ( BPs->nuclear_reactions_ ),
+    collisions_             ( BPs->collisions_ ),
+    collisional_ionization_ ( BPs->collisional_ionization_ ),
+    species_group1_         ( BPs->species_group1_   ),
+    species_group2_         ( BPs->species_group2_   ),
+    intra_                  ( BPs->intra_            ),
+    screening_group_        ( BPs->screening_group_  ),
+    every_                  ( BPs->every_            ),
+    debug_every_            ( BPs->debug_every_      ),
+    timesteps_frozen_       ( BPs->timesteps_frozen_ ),
+    filename_               ( BPs->filename_         ),
+    debug_file_             ( BPs->debug_file_       )
 {
-    species_group1_     = BPs->species_group1_    ;
-    species_group2_     = BPs->species_group2_    ;
-    intra_              = BPs->intra_             ;
-    screening_group_    = BPs->screening_group_   ;
-    every_              = BPs->every_             ;
-    debug_every_        = BPs->debug_every_       ;
-    timesteps_frozen_   = BPs->timesteps_frozen_  ;
-    filename_           = BPs->filename_          ;
-    debug_file_         = BPs->debug_file_        ;
-
-    processes_.clear();
-    for( unsigned int i=0; i<BPs->processes_.size(); i++ ) {
-        if( Collisions * coll = dynamic_cast<Collisions*>( BPs->processes_[i] ) ) {
-            processes_.push_back( new Collisions( coll ) );
-        } else if( CollisionalIonization * CI = dynamic_cast<CollisionalIonization*>( BPs->processes_[i] ) ) {
-            processes_.push_back( new CollisionalIonization( CI ) );
-        } else if( CollisionalFusionDD * DD = dynamic_cast<CollisionalFusionDD*>( BPs->processes_[i] ) ) {
-            processes_.push_back( new CollisionalFusionDD( DD ) );
-        } else {
-            ERROR( "Undefined binary process" );
-        }
-    }
-
 }
 
 
 BinaryProcesses::~BinaryProcesses()
 {
-    for( unsigned int i=0; i<processes_.size(); i++ ) {
-        delete processes_[i];
-    }
-    processes_.clear();
+    delete nuclear_reactions_;
+    delete collisions_;
+    delete collisional_ionization_;
 }
 
 // Declare other static variables here
@@ -193,21 +184,39 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         return;
     }
     
-    BinaryProcessData D;
+    if( nuclear_reactions_ ) {
+        nuclear_reactions_->prepare();
+    }
+    if( collisions_ ) {
+        collisions_->prepare();
+    }
+    
+    // Time between binary process events
+    double delta_t = every_ * params.timestep;
+    
+    // Number of bins (should be cells)
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     
     // numbers of species in each group
-    size_t nspec1 = species_group1_.size();
-    size_t nspec2 = species_group1_.size();
+    const size_t nspec1 = species_group1_.size();
+    const size_t nspec2 = species_group2_.size();
     
-    for( unsigned int i=0; i<processes_.size(); i++ ) {
-        processes_[i]->prepare();
+    // Get cell volume for each bin
+    double inv_cell_volume[nbin];
+    for( size_t ibin = 0; ibin < nbin; ibin ++ ) {
+        for( size_t ispec1 = 0; ispec1 < nspec1; ispec1++ ) {
+            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
+            if( p->first_index[ibin] < p->last_index[ibin] ) {
+                inv_cell_volume[ibin] = 1./patch->getPrimalCellVolume( p, p->first_index[ibin], params );
+                break;
+            }
+        }
     }
     
     // Info for ionization
-    D.electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
+    bool electronFirst = patch->vecSpecies[species_group1_[0]]->atomic_number_==0 ? true : false;
     
     // Store info for screening (e-i collisions)
-    D.screening_group = screening_group_;
     vector<double> screening_Z; // atomic number
     vector<double> lTF; // thomas-fermi length
     if( screening_group_ > 0 ) {
@@ -222,23 +231,75 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     }
     screening_Z.push_back( 0. ); // placeholder for no screening
     lTF.push_back( 0. );
+    size_t screening_group_size = screening_Z.size();
+    
+    // Make pointers to all the necessary data (needed for GPU)
+    const double *const __restrict__ debye2_ptr = patch->debye_length_squared.data();
+    const double *const __restrict__ screening_Z_ptr = screening_Z.data();
+    const double *const __restrict__ lTF_ptr = lTF.data();
+    const unsigned int *__restrict__ sg1_ptr = species_group1_.data();
+    const unsigned int *__restrict__ sg2_ptr = species_group2_.data();
+    Particles *__restrict__ p1_ptr[nspec1], *__restrict__ p2_ptr[nspec2];
+    int *__restrict__ first_index1_ptr[nspec1], *__restrict__ first_index2_ptr[nspec2];
+    int *__restrict__ last_index1_ptr[nspec1], *__restrict__ last_index2_ptr[nspec2];
+    double *__restrict__ weight1_ptr[nspec1], *__restrict__ weight2_ptr[nspec2];
+    short *__restrict__ charge1_ptr[nspec1], *__restrict__ charge2_ptr[nspec2];
+    double *__restrict__ px1_ptr[nspec1], *__restrict__ px2_ptr[nspec2];
+    double *__restrict__ py1_ptr[nspec1], *__restrict__ py2_ptr[nspec2];
+    double *__restrict__ pz1_ptr[nspec1], *__restrict__ pz2_ptr[nspec2];
+    double mass1[nspec1], mass2[nspec2];
+    for( size_t ispec1 = 0; ispec1 < nspec1; ispec1 ++ ) {
+        p1_ptr[ispec1] = patch->vecSpecies[species_group1_[ispec1]]->particles;
+        first_index1_ptr[ispec1] = p1_ptr[ispec1]->first_index.data();
+        last_index1_ptr[ispec1] = p1_ptr[ispec1]->last_index.data();
+        weight1_ptr[ispec1] = p1_ptr[ispec1]->getPtrWeight();
+        charge1_ptr[ispec1] = p1_ptr[ispec1]->getPtrCharge();
+        px1_ptr[ispec1] = p1_ptr[ispec1]->getPtrMomentum( 0 );
+        py1_ptr[ispec1] = p1_ptr[ispec1]->getPtrMomentum( 1 );
+        pz1_ptr[ispec1] = p1_ptr[ispec1]->getPtrMomentum( 2 );
+        mass1[ispec1] = patch->vecSpecies[species_group1_[ispec1]]->mass_;
+    }
+    for( size_t ispec2 = 0; ispec2 < nspec2; ispec2 ++ ) {
+        p2_ptr[ispec2] = patch->vecSpecies[species_group2_[ispec2]]->particles;
+        first_index2_ptr[ispec2] = p2_ptr[ispec2]->first_index.data();
+        last_index2_ptr[ispec2] = p2_ptr[ispec2]->last_index.data();
+        weight2_ptr[ispec2] = p2_ptr[ispec2]->getPtrWeight();
+        charge2_ptr[ispec2] = p2_ptr[ispec2]->getPtrCharge();
+        px2_ptr[ispec2] = p2_ptr[ispec2]->getPtrMomentum( 0 );
+        py2_ptr[ispec2] = p2_ptr[ispec2]->getPtrMomentum( 1 );
+        pz2_ptr[ispec2] = p2_ptr[ispec2]->getPtrMomentum( 2 );
+        mass2[ispec2] = patch->vecSpecies[species_group2_[ispec2]]->mass_;
+    }
+    
+    BinaryProcessData D;
+    size_t np1[nspec1], np2[nspec2];
+    
+    // Due to GPU offloading, we must have a different rand object for each bin
+    // Each bin gets a seed equal to the `patch->rand_` seed plus `ibin`
+    uint32_t rand_state = patch->rand_->xorshift32_state;
+    patch->rand_->add( nbin );
     
     // Loop bins of particles
-    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
+    #pragma acc parallel loop gang vector_length(32) private(D, np1, np2) \
+        copyin( delta_t, nspec1, nspec2, intra_, rand_state, sg1_ptr[:nspec1], sg2_ptr[:nspec2], \
+            screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
+            screening_group_, electronFirst, mass1[:nspec1], mass2[:nspec2], debye2_ptr[:nbin], inv_cell_volume[:nbin], \
+            first_index1_ptr[:nspec1], weight1_ptr[:nspec1], charge1_ptr[:nspec1], px1_ptr[:nspec1], py1_ptr[:nspec1], pz1_ptr[:nspec1], \
+            first_index2_ptr[:nspec2], weight2_ptr[:nspec2], charge2_ptr[:nspec2], px2_ptr[:nspec2], py2_ptr[:nspec2], pz2_ptr[:nspec2] )
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
         
+        D.screening_group = screening_group_;
+        D.electronFirst = electronFirst;
+        
         // get number of particles for all necessary species
-        vector<size_t> np1( nspec1 ), np2( nspec2 );
         size_t npart1 = 0;
         for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
-            np1[ispec1] = p->last_index[ibin] - p->first_index[ibin];
+            np1[ispec1] = last_index1_ptr[ispec1][ibin] - first_index1_ptr[ispec1][ibin];
             npart1 += np1[ispec1];
         }
         size_t npart2 = 0;
         for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            Particles * p = patch->vecSpecies[species_group2_[ispec2]]->particles;
-            np2[ispec2] = p->last_index[ibin] - p->first_index[ibin];
+            np2[ispec2] = last_index2_ptr[ispec2][ibin] - first_index2_ptr[ispec2][ibin];
             npart2 += np2[ispec2];
         }
         // We need to shuffle the group that has most particles
@@ -246,7 +307,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         size_t npartmin = npart1;
         size_t npartmax = npart2;
         if( shuffle1 ) {
-            swap( npartmin, npartmax );
+            npartmin = npart2;
+            npartmax = npart1;
         }
         
         // skip to next bin if not enough pairs
@@ -268,48 +330,39 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             weight_correction_2 = 1. / (double)( npairs / npairs_not_repeated + 1 );
         }
         
-        RandomShuffle shuffler( *patch->rand_, npartmax );
+        Random rand( rand_state + ibin );
+        RandomShuffle shuffler( rand, npartmax );
         
         // Calculate the densities
         double n1  = 0., n2 = 0.;
+        #pragma acc loop vector reduction( +:n1 )
         for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
-            for( int i = p->first_index[ibin]; i < p->last_index[ibin]; i++ ) {
-                n1 += p->weight( i );
+            for( int i = first_index1_ptr[ispec1][ibin]; i < last_index1_ptr[ispec1][ibin]; i++ ) {
+                n1 += weight1_ptr[ispec1][i];
             }
         }
+        #pragma acc loop vector reduction( +:n2 )
         for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            Particles * p = patch->vecSpecies[species_group2_[ispec2]]->particles;
-            for( int i = p->first_index[ibin]; i < p->last_index[ibin]; i++ ) {
-                n2 += p->weight( i );
-            }
-        }
-        
-        // Get cell volume
-        double inv_cell_volume = 0.;
-        for( size_t ispec1 = 0; ispec1 < nspec1; ispec1++ ) {
-            Particles * p = patch->vecSpecies[species_group1_[ispec1]]->particles;
-            if( p->first_index[ibin] < p->last_index[ibin] ) {
-                inv_cell_volume = 1./patch->getPrimalCellVolume( p, p->first_index[ibin], params );
-                break;
+            for( int i = first_index2_ptr[ispec2][ibin]; i < last_index2_ptr[ispec2][ibin]; i++ ) {
+                n2 += weight2_ptr[ispec2][i];
             }
         }
         
         // Set the debye length
         if( BinaryProcesses::debye_length_required_ ) {
-            D.debye = sqrt( patch->debye_length_squared[ibin] );
+            D.debye = sqrt( debye2_ptr[ibin] );
         }
         
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_ ? 2*npairs-1 : npairs;
-        double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
-        n1  *= inv_cell_volume;
-        n2  *= inv_cell_volume;
+        double dt_corr = delta_t * ((double)ncorr) * inv_cell_volume[ibin];
+        n1  *= inv_cell_volume[ibin];
+        n2  *= inv_cell_volume[ibin];
         D.n123 = pow( n1, 2./3. );
         D.n223 = pow( n2, 2./3. );
         
         // Prepare buffers
-        size_t buffer_size = std::min( D.max_buffer_size_, npairs );
+        size_t buffer_size = npairs < SMILEI_BINARYPROCESS_BUFFERSIZE ? npairs : SMILEI_BINARYPROCESS_BUFFERSIZE;
         size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
         
         // Now start the real loop on pairs of particles
@@ -317,113 +370,186 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         // ----------------------------------------------------
         
         // Loop on buffers
+        #pragma acc loop seq
         for( size_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
             
             size_t start = ibuffer * buffer_size;
-            size_t stop = std::min( start + buffer_size, npairs );
+            size_t stop = npairs < start + buffer_size ? npairs : start + buffer_size;
             D.n = stop - start;
             
             // Determine the shuffled indices in the whole groups of species
             if( intra_ ) {
-                for( size_t i = 0; i<D.n; i++ ) {
-                    D.i[0][i] = shuffler.next();
-                    D.i[1][i] = shuffler.next();
-                }
+                shuffler.next( D.n, &D.i[0][0] );
+                shuffler.next( D.n, &D.i[1][0] );
             } else if( shuffle1 ) {
+                shuffler.next( D.n, &D.i[0][0] );
+                #pragma acc loop vector
                 for( size_t i = 0; i<D.n; i++ ) {
-                    D.i[0][i] = shuffler.next();
                     D.i[1][i] = ( i + start ) % npart2;
                 }
             } else {
+                #pragma acc loop vector
                 for( size_t i = 0; i<D.n; i++ ) {
                     D.i[0][i] = ( i + start ) % npart1;
-                    D.i[1][i] = shuffler.next();
+                }
+                shuffler.next( D.n, &D.i[1][0] );
+            }
+            
+            // find species and indices of particles
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                for( D.ispec[0][i] = 0; D.i[0][i]>=np1[D.ispec[0][i]]; D.ispec[0][i]++ ) {
+                    D.i[0][i] -= np1[D.ispec[0][i]];
+                }
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                for( D.ispec[1][i] = 0; D.i[1][i]>=np2[D.ispec[1][i]]; D.ispec[1][i]++ ) {
+                    D.i[1][i] -= np2[D.ispec[1][i]];
                 }
             }
             
-            for( size_t i = 0; i<D.n; i++ ) {
-                // find species and indices of particles
-                size_t ispec[3] = { lTF.size() - 1, 0, 0 };
-                for( ; D.i[0][i]>=np1[ispec[1]]; ispec[1]++ ) {
-                    D.i[0][i] -= np1[ispec[1]];
+            // Get screening length & Z
+            if( screening_group_ == 0 ) {
+                #pragma acc loop vector
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.lTF[i] = lTF_ptr[screening_group_size - 1];
+                    D.Z1Z2[i] = screening_Z_ptr[screening_group_size - 1];
                 }
-                for( ; D.i[1][i]>=np2[ispec[2]]; ispec[2]++ ) {
-                    D.i[1][i] -= np2[ispec[2]];
+            } else if( screening_group_ == 1 ) {
+                #pragma acc loop vector
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.lTF[i] = lTF_ptr[D.ispec[0][i]];
+                    D.Z1Z2[i] = screening_Z_ptr[D.ispec[0][i]];
                 }
-                // p1 and p2 are the pointers to Particles
-                D.p[0][i] = patch->vecSpecies[species_group1_[ispec[1]]]->particles;
-                D.p[1][i] = patch->vecSpecies[species_group2_[ispec[2]]]->particles;
-                // i1 and i2 are particle indices in this bin
-                D.i[0][i] += D.p[0][i]->first_index[ibin];
-                D.i[1][i] += D.p[1][i]->first_index[ibin];
-                // Get masses
-                D.m[0][i] = patch->vecSpecies[species_group1_[ispec[1]]]->mass_;
-                D.m[1][i] = patch->vecSpecies[species_group2_[ispec[2]]]->mass_;
-                // Get screening length
-                D.lTF[i] = lTF[ispec[screening_group_]];
-                D.Z1Z2[i] = screening_Z[ispec[screening_group_]];
-                // Get Weights
-                D.W[0][i] = D.p[0][i]->weight( D.i[0][i] );
-                D.W[1][i] = D.p[1][i]->weight( D.i[1][i] );
-                // Get charges
-                D.q[0][i] = D.p[0][i]->charge( D.i[0][i] );
-                D.q[1][i] = D.p[1][i]->charge( D.i[1][i] );
-                // Get momenta
-                D.px[0][i] = D.p[0][i]->momentum( 0, D.i[0][i] ); D.px[1][i] = D.p[1][i]->momentum( 0, D.i[1][i] );
-                D.py[0][i] = D.p[0][i]->momentum( 1, D.i[0][i] ); D.py[1][i] = D.p[1][i]->momentum( 1, D.i[1][i] );
-                D.pz[0][i] = D.p[0][i]->momentum( 2, D.i[0][i] ); D.pz[1][i] = D.p[1][i]->momentum( 2, D.i[1][i] );
+            } else if( screening_group_ == 2 ) {
+                #pragma acc loop vector
+                for( size_t i = 0; i<D.n; i++ ) {
+                    D.lTF[i] = lTF_ptr[D.ispec[1][i]];
+                    D.Z1Z2[i] = screening_Z_ptr[D.ispec[1][i]];
+                }
             }
             
+            // Get particle indices in this bin
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
-                // Calculate the timestep correction
-                D.dt_correction[i] = max( D.W[0][i], D.W[1][i] ) * dt_corr;
+                D.i[0][i] += first_index1_ptr[D.ispec[0][i]][ibin];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.i[1][i] += first_index2_ptr[D.ispec[1][i]][ibin];
+            }
+            // Get pointers to Particles
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.p[0][i] = p1_ptr[D.ispec[0][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.p[1][i] = p2_ptr[D.ispec[1][i]];
+            }
+            // Get masses
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.m[0][i] = mass1[D.ispec[0][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.m[1][i] = mass2[D.ispec[1][i]];
+            }
+            // Get Weights
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.W[0][i] = weight1_ptr[D.ispec[0][i]][D.i[0][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.W[1][i] = weight2_ptr[D.ispec[1][i]][D.i[1][i]];
+            }
+            // Get charges
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.q[0][i] = charge1_ptr[D.ispec[0][i]][D.i[0][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.q[1][i] = charge2_ptr[D.ispec[1][i]][D.i[1][i]];
+            }
+            // Get momenta
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.px[0][i] = px1_ptr[D.ispec[0][i]][D.i[0][i]]; D.px[1][i] = px2_ptr[D.ispec[1][i]][D.i[1][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.py[0][i] = py1_ptr[D.ispec[0][i]][D.i[0][i]]; D.py[1][i] = py2_ptr[D.ispec[1][i]][D.i[1][i]];
+            }
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.pz[0][i] = pz1_ptr[D.ispec[0][i]][D.i[0][i]]; D.pz[1][i] = pz2_ptr[D.ispec[1][i]][D.i[1][i]];
+            }
+            
+            // Calculate the timestep correction
+            #pragma acc loop vector
+            for( size_t i = 0; i<D.n; i++ ) {
+                D.dt_correction[i] = ( D.W[0][i] > D.W[1][i] ? D.W[0][i] : D.W[1][i] ) * dt_corr;
                 double corr2 = ( i + start ) % npairs_not_repeated < npairs % npairs_not_repeated;
                 double corr1 = 1. - corr2;
                 D.dt_correction[i] *= corr1 * weight_correction_1 + corr2 * weight_correction_2;
             }
             
             // Calculate gammas
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma[0][i] = sqrt( 1 + D.px[0][i]*D.px[0][i] + D.py[0][i]*D.py[0][i] + D.pz[0][i]*D.pz[0][i] );
             }
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma[1][i] = sqrt( 1 + D.px[1][i]*D.px[1][i] + D.py[1][i]*D.py[1][i] + D.pz[1][i]*D.pz[1][i] );
             }
             
             // Calculate the mass ratio
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.R[i] = D.m[1][i] / D.m[0][i];
             }
             
             // Calculate the total gamma
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma_tot[i] = D.gamma[0][i] + D.R[i] * D.gamma[1][i];
             }
             
             // Calculate the total momentum
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.px_tot[i] = D.px[0][i] + D.R[i] * D.px[1][i];
             }
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.py_tot[i] = D.py[0][i] + D.R[i] * D.py[1][i];
             }
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.pz_tot[i] = D.pz[0][i] + D.R[i] * D.pz[1][i];
             }
             
             // Calculate the Lorentz invariant gamma1 gamma2 - u1.u2
             // It is equal to the gamma of one particle in the rest frame of the other particle
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma0[i] = D.gamma[0][i] * D.gamma[1][i] - D.px[0][i] * D.px[1][i] - D.py[0][i] * D.py[1][i] - D.pz[0][i] * D.pz[1][i];
             }
             
             // Now we calculate quantities in the center-of-mass frame
             // denoted by the suffix _COM
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 D.gamma_tot_COM[i] = sqrt( 2*D.R[i]*D.gamma0[i] + D.R[i] * D.R[i] + 1 );
                 D.gamma_COM0[i] = ( D.R[i] * D.gamma0[i] + 1 ) / D.gamma_tot_COM[i];
             }
             
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 double gg = ( D.gamma[0][i] + D.gamma_COM0[i] ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
                 D.px_COM[i] = D.px[0][i] - gg * D.px_tot[i];
@@ -432,37 +558,53 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
                 D.p_COM[i] = sqrt( D.px_COM[i]*D.px_COM[i] + D.py_COM[i]*D.py_COM[i] + D.pz_COM[i]*D.pz_COM[i] );
             }
             
+            // Calculate some intermediate quantities
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
-                // Calculate some intermediate quantities
                 double p_gamma_COM = D.p_COM[i] * D.gamma_tot_COM[i];
                 D.vrel[i] = p_gamma_COM / ( D.gamma_COM0[i] * ( D.gamma_tot_COM[i] - D.gamma_COM0[i] ) ); // | v2_COM - v1_COM |
             }
             
             // Apply all processes (collisions, ionization, ...)
-            for( unsigned int i=0; i<processes_.size(); i++ ) {
-                processes_[i]->apply( patch->rand_, D );
+            if( nuclear_reactions_ ) {
+                nuclear_reactions_->apply( &rand, D );
+            }
+            if( collisions_ ) {
+                collisions_->apply( &rand, D );
+            }
+            if( collisional_ionization_ ) {
+                collisional_ionization_->apply( &rand, D );
             }
             
             // Update the particle arrays from the buffers
+            #pragma acc loop vector
             for( size_t i = 0; i<D.n; i++ ) {
                 // Store Weights
-                D.p[0][i]->weight( D.i[0][i] ) = D.W[0][i];
-                D.p[1][i]->weight( D.i[1][i] ) = D.W[1][i];
+                weight1_ptr[D.ispec[0][i]][D.i[0][i]] = D.W[0][i];
+                weight2_ptr[D.ispec[1][i]][D.i[1][i]] = D.W[1][i];
                 // Store charges
-                D.p[0][i]->charge( D.i[0][i] ) = D.q[0][i];
-                D.p[1][i]->charge( D.i[1][i] ) = D.q[1][i];
+                charge1_ptr[D.ispec[0][i]][D.i[0][i]] = D.q[0][i];
+                charge2_ptr[D.ispec[1][i]][D.i[1][i]] = D.q[1][i];
                 // Store momenta
-                D.p[0][i]->momentum( 0, D.i[0][i] ) = D.px[0][i]; D.p[1][i]->momentum( 0, D.i[1][i] ) = D.px[1][i];
-                D.p[0][i]->momentum( 1, D.i[0][i] ) = D.py[0][i]; D.p[1][i]->momentum( 1, D.i[1][i] ) = D.py[1][i];
-                D.p[0][i]->momentum( 2, D.i[0][i] ) = D.pz[0][i]; D.p[1][i]->momentum( 2, D.i[1][i] ) = D.pz[1][i];
+                px1_ptr[D.ispec[0][i]][D.i[0][i]] = D.px[0][i]; px2_ptr[D.ispec[1][i]][D.i[1][i]] = D.px[1][i];
+                py1_ptr[D.ispec[0][i]][D.i[0][i]] = D.py[0][i]; py2_ptr[D.ispec[1][i]][D.i[1][i]] = D.py[1][i];
+                pz1_ptr[D.ispec[0][i]][D.i[0][i]] = D.pz[0][i]; pz2_ptr[D.ispec[1][i]][D.i[1][i]] = D.pz[1][i];
             }
-        }
-         // end loop on pairs of particles
-
+            
+        } // end loop on buffers of particles
+        
     } // end loop on bins
-
-    for( unsigned int i=0; i<processes_.size(); i++ ) {
-        processes_[i]->finish( params, patch, localDiags, intra_, species_group1_, species_group2_, itime );
+    
+    
+    // The finishing touch on all processes
+    if( nuclear_reactions_ ) {
+        nuclear_reactions_->finish( params, patch, localDiags, intra_, species_group1_, species_group2_, itime );
+    }
+    if( collisions_ ) {
+        collisions_->finish( params, patch, localDiags, intra_, species_group1_, species_group2_, itime );
+    }
+    if( collisional_ionization_ ) {
+        collisional_ionization_->finish( params, patch, localDiags, intra_, species_group1_, species_group2_, itime );
     }
 }
 
@@ -489,16 +631,14 @@ void BinaryProcesses::debug( Params &params, int itime, unsigned int icoll, Vect
                 debye_length[ipatch] += vecPatches( ipatch )->debye_length_squared[ibin];
             }
             debye_length[ipatch] = sqrt( debye_length[ipatch] / nbin );
-
+            
             // Data from processes
-            vector<BinaryProcess*> vBP = vecPatches( ipatch )->vecBPs[icoll]->processes_;
-            for( unsigned int iBP=0; iBP<vBP.size(); iBP++ ) {
-                if( Collisions *coll = dynamic_cast<Collisions*>(vBP[iBP]) ) {
-                    smean   [ipatch] = coll->smean_   ;
-                    logLmean[ipatch] = coll->logLmean_;
-                } else if( CollisionalNuclearReaction *NR = dynamic_cast<CollisionalNuclearReaction*>(vBP[iBP]) ) {
-                    nuclear_reaction_multiplier[ipatch] = NR->rate_multiplier_;
-                }
+            BinaryProcesses * BPs = vecPatches( ipatch )->vecBPs[icoll];
+            if( Collisions * coll = BPs->collisions_ ) {
+                smean   [ipatch] = coll->smean_   ;
+                logLmean[ipatch] = coll->logLmean_;
+            } else if( CollisionalNuclearReaction *NR = BPs->nuclear_reactions_ ) {
+                nuclear_reaction_multiplier[ipatch] = NR->rate_multiplier_;
             }
         }
 

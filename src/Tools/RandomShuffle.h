@@ -3,9 +3,10 @@
 
 #include "Random.h"
 
-#define SMILEI_SHUFFLE_THRESHOLD 8
-
 static constexpr size_t best_prime[] = {2, 2, 5, 11, 17, 37, 67, 131, 257, 521, 1031, 2053, 4099, 8209, 16411, 32771, 65537, 131101, 262147, 524309, 1048583, 2097169, 4194319, 8388617};
+
+//! Maximum number of elements for method 0
+static constexpr size_t shuffle_threshold = 8;
 
 // A random shuffler which ensures a small memory occupancy (fixed)
 // at the cost of a reasonable loss in performance
@@ -13,11 +14,12 @@ class RandomShuffle
 {
 public:
 
+    #pragma acc routine seq
     RandomShuffle( Random &rand, size_t length )
     : length_( length ), mask_( 1 ), P_( 0 ), i_( 0 )
     {
         
-        if( length_ < SMILEI_SHUFFLE_THRESHOLD ) {
+        if( length_ < shuffle_threshold ) {
             
             // Fischer-Yates method
             
@@ -57,33 +59,52 @@ public:
     }
     
     //! Get the next shuffled position
+    #pragma acc routine seq
     size_t next() {
-        
-        size_t next_position;
-        
-        if( length_ < SMILEI_SHUFFLE_THRESHOLD ){
-            
-            next_position = random_array_[i_];
-            i_ = ( i_ + 1 ) % length_;
-            
+        if( length_ < shuffle_threshold ){
+            return next0();
         } else {
-            
-            do{
-                next_position = i_;
-                i_ = ( i_ + 1 ) % mask_;
-                next_position ^= random_array_[0];
-                do {
-                    next_position = (random_array_[3] * next_position + random_array_[4]) % P_;
-                } while( next_position > mask_ );
-                next_position ^= random_array_[1];
-                do {
-                    next_position = (random_array_[5] * next_position + random_array_[6]) % P_;
-                } while( next_position > mask_ );
-                next_position ^= random_array_[2];
-            } while( next_position >= length_ );
-            
+            return next1();
         }
-        
+    }
+    
+    //! Get n next shuffled positions
+    #pragma acc routine seq
+    void next( size_t n, size_t * shuffled ) {
+        if( length_ < shuffle_threshold ){
+            for( size_t i = 0; i < n; i++ ) {
+                shuffled[i] = next0();
+            }
+        } else {
+            for( size_t i = 0; i < n; i++ ) {
+                shuffled[i] = next1();
+            }
+        }
+    }
+    
+    //! Get the next shuffled position for method 0
+    size_t next0() {
+        size_t next_position = random_array_[i_];
+        i_ = ( i_ + 1 ) % length_;
+        return next_position;
+    }
+    
+    //! Get the next shuffled position for method 1
+    size_t next1() {
+        size_t next_position;
+        do{
+            next_position = i_;
+            i_ = ( i_ + 1 ) % mask_;
+            next_position ^= random_array_[0];
+            do {
+                next_position = (random_array_[3] * next_position + random_array_[4]) % P_;
+            } while( next_position > mask_ );
+            next_position ^= random_array_[1];
+            do {
+                next_position = (random_array_[5] * next_position + random_array_[6]) % P_;
+            } while( next_position > mask_ );
+            next_position ^= random_array_[2];
+        } while( next_position >= length_ );
         return next_position;
     }
     
@@ -93,7 +114,7 @@ private:
     size_t length_;
     
     //! A random array required initially for the algorithm
-    size_t random_array_[SMILEI_SHUFFLE_THRESHOLD];
+    size_t random_array_[shuffle_threshold];
     
     //! Bitmask required for method 1
     size_t mask_;

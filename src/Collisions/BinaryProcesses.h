@@ -4,7 +4,9 @@
 #include <vector>
 
 #include "H5.h"
-#include "BinaryProcess.h"
+#include "CollisionalNuclearReaction.h"
+#include "Collisions.h"
+#include "CollisionalIonization.h"
 
 class BinaryProcesses
 {
@@ -16,7 +18,9 @@ public:
         std::vector<unsigned int> species_group2,
         bool intra,
         int screening_group,
-        std::vector<BinaryProcess*> processes,
+        CollisionalNuclearReaction * nuclear_reactions,
+        Collisions * collisions,
+        CollisionalIonization * collisional_ionization,
         int every,
         int debug_every,
         double time_frozen,
@@ -41,8 +45,10 @@ public:
     
     H5Write * debug_file_;
     
-    //! List of processes
-    std::vector<BinaryProcess*> processes_;
+    //! Processes
+    CollisionalNuclearReaction * nuclear_reactions_;
+    Collisions * collisions_;
+    CollisionalIonization * collisional_ionization_;
     
 private:
     

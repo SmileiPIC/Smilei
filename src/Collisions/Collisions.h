@@ -8,13 +8,13 @@
 #include "H5.h"
 #include "Random.h"
 #include "Params.h"
-#include "BinaryProcess.h"
+#include "BinaryProcessData.h"
 
 class Patch;
 class Species;
 class VectorPatch;
 
-class Collisions : public BinaryProcess
+class Collisions
 {
 public:
     //! Constructor for Collisions between two species
@@ -29,6 +29,7 @@ public:
     ~Collisions();
     
     void prepare();
+    #pragma acc routine vector nohost
     void apply( Random *random, BinaryProcessData &D );
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     std::string name() {
@@ -51,13 +52,13 @@ public:
 protected:
     
     //! Coulomb logarithm (zero or negative means automatic)
-    double coulomb_log_;
+    const double coulomb_log_;
     
     //! Coulomb logarithm factor
-    double coulomb_log_factor_;
+    const double coulomb_log_factor_;
     
     const double twoPi = 2. * 3.14159265358979323846;
-    double coeff1_, coeff2_, coeff3_, coeff4_;
+    const double coeff1_, coeff2_, coeff3_, coeff4_;
     
 };
 

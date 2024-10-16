@@ -7,12 +7,12 @@
 #include "Species.h"
 #include "Params.h"
 #include "Random.h"
-#include "BinaryProcess.h"
 #include "NuclearReactionProducts.h"
+#include "BinaryProcessData.h"
 
 class Patch;
 
-class CollisionalNuclearReaction : public BinaryProcess
+class CollisionalNuclearReaction
 {
 
 public:
@@ -28,6 +28,7 @@ public:
         tot_probability_ = 0.;
         npairs_tot_ = 0;
     };
+    #pragma acc routine vector nohost
     void apply( Random *random, BinaryProcessData &D );
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     virtual std::string name() = 0;
