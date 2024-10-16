@@ -48,11 +48,11 @@ double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const do
 
     if (BSI_rate_quadratic >= BSI_rate_linear)
     {
-        return quadratic(Z, E);
+        return linear(Z, E);
     }
     else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic)
     {
-        return linear(Z, E);
+        return quadratic(Z, E);
     }
     else
     {
