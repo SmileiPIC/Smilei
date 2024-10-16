@@ -237,8 +237,8 @@ class Main(SmileiSingleton):
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
 
-                # Yee solver
-                if ((Main.maxwell_solver == 'Yee') or (Main.maxwell_solver == 'Terzani')):
+                # Yee solver or Terzani solver
+                if Main.maxwell_solver in ['Yee','Terzani']:
                     if (Main.geometry=="AMcylindrical"):
                         alpha = [0.210486, 0.591305, 3.5234, 8.51041, 15.5059]
                         if (Main.number_of_AM < 6):
