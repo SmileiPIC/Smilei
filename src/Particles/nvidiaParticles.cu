@@ -315,26 +315,37 @@ namespace detail {
         }
     }
     
-    struct DifferentClusterPredicate
-    {
-        int stride_;
-
-        __host__ __device__
-        DifferentClusterPredicate( int stride ) : stride_( stride ) {}
-
-        constexpr __host__ __device__ bool
-        operator()( const int& x, const int& y ) const
-        {
-            return ( x + 1 ) * stride_ < y + 1;
+    template<int a, int b>
+    struct linear_function : public thrust::unary_function<int,int> {
+        __host__ __device__ int operator()( int x ) const {
+            return a * x + b;
         }
     };
-
+    
+    template<int N>
+    void pickEveryN( int * input, int * output, int size ) {
+        
+        thrust::counting_iterator<int> first_cluster( 0 );
+        thrust::counting_iterator<int> last_cluster( size / N );
+        const auto last_in_cluster = linear_function<N, N-1>();
+        thrust::gather( thrust::device,
+                        thrust::make_transform_iterator( first_cluster, last_in_cluster ),
+                        thrust::make_transform_iterator( last_cluster , last_in_cluster ),
+                        input,
+                        output );
+        
+    }
+    
     inline void
     Cluster::computeBinIndex( nvidiaParticles& particle_container, bool cell_sorting )
     {
         SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( particle_container.last_index.data() );
-
-        Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( particle_container.last_index.data() );
+        
+        // kClusterwidth should not be hard coded here
+        const int kClusterwidth = 4;
+        
+        IDType* last_index = particle_container.getPtrLastIndex();
+        const IDType * cell_keys = particle_container.getPtrCellKeys();
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
@@ -351,25 +362,43 @@ namespace detail {
         // NOTE: A particle is in a bin if the index of the bin is the same integer value as the particle's cell key.
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
         
-        // kClusterwidth should not be hard coded here
-        int Ncells_per_cluster = pow( 4, particle_container.dimension() );
+        const SizeType n_cluster = particle_container.last_index.size();
+        const SizeType ncells = n_cluster * pow( kClusterwidth, particle_container.dimension() );
+        
         if( cell_sorting ) {
+            
+            // When there is cell sorting, we first get the cells indices
+            particle_container.cell_last_index_.resize( ncells );
+            auto cell_last_index = particle_container.getPtrCellLastIndex();
             thrust::upper_bound( thrust::device,
-                                static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
-                                static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
-                                thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                                thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                                bin_upper_bound,
-                                DifferentClusterPredicate( Ncells_per_cluster ) );
+                                cell_keys,
+                                cell_keys + particle_container.deviceSize(),
+                                thrust::counting_iterator<SizeType>{ static_cast<SizeType>( 0 ) },
+                                thrust::counting_iterator<SizeType>{ ncells },
+                                cell_last_index );
+            
+            // Then deduce the cluster indices (at positions icluster * kClusterwidth - 1)
+            thrust::counting_iterator<int> first_cluster( 0 );
+            thrust::counting_iterator<int> last_cluster( n_cluster );
+            if( particle_container.dimension() == 1 ) {
+                pickEveryN<kClusterwidth>( cell_last_index, last_index, ncells );
+            } else if( particle_container.dimension() == 2 ) {
+                pickEveryN<kClusterwidth * kClusterwidth>( cell_last_index, last_index, ncells );
+            } else if( particle_container.dimension() == 3 ) {
+                pickEveryN<kClusterwidth * kClusterwidth * kClusterwidth>( cell_last_index, last_index, ncells );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+            
         } else {
             // When there is no cell sorting, the keys are the cluster keys
             // so we don't need a particular predicate to differentiate clusters
             thrust::upper_bound( thrust::device,
-                                static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
-                                static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
-                                thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                                thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                                bin_upper_bound );
+                                cell_keys,
+                                cell_keys + particle_container.deviceSize(),
+                                thrust::counting_iterator<SizeType>{ static_cast<SizeType>( 0 ) },
+                                thrust::counting_iterator<SizeType>{ n_cluster },
+                                last_index );
         }
 
 
@@ -885,6 +914,7 @@ void nvidiaParticles::initializeDataOnDevice()
 
         detail::Cluster::computeBinIndex( *this, parameters_->cell_sorting_ );
         setHostBinIndex();
+        
     }
 }
 
@@ -1269,10 +1299,6 @@ int nvidiaParticles::prepareBinIndex()
     SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( last_index.data() ) );
 
     // We'll need last_index to be on the GPU.
-
-    // TODO(Etienne M): FREE. If we have load balancing or other patch
-    // creation/destruction available (which is not the case on GPU ATM),
-    // we should be taking care of freeing this GPU memory.
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( last_index );
 
     return 0;

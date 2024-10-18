@@ -417,10 +417,6 @@ public:
         return min_local_;
     }
     
-    //! Return the volume (or surface or length depending on simulation dimension)
-    //! of one cell at the position of a given particle
-    virtual double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) = 0;
-    
     //! Given several arrays (x,y,z for instance), return indices of points in patch
     virtual std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) = 0;
     

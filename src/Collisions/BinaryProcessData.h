@@ -12,8 +12,6 @@
 //! Contains the relativistic kinematic quantities associated to the collision of two particles noted 1 and 2
 struct BinaryProcessData
 {
-    //! Number of particles in buffer
-    size_t n;
     
     //! Indices of both particles in their Particles object
     size_t i[2][SMILEI_BINARYPROCESS_BUFFERSIZE];

@@ -14,10 +14,16 @@ class RandomShuffle
 {
 public:
 
-    #pragma acc routine seq
     RandomShuffle( Random &rand, size_t length )
     : length_( length ), mask_( 1 ), P_( 0 ), i_( 0 )
     {
+        reinit( rand, length );
+    }
+    
+    //! Reinitialize the shuffler
+    #pragma acc routine seq
+    void reinit( Random &rand, size_t length ) {
+        length_ = length;
         
         if( length_ < shuffle_threshold ) {
             
@@ -55,7 +61,6 @@ public:
                 } while( random_array_[i] == 0 );
             }
         }
-        
     }
     
     //! Get the next shuffled position
@@ -72,10 +77,12 @@ public:
     #pragma acc routine seq
     void next( size_t n, size_t * shuffled ) {
         if( length_ < shuffle_threshold ){
+            #pragma acc loop seq
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next0();
             }
         } else {
+            #pragma acc loop seq
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next1();
             }
@@ -83,6 +90,7 @@ public:
     }
     
     //! Get the next shuffled position for method 0
+    #pragma acc routine seq
     size_t next0() {
         size_t next_position = random_array_[i_];
         i_ = ( i_ + 1 ) % length_;
@@ -90,6 +98,7 @@ public:
     }
     
     //! Get the next shuffled position for method 1
+    #pragma acc routine seq
     size_t next1() {
         size_t next_position;
         do{

@@ -23,15 +23,29 @@ public:
         double coulomb_log,
         double coulomb_log_factor
     );
+    //! Constructor for Collisions that do nothing (no collisions)
+    Collisions();
     //! Cloning Constructor
     Collisions( Collisions * );
     //! destructor
     ~Collisions();
     
+    operator bool() const { 
+        return coulomb_log_ >= 0.;
+    }
+    
+    void toDevice() {
+        #pragma acc enter data copyin(this[0:1])
+        #pragma acc enter data copyin(coulomb_log_, coulomb_log_factor_, twoPi, coeff1_, coeff2_, coeff3_, coeff4_,npairs_tot_,smean_,logLmean_)
+    };
+    
     void prepare();
-    #pragma acc routine vector nohost
-    void apply( Random *random, BinaryProcessData &D );
+    
+    #pragma acc routine vector
+    void apply( Random *random, BinaryProcessData &D, size_t n );
+    
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
+    
     std::string name() {
         std::ostringstream t;
         t << "Collisions with Coulomb logarithm: ";

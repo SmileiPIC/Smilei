@@ -23,7 +23,7 @@ public:
     ~CollisionalIonization() {};
     
     #pragma acc routine vector nohost
-    void apply( Random *random, BinaryProcessData &D );
+    void apply( Random *random, BinaryProcessData &D, size_t n );
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     std::string name() {
         std:: ostringstream t;

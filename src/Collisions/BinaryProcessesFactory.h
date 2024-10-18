@@ -75,7 +75,6 @@ public:
         
         // Now make all the binary processes
         CollisionalNuclearReaction * collisional_nuclear_reaction = nullptr;
-        Collisions * collisions = nullptr;
         CollisionalIonization * collisional_ionization = nullptr;
         
         // Nuclear reactions
@@ -163,7 +162,6 @@ public:
                     LINK_NAMELIST + std::string("#collisions-reactions") );
             }
             
-            collisions = new Collisions( params, clog, clog_factor );
         }
         
         // Collisional ionization
@@ -260,46 +258,11 @@ public:
             
         }
         
-        // Print Binary processes parameters
-        std::ostringstream t;
-        t << "(" << sgroup[0][0];
-        for( unsigned int rs=1 ; rs<sgroup[0].size() ; rs++ ) {
-            t << " " << sgroup[0][rs];
-        }
-        MESSAGE("");
-        if( intra ) {
-            MESSAGE( 1, "Binary processes #" << n_binary_processes << " within species " << t.str() << ")" );
-        } else {
-            t << ") and (" << sgroup[1][0];
-            for( unsigned int rs=1 ; rs<sgroup[1].size() ; rs++ ) {
-                t << " " << sgroup[1][rs];
-            }
-            MESSAGE( 1, "Binary processes #" << n_binary_processes << " between species " << t.str() << ")" );
-        }
-        
-        int number = 1;
-        if( collisional_nuclear_reaction ) {
-            MESSAGE( 2, number << ". "<< collisional_nuclear_reaction->name() );
-            number++;
-        }
-        if( collisions ) {
-            MESSAGE( 2, number << ". "<< collisions->name() );
-            number++;
-        }
-        if( collisional_nuclear_reaction ) {
-            MESSAGE( 2, number << ". "<< collisional_ionization->name() );
-            number++;
-        }
-        
-        if( debug_every>0 ) {
-            MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
-        }
-        
         // If debugging log requested
         std::string filename;
         if( debug_every>0 ) {
             // Build the file name
-            t.str( "" );
+            std::ostringstream t;
             t << "BinaryProcesses" << n_binary_processes << ".h5";
             filename = t.str();
             std::ifstream file( filename );
@@ -327,20 +290,58 @@ public:
             }
         }
         
-        return new BinaryProcesses( 
+        BinaryProcesses * BPs = new BinaryProcesses( 
             params,
             sgroup[0],
             sgroup[1],
             intra,
             screening_group,
             collisional_nuclear_reaction,
-            collisions,
+            clog,
+            clog_factor,
             collisional_ionization,
             every,
             debug_every,
             time_frozen,
             filename
         );
+        
+        // Print Binary processes parameters
+        std::ostringstream t;
+        t << "(" << sgroup[0][0];
+        for( unsigned int rs=1 ; rs<sgroup[0].size() ; rs++ ) {
+            t << " " << sgroup[0][rs];
+        }
+        MESSAGE("");
+        if( intra ) {
+            MESSAGE( 1, "Binary processes #" << n_binary_processes << " within species " << t.str() << ")" );
+        } else {
+            t << ") and (" << sgroup[1][0];
+            for( unsigned int rs=1 ; rs<sgroup[1].size() ; rs++ ) {
+                t << " " << sgroup[1][rs];
+            }
+            MESSAGE( 1, "Binary processes #" << n_binary_processes << " between species " << t.str() << ")" );
+        }
+        
+        int number = 1;
+        if( collisional_nuclear_reaction ) {
+            MESSAGE( 2, number << ". "<< collisional_nuclear_reaction->name() );
+            number++;
+        }
+        if( BPs->collisions_ ) {
+            MESSAGE( 2, number << ". "<< BPs->collisions_.name() );
+            number++;
+        }
+        if( collisional_nuclear_reaction ) {
+            MESSAGE( 2, number << ". "<< collisional_ionization->name() );
+            number++;
+        }
+        
+        if( debug_every>0 ) {
+            MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
+        }
+        
+        return BPs;
     }
     
     

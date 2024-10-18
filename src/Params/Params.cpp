@@ -1278,7 +1278,7 @@ void Params::compute()
 
 
     // Verify that cluster_width_ divides patch_size_[0] or patch_size_[n] in GPU mode
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
+#if defined( SMILEI_ACCELERATOR_GPU )
     const int kClusterWidth = getGPUClusterWidth();
 
     if( kClusterWidth < 0 ) {
@@ -1288,7 +1288,7 @@ void Params::compute()
     } else {
         for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id ) {
             if( ( patch_size_[dimension_id] % kClusterWidth ) != 0 ) {
-                ERROR_NAMELIST( "The parameter `cluster_width`==" << kClusterWidth << " must divide the number of cells in a patch, in all dimensions.",
+                ERROR_NAMELIST( "On GPU, the number of cells in one patch must be a multiple of " << kClusterWidth << " (in all axes).",
                                 LINK_NAMELIST + std::string( "#main-variables" ) );
             }
         }

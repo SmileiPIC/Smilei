@@ -25,9 +25,18 @@ Collisions::Collisions(
 {
 }
 
+Collisions::Collisions() :
+    coulomb_log_( -1. ),
+    coulomb_log_factor_( 0 ),
+    coeff1_( 0 ),
+    coeff2_( 0 ),
+    coeff3_( 0 ),
+    coeff4_( 0 )
+{
+}
+
 // Cloning Constructor
-Collisions::Collisions( Collisions *coll )
-:
+Collisions::Collisions( Collisions *coll ) :
     coulomb_log_       ( coll->coulomb_log_        ),
     coulomb_log_factor_( coll->coulomb_log_factor_ ),
     coeff1_            ( coll->coeff1_             ),
@@ -49,23 +58,23 @@ void Collisions::prepare()
     logLmean_    = 0.;
 }
 
-void Collisions::apply( Random *random, BinaryProcessData &D )
+void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
 {
     // Buffer intermediate quantities
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer1[i] = 1./( D.m[0][i] * D.p_COM[i] );
     }
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer2[i] = D.gamma0[i] * D.buffer1[i];
     }
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer3[i] = D.R[i] / ( D.p_COM[i] * D.gamma_tot_COM[i] );
     }
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer4[i] = ( double ) D.q[0][i] * ( double ) D.q[1][i];
     }
     
@@ -79,7 +88,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
         double bmin[SMILEI_BINARYPROCESS_BUFFERSIZE];
         double lnLD[SMILEI_BINARYPROCESS_BUFFERSIZE];
         #pragma acc loop vector
-        for( size_t i = 0; i<D.n; i++ ) {
+        for( size_t i = 0; i<n; i++ ) {
             // Note : 0.00232282 is coeff2 / coeff1
             double b1 = 0.00232282*D.buffer4[i]*D.buffer3[i]*D.buffer2[i];
             if( b1 < 0 ) {
@@ -93,7 +102,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
         if( D.screening_group == 0 ) {
             
             #pragma acc loop vector reduction(+:logLmean_,smean_)
-            for( size_t i = 0; i<D.n; i++ ) {
+            for( size_t i = 0; i<n; i++ ) {
                 double qqqqlogL = D.buffer4[i] * D.buffer4[i] * lnLD[i];
                 D.buffer5[i] = coeff3_ * qqqqlogL * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
                 logLmean_ += lnLD[i];
@@ -104,7 +113,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
         } else {
             
             #pragma acc loop vector reduction(+:logLmean_,smean_)
-            for( size_t i = 0; i<D.n; i++ ) {
+            for( size_t i = 0; i<n; i++ ) {
                 double logL;
                 double qqqqlogL; // q1^2 q2^2 logL
                 double qqqq = D.buffer4[i] * D.buffer4[i];
@@ -138,7 +147,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     } else {
         
         #pragma acc loop vector reduction(+:logLmean_,smean_)
-        for( size_t i = 0; i<D.n; i++ ) {
+        for( size_t i = 0; i<n; i++ ) {
             // Calculate the collision parameter s12 (similar to number of real collisions)
             D.buffer5[i] = coeff3_ * D.buffer4[i] * D.buffer4[i] * coulomb_log_ * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
             logLmean_ += coulomb_log_;
@@ -149,7 +158,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     
     // Low-temperature correction to s
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double n = D.n123 > D.R[i] * D.n223 ? D.n123 : D.R[i] * D.n223;
         double smax = coeff4_ * ( 1 + D.R[i] ) * D.vrel[i] / n;
         
@@ -165,12 +174,12 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     // and Perez http://dx.doi.org/10.1063/1.4742167
     // we made a new fit (faster and more accurate)
     #pragma acc loop seq
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer3[i] = random->uniform();
         D.buffer4[i] = random->uniform_2pi();
     }
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double &s = D.buffer5[i];
         double &U1 = D.buffer3[i];
         if( D.buffer5[i] < 4. ) {
@@ -187,7 +196,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     
     // Calculate the combination with angle phi
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double &phi = D.buffer4[i];
         D.buffer3[i] = D.buffer2[i]*cos( phi ); // sinXcosPhi
         D.buffer2[i] = D.buffer2[i]*sin( phi ); // sinXsinPhi
@@ -195,7 +204,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     
     // Apply the deflection
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double & cosX       = D.buffer1[i];
         double & sinXsinPhi = D.buffer2[i];
         double & sinXcosPhi = D.buffer3[i];
@@ -218,7 +227,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
     
     // Go back to the lab frame and update particles momenta
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double & newpx_COM = D.buffer1[i];
         double & newpy_COM = D.buffer2[i];
         double & newpz_COM = D.buffer3[i];
@@ -226,11 +235,11 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
         D.buffer4[i] = ( D.gamma_COM0[i] + pp ) / D.gamma_tot_COM[i];
     }
     #pragma acc loop seq
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         D.buffer5[i] = random->uniform();
     }
     #pragma acc loop vector
-    for( size_t i = 0; i<D.n; i++ ) {
+    for( size_t i = 0; i<n; i++ ) {
         double & newpx_COM = D.buffer1[i];
         double & newpy_COM = D.buffer2[i];
         double & newpz_COM = D.buffer3[i];
@@ -248,7 +257,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D )
         }
     }
     
-    npairs_tot_ += D.n;
+    npairs_tot_ += n;
 }
 
 void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )

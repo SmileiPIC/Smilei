@@ -4052,7 +4052,7 @@ void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timer
     if( BinaryProcesses::debye_length_required_ ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            BinaryProcesses::calculate_debye_length( params, patches_[ipatch] );
+            patches_[ipatch]->vecBPs[0]->calculate_debye_length( params, patches_[ipatch] );
         }
     }
 

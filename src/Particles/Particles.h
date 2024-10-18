@@ -467,8 +467,16 @@ public:
     virtual int* getPtrCellKeys() {
         return &(cell_keys[0]);
     };
-
-
+    
+    // On GPU, this points to the array corresponding to cluster sorting
+    virtual int * getPtrLastIndex() {
+        return last_index.data();
+    };
+    // On GPU, this points to the array corresponding to cell sorting
+    virtual int * getPtrCellLastIndex() {
+        return last_index.data();
+    };
+    
     // --------------------------------------------------------------------------------------------
     // Accelerator specific virtual functions
 
