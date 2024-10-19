@@ -209,7 +209,6 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     }
     if( collisions_ ) {
         collisions_.prepare();
-        collisions_.toDevice();
     }
     
     // Time between binary process events
@@ -288,7 +287,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     patch->rand_->add( nbin );
     
     // Loop bins of particles
-    #pragma acc parallel loop gang worker vector_length(32) private(D, np1, np2, rand, shuffler) \
+        // Mystery: wrong results are obtained on GPU when num_workers(1)
+    #pragma acc parallel loop gang worker num_workers(2) vector_length(32) private(D, np1, np2, rand, shuffler) \
         copyin( cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
             mass1[:nspec1], mass2[:nspec2], debye2_ptr[:nbin], \
