@@ -31,35 +31,56 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     if( i_boundary_ == 0 && patch->isXmin() ) {
     
+        const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+        double *const __restrict__ By2D = B[1]->data_;
+        double *const __restrict__ Bz2D = B[2]->data_;
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        const int sizeofB1 = B[1]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
+        const unsigned int nyp   = n_p[1];
+        const unsigned int nyd   = n_d[1]; 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
-        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        //Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
-        Field2D *By2D = static_cast<Field2D *>( EMfields->By_ );
-        Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
+        //Field2D *By2D = static_cast<Field2D *>( EMfields->By_ );
+        //Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
-        //        // for Bx^(p,d)
-        //        for (unsigned int i=oversize_; i>0; i--) {
-        //            for (unsigned int j=0 ; j<n_d[1] ; j++) {
-        //                (*Bx2D)(i-1,j) = (*Bx2D)(i,j);
-        //            }//j
-        //        }//i
         
         // for By^(d,p)
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(By2D[0:sizeofB1])
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for 
+#endif
         for( unsigned int i=oversize_; i>0; i-- ) {
-            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
-                ( *By2D )( i-1, j ) = ( *By2D )( i, j );
-            }//j
-        }//i
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j=0 ; j<nyp ; j++ ) {
+                //( *By2D )( i-1, j ) = ( *By2D )( i, j );
+                By2D[(i-1)*nyp + j] = By2D[i*nyp + j];
+            }
+        }
         
         // for Bz^(d,d)
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(Bz2D[0:sizeofB2],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for 
+#endif
         for( unsigned int i=oversize_; i>0; i-- ) {
-            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
-                ( *Bz2D )( i-1, j ) = ( *Bz2D )( i, j );
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j=0 ; j<nyd ; j++ ) {
+                //( *Bz2D )( i-1, j ) = ( *Bz2D )( i, j );
+                Bz2D[(i-1)*nyd + j] = Bz2D[i*nyd + j];
             }
         }
         
@@ -110,34 +131,56 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
         
     } else if( i_boundary_ == 1 && patch->isXmax() ) {
     
+        const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+        double *const __restrict__ By2D = B[1]->data_;
+        double *const __restrict__ Bz2D = B[2]->data_;
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        const int sizeofB1 = B[1]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
+        const unsigned int nxp   = n_p[0];
+        const unsigned int nxd   = n_d[0]; 
+        const unsigned int nyp   = n_p[1];
+        const unsigned int nyd   = n_d[1]; 
         // Static cast of the fields
-        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        //Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_);
-        Field2D *By2D = static_cast<Field2D *>( EMfields->By_ );
-        Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
+        //Field2D *By2D = static_cast<Field2D *>( EMfields->By_ );
+        //Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
-        //        // for Bx^(p,d)
-        //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++) {
-        //            for (unsigned int j=0 ; j<n_d[1] ; j++) {
-        //                (*Bx2D)(i,j) = (*Bx2D)(i-1,j);
-        //            }//j
-        //        }//i
-        
         // for By^(d,p)
-        for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
-            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
-                ( *By2D )( i, j ) = ( *By2D )( i-1, j );
-            }//j
-        }//i
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(By2D[0:sizeofB1],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for
+#endif
+        for( unsigned int i = nxd - oversize_; i < nxd; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j = 0 ; j < nyp ; j++ ) {
+                By2D[i*nyp + j] = By2D[ (i-1)*nyp + j];
+                //( *By2D )( i, j ) = ( *By2D )( i-1, j );
+            }
+        }
         
         // for Bz^(d,d)
-        for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
-            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
-                ( *Bz2D )( i, j ) = ( *Bz2D )( i-1, j );
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(Bz2D[0:sizeofB2],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for 
+#endif
+        for( unsigned int i = nxd - oversize_; i < nxd; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j = 0 ; j < nyd ; j++ ) {
+                Bz2D[i*nyd + j] = Bz2D[(i-1)*nyd + j];
+                //( *Bz2D )( i, j ) = ( *Bz2D )( i-1, j );
             }
         }
         
@@ -190,35 +233,57 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
         
     } else if( i_boundary_ == 2 && patch->isYmin() ) {
     
+        const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+        double *const __restrict__ Bx2D = B[0]->data_;
+        double *const __restrict__ Bz2D = B[2]->data_;
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        const int sizeofB0 = B[0]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
+        const unsigned int nxp   = n_p[0];
+        const unsigned int nxd   = n_d[0]; 
+        const unsigned int nyp   = n_p[1];
+        const unsigned int nyd   = n_d[1]; 
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
-        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_ );
-        //Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
-        Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
+        //Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_ );
+        //Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d)
-        for( unsigned int i=0; i<n_p[0]; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(Bx2D[0:sizeofB0],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for 
+#endif
+        for( unsigned int i=0; i<nxp; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
             for( unsigned int j=oversize_ ; j>0 ; j-- ) {
-                ( *Bx2D )( i, j-1 ) = ( *Bx2D )( i, j );
-            }//j
-        }//i
-        
-        //        // for By^(d,p)
-        //        for (unsigned int i=0; i<n_d[0]; i++) {
-        //            for (unsigned int j=oversize_ ; j>0 ; j--) {
-        //                (*By2D)(i,j-1) = (*By2D)(i,j);
-        //            }//j
-        //        }//i
+                //( *Bx2D )( i, j-1 ) = ( *Bx2D )( i, j );
+                Bx2D[i*nyd + j-1] = Bx2D[i*nyd + j];
+            }
+        }
         
         // for Bz^(d,d)
-        for( unsigned int i=0; i<n_d[0]; i++ ) {
-            for( unsigned int j=oversize_ ; j>0 ; j-- ) {
-                ( *Bz2D )( i, j-1 ) = ( *Bz2D )( i, j );
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(Bz2D[0:sizeofB2],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for 
+#endif
+        for( unsigned int i=0; i<nxd; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j = oversize_ ; j>0 ; j-- ) {
+                //( *Bz2D )( i, j-1 ) = ( *Bz2D )( i, j );
+                Bz2D[i*nyd + j-1] = Bz2D[i*nyd + j];
             }
         }
         
@@ -268,34 +333,56 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
         
     } else if( i_boundary_ == 3 && patch->isYmax() ) {
     
+        const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+        double *const __restrict__ Bx2D = B[0]->data_;
+        double *const __restrict__ Bz2D = B[2]->data_;
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        const int sizeofB0 = B[0]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
+        const unsigned int nxp   = n_p[0];
+        const unsigned int nxd   = n_d[0]; 
+        const unsigned int nyp   = n_p[1];
+        const unsigned int nyd   = n_d[1]; 
         // Static cast of the fields
-        //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
-        //Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
-        //Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
-        Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_ );
-        //Field2D* By2D = static_cast<Field2D*>(EMfields->By_);
-        Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
+        //Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_ );
+        //Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d)
-        for( unsigned int i=0; i<n_p[0]; i++ ) {
-            for( unsigned int j=n_d[1]-oversize_; j<n_d[1] ; j++ ) {
-                ( *Bx2D )( i, j ) = ( *Bx2D )( i, j-1 );
-            }//j
-        }//i
-        
-        //        // for By^(d,p)
-        //        for (unsigned int i=0; i<n_d[0]; i++) {
-        //            for (unsigned int j=n_p[1]-oversize_ ; j<n_p[1] ; j++) {
-        //                (*By2D)(i,j) = (*By2D)(i,j-1);
-        //            }//j
-        //        }//i
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        #pragma acc parallel present(Bx2D[0:sizeofB0],)
+        #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target
+        #pragma omp teams distribute parallel for
+#endif
+        for( unsigned int i=0; i<nxp; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j=nyd-oversize_; j<nyd ; j++ ) {
+                //( *Bx2D )( i, j ) = ( *Bx2D )( i, j-1 );
+                Bx2D[i*nyd + j] = Bx2D[i*nyd + j-1];
+            }
+        }
         
         // for Bz^(d,d)
-        for( unsigned int i=0; i<n_d[0]; i++ ) {
-            for( unsigned int j=n_d[1]-oversize_; j<n_d[1] ; j++ ) {
-                ( *Bz2D )( i, j ) = ( *Bz2D )( i, j-1 );
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc parallel present(Bz2D[0:sizeofB2],)
+            #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for 
+#endif
+        for( unsigned int i=0; i<nxd; i++ ) {
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc loop worker vector
+#endif
+            for( unsigned int j=nyd-oversize_; j<nyd ; j++ ) {
+                //( *Bz2D )( i, j ) = ( *Bz2D )( i, j-1 );
+                Bz2D[i*nyd + j] = Bz2D[i*nyd + j-1];
             }
         }
         
