@@ -906,7 +906,8 @@ namespace cudahip {
                             dx_ov_dt, dy_ov_dt, dz_ov_dt,
                             i_domain_begin, j_domain_begin, k_domain_begin,
                             nprimy, nprimz,
-                            not_spectral );
+                            not_spectral,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )

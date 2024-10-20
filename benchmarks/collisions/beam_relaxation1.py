@@ -19,7 +19,7 @@ Main(
     time_fields_frozen = 100000000000.,
 
     cell_length = [2.*L0],
-    grid_length = [128.*L0],
+    grid_length = [112.*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 

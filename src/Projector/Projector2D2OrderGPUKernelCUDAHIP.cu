@@ -1363,7 +1363,8 @@ namespace cudahip2d {
                             dx_ov_dt, dy_ov_dt,
                             i_domain_begin, j_domain_begin,
                             nprimy,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )

@@ -14,6 +14,9 @@ class Patch;
 class Species;
 class VectorPatch;
 
+#ifdef SMILEI_ACCELERATOR_GPU_OMP
+#pragma omp declare target
+#endif
 class Collisions
 {
 public:
@@ -25,10 +28,6 @@ public:
     );
     //! Constructor for Collisions that do nothing (no collisions)
     Collisions();
-    //! Cloning Constructor
-    Collisions( Collisions * );
-    //! destructor
-    ~Collisions();
     
     operator bool() const { 
         return coulomb_log_ >= 0.;
@@ -36,9 +35,11 @@ public:
     
     void prepare();
     
-    #pragma acc routine vector
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+#pragma acc routine vector
+#endif
     void apply( Random *random, BinaryProcessData &D, size_t n );
-    
+
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     
     std::string name() {
@@ -70,6 +71,9 @@ protected:
     const double coeff1_, coeff2_, coeff3_, coeff4_;
     
 };
+#ifdef SMILEI_ACCELERATOR_GPU_OMP
+#pragma omp end declare target
+#endif
 
 
 #endif

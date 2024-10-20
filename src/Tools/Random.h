@@ -5,6 +5,9 @@
 #include <inttypes.h>
 #include <cmath>
 
+#ifdef SMILEI_ACCELERATOR_OMP
+#pragma omp declare target
+#endif
 class Random
 {
 public:
@@ -99,6 +102,9 @@ private:
     static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967295.;
     
 };
+#ifdef SMILEI_ACCELERATOR_OMP
+#pragma omp end declare target
+#endif
 
 
 #endif

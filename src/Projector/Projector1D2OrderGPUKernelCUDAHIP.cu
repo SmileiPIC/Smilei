@@ -1056,7 +1056,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
