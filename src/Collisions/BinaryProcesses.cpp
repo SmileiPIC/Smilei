@@ -135,7 +135,7 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
             weight_ptr[:nspec], charge_ptr[:nspec], px_ptr[:nspec], py_ptr[:nspec], pz_ptr[:nspec] )
 #endif
     for( size_t ibin = 0 ; ibin < nbin ; ibin++ ) {
-        double density_max = 0.;
+        double density_tot = 0.;
         double inv_D2 = 0.;
         double inv_cell_volume = 1. / cellVolume( ibin );
         
@@ -175,10 +175,8 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
                 } else {
                     inv_D2 += density*charge*charge/temperature;
                 }
-                // compute maximum density of species
-                if( density > density_max ) {
-                    density_max = density;
-                }
+                // compute total density of species
+                density_tot += density;
             }
         }
         
@@ -187,7 +185,7 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
             // compute debye length squared in code units
             debye2_ptr[ibin] = 1./inv_D2;
             // apply lower limit to the debye length (minimum interatomic distance)
-            double rmin2 = pow( coeff*density_max, -2./3. );
+            double rmin2 = pow( coeff*density_tot, -2./3. );
             if( debye2_ptr[ibin] < rmin2 ) {
                 debye2_ptr[ibin] = rmin2;
             }

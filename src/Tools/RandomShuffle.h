@@ -22,6 +22,7 @@ public:
     
     //! Reinitialize the shuffler
     void reinit( Random &rand, size_t length ) {
+        i_ = 0;
         length_ = length;
         
         if( length_ < shuffle_threshold ) {
