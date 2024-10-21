@@ -40,6 +40,7 @@ void Collisions::prepare()
     npairs_tot_  = 0.;
     smean_       = 0.;
     logLmean_    = 0.;
+    #pragma data copyin(npairs_tot_, smean_, logLmean_)
 }
 
 #ifdef SMILEI_ACCELERATOR_GPU_OMP
@@ -67,6 +68,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     
     // Calculate coulomb log
     // and the collision parameter s12 (similar to number of real collisions)
+    double logLmean = 0., smean = 0.;
     
     // if auto coulomb log
     if( coulomb_log_ <= 0. ) {
@@ -88,12 +90,12 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         // If no Thomas-Fermi screening
         if( D.screening_group == 0 ) {
             
+            
             SMILEI_ACCELERATOR_LOOP_VECTOR
             for( size_t i = 0; i<n; i++ ) {
                 double qqqqlogL = D.buffer4[i] * D.buffer4[i] * lnLD[i];
                 D.buffer5[i] = coeff3_ * qqqqlogL * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
-                logLmean_ += lnLD[i];
-                smean_    += D.buffer5[i];
+                logLmean += lnLD[i];
             }
         
         // If Thomas-Fermi screening
@@ -124,8 +126,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
                 
                 // Calculate the collision parameter s12 (similar to number of real collisions)
                 D.buffer5[i] = coeff3_ * qqqqlogL * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
-                logLmean_ += logL;
-                smean_    += D.buffer5[i];
+                logLmean += logL;
             }
         
         }
@@ -137,11 +138,12 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         for( size_t i = 0; i<n; i++ ) {
             // Calculate the collision parameter s12 (similar to number of real collisions)
             D.buffer5[i] = coeff3_ * D.buffer4[i] * D.buffer4[i] * coulomb_log_ * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
-            logLmean_ += coulomb_log_;
-            smean_    += D.buffer5[i];
+            logLmean += coulomb_log_;
         }
         
     }
+    #pragma acc atomic update
+    logLmean_ += logLmean;
     
     // Low-temperature correction to s
     SMILEI_ACCELERATOR_LOOP_VECTOR
@@ -153,8 +155,11 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         if( s > smax ) {
             s = smax;
         }
+        smean += D.buffer5[i];
         D.buffer5[i] *= D.dt_correction[i];
     }
+    #pragma acc atomic update
+    smean_ += smean;
     
     // Pick the deflection angles in the center-of-mass frame.
     // Instead of Nanbu http://dx.doi.org/10.1103/PhysRevE.55.4642
@@ -244,7 +249,8 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         }
     }
     
-    npairs_tot_ += n;
+    #pragma acc atomic update
+    npairs_tot_ += (unsigned int) n;
 }
 #ifdef SMILEI_ACCELERATOR_GPU_OMP
 #pragma omp end declare target
@@ -252,6 +258,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
 
 void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
 {
+    #pragma data copyout(npairs_tot_, smean_, logLmean_)
     if( npairs_tot_>0. ) {
         smean_    /= npairs_tot_;
         logLmean_ /= npairs_tot_;

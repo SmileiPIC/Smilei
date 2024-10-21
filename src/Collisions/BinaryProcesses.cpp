@@ -297,7 +297,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     // Loop bins of particles
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
     size_t np1[nspec1], np2[nspec2];
-        // Mystery: wrong results are obtained on GPU when num_workers(1)
+        // Mystery: wrong results are obtained when num_workers(1)
     #pragma acc parallel loop gang worker num_workers(2) vector_length(32) firstprivate(rand) private(D, np1, np2, shuffler)\
         copyin( cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
@@ -308,7 +308,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     size_t np1[10], np2[10]; // The cray compiler crashes if these arrays have non-fixed sizes 
     SMILEI_ASSERT_VERBOSE( nspec1 <= 10 && nspec2 <= 10, "Too many species in Collisions" );
     #pragma omp target teams distribute thread_limit(32) firstprivate(rand, shuffler, collisions_) private(D, np1, np2) \
-        map(to: cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
+        map( to: cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
             mass1[:nspec1], mass2[:nspec2], debye2_ptr[:nbin], \
             last_index1_ptr[:nspec1], weight1_ptr[:nspec1], charge1_ptr[:nspec1], px1_ptr[:nspec1], py1_ptr[:nspec1], pz1_ptr[:nspec1], \
@@ -407,11 +407,11 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         // Prepare buffers
         size_t buffer_size = ( npairs < SMILEI_BINARYPROCESS_BUFFERSIZE ) ? npairs : SMILEI_BINARYPROCESS_BUFFERSIZE;
         size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
-      
+        
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
-      
+        
         // Loop on buffers
         for( size_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
             
