@@ -15,10 +15,8 @@ namespace smilei {
             // Omp/OpenACC
             ////////////////////////////////////////////////////////////////////////////////
 
-#define STRINGIFY(a) #a
-
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #define SMILEI_ACCELERATOR_LOOP_VECTOR(args) _Pragma( STRINGIFY( omp parallel for ## args ) )
+    #define SMILEI_ACCELERATOR_LOOP_VECTOR _Pragma( "omp parallel for" )
     #define SMILEI_ACCELERATOR_LOOP_SEQ 
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE     _Pragma( "omp declare target" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END _Pragma( "omp end declare target" )
@@ -26,7 +24,7 @@ namespace smilei {
     #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::hip::par_nosync
     #define SMILEI_ACCELERATOR_DEVICE_SYNC() hipDeviceSynchronize()
 #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
-    #define SMILEI_ACCELERATOR_LOOP_VECTOR(args)  _Pragma( STRINGIFY( acc loop vector ## args ) )
+    #define SMILEI_ACCELERATOR_LOOP_VECTOR _Pragma( "acc loop vector" )
     #define SMILEI_ACCELERATOR_LOOP_SEQ _Pragma( "acc loop seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END

@@ -40,7 +40,6 @@ public:
         }
     };
     
-    #pragma acc routine seq
     double operator()( size_t ibin ) {
         
         double volume = dual_cell_volume_;

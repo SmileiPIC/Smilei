@@ -21,7 +21,6 @@ public:
     }
     
     //! Reinitialize the shuffler
-    #pragma acc routine seq
     void reinit( Random &rand, size_t length ) {
         length_ = length;
         
@@ -64,7 +63,6 @@ public:
     }
     
     //! Get the next shuffled position
-    #pragma acc routine seq
     size_t next() {
         if( length_ < shuffle_threshold ){
             return next0();
@@ -74,15 +72,12 @@ public:
     }
     
     //! Get n next shuffled positions
-    #pragma acc routine seq
     void next( size_t n, size_t * shuffled ) {
         if( length_ < shuffle_threshold ){
-            #pragma acc loop seq
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next0();
             }
         } else {
-            #pragma acc loop seq
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next1();
             }
@@ -90,7 +85,6 @@ public:
     }
     
     //! Get the next shuffled position for method 0
-    #pragma acc routine seq
     size_t next0() {
         size_t next_position = random_array_[i_];
         i_ = ( i_ + 1 ) % length_;
@@ -98,7 +92,6 @@ public:
     }
     
     //! Get the next shuffled position for method 1
-    #pragma acc routine seq
     size_t next1() {
         size_t next_position;
         do{

@@ -48,19 +48,19 @@ void Collisions::prepare()
 void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
 {
     // Buffer intermediate quantities
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         D.buffer1[i] = 1./( D.m[0][i] * D.p_COM[i] );
     }
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         D.buffer2[i] = D.gamma0[i] * D.buffer1[i];
     }
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         D.buffer3[i] = D.R[i] / ( D.p_COM[i] * D.gamma_tot_COM[i] );
     }
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         D.buffer4[i] = ( double ) D.q[0][i] * ( double ) D.q[1][i];
     }
@@ -74,7 +74,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         // Calculate the minimum impact parameter and the Debye-screening logarithm
         double bmin[SMILEI_BINARYPROCESS_BUFFERSIZE];
         double lnLD[SMILEI_BINARYPROCESS_BUFFERSIZE];
-        SMILEI_ACCELERATOR_LOOP_VECTOR()
+        SMILEI_ACCELERATOR_LOOP_VECTOR
         for( size_t i = 0; i<n; i++ ) {
             // Note : 0.00232282 is coeff2 / coeff1
             double b1 = 0.00232282*D.buffer4[i]*D.buffer3[i]*D.buffer2[i];
@@ -88,7 +88,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         // If no Thomas-Fermi screening
         if( D.screening_group == 0 ) {
             
-            SMILEI_ACCELERATOR_LOOP_VECTOR()
+            SMILEI_ACCELERATOR_LOOP_VECTOR
             for( size_t i = 0; i<n; i++ ) {
                 double qqqqlogL = D.buffer4[i] * D.buffer4[i] * lnLD[i];
                 D.buffer5[i] = coeff3_ * qqqqlogL * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
@@ -99,7 +99,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         // If Thomas-Fermi screening
         } else {
             
-            SMILEI_ACCELERATOR_LOOP_VECTOR()
+            SMILEI_ACCELERATOR_LOOP_VECTOR
             for( size_t i = 0; i<n; i++ ) {
                 double logL;
                 double qqqqlogL; // q1^2 q2^2 logL
@@ -133,7 +133,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     // if constant coulomb log 
     } else {
         
-        SMILEI_ACCELERATOR_LOOP_VECTOR()
+        SMILEI_ACCELERATOR_LOOP_VECTOR
         for( size_t i = 0; i<n; i++ ) {
             // Calculate the collision parameter s12 (similar to number of real collisions)
             D.buffer5[i] = coeff3_ * D.buffer4[i] * D.buffer4[i] * coulomb_log_ * D.buffer2[i] * D.buffer2[i] * D.buffer3[i] / ( D.gamma[0][i] * D.gamma[1][i] );
@@ -144,7 +144,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     }
     
     // Low-temperature correction to s
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double n = D.n123 > D.R[i] * D.n223 ? D.n123 : D.R[i] * D.n223;
         double smax = coeff4_ * ( 1 + D.R[i] ) * D.vrel[i] / n;
@@ -165,7 +165,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         D.buffer3[i] = random->uniform();
         D.buffer4[i] = random->uniform_2pi();
     }
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double &s = D.buffer5[i];
         double &U1 = D.buffer3[i];
@@ -182,7 +182,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     }
     
     // Calculate the combination with angle phi
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double &phi = D.buffer4[i];
         D.buffer3[i] = D.buffer2[i]*cos( phi ); // sinXcosPhi
@@ -190,7 +190,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     }
     
     // Apply the deflection
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double & cosX       = D.buffer1[i];
         double & sinXsinPhi = D.buffer2[i];
@@ -213,7 +213,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     }
     
     // Go back to the lab frame and update particles momenta
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double & newpx_COM = D.buffer1[i];
         double & newpy_COM = D.buffer2[i];
@@ -225,7 +225,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
     for( size_t i = 0; i<n; i++ ) {
         D.buffer5[i] = random->uniform();
     }
-    SMILEI_ACCELERATOR_LOOP_VECTOR()
+    SMILEI_ACCELERATOR_LOOP_VECTOR
     for( size_t i = 0; i<n; i++ ) {
         double & newpx_COM = D.buffer1[i];
         double & newpy_COM = D.buffer2[i];
