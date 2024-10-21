@@ -232,10 +232,10 @@ class Main(SmileiSingleton):
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
-                raise Exception("timestep and timestep_over_CFL not defined")
+                raise Exception("ERROR in the namelist in Main: timestep and timestep_over_CFL not defined")
             else:
                 if Main.cell_length is None:
-                    raise Exception("Need cell_length to calculate timestep")
+                    raise Exception("ERROR in the namelist in Main: cell_length must be defined in order to calculate timestep from timestep_over_CFL")
 
                 # Yee solver or Terzani solver
                 if Main.maxwell_solver in ['Yee','Terzani']:
@@ -246,27 +246,25 @@ class Main(SmileiSingleton):
                         else:
                             alpha = (Main.number_of_AM-1)**2
                         Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + alpha/Main.cell_length[1]**2 )
+                        if (Main.maxwell_solver == "Terzani"):
+                            print("WARNING CFL: The timestep has been set as for a Yee solver but the maximum stable timestep for the Terzani solver may be slightly smaller.")
                     else:
                         dim = int(Main.geometry[0])
-                        if dim<1 or dim>3:
-                            raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                         Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-                    if (Main.maxwell_solver == "Terzani"):
-                        print("CFL: the maximum stable timestep for the Terzani solver may be slightly smaller.")
 
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
-                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+                        raise Exception("ERROR in the namelist in Main: timestep_over_CFL for the Grassi solver not implemented in geometry "+Main.geometry)
 
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
-                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+                        raise Exception("ERROR in the namelist in Main: timestep_over_CFL for the GrassiSpL solver not implemented in geometry "+Main.geometry)
 
                 # M4
                 elif Main.maxwell_solver == 'M4':
@@ -277,11 +275,11 @@ class Main(SmileiSingleton):
                     elif Main.geometry == '3Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * min(Main.cell_length)
                     else:
-                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+                        raise Exception("ERROR in the namelist in Main: timestep_over_CFL for the M4 solver not implemented in geometry "+Main.geometry)
 
                 # None recognized solver
                 else:
-                    raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
+                    raise Exception("ERROR in the namelist in Main: timestep_over_CFL not implemented for the solver "+Main.maxwell_solver)
 
         # Constraint on timestep for WT interpolation
         if Main.interpolator.lower() == "wt":
@@ -300,7 +298,7 @@ class Main(SmileiSingleton):
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
-                raise Exception("simulation_time and number_of_timesteps are not defined")
+                raise Exception("ERROR in the namelist in Main: simulation_time and number_of_timesteps are not defined")
             Main.simulation_time = Main.timestep * Main.number_of_timesteps
 
         # Initialize grid_length if not defined based on number_of_cells and cell_length
@@ -309,7 +307,7 @@ class Main(SmileiSingleton):
              or len(Main.number_of_cells + Main.cell_length) == 0
              or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0
            ):
-                raise Exception("Main: you must define two (and only two) between grid_length, number_of_cells and cell_length")
+                raise Exception("ERROR in the namelist in Main: you must define exactly two parameters among grid_length, number_of_cells and cell_length")
 
         if len(Main.grid_length) == 0:
             Main.grid_length = [a*b for a,b in zip(Main.number_of_cells, Main.cell_length)]
