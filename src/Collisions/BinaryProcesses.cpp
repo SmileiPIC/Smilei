@@ -307,7 +307,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     size_t np1[10], np2[10]; // The cray compiler crashes if these arrays have non-fixed sizes 
     SMILEI_ASSERT_VERBOSE( nspec1 <= 10 && nspec2 <= 10, "Too many species in Collisions" );
-    #pragma omp target teams distribute thread_limit(32) firstprivate(rand, shuffler, collisions_) private(D, np1, np2) \
+    #pragma omp target teams distribute thread_limit(32) firstprivate(rand, shuffler) private(D, np1, np2) \
         map( to: cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
             mass1[:nspec1], mass2[:nspec2], debye2_ptr[:nbin], \

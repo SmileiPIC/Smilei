@@ -40,7 +40,11 @@ void Collisions::prepare()
     npairs_tot_  = 0.;
     smean_       = 0.;
     logLmean_    = 0.;
+    #if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc data copyin(npairs_tot_, smean_, logLmean_)
+    #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target update to(npairs_tot_, smean_, logLmean_)
+    #endif
 }
 
 #ifdef SMILEI_ACCELERATOR_GPU_OMP
@@ -142,7 +146,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         }
         
     }
-    #pragma acc atomic update
+    SMILEI_ACCELERATOR_ATOMIC
     logLmean_ += logLmean;
     
     // Low-temperature correction to s
@@ -158,7 +162,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         smean += D.buffer5[i];
         D.buffer5[i] *= D.dt_correction[i];
     }
-    #pragma acc atomic update
+    SMILEI_ACCELERATOR_ATOMIC
     smean_ += smean;
     
     // Pick the deflection angles in the center-of-mass frame.
@@ -249,7 +253,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
         }
     }
     
-    #pragma acc atomic update
+    SMILEI_ACCELERATOR_ATOMIC
     npairs_tot_ += (unsigned int) n;
 }
 #ifdef SMILEI_ACCELERATOR_GPU_OMP
@@ -258,7 +262,11 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
 
 void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
 {
+    #if defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc data copyout(npairs_tot_, smean_, logLmean_)
+    #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target update from(npairs_tot_, smean_, logLmean_)
+    #endif
     if( npairs_tot_>0. ) {
         smean_    /= npairs_tot_;
         logLmean_ /= npairs_tot_;
