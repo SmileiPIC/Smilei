@@ -40,7 +40,7 @@ void Collisions::prepare()
     npairs_tot_  = 0.;
     smean_       = 0.;
     logLmean_    = 0.;
-    #pragma data copyin(npairs_tot_, smean_, logLmean_)
+    #pragma acc data copyin(npairs_tot_, smean_, logLmean_)
 }
 
 #ifdef SMILEI_ACCELERATOR_GPU_OMP
@@ -258,7 +258,7 @@ void Collisions::apply( Random *random, BinaryProcessData &D, size_t n )
 
 void Collisions::finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, int )
 {
-    #pragma data copyout(npairs_tot_, smean_, logLmean_)
+    #pragma acc data copyout(npairs_tot_, smean_, logLmean_)
     if( npairs_tot_>0. ) {
         smean_    /= npairs_tot_;
         logLmean_ /= npairs_tot_;
