@@ -21,6 +21,7 @@ public:
     }
     
     //! Reinitialize the shuffler
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE
     void reinit( Random &rand, size_t length ) {
         i_ = 0;
         length_ = length;
@@ -62,6 +63,7 @@ public:
             }
         }
     }
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     
     //! Get the next shuffled position
     size_t next() {
@@ -75,10 +77,12 @@ public:
     //! Get n next shuffled positions
     void next( size_t n, size_t * shuffled ) {
         if( length_ < shuffle_threshold ){
+            SMILEI_ACCELERATOR_LOOP_SEQ
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next0();
             }
         } else {
+            SMILEI_ACCELERATOR_LOOP_SEQ
             for( size_t i = 0; i < n; i++ ) {
                 shuffled[i] = next1();
             }

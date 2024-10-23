@@ -297,8 +297,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     // Loop bins of particles
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
     size_t np1[nspec1], np2[nspec2];
-        // Mystery: wrong results are obtained when num_workers(1)
-    #pragma acc parallel loop gang worker num_workers(2) vector_length(32) firstprivate(rand) private(D, np1, np2, shuffler)\
+    #pragma acc parallel loop gang vector_length(32) firstprivate(rand) private(D, np1, np2, shuffler)\
         copyin( cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
             mass1[:nspec1], mass2[:nspec2], debye2_ptr[:nbin], \
@@ -405,8 +404,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         D.n223 = pow( n2, 2./3. );
         
         // Prepare buffers
-        size_t buffer_size = ( npairs < SMILEI_BINARYPROCESS_BUFFERSIZE ) ? npairs : SMILEI_BINARYPROCESS_BUFFERSIZE;
-        size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
+        const size_t buffer_size = ( npairs_not_repeated < SMILEI_BINARYPROCESS_BUFFERSIZE ) ? npairs_not_repeated : SMILEI_BINARYPROCESS_BUFFERSIZE;
+        const size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -415,9 +414,9 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         // Loop on buffers
         for( size_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
             
-            size_t start = ibuffer * buffer_size;
-            size_t stop = ( npairs < start + buffer_size ) ? npairs : start + buffer_size;
-            uint32_t n = stop - start;
+            const size_t start = ibuffer * buffer_size;
+            const size_t stop = ( npairs < start + buffer_size ) ? npairs : start + buffer_size;
+            const uint32_t n = stop - start;
             
             // Determine the shuffled indices in the whole groups of species
             if( intra_ ) {

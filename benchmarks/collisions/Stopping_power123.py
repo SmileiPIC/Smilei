@@ -99,8 +99,8 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 	
 	
 	fig = plt.figure(3)
-	fig.set_facecolor('w')
-	ax = fig.add_subplot(1,1,1)
+	# fig.set_facecolor('w')
+	# ax = fig.add_subplot(1,1,1)
 	for k in range(nx):
 		Q = (Ekin[k][-1]-Ekin[k][1]) / (times[-1]-times[1])
 		E0 = Ekin[k][0]
@@ -108,13 +108,12 @@ for path in ["Stopping_power1","Stopping_power2","Stopping_power3"]:
 		Q /= -1e-15*v0*coulomb_log # MeV/m
 		Q *= 0.01 # MeV/cm
 		Q /= density_electron*1.11e21 # MeV*cm^2
-		ax.loglog(E0,Q, 'ok')
+		plt.loglog(E0,Q, 'ok')
 		
 E = np.logspace(-2,1,1000)
-ax.loglog(E,FrankelStoppingPower(E,temperature_electron*0.511), 'k', label='Frankel theory' )
-if not ax.legend_: ax.legend()
-ax.set_xlim(0.01,10)
-ax.set_xlabel('Electron energy (MeV)')
-ax.set_title('Stopping power $Q/(n_e \ln\Lambda)$ (MeV cm$^2$)')
+plt.loglog(E,FrankelStoppingPower(E,temperature_electron*0.511), 'k', label='Frankel theory' )
+plt.xlim(0.01,10)
+plt.xlabel('Electron energy (MeV)')
+plt.title('Stopping power $Q/(n_e \ln\Lambda)$ (MeV cm$^2$)')
 
 plt.show()

@@ -316,7 +316,7 @@ namespace detail {
     }
     
     template<int a, int b>
-    struct linear_function : public thrust::unary_function<int,int> {
+    struct affine_function : public thrust::unary_function<int,int> {
         __host__ __device__ int operator()( int x ) const {
             return a * x + b;
         }
@@ -327,7 +327,7 @@ namespace detail {
         
         thrust::counting_iterator<int> first_cluster( 0 );
         thrust::counting_iterator<int> last_cluster( size / N );
-        const auto last_in_cluster = linear_function<N, N-1>();
+        const auto last_in_cluster = affine_function<N, N-1>();
         thrust::gather( thrust::device,
                         thrust::make_transform_iterator( first_cluster, last_in_cluster ),
                         thrust::make_transform_iterator( last_cluster , last_in_cluster ),
