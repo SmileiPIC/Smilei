@@ -156,23 +156,23 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         // Lasers polarized along axis 1
         std::vector<double> b1( n_p[axis1_], 0. );
         double *const __restrict__ db1 = b1.data();
-	const unsigned int n1p    = n_p[axis1_];
+        const unsigned int n1p    = n_p[axis1_];
         const unsigned int n1d    = n_d[axis1_];
 
         const unsigned int nyp   = n_p[1];
         const unsigned int nyd   = n_d[1]; 
         const unsigned int iB0    = iB_[0];
-	const unsigned int p0     = iB_[0] - sign_;
+        const unsigned int p0     = iB_[0] - sign_;
         const unsigned int p1     = iB_[1] - sign_;
         const unsigned int iB1    = iB_[1];
-	const unsigned int iB2    = iB_[2];
+        const unsigned int iB2    = iB_[2];
         const unsigned int p2     = iB_[2] - sign_;
 
         const int b1_size = n1p ;
         const int b2_size = n1d ;
         std::vector<double> pos( 1 );
 
-	if( ! vecLaser.empty() ) {
+        if( ! vecLaser.empty() ) {
             for( unsigned int j=isBoundary1min ; j<n1p-isBoundary1max ; j++ ) {
                 pos[0] = patch->getDomainLocalMin( axis1_ ) + ( ( int )j - ( int )EMfields->oversize[axis1_] )*d[axis1_];
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
