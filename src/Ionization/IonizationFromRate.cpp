@@ -38,14 +38,13 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
     
 #ifdef SMILEI_USE_NUMPY
     // Run python to evaluate the ionization rate for each particle
-    PyArrayObject *ret;
     unsigned int npart = ipart_max - ipart_min;
-    #pragma omp critical
+    SMILEI_PY_ACQUIRE_GIL
     {
         ParticleData particleData( npart );
         particleData.startAt( ipart_min );
         particleData.set( particles );
-        ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( ionization_rate_, particleData.get(), NULL );
+        PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( ionization_rate_, particleData.get(), NULL );
         PyTools::checkPyError();
         if( ret == NULL ) {
             ERROR( "ionization_rate profile has not provided a correct result" );
@@ -58,6 +57,7 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         }
         Py_DECREF( ret );
     }
+    SMILEI_PY_RELEASE_GIL
 #endif
     
     

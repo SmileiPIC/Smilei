@@ -139,7 +139,6 @@ public:
     inline double getAmplitude( std::vector<double> pos, double t, int, int ) override
     {
         double amp;
-        #pragma omp critical
         amp = spaceAndTimeProfile_->valueAt( pos, t );
         return amp;
     }
@@ -147,7 +146,6 @@ public:
     inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int, int ) override
     {
         std::complex<double> amp;
-        #pragma omp critical
         amp = spaceAndTimeProfile_->complexValueAt( pos, t );
         return amp;
     }
