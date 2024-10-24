@@ -57,9 +57,9 @@ BinaryProcesses::BinaryProcesses(
 
 // Cloning Constructor
 BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs ) :
-    nuclear_reactions_      ( BPs->nuclear_reactions_ ),
+    nuclear_reactions_      ( nullptr ),
     collisions_             ( BPs->collisions_ ),
-    collisional_ionization_ ( BPs->collisional_ionization_ ),
+    collisional_ionization_ ( nullptr ),
     species_group1_         ( BPs->species_group1_   ),
     species_group2_         ( BPs->species_group2_   ),
     intra_                  ( BPs->intra_            ),
@@ -70,11 +70,17 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs ) :
     filename_               ( BPs->filename_         ),
     debug_file_             ( BPs->debug_file_       )
 {
+    if( CollisionalFusionDD * DD = dynamic_cast<CollisionalFusionDD*>( BPs->nuclear_reactions_ ) ) {
+        nuclear_reactions_ = new CollisionalFusionDD( DD );
+    }
+    if( CollisionalIonization * CI = dynamic_cast<CollisionalIonization*>( BPs->collisional_ionization_ ) ) {
+        collisional_ionization_ = new CollisionalIonization( CI );
+    }
 }
-
 
 BinaryProcesses::~BinaryProcesses()
 {
+    MESSAGE( nuclear_reactions_ );
     delete nuclear_reactions_;
     delete collisional_ionization_;
 }

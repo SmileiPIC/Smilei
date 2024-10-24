@@ -332,7 +332,7 @@ public:
             MESSAGE( 2, number << ". "<< BPs->collisions_.name() );
             number++;
         }
-        if( collisional_nuclear_reaction ) {
+        if( collisional_ionization ) {
             MESSAGE( 2, number << ". "<< collisional_ionization->name() );
             number++;
         }
