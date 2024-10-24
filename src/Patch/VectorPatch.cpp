@@ -540,7 +540,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
     timers.particleInjection.restart();
 
     //#pragma omp for schedule(runtime)
-    #pragma omp single
+    #pragma omp master
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
 
         Patch * patch = ( *this )( ipatch );
@@ -779,6 +779,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         }
         
     } // end for ipatch
+    #pragma omp barrier
 
     timers.particleInjection.update( params.printNow( itime ) );
 }
@@ -4033,9 +4034,10 @@ void VectorPatch::applyAntennas( double time )
         } else {
 
             // Get intensity from antenna of the first patch
-            #pragma omp single
+            #pragma omp master
             antenna_intensity_ = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
-
+            #pragma omp barrier
+            
             // Loop patches to apply
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
