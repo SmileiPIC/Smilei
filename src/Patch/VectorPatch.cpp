@@ -1170,6 +1170,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
         }
 
         timers.maxwellBC.restart();
+        SMILEI_PY_SAVE_MASTER_THREAD
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
@@ -1177,6 +1178,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
                 ( *this )( ipatch )->EMfields->boundaryConditions( time_dual, ( *this )( ipatch ), simWindow );
 
         }
+        SMILEI_PY_RESTORE_MASTER_THREAD
         SyncVectorPatch::exchangeForPML( params, (*this), smpi );
 
         #pragma omp for schedule(static)
@@ -4963,6 +4965,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
     diag_PartEventTracing = smpi->diagPartEventTracing( time_dual, params.timestep);
 #endif
 
+    SMILEI_PY_SAVE_MASTER_THREAD
     #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->restartRhoJ();
@@ -5019,6 +5022,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
             } // end loop on species
             //MESSAGE("species dynamics");
         } // end loop on patches
+    SMILEI_PY_RESTORE_MASTER_THREAD
 }
 
 void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Params &params,
