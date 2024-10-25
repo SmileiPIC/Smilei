@@ -567,24 +567,26 @@ class HistogramAxis_user_function : public HistogramAxis
 public:
     HistogramAxis_user_function( PyObject *type_object ) :
         HistogramAxis(),
-        function( type_object ),
-        particleData( 0 )
-    {
-    };
+        function( type_object )
+    {};
     ~HistogramAxis_user_function()
     {
+        SMILEI_PY_ACQUIRE_GIL
         Py_DECREF( function );
+        SMILEI_PY_RELEASE_GIL
     };
 private:
     void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow * )
     {
+        PyArrayObject *ret;
         SMILEI_PY_ACQUIRE_GIL
-        // Expose particle data as numpy arrays
-        particleData.resize( npart );
-        particleData.set( s->particles );
-        // run the function
-        PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
-        particleData.clear();
+        {
+            // Expose particle data as numpy arrays
+            ParticleData particleData( npart );
+            particleData.set( s->particles );
+            // run the function
+            ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
+        }
         // Copy the result to "array"
         double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ )
@@ -599,7 +601,6 @@ private:
     };
 
     PyObject *function;
-    ParticleData particleData;
 };
 #endif
 
@@ -1155,24 +1156,27 @@ class Histogram_user_function : public Histogram
 public:
     Histogram_user_function( PyObject *deposited_quantity_object ) :
         Histogram(),
-        function( deposited_quantity_object ),
-        particleData( 0 )
+        function( deposited_quantity_object )
     {};
     ~Histogram_user_function()
     {
+        SMILEI_PY_ACQUIRE_GIL
         Py_DECREF( function );
+        SMILEI_PY_RELEASE_GIL
     };
 private:
     void valuate( Species *s, double *array, int *index )
     {
         unsigned int npart = s->getNbrOfParticles();
+        PyArrayObject *ret;
         SMILEI_PY_ACQUIRE_GIL
         // Expose particle data as numpy arrays
-        particleData.resize( npart );
-        particleData.set( s->particles );
-        // run the function
-        PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
-        particleData.clear();
+        {
+            ParticleData particleData( npart );
+            particleData.set( s->particles );
+            // run the function
+            ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
+        }
         // Copy the result to "array"
         double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -1186,7 +1190,6 @@ private:
     };
     
     PyObject *function;
-    ParticleData particleData;
 };
 #endif
 

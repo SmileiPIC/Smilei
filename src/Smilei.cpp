@@ -423,12 +423,14 @@ int main( int argc, char *argv[] )
 
     if( !params.restart ) {
         TITLE( "Running diags at time t = 0" );
+        #pragma omp parallel shared( smpi, params, vecPatches, simWindow )
+        {
 #ifdef _OMPTASKS
-        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
 #else
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+            vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 #endif
-        
+        }
     }
 
     TITLE( "Species creation summary" );
