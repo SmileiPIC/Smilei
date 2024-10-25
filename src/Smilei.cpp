@@ -431,6 +431,7 @@ int main( int argc, char *argv[] )
             vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 #endif
         }
+        vecPatches.rebootDiagTimers();
     }
 
     TITLE( "Species creation summary" );
