@@ -1285,9 +1285,6 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
 
-            //std::cout << " " << dynamic_cast<DiagnosticScalar*>( globalDiags[idiag] )
-	   //	      << std::endl;
-
             if (dynamic_cast<DiagnosticScalar*>( globalDiags[idiag])) {
                 //need_particles = true;
                 //need_fields    = true;
@@ -1315,7 +1312,7 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
             } else if (dynamic_cast<DiagnosticFields*>(localDiags[idiag])) {   
                 need_fields    = true;
             } else if (dynamic_cast<DiagnosticPerformances*>(localDiags[idiag])) {   
-		        // Nothing to be done
+                // Nothing to be done
             } else {
                 need_particles = true;
                 need_fields    = true; 
