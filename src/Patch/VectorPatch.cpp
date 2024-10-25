@@ -1506,12 +1506,6 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
     }
     timers.diags.update();
 
-    if( itime==0 ) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers_.size() ; idiag++ ) {
-            diag_timers_[idiag]->reboot();
-        }
-    }
-
 } // END runAllDiags
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1634,13 +1628,14 @@ void VectorPatch::runAllDiagsTasks( Params &, SmileiMPI *smpi, unsigned int itim
     }
     timers.diags.update();
 
-    if (itime==0) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers_.size() ; idiag++ )
-            diag_timers_[idiag]->reboot();
-    }
-
 } // END runAllDiags
 
+void VectorPatch::rebootDiagTimers()
+{
+    for( unsigned int idiag = 0 ; idiag < diag_timers_.size() ; idiag++ ) {
+        diag_timers_[idiag]->reboot();
+    }
+} 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Check if rho is null (MPI & patch sync)
