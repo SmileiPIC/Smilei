@@ -453,12 +453,9 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch, ElectroMag
 double LaserProfileSeparable::getAmplitude( std::vector<double>, double t, int j, int k )
 {
     double amp;
-    #pragma omp critical
-    {
-        double omega = omega_ * chirpProfile_->valueAt( t );
-        double phi = ( *phase )( j, k );
-        amp = timeProfile_->valueAt( t-( phi+delay_phase_ )/omega ) * ( *space_envelope )( j, k ) * sin( omega*t - phi );
-    }
+    double omega = omega_ * chirpProfile_->valueAt( t );
+    double phi = ( *phase )( j, k );
+    amp = timeProfile_->valueAt( t-( phi+delay_phase_ )/omega ) * ( *space_envelope )( j, k ) * sin( omega*t - phi );
     return amp;
 }
 
@@ -562,10 +559,7 @@ double LaserProfileFile::getAmplitude( std::vector<double> pos, double t, int j,
     for( unsigned int i=0; i<n; i++ ) {
         amp += ( *magnitude )( j, k, i ) * cos( omega[i] * t + ( *phase )( j, k, i ) );
     }
-    #pragma omp critical
-    {
-        amp *= extraProfile->valueAt( pos, t );
-    }
+    amp *= extraProfile->valueAt( pos, t );
     return amp;
 }
 

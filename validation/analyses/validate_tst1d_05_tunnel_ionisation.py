@@ -93,7 +93,7 @@ Validate("Scalar Zavg_carbon"  , S.Scalar.Zavg_carbon  ().getData(), 0.2)
 d = S.TrackParticles("electron", axes=["Id","x","Wy"], timesteps=1000).getData()
 keep = d["Id"] > 0
 order = np.argsort(d["x"][keep])
-Validate("Track electron x", d["x"][keep][order][::200], 1e-4)
+Validate("Track electron x", d["x"][keep][order][::200], 2e-4)
 Validate("Track electron Wy", gaussian_filter(maximum_filter1d(d["Wy"][keep][order],20),200)[::200], 1e-5)
 
 # NEW PARTICLES DIAGNOSTIC

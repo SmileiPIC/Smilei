@@ -103,6 +103,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     string seterr( "seterr" );
     string sChar( "s" );
     Py_DECREF( PyObject_CallMethod( numpy, &seterr[0], &sChar[0], "ignore" ) );
+    string numpy_version = "";
+    PyTools::getAttr( numpy, "__version__", numpy_version );
+    MESSAGE( "Numpy version " << numpy_version );
     Py_DECREF( numpy );
 #else
     WARNING("Numpy not found. Some options will not be available");
@@ -868,7 +871,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
-            ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            //ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            WARNING( "Collisions in AM geometry is experimental and valid only with a single mode" );
         }
 
     }
