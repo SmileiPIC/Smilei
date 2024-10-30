@@ -61,12 +61,12 @@ CollisionalNuclearReaction::~CollisionalNuclearReaction()
     product_particles_.clear();
 }
 
-void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D, size_t n )
+void CollisionalNuclearReaction::apply( Random *random, BinaryProcessData &D, uint32_t n )
 {
     
 // Not ported to GPU yet
 #ifndef SMILEI_ACCELERATOR_GPU
-    for( size_t i = 0; i<n; i++ ) {
+    for( uint32_t i = 0; i<n; i++ ) {
         
         double ekin = D.m[0][i] * D.gamma_tot_COM[i] - D.m[0][i] - D.m[1][i];
         double log_ekin = log( ekin );

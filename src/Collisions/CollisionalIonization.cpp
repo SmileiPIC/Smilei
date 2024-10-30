@@ -132,23 +132,23 @@ unsigned int CollisionalIonization::createDatabase( double reference_angular_fre
 }
 
 // Method to apply the ionization
-void CollisionalIonization::apply( Random *random, BinaryProcessData &D, size_t n )
+void CollisionalIonization::apply( Random *random, BinaryProcessData &D, uint32_t n )
 {
 
 // Not ported to GPU yet
 #ifndef SMILEI_ACCELERATOR_GPU
 
-    for( uint8_t i = 0; i<n; i++ ) {
+    for( uint32_t i = 0; i<n; i++ ) {
         // Random numbers
         double U1 = random->uniform();
         double U2 = random->uniform();
         // Find which particle in the pair is electron or ion
-        size_t which_e = (size_t) !D.electronFirst;
-        size_t which_i = (size_t) D.electronFirst;
+        uint32_t which_e = (uint32_t) !D.electronFirst;
+        uint32_t which_i = (uint32_t) D.electronFirst;
         Particles *& pe = D.p[which_e][i];
         Particles *& pi = D.p[which_i][i];
-        size_t & ie = D.i[which_e][i];
-        size_t & ii = D.i[which_i][i];
+        uint32_t & ie = D.i[which_e][i];
+        uint32_t & ii = D.i[which_i][i];
         double & We = D.W[which_e][i];
         double & Wi = D.W[which_i][i];
         double & gammae = D.gamma[which_e][i];

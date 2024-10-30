@@ -38,7 +38,7 @@ public:
 #ifdef SMILEI_ACCELERATOR_GPU_OACC
 #pragma acc routine vector
 #endif
-    void apply( Random *random, BinaryProcessData &D, size_t n );
+    void apply( Random *random, BinaryProcessData &D, uint32_t n );
 
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     

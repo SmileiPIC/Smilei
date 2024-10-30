@@ -30,7 +30,7 @@ public:
     };
 
     SMILEI_ACCELERATOR_DECLARE_ROUTINE
-    void apply( Random *random, BinaryProcessData &D, size_t n );
+    void apply( Random *random, BinaryProcessData &D, uint32_t n );
     SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     
     void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
