@@ -292,7 +292,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     D.screening_group = screening_group_;
     D.electronFirst = electronFirst;
     CellVolumeCalculator cellVolume( params, patch );
-    const size_t nbin = cellVolume.nbin_;
+    const uint32_t nbin = cellVolume.nbin_;
+    SMILEI_ASSERT_VERBOSE( cellVolume.nbin_ > 4294967295, "Too many cells per patch in Collisions" );
     
     // Due to GPU offloading, we must have a different rand object for each bin
     // Each bin gets a seed equal to the `patch->rand_` seed plus `ibin`
@@ -300,9 +301,11 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
     RandomShuffle shuffler( rand, 1 );
     patch->rand_->add( nbin );
     
+    
+    
     // Loop bins of particles
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
-    size_t np1[nspec1], np2[nspec2];
+    uint32_t np1[nspec1], np2[nspec2];
     #pragma acc parallel loop gang vector_length(32) firstprivate(rand) private(D, np1, np2, shuffler)\
         copyin( cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
             screening_group_size, screening_Z_ptr[:screening_group_size], lTF_ptr[:screening_group_size], \
@@ -310,7 +313,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             last_index1_ptr[:nspec1], weight1_ptr[:nspec1], charge1_ptr[:nspec1], px1_ptr[:nspec1], py1_ptr[:nspec1], pz1_ptr[:nspec1], \
             last_index2_ptr[:nspec2], weight2_ptr[:nspec2], charge2_ptr[:nspec2], px2_ptr[:nspec2], py2_ptr[:nspec2], pz2_ptr[:nspec2] )
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    size_t np1[10], np2[10]; // The cray compiler crashes if these arrays have non-fixed sizes 
+    uint32_t np1[10], np2[10]; // The cray compiler crashes if these arrays have non-fixed sizes 
     SMILEI_ASSERT_VERBOSE( nspec1 <= 10 && nspec2 <= 10, "Too many species in Collisions" );
     #pragma omp target teams distribute thread_limit(32) firstprivate(rand, shuffler) private(D, np1, np2) \
         map( to: cellVolume, delta_t, nspec1, nspec2,/* sg1_ptr[:nspec1], sg2_ptr[:nspec2],*/ \
@@ -319,29 +322,29 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             last_index1_ptr[:nspec1], weight1_ptr[:nspec1], charge1_ptr[:nspec1], px1_ptr[:nspec1], py1_ptr[:nspec1], pz1_ptr[:nspec1], \
             last_index2_ptr[:nspec2], weight2_ptr[:nspec2], charge2_ptr[:nspec2], px2_ptr[:nspec2], py2_ptr[:nspec2], pz2_ptr[:nspec2] )
 #else
-    size_t np1[nspec1], np2[nspec2];
+    uint32_t np1[nspec1], np2[nspec2];
 #endif
-    for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
+    for( uint32_t ibin = 0 ; ibin < nbin ; ibin++ ) {
         
         // get number of particles for all necessary species
-        size_t npart1 = 0;
-        for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            int last = last_index1_ptr[ispec1][ibin];
-            int first = ( ibin == 0 ) ? 0 : last_index1_ptr[ispec1][ibin-1];
+        uint32_t npart1 = 0;
+        for( uint8_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
+            uint32_t last = last_index1_ptr[ispec1][ibin];
+            uint32_t first = ( ibin == 0 ) ? 0 : last_index1_ptr[ispec1][ibin-1];
             np1[ispec1] = last - first;
             npart1 += np1[ispec1];
         }
-        size_t npart2 = 0;
-        for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            int last = last_index2_ptr[ispec2][ibin];
-            int first = ( ibin == 0 ) ? 0 : last_index2_ptr[ispec2][ibin-1];
+        uint32_t npart2 = 0;
+        for( uint8_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
+            uint32_t last = last_index2_ptr[ispec2][ibin];
+            uint32_t first = ( ibin == 0 ) ? 0 : last_index2_ptr[ispec2][ibin-1];
             np2[ispec2] = last - first;
             npart2 += np2[ispec2];
         }
         // We need to shuffle the group that has most particles
         bool shuffle1 = npart1 > npart2;
-        size_t npartmin = npart1;
-        size_t npartmax = npart2;
+        uint32_t npartmin = npart1;
+        uint32_t npartmax = npart2;
         if( shuffle1 ) {
             npartmin = npart2;
             npartmax = npart1;
@@ -352,8 +355,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             continue;
         }
         
-        size_t npairs, npairs_not_repeated;
-        double weight_correction_1, weight_correction_2;
+        uint32_t npairs, npairs_not_repeated;
+        float weight_correction_1, weight_correction_2;
         if( intra_ ) { // In the case of pairing within one species
             npairs = ( npartmax + 1 ) / 2; // half as many pairs as macro-particles
             npairs_not_repeated = npartmax - npairs;
@@ -362,8 +365,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         } else { // In the case of pairing between two species
             npairs = npartmax; // as many pairs as macro-particles in group with more particles
             npairs_not_repeated = npartmin;
-            weight_correction_1 = 1. / (double)( npairs / npairs_not_repeated );
-            weight_correction_2 = 1. / (double)( npairs / npairs_not_repeated + 1 );
+            weight_correction_1 = 1. / (float)( npairs / npairs_not_repeated );
+            weight_correction_2 = 1. / (float)( npairs / npairs_not_repeated + 1 );
         }
         
         // Set the shuffler seed and size
@@ -371,15 +374,15 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         shuffler.reinit( rand, npartmax );
         
         // Calculate the densities
-        double n1  = 0., n2 = 0.;
+        float n1  = 0., n2 = 0.;
         #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop vector reduction( +:n1 )
         #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp parallel for reduction( +:n1 )
         #endif
-        for( size_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
-            int start = ibin == 0 ? 0 : last_index1_ptr[ispec1][ibin-1];
-            for( int i = start; i < last_index1_ptr[ispec1][ibin]; i++ ) {
+        for( uint8_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
+            uint32_t start = ibin == 0 ? 0 : last_index1_ptr[ispec1][ibin-1];
+            for( uint32_t i = start; i < last_index1_ptr[ispec1][ibin]; i++ ) {
                 n1 += weight1_ptr[ispec1][i];
             }
         }
@@ -388,9 +391,9 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp parallel for reduction( +:n2 )
         #endif
-        for( size_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
-            int start = ibin == 0 ? 0 : last_index2_ptr[ispec2][ibin-1];
-            for( int i = start; i < last_index2_ptr[ispec2][ibin]; i++ ) {
+        for( uint8_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
+            uint32_t start = ibin == 0 ? 0 : last_index2_ptr[ispec2][ibin-1];
+            for( uint32_t i = start; i < last_index2_ptr[ispec2][ibin]; i++ ) {
                 n2 += weight2_ptr[ispec2][i];
             }
         }
@@ -401,27 +404,27 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         }
         
         // Pre-calculate some numbers before the big loop
-        const double inv_cell_volume = 1. / cellVolume( ibin );
-        const unsigned int ncorr = intra_ ? 2*npairs-1 : npairs;
-        const double dt_corr = delta_t * ((double)ncorr) * inv_cell_volume;
+        const float inv_cell_volume = 1. / cellVolume( ibin );
+        const uint32_t ncorr = intra_ ? 2*npairs-1 : npairs;
+        const float dt_corr = delta_t * ((float)ncorr) * inv_cell_volume;
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
-        D.n123 = pow( n1, 2./3. );
-        D.n223 = pow( n2, 2./3. );
+        D.n123 = cbrt( n1 * n1 );
+        D.n223 = cbrt( n2 * n2 );
         
         // Prepare buffers
-        const size_t buffer_size = ( npairs_not_repeated < SMILEI_BINARYPROCESS_BUFFERSIZE ) ? npairs_not_repeated : SMILEI_BINARYPROCESS_BUFFERSIZE;
-        const size_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
+        const uint8_t buffer_size = ( npairs_not_repeated < SMILEI_BINARYPROCESS_BUFFERSIZE ) ? npairs_not_repeated : SMILEI_BINARYPROCESS_BUFFERSIZE;
+        const uint32_t nbuffers = ( npairs - 1 ) / buffer_size + 1;
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
         
         // Loop on buffers
-        for( size_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
+        for( uint32_t ibuffer = 0; ibuffer < nbuffers; ibuffer++ ) {
             
-            const size_t start = ibuffer * buffer_size;
-            const size_t stop = ( npairs < start + buffer_size ) ? npairs : start + buffer_size;
+            const uint32_t start = ibuffer * buffer_size;
+            const uint32_t stop = ( npairs < start + buffer_size ) ? npairs : start + buffer_size;
             const uint32_t n = stop - start;
             
             // Determine the shuffled indices in the whole groups of species
@@ -431,12 +434,12 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             } else if( shuffle1 ) {
                 shuffler.next( n, &D.i[0][0] );
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.i[1][i] = ( i + start ) % npart2;
                 }
             } else {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.i[0][i] = ( i + start ) % npart1;
                 }
                 shuffler.next( n, &D.i[1][0] );
@@ -444,13 +447,13 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             
             // find species and indices of particles
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 for( D.ispec[0][i] = 0; D.i[0][i]>=np1[D.ispec[0][i]]; D.ispec[0][i]++ ) {
                     D.i[0][i] -= np1[D.ispec[0][i]];
                 }
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 for( D.ispec[1][i] = 0; D.i[1][i]>=np2[D.ispec[1][i]]; D.ispec[1][i]++ ) {
                     D.i[1][i] -= np2[D.ispec[1][i]];
                 }
@@ -459,19 +462,19 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Get screening length & Z
             if( screening_group_ == 0 ) {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.lTF[i] = lTF_ptr[screening_group_size - 1];
                     D.Z1Z2[i] = screening_Z_ptr[screening_group_size - 1];
                 }
             } else if( screening_group_ == 1 ) {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.lTF[i] = lTF_ptr[D.ispec[0][i]];
                     D.Z1Z2[i] = screening_Z_ptr[D.ispec[0][i]];
                 }
             } else if( screening_group_ == 2 ) {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.lTF[i] = lTF_ptr[D.ispec[1][i]];
                     D.Z1Z2[i] = screening_Z_ptr[D.ispec[1][i]];
                 }
@@ -480,81 +483,81 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Get particle indices in this bin
             if( ibin > 0 ) {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.i[0][i] += last_index1_ptr[D.ispec[0][i]][ibin-1];
                 }
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( size_t i = 0; i<n; i++ ) {
+                for( uint8_t i = 0; i<n; i++ ) {
                     D.i[1][i] += last_index2_ptr[D.ispec[1][i]][ibin-1];
                 }
             }
 #ifndef SMILEI_ACCELERATOR_GPU
             // Get pointers to Particles
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.p[0][i] = p1_ptr[D.ispec[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.p[1][i] = p2_ptr[D.ispec[1][i]];
             }
 #endif
             // Get masses
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.m[0][i] = mass1[D.ispec[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.m[1][i] = mass2[D.ispec[1][i]];
             }
             // Get Weights
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.W[0][i] = weight1_ptr[D.ispec[0][i]][D.i[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.W[1][i] = weight2_ptr[D.ispec[1][i]][D.i[1][i]];
             }
             // Get charges
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.q[0][i] = charge1_ptr[D.ispec[0][i]][D.i[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.q[1][i] = charge2_ptr[D.ispec[1][i]][D.i[1][i]];
             }
             // Get momenta
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.px[0][i] = px1_ptr[D.ispec[0][i]][D.i[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.px[1][i] = px2_ptr[D.ispec[1][i]][D.i[1][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.py[0][i] = py1_ptr[D.ispec[0][i]][D.i[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.py[1][i] = py2_ptr[D.ispec[1][i]][D.i[1][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.pz[0][i] = pz1_ptr[D.ispec[0][i]][D.i[0][i]];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.pz[1][i] = pz2_ptr[D.ispec[1][i]][D.i[1][i]];
             }
             
             // Calculate the timestep correction
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.dt_correction[i] = ( D.W[0][i] > D.W[1][i] ? D.W[0][i] : D.W[1][i] ) * dt_corr;
                 double corr2 = ( i + start ) % npairs_not_repeated < npairs % npairs_not_repeated;
                 double corr1 = 1. - corr2;
@@ -563,58 +566,58 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             
             // Calculate gammas
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.gamma[0][i] = sqrt( 1 + D.px[0][i]*D.px[0][i] + D.py[0][i]*D.py[0][i] + D.pz[0][i]*D.pz[0][i] );
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.gamma[1][i] = sqrt( 1 + D.px[1][i]*D.px[1][i] + D.py[1][i]*D.py[1][i] + D.pz[1][i]*D.pz[1][i] );
             }
             
             // Calculate the mass ratio
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.R[i] = D.m[1][i] / D.m[0][i];
             }
             
             // Calculate the total gamma
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.gamma_tot[i] = D.gamma[0][i] + D.R[i] * D.gamma[1][i];
             }
             
             // Calculate the total momentum
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.px_tot[i] = D.px[0][i] + D.R[i] * D.px[1][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.py_tot[i] = D.py[0][i] + D.R[i] * D.py[1][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.pz_tot[i] = D.pz[0][i] + D.R[i] * D.pz[1][i];
             }
             
             // Calculate the Lorentz invariant gamma1 gamma2 - u1.u2
             // It is equal to the gamma of one particle in the rest frame of the other particle
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.gamma0[i] = D.gamma[0][i] * D.gamma[1][i] - D.px[0][i] * D.px[1][i] - D.py[0][i] * D.py[1][i] - D.pz[0][i] * D.pz[1][i];
             }
             
             // Now we calculate quantities in the center-of-mass frame
             // denoted by the suffix _COM
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 D.gamma_tot_COM[i] = sqrt( 2*D.R[i]*D.gamma0[i] + D.R[i] * D.R[i] + 1 );
                 D.gamma_COM0[i] = ( D.R[i] * D.gamma0[i] + 1 ) / D.gamma_tot_COM[i];
             }
             
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
-                double gg = ( D.gamma[0][i] + D.gamma_COM0[i] ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
+            for( uint8_t i = 0; i<n; i++ ) {
+                float gg = ( D.gamma[0][i] + D.gamma_COM0[i] ) / ( D.gamma_tot[i] + D.gamma_tot_COM[i] );
                 D.px_COM[i] = D.px[0][i] - gg * D.px_tot[i];
                 D.py_COM[i] = D.py[0][i] - gg * D.py_tot[i];
                 D.pz_COM[i] = D.pz[0][i] - gg * D.pz_tot[i];
@@ -623,8 +626,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             
             // Calculate some intermediate quantities
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
-                double p_gamma_COM = D.p_COM[i] * D.gamma_tot_COM[i];
+            for( uint8_t i = 0; i<n; i++ ) {
+                float p_gamma_COM = D.p_COM[i] * D.gamma_tot_COM[i];
                 D.vrel[i] = p_gamma_COM / ( D.gamma_COM0[i] * ( D.gamma_tot_COM[i] - D.gamma_COM0[i] ) ); // | v2_COM - v1_COM |
             }
             
@@ -642,45 +645,45 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Update the particle arrays from the buffers
             // Store Weights
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 weight1_ptr[D.ispec[0][i]][D.i[0][i]] = D.W[0][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 weight2_ptr[D.ispec[1][i]][D.i[1][i]] = D.W[1][i];
             }
             // Store charges
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 charge1_ptr[D.ispec[0][i]][D.i[0][i]] = D.q[0][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 charge2_ptr[D.ispec[1][i]][D.i[1][i]] = D.q[1][i];
             }
             // Store momenta
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 px1_ptr[D.ispec[0][i]][D.i[0][i]] = D.px[0][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 px2_ptr[D.ispec[1][i]][D.i[1][i]] = D.px[1][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 py1_ptr[D.ispec[0][i]][D.i[0][i]] = D.py[0][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 py2_ptr[D.ispec[1][i]][D.i[1][i]] = D.py[1][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 pz1_ptr[D.ispec[0][i]][D.i[0][i]] = D.pz[0][i];
             }
             SMILEI_ACCELERATOR_LOOP_VECTOR
-            for( size_t i = 0; i<n; i++ ) {
+            for( uint8_t i = 0; i<n; i++ ) {
                 pz2_ptr[D.ispec[1][i]][D.i[1][i]] = D.pz[1][i];
             }
             

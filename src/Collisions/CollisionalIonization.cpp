@@ -138,7 +138,7 @@ void CollisionalIonization::apply( Random *random, BinaryProcessData &D, size_t 
 // Not ported to GPU yet
 #ifndef SMILEI_ACCELERATOR_GPU
 
-    for( size_t i = 0; i<n; i++ ) {
+    for( uint8_t i = 0; i<n; i++ ) {
         // Random numbers
         double U1 = random->uniform();
         double U2 = random->uniform();
