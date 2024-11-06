@@ -540,13 +540,15 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum, momentumRefl_2D, momentumRefl_3D, momentum_x, momentum_y, momentum_z, weight ) map( tofrom : change_in_energy )
-    #pragma omp teams distribute thread_limit(32) parallel for reduction( + : change_in_energy )
+    #pragma omp teams distribute thread_limit(32) reduction( + : change_in_energy )
 #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel loop gang vector_length(32)  reduction(+ : change_in_energy) independent deviceptr(position, momentum, momentumRefl_2D, momentumRefl_3D,momentum_x,momentum_y,momentum_z,weight)
 #else
     #pragma omp simd reduction(+ : change_in_energy)
+    for (int ipart = imin ; ipart < imax ; ++ipart ) {
 #endif
-    for (int ichunk = imin/32 ; ichunk < imax/32 ; ichunk++ ) {
+#if defined( SMILEI_ACCELERATOR_GPU)
+    for (int ichunk = imin/32 ; ichunk < imax/32 ; ++ichunk ) {
 
 #if defined( SMILEI_ACCELERATOR_GPU )
         uint32_t xorshift32_state_local = xorshift32_state + ichunk;
@@ -567,10 +569,11 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp simd
+        #pragma omp parallel for
 #endif
         for( int i = istart; i < iend ; ++i ){
             int ipart = ichunk * 32 + i;
+#endif
             if ( position[ ipart ] < limit_inf) {
                 // checking the particle's velocity compared to the thermal one
                 double p2 = momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart];
@@ -630,7 +633,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
 
                 // energy lost during thermalization
                 LorentzFactor = sqrt( 1. + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );
-                energy_change += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
+                change_in_energy += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
 
 
                 // HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
@@ -647,7 +650,9 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
                 
             }
         }
+#if defined( SMILEI_ACCELERATOR_GPU ) 
     }
+#endif
     energy_change = change_in_energy;
 #if defined( SMILEI_ACCELERATOR_GPU ) 
     xorshift32_state += 32;
@@ -699,13 +704,15 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
     }
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum, momentumRefl_2D, momentumRefl_3D, momentum_x, momentum_y, momentum_z, weight ) map( tofrom : change_in_energy )
-    #pragma omp teams distribute thread_limit(32) parallel for reduction( + : change_in_energy )
+    #pragma omp teams distribute thread_limit(32) reduction( + : change_in_energy )
 #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
     #pragma acc parallel loop gang vector_length(32)  reduction(+ : change_in_energy) independent deviceptr(position, momentum, momentumRefl_2D, momentumRefl_3D,momentum_x,momentum_y,momentum_z,weight)
 #else
     #pragma omp simd reduction(+ : change_in_energy)
+    for (int ipart = imin ; ipart < imax ; ++ipart ) {
 #endif
-    for (int ichunk = imin/32 ; ichunk < imax/32 ; ichunk++ ) {
+#if defined( SMILEI_ACCELERATOR_GPU)
+    for (int ichunk = imin/32 ; ichunk < imax/32 ; ++ichunk ) {
         
 #if defined( SMILEI_ACCELERATOR_GPU )
         uint32_t xorshift32_state_local = xorshift32_state + ichunk;
@@ -725,11 +732,11 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp simd
+        #pragma omp parallel for 
 #endif
         for( int i = istart; i < iend ; ++i ){
             int ipart = ichunk * 32 + i;
-            
+#endif            
             if ( position[ ipart ] >= limit_sup) {
                 // checking the particle's velocity compared to the thermal one
                 double p2 = momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart];
@@ -794,7 +801,7 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 
                 // energy lost during thermalization
                 LorentzFactor = sqrt( 1. + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );
-                energy_change += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
+                change_in_energy += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
 
                 /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
                 // double val_min(params.dens_profile.vacuum_length[1]), val_max(params.dens_profile.vacuum_length[1]+params.dens_profile.length_params_y[0]);
@@ -810,7 +817,9 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
                 */
             }
         }
+#if defined( SMILEI_ACCELERATOR_GPU ) 
     }
+#endif
     energy_change = change_in_energy;
 #if defined( SMILEI_ACCELERATOR_GPU ) 
     xorshift32_state += 32;
