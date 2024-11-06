@@ -13,6 +13,7 @@ public:
 
     static double erfinv( double x );
     static double erfinv2( double x );
+    static inline double erfinv_v3( double x );
                                      
     //! Load repartition in 1d between MPI processes
     static void distributeArray( int rank,
