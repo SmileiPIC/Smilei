@@ -67,7 +67,7 @@ double erfinv::call( double x )
     double val = 0.0;
     
     if( x <= erfinv_x_[0] ) {
-        val = 0.5*sqrt( pi )*x + pi/24.0 *pow( x, 3 );
+        val = 0.5*sqrt( pi )*x + pi/24.0 *x*x*x;
     } else if( x >= erfinv_x_.back() ) {
         double eta = -log( sqrt( pi )*( 1.0-x ) );
         double log_eta = log( eta );

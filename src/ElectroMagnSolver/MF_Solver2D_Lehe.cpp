@@ -13,9 +13,9 @@ MF_Solver2D_Lehe::MF_Solver2D_Lehe( Params &params )
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     
-    beta_yx = 1./8.;
-    beta_xy = pow( dx/dy, 2 )/8.;
-    delta_x = ( 1./4. )*( 1.-pow( sin( M_PI*dt_ov_dx/2. )/dt_ov_dx, 2 ) );
+    beta_yx = 0.125;
+    beta_xy = dx*dx/(dy*dy)*0.125;
+    delta_x = 0.25*( 1.-( sin( M_PI*dt_ov_dx*0.5 )/dt_ov_dx) * ( sin( M_PI*dt_ov_dx*0.5 )/dt_ov_dx));
     
     alpha_y =  1.-2.*beta_yx;
     alpha_x =  1.-2.*beta_xy-3.*delta_x;

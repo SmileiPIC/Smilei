@@ -25,14 +25,6 @@ inline double perp_rand( Random * rand ) {
     return a;
 }
 
-
-/*inline double perp_rand_gpu( Random * rand ) {
-    double a = userFunctions::erfinv_v3( rand->uniform1() );
-    if( rand->cointoss() ) { 
-        a *= -1.;
-    }
-    return a;
-}*/
 /**
  * copied from erfinv_DP_1.cu by Prof. Mike Giles.
  * https://people.maths.ox.ac.uk/gilesm/
@@ -148,9 +140,6 @@ inline double perp_rand_gpu_v3(uint32_t xorshift32_state) {
     }
     return a;
 }
-//*/
-
-
 
 
 void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );

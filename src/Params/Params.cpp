@@ -1839,7 +1839,7 @@ void Params::multiple_decompose_3D()
     // Number of domain in 3D
     // Decomposition in 2 times, X and larger side
     double tmp = (double)(number_of_patches[0]*number_of_patches[0]) / (double)(number_of_patches[1]*number_of_patches[2]);
-    number_of_region[0] = min( sz, max(1, (int) pow( (double)sz*tmp, 1./3. ) ) );
+    number_of_region[0] = min( sz, max(1, (int) (cbrt (sz*tmp)) ) );
 
     int rest = (int)(sz / number_of_region[0]);
     while ( (int)number_of_region[0]*rest != sz ) {

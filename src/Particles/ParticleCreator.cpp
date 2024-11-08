@@ -843,7 +843,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
                 double phi   = acos( -rand->uniform2() );
                 double theta = rand->uniform_2pi();
-                double psm = sqrt( pow( 1.0+energies[p-iPart], 2 )-1.0 );
+                double psm = sqrt( ( 1.0 + energies[p-iPart]) * ( 1.0 + energies[p-iPart]) - 1.0 );
 
                 particles->momentum( 0, p ) = psm*cos( theta )*sin( phi );
                 particles->momentum( 1, p ) = psm*sin( theta )*sin( phi );
@@ -1018,7 +1018,7 @@ std::vector<double> ParticleCreator::maxwellJuttner( Species * species, unsigned
             // Calculate the inverse of F
             lnlnU = log( -log( U ) );
             if( lnlnU>2. ) {
-                invF = 3.*sqrt( M_PI )/4. * pow( U, 2./3. );
+                invF = 3.*sqrt( M_PI )/4. * cbrt( U*U );
             } else if( lnlnU<-19. ) {
                 invF = 1.;
             } else {
@@ -1047,7 +1047,7 @@ std::vector<double> ParticleCreator::maxwellJuttner( Species * species, unsigned
                 // Calculate the inverse of H at the point log(1.-U) + H0
                 lnU = log( -log( 1.-U ) - H0 );
                 if( lnU<-26. ) {
-                    invH = pow( -6.*U, 1./3. );
+                    invH = cbrt( -6.*U );
                 } else if( lnU>12. ) {
                     invH = -U + 11.35 * pow( -U, 0.06 );
                 } else {
