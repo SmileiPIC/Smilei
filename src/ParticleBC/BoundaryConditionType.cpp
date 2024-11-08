@@ -132,16 +132,17 @@ void reflect_particle_wall( Species *species, int imin, int imax, int direction,
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
+    double* invgf_p  = invgf.data();
 #ifdef SMILEI_ACCELERATOR_GPU_OACC
-    #pragma acc parallel deviceptr(position,momentum, invgf)
+    #pragma acc parallel deviceptr(position,momentum,invgf_p)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target is_device_ptr( position, momentum, invgf )
+    #pragma omp target is_device_ptr(position,momentum,invgf_p)
     #pragma omp teams distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
-        double particle_position_old = particle_position - dt*invgf[ipart]*momentum[ipart]; 
+        double particle_position_old = particle_position - dt*invgf_p[ipart]*momentum[ipart]; 
         if ( ( wall_position - particle_position_old ) * ( wall_position - particle_position )<0) {
             position[ ipart ] = 2 * wall_position - position[ ipart ];
             momentum[ ipart ] = - momentum[ ipart ];
@@ -556,7 +557,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop seq
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp single
+        //#pragma omp single // does not work with rocm
 #endif    
         // boucle sur les particules de ce chunk pour remplir  xorshift32_state_array[...] avec le state local
         for( int i = 0; i < 32; ++i ){
@@ -720,7 +721,7 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop seq
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        #pragma omp single
+        //#pragma omp single // does not work with rocm
 #endif    
         // boucle sur les particules de ce chunk pour remplir  xorshift32_state_array[...] avec le state local
         for( int i = 0; i < 32; ++i ){
