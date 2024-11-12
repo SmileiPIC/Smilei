@@ -3,7 +3,6 @@
 
 #include "Params.h"
 #include "Random.h"
-#include "tabulatedFunctions.h"
 
 class Patch;
 class Species;

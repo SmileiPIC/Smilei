@@ -13,7 +13,6 @@
 #include "Particles.h"
 #include "Species.h"
 #include "Params.h"
-#include "tabulatedFunctions.h"
 #include "userFunctions.h"
 #include "Random.h"
 
