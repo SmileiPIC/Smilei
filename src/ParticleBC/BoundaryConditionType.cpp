@@ -560,7 +560,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
 #endif    
         // boucle sur les particules de ce chunk pour remplir  xorshift32_state_array[...] avec le state local
         for( int i = 0; i < 32; ++i ){
-            xorshift32_state_array[i] = xorshift32(xorshift32_state_local);
+            xorshift32_state_array[i] = Random_namespace::xorshift32(xorshift32_state_local);
         }
 #endif   
         // boucle sur les particules de ce chunk qui utilise xorshift32_state_array[i]
@@ -591,7 +591,7 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
                     // change of velocity in the direction normal to the reflection plane
                     double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
                     #if defined( SMILEI_ACCELERATOR_GPU ) 
-                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - uniform1(xorshift32_state_array[i]) ) );
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - Random_namespace::uniform1(xorshift32_state_array[i]) ) );
                     #else
                         momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - rand->uniform1() ) );
                     #endif
@@ -599,13 +599,13 @@ void thermalize_particle_inf( Species *species, int imin, int imax, int directio
                     // change of momentum in the direction(s) along the reflection plane
                     if (nDim>1) {
                         #if defined( SMILEI_ACCELERATOR_GPU ) 
-                            momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand_gpu_v3(xorshift32_state_array[i]);
+                            momentumRefl_2D[ ipart ] = thermal_momentum1 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
                         #else
                             momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand( rand );
                         #endif
                         if (nDim>2) {
                         #if defined( SMILEI_ACCELERATOR_GPU ) 
-                            momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand_gpu_v3(xorshift32_state_array[i]);
+                            momentumRefl_3D[ ipart ] = thermal_momentum2 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
                         #else
                             momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand( rand );
                         #endif
@@ -724,7 +724,7 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 #endif    
         // boucle sur les particules de ce chunk pour remplir  xorshift32_state_array[...] avec le state local
         for( int i = 0; i < 32; ++i ){
-            xorshift32_state_array[i] = xorshift32(xorshift32_state_local);
+            xorshift32_state_array[i] = Random_namespace::xorshift32(xorshift32_state_local);
         }
 #endif        
         int istart = ichunk==(imin/32) ? imin%32 : 0; 
@@ -756,7 +756,7 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
                     // change of velocity in the direction normal to the reflection plane
                     double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
                     #if defined( SMILEI_ACCELERATOR_GPU ) 
-                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - uniform1(xorshift32_state_array[i]) ) );
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - Random_namespace::uniform1(xorshift32_state_array[i]) ) );
                     #else
                         momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - rand->uniform1() ) );
                     #endif
@@ -764,13 +764,13 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
                     // change of momentum in the direction(s) along the reflection plane
                     if (nDim>1) {
                         #if defined( SMILEI_ACCELERATOR_GPU ) 
-                            momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand_gpu_v3(xorshift32_state_array[i]);
+                            momentumRefl_2D[ ipart ] = thermal_momentum1 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
                         #else
                             momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand( rand );
                         #endif
                         if (nDim>2) {
                         #if defined( SMILEI_ACCELERATOR_GPU ) 
-                            momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand_gpu_v3(xorshift32_state_array[i]);
+                            momentumRefl_3D[ ipart ] = thermal_momentum2 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
                         #else
                             momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand( rand );
                         #endif

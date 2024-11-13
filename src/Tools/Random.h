@@ -4,6 +4,35 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <cmath>
+#include "userFunctions.h"
+
+namespace Random_namespace // in order to use the random functions without having access to the class random
+{
+
+    inline uint32_t xorshift32(uint32_t xorshift32_state)
+    {
+        // Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" 
+        xorshift32_state ^= xorshift32_state << 13;
+        xorshift32_state ^= xorshift32_state >> 17;
+        xorshift32_state ^= xorshift32_state << 5;
+        return xorshift32_state;
+    }
+
+    inline double uniform1(uint32_t xorshift32_state) {
+        constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
+        return xorshift32(xorshift32_state) * xorshift32_invmax1;
+    }
+
+    inline double perp_rand_dp(uint32_t xorshift32_state) {
+        double a = userFunctions::erfinv_dp( uniform1(xorshift32_state) ); 
+        // technically we could also use the erfinv() function fron cuda, it would require compiling with -cuda though ...
+        // the study showed the gap in perf for BC thermal was not worth the added depend
+        if( xorshift32(xorshift32_state) & 1  ) { // rand->cointoss()
+            a *= -1.;
+        }
+        return a;
+    }
+}
 
 class Random
 {
