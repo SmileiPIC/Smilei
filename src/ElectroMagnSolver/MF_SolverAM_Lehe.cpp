@@ -10,9 +10,9 @@ MF_SolverAM_Lehe::MF_SolverAM_Lehe( Params &params )
     : SolverAM( params )
 {
 
-    beta_rl = 1./4.; 
-    beta_tl = 1./4.;
-    delta_l = ( 1./4. )*( 1.-pow( sin( M_PI*dt_ov_dl/2. )/dt_ov_dl, 2 ) );
+    beta_rl = 0.25; 
+    beta_tl = 0.25;
+    delta_l = 0.25 * ( 1.- ( sin( M_PI * dt_ov_dl * 0.5 )/dt_ov_dl )*( sin( M_PI*dt_ov_dl * 0.5 )/dt_ov_dl ) );
 
     alpha_r =  1. - 2.*beta_rl; 
     alpha_t =  1. - 2.*beta_tl; 

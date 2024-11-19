@@ -29,9 +29,9 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params):
     // On the axes v_phi^max = 1.01c and is below c @ 0.54 kxdx/pi
     // So there could existe a numerical cherenkov emission at this point
     // On the diagonal v_phi^max = 1.01c and is below c @ 0.85 sqrt((kxdx)^2+(kydy)^2)
-    double delta = 0.1222*(1-pow(2.,2))/4. ;
-    double beta = -0.1727*(1-0.5*pow(2.,2)-4.*delta)/4. ;
-    double alpha = 1-2.*beta-3.*delta;
+    double delta = -0.0916500000000000;//0.1222*(1-pow (2.,2))/4. ;
+    double beta  =  0.027347045;//-0.1727*(1-0.5*pow (2.,2)-4.*delta)/4. ;
+    double alpha =  1.22025591; //1-2.*beta-3.*delta;
 
     beta_xy = beta;
     beta_yx = beta;

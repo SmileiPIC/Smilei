@@ -448,7 +448,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     for( int ipair=i_pair_start; ipair < i_pair_start+mBW_pair_creation_sampling_[0]; ipair++ ) {
 
                         // Momentum
-                        const double p = std::sqrt( std::pow( 1.+pair_chi[0]*inv_chiph_gammaph, 2 )-1 );
+                        const double p = std::sqrt( ( 1.+pair_chi[0]*inv_chiph_gammaph)*( 1.+pair_chi[0]*inv_chiph_gammaph) - 1 );
                         pair0_momentum_x[ipair] = p*ux;
                         pair0_momentum_y[ipair] = p*uy;
                         pair0_momentum_z[ipair] = p*uz;
@@ -511,7 +511,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     for( auto ipair=i_pair_start; ipair < i_pair_start + mBW_pair_creation_sampling_[1]; ipair++ ) {
 
                         // Momentum
-                        const double p = std::sqrt( std::pow( 1.+pair_chi[1]*inv_chiph_gammaph, 2 )-1 );
+                        const double p = std::sqrt( ( 1.+pair_chi[1]*inv_chiph_gammaph) * ( 1.+pair_chi[1]*inv_chiph_gammaph) - 1 );
                         pair1_momentum_x[ipair] = p*ux;
                         pair1_momentum_y[ipair] = p*uy;
                         pair1_momentum_z[ipair] = p*uz;
@@ -569,7 +569,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                         for( int idNew=nparticles-mBW_pair_creation_sampling_[k]; idNew<nparticles; idNew++ ) {
 
                             // Momentum
-                            double p = std::sqrt( std::pow( 1.+pair_chi[k]*inv_chiph_gammaph, 2 )-1 );
+                            double p = std::sqrt( ( 1.+pair_chi[k]*inv_chiph_gammaph ) * ( 1.+pair_chi[k]*inv_chiph_gammaph ) - 1 );
                             
                             new_pair_per_bin[ibin][k].momentum( 0, idNew ) = p*ux ;
                             new_pair_per_bin[ibin][k].momentum( 1, idNew ) = p*uy ;

@@ -29,9 +29,9 @@ MF_Solver3D_Bouchard::MF_Solver3D_Bouchard( Params &params )
         WARNING( "Bouchard solver requires dx/dt = 2 (Magical Timestep)" );
     }
 
-    double delta = 0.1222*(1-pow(2.,2))/4. ;
-    double beta = -0.1727*(1-0.5*pow(2.,2)-4.*delta)/4. ;
-    double alpha = 1-4.*beta-3.*delta ;
+    double delta = -0.0916500000000000;//0.1222*(1-pow (2.,2))/4. ;
+    double beta  =  0.027347044999999997;//-0.1727*(1-0.5*pow (2.,2)-4.*delta)/4. ;
+    double alpha =  1.16556182; //1-4.*beta-3.*delta ;
     
     delta_x = delta ;
     delta_y = delta ;

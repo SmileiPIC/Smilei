@@ -14,10 +14,10 @@ MF_Solver3D_Lehe::MF_Solver3D_Lehe( Params &params )
     dy = params.cell_length[1];
     dz = params.cell_length[2];
 
-    beta_yx = 1./8.; // = beta_zx as well but we define and use only 1 variable
-    beta_xy = pow( dx/dy, 2 )/8.;
-    beta_xz = pow( dx/dz, 2 )/8.;
-    delta_x = ( 1./4. )*( 1.-pow( sin( M_PI*dt_ov_dx/2. )/dt_ov_dx, 2 ) );
+    beta_yx = 0.125; // = beta_zx as well but we define and use only 1 variable
+    beta_xy = dx*dx/(dy*dy)*0.125;
+    beta_xz = dx*dx/(dz*dz)*0.125;
+    delta_x = 0.25*( 1.-( sin( M_PI*dt_ov_dx*0.5 )/dt_ov_dx ) * ( sin( M_PI*dt_ov_dx*0.5 )/dt_ov_dx ));
 
     alpha_y =  1. - 2.*beta_yx; // = alpha_z as well but we define and use only 1 variable
     alpha_x =  1. - 2.*beta_xy - 2.*beta_xz - 3.*delta_x ;

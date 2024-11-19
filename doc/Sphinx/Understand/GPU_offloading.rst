@@ -20,6 +20,8 @@ the announced exaflopic supercomputers will include GPUs.
   * Cartesian geometry in 1D, 2D and in 3D , for order 2
   * Diagnostics: Field, Probes, Scalar, ParticleBinning, TrackParticles
   * Moving Window
+  * Boundary conditions for Fields: Periodic, reflective and silver-muller are supported (no PML or BM)
+  * Boundary conditions for Particles: Periodic, Reflective, thermal, remove and stop are supported
 
 * A few key features remain to be implemented (AM geometry, ionization, PML, envelope,
   additional physics), but the fundamentals of the code are ported.

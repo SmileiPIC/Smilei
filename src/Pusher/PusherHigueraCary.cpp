@@ -117,10 +117,11 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
 
         // beta**2
         const double beta2 = Tx*Tx + Ty*Ty + Tz*Tz;
+        const double Tum = Tx*umx + Ty*umy + Tz*umz;
 
         // Equivalent of 1/\gamma_{new} in the paper
         const double local_invgf = 1./std::sqrt( 0.5*( gfm2 - beta2 +
-                                     std::sqrt( (gfm2 - beta2)*(gfm2 - beta2) + 4.0*( beta2 + std::pow( Tx*umx + Ty*umy + Tz*umz, 2 ) ) ) ) );
+                                     std::sqrt( (gfm2 - beta2)*(gfm2 - beta2) + 4.0*( beta2 + Tum * Tum ) ) ) );
 
         // Rotation in the magnetic field
         Tx    *= local_invgf;
