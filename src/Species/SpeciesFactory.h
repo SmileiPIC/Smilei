@@ -739,6 +739,9 @@ public:
 
             this_species->maximum_charge_state_ = 0;
             PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec);
+    
+            this_species->ionization_tl_parameter_ = 6;
+            PyTools::extract( "ionization_tl_parameter", this_species->ionization_tl_parameter_, "Species", ispec);
 
             std::string model;
             PyTools::extract( "ionization_model", model, "Species", ispec );
@@ -760,7 +763,7 @@ public:
                         LINK_NAMELIST + std::string("#species") );
                 }
 
-                if( model == "tunnel" ){
+                if( (model == "tunnel") || (model == "tunnel_BSI") || (model == "tunnel_TL") || (model == "tunnel_full_PPT") ){
                     if (params.Laser_Envelope_model){
                         ERROR_NAMELIST("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name,
                         LINK_NAMELIST + std::string("#species"));
