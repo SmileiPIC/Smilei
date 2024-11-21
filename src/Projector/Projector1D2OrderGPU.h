@@ -29,6 +29,8 @@ public:
                                     int          icell     = 0,
                                     int          ipart_ref = 0 ) override;
 
+    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int , Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
+
     void susceptibility( ElectroMagn *EMfields,
                          Particles   &particles,
                          double       species_mass,

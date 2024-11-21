@@ -103,6 +103,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     string seterr( "seterr" );
     string sChar( "s" );
     Py_DECREF( PyObject_CallMethod( numpy, &seterr[0], &sChar[0], "ignore" ) );
+    string numpy_version = "";
+    PyTools::getAttr( numpy, "__version__", numpy_version );
+    MESSAGE( "Numpy version " << numpy_version );
     Py_DECREF( numpy );
 #else
     WARNING("Numpy not found. Some options will not be available");
@@ -868,7 +871,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
-            ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            //ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
+            WARNING( "Collisions in AM geometry is experimental and valid only with a single mode" );
         }
 
     }
@@ -1533,12 +1537,12 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 #else
         MESSAGE( 1, "OpenMP disabled" );
 #endif
-#ifdef _OMPTASKS
-        MESSAGE( 1, "OpenMP task parallelization activated");
-#else
-        MESSAGE( 1, "OpenMP task parallelization not activated");
-#endif
-        MESSAGE( "" );
+// #ifdef _OMPTASKS
+//         MESSAGE( 1, "OpenMP task parallelization activated");
+// #else
+//         MESSAGE( 1, "OpenMP task parallelization not activated");
+// #endif
+//         MESSAGE( "" );
 
         ostringstream np;
         np << "Number of patches: " << number_of_patches[0];
@@ -1835,7 +1839,7 @@ void Params::multiple_decompose_3D()
     // Number of domain in 3D
     // Decomposition in 2 times, X and larger side
     double tmp = (double)(number_of_patches[0]*number_of_patches[0]) / (double)(number_of_patches[1]*number_of_patches[2]);
-    number_of_region[0] = min( sz, max(1, (int) pow( (double)sz*tmp, 1./3. ) ) );
+    number_of_region[0] = min( sz, max(1, (int) (cbrt (sz*tmp)) ) );
 
     int rest = (int)(sz / number_of_region[0]);
     while ( (int)number_of_region[0]*rest != sz ) {

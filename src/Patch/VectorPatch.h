@@ -238,6 +238,7 @@ public :
         SimWindow *simWindow );
         
     void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
+    void rebootDiagTimers();
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
     

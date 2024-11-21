@@ -73,7 +73,7 @@ private:
     
     //! Current ionization rate array (one cell per number of ionization events)
     std::vector<double> rate;
-    std::vector<double> irate;
+    std::vector<double> rate_product;
     //! Current ionization probability array (one cell per number of ionization events)
     std::vector<double> prob;
     

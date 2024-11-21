@@ -30,7 +30,7 @@ protected:
     double dx_inv_;
     double dx_ov_dt_;
     int i_domain_begin_;
-    double *Jx_, *Jy_, *Jz_, *rho_;
+    //double *Jx_, *Jy_, *Jz_, *rho_;
 };
 
 #endif

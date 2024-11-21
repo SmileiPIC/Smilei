@@ -83,7 +83,7 @@ void Radiation::computeParticlesChi( Particles &particles,
     double charge_over_mass2;
 
     // 1/mass^2
-    double one_over_mass_square = pow( one_over_mass_, 2. );
+    double one_over_mass_square = one_over_mass_ * one_over_mass_;
 
     // Temporary Lorentz factor
     double gamma;

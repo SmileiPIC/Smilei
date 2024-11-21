@@ -72,7 +72,7 @@ void RadiationDiagRadiationSpectrum::operator() (
     double charge_over_mass2;
 
     // 1/mass^2
-    const double one_over_mass_2 = std::pow(one_over_mass_,2.);
+    const double one_over_mass_2 = one_over_mass_ * one_over_mass_;
 
     // Temporary Lorentz factor
     double gamma;
