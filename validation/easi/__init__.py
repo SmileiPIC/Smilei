@@ -568,8 +568,10 @@ class Validation(object):
         execfile(validation_script, {"Validate":Validate})
         if _dataNotMatching:
             print("The validation procedure failed.")
+            return 0
         else:
             print("PASS")
+            return 1
 
     #Generate reference from an already existing directory
     def generate_reference(self, benchname, simulation_dir):
