@@ -105,7 +105,7 @@ class ValidationOptions(object):
         self.account       = kwargs.pop( "account"      , ""            )
         
         if kwargs:
-            raise Exception(diplay.error("Unknown options for validation: "+", ".join(kwargs)))
+            raise Exception(display.error("Unknown options for validation: "+", ".join(kwargs)))
         
         from numpy import array, sum
         self.max_time_seconds = sum(array(self.max_time.split(":"),dtype=int)*array([3600,60,1]))
