@@ -1,4 +1,3 @@
-
 stages:
     - install
     - compile_default
@@ -54,7 +53,7 @@ install:
   only:
     - develop
     - ci_gpu
- 
+
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -73,7 +72,7 @@ compile_default:
   only:
     - develop
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -85,7 +84,7 @@ runQuick:
   only:
     - develop
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -97,7 +96,7 @@ run1D:
   only:
     - develop  
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -110,7 +109,7 @@ run2D:
   only:
     - develop  
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -125,7 +124,7 @@ run3D:
   only:
     - develop  
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -141,7 +140,7 @@ runAM:
   only:
     - develop  
     - ci_gpu
- 
+
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
