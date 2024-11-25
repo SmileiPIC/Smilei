@@ -33,9 +33,9 @@ for test_name in list_test:
         test_passed = False
         break 
 
-if (test_passed)
+if (test_passed):
     print("CI GPU PASSED")
 
 # clean up
- subprocess.run("rm -rf /gpfs/workdir/prouveurc/runs/ci_runs/*", shell = True, executable="/bin/bash")
+subprocess.run("rm -rf /gpfs/workdir/prouveurc/runs/ci_runs/*", shell = True, executable="/bin/bash")
 

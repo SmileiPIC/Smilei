@@ -30,9 +30,8 @@ install_gpu:
     # Move in test dir  -> NOT needed, by default the runner will give the order to git clone the repo and cd inside before our instructions (in "script")
     #- cd validation/  # $GITLAB_RUNNER_WORKDIR/$CI_PIPELINE_ID/smilei/
     # Run validation script
-    - echo "HELLO"
     - make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp verbose"  # TODO: make a script that launches the job on a cpu node
-    - cd Validation/
+    - cd validation/
     - module load anaconda3/2022.10/gcc-11.2.0
     - python gpu_validation.py #"gpu_*.py" 
 
