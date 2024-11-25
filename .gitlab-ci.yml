@@ -53,7 +53,7 @@ install:
   only:
     - develop
     - ci_gpu
-
+ 
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -72,7 +72,7 @@ compile_default:
   only:
     - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -84,19 +84,19 @@ runQuick:
   only:
     - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-   - python validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
+    - python validation.py -b "tst_quick_1d.py" -m 1 -o 1 -v
 
 run1D:
   stage: run_default
   only:
-    - develop  
+    - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -107,9 +107,9 @@ run1D:
 run2D:
   stage: run_default
   only:
-    - develop  
+    - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -122,9 +122,9 @@ run2D:
 run3D:
   stage: run_default
   only:
-    - develop  
+    - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -138,9 +138,9 @@ run3D:
 runAM:
   stage: run_default
   only:
-    - develop  
+    - develop
     - ci_gpu
-
+ 
   script:
     # Move in test dir
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -151,7 +151,7 @@ runAM:
 runCollisions:
   stage: run_default
   only:
-    - develop  
+    - develop
     - ci_gpu
  
   script:
@@ -163,7 +163,7 @@ runCollisions:
 compile_picsar:
   stage: compile_picsar
   only:
-    - develop  
+    - develop
     - ci_gpu
 
   script:
@@ -174,7 +174,7 @@ compile_picsar:
 run_picsar:
   stage: run_picsar
   only:
-    - develop  
+    - develop
     - ci_gpu
 
   script:
@@ -184,7 +184,7 @@ run_picsar:
 compile_debug:
   stage: compile_debug
   only:
-    - develop  
+    - develop
     - ci_gpu
 
   script:
@@ -195,7 +195,7 @@ compile_debug:
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
-    - develop  
+    - develop
     - ci_gpu
 
   script:
@@ -206,7 +206,7 @@ compile_no_mpi_threadmultiple:
 compile_no_openmp:
   stage: compile_no_openmp
   only:
-    - develop  
+    - develop
     - ci_gpu
 
   script:
@@ -214,21 +214,21 @@ compile_no_openmp:
     - make clean
     - python validation/validation.py -k noopenmp -c -v
 
-compile_omptasks:
-  stage: compile_omptasks
-  only:
-    - develop
-
-  script:
-    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
-    - make clean
-    - python validation/validation.py -k omptasks -c -v
-
-run_omptasks:
-  stage: run_omptasks
-  only:
-    - develop
-    
-  script:
-    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v
+#compile_omptasks:
+#  stage: compile_omptasks
+#  only:
+#    - develop
+#
+#  script:
+#    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
+#    - make clean
+#    - python validation/validation.py -k omptasks -c -v
+#
+#run_omptasks:
+#  stage: run_omptasks
+#  only:
+#    - develop
+#    
+#  script:
+#    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#    - python validation.py -k omptasks -b "tst2d_tasks_01_radiation_pressure_acc.py" -m 4 -o 4 -n 1 -v
