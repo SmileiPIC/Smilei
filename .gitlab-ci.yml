@@ -23,29 +23,25 @@ install_gpu:
   only: 
     - ci_gpu
   script:
-    - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh #env_smilei.sh  ; TODO: move it to $WORKDIR
+    - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh
     # adapt script tornado -> ruche
     # Move in test dir  -> NOT needed, by default the runner will give the order to git clone the repo and cd inside before our instructions (in "script")
     #- cd validation/  # $GITLAB_RUNNER_WORKDIR/$CI_PIPELINE_ID/smilei/
     # Run validation script
     - make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp verbose"  # TODO: make a script that launches the job on a cpu node
-    - cd validation/
+
+test_gpu:
+  stage: run_default
+  tags:
+    - ruche-ci-gpu
+  only: 
+    - ci_gpu
+  script:
+    - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh #env_smilei.sh
     - module load anaconda3/2022.10/gcc-11.2.0
-    - python gpu_validation.py #"gpu_*.py" 
+    - cd validation/
+    - python gpu_validation.py
 
-
-    #- python validation.py -c  -v -l "$GITLAB_RUNNER_WORKDIR/logs" -t "00:30:00" # generates  make -j 10 machine="cp_laptop" config="gpu_nvidia noopenmp detailed_timers verbose"
-                       
-    #- python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00" # generates  make -j 10 machine="cp_laptop" config="gpu_nvidia noopenmp detailed_timers verbose"
-    # create a ruche_gpu.py 
-    #
-    # GITLAB_RUNNER_WORKDIR
-    #test_gpu:
-    #  stage: test_gpu
-    #  tags:
-    #    - ruche-ci-gpu
-    #  only: 
-    #    - ci_gpu
 
 install_cpu:
   stage: install
