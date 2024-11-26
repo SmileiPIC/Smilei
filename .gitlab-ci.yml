@@ -10,7 +10,6 @@ stages:
     - compile_no_openmp
     - compile_omptasks
     - run_omptasks
-    - install_gpu
 #    - test_gpu
 
 
@@ -18,7 +17,7 @@ stages:
 #    - install_gpu
 
 install_gpu:
-  stage: install_gpu
+  stage: install
   tags:
     - ruche-ci-gpu
   only: 
@@ -48,7 +47,7 @@ install_gpu:
     #  only: 
     #    - ci_gpu
 
-install:
+install_cpu:
   stage: install
   only:
     - develop
