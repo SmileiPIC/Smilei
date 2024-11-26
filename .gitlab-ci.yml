@@ -29,6 +29,7 @@ install_gpu:
     #- cd validation/  # $GITLAB_RUNNER_WORKDIR/$CI_PIPELINE_ID/smilei/
     # Run validation script
     - make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp verbose"  # TODO: make a script that launches the job on a cpu node
+    - cp -r $PWD/ /gpfs/workdir/prouveurc/runs/ci_runs/
 
 test_gpu:
   stage: run_default
@@ -39,8 +40,10 @@ test_gpu:
   script:
     - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh #env_smilei.sh
     - module load anaconda3/2022.10/gcc-11.2.0
-    - cd validation/
+    - cd /gpfs/workdir/prouveurc/runs/ci_runs/smilei/validation/
     - python gpu_validation.py
+    - cd /gpfs/workdir/prouveurc/runs/ci_runs
+    - rm -rf /gpfs/workdir/prouveurc/runs/ci_runs
 
 
 install_cpu:
