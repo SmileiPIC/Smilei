@@ -15,7 +15,7 @@ for test_name in list_test:
     subprocess.run("mkdir " + test_folder, shell = True, executable="/bin/bash")
     subprocess.run("cp ../smilei " + test_folder + "/", shell = True, executable="/bin/bash")
     subprocess.run("cp ../benchmarks/gpu/" + "gpu_" + test_name + ".py " + test_folder + "/input.py", shell = True, executable="/bin/bash")
-    subprocess.run("cp submit_ruche_gpu.sh " + test_folder + "/", shell = True, executable="/bin/bash")
+    subprocess.run("cp easi/machines/ruche_gpu.sh " + test_folder + "/", shell = True, executable="/bin/bash")
     subprocess.run("cd " + test_folder +" ; sbatch submit_ruche_gpu.sh", shell = True, executable="/bin/bash")
     #subprocess.run("cd " + path, shell = True, executable="/bin/bash") useless
 
