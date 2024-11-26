@@ -40,10 +40,10 @@ test_gpu:
   script:
     - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh #env_smilei.sh
     - module load anaconda3/2022.10/gcc-11.2.0
-    - cd /gpfs/workdir/prouveurc/runs/ci_runs/smilei/validation/
+    - cd /gpfs/workdir/prouveurc/runs/ci_runs/validation/
     - python gpu_validation.py
     - cd /gpfs/workdir/prouveurc/runs/ci_runs
-    - rm -rf /gpfs/workdir/prouveurc/runs/ci_runs
+    - rm -rf /gpfs/workdir/prouveurc/runs/ci_runs/*
 
 
 install_cpu:
