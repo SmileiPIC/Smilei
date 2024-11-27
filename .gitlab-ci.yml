@@ -24,11 +24,10 @@ install_gpu:
     - ci_gpu
   script:
     - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh
-    # adapt script tornado -> ruche
     # Move in test dir  -> NOT needed, by default the runner will give the order to git clone the repo and cd inside before our instructions (in "script")
     #- cd validation/  # $GITLAB_RUNNER_WORKDIR/$CI_PIPELINE_ID/smilei/
-    # Run validation script
-    - make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp verbose"  # TODO: make a script that launches the job on a cpu node
+    - cp validation/easi/machines/ruche_compile_gpu.sh .
+    - sbatch -W ruche_compile_gpu.sh 
     - cp -r $PWD/ /gpfs/workdir/prouveurc/runs/ci_runs/
 
 test_gpu:

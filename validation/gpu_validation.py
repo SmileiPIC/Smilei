@@ -16,12 +16,15 @@ for test_name in list_test:
     subprocess.run("cp ../smilei " + test_folder + "/", shell = True, executable="/bin/bash")
     subprocess.run("cp ../benchmarks/gpu/" + "gpu_" + test_name + ".py " + test_folder + "/input.py", shell = True, executable="/bin/bash")
     subprocess.run("cp easi/machines/ruche_gpu.sh " + test_folder + "/", shell = True, executable="/bin/bash")
-    subprocess.run("cd " + test_folder +" ; sbatch submit_ruche_gpu.sh", shell = True, executable="/bin/bash")
+    subprocess.run("cd " + test_folder +" ; sbatch -W ruche_gpu.sh", shell = True, executable="/bin/bash")
     #subprocess.run("cd " + path, shell = True, executable="/bin/bash") useless
 
+# there is a real question on what is the best strategy... wait after all jobs are submitted, maybe wait only for the last if we assume it will be the last to finish
+# of wait after each job is finished. One is faster but assume the sleep time is a good approximation of the total time, the other makes sure all tests are done
+
 # after launching all test cases, wait appropriate amount of time:
-import time
-time.sleep(600) 
+#import time
+#time.sleep(600) 
 
 # Validate the results with the reference results
 V = Validation()
