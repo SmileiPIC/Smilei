@@ -10,11 +10,6 @@ stages:
     - compile_no_openmp
     - compile_omptasks
     - run_omptasks
-#    - test_gpu
-
-
-#stages:
-#    - install_gpu
 
 install_gpu:
   stage: install
