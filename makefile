@@ -13,6 +13,7 @@
 # BOOST_ROOT_DIR   : the local path to the boost library
 # TABLES_BUILD_DIR : build directory for databases (default ./tools/tables/build)
 
+
 BUILD_DIR ?= build
 SMILEICXX ?= mpicxx
 PYTHONEXE ?= python
