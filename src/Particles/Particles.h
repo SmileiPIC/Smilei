@@ -310,7 +310,7 @@ public:
     //! Method used to get the Particle Lorentz factor
     inline  double LorentzFactor( unsigned int ipart )
     {
-        return sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
+        return sqrt( 1. + momentum( 0, ipart ) * momentum( 0, ipart ) + momentum( 1, ipart ) * momentum( 1, ipart ) + momentum( 2, ipart ) * momentum( 2, ipart )  );
     }
 
     //! Method used to get the inverse Particle Lorentz factor
@@ -322,7 +322,7 @@ public:
     //! Method used to get the momentum norm which is also the normalized photon energy
     inline double momentumNorm( unsigned int ipart )
     {
-        return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
+        return sqrt( momentum( 0, ipart ) * momentum( 0, ipart ) + momentum( 1, ipart ) * momentum( 1, ipart ) + momentum( 2, ipart ) * momentum( 2, ipart ) );
     }
 
     void resetIds()

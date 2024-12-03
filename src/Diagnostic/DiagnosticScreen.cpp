@@ -75,7 +75,7 @@ DiagnosticScreen::DiagnosticScreen(
     if( params.nDim_particle > 1 ) {
         screen_vector_a[0] = -screen_unitvector[1];
         screen_vector_a[1] =  screen_unitvector[0];
-        double norm = sqrt( pow( screen_vector_a[0], 2 ) + pow( screen_vector_a[1], 2 ) );
+        double norm = sqrt( screen_vector_a[0] * screen_vector_a[0] + screen_vector_a[1] * screen_vector_a[1] );
         if( norm < 1.e-8 ) {
             screen_vector_a[0] = 0.;
             screen_vector_a[1] = 1.;
@@ -132,7 +132,7 @@ DiagnosticScreen::DiagnosticScreen(
                     ERROR( errorPrefix << ": axis `theta` not available for `" << screen_shape << "` screen" );
                 }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
-                    coefficients[params.nDim_particle+idim] = screen_vector[idim] / pow( screen_vectornorm, 2 );
+                    coefficients[params.nDim_particle+idim] = screen_vector[idim] / ( screen_vectornorm * screen_vectornorm );
                 }
             } else if( type == "phi" ) {
                 if( screen_type == 0 ) {
@@ -187,7 +187,7 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
     } else if( screen_type == 1 ) { // sphere
         double distance_to_center = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_center += pow( patch->center_[idim] - screen_point[idim], 2 );
+            distance_to_center += ( patch->center_[idim] - screen_point[idim] ) * ( patch->center_[idim] - screen_point[idim] );
         }
         distance_to_center = sqrt( distance_to_center );
         if( abs( screen_vectornorm - distance_to_center ) > patch->radius ) {
@@ -196,10 +196,10 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
     } else if( screen_type == 2 ) { // cylinder
         double distance_to_axis = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_axis += pow( 
-                 ( patch->center_[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
-                -( patch->center_[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim]
-                , 2 );
+
+            distance_to_axis += ( ( patch->center_[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
+                -( patch->center_[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim] ) * ( ( patch->center_[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
+                -( patch->center_[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim] );
         }
         distance_to_axis = sqrt( distance_to_axis );
         if( abs( screen_vectornorm - distance_to_axis ) > patch->radius ) {
@@ -260,8 +260,9 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
                 double side_old = 0.;
                 double dtg = dt / s->particles->LorentzFactor( ipart );
                 for( unsigned int idim=0; idim<ndim; idim++ ) {
-                    side += pow( s->particles->Position[idim][ipart] - screen_point[idim], 2 );
-                    side_old += pow( s->particles->Position[idim][ipart] - dtg*( s->particles->Momentum[idim][ipart] ) - screen_point[idim], 2 );
+                    side += ( s->particles->Position[idim][ipart] - screen_point[idim] ) * ( s->particles->Position[idim][ipart] - screen_point[idim] );
+                    side_old += ( s->particles->Position[idim][ipart] - dtg*( s->particles->Momentum[idim][ipart] ) - screen_point[idim] ) * 
+                                ( s->particles->Position[idim][ipart] - dtg*( s->particles->Momentum[idim][ipart] ) - screen_point[idim] ) ;
                 }
                 side     = screen_vectornorm-sqrt( side );
                 side_old = screen_vectornorm-sqrt( side_old );
@@ -284,10 +285,12 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
                 for( unsigned int idim=0; idim<ndim; idim++ ) {
                     double u1 = s->particles->Position[(idim+1)%ndim][ipart] - screen_point[(idim+1)%ndim];
                     double u2 = s->particles->Position[(idim+2)%ndim][ipart] - screen_point[(idim+2)%ndim];
-                    side += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                    side += ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] ) * 
+                            ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] );
                     u1 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
                     u2 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
-                    side_old += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                    side_old += ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] ) *
+                                ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] );
                 }
                 side     = r2 - side;
                 side_old = r2 - side_old;

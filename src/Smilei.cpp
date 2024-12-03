@@ -799,7 +799,6 @@ int main( int argc, char *argv[] )
 //                                               END MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
 
-
 int executeTestMode( VectorPatch &vecPatches,
                      Region &region,
                      SmileiMPI *smpi,

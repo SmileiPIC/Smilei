@@ -69,7 +69,7 @@ private:
         coeffxd[2] = 0.5 * ( delta2 + delta + 0.25 );
 
         delta      = xpn - static_cast<double>( idx_p[0] );
-        delta2     = delta * delta; // pow( delta_p[0], 2 );   // square of the normalized distance to the central node
+        delta2     = delta * delta; // pow ( delta_p[0], 2 );   // square of the normalized distance to the central node
 
         delta_p[0] = delta;   // normalized distance to the central node	
         coeffxp[0] = 0.5 * ( delta2 - delta_p[0] + 0.25 );

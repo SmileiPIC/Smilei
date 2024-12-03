@@ -219,7 +219,7 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate(
     // An asymptotic approximation is used
     else if( (unsigned int) ichiph >= T_.size_-1 ) {
         ichiph = T_.size_-2;
-        dNBWdt = 2.067731275227008*std::pow( photon_chi, 5.0/3.0 );
+        dNBWdt = 2.067731275227008 * cbrt(photon_chi*photon_chi*photon_chi*photon_chi*photon_chi);
     } else {
         // Upper and lower values for linear interpolation
         const double logchiphm = ichiph*T_.delta_ + T_.log10_min_;

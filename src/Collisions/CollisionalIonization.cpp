@@ -248,7 +248,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Lose incident electron energy
         if( U2 < Wi/We ) {
             // Calculate the modified electron momentum
-            double pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
+            double pr = sqrt( ( ( gamma_s - e ) * ( gamma_s - e ) - 1. ) / p2 );
             pe->momentum( 0, ie ) *= pr;
             pe->momentum( 1, ie ) *= pr;
             pe->momentum( 2, ie ) *= pr;
