@@ -631,15 +631,19 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             }
             
             // Apply all processes (collisions, ionization, ...)
+            #ifndef SMILEI_ACCELERATOR_GPU
             if( nuclear_reactions_ ) {
                 nuclear_reactions_->apply( &rand, D, n );
             }
+            #endif
             if( collisions_ ) {
                 collisions_.apply( &rand, D, n );
             }
+            #ifndef SMILEI_ACCELERATOR_GPU
             if( collisional_ionization_ ) {
                 collisional_ionization_->apply( &rand, D, n );
             }
+            #endif
             
             // Update the particle arrays from the buffers
             // Store Weights
