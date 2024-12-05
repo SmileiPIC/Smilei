@@ -807,15 +807,24 @@ void VectorPatch::computeCharge(bool old /*=false*/)
 
 void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &params, unsigned int ispec )
 {
-    #pragma omp for schedule(runtime)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
-        // project only if it is the right time to initialize its fields
-        if( ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) { 
+    if( ( (int)(time_primal/params.timestep) == species( 0, ispec )->iter_relativistic_initialization_ ) ) { 
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+            // project only if it is the right time to initialize its fields
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                 species( ipatch, ispec )->computeCharge( emfields( ipatch ) );
             } else {
                 species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ) );
+            }
+            if(params.geometry == "AMcylindrical" and ( *this )( ipatch )->isYmin()){
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( (*this)(ipatch)->EMfields );
+                //Fold Rho along axis for each mode as in Projector BC.
+                for(unsigned int imode=0; imode < emAM->Jl_.size() ; imode++){
+                    std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
+                    //Warning 2nd order is forced here. Could be generalized.
+                    static_cast<ProjectorAM2Order *>(species( ipatch, ispec)->Proj)->apply_axisBC(rhoj, NULL, NULL, NULL, imode, true);
+                }
             }
         }
     }
