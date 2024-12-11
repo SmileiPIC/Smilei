@@ -2965,7 +2965,7 @@ for instance::
 
   :default: 1
 
-  The number of time-steps during which the data is averaged before output.
+  The number of time-steps during which the data is averaged. The data is averaged over `time_average` consecutive iterations after the selected time.
 
 
 .. py:data:: species

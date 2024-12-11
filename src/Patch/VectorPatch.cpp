@@ -1294,11 +1294,14 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Global diags
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
+
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
+
+        if( globalDiags[idiag]->theTimeIsNow_ && ( itime > 0 ) ) {
 
             if (dynamic_cast<DiagnosticScalar*>( globalDiags[idiag])) {
-                //need_particles = true;
-                //need_fields    = true;
+                // Nothing to be done
             } else if (dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag])) {
                 need_particles = true;
             } else if (dynamic_cast<DiagnosticScreen*>( globalDiags[idiag])) {
@@ -1314,8 +1317,11 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Local diags (fields, probes, tracks)
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
-        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
-            ( itime > 0 ) ) {
+
+        #pragma omp single
+        localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
+
+        if( localDiags[idiag]->theTimeIsNow_ && ( itime > 0 ) ) {
             if (dynamic_cast<DiagnosticTrack*>(localDiags[idiag])) {
                 need_particles = true;
             } else if (dynamic_cast<DiagnosticProbes*>(localDiags[idiag])) {
@@ -1333,19 +1339,11 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Copy device to host for diags not implemented on GPU
     // At initilisation, data is still on the host
-    if (itime > 0) {
-        #pragma omp single
-        {
-            if (need_particles) {
-                copyParticlesFromDeviceToHost();
-            }
-            if (need_fields) {
-                copyFieldsFromDeviceToHost();
-            }
-            if (diag_flag) {
-                copySpeciesFieldsFromDeviceToHost();
-            }
-        }
+    #pragma omp single
+    {
+        if (need_particles) copyParticlesFromDeviceToHost();
+        if (need_fields)    copyFieldsFromDeviceToHost();
+        if (diag_flag)      copySpeciesFieldsFromDeviceToHost();
     }
 #endif
 
