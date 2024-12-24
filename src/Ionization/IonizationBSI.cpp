@@ -26,7 +26,7 @@ IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species) : Ioniza
 }
 
 template <>
-double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const double oldZ)
+double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const int oldZ)
 {
     auto normal = [this](const int Z, const double E) -> double {
         double delta = gamma_tunnel[Z] / E;

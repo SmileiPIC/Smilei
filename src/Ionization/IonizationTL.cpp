@@ -32,7 +32,7 @@ IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species) : Ioniza
 }
 
 template <>
-double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const double oldZ)
+double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const int oldZ)
 {
     const double delta = gamma_tunnel[Z] / E;
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta) - E * lambda_tunnel[Z]);

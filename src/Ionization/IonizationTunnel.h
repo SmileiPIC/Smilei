@@ -27,7 +27,7 @@ class IonizationTunnel : public Ionization
                                    int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0) override;
 
    private:
-    inline double ionizationRate(const int Z, const double E, double oldZ);
+    inline double ionizationRate(const int Z, const double E, int oldZ);
 
     // To be conditionally prepared
     // FullPPT
@@ -174,7 +174,7 @@ unsigned int Z, Zp1, newZ, k_times;
 }
 
 template <int Model>
-inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double E, const double oldZ)
+inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double E, const int oldZ)
 {
     double delta = gamma_tunnel[Z] / E;
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
@@ -193,14 +193,14 @@ template <>
 IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species);
 
 template <>
-double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const double oldZ);
+double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const int oldZ);
 
 // BSI: 3
 template <>
 IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species);
 
 template <>
-double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const double oldZ);
+double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const int oldZ);
 
 template <int Model>
 void IonizationTunnel<Model>::ionizationTunnelWithTasks( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, 
