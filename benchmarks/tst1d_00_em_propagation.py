@@ -9,7 +9,7 @@ Main(
     interpolation_order = 2,
     
     cell_length = [l0/resx],
-    grid_length  = [6.0*l0],
+    grid_length  = [8.0*l0],
     
     number_of_patches = [ 8 ],
     

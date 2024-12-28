@@ -807,15 +807,24 @@ void VectorPatch::computeCharge(bool old /*=false*/)
 
 void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &params, unsigned int ispec )
 {
-    #pragma omp for schedule(runtime)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
-        // project only if it is the right time to initialize its fields
-        if( ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) { 
+    if( ( (int)(time_primal/params.timestep) == species( 0, ispec )->iter_relativistic_initialization_ ) ) { 
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+            // project only if it is the right time to initialize its fields
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                 species( ipatch, ispec )->computeCharge( emfields( ipatch ) );
             } else {
                 species( ipatch, ispec )->Species::computeCharge( emfields( ipatch ) );
+            }
+            if(params.geometry == "AMcylindrical" and ( *this )( ipatch )->isYmin()){
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( (*this)(ipatch)->EMfields );
+                //Fold Rho along axis for each mode as in Projector BC.
+                for(unsigned int imode=0; imode < emAM->Jl_.size() ; imode++){
+                    std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
+                    //Warning 2nd order is forced here. Could be generalized.
+                    static_cast<ProjectorAM2Order *>(species( ipatch, ispec)->Proj)->apply_axisBC(rhoj, NULL, NULL, NULL, imode, true);
+                }
             }
         }
     }
@@ -1285,11 +1294,14 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Global diags
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        if( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) {
+
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
+
+        if( globalDiags[idiag]->theTimeIsNow_ && ( itime > 0 ) ) {
 
             if (dynamic_cast<DiagnosticScalar*>( globalDiags[idiag])) {
-                //need_particles = true;
-                //need_fields    = true;
+                // Nothing to be done
             } else if (dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag])) {
                 need_particles = true;
             } else if (dynamic_cast<DiagnosticScreen*>( globalDiags[idiag])) {
@@ -1305,8 +1317,11 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Local diags (fields, probes, tracks)
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
-        if( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) &&
-            ( itime > 0 ) ) {
+
+        #pragma omp single
+        localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
+
+        if( localDiags[idiag]->theTimeIsNow_ && ( itime > 0 ) ) {
             if (dynamic_cast<DiagnosticTrack*>(localDiags[idiag])) {
                 need_particles = true;
             } else if (dynamic_cast<DiagnosticProbes*>(localDiags[idiag])) {
@@ -1324,19 +1339,11 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Copy device to host for diags not implemented on GPU
     // At initilisation, data is still on the host
-    if (itime > 0) {
-        #pragma omp single
-        {
-            if (need_particles) {
-                copyParticlesFromDeviceToHost();
-            }
-            if (need_fields) {
-                copyFieldsFromDeviceToHost();
-            }
-            if (diag_flag) {
-                copySpeciesFieldsFromDeviceToHost();
-            }
-        }
+    #pragma omp single
+    {
+        if (need_particles) copyParticlesFromDeviceToHost();
+        if (need_fields)    copyFieldsFromDeviceToHost();
+        if (diag_flag)      copySpeciesFieldsFromDeviceToHost();
     }
 #endif
 
