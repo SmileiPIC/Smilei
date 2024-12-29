@@ -53,7 +53,7 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
         bool isXmax = ( static_cast<ElectroMagnAM *>( fields ) )->isXmax;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
 
-        // Magnetic field Bl^(p,d)
+        // ---- Magnetic field Bl^(p,d)
         for( unsigned int i=0 ; i<nl_p;  i++ ) {
             #pragma omp simd
             for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
@@ -61,8 +61,8 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
             }
         }
 
-        // Magnetic field Br^(d,p)
-        for( unsigned int i=2+1*isXmin ; i<nl_d-2 ; i++ ) {
+        // ---- Magnetic field Br^(d,p), smaller loop boundaries to avoid segfault
+        for( unsigned int i=2 ; i<nl_d-2 ; i++ ) {
             #pragma omp simd
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * (1.-3.*delta) * ( ( *Et )( i  , j ) - ( *Et )( i-1, j ) )
@@ -70,31 +70,25 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
                                 +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
-        
-        if (isXmin){
-            // Magnetic field Br^(d,p), left border: evolve as in Yee solver
-          for( unsigned int i=1 ; i<3 ; i++ ) {
+        // Magnetic field Br^(d,p), left border of the patch: evolve as in Yee solver
+        for( unsigned int i=1 ; i<2 ; i++ ) {
+            #pragma omp simd 
+            for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
+                ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
+                                +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+            }
+        }
+        // Magnetic field Br^(d,p), right border of the patch: evolve as in Yee solver
+        for( unsigned int i=nl_d-2 ; i<nl_d-1 ; i++ ) {
             #pragma omp simd 
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
                                  +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
-          }
         }
-        
-        // if (isXmax){
-        //     // Magnetic field Br^(d,p), right border: evolve as in Yee solver
-        //     unsigned int i=nl_d-2;
-        //     #pragma omp simd 
-        //     for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
-        //         ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-        //                          +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
-        //     }
-        // }
-        
-        
-        // Magnetic field Bt^(d,d)
-        for( unsigned int i=2+1*isXmin ; i<nl_d-2 ; i++ ) {
+          
+        // ---- Magnetic field Bt^(d,d), smaller loop boundaries to avoid segfault
+        for( unsigned int i=2 ; i<nl_d-2 ; i++ ) {
             #pragma omp simd
             for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
                 ( *Bt )( i, j ) += dt_ov_dr *                ( ( *El )( i, j   ) - ( *El )( i, j-1 ) )
@@ -103,81 +97,89 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
             }
         }
         
-        if (isXmin){
-            // Magnetic field Bt^(d,d), left border: evolve as in Yee solver
-          for( unsigned int i=1 ; i<3 ; i++ ) {
+        // Magnetic field Bt^(d,d), left border of the patch : evolve as in Yee solver
+        for( unsigned int i=1 ; i<2 ; i++ ) {
             #pragma omp simd 
             for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
                 ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
-                                   -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+                                  -dt_ov_dl * ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
             }
+        }
+        
+        // Magnetic field Bt^(d,d), right border of the patch : evolve as in Yee solver
+        for( unsigned int i=nl_d-2 ; i<nl_d-1 ; i++ ) {
+          #pragma omp simd 
+          for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
+              ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
+                                 -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
           }
         }
-        // if (isXmax){
-        //     // Magnetic field Bt^(d,d), right border: evolve as in Yee solver
-        //     unsigned int i=nl_d-2;
-        //     #pragma omp simd 
-        //     for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
-        //         ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
-        //                            -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
-        //     }
-        // }
-
-        // On axis conditions
+        
+        
+        // On axis conditions: as in Yee solver, 
+        // except for mode 1 where derivative along x is present
         if( isYmin ) {
             unsigned int j=2;
             if( imode==0 ) {
+                // ---- Br
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                    ( *Br )( i, j )=0;
+                    ( *Br )( i, j )= 0;
                     ( *Br )( i, 1 )=-( *Br )( i, 3 );
                 }
-                for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                // ---- Bt
+                for( unsigned int i= 0 ; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= -( *Bt )( i, j+1 );
                 }
-                for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                // ---- Bl
+                for( unsigned int i= 0 ; i<nl_p ; i++ ) {
                     ( *Bl )( i, j )= ( *Bl )( i, j+1 );
                 }
             }
 
             else if( imode==1 ) {
+                // ---- Bl
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                     ( *Bl )( i, j )= -( *Bl )( i, j+1 ); // Zero Bl mode 1 on axis.
                 }
-
-                for( unsigned int i=2+1*isXmin ; i<nl_d-2 ; i++ ) {
+                
+                // ---- Br: use Terzani's derivative in smaller loop boundaries
+                for( unsigned int i=2 ; i<nl_d-2 ; i++ ) {
                     ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
-                                    +	 (1.-3.*delta) *	dt_ov_dl*( ( *Et )( i, j   )-( *Et )( i-1, j ) )
-                                    +   delta       * dt_ov_dl*( ( *Et )( i+1, j )-( *Et )( i-2, j ) );
-                    ( *Br )( i, 1 )=( *Br )( i, 3 );
+                                   +	 (1.-3.*delta)*	dt_ov_dl * ( ( *Et )( i  , j )-( *Et )( i-1, j ) )
+                                   +   delta        * dt_ov_dl * ( ( *Et )( i+1, j )-( *Et )( i-2, j ) );
+                    ( *Br )( i, 1 ) =( *Br )( i, 3 );
                 }
                 
-                if (isXmin){
-                    // left border: as in Yee solver
-                  for( unsigned int i=1 ; i<3 ; i++ ) {
+                // ---- Br: as in Yee solver at the left border of the patch 
+                for( unsigned int i=1 ; i<2 ; i++ ) {
                     ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
                                        +	dt_ov_dl*( ( *Et )( i, j   )-( *Et )( i-1, j ) );
-                    ( *Br )( i, 1 )=( *Br )( i, 3 );
-                  }
+                    ( *Br )( i, 1 ) =( *Br )( i, 3 );
                 }
-                // if (isXmax){        
-                //     // right border
-                //     ( *Br )( nl_d-2, j )+=  Icpx*dt_ov_dr*( *El )( nl_d-2, j+1 )
-                //                         +	dt_ov_dl*( ( *Et )( nl_d-2, j   )-( *Et )( nl_d-3, j ) );
-                //     ( *Br )( nl_d-2, 1 )=( *Br )( nl_d-2, 3 );
-                // } 
                 
+                // ---- Br: as in Yee solver at the right border of the patch 
+                for( unsigned int i=nl_d-2 ; i<nl_d-1 ; i++ ) {
+                    ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
+                                       +	dt_ov_dl*( ( *Et )( i, j   )-( *Et )( i-1, j ) );
+                    ( *Br )( i, 1 ) =( *Br )( i, 3 );
+                }
+                
+                // ---- Bt
                 for( unsigned int i=0; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= ( *Bt )( i, j+1 ); // Non zero Bt mode 1 on axis.
                 }
 
             } else { // modes > 1
+                // ---- Bl
                 for( unsigned int  i=0 ; i<nl_p; i++ ) {
                     ( *Bl )( i, j )= -( *Bl )( i, j+1 );
                 }
+                // ---- Br
                 for( unsigned int i=0 ; i<nl_d; i++ ) {
                     ( *Br )( i, j )= 0;
                     ( *Br )( i, 1 )=-( *Br )( i, 3 );
                 }
+                // ---- Bt
                 for( unsigned int  i=0 ; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
                 }
