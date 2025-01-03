@@ -26,7 +26,8 @@ class IonizationTunnel : public Ionization
                                           int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0) override;
 
    private:
-    inline double ionizationRate(const int Z, const double E, int oldZ);
+    inline double ionizationRate1(const int Z, const double E);
+    inline double ionizationRate2(const int Z, const double E);
 
     // To be conditionally prepared
     // FullPPT
@@ -39,6 +40,7 @@ class IonizationTunnel : public Ionization
     // BSI
     const double au_to_eV = 27.2116;
     const double IH = 13.598434005136;
+    int rate_formula;
 };
 
 template <int Model>
@@ -47,7 +49,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
 {
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
-    vector<double> IonizRate_tunnel(atomic_number_), Dnom_tunnel(atomic_number_);
+    vector<double> IonizRate_tunnel(atomic_number_), Dnom_tunnel(atomic_number_, 0.);
     LocalFields Jion;
     double factorJion_0 = au_to_mec2 * EC_to_au * EC_to_au * invdt;
 
@@ -79,7 +81,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
         invE = 1. / E;
         factorJion = factorJion_0 * invE * invE;
         ran_p = patch->rand_->uniform();
-        IonizRate_tunnel[Z] = ionizationRate(Z, E, Z);
+        IonizRate_tunnel[Z] = ionizationRate1(Z, E);
 
         // Total ionization potential (used to compute the ionization current)
         TotalIonizPot = 0.0;
@@ -109,7 +111,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
             // multiple ionization loop while Pint_tunnel < ran_p and still partial ionization
             while ((Pint_tunnel < ran_p) and (k_times < atomic_number_ - Zp1)) {
                 newZ = Zp1 + k_times;
-                IonizRate_tunnel[newZ] = ionizationRate(newZ, E, Z);
+                IonizRate_tunnel[newZ] = ionizationRate2(newZ, E);
                 D_sum = 0.0;
                 P_sum = 0.0;
                 Mult *= IonizRate_tunnel[Z + k_times];
@@ -118,7 +120,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
                     D_sum += Dnom_tunnel[i];
                     P_sum += exp(-IonizRate_tunnel[Z + i] * dt) * Dnom_tunnel[i];
                 }
-                Dnom_tunnel[k_times + 1] = -D_sum;  // bug fix
+                Dnom_tunnel[k_times + 1] -= D_sum;  // bug fix
                 P_sum = P_sum + Dnom_tunnel[k_times + 1] * exp(-IonizRate_tunnel[newZ] * dt);
                 Pint_tunnel = Pint_tunnel + P_sum * Mult;
 
@@ -171,7 +173,14 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
 }
 
 template <int Model>
-inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double E, const int oldZ)
+inline double IonizationTunnel<Model>::ionizationRate1(const int Z, const double E)
+{
+    double delta = gamma_tunnel[Z] / E;
+    return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
+}
+
+template <int Model>
+inline double IonizationTunnel<Model>::ionizationRate2(const int Z, const double E)
 {
     double delta = gamma_tunnel[Z] / E;
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
@@ -190,14 +199,20 @@ template <>
 IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species);
 
 template <>
-double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const int oldZ);
+double IonizationTunnel<2>::ionizationRate1(const int Z, const double E);
+
+template <>
+double IonizationTunnel<2>::ionizationRate2(const int Z, const double E);
 
 // BSI: 3
 template <>
 IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species);
 
 template <>
-double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const int oldZ);
+double IonizationTunnel<3>::ionizationRate1(const int Z, const double E);
+
+template <>
+double IonizationTunnel<3>::ionizationRate2(const int Z, const double E);
 
 template <int Model>
 void IonizationTunnel<Model>::ionizationTunnelWithTasks(Particles *particles, unsigned int ipart_min,

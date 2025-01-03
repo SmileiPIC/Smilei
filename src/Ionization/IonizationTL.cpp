@@ -1,5 +1,5 @@
-#include "IonizationTunnel.h"
 #include "IonizationTables.h"
+#include "IonizationTunnel.h"
 
 template <>
 IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species) : Ionization(params, species)
@@ -12,8 +12,7 @@ IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species) : Ioniza
     lambda_tunnel.resize(atomic_number_);
 
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
-    for (int Z = 0; Z < (int)atomic_number_; Z++)
-    {
+    for (int Z = 0; Z < (int)atomic_number_; Z++) {
         DEBUG("Z : " << Z);
         Potential[Z] = IonizationTables::ionization_energy(atomic_number_, Z) * eV_to_au;
         Azimuthal_quantum_number[Z] = IonizationTables::azimuthal_atomic_number(atomic_number_, Z);
@@ -32,9 +31,14 @@ IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species) : Ioniza
 }
 
 template <>
-double IonizationTunnel<2>::ionizationRate(const int Z, const double E, const int oldZ)
+double IonizationTunnel<2>::ionizationRate1(const int Z, const double E)
 {
     const double delta = gamma_tunnel[Z] / E;
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta) - E * lambda_tunnel[Z]);
 }
 
+template <>
+double IonizationTunnel<2>::ionizationRate2(const int Z, const double E)
+{
+    return ionizationRate1(Z, E);
+}

@@ -1,5 +1,5 @@
-#include "IonizationTunnel.h"
 #include "IonizationTables.h"
+#include "IonizationTunnel.h"
 
 template <>
 IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species) : Ionization(params, species)
@@ -7,8 +7,7 @@ IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species) : Ioniza
     DEBUG("Creating the Tunnel BSI Ionizaton class");
 
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
-    for (int Z = 0; Z < (int)atomic_number_; Z++)
-    {
+    for (int Z = 0; Z < (int)atomic_number_; Z++) {
         DEBUG("Z : " << Z);
 
         Potential[Z] = IonizationTables::ionization_energy(atomic_number_, Z) * eV_to_au;
@@ -26,37 +25,37 @@ IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species) : Ioniza
 }
 
 template <>
-double IonizationTunnel<3>::ionizationRate(const int Z, const double E, const int oldZ)
+double IonizationTunnel<3>::ionizationRate1(const int Z, const double E)
 {
-    auto normal = [this](const int Z, const double E) -> double {
-        double delta = gamma_tunnel[Z] / E;
-        return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
-    };
+    double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
 
-    auto linear = [this](const int Z, const double E) -> double {
-        const double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
-        return au_to_w0 * (0.8 * E * pow(ratio_of_IPs, 0.5));
-    };
-    auto quadratic = [this](const int Z, const double E) -> double {
-        const double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
-        return au_to_w0 * (2.4 * (pow(E, 2)) * pow(ratio_of_IPs, 2));
-    };
+    double BSI_rate_quadratic = 2.4 * (pow(E, 2))*pow(ratio_of_IPs, 2) * au_to_w0;
+    double BSI_rate_linear = 0.8 * E * pow(ratio_of_IPs, 0.5) * au_to_w0;
+    double delta = gamma_tunnel[Z] / E;
+    double Tunnel_rate = beta_tunnel[Z] * exp(-delta / 3.0 + alpha_tunnel[Z] * log(delta));
 
-    double BSI_rate_quadratic = quadratic(oldZ+1, E);
-    double BSI_rate_linear = linear(oldZ+1, E);
-    double Tunnel_rate = normal(oldZ, E);
-
-    if (BSI_rate_quadratic >= BSI_rate_linear)
-    {
-        return linear(Z, E);
+    if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
+        rate_formula = 1;
+        return BSI_rate_quadratic;
+    } else if (BSI_rate_quadratic >= BSI_rate_linear) {
+        rate_formula = 2;
+        return BSI_rate_quadratic;
+    } else {
+        rate_formula = 0;
+        return Tunnel_rate;
     }
-    else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic)
-    {
-        return quadratic(Z, E);
-    }
-    else
-    {
-        return normal(Z, E);
-    }
+}
 
+template <>
+double IonizationTunnel<3>::ionizationRate2(const int newZ, const double E)
+{
+    double ratio_of_IPs_newZ = IH / IonizationTables::ionization_energy(atomic_number_, newZ);
+    double delta = gamma_tunnel[newZ] / E;
+    if (rate_formula == 1) {
+        return au_to_w0 * (2.4 * (pow(E, 2))*pow(ratio_of_IPs_newZ, 2));
+    } else if (rate_formula == 2) {
+        return au_to_w0 * (0.8 * E * pow(ratio_of_IPs_newZ, 0.5));
+    } else {
+        return beta_tunnel[newZ] * exp(-delta * one_third + alpha_tunnel[newZ] * log(delta));
+    }
 }
