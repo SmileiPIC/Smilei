@@ -29,6 +29,11 @@ class IonizationTunnel : public Ionization
     inline double ionizationRate1(const int Z, const double E);
     inline double ionizationRate2(const int Z, const double E);
 
+    double one_third;
+    unsigned int atomic_number_;
+    std::vector<double> Potential, Azimuthal_quantum_number;
+    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
+
     // To be conditionally prepared
     // FullPPT
     std::vector<double> Magnetic_quantum_number;

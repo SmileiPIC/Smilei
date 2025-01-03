@@ -6,6 +6,16 @@ IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species) : Ioniza
 {
     DEBUG("Creating the Tunnel BSI Ionizaton class");
 
+    atomic_number_ = species->atomic_number_;
+    Potential.resize(atomic_number_);
+    Azimuthal_quantum_number.resize(atomic_number_);
+
+    one_third = 1.0 / 3.0;
+
+    alpha_tunnel.resize(atomic_number_);
+    beta_tunnel.resize(atomic_number_);
+    gamma_tunnel.resize(atomic_number_);
+
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     for (int Z = 0; Z < (int)atomic_number_; Z++) {
         DEBUG("Z : " << Z);

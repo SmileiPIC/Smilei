@@ -6,6 +6,16 @@ IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species) : Ioniza
 {
     DEBUG("Creating the Tong-Lin Tunnel Ionizaton class");
 
+    atomic_number_ = species->atomic_number_;
+    Potential.resize(atomic_number_);
+    Azimuthal_quantum_number.resize(atomic_number_);
+
+    one_third = 1.0 / 3.0;
+
+    alpha_tunnel.resize(atomic_number_);
+    beta_tunnel.resize(atomic_number_);
+    gamma_tunnel.resize(atomic_number_);
+
     ionization_tl_parameter_ =
         species->ionization_tl_parameter_;  // species->ionization_tl_parameter_ is double
                                             // Varies from 6 to 9. This is the alpha parameter in Tong-Lin exponential, see Eq. (6) in [M F Ciappina and S V Popruzhenko 2020 Laser Phys. Lett. 17 025301 2020].
