@@ -1164,11 +1164,6 @@ public:
                 // int max_eon_number = s1.getNbrOfParticles() * ( s1.atomic_number_ || s1.maximum_charge_state_ );
                 // s1.Ionize->new_electrons.initializeReserve( max_eon_number, *s1.electron_species->particles
                 s1.Ionize->new_electrons.initialize( 0, *s1.electron_species->particles );
-#ifdef _OMPTASKS
-                for( unsigned int ibin = 0 ; ibin < s1.Nbins ; ibin++ ){
-                    s1.Ionize->new_electrons_per_bin[ibin].initializeReserve( 0, *s1.electron_species->particles );
-                }
-#endif
             }
 
             // Radiating species
@@ -1197,11 +1192,6 @@ public:
                             s1.radiated_photons_ = ParticlesFactory::create( params, *patch );
                             // s1.radiated_photons_->initializeReserve( s1.getNbrOfParticles(), *s1.photon_species_->particles );
                             s1.radiated_photons_->initialize( 0, *s1.photon_species_->particles );
-#ifdef _OMPTASKS
-                            for (unsigned int ibin = 0 ; ibin < s1.Nbins ; ibin++){
-                                s1.Radiate->new_photons_per_bin_[ibin].initializeReserve( s1.getNbrOfParticles(), *s1.photon_species_->particles );
-                            }
-#endif
                             break;
                         }
                     }
@@ -1252,11 +1242,6 @@ public:
 
                             // s1.mBW_pair_particles_[k]->initializeReserve( s1.getNbrOfParticles(), *s1.mBW_pair_species_[k]->particles );
                             s1.mBW_pair_particles_[k]->initialize( 0, *s1.mBW_pair_species_[k]->particles );
-#ifdef _OMPTASKS
-                            for (unsigned int ibin = 0; ibin < s1.Nbins; ibin++){
-                                s1.Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initializeReserve( s1.getNbrOfParticles(), *s1.mBW_pair_species_[k]->particles );
-                            }
-#endif
                             ispec2 = patch->vecSpecies.size() + 1;
                         }
                         ispec2++ ;
@@ -1299,11 +1284,6 @@ public:
                 s.electron_species_index = vector_species[i]->electron_species_index;
                 s.electron_species = patch->vecSpecies[s.electron_species_index];
                 s.Ionize->new_electrons.initialize( 0, *s.electron_species->particles );
-#ifdef _OMPTASKS
-                for (unsigned int ibin = 0 ; ibin < s.Nbins ; ibin++){
-                    s.Ionize->new_electrons_per_bin[ibin].initialize( 0, *s.electron_species->particles );
-                }
-#endif
                 s.Ionize->save_ion_charge_ = vector_species[i]->Ionize->save_ion_charge_;
             }
         }
@@ -1323,15 +1303,6 @@ public:
                     patch->vecSpecies[i]->radiated_photons_->has_quantum_parameter = patch->vecSpecies[i]->photon_species_->particles->has_quantum_parameter;
                     patch->vecSpecies[i]->radiated_photons_->has_Monte_Carlo_process = patch->vecSpecies[i]->photon_species_->particles->has_Monte_Carlo_process;
                     patch->vecSpecies[i]->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old );
-#ifdef _OMPTASKS
-                    unsigned int Nbins = patch->vecSpecies[i]->Nbins;
-                    for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].has_quantum_parameter = patch->vecSpecies[i]->photon_species_->particles->has_quantum_parameter;
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].has_Monte_Carlo_process = patch->vecSpecies[i]->photon_species_->particles->has_Monte_Carlo_process;
-                        patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
-                    }
-#endif
                 } else {
                     patch->vecSpecies[i]->photon_species_ = nullptr;
                     patch->vecSpecies[i]->radiated_photons_ = nullptr;
@@ -1355,16 +1326,6 @@ public:
                     patch->vecSpecies[i]->mBW_pair_particles_[k]->has_Monte_Carlo_process = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_Monte_Carlo_process;
                     patch->vecSpecies[i]->mBW_pair_particles_[k]->initialize(
                         0, params.nDim_particle, params.keep_position_old );
-#ifdef _OMPTASKS
-                    unsigned int Nbins = patch->vecSpecies[i]->Nbins;
-                    for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].tracked = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->tracked;
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].has_quantum_parameter = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_quantum_parameter;
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].has_Monte_Carlo_process = patch->vecSpecies[i]->mBW_pair_species_[k]->particles->has_Monte_Carlo_process;
-                        patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initialize(
-                            0, params.nDim_particle, params.keep_position_old );
-                    }
-#endif
                 }
             } else {
                 patch->vecSpecies[i]->mBW_pair_species_[0] = nullptr;
