@@ -237,7 +237,6 @@ public :
         Timers &timers, 
         SimWindow *simWindow );
         
-    void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void rebootDiagTimers();
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
@@ -309,26 +308,6 @@ public :
         Timers    &timers,
         int       itime
     );
-
-#ifdef _OMPTASKS
-    //! macro-particle operations with tasks
-    void dynamicsWithTasks( Params &params,
-                   SmileiMPI *smpi,
-                   SimWindow *simWindow,
-                   RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                   double time_dual,
-                   Timers &timers, int itime );
-    //! macro-particle operations with envelope and tasks
-    void ponderomotiveUpdateSusceptibilityAndMomentumWithTasks( Params &params,
-            SmileiMPI *smpi,
-            SimWindow *simWindow,
-            double time_dual, Timers &timers, int itime );
-    void ponderomotiveUpdatePositionAndCurrentsWithTasks( Params &params,
-            SmileiMPI *smpi,
-            SimWindow *simWindow,
-            double time_dual, Timers &timers, int itime );
-#endif
     
     // Lists of fields
     std::vector<Field *> densities;
