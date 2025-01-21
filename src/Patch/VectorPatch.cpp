@@ -1314,11 +1314,13 @@ void VectorPatch::runAllDiags( Params &/*params*/, SmileiMPI *smpi, unsigned int
 
     // Copy device to host for diags not implemented on GPU
     // At initilisation, data is still on the host
-    #pragma omp single
-    {
-        if (need_particles) copyParticlesFromDeviceToHost();
-        if (need_fields)    copyFieldsFromDeviceToHost();
-        if (diag_flag)      copySpeciesFieldsFromDeviceToHost();
+    if (itime > 0) {
+        #pragma omp single
+        {
+            if (need_particles) copyParticlesFromDeviceToHost();
+            if (need_fields)    copyFieldsFromDeviceToHost();
+            if (diag_flag)      copySpeciesFieldsFromDeviceToHost();
+        }
     }
 #endif
 
