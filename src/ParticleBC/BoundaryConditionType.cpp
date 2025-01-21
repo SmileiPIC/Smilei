@@ -702,6 +702,7 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
         Lxz = gm1 * vx*vz/v2;
         Lyz = gm1 * vy*vz/v2;
     }
+    const int nchunks = (imax-imin)/32 + 1 ;
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target is_device_ptr( position, momentum, momentumRefl_2D, momentumRefl_3D, momentum_x, momentum_y, momentum_z, weight ) map( tofrom : change_in_energy )
     #pragma omp teams distribute thread_limit(32) reduction( + : change_in_energy )
@@ -712,7 +713,6 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
     for (int ipart = imin ; ipart < imax ; ++ipart ) {
 #endif
 #if defined( SMILEI_ACCELERATOR_GPU)
-    int nchuncs = (imax-imin)/32 + 1 ;
     //for (int ichunk = imin/32 ; ichunk < imax/32 ; ++ichunk ) {
     for (int ichunk = 0 ; ichunk < nchunks ; ++ichunk ) {
         int chunk_size = (ichunk==nchunks-1) ? (imax-imin)%32 : 32;
