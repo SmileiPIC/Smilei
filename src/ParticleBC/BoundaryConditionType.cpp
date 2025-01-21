@@ -712,8 +712,10 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
     for (int ipart = imin ; ipart < imax ; ++ipart ) {
 #endif
 #if defined( SMILEI_ACCELERATOR_GPU)
-    for (int ichunk = imin/32 ; ichunk < imax/32 ; ++ichunk ) {
-        
+    int nchuncs = (imax-imin)/32 + 1 ;
+    //for (int ichunk = imin/32 ; ichunk < imax/32 ; ++ichunk ) {
+    for (int ichunk = 0 ; ichunk < nchunks ; ++ichunk ) {
+        int chunk_size = (ichunk==nchunks-1) ? (imax-imin)%32 : 32;
 #if defined( SMILEI_ACCELERATOR_GPU )
         uint32_t xorshift32_state_local = xorshift32_state + ichunk;
         uint32_t xorshift32_state_array[32];
@@ -723,19 +725,22 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
         //#pragma omp single // does not work with rocm
 #endif    
         // boucle sur les particules de ce chunk pour remplir  xorshift32_state_array[...] avec le state local
-        for( int i = 0; i < 32; ++i ){
+        //for( int i = 0; i < 32; ++i ){
+        for( int i = 0; i < chunk_size; ++i ){
             xorshift32_state_array[i] = Random_namespace::xorshift32(xorshift32_state_local);
         }
 #endif        
-        int istart = ichunk==(imin/32) ? imin%32 : 0; 
-        int iend   = ichunk==(imax/32) ? imax%32 : 32;
+        //int istart = ichunk==(imin/32) ? imin%32 : 0; 
+        //int iend   = ichunk==(imax/32) ? imax%32 : 32;
 #if defined( SMILEI_ACCELERATOR_GPU_OACC )
         #pragma acc loop vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp parallel for 
 #endif
-        for( int i = istart; i < iend ; ++i ){
-            int ipart = ichunk * 32 + i;
+        
+        //for( int i = istart; i < iend ; ++i ){
+        for( int i = 0; i < chunk_size ; ++i ){
+            int ipart = imin + ichunk * 32 + i;
 #endif            
             if ( position[ ipart ] >= limit_sup) {
                 // checking the particle's velocity compared to the thermal one
