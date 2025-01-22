@@ -763,7 +763,7 @@ public:
                         LINK_NAMELIST + std::string("#species") );
                 }
 
-                if( (model == "tunnel") || (model == "tunnel_BSI") || (model == "tunnel_TL") || (model == "tunnel_full_PPT") ){
+                if( (model == "tunnel") || (model == "barrier_suppression") || (model == "Tong_Lin") || (model == "tunnel_full_PPT") ){
                     if (params.Laser_Envelope_model){
                         ERROR_NAMELIST("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name,
                         LINK_NAMELIST + std::string("#species"));
