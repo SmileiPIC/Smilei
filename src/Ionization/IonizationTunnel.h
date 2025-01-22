@@ -77,9 +77,9 @@ inline void IonizationTunnel<Model>::operator()(
     }
 
     // Absolute value of the electric field normalized in atomic units
-    E = EC_to_au * sqrt(pow(*(Ex + ipart - ipart_ref), 2) +
-                        pow(*(Ey + ipart - ipart_ref), 2) +
-                        pow(*(Ez + ipart - ipart_ref), 2));
+    E = EC_to_au * sqrt(*(Ex + ipart - ipart_ref) * *(Ex + ipart - ipart_ref) +
+                        *(Ey + ipart - ipart_ref) * *(Ey + ipart - ipart_ref) +
+                        *(Ez + ipart - ipart_ref) * *(Ez + ipart - ipart_ref));
     if (E < 1e-10) {
       continue;
     }
@@ -133,7 +133,7 @@ inline void IonizationTunnel<Model>::operator()(
           D_sum += Dnom_tunnel[i];
           P_sum += exp(-IonizRate_tunnel[Z + i] * dt) * Dnom_tunnel[i];
         }
-        Dnom_tunnel[k_times + 1] -= D_sum; // bug fix
+        Dnom_tunnel[k_times + 1] -= D_sum;
         P_sum = P_sum +
                 Dnom_tunnel[k_times + 1] * exp(-IonizRate_tunnel[newZ] * dt);
         Pint_tunnel = Pint_tunnel + P_sum * Mult;
@@ -253,9 +253,9 @@ void IonizationTunnel<Model>::ionizationTunnelWithTasks(
     }
 
     // Absolute value of the electric field normalized in atomic units
-    E = EC_to_au * sqrt(pow(*(Ex + ipart - ipart_ref), 2) +
-                        pow(*(Ey + ipart - ipart_ref), 2) +
-                        pow(*(Ez + ipart - ipart_ref), 2));
+    E = EC_to_au * sqrt(*(Ex + ipart - ipart_ref) * *(Ex + ipart - ipart_ref) +
+                        *(Ey + ipart - ipart_ref) * *(Ey + ipart - ipart_ref) +
+                        *(Ez + ipart - ipart_ref) * *(Ez + ipart - ipart_ref));
     if (E < 1e-10) {
       continue;
     }

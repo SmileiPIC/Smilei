@@ -4,7 +4,6 @@
 #include "Params.h"
 #include "Species.h"
 #include "Particles.h"
-#include "tabulatedFunctions.h"
 
 class Patch;
 

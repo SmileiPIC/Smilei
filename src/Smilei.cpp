@@ -423,12 +423,15 @@ int main( int argc, char *argv[] )
 
     if( !params.restart ) {
         TITLE( "Running diags at time t = 0" );
+        #pragma omp parallel shared( smpi, params, vecPatches, simWindow )
+        {
 #ifdef _OMPTASKS
-        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
 #else
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+            vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 #endif
-        
+        }
+        vecPatches.rebootDiagTimers();
     }
 
     TITLE( "Species creation summary" );
@@ -650,7 +653,7 @@ int main( int argc, char *argv[] )
                     // Standard fields operations (maxwell + comms + boundary conditions) are completed
                     // apply prescribed fields can be considered if requested
                     if( vecPatches(0)->EMfields->prescribedFields.size() ) {
-                        #pragma omp single
+                        #pragma omp master
                         vecPatches.applyPrescribedFields( time_prim );
                         #pragma omp barrier
                     }
@@ -795,7 +798,6 @@ int main( int argc, char *argv[] )
 // ---------------------------------------------------------------------------------------------------------------------
 //                                               END MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
-
 
 int executeTestMode( VectorPatch &vecPatches,
                      Region &region,

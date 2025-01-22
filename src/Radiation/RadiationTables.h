@@ -131,8 +131,9 @@ public:
     //#pragma omp declare simd
     static inline double __attribute__((always_inline)) computeRidgersFit( double particle_chi )
     {
-        return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
-                    + 2.44*particle_chi*particle_chi, -2.0/3.0 );
+        double a = 1.0 + 4.8 * ( 1.0 + particle_chi )*std::log( 1.0 + 1.7 * particle_chi ) 
+                    + 2.44 * particle_chi * particle_chi;
+        return 1.0 / std::cbrt( a * a );
     };
 
     //! Get of the classical continuous radiated energy during dt

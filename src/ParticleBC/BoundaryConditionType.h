@@ -13,11 +13,11 @@
 #include "Particles.h"
 #include "Species.h"
 #include "Params.h"
-#include "tabulatedFunctions.h"
 #include "userFunctions.h"
+#include "Random.h"
 
 inline double perp_rand( Random * rand ) {
-    double a = userFunctions::erfinv( rand->uniform1() );
+    double a = userFunctions::erfinv_dp( rand->uniform1() ); 
     if( rand->cointoss() ) { 
         a *= -1.;
     }

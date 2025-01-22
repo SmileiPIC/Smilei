@@ -8,81 +8,144 @@ using namespace std;
 // 1D
 double Function_Python1D::valueAt( double time )
 {
-    return PyTools::runPyFunction( py_profile, time );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 double Function_Python1D::valueAt( vector<double>, double time )
 {
-    return PyTools::runPyFunction( py_profile, time );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 double Function_Python1D::valueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0] );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0] );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 
 // 2D
 double Function_Python2D::valueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0], time );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 double Function_Python2D::valueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1] );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1] );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 // 2D complex
 std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], time );
+    std::complex<double> v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1] );
+    std::complex<double> v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1] );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 
 // 3D
 double Function_Python3D::valueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], time );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 double Function_Python3D::valueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], x_cell[2] );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], x_cell[2] );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 // 3D complex
 std::complex<double> Function_Python3D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], time );
+    std::complex<double> v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 
 // 4D
 double Function_Python4D::valueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
+    double v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 // 4D complex
 std::complex<double> Function_Python4D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
+    std::complex<double> v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 
 // Special cases for locations specified in numpy arrays
 #ifdef SMILEI_USE_NUMPY
 PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *> x )
 {
-    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], NULL );
+    PyArrayObject * v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], NULL );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 PyArrayObject *Function_Python2D::valueAt( std::vector<PyArrayObject *> x )
 {
-    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], NULL );
+    PyArrayObject * v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], NULL );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x )
 {
-    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], NULL );
+    PyArrayObject * v;
+    SMILEI_PY_ACQUIRE_GIL
+    v = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], NULL );
+    SMILEI_PY_RELEASE_GIL
+    return v;
 }
 PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x )
 {
+    PyArrayObject *cvalues;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], NULL );
-    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
+    cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
     Py_DECREF( values );
+    SMILEI_PY_RELEASE_GIL
     return cvalues;
 }
 
@@ -90,45 +153,63 @@ PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x
 
 PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *>, double time )
 {
+    PyArrayObject * ret;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, t, NULL );
+    ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, t, NULL );
     Py_DECREF( t );
+    SMILEI_PY_RELEASE_GIL
     return ret;
 }
 PyArrayObject *Function_Python2D::valueAt( std::vector<PyArrayObject *> x, double time  )
 {
+    PyArrayObject * ret;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], t, NULL );
+    ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], t, NULL );
     Py_DECREF( t );
+    SMILEI_PY_RELEASE_GIL
     return ret;
 }
 PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x, double time  )
 {
+    PyArrayObject * ret;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], t, NULL );
+    ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], t, NULL );
     Py_DECREF( t );
+    SMILEI_PY_RELEASE_GIL
     return ret;
 }
 PyArrayObject *Function_Python4D::valueAt( std::vector<PyArrayObject *> x, double time  )
 {
+    PyArrayObject * ret;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
+    ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
     Py_DECREF( t );
+    SMILEI_PY_RELEASE_GIL
     return ret;
 }PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
 {
+    PyArrayObject *cvalues;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *t = PyFloat_FromDouble( time );
     PyObject * values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
     Py_DECREF( t );
-    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
+    cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
     Py_DECREF( values );
+    SMILEI_PY_RELEASE_GIL
     return cvalues;
 }
 PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, PyArrayObject *t )
 {
+    PyArrayObject *cvalues;
+    SMILEI_PY_ACQUIRE_GIL
     PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
-    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
+    cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
     Py_DECREF( values );
+    SMILEI_PY_RELEASE_GIL
     return cvalues;
 }
 

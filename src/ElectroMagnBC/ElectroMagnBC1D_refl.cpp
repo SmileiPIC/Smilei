@@ -35,20 +35,31 @@ void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
 {
     if( i_boundary_ == 0 ) {
         if( patch->isXmin() ) {
+            const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+            double *const __restrict__ By1D = B[1]->data_;
+            double *const __restrict__ Bz1D = B[2]->data_;
         
             // Application over the full-ghost cell
-            //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
-            //Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
-            //Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
-            //Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
-            Field1D *By1D   = static_cast<Field1D *>( EMfields->By_ );
-            Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
+            //Field1D *By1D   = static_cast<Field1D *>( EMfields->By_ );
+            //Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
             
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+        const int sizeofB1 = B[1]->number_of_points_;
+        const int sizeofB2 = B[2]->number_of_points_;
+#endif
             // force constant magnetic fields in the ghost cells
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc parallel present(By1D[0:sizeofB1],Bz1D[0:sizeofB2])
+            #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#endif
             for( unsigned int i=oversize_; i>0; i-- ) {
-                //(*Bx1D)(i-1) = (*Bx1D)(i);
-                ( *By1D )( i-1 ) = ( *By1D )( i );
-                ( *Bz1D )( i-1 ) = ( *Bz1D )( i );
+                //( *By1D )( i-1 ) = ( *By1D )( i );
+                //( *Bz1D )( i-1 ) = ( *Bz1D )( i );
+                By1D[i-1] = By1D[i];
+                Bz1D[i-1] = Bz1D[i];
             }
             
             //        // force 0 electric fields in the ghost cells
@@ -59,7 +70,6 @@ void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
             //            (*Ey1D)(i) = 0.0;
             //            (*Ez1D)(i) = 0.0;
             //        }
-            
             
             /* DEFINITION BY NICO
             
@@ -76,21 +86,34 @@ void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double, Patch *patch )
         }//if Xmin
     } else {
         if( patch->isXmax() ) {
+            const Field  *B[3]{ EMfields->Bx_, EMfields->By_, EMfields->Bz_ };
+            double *const __restrict__ By1D = B[1]->data_;
+            double *const __restrict__ Bz1D = B[2]->data_;
         
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            const int sizeofB1 = B[1]->number_of_points_;
+            const int sizeofB2 = B[2]->number_of_points_;
+#endif
+            const unsigned int nxd   = n_d[0]; 
             // application of Bcs over the full ghost cells
-            //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
-            //Field1D* Ey1D   = static_cast<Field1D*>(EMfields->Ey_);
-            //Field1D* Ez1D   = static_cast<Field1D*>(EMfields->Ez_);
-            //Field1D* Bx1D   = static_cast<Field1D*>(EMfields->Bx_);
-            Field1D *By1D   = static_cast<Field1D *>( EMfields->By_ );
-            Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
+            //Field1D *By1D   = static_cast<Field1D *>( EMfields->By_ );
+            //Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
             
             // force constant magnetic fields in the ghost cells
             //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++)
             //            (*Bx1D)(i) = (*Bx1D)(i-1);
-            for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
-                ( *By1D )( i ) = ( *By1D )( i-1 );
-                ( *Bz1D )( i ) = ( *Bz1D )( i-1 );
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+            #pragma acc parallel present(By1D[0:sizeofB1],Bz1D[0:sizeofB2])
+            #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            #pragma omp target
+            #pragma omp teams distribute parallel for
+#endif
+            for( unsigned int i=nxd-oversize_; i<nxd; i++ ) {
+                //( *By1D )( i ) = ( *By1D )( i-1 );
+                //( *Bz1D )( i ) = ( *Bz1D )( i-1 );
+                By1D[i] = By1D[i-1];
+                Bz1D[i] = Bz1D[i-1];
             }
             
             //        // force 0 electric fields in the ghost cells

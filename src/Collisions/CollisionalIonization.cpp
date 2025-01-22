@@ -23,7 +23,7 @@ CollisionalIonization::CollisionalIonization( int Z, Params *params, int ionizat
 {
     atomic_number = Z;
     rate .resize( Z );
-    irate.resize( Z );
+    rate_product.resize( Z );
     prob .resize( Z );
     ionization_electrons_ = ionization_electrons;
     if( params ) {
@@ -39,7 +39,7 @@ CollisionalIonization::CollisionalIonization( CollisionalIonization *CI )
 {
     atomic_number = CI->atomic_number;
     rate .resize( atomic_number );
-    irate.resize( atomic_number );
+    rate_product.resize( atomic_number );
     prob .resize( atomic_number );
     ionization_electrons_ = CI->ionization_electrons_;
     new_electrons.initialize( 0, CI->new_electrons );
@@ -177,7 +177,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
     // Loop for multiple ionization
     // k+1 is the number of ionizations
     const int kmax = atomic_number-Zstar-1;
-    double cs, w, e, cum_prob = 0;
+    double cs, w, e, cum_prob = 0, A = 1.;
     for( int k = 0; k <= kmax;  k++ ) {
         // Calculate the location x (~log of energy) in the databases
         const double x = a2*log( a1*( gamma_s-1. ) );
@@ -203,24 +203,24 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         }
         
         rate[k] = K*cs/gammae  ; // k-th ionization rate
-        irate[k] = 1./rate[k]  ; // k-th ionization inverse rate
         prob[k] = exp( -rate[k] ); // k-th ionization probability
+        rate_product[k] = 1.;
         
         // Calculate the cumulative probability for k-th ionization (Nuter et al, 2011)
         if( k==0 ) {
-            cum_prob = prob[k];
+            cum_prob = prob[k]; // cumulative probability
         } else {
+            double sum = 0.;
             for( int p=0; p<k; p++ ) {
-                double cp = 1. - rate[k]*irate[p];
-                for( int j=0  ; j<p; j++ ) {
-                    cp *= 1.-rate[p]*irate[j];
-                }
-                for( int j=p+1; j<k; j++ ) {
-                    cp *= 1.-rate[p]*irate[j];
-                }
-                cum_prob += ( prob[k]-prob[p] )/cp;
+                const double d = rate[k] - rate[p];
+                rate_product[p] *= d;
+                rate_product[k] *= -d;
+                sum += ( prob[p]-prob[k] ) / rate_product[p];
             }
+            sum *= A;
+            cum_prob += sum;
         }
+        A *= rate[k];
         
         // If no more ionization, leave
         if( U1 < cum_prob ) {
@@ -248,7 +248,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Lose incident electron energy
         if( U2 < Wi/We ) {
             // Calculate the modified electron momentum
-            double pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
+            double pr = sqrt( ( ( gamma_s - e ) * ( gamma_s - e ) - 1. ) / p2 );
             pe->momentum( 0, ie ) *= pr;
             pe->momentum( 1, ie ) *= pr;
             pe->momentum( 2, ie ) *= pr;

@@ -86,9 +86,13 @@ public:
 #ifdef SMILEI_USE_NUMPY
             // Test the function with temporary, "fake" particles
             double *dummy = NULL;
-            ParticleData test( params.nDim_particle, deposited_quantity_object, deposited_quantityPrefix, dummy );
-            histogram = new Histogram_user_function( deposited_quantity_object );
-            histogram->deposited_quantity = "user_function";
+            SMILEI_PY_ACQUIRE_GIL
+            {
+                ParticleData test( params.nDim_particle, deposited_quantity_object, deposited_quantityPrefix, dummy );
+                histogram = new Histogram_user_function( deposited_quantity_object );
+                histogram->deposited_quantity = "user_function";
+            }
+            SMILEI_PY_RELEASE_GIL
 #else
             ERROR( deposited_quantityPrefix << " should be a string" );
 #endif

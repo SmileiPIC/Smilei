@@ -12,16 +12,15 @@ Open-source, collaborative, user-friendly and designed for high performances on 
 it is applied to a wide range of physics studies: from relativistic laser-plasma
 interaction to astrophysics.
 
-..
-  .. raw:: html
+.. raw:: html
 
-..
-  <a href="https://indico.math.cnrs.fr/e/smilei4" style="color:#3E4349; text-decoration:none">
-      <div style="text-align:center; background-color:#e6f0ff; margin:1em 0 0 0; padding:0.3em; border-radius:0.8em;border-left:0.3em #0672BA solid; border-right:0.3em #0672BA solid;">
-          <b>4th user & training workshop: 8-10 Nov 2023 in Prague (Czechia)</b>
+  <a href="https://indico.math.cnrs.fr/e/smilei5" style="font-size:1.2em; color:#3E4349; color:var(--text); text-decoration:none">
+      <div style="text-align:center; background-color:#EAF4FD; background-color:var(--main_pale); margin:1em 0 0 0; padding:1em 0.3em; border-radius:0.8em;border-left:0.3em #0672BA solid; border-right:0.3em #0672BA solid;">
+        <img src="_static/workshopLogo.svg" alt="workshop" style="height:1.5em" />
+        <br />
+        <b>5th user & training workshop:<br /> 19-21st March 2025 in Madrid (Spain)</b>
       </div>
   </a>
-..
   <div style="width:100%; text-align:center; margin-bottom:2em;">
   </div>
   

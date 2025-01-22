@@ -671,7 +671,7 @@ public:
         }
         if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions_[1][1] != "remove" ) && ( this_species->boundary_conditions_[1][1] != "stop" ) && ( this_species->boundary_conditions_[1][1] != "reflective" ) ) {
             ERROR_NAMELIST(
-                " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ",
+                " In AM geometry particle boundary conditions supported in Rmax are 'remove', 'reflective' and 'stop' ",
                 LINK_NAMELIST + std::string("#species")
             );
         }
