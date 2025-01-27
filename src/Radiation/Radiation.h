@@ -76,10 +76,10 @@ public:
     {
 
         return std::fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
-               * std::sqrt( std::fabs( std::pow( Ex*px + Ey*py + Ez*pz, 2 )
-                             - std::pow( gamma*Ex - By*pz + Bz*py, 2 )
-                             - std::pow( gamma*Ey - Bz*px + Bx*pz, 2 )
-                             - std::pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
+               * std::sqrt( std::fabs(  (Ex*px + Ey*py + Ez*pz) * (Ex*px + Ey*py + Ez*pz)
+                             - (gamma*Ex - By*pz + Bz*py) * (gamma*Ex - By*pz + Bz*py)
+                             - (gamma*Ey - Bz*px + Bx*pz) * (gamma*Ey - Bz*px + Bx*pz)
+                             - (gamma*Ez - Bx*py + By*px) * (gamma*Ez - Bx*py + By*px) ) );
     };
 
     //! Computation of the quantum parameter for the given

@@ -1758,7 +1758,7 @@ void SpeciesV::mergeParticles( double time_dual )
 
         // for (unsigned int ip = 0; ip < (unsigned int)(particles->last_index.back()) ; ip++) {
         //         weight_before += particles->weight(ip);
-        //         energy_before += sqrt(1 + pow(particles->momentum(0,ip),2) + pow(particles->momentum(1,ip),2) + pow(particles->momentum(2,ip),2));
+        //         energy_before += sqrt(1 + particles->momentum(0,ip) * particles->momentum(0,ip) + particles->momentum(1,ip) * particles->momentum(1,ip) + particles->momentum(2,ip) * particles->momentum(2,ip));
         // }
 
         // For each cell, we apply independently the merging process
@@ -1787,9 +1787,7 @@ void SpeciesV::mergeParticles( double time_dual )
 
         // for (unsigned int ip = 0; ip < (unsigned int)(particles->last_index.back()) ; ip++) {
         //         weight_after += particles->weight(ip);
-        //         energy_after += sqrt(1 + pow(particles->momentum(0,ip),2)
-        //                      + pow(particles->momentum(1,ip),2)
-        //                      + pow(particles->momentum(2,ip),2));
+        //         energy_after += sqrt(1 + particles->momentum(0,ip) * particles->momentum(0,ip) + particles->momentum(1,ip) * particles->momentum(1,ip) + particles->momentum(2,ip) * particles->momentum(2,ip));
         // }
         //
         // if (weight_before != weight_after) {

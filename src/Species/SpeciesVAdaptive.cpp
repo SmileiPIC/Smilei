@@ -346,18 +346,33 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     if (time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
 
+        if( params.geometry != "AMcylindrical" ) {
 
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
-        double *b_rho=nullptr;
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-
-            b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-            for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                Proj->basic( b_rho, ( *particles ), iPart, 0 );
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
+            double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                }
             }
-        }
-        smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
 
+        } else { // AM case
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            int n_species = patch->vecSpecies.size();
+
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,0,3);
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
+                complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    }
+                }
+            }
+            smpi->traceEventIfDiagTracing(diag_PartEventTracing, ithread,1,3);
+        }
     }
 
 }//END scalarDynamics

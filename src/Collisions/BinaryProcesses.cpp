@@ -162,7 +162,7 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
             // compute debye length squared in code units
             patch->debye_length_squared[ibin] = 1./inv_D2;
             // apply lower limit to the debye length (minimum interatomic distance)
-            double rmin2 = pow( coeff*density_max, -2./3. );
+            double rmin2 = 1.0 / cbrt( coeff*density_max * coeff*density_max ) ; 
             if( patch->debye_length_squared[ibin] < rmin2 ) {
                 patch->debye_length_squared[ibin] = rmin2;
             }
@@ -292,8 +292,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
-        D.n123 = pow( n1, 2./3. );
-        D.n223 = pow( n2, 2./3. );
+        D.n123 = cbrt(n1*n1);
+        D.n223 = cbrt(n2*n2);
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167

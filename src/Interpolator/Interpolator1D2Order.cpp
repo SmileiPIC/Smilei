@@ -596,7 +596,7 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         // Primal
         idx_p[0]     = round( xpn );                 // index of the central point
         delta_p[0]   = xpn -( double )idx_p[0];      // normalized distance to the central node
-        delta2       = pow( delta_p[0], 2 );         // square of the normalized distance to the central node
+        delta2       = delta_p[0] * delta_p[0];         // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
         coeffxp[0]   = 0.5 * ( delta2-delta_p[0]+0.25 );

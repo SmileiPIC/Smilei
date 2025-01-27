@@ -16,8 +16,6 @@ This page contains the links of this documentation to compile and run SMILEI on 
 
 ----
 
-Known issues
-^^^^^^^^^^^^
+Important note: 
 
-2D and 3D runs may crash with A2000 & A6000 GPUs (used in laptops and worstations respectively, 
-they are not 'production GPUs' which are designed for 64 bits floating point operations )
+The biggest challenge to execute SMILEI on an accelerator is the correct installation of the openmpi library. It needs to be compiled with nvc++ after configuring (ie. ./configure --options) with the appropriate options specific to your system 

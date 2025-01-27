@@ -43,11 +43,11 @@ class IonizationFactory
             checkMaxCharge(species);
             checkNotLaserEnvelopeModel(params);
             Ionize = new IonizationTunnel<1>(params, species); // FullPPT
-        } else if (model == "tunnel_TL") {  
+        } else if (model == "Tong_Lin") {  
             checkMaxCharge(species);
             checkNotLaserEnvelopeModel(params);
-            Ionize = new IonizationTunnel<2>(params, species); // Tong&Ling
-        } else if (model == "tunnel_BSI") {  
+            Ionize = new IonizationTunnel<2>(params, species); // Tong&Lin
+        } else if (model == "barrier_suppression") {  
             checkMaxCharge(species);
             checkNotLaserEnvelopeModel(params);
             Ionize = new IonizationTunnel<3>(params, species); // BSI

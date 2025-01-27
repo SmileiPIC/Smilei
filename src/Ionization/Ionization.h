@@ -47,7 +47,6 @@ class Ionization
     double au_to_mec2;
     double EC_to_au;
     double au_to_w0;
-    double one_third;
 
     double reference_angular_frequency_SI;
     double dt;
@@ -55,10 +54,6 @@ class Ionization
     unsigned int nDim_field;
     unsigned int nDim_particle;
     double ionized_species_invmass;
-
-    unsigned int atomic_number_;
-    std::vector<double> Potential, Azimuthal_quantum_number;
-    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
 
    private:
 };
