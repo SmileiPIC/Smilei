@@ -52,11 +52,11 @@ inline double IonizationTunnel<3>::ionizationRate<1>(const int Z,
   double Tunnel_rate =
       beta_tunnel[Z] * exp(-delta / 3.0 + alpha_tunnel[Z] * log(delta));
 
-  if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
-    rate_formula = 1;
-    return BSI_rate_quadratic;
-  } else if (BSI_rate_quadratic >= BSI_rate_linear) {
+  if (BSI_rate_quadratic >= BSI_rate_linear) {
     rate_formula = 2;
+    return BSI_rate_linear;
+  } else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
+    rate_formula = 1;
     return BSI_rate_quadratic;
   } else {
     rate_formula = 0;
