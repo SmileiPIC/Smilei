@@ -11,7 +11,7 @@ MF_SolverAM_Terzani::MF_SolverAM_Terzani( Params &params )
 {
     isEFilterApplied = params.Friedman_filter;
     
-    delta = ( pow(dt_ov_dl,2)-1.) / 12. ;
+    delta = ( dt_ov_dl * dt_ov_dl - 1.) / 12. ;
     // this coefficient and the associated solver are defined in 
     // D. Terzani and P. Londrillo, Computer Physics Communications 242 (2019)
     // https://doi.org/10.1016/j.cpc.2019.04.007
@@ -48,16 +48,16 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
         cField2D *Bl = ( static_cast<ElectroMagnAM *>( fields ) )->Bl_[imode];
         cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
-        int  j_glob = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
-        bool isXmin = ( static_cast<ElectroMagnAM *>( fields ) )->isXmin;
-        bool isXmax = ( static_cast<ElectroMagnAM *>( fields ) )->isXmax;
-        bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
+        int  j_glob  = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
+        bool isXmin  = ( static_cast<ElectroMagnAM *>( fields ) )->isXmin;
+        bool isXmax  = ( static_cast<ElectroMagnAM *>( fields ) )->isXmax;
+        bool isYmin  = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
 
         // ---- Magnetic field Bl^(p,d)
         for( unsigned int i=0 ; i<nl_p;  i++ ) {
             #pragma omp simd
             for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
-                ( *Bl )( i, j ) += - dt/( ( j_glob+j-0.5 )*dr ) * ( ( double )( j+j_glob )*( *Et )( i, j ) - ( double )( j+j_glob-1. )*( *Et )( i, j-1 ) + Icpx*( double )imode*( *Er )( i, j ) );
+                ( *Bl )( i, j ) += - dt/( ( j_glob+j-0.5 )*dr ) * ( ( double )( j+j_glob )*( *Et )( i, j ) - ( double )( j+j_glob-1. )*( *Et )( i, j-1 ) + Icpx*(static_cast<double>(imode))*( *Er )( i, j ) );
             }
         }
 
@@ -66,8 +66,8 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
             #pragma omp simd
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * (1.-3.*delta) * ( ( *Et )( i  , j ) - ( *Et )( i-1, j ) )
-                                 + dt_ov_dl * delta        * ( ( *Et )( i+1, j ) - ( *Et )( i-2, j ) )
-                                +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+                                 + dt_ov_dl * delta         * ( ( *Et )( i+1, j ) - ( *Et )( i-2, j ) )
+                                +Icpx*dt*( static_cast<double>(imode) )/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
         // Magnetic field Br^(d,p), left border of the patch: evolve as in Yee solver
@@ -75,7 +75,7 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
             #pragma omp simd 
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-                                +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+                                +Icpx*dt*( static_cast<double>(imode) )/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
         // Magnetic field Br^(d,p), right border of the patch: evolve as in Yee solver
@@ -83,7 +83,7 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
             #pragma omp simd 
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-                                 +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
+                                 +Icpx*dt*( static_cast<double>(imode) )/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
           
@@ -110,8 +110,8 @@ void MF_SolverAM_Terzani::operator()( ElectroMagn *fields )
         for( unsigned int i=nl_d-2 ; i<nl_d-1 ; i++ ) {
           #pragma omp simd 
           for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
-              ( *Bt )( i, j ) += dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
-                                 -dt_ov_dl* ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
+              ( *Bt )( i, j ) +=  dt_ov_dr * ( ( *El )( i, j ) - ( *El )( i, j-1 ) )
+                                 -dt_ov_dl * ( ( *Er )( i, j ) - ( *Er )( i-1, j ) );
           }
         }
         
