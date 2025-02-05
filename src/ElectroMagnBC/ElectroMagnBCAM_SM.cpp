@@ -236,9 +236,11 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             //Redo condition on axis for Bt because it was modified
             if( isYmin && imode != 1 ) {
                 ( *Bt )( 0, 2 ) = -( *Bt )( 0, 3 );
+                ( *Br )( 0, 1 ) = -( *Br )( 0, 3 );
             }
             if( isYmin && imode == 1 ) {
-                ( *Bt )( 0, 2 )= -2.*Icpx*( *Br )( 0, 2 )-( *Bt )( 0, 3 );
+                ( *Bt )( 0, 2 ) = ( *Bt )( 0, 3 );
+                ( *Br )( 0, 1 ) = ( *Br )( 0, 3 );
             }
         } else if( i_boundary_ == 1 && patch->isXmax() ) {
             // for Br^(d,p)
@@ -285,9 +287,11 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             //Redo condition on axis for Bt because it was modified
             if( isYmin && imode != 1 ) {
                 ( *Bt )( n_p[0], 2 ) = -( *Bt )( n_p[0], 3 );
+                ( *Br )( n_p[0], 1 ) = -( *Br )( n_p[0], 3 );
             }
             if( isYmin && imode == 1 ) {
-                ( *Bt )( n_p[0], 2 )= -2.*Icpx*( *Br )( n_p[0], 2 )-( *Bt )( n_p[0], 3 );
+                ( *Bt )( n_p[0], 2 ) = ( *Bt )( n_p[0], 3 );
+                ( *Br )( n_p[0], 1 ) = ( *Br )( n_p[0], 3 );
             }
         }
     }

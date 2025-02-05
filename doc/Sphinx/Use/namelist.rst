@@ -236,10 +236,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
-  .. warning::
-
-    The size of clusters becomes particularly important when :doc:`/Understand/task_parallelization` is used.
-
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
@@ -248,10 +244,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` are available for ``3DCartesian``.
-  ``"Lehe"`` is available for ``AMcylindrical``.
+  ``"Lehe"`` and ``"Terzani"`` are available for ``AMcylindrical``.
   The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
-  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
+  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_.
+  The Terzani solver is described in `this paper <https://doi.org/10.1016/j.cpc.2019.04.007>`_.
 
 .. py:data:: solve_poisson
 
@@ -2969,7 +2966,7 @@ for instance::
 
   :default: 1
 
-  The number of time-steps during which the data is averaged before output.
+  The number of time-steps during which the data is averaged. The data is averaged over `time_average` consecutive iterations after the selected time.
 
 
 .. py:data:: species

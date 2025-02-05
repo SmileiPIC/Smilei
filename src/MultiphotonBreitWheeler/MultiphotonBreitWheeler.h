@@ -141,8 +141,6 @@ public:
     // Local array of new pairs of electron-positron per bin
     std::vector<Particles *> new_pair_per_bin;
 
-    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
-    void joinNewElectronPositronPairs(Particles **new_pair,unsigned int Nbins);
 
 private:
 

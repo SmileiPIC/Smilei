@@ -86,35 +86,6 @@ public:
     //! Method performing the merging of particles
     virtual void mergeParticles( double time_dual )override;
 
-#ifdef _OMPTASKS
-
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection) with tasks
-    void dynamicsTasks( double time, unsigned int ispec,
-                   ElectroMagn *EMfields,
-                   Params &params, bool diag_flag,
-                   PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                   RadiationTables &RadiationTables,
-                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id ) override;
-
-    //! Method with tasks to project susceptibility and calculate the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, 
-            ElectroMagn *EMfields,
-            Params &params, 
-            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
-
-    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
-    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
-    void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
-
-#endif
-
-
-    // used for tasks 
-    std::vector<int> first_cell_of_bin;
-    std::vector<int> last_cell_of_bin;
 
 private:
 
@@ -122,11 +93,6 @@ private:
     unsigned int npack_;
     //! Size of the pack in number of particles
     unsigned int packsize_;
-
-    
-    
-
-    
 
 };
 

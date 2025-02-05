@@ -11,7 +11,7 @@ At the cost of having a slightly higher computing cost than Silver-Muller, PML h
 * Absorption is efficient for any incident angle.
 * The overall absorption of exiting waves is, in most cases, much better than Silver-Muller.
 
-This leads to a more accurate result of course but can also relaxes constraints on the size of the simulation domain.
+This leads to a more accurate result of course but can also relax constraints on the size of the simulation domain.
 Very large transverse sizes to let the laser diffract more before it hits the boundary is no longer necessary for instance.
 
 .. rubric:: Basic use
