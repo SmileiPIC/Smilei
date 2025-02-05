@@ -53,7 +53,7 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
 
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
-    vector<double> IonizRate_tunnel( atomic_number_ ), Dnom_tunnel( atomic_number_ , 0.);
+    vector<double> IonizRate_tunnel( atomic_number_ ), Dnom_tunnel( atomic_number_ );
     LocalFields Jion;
     double factorJion_0 = au_to_mec2 * EC_to_au*EC_to_au * invdt;
     
@@ -129,7 +129,7 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
                     D_sum += Dnom_tunnel[i];
                     P_sum += exp( -IonizRate_tunnel[Z+i]*dt )*Dnom_tunnel[i];
                 }
-                Dnom_tunnel[k_times+1] -= D_sum;
+                Dnom_tunnel[k_times+1]  = -D_sum;
                 P_sum                   = P_sum + Dnom_tunnel[k_times+1]*exp( -IonizRate_tunnel[newZ]*dt );
                 Pint_tunnel             = Pint_tunnel + P_sum*Mult;
                 

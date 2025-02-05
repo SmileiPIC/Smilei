@@ -79,7 +79,7 @@ Species(
 def By(t):
 	return 1e-7 * math.sin(t)
 def Bz(t):
-	return 0.1 * math.sin(t)
+	return 1.0 * math.sin(t)
 
 Laser(
 	box_side = "xmin",
