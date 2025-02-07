@@ -72,67 +72,15 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
 
+We note that the initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
+This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.
 
 In :program:`Smilei`, four models are available to compute the ionization rate of :eq:`ionizationRate1`.
 
-**Tunnelling Ionization (PPT-ADK) for :math:`m=0`**
+PPT-ADK model
+""""""""""""""""
 
 In the classical model, the ionization rate of :eq:`ionizationRate1`
-is computed for :math:`\vert m \vert=0` only.
-Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
-computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
-
-.. math::
-
-  R = \frac{\Gamma_{{\rm qs},\vert m \vert = 0}}{\Gamma_{{\rm qs},\vert m \vert = 1}}
-  =  2\frac{(2\,I_p)^{3/2}}{\vert E\vert}
-  \simeq 7.91\,10^{-3} \,\,\frac{(I_p[\rm eV])^{3/2}}{a_0\,\hbar\omega_0[\rm eV]}\,,
-
-where, in the practical units formulation, we have considered ionization
-by a laser with normalized vector potential :math:`a_0=e\vert E\vert /(m_e c \omega_0)`,
-and photon energy :math:`\hbar\omega_0` in eV.
-
-
-
-**Tunnelling Ionization (PPT-ADK) for :math:`|m|>0`**
-In this model,d ependence on the magnetic quantum number :math:`m` is added. 
-
-:math:`m` is attributed to eac electron in accordance with the following rulse:
-1. Since :math:`\Gamma_z(m=0)>\Gamma_z(m=1)>\Gamma_z(m=2)>...` we assume that for electrons
-with the same azimuthal quantum number :math:`l`, the states with the lowest value of
-:math:`|m|` are ionized first.
-2. Electrons with the same azimuthal qunatum number :math:`l` occupy the sub-shells in the
-order of increasing :math:`|m|` and for the same :math:`|m|` in the order of increasing :math:`m`. 
-
-With this algorithm, by knowing the atomic number A, we can assign a unique set of
-quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
-order during successive ionization. 
-
-
-**Barrier Suppression Ionization (Tong&Ling)**
-The formula proposed by Tong and Lin [Tong2005]_ extends the tunnelling ionization rate to the barrier-suppression
-regime. This is achieved by introducing the empirical factor in :eq:`ionizationRate1`:
-
-.. math::
-
-  \Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp (-2\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}),
-
-where :math:`\alpha_TL` is an emprirical constant with value typically from 6 to 9. The actual value
-should be guessed from empirical data. When such data is
-not available, the formula can be used for qualitative analysis of the barrier-suppression
-ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce the results from this paper.
-
-
-**Barrier Suppression IOnization (Ouatu)**
-Ouatu implemented a different model of BSI initially proposed in [Kostyukov2018]_ which was used in the
-study [Ouatu2022]_.
-
-
-
-To Be removed
-""""""""""""""""""""
-
-In :program:`Smilei`, following [Nuter2011]_, the ionization rate of :eq:`ionizationRate1`
 is computed for :math:`\vert m \vert=0` only.
 Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
 computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
@@ -156,8 +104,57 @@ of high-Z atoms). As a consequence, :math:`R\gg1`, and the probability
 of ionization of an electron with magnetic quantum number :math:`\vert m \vert=0`
 greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
 
-The initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
-This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.
+
+PPT-ADK model with account for :math:`m\neq 0`
+""""""
+
+In this model, dependence on the magnetic quantum number :math:`m` is added. 
+
+:math:`m` is attributed to each electron in accordance with the following rules:
+
+1. Since :math:`\Gamma_z(m=0)>\Gamma_z(m=1)>\Gamma_z(m=2)>...` we assume that for electrons
+with the same azimuthal quantum number :math:`l`, the states with the lowest value of
+:math:`|m|` are ionized first.
+
+2. Electrons with the same azimuthal quantum number :math:`l` occupy the sub-shells in the
+order of increasing :math:`|m|` and for the same :math:`|m|` in the order of increasing :math:`m`. 
+
+With this algorithm, by knowing the atomic number A, we can assign a unique set of
+quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
+order during successive ionization. 
+
+
+Barrier Suppression Ionization (Tong & Lin)
+""""""""
+
+The formula proposed by Tong and Lin [Tong2005]_ extends the tunnelling ionization rate to the barrier-suppression
+regime. This is achieved by introducing the empirical factor in :eq:`ionizationRate1`:
+
+.. math::
+
+  \Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp \left(-2\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}\right),
+
+where :math:`\alpha_{TL}` is an emprirical constant with value typically from 6 to 9. The actual value
+should be guessed from empirical data. When such data is
+not available, the formula can be used for qualitative analysis of the barrier-suppression
+ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce the results from this paper.
+
+
+Barrier Suppression Ionization (Ouatu)
+""""""""""
+
+This is a piecewise function implemented by [Ouatu2022]_ as follows:
+
+.. math::
+   \Gamma_{Ouatu} =
+   \begin{cases}
+       \Gamma_{qs,|m|=0}, & E < E_1 \\
+       \Gamma_{BM}, & E_1 < E < E_2 \\
+       \Gamma_{BSI}, & E > E_2 
+   \end{cases}
+
+where :math:`\Gamma_{BM} = 2.4\omega_a(E/E_a)^2(I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8\omega_a(E/E_a)\sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Kostyukov2018]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\omega_{ADK}` with :math:`\omega_{BM}` and :math:`\omega_{BM}` with :math:`\omega_{BSI}` respectively, such that the function is continuous, :math:`\omega_a` and :math:`E_a` are the atomic units of frequency and electric field respectively and :math:`I_H` is the ionisation potential of hydrogen.
+
 
 
 Monte-Carlo scheme
@@ -401,10 +398,13 @@ References
 
 .. [Gibbon] P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)
 
-.. [Tong2005] `Tong X. M., Lin C. D., J. Phys. B: At. Mol. Opt. Phys. 38 2593 (2005) <https://iopscience.iop.org/article/10.1088/0953-4075/38/15/001>`
+.. [Tong2005] `Tong X. M., Lin C. D., J. Phys. B: At. Mol. Opt. Phys. 38 2593 (2005) <https://iopscience.iop.org/article/10.1088/0953-4075/38/15/001>`_
 
-.. [Ciappina2020] `M. F. Ciappina, S. V. Popruzhenko., Laser Phys. Lett. 17 025301 (2020) <https://iopscience.iop.org/article/10.1088/1612-202X/ab6559>`
+.. [Ciappina2020] `M. F. Ciappina, S. V. Popruzhenko., Laser Phys. Lett. 17 025301 (2020) <https://iopscience.iop.org/article/10.1088/1612-202X/ab6559>`_
 
-.. [Kostyukov2018] `I. Yu. Kostyukov, A. A. Golovanov, Phys. Rev. A 98, 043407 (2018) <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.98.043407>`
+.. [Kostyukov2018] `I. Yu. Kostyukov, A. A. Golovanov, Phys. Rev. A 98, 043407 (2018) <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.98.043407>`_
 
-.. [Ouatu2022] `I. Ouatu et al, Phys. Rev. E 106, 015205 (2022) <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015205>`
+.. [Ouatu2022] `I. Ouatu et al, Phys. Rev. E 106, 015205 (2022) <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015205>`_
+
+.. [Bauer1999] `D. Bauer, P. Mulser, Phys. Rev. A 59, 569 (1999) <https://doi.org/10.1103/PhysRevA.59.569>`_
+
