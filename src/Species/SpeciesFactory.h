@@ -1032,6 +1032,7 @@ public:
         new_species->thermal_momentum_                         = species->thermal_momentum_;
         new_species->atomic_number_                            = species->atomic_number_;
         new_species->maximum_charge_state_                     = species->maximum_charge_state_;
+        new_species->ionization_tl_parameter_                  = species->ionization_tl_parameter_;
         new_species->ionization_rate_                          = species->ionization_rate_;
         if( new_species->ionization_rate_!=Py_None ) {
             Py_INCREF( new_species->ionization_rate_ );
