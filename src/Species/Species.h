@@ -456,11 +456,6 @@ public:
             Params &, 
             Patch *, SmileiMPI * ) {};
 
-    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double, 
-            ElectroMagn *,
-            Params &, 
-            Patch *, SmileiMPI *, int ) {};
-
     virtual void scalarPonderomotiveUpdatePositionAndCurrents( double, unsigned int,
             ElectroMagn *,
             Params &, bool, PartWalls *,
@@ -616,45 +611,7 @@ public:
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
 
-#ifdef _OMPTASKS
-
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
-    virtual void dynamicsTasks(     double time, unsigned int ispec,
-                            ElectroMagn *EMfields,
-                            Params &params, bool diag_flag,
-                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                            RadiationTables &RadiationTables,
-                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id );
-
-    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual,
-            ElectroMagn *EMfields,
-            Params &params,
-            Patch *patch, SmileiMPI *smpi, int buffer_id );
-
-    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
-    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
-    virtual void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi, int buffer_id );
-
-    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
-    virtual void scalarDynamicsTasks( double, unsigned int,
-                                  ElectroMagn *,
-                                  Params &, bool,
-                                  PartWalls *, Patch *, SmileiMPI *,
-                                  RadiationTables &,
-                                  MultiphotonBreitWheelerTables &, int ) {};
-
-    virtual void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double, unsigned int,
-            ElectroMagn *,
-            Params &, bool, PartWalls *,
-            Patch *, SmileiMPI *, int ) {};
-
-#endif
-
-    // ---- Variables for tasks
+    // ---- Variables for tasks -> does not look like it's only used for tasks now ...
 
     // Number of bins for the use of tasks
     unsigned int Nbins;

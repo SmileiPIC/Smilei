@@ -449,11 +449,6 @@ Introducing this result in the standard FDTD scheme for :math:`B_r` we get the a
    B_{r}^{m=1,n+1}[i,2] = B_{r}^{m=1,n}[i,2] + dt\left(\frac{i}{dr}E_l^{m=1}[i,3]+\frac{E_{\theta}^{m=1}[i+1,2]-E_{\theta}^{m=1}[i,2]}{dl}\right)
 
 where the :math:`n` indice indicates the time step and :math:`i` the longitudinal indice.
-Exactly as for the electric field, we need to have :math:`B_{r}^{m=1}=iB_{\theta}^{m=1}`.
-With a similar interpolation we obtain the boundary condition on axis for :math:`B_{\theta}^{m=1}`:
-
-.. math::
-   B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
 
 Longitudinal field on axis
 """""""""""""""""""""""""""""

@@ -60,29 +60,6 @@ public:
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi ) override;
-
-#ifdef _OMPTASKS
-
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
-    //! without vectorized operators but with the cell sorting algorithm
-    void scalarDynamicsTasks( double time, unsigned int ispec,
-                               ElectroMagn *EMfields,
-                               Params &params, bool diag_flag,
-                               PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                               RadiationTables &RadiationTables,
-                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables, int buffer_id ) override;
-
-    void scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual,
-            ElectroMagn *EMfields,
-            Params &params, 
-            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
-
-    void scalarPonderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi, int buffer_id ) override;
-
-#endif
     
 private:
 

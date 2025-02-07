@@ -206,7 +206,7 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
             return;
         }
     } else {
-        ERROR( "unkown screen_type " << screen_type );
+        ERROR( "unknown screen_type " << screen_type );
     }
     
     // Calculate the total number of particles in this patch and resize buffers

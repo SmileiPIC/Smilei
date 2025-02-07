@@ -425,11 +425,7 @@ int main( int argc, char *argv[] )
         TITLE( "Running diags at time t = 0" );
         #pragma omp parallel shared( smpi, params, vecPatches, simWindow )
         {
-#ifdef _OMPTASKS
-            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
-#else
             vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-#endif
         }
         vecPatches.rebootDiagTimers();
     }
@@ -661,11 +657,7 @@ int main( int argc, char *argv[] )
             }
 
             // Call the various diagnostics
-#ifdef _OMPTASKS
-            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
-#else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-#endif
 
             // Move window
             vecPatches.moveWindow( params, &smpi, region, simWindow, time_dual, timers, itime );

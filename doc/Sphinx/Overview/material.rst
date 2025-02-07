@@ -30,7 +30,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of October 2024, at least 211 papers have been published covering a broad range of topics:
+As of January 2025, at least 218 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -50,6 +50,50 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+
+.. [Wu2024]
+
+     Y. Wu, J. Zhao, X. Tao, L. Dai,
+     `Particle Simulation Study of Obliquely Propagating Whistler Waves in Low‐Beta Plasmas`,
+     `Journal of Geophysical Research: Space Physics, 129, e2024JA033035 (2024) <https://doi-org.ezproxy.universite-paris-saclay.fr/10.1029/2024JA033035>`_
+     
+.. [Tang2024]
+
+    X. Tang , J. Hao , and Y. Shi, 
+    `Electron injection and acceleration in a twisted laser driven by the light fan`,
+    `High Power Laser Science and Engineering 12, e86 (2024) <https://doi.org/10.1017/hpl.2024.56>`_
+
+.. [Huault2025]
+
+    M. Huault, T. Carrière;  H. Larreur, Ph. Nicolaï, D. Raffestin, D. Singappuli, E. D'Humieres, D. Dubresson, K. Batani, M. Cipriani, F. Filippi, 
+    M. Scisciò. C. Verona, L. Giuffrida, V. Kantarelou, S. Stancek, N. Boudjema, R. Lera, J. A. Pérez-Hernández, L. Volpe, M. D. Rodríguez Frías, A. Bonasera, 
+    M. R. D. Rodrigues, D. Ramirez Chavez, F. Consoli, and D. Batani,
+    `Experimental and computational evaluation of alpha particle production from laser-driven proton–boron nuclear reaction in hole-boring scheme`,
+    `Physics of Plasmas 32, 013102 (2025) <https://doi.org/10.1063/5.0238029>`_
+    
+.. [Zhang2024]
+
+    J.-Y. Zhang, D. Wu, H.-Y. Lan, H.-G. Lu, J.-X. Liu, J.-F. Lv, M.-Z. Wang, and X.-Q. Yan,
+    `Generation of medical isotopes` :math:`~^{47}` `Sc,` :math:`^{67}` `Cu through laser-induced (` :math:`\gamma`, `p) reaction`,
+    `Nuclear Science and Techniques 35, 206, (2024) <https://link.springer.com/article/10.1007/s41365-024-01550-x>`_
+       
+.. [Yoon2024b]
+
+    Y. D. Yoon, T. E. Moore, D. E. Wendel , M. Laishram, and G. S. Yun,
+    `Enablement or Suppression of Collisionless Magnetic Reconnection by the Background Plasma Beta and Guide Field`,
+    `Geophysical Research Letters, 51, e2024GL112126 (2024) <https://doi.org/10.1029/2024GL112126>`_
+       
+.. [Romansky2024]
+
+    V. I. Romansky, A. M. Bykov, S.M. Osipov,
+    `Cosmic ray acceleration and non-thermal emission from fast luminous optical transient sources`,
+    `Advances in Space Research 74, 9 (2024) <https://doi.org/10.1016/j.asr.2024.02.018>`_
+       
+.. [Guo2024]
+
+    A. Guo, Q. Lu, S. Lu, Z. Yang, and X. Gao,
+    `Electron Shock Drift Acceleration at a Low-Mach-number, Low-plasma-beta Quasi-perpendicular Shock`,
+    `The Astrophysical Journal 974, 57 (2024) <https://doi.org/10.3847/1538-4357/ad6c46>`_
 
 .. [Jirka2024]
 
@@ -87,7 +131,6 @@ Following is the distribution of these topics in the listed publications up to N
     `Nonthermal Acceleration of Electrons, Positrons, and Protons at a Nonrelativistic Quasi-parallel Collisionless Shock`,
     `The Astrophysical Journal 969, 13 (2024) <http://dx.doi.org/10.3847/1538-4357/ad5181>`_
 
-
 .. [Liu2024]
 
     B. Liu, B. Lei, Y. Gao, M. Wen, and K. Zhu,
@@ -112,7 +155,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Unforeseen advantage of looser focusing in vacuum laser acceleration`,
     `Nature Communications Physics 7, 293 (2024) <https://doi.org/10.1038/s42005-024-01781-9>`_
 
-.. [Yoon2024]
+.. [Yoon2024a]
 
     Y. D. Yoon, M. Laishram, T. E. Moore, and G. S. Yun,
     `Non-equilibrium formation and relaxation of magnetic flux ropes at kinetic scales`,
@@ -590,7 +633,7 @@ Following is the distribution of these topics in the listed publications up to N
 
     X. Geng, L. Ji and B. Shen,
     `Quasimonochromatic Bright Gamma-ray Generation from Synchronized Compton Scattering via Azimuthal Spatial-Temporal Coupling`,
-    `Physical Review Applied 17, 024055 (2022) <https://doi.org/10.1063/5.0084870>`_
+    `Physical Review Applied 17, 024055 (2022) <https://doi.org/10.1103/PhysRevApplied.17.024055>`_
               
 .. [Yan2022]
 

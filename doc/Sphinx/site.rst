@@ -30,6 +30,5 @@ Unreferenced pages
   /Use/profiles
   /Use/tables
   /Use/optimization_flags
-  /Understand/task_parallelization
   syntax_changes
   implementation
