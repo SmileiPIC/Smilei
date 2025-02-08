@@ -236,130 +236,36 @@ DiagFields(
 	fields = ["Ex", "Ey", "Ez"]
 )
 
-DiagParticleBinning(
-    name = "hydrogen_tunnel",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["hydrogen_tunnel"],
-	axes = [
-		["charge",  -0.5, 1.5, 2]
-	]
-)
+for i, model in enumerate(["tunnel", "tunnel_full_PPT", "tunnel_TL", "tunnel_BSI"]):
+    DiagParticleBinning(
+        name = "hydrogen_"+model,
+        deposited_quantity = "weight",
+        every = 20,
+        species = ["hydrogen_tunnel"],
+        axes = [
+            ["charge",  -0.5, 1.5, 2]
+        ]
+    )
 
-DiagParticleBinning(
-    name = "hydrogen_tunnel_full_PPT",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["hydrogen_tunnel_full_PPT"],
-	axes = [
-		["charge",  -0.5, 1.5, 2]
-	]
-)
+    DiagParticleBinning(
+        name = "carbon_"+model,
+        deposited_quantity = "weight",
+        every = 20,
+        species = ["carbon_tunnel"],
+        axes = [
+            ["charge",  -0.5, 6.5, 7]
+        ]
+    )
 
-DiagParticleBinning(
-    name = "hydrogen_tunnel_TL",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["hydrogen_tunnel_TL"],
-	axes = [
-		["charge",  -0.5, 1.5, 2]
-	]
-)
+    DiagTrackParticles(
+        species = "electron_"+model,
+        every = [1,1000,30],
+        attributes = ["x","px","py","pz","w","Wy"]
+    )
 
-DiagParticleBinning(
-    name = "hydrogen_tunnel_BSI",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["hydrogen_tunnel_BSI"],
-	axes = [
-		["charge",  -0.5, 1.5, 2]
-	]
-)
+    DiagNewParticles(
+        species = "electron_"+model,
+        every = 100,
+        attributes = ["x","py","w","q"],
+    )
 
-DiagParticleBinning(
-    name = "carbon_tunnel",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["carbon_tunnel"],
-	axes = [
-		["charge",  -0.5, 6.5, 7]
-	]
-)
-
-DiagParticleBinning(
-    name = "carbon_tunnel_full_PPT",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["carbon_tunnel_full_PPT"],
-	axes = [
-		["charge",  -0.5, 6.5, 7]
-	]
-)
-
-DiagParticleBinning(
-    name = "carbon_tunnel_TL",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["carbon_tunnel_TL"],
-	axes = [
-		["charge",  -0.5, 6.5, 7]
-	]
-)
-
-DiagParticleBinning(
-    name = "carbon_tunnel_BSI",
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["carbon_tunnel_BSI"],
-	axes = [
-		["charge",  -0.5, 6.5, 7]
-	]
-)
-
-DiagTrackParticles(
-	species = "electron_tunnel",
-	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wy"]
-)
-
-DiagTrackParticles(
-	species = "electron_tunnel_full_PPT",
-	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wy"]
-)
-
-DiagTrackParticles(
-	species = "electron_tunnel_TL",
-	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wy"]
-)
-
-DiagTrackParticles(
-	species = "electron_tunnel_BSI",
-	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wy"]
-)
-
-DiagNewParticles(
-	species = "electron_tunnel",
-	every = 100,
-	attributes = ["x","py","w","q"],
-)
-
-DiagNewParticles(
-	species = "electron_tunnel_full_PPT",
-	every = 100,
-	attributes = ["x","py","w","q"],
-)
-
-DiagNewParticles(
-	species = "electron_tunnel_TL",
-	every = 100,
-	attributes = ["x","py","w","q"],
-)
-
-DiagNewParticles(
-	species = "electron_tunnel_BSI",
-	every = 100,
-	attributes = ["x","py","w","q"],
-)
