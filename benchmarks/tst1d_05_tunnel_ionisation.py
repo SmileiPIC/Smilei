@@ -30,10 +30,11 @@ Main(
 	
 )
 
+# Tunnel
 Species(
-	name = 'hydrogen',
+	name = 'hydrogen_tunnel',
 	ionization_model = 'tunnel',
-	ionization_electrons = 'electron',
+	ionization_electrons = 'electron_tunnel',
 	atomic_number = 1,
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
@@ -47,9 +48,9 @@ Species(
 )
 
 Species(
-	name = 'carbon',
+	name = 'carbon_tunnel',
 	ionization_model = 'tunnel',
-	ionization_electrons = 'electron',
+	ionization_electrons = 'electron_tunnel',
 	atomic_number = 6,
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
@@ -63,7 +64,148 @@ Species(
 )
 
 Species(
-	name = 'electron',
+	name = 'electron_tunnel',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 0,
+	mass = 1.0,
+	charge = -1.0,
+	charge_density = 0.0,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+)
+
+# tunnel_full_PPT
+Species(
+	name = 'hydrogen_tunnel_full_PPT',
+	ionization_model = 'tunnel_full_PPT',
+	ionization_electrons = 'electron_tunnel_full_PPT',
+	atomic_number = 1,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'carbon_tunnel_full_PPT',
+	ionization_model = 'tunnel_full_PPT',
+	ionization_electrons = 'electron_tunnel_full_PPT',
+	atomic_number = 6,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'electron_tunnel_full_PPT',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 0,
+	mass = 1.0,
+	charge = -1.0,
+	charge_density = 0.0,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+)
+
+# Tong & Lin
+Species(
+	name = 'hydrogen_tunnel_TL',
+	ionization_model = 'tunnel_TL',
+	ionization_electrons = 'electron_tunnel_TL',
+	atomic_number = 1,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'carbon_tunnel_TL',
+	ionization_model = 'tunnel_TL',
+	ionization_electrons = 'electron_tunnel_TL',
+	atomic_number = 6,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'electron_tunnel_TL',
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 0,
+	mass = 1.0,
+	charge = -1.0,
+	charge_density = 0.0,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+)
+
+# BSI
+Species(
+	name = 'hydrogen_tunnel_BSI',
+	ionization_model = 'tunnel_BSI',
+	ionization_electrons = 'electron_tunnel_BSI',
+	atomic_number = 1,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'carbon_tunnel_BSI',
+	ionization_model = 'tunnel_BSI',
+	ionization_electrons = 'electron_tunnel_BSI',
+	atomic_number = 6,
+	position_initialization = 'regular',
+	momentum_initialization = 'cold',
+	particles_per_cell = 40,
+	mass = 1836.0*1000.,
+	charge = 0.0,
+	number_density = 0.1,
+	boundary_conditions = [
+		["remove", "remove"],
+	],
+)
+
+Species(
+	name = 'electron_tunnel_BSI',
 	position_initialization = 'regular',
 	momentum_initialization = 'cold',
 	particles_per_cell = 0,
@@ -79,7 +221,7 @@ Species(
 def By(t):
 	return 1e-7 * math.sin(t)
 def Bz(t):
-	return 0.1 * math.sin(t)
+	return 10 * math.sin(t)
 
 Laser(
 	box_side = "xmin",
@@ -95,31 +237,129 @@ DiagFields(
 )
 
 DiagParticleBinning(
+    name = "hydrogen_tunnel",
 	deposited_quantity = "weight",
 	every = 20,
-	species = ["hydrogen"],
+	species = ["hydrogen_tunnel"],
 	axes = [
 		["charge",  -0.5, 1.5, 2]
 	]
 )
 
 DiagParticleBinning(
+    name = "hydrogen_tunnel_full_PPT",
 	deposited_quantity = "weight",
 	every = 20,
-	species = ["carbon"],
+	species = ["hydrogen_tunnel_full_PPT"],
+	axes = [
+		["charge",  -0.5, 1.5, 2]
+	]
+)
+
+DiagParticleBinning(
+    name = "hydrogen_tunnel_TL",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["hydrogen_tunnel_TL"],
+	axes = [
+		["charge",  -0.5, 1.5, 2]
+	]
+)
+
+DiagParticleBinning(
+    name = "hydrogen_tunnel_BSI",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["hydrogen_tunnel_BSI"],
+	axes = [
+		["charge",  -0.5, 1.5, 2]
+	]
+)
+
+DiagParticleBinning(
+    name = "carbon_tunnel",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["carbon_tunnel"],
+	axes = [
+		["charge",  -0.5, 6.5, 7]
+	]
+)
+
+DiagParticleBinning(
+    name = "carbon_tunnel_full_PPT",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["carbon_tunnel_full_PPT"],
+	axes = [
+		["charge",  -0.5, 6.5, 7]
+	]
+)
+
+DiagParticleBinning(
+    name = "carbon_tunnel_TL",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["carbon_tunnel_TL"],
+	axes = [
+		["charge",  -0.5, 6.5, 7]
+	]
+)
+
+DiagParticleBinning(
+    name = "carbon_tunnel_BSI",
+	deposited_quantity = "weight",
+	every = 20,
+	species = ["carbon_tunnel_BSI"],
 	axes = [
 		["charge",  -0.5, 6.5, 7]
 	]
 )
 
 DiagTrackParticles(
-	species = "electron",
+	species = "electron_tunnel",
+	every = [1,1000,30],
+	attributes = ["x","px","py","pz","w","Wy"]
+)
+
+DiagTrackParticles(
+	species = "electron_tunnel_full_PPT",
+	every = [1,1000,30],
+	attributes = ["x","px","py","pz","w","Wy"]
+)
+
+DiagTrackParticles(
+	species = "electron_tunnel_TL",
+	every = [1,1000,30],
+	attributes = ["x","px","py","pz","w","Wy"]
+)
+
+DiagTrackParticles(
+	species = "electron_tunnel_BSI",
 	every = [1,1000,30],
 	attributes = ["x","px","py","pz","w","Wy"]
 )
 
 DiagNewParticles(
-	species = "electron",
+	species = "electron_tunnel",
+	every = 100,
+	attributes = ["x","py","w","q"],
+)
+
+DiagNewParticles(
+	species = "electron_tunnel_full_PPT",
+	every = 100,
+	attributes = ["x","py","w","q"],
+)
+
+DiagNewParticles(
+	species = "electron_tunnel_TL",
+	every = 100,
+	attributes = ["x","py","w","q"],
+)
+
+DiagNewParticles(
+	species = "electron_tunnel_BSI",
 	every = 100,
 	attributes = ["x","py","w","q"],
 )
