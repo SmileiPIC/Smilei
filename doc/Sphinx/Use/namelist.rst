@@ -982,7 +982,10 @@ Each species has to be defined in a ``Species`` block::
 
   The model for ionization:
 
-  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK <ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_full_PPT"`` for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_TL"`` for :ref:`field ionization <field_ionization>` using :ref:`Tong and Lin <tong_lin>`'s rate (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_BSI"`` for :ref:`field ionization <field_ionization>` using :ref:`Ouatu <ouatu>`'s rate (requires species with an :py:data:`atomic_number`)
   * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 

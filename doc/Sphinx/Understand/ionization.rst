@@ -77,6 +77,9 @@ This constitutes a minor violation of momentum conservation, as the ion mass is 
 
 In :program:`Smilei`, four models are available to compute the ionization rate of :eq:`ionizationRate1`.
 
+
+.. _ppt_adk:
+
 PPT-ADK model
 """"""""""""""""
 
@@ -105,6 +108,8 @@ of ionization of an electron with magnetic quantum number :math:`\vert m \vert=0
 greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
 
 
+.. _full_ppt_adk:
+
 PPT-ADK model with account for :math:`m\neq 0`
 """"""
 
@@ -123,6 +128,7 @@ With this algorithm, by knowing the atomic number A, we can assign a unique set 
 quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
 order during successive ionization. 
 
+.. _tong_lin:
 
 Barrier Suppression Ionization (Tong & Lin)
 """"""""
@@ -139,6 +145,7 @@ should be guessed from empirical data. When such data is
 not available, the formula can be used for qualitative analysis of the barrier-suppression
 ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce the results from this paper.
 
+.. _ouatu:
 
 Barrier Suppression Ionization (Ouatu)
 """"""""""
