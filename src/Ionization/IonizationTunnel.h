@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Ionization.h"
+#include "IonizationTables.h"
 #include "Particles.h"
 #include "Species.h"
 #include "Tools.h"
@@ -42,6 +43,59 @@ class IonizationTunnel : public Ionization
     const double IH = 13.598434005136;
     int rate_formula;
 };
+
+template <int Model>
+IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Ionization(params, species)
+{
+    DEBUG("Creating the Tunnel Ionizaton class");
+    double abs_m = 0;
+
+    // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
+    atomic_number_ = species->atomic_number_;
+    Potential.resize(atomic_number_);
+    Azimuthal_quantum_number.resize(atomic_number_);
+
+    one_third = 1.0 / 3.0;
+
+    alpha_tunnel.resize(atomic_number_);
+    beta_tunnel.resize(atomic_number_);
+    gamma_tunnel.resize(atomic_number_);
+
+    if (Model == 2) {
+        ionization_tl_parameter_ = species->ionization_tl_parameter_;  // species->ionization_tl_parameter_ is
+                                                                       // double Varies from 6 to 9. This is
+                                                                       // the alpha parameter in Tong-Lin
+                                                                       // exponential, see Eq. (6) in [M F
+                                                                       // Ciappina and S V Popruzhenko 2020
+                                                                       // Laser Phys. Lett. 17 025301 2020].
+        lambda_tunnel.resize(atomic_number_);
+    }
+
+    for (unsigned int Z = 0; Z < atomic_number_; Z++) {
+        DEBUG("Z : " << Z);
+
+        if (Model == 1) {
+            abs_m = abs(IonizationTables::magnetic_atomic_number(atomic_number_, Z));
+        }
+
+        Potential[Z] = IonizationTables::ionization_energy(atomic_number_, Z) * eV_to_au;
+        Azimuthal_quantum_number[Z] = IonizationTables::azimuthal_atomic_number(atomic_number_, Z);
+
+        DEBUG("Potential: " << Potential[Z] << " Az.q.num: " << Azimuthal_quantum_number[Z]);
+
+        double cst = ((double)Z + 1.0) * sqrt(2.0 / Potential[Z]);
+        alpha_tunnel[Z] = cst - 1.0 - abs_m;
+        beta_tunnel[Z] = pow(2, alpha_tunnel[Z]) * (8. * Azimuthal_quantum_number[Z] + 4.0) / (cst * tgamma(cst)) *
+                         Potential[Z] * au_to_w0 * tgamma(Azimuthal_quantum_number[Z] + abs_m + 1) /
+                         (tgamma(abs_m + 1) * tgamma(Azimuthal_quantum_number[Z] - abs_m + 1));
+        gamma_tunnel[Z] = 2.0 * sqrt(2.0 * Potential[Z] * 2.0 * Potential[Z] * 2.0 * Potential[Z]);
+        if (Model == 2) {
+            lambda_tunnel[Z] = ionization_tl_parameter_ * cst * cst / gamma_tunnel[Z];
+        }
+    }
+
+    DEBUG("Finished Creating the Tunnel Ionizaton class");
+}
 
 template <int Model>
 inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned int ipart_min, unsigned int ipart_max,
@@ -184,32 +238,52 @@ inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double 
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
 }
 
-// IonizationTunnel : 0
-template <>
-IonizationTunnel<0>::IonizationTunnel(Params &params, Species *species);
-
-// IonizationTunnelFullPPT: 1
-template <>
-IonizationTunnel<1>::IonizationTunnel(Params &params, Species *species);
-
 // Tong&Ling: 2
 template <>
-IonizationTunnel<2>::IonizationTunnel(Params &params, Species *species);
-
-template <>
 template <int place>
-inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E);
+inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
+{
+    const double delta = gamma_tunnel[Z] / E;
+    return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta) - E * lambda_tunnel[Z]);
+}
 
 // BSI: 3
 template <>
-IonizationTunnel<3>::IonizationTunnel(Params &params, Species *species);
+template <>
+inline double IonizationTunnel<3>::ionizationRate<1>(const int Z, const double E)
+{
+    double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
+
+    double BSI_rate_quadratic = 2.4 * (E * E) * ratio_of_IPs * ratio_of_IPs * au_to_w0;
+    double BSI_rate_linear = 0.8 * E * sqrt(ratio_of_IPs) * au_to_w0;
+    double delta = gamma_tunnel[Z] / E;
+    double Tunnel_rate = beta_tunnel[Z] * exp(-delta / 3.0 + alpha_tunnel[Z] * log(delta));
+
+    if (BSI_rate_quadratic >= BSI_rate_linear) {
+        rate_formula = 2;
+        return BSI_rate_linear;
+    } else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
+        rate_formula = 1;
+        return BSI_rate_quadratic;
+    } else {
+        rate_formula = 0;
+        return Tunnel_rate;
+    }
+}
 
 template <>
 template <>
-double IonizationTunnel<3>::ionizationRate<1>(const int Z, const double E);
-
-template <>
-template <>
-double IonizationTunnel<3>::ionizationRate<2>(const int Z, const double E);
+inline double IonizationTunnel<3>::ionizationRate<2>(const int newZ, const double E)
+{
+    double ratio_of_IPs_newZ = IH / IonizationTables::ionization_energy(atomic_number_, newZ);
+    double delta = gamma_tunnel[newZ] / E;
+    if (rate_formula == 1) {
+        return au_to_w0 * (2.4 * (E * E) * (ratio_of_IPs_newZ * ratio_of_IPs_newZ));
+    } else if (rate_formula == 2) {
+        return au_to_w0 * (0.8 * E * sqrt(ratio_of_IPs_newZ));
+    } else {
+        return beta_tunnel[newZ] * exp(-delta * one_third + alpha_tunnel[newZ] * log(delta));
+    }
+}
 
 #endif
