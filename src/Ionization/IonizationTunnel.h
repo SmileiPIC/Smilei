@@ -39,7 +39,6 @@ class IonizationTunnel : public Ionization
     std::vector<double> lambda_tunnel;
 
     // BSI
-    const double au_to_eV = 27.2116;
     const double IH = 13.598434005136;
     int rate_formula;
 };
