@@ -23,21 +23,15 @@ class IonizationTunnel : public Ionization
                            int ipart_ref = 0) override;
 
    private:
-    template <int place>
     inline double ionizationRate(const int Z, const double E);
 
-    const double one_third = 1. / 3.;
+    static constexpr double one_third = 1. / 3.;
     unsigned int atomic_number_;
     std::vector<double> Potential, Azimuthal_quantum_number;
     std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
 
-    // To be conditionally prepared
     // Tong&Lin
     std::vector<double> lambda_tunnel;
-
-    // BSI
-    const double IH = 13.598434005136;
-    int rate_formula;
 };
 
 template <int Model>
@@ -131,7 +125,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
         invE = 1. / E;
         factorJion = factorJion_0 * invE * invE;
         ran_p = patch->rand_->uniform();
-        IonizRate_tunnel[Z] = ionizationRate<1>(Z, E);
+        IonizRate_tunnel[Z] = ionizationRate(Z, E);
 
         // Total ionization potential (used to compute the ionization current)
         TotalIonizPot = 0.0;
@@ -163,7 +157,7 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
             // ionization
             while ((Pint_tunnel < ran_p) and (k_times < atomic_number_ - Zp1)) {
                 newZ = Zp1 + k_times;
-                IonizRate_tunnel[newZ] = ionizationRate<2>(newZ, E);
+                IonizRate_tunnel[newZ] = ionizationRate(newZ, E);
                 D_sum = 0.0;
                 P_sum = 0.0;
                 Mult *= IonizRate_tunnel[Z + k_times];
@@ -226,7 +220,6 @@ inline void IonizationTunnel<Model>::operator()(Particles *particles, unsigned i
 }
 
 template <int Model>
-template <int place>
 inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double E)
 {
     double delta = gamma_tunnel[Z] / E;
@@ -235,7 +228,6 @@ inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double 
 
 // Tong&Ling: 2
 template <>
-template <int place>
 inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 {
     const double delta = gamma_tunnel[Z] / E;
@@ -244,9 +236,9 @@ inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 
 // BSI: 3
 template <>
-template <>
-inline double IonizationTunnel<3>::ionizationRate<1>(const int Z, const double E)
+inline double IonizationTunnel<3>::ionizationRate(const int Z, const double E)
 {
+    constexpr double IH = 13.598434005136;
     double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
 
     double BSI_rate_quadratic = 2.4 * (E * E) * ratio_of_IPs * ratio_of_IPs * au_to_w0;
@@ -255,29 +247,11 @@ inline double IonizationTunnel<3>::ionizationRate<1>(const int Z, const double E
     double Tunnel_rate = beta_tunnel[Z] * exp(-delta / 3.0 + alpha_tunnel[Z] * log(delta));
 
     if (BSI_rate_quadratic >= BSI_rate_linear) {
-        rate_formula = 2;
         return BSI_rate_linear;
     } else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
-        rate_formula = 1;
         return BSI_rate_quadratic;
     } else {
-        rate_formula = 0;
         return Tunnel_rate;
-    }
-}
-
-template <>
-template <>
-inline double IonizationTunnel<3>::ionizationRate<2>(const int newZ, const double E)
-{
-    double ratio_of_IPs_newZ = IH / IonizationTables::ionization_energy(atomic_number_, newZ);
-    double delta = gamma_tunnel[newZ] / E;
-    if (rate_formula == 1) {
-        return au_to_w0 * (2.4 * (E * E) * (ratio_of_IPs_newZ * ratio_of_IPs_newZ));
-    } else if (rate_formula == 2) {
-        return au_to_w0 * (0.8 * E * sqrt(ratio_of_IPs_newZ));
-    } else {
-        return beta_tunnel[newZ] * exp(-delta * one_third + alpha_tunnel[newZ] * log(delta));
     }
 }
 
