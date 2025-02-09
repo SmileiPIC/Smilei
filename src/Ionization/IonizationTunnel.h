@@ -26,17 +26,13 @@ class IonizationTunnel : public Ionization
     template <int place>
     inline double ionizationRate(const int Z, const double E);
 
-    double one_third;
+    const double one_third = 1. / 3.;
     unsigned int atomic_number_;
     std::vector<double> Potential, Azimuthal_quantum_number;
     std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel;
 
     // To be conditionally prepared
-    // FullPPT
-    std::vector<double> Magnetic_quantum_number;
-
     // Tong&Lin
-    double ionization_tl_parameter_;
     std::vector<double> lambda_tunnel;
 
     // BSI
@@ -49,13 +45,12 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
 {
     DEBUG("Creating the Tunnel Ionizaton class");
     double abs_m = 0;
+    double ionization_tl_parameter_;
 
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     atomic_number_ = species->atomic_number_;
     Potential.resize(atomic_number_);
     Azimuthal_quantum_number.resize(atomic_number_);
-
-    one_third = 1.0 / 3.0;
 
     alpha_tunnel.resize(atomic_number_);
     beta_tunnel.resize(atomic_number_);
