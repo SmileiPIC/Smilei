@@ -30,198 +30,10 @@ Main(
 	
 )
 
-# Tunnel
-Species(
-	name = 'hydrogen_tunnel',
-	ionization_model = 'tunnel',
-	ionization_electrons = 'electron_tunnel',
-	atomic_number = 1,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'carbon_tunnel',
-	ionization_model = 'tunnel',
-	ionization_electrons = 'electron_tunnel',
-	atomic_number = 6,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'electron_tunnel',
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
-)
-
-# tunnel_full_PPT
-Species(
-	name = 'hydrogen_tunnel_full_PPT',
-	ionization_model = 'tunnel_full_PPT',
-	ionization_electrons = 'electron_tunnel_full_PPT',
-	atomic_number = 1,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'carbon_tunnel_full_PPT',
-	ionization_model = 'tunnel_full_PPT',
-	ionization_electrons = 'electron_tunnel_full_PPT',
-	atomic_number = 6,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'electron_tunnel_full_PPT',
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
-)
-
-# Tong & Lin
-Species(
-	name = 'hydrogen_tunnel_TL',
-	ionization_model = 'tunnel_TL',
-	ionization_electrons = 'electron_tunnel_TL',
-	atomic_number = 1,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'carbon_tunnel_TL',
-	ionization_model = 'tunnel_TL',
-	ionization_electrons = 'electron_tunnel_TL',
-	atomic_number = 6,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'electron_tunnel_TL',
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
-)
-
-# BSI
-Species(
-	name = 'hydrogen_tunnel_BSI',
-	ionization_model = 'tunnel_BSI',
-	ionization_electrons = 'electron_tunnel_BSI',
-	atomic_number = 1,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'carbon_tunnel_BSI',
-	ionization_model = 'tunnel_BSI',
-	ionization_electrons = 'electron_tunnel_BSI',
-	atomic_number = 6,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'electron_tunnel_BSI',
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
-)
-
 def By(t):
 	return 1e-7 * math.sin(t)
 def Bz(t):
-	return 10 * math.sin(t)
+	return 1. * math.sin(t)
 
 Laser(
 	box_side = "xmin",
@@ -237,11 +49,57 @@ DiagFields(
 )
 
 for i, model in enumerate(["tunnel", "tunnel_full_PPT", "tunnel_TL", "tunnel_BSI"]):
+    Species(
+        name = 'hydrogen_'+model,
+        ionization_model = model,
+        ionization_electrons = 'electron_'+model,
+        atomic_number = 1,
+        position_initialization = 'regular',
+        momentum_initialization = 'cold',
+        particles_per_cell = 40,
+        mass = 1836.0*1000.,
+        charge = 0.0,
+        number_density = 0.1,
+        boundary_conditions = [
+            ["remove", "remove"],
+        ],
+    )
+
+    Species(
+        name = 'carbon_'+model,
+        ionization_model = model,
+        ionization_electrons = 'electron_'+model,
+        atomic_number = 6,
+        position_initialization = 'regular',
+        momentum_initialization = 'cold',
+        particles_per_cell = 40,
+        mass = 1836.0*1000.,
+        charge = 0.0,
+        number_density = 0.1,
+        boundary_conditions = [
+            ["remove", "remove"],
+        ],
+    )
+
+    Species(
+        name = 'electron_'+model,
+        position_initialization = 'regular',
+        momentum_initialization = 'cold',
+        particles_per_cell = 0,
+        mass = 1.0,
+        charge = -1.0,
+        charge_density = 0.0,
+        boundary_conditions = [
+            ["remove", "remove"],
+        ],
+        keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+    )
+
     DiagParticleBinning(
         name = "hydrogen_"+model,
         deposited_quantity = "weight",
         every = 20,
-        species = ["hydrogen_tunnel"],
+        species = ["hydrogen_"+model],
         axes = [
             ["charge",  -0.5, 1.5, 2]
         ]
@@ -251,7 +109,7 @@ for i, model in enumerate(["tunnel", "tunnel_full_PPT", "tunnel_TL", "tunnel_BSI
         name = "carbon_"+model,
         deposited_quantity = "weight",
         every = 20,
-        species = ["carbon_tunnel"],
+        species = ["carbon_"+model],
         axes = [
             ["charge",  -0.5, 6.5, 7]
         ]
