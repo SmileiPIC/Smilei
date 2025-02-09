@@ -34,7 +34,7 @@ class IonizationTunnel : public Ionization
     // FullPPT
     std::vector<double> Magnetic_quantum_number;
 
-    // Tong&Ling
+    // Tong&Lin
     double ionization_tl_parameter_;
     std::vector<double> lambda_tunnel;
 
