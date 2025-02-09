@@ -35,7 +35,7 @@ IonizationTunnel<1>::IonizationTunnel(Params &params, Species *species) : Ioniza
         beta_tunnel[Z] = pow(2, alpha_tunnel[Z]) * (8. * Azimuthal_quantum_number[Z] + 4.0) / (cst * tgamma(cst)) *
                          Potential[Z] * au_to_w0 * tgamma(Azimuthal_quantum_number[Z] + abs_m + 1) /
                          (tgamma(abs_m + 1) * tgamma(Azimuthal_quantum_number[Z] - abs_m + 1));
-        gamma_tunnel[Z] = 2.0 * pow(2.0 * Potential[Z], 1.5);
+        gamma_tunnel[Z] = 2.0 * 2.0 * Potential[Z] * sqrt(2.0 * Potential[Z]);
     }
 
     DEBUG("Finished Creating the Tunnel Ionizaton class");
