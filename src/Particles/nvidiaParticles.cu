@@ -140,6 +140,7 @@ namespace detail {
                                    const Patch&     a_parent_patch );
 
         double   inverse_of_x_cell_dimension_;
+        SizeType local_x_dimension_in_cluster_;
         int CellStartingGlobalIndex_for_x_;
     };
 
@@ -173,6 +174,7 @@ namespace detail {
     public:
         double   inverse_of_x_cell_dimension_;
         double   inverse_of_y_cell_dimension_;
+        SizeType local_x_dimension_in_cluster_;
         SizeType local_y_dimension_in_cluster_;
         int CellStartingGlobalIndex_for_x_;
         int CellStartingGlobalIndex_for_y_;
@@ -212,6 +214,7 @@ namespace detail {
         double   inverse_of_x_cell_dimension_;
         double   inverse_of_y_cell_dimension_;
         double   inverse_of_z_cell_dimension_;
+        SizeType local_x_dimension_in_cluster_;
         SizeType local_y_dimension_in_cluster_;
         SizeType local_z_dimension_in_cluster_;
         int CellStartingGlobalIndex_for_x_;
@@ -384,6 +387,7 @@ namespace detail {
                                          SizeType local_x_dimension_in_cell,
                                          int CellStartingGlobalIndex_for_x)
         : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
+        , local_x_dimension_in_cluster_{ local_x_dimension_in_cell / kClusterWidth }
         , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
     {
     }
@@ -396,6 +400,7 @@ namespace detail {
                                          int CellStartingGlobalIndex_for_x, int CellStartingGlobalIndex_for_y )
         : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
         , inverse_of_y_cell_dimension_{ inverse_y_cell_dimension }
+        , local_x_dimension_in_cluster_{ local_x_dimension_in_cell / kClusterWidth }
         , local_y_dimension_in_cluster_{ local_y_dimension_in_cell / kClusterWidth }
         , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
         , CellStartingGlobalIndex_for_y_{CellStartingGlobalIndex_for_y}
@@ -414,6 +419,7 @@ namespace detail {
         : inverse_of_x_cell_dimension_{ inverse_x_cell_dimension }
         , inverse_of_y_cell_dimension_{ inverse_y_cell_dimension }
         , inverse_of_z_cell_dimension_{ inverse_z_cell_dimension }
+        , local_x_dimension_in_cluster_{ local_x_dimension_in_cell / kClusterWidth }
         , local_y_dimension_in_cluster_{ local_y_dimension_in_cell / kClusterWidth }
         , local_z_dimension_in_cluster_{ local_z_dimension_in_cell / kClusterWidth }
         , CellStartingGlobalIndex_for_x_{CellStartingGlobalIndex_for_x}
@@ -467,8 +473,8 @@ namespace detail {
         static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
         static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
 
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = min(local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell, local_x_dimension_in_cluster_ - 1);
+        const SizeType local_y_particle_cluster_coordinate_in_cluster = min(local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell, local_y_dimension_in_cluster_ - 1);
 
         const SizeType y_stride = local_y_dimension_in_cluster_;
 
