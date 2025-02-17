@@ -111,7 +111,7 @@ greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
 .. _full_ppt_adk:
 
 PPT-ADK model with account for :math:`m\neq 0`
-""""""
+""""""""""""""""""""""""""""""""""""""""""""""
 
 In this model, dependence on the magnetic quantum number :math:`m` is added. 
 
@@ -131,7 +131,7 @@ order during successive ionization.
 .. _tong_lin:
 
 Barrier Suppression Ionization (Tong & Lin)
-""""""""
+""""""""""""""""""""""""""""""""""""""""""""""
 
 The formula proposed by Tong and Lin [Tong2005]_ extends the tunnelling ionization rate to the barrier-suppression
 regime. This is achieved by introducing the empirical factor in :eq:`ionizationRate1`:
@@ -148,7 +148,7 @@ ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce t
 .. _ouatu:
 
 Barrier Suppression Ionization (Ouatu)
-""""""""""
+"""""""""""""""""""""""""""""""""""""""""""
 
 This is a piecewise function implemented by [Ouatu2022]_ as follows:
 
@@ -160,7 +160,7 @@ This is a piecewise function implemented by [Ouatu2022]_ as follows:
        \Gamma_{BSI}, & E > E_2 
    \end{cases}
 
-where :math:`\Gamma_{BM} = 2.4\omega_a(E/E_a)^2(I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8\omega_a(E/E_a)\sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Kostyukov2018]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\omega_{ADK}` with :math:`\omega_{BM}` and :math:`\omega_{BM}` with :math:`\omega_{BSI}` respectively, such that the function is continuous, :math:`\omega_a` and :math:`E_a` are the atomic units of frequency and electric field respectively and :math:`I_H` is the ionisation potential of hydrogen.
+where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Kostyukov2018]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
 
 
 
