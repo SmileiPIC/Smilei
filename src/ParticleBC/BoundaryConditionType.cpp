@@ -120,7 +120,8 @@ void reflect_particle_sup( Species *species, int imin, int imax, int direction, 
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
-            position[ ipart ] = 2*limit_sup - position[ ipart ];
+            // The upper boundary does not belong to the domain so the reflection is done just before it.
+            position[ ipart ] = 2*std::nextafter(limit_sup, 0) - position[ ipart ];
             momentum[ ipart ] = -momentum[ ipart ];
         }
     }
@@ -169,7 +170,7 @@ void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, 
             double v2 = p2 * invgf[ipart]*invgf[ipart];
             double delta = b*b - 4.*v2*( r2 - limit_sup*limit_sup );
             
-            //delta is neceseraliy >=0 otherwise there are no solution which means that something unsual happened
+            //delta is neceseraliy >=0 otherwise there is no solution which means that something unsual happened
             if( delta < 0 ) {
                 ERROR( "There are no solution to reflexion. This should never happen" );
             }
@@ -193,9 +194,9 @@ void refl_particle_AM( Species *species, int imin, int imax, int /*direction*/, 
             momentum_z[ipart] = (-pr*z0 + pt*y0)/limit_sup;
  
             //Update new particle position as a movement from (y0,z0) with new momentum during time t:
-    
-            position_y[ ipart ] = y0 + momentum_y[ipart]*invgf[ipart]*t ;
-            position_z[ ipart ] = z0 + momentum_z[ipart]*invgf[ipart]*t ;
+            // The upper boundary point (y0,z0) does not belong to the simulation domain so the reflection is done on the point just before towards the center of the domain.
+            position_y[ ipart ] = std::nextafter(y0, 0.) + momentum_y[ipart]*invgf[ipart]*t ;
+            position_z[ ipart ] = std::nextafter(z0, 0.) + momentum_z[ipart]*invgf[ipart]*t ;
         }
     }    
 }
@@ -785,8 +786,8 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 
                 }// endif on v vs. thermal_velocity_
 
-                // position of the particle after reflection
-                position[ ipart ] = 2.*limit_sup - position[ ipart ];
+                // The upper boundary does not belong to the domain so the reflection is done just before it.
+                position[ ipart ] = 2*std::nextafter(limit_sup, 0) - position[ ipart ];
 
                 // energy lost during thermalization
                 LorentzFactor = sqrt( 1. + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );

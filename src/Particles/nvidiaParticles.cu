@@ -439,7 +439,7 @@ namespace detail {
         // cell amount) for a given area.
         static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
 
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = std::nextafter(local_x_particle_coordinate_in_cell, 0) / x_cluster_dimension_in_cell;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
 
         const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster;
 
@@ -467,8 +467,8 @@ namespace detail {
         static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
         static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
 
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = std::nextafter(local_x_particle_coordinate_in_cell, 0) / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = std::nextafter(local_y_particle_coordinate_in_cell, 0) / y_cluster_dimension_in_cell;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
 
         const SizeType y_stride = local_y_dimension_in_cluster_;
 
@@ -504,9 +504,9 @@ namespace detail {
         static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
         static constexpr SizeType z_cluster_dimension_in_cell = kClusterWidth;
 
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = std::nextafter(local_x_particle_coordinate_in_cell, 0) / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = std::nextafter(local_y_particle_coordinate_in_cell, 0) / y_cluster_dimension_in_cell;
-        const SizeType local_z_particle_cluster_coordinate_in_cluster = std::nextafter(local_z_particle_coordinate_in_cell, 0) / z_cluster_dimension_in_cell;
+        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
+        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
+        const SizeType local_z_particle_cluster_coordinate_in_cluster = local_z_particle_coordinate_in_cell / z_cluster_dimension_in_cell;
 
         const SizeType y_stride = local_y_dimension_in_cluster_;
         const SizeType z_stride = local_z_dimension_in_cluster_;
