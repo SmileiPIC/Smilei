@@ -25,13 +25,20 @@ namespace smilei {
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma( "acc routine seq" )
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     #define SMILEI_ACCELERATOR_ATOMIC _Pragma( "acc atomic" )
+#if __CUDACC_VER_MAJOR__==12 && __CUDACC_VER_MINOR__ < 11 || __CUDACC_VER_MAJOR__<12 
+    #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::cuda::par
+#else
     #define SMILEI_ACCELERATOR_ASYNC_POLYCY thrust::cuda::par_nosync
+#endif
     #define SMILEI_ACCELERATOR_DEVICE_SYNC() cudaDeviceSynchronize()
 #else
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE
     #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
     #define SMILEI_ACCELERATOR_ATOMIC
 #endif
+
+
+
 
 
             ////////////////////////////////////////////////////////////////////////////////
