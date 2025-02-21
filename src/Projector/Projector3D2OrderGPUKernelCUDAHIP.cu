@@ -59,7 +59,7 @@ namespace cudahip {
                 __device__ void
                 AddNoReturn( float *a_pointer, float a_value )
                 {
-        #if defined( __gfx90a__ )
+        #if defined( __gfx90a__ ) ||  defined (__gfx942__)
                     ::unsafeAtomicAdd( a_pointer, a_value );
 
                     // uint32_t *as_uint32{ reinterpret_cast<uint32_t *>( a_pointer ) };
@@ -79,7 +79,7 @@ namespace cudahip {
                 __device__ void
                 AddNoReturn( double *a_pointer, double a_value )
                 {
-        #if defined( __gfx90a__ )
+        #if defined( __gfx90a__ ) ||  defined (__gfx942__)
                     ::unsafeAtomicAdd( a_pointer, a_value );
         #else
                     ::atomicAdd( a_pointer, a_value );
@@ -91,7 +91,7 @@ namespace cudahip {
                 __device__ void
                 AddNoReturn( double *a_pointer, double a_value )
                 {
-        #if defined( __gfx90a__ )
+        #if defined( __gfx90a__ ) ||  defined (__gfx942__)
                     ::unsafeAtomicAdd( a_pointer, a_value );
         #else
                     ::atomicAdd( a_pointer, a_value );
