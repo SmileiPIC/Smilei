@@ -21,7 +21,7 @@ Collisions::Collisions(
     coeff1_( 4.046650232e-21*params.reference_angular_frequency_SI ), // h*omega/(2*me*c^2)
     coeff2_( 2.817940327e-15*params.reference_angular_frequency_SI/299792458. ), // re omega / c
     coeff3_( coeff2_ * coulomb_log_factor_ ),
-    coeff4_( pow( 3.*coeff2_, -1./3. ) )
+    coeff4_( 1. / cbrt( 3.*coeff2_ ) )
 {
 }
 

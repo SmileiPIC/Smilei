@@ -51,7 +51,7 @@ public:
                 
                 // Reaction occurs
                 
-                double W = min( D.W[0][i], D.W[1][i] ) / rate_multiplier_;
+                double W = std::min( D.W[0][i], D.W[1][i] ) / rate_multiplier_;
                 
                 // Reduce the weight of both reactants
                 // If becomes zero, then the particle will be discarded later

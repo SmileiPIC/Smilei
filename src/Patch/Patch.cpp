@@ -149,10 +149,10 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
         min_local_[i] = ( Pcoordinates[i]   )*( params.patch_size_[i]*params.cell_length[i] );
         max_local_[i] = ( Pcoordinates[i]+1 )*( params.patch_size_[i]*params.cell_length[i] );
         cell_starting_global_index[i] += Pcoordinates[i]*params.patch_size_[i];
-	cell_starting_global_index_noGC[i] = Pcoordinates[i]*params.patch_size_[i];
+        cell_starting_global_index_noGC[i] = Pcoordinates[i]*params.patch_size_[i];
         cell_starting_global_index[i] -= params.oversize[i];	
         center_[i] = ( min_local_[i]+max_local_[i] )*0.5;
-        radius += pow( max_local_[i] - center_[i] + params.cell_length[i], 2 );
+        radius += ( max_local_[i] - center_[i] + params.cell_length[i] ) * ( max_local_[i] - center_[i] + params.cell_length[i] );
     }
     radius = sqrt( radius );
 
@@ -327,9 +327,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             min_local_[iDim] =  params.offset_map[iDim][ijk[iDim]]                            * params.cell_length[iDim];
                             max_local_[iDim] = (params.offset_map[iDim][ijk[iDim]]+params.region_size_[iDim]) * params.cell_length[iDim];
                             center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
-                            radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
+                            radius += ( max_local_[iDim] - center_[iDim] + params.cell_length[iDim]) * ( max_local_[iDim] - center_[iDim] + params.cell_length[iDim]);
                             cell_starting_global_index[iDim] = params.offset_map[iDim][ijk[iDim]];
-			    cell_starting_global_index_noGC[iDim] = params.offset_map[iDim][ijk[iDim]];
+                            cell_starting_global_index_noGC[iDim] = params.offset_map[iDim][ijk[iDim]];
                             // Neighbor before
                             if( ijk[iDim] > 0 ) {
                                 unsigned int IJK[3] = { ijk[0], ijk[1], ijk[2] };
@@ -396,7 +396,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             max_local_[iDim] = params.global_size_[iDim]*params.cell_length[iDim];
 
             center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
-            radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
+            radius += ( max_local_[iDim] - center_[iDim] + params.cell_length[iDim] ) * ( max_local_[iDim] - center_[iDim] + params.cell_length[iDim] );
 
             cell_starting_global_index[iDim] = -oversize[iDim];
 

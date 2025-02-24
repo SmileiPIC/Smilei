@@ -93,7 +93,6 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             by += vecLaser[ilaser]->getAmplitude0( pos, time_dual, 0, 0 );
             bz += vecLaser[ilaser]->getAmplitude1( pos, time_dual, 0, 0 );
         }
-        
 #ifdef SMILEI_ACCELERATOR_GPU_OACC
         const int sizeofE1 = E[1]->number_of_points_;
         const int sizeofE2 = E[2]->number_of_points_;
@@ -106,6 +105,8 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         #pragma acc parallel present(E1[0:sizeofE1],E2[0:sizeofE2],B1[0:sizeofB1],B2[0:sizeofB2])
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         #pragma omp target
+	#pragma omp teams distribute parallel for
+	for (int i=0; i<1;++i)
 #endif
         {
             //( *By1D )( iB_ ) = -sign_*Alpha_*( *Ez1D )( iE_ ) + Beta_*( ( *By1D )( iB_old_ )-By_val_ ) + Gamma_*by + By_val_;

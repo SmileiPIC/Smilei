@@ -6,6 +6,9 @@ First, make sure you have a recent version of CMAKE, and the other libraries
 to compile Smilei on CPU as usual. In particular, for this example, you
 need GCC <= 12.
 
+The installation protocol showed below uses the openmpi included in nvhpc. This approach often results in segfault at runtime (note that nvidia will remove openmpi from nvhpc in the future). 
+The "proper" way, which is much harder, consists in installing openmpi compiled with nvhpc (  
+
 Make a directory to store all the nvidia tools. We call it $NVDIR:
 
 .. code:: bash
@@ -72,3 +75,20 @@ To run:
 
   source nvidia_env.sh
   smilei namelist.py
+
+
+As an example of a "simple" openmpi installation
+Openmpi dependencies such as zlib, hwloc and libevent should first be compiled with nvc++ 
+
+.. code:: bash
+  export cuda=PATH_TO_YOUR_NVHPC_FOLDER/Linux_x86_64/24.5/cuda
+  wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.5.tar.gz
+  tar -xzf openmpi-4.1.5.tar.gz
+  cd openmpi-4.1.5
+  mkdir build
+  cd build
+  CC=nvc++ CXX=nvc++ CFLAGS=-fPIC CXXFLAGS=-fPIC ../configure --with-hwloc --enable-mpirun-prefix-by-default   --prefix=PATH_TO_openmpi/openmpi-4.1.6/build --enable-mpi-cxx  --without-verb --with-cuda=$cuda --disable-mpi-fortran -with-libevent=PATH_TO_libevent/libevent-2.1.12-stable/build
+  make -j 4 all
+  make install
+
+Because of the complexity of the configure for openmpi, we recommend using your supercomputer support to use smilei on GPUs.

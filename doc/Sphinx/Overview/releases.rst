@@ -25,10 +25,14 @@ Changes made in the repository (not released)
 
 * **Features**:
 
+  * Electron-ion collisions now include screening from bound electrons,
+    thus supporting electron-neutral collisions.
   * Prescribed fields in AM geometry.
   * Particle reflective boundary conditions at Rmax in AM geometry.
   * 1st order Ruyten shape function in AM geometry.
   * Support for collisions in single mode AM geometry.
+  * Remove experimental support for task parallelization.
+  * Low dispersion Maxwell solver ``"Terzani"`` from `this article <https://doi.org/10.1016/j.cpc.2019.04.007>`_ in ``"AMcylindrical"`` geometry.
 
 * **Bug fixes**:
 

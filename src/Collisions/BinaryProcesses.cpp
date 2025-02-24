@@ -80,7 +80,6 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs ) :
 
 BinaryProcesses::~BinaryProcesses()
 {
-    MESSAGE( nuclear_reactions_ );
     delete nuclear_reactions_;
     delete collisional_ionization_;
 }
@@ -191,7 +190,8 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
             // compute debye length squared in code units
             debye2_ptr[ibin] = 1./inv_D2;
             // apply lower limit to the debye length (minimum interatomic distance)
-            double rmin2 = pow( coeff*density_tot, -2./3. );
+            double rmin2 = 1. / cbrt( coeff*density_tot );
+            rmin2 *= rmin2;
             if( debye2_ptr[ibin] < rmin2 ) {
                 debye2_ptr[ibin] = rmin2;
             }

@@ -39,10 +39,10 @@ public:
             Particles *& pi = D.p[which_i][i];
             uint32_t & ie = D.i[which_e][i];
             uint32_t & ii = D.i[which_i][i];
-            double & We = D.W[which_e][i];
-            double & Wi = D.W[which_i][i];
-            double & gammae = D.gamma[which_e][i];
-            double & gammai = D.gamma[which_i][i];
+            auto & We = D.W[which_e][i];
+            auto & Wi = D.W[which_i][i];
+            auto & gammae = D.gamma[which_e][i];
+            auto & gammai = D.gamma[which_i][i];
             short & qe = D.q[which_e][i];
             short & qi = D.q[which_i][i];
             
@@ -55,9 +55,9 @@ public:
             double K = D.dt_correction[i] * sqrt( D.gamma0[i]*D.gamma0[i]-1. )/gammai;
             
             // Fetch cross sections
-            const vector<vector<double> > & crossSection = DB_crossSection[dataBaseIndex];
-            const vector<vector<double> > & transferredEnergy = DB_transferredEnergy[dataBaseIndex];
-            const vector<vector<double> > & lostEnergy = DB_lostEnergy[dataBaseIndex];
+            const std::vector<std::vector<double> > & crossSection = DB_crossSection[dataBaseIndex];
+            const std::vector<std::vector<double> > & transferredEnergy = DB_transferredEnergy[dataBaseIndex];
+            const std::vector<std::vector<double> > & lostEnergy = DB_lostEnergy[dataBaseIndex];
             
             // Loop for multiple ionization
             // k+1 is the number of ionizations

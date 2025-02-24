@@ -38,12 +38,6 @@ public:
     //!Wrapper
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell,  int ipart_ref ) override final;
     
-    //!Wrapper for projection on buffers
-    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int, Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
-
-    //!Wrapper for projection on AM buffers
-    void currentsAndDensityWrapperOnAMBuffers( ElectroMagn *, std::complex<double> *, std::complex<double> *, std::complex<double> *, std::complex<double> *, int, int, Particles &, SmileiMPI *, int, int, int, bool, int = 0 ) override final {};
-
     // Project susceptibility
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override final;
     

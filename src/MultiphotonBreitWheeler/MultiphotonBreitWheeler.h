@@ -70,10 +70,10 @@ public:
     {
 
         return inv_norm_E_Schwinger_
-               * std::sqrt( std::fabs( std::pow( Ex*kx + Ey*ky + Ez*kz, 2 )
-                             - std::pow( gamma*Ex - By*kz + Bz*ky, 2 )
-                             - std::pow( gamma*Ey - Bz*kx + Bx*kz, 2 )
-                             - std::pow( gamma*Ez - Bx*ky + By*kx, 2 ) ) );
+               * std::sqrt( std::fabs( ( Ex*kx + Ey*ky + Ez*kz) * (Ex*kx + Ey*ky + Ez*kz)
+                             - ( gamma*Ex - By*kz + Bz*ky ) * ( gamma*Ex - By*kz + Bz*ky )
+                             - ( gamma*Ey - Bz*kx + Bx*kz ) * ( gamma*Ey - Bz*kx + Bx*kz )
+                             - ( gamma*Ez - Bx*ky + By*kx ) * ( gamma*Ez - Bx*ky + By*kx ) ) );
     };
 
     //! Computation of the quantum parameter for the given
@@ -141,8 +141,6 @@ public:
     // Local array of new pairs of electron-positron per bin
     std::vector<Particles *> new_pair_per_bin;
 
-    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
-    void joinNewElectronPositronPairs(Particles **new_pair,unsigned int Nbins);
 
 private:
 

@@ -566,27 +566,27 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // 1. update u3
                     ( *u3_np1_x_pml )( i, j, k ) = -kappa_prime_x_p[i]*sigma_x_p[i] ;
                     ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + sigma_prime_x_p[i]*kappa_x_p[i] ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*pow(kappa_x_p[i],2) ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * pow(sigma_x_p[i],2) * dA_over_dx / pow(kappa_x_p[i],4) ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*kappa_x_p[i]*kappa_x_p[i] ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * sigma_x_p[i]*sigma_x_p[i] * dA_over_dx / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_x_pml )( i, j, k ) = ( ( *u3_np1_x_pml )( i, j, k ) - ( *u3_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     //( *u3_np1_x_pml )( i, j, k ) = ( ( *u3_np1_x_pml )( i, j, k ) - ( *u3_nm1_x_pml )( i, j, k )*( 1. + 1.0*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 1.0*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+pow(kappa_x_p[i],2)*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
+                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+kappa_x_p[i]*kappa_x_p[i]*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) + sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) * sigma_x_p[i] ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
-                    //( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*( *u3_np1_x_pml )( i, j, k ) ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
+                    //( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*( *u3_np1_x_pml )( i, j, k ) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_x_pml )( i, j, k ) = ( ( *u2_np1_x_pml )( i, j, k ) - ( *u2_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     //( *u2_np1_x_pml )( i, j, k ) = ( ( *u2_np1_x_pml )( i, j, k ) - ( *u2_nm1_x_pml )( i, j, k )*( 1. + 1.0*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 1.0*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_x_pml )( i, j, k ) = ( sigma_prime_x_p[i]*kappa_x_p[i] - 3*kappa_prime_x_p[i]*sigma_x_p[i] ) * dA_over_dx ;
                     ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) + 2.*sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
-                    //( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*( *u2_np1_x_pml )( i, j, k ) ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
+                    //( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*( *u2_np1_x_pml )( i, j, k ) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_x_pml )( i, j, k ) = ( ( *u1_np1_x_pml )( i, j, k ) - ( *u1_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     //( *u1_np1_x_pml )( i, j, k ) = ( ( *u1_np1_x_pml )( i, j, k ) - ( *u1_nm1_x_pml )( i, j, k )*( 1. + 1.0*dt*( i1*k0 + alpha_x_p[i] + sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 1.0*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
@@ -594,10 +594,10 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Envelop udpate with correction/source terms
                     // ----
                     // 4.a update A : Correction/source terms
-                    source_term_x = ( kappa_x_p[i] - pow(kappa_x_p[i],3) )*d2A_over_dx2 ;
+                    source_term_x = ( kappa_x_p[i] - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) )*d2A_over_dx2 ;
                     source_term_x = source_term_x - kappa_prime_x_p[i]*dA_over_dx ;
-                    source_term_x = source_term_x - pow(kappa_x_p[i],3)*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
-                    source_term_x = dt*dt*source_term_x / pow(kappa_x_p[i],3) ;
+                    source_term_x = source_term_x - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
+                    source_term_x = dt*dt*source_term_x / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // ----
                     ( *A_np1_pml )( i, j, k ) = 1.*source_term_x - dt*dt*( *A_n_pml )( i, j, k )*( *Chi_n_pml )(i, j, k) ;
                     //( *A_np1_pml )( i, j, k ) = 0;
@@ -682,60 +682,60 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // 1. update u3
                     ( *u3_np1_x_pml )( i, j, k ) = -kappa_prime_x_p[i]*sigma_x_p[i] ;
                     ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + sigma_prime_x_p[i]*kappa_x_p[i] ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*pow(kappa_x_p[i],2) ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * pow(sigma_x_p[i],2) * dA_over_dx / pow(kappa_x_p[i],4) ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*kappa_x_p[i]*kappa_x_p[i] ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * sigma_x_p[i]*sigma_x_p[i] * dA_over_dx / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_x_pml )( i, j, k ) = ( ( *u3_np1_x_pml )( i, j, k ) - ( *u3_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+pow(kappa_x_p[i],2)*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
+                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+kappa_x_p[i]*kappa_x_p[i]*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) + sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) * sigma_x_p[i] ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_x_pml )( i, j, k ) = ( ( *u2_np1_x_pml )( i, j, k ) - ( *u2_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_x_pml )( i, j, k ) = ( sigma_prime_x_p[i]*kappa_x_p[i] - 3*kappa_prime_x_p[i]*sigma_x_p[i] ) * dA_over_dx ;
                     ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) + 2.*sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_x_pml )( i, j, k ) = ( ( *u1_np1_x_pml )( i, j, k ) - ( *u1_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 1. update u3
                     ( *u3_np1_y_pml )( i, j, k ) = -kappa_prime_y_p[j]*sigma_y_p[j] ;
                     ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + sigma_prime_y_p[j]*kappa_y_p[j] ;
-                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + alpha_prime_y_p[j]*pow(kappa_y_p[j],2) ;
-                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) * pow(sigma_y_p[j],2) * dA_over_dy / pow(kappa_y_p[j],4) ;
+                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + alpha_prime_y_p[j]*kappa_y_p[j]*kappa_y_p[j] ;
+                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) * sigma_y_p[j]*sigma_y_p[j] * dA_over_dy / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_y_pml )( i, j, k ) = ( ( *u3_np1_y_pml )( i, j, k ) - ( *u3_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_y_pml )( i, j, k ) = (2.*sigma_prime_y_p[j]*kappa_y_p[j]+pow(kappa_y_p[j],2)*alpha_prime_y_p[j]-3.*kappa_prime_y_p[j]*sigma_y_p[j])*dA_over_dy ;
+                    ( *u2_np1_y_pml )( i, j, k ) = (2.*sigma_prime_y_p[j]*kappa_y_p[j]+kappa_y_p[j]*kappa_y_p[j]*alpha_prime_y_p[j]-3.*kappa_prime_y_p[j]*sigma_y_p[j])*dA_over_dy ;
                     ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) + sigma_y_p[j]*kappa_y_p[j]*d2A_over_dy2 ;
                     ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) * sigma_y_p[j] ;
-                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) - pow(kappa_y_p[j],3)*0.5*( ( *u3_np1_y_pml )( i, j, k ) + ( *u3_nm1_y_pml )( i, j, k ) ) ;
-                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) / pow(kappa_y_p[j],4) ;
+                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u3_np1_y_pml )( i, j, k ) + ( *u3_nm1_y_pml )( i, j, k ) ) ;
+                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_y_pml )( i, j, k ) = ( ( *u2_np1_y_pml )( i, j, k ) - ( *u2_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_y_pml )( i, j, k ) = ( sigma_prime_y_p[j]*kappa_y_p[j] - 3*kappa_prime_y_p[j]*sigma_y_p[j] ) * dA_over_dy ;
                     ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) + 2.*sigma_y_p[j]*kappa_y_p[j]*d2A_over_dy2 ;
-                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) - pow(kappa_y_p[j],3)*0.5*( ( *u2_np1_y_pml )( i, j, k ) + ( *u2_nm1_y_pml )( i, j, k ) ) ;
-                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) / pow(kappa_y_p[j],4) ;
+                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u2_np1_y_pml )( i, j, k ) + ( *u2_nm1_y_pml )( i, j, k ) ) ;
+                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_y_pml )( i, j, k ) = ( ( *u1_np1_y_pml )( i, j, k ) - ( *u1_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // ----
                     // Envelop udpate with correction/source terms
                     // ----
                     // 4.a update A : Correction/source terms
-                    source_term_x = ( kappa_x_p[i] - pow(kappa_x_p[i],3) )*d2A_over_dx2 ;
+                    source_term_x = ( kappa_x_p[i] - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) )*d2A_over_dx2 ;
                     source_term_x = source_term_x - kappa_prime_x_p[i]*dA_over_dx ;
-                    source_term_x = source_term_x - pow(kappa_x_p[i],3)*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
-                    source_term_x = dt*dt*source_term_x / pow(kappa_x_p[i],3) ;
+                    source_term_x = source_term_x - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
+                    source_term_x = dt*dt*source_term_x / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // ----
-                    source_term_y = ( kappa_y_p[j] - pow(kappa_y_p[j],3) )*d2A_over_dy2 ;
+                    source_term_y = ( kappa_y_p[j] - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) )*d2A_over_dy2 ;
                     source_term_y = source_term_y - kappa_prime_y_p[j]*dA_over_dy ;
-                    source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j, k ) + ( *u1_nm1_y_pml )( i, j, k ) ) ;
-                    source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
+                    source_term_y = source_term_y - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u1_np1_y_pml )( i, j, k ) + ( *u1_nm1_y_pml )( i, j, k ) ) ;
+                    source_term_y = dt*dt*source_term_y / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // ----
                     ( *A_np1_pml )( i, j, k ) = 1.*source_term_x + 1.*source_term_y - dt*dt*( *A_n_pml )( i, j, k )*( *Chi_n_pml )(i, j, k) ;
                     // ( *A_np1_pml )( i, j, k ) = 0;
@@ -823,87 +823,87 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // 1. update u3
                     ( *u3_np1_x_pml )( i, j, k ) = -kappa_prime_x_p[i]*sigma_x_p[i] ;
                     ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + sigma_prime_x_p[i]*kappa_x_p[i] ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*pow(kappa_x_p[i],2) ;
-                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * pow(sigma_x_p[i],2) * dA_over_dx / pow(kappa_x_p[i],4) ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) + alpha_prime_x_p[i]*kappa_x_p[i]*kappa_x_p[i] ;
+                    ( *u3_np1_x_pml )( i, j, k ) = ( *u3_np1_x_pml )( i, j, k ) * sigma_x_p[i]*sigma_x_p[i] * dA_over_dx / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_x_pml )( i, j, k ) = ( ( *u3_np1_x_pml )( i, j, k ) - ( *u3_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+pow(kappa_x_p[i],2)*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
+                    ( *u2_np1_x_pml )( i, j, k ) = (2.*sigma_prime_x_p[i]*kappa_x_p[i]+kappa_x_p[i]*kappa_x_p[i]*alpha_prime_x_p[i]-3.*kappa_prime_x_p[i]*sigma_x_p[i])*dA_over_dx ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) + sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
                     ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) * sigma_x_p[i] ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
-                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u3_np1_x_pml )( i, j, k ) + ( *u3_nm1_x_pml )( i, j, k ) ) ;
+                    ( *u2_np1_x_pml )( i, j, k ) = ( *u2_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_x_pml )( i, j, k ) = ( ( *u2_np1_x_pml )( i, j, k ) - ( *u2_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_x_pml )( i, j, k ) = ( sigma_prime_x_p[i]*kappa_x_p[i] - 3*kappa_prime_x_p[i]*sigma_x_p[i] ) * dA_over_dx ;
                     ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) + 2.*sigma_x_p[i]*kappa_x_p[i]*d2A_over_dx2 ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - pow(kappa_x_p[i],3)*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
-                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / pow(kappa_x_p[i],4) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u2_np1_x_pml )( i, j, k ) + ( *u2_nm1_x_pml )( i, j, k ) ) ;
+                    ( *u1_np1_x_pml )( i, j, k ) = ( *u1_np1_x_pml )( i, j, k ) / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_x_pml )( i, j, k ) = ( ( *u1_np1_x_pml )( i, j, k ) - ( *u1_nm1_x_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_x_p[i]+sigma_x_p[i]/kappa_x_p[i]) - 1. ) ;
                     // 1. update u3
                     ( *u3_np1_y_pml )( i, j, k ) = -kappa_prime_y_p[j]*sigma_y_p[j] ;
                     ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + sigma_prime_y_p[j]*kappa_y_p[j] ;
-                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + alpha_prime_y_p[j]*pow(kappa_y_p[j],2) ;
-                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) * pow(sigma_y_p[j],2) * dA_over_dy / pow(kappa_y_p[j],4) ;
+                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) + alpha_prime_y_p[j]*kappa_y_p[j]*kappa_y_p[j] ;
+                    ( *u3_np1_y_pml )( i, j, k ) = ( *u3_np1_y_pml )( i, j, k ) * sigma_y_p[j]*sigma_y_p[j] * dA_over_dy / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_y_pml )( i, j, k ) = ( ( *u3_np1_y_pml )( i, j, k ) - ( *u3_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_y_pml )( i, j, k ) = (2.*sigma_prime_y_p[j]*kappa_y_p[j]+pow(kappa_y_p[j],2)*alpha_prime_y_p[j]-3.*kappa_prime_y_p[j]*sigma_y_p[j])*dA_over_dy ;
+                    ( *u2_np1_y_pml )( i, j, k ) = (2.*sigma_prime_y_p[j]*kappa_y_p[j]+kappa_y_p[j]*kappa_y_p[j]*alpha_prime_y_p[j]-3.*kappa_prime_y_p[j]*sigma_y_p[j])*dA_over_dy ;
                     ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) + sigma_y_p[j]*kappa_y_p[j]*d2A_over_dy2 ;
                     ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) * sigma_y_p[j] ;
-                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) - pow(kappa_y_p[j],3)*0.5*( ( *u3_np1_y_pml )( i, j, k ) + ( *u3_nm1_y_pml )( i, j, k ) ) ;
-                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) / pow(kappa_y_p[j],4) ;
+                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u3_np1_y_pml )( i, j, k ) + ( *u3_nm1_y_pml )( i, j, k ) ) ;
+                    ( *u2_np1_y_pml )( i, j, k ) = ( *u2_np1_y_pml )( i, j, k ) / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_y_pml )( i, j, k ) = ( ( *u2_np1_y_pml )( i, j, k ) - ( *u2_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_y_pml )( i, j, k ) = ( sigma_prime_y_p[j]*kappa_y_p[j] - 3*kappa_prime_y_p[j]*sigma_y_p[j] ) * dA_over_dy ;
                     ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) + 2.*sigma_y_p[j]*kappa_y_p[j]*d2A_over_dy2 ;
-                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) - pow(kappa_y_p[j],3)*0.5*( ( *u2_np1_y_pml )( i, j, k ) + ( *u2_nm1_y_pml )( i, j, k ) ) ;
-                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) / pow(kappa_y_p[j],4) ;
+                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u2_np1_y_pml )( i, j, k ) + ( *u2_nm1_y_pml )( i, j, k ) ) ;
+                    ( *u1_np1_y_pml )( i, j, k ) = ( *u1_np1_y_pml )( i, j, k ) / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_y_pml )( i, j, k ) = ( ( *u1_np1_y_pml )( i, j, k ) - ( *u1_nm1_y_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_y_p[j]+sigma_y_p[j]/kappa_y_p[j]) - 1. ) ;
                     // 1. update u3
                     ( *u3_np1_z_pml )( i, j, k ) = -kappa_prime_z_p[k]*sigma_z_p[k] ;
                     ( *u3_np1_z_pml )( i, j, k ) = ( *u3_np1_z_pml )( i, j, k ) + sigma_prime_z_p[k]*kappa_z_p[k] ;
-                    ( *u3_np1_z_pml )( i, j, k ) = ( *u3_np1_z_pml )( i, j, k ) + alpha_prime_z_p[k]*pow(kappa_z_p[k],2) ;
-                    ( *u3_np1_z_pml )( i, j, k ) = ( *u3_np1_z_pml )( i, j, k ) * pow(sigma_z_p[k],2) * dA_over_dz / pow(kappa_z_p[k],4) ;
+                    ( *u3_np1_z_pml )( i, j, k ) = ( *u3_np1_z_pml )( i, j, k ) + alpha_prime_z_p[k]*kappa_z_p[k]*kappa_z_p[k] ;
+                    ( *u3_np1_z_pml )( i, j, k ) = ( *u3_np1_z_pml )( i, j, k ) * sigma_z_p[k]*sigma_z_p[k] * dA_over_dz / (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]) ;
                     // time operation on u3 : Be carefull, u3 has to be considered like an envelop * a carrier wave
                     ( *u3_np1_z_pml )( i, j, k ) = ( ( *u3_np1_z_pml )( i, j, k ) - ( *u3_nm1_z_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k]) - 1. ) ;
                     // 2. update u2
-                    ( *u2_np1_z_pml )( i, j, k ) = (2.*sigma_prime_z_p[k]*kappa_z_p[k]+pow(kappa_z_p[k],2)*alpha_prime_z_p[k]-3.*kappa_prime_z_p[k]*sigma_z_p[k])*dA_over_dz ;
+                    ( *u2_np1_z_pml )( i, j, k ) = (2.*sigma_prime_z_p[k]*kappa_z_p[k]+kappa_z_p[k]*kappa_z_p[k]*alpha_prime_z_p[k]-3.*kappa_prime_z_p[k]*sigma_z_p[k])*dA_over_dz ;
                     ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) + sigma_z_p[k]*kappa_z_p[k]*d2A_over_dz2 ;
                     ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) * sigma_z_p[k] ;
-                    ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) - pow(kappa_z_p[k],3)*0.5*( ( *u3_np1_z_pml )( i, j, k ) + ( *u3_nm1_z_pml )( i, j, k ) ) ;
-                    ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) / pow(kappa_z_p[k],4) ;
+                    ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) - (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k])*0.5*( ( *u3_np1_z_pml )( i, j, k ) + ( *u3_nm1_z_pml )( i, j, k ) ) ;
+                    ( *u2_np1_z_pml )( i, j, k ) = ( *u2_np1_z_pml )( i, j, k ) / (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]) ;
                     // time operation on u2 : Be carefull, u2 has to be considered like an envelop * a carrier wave
                     ( *u2_np1_z_pml )( i, j, k ) = ( ( *u2_np1_z_pml )( i, j, k ) - ( *u2_nm1_z_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k] ) ) / dt ) * dt / ( 0.5*dt*(i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k]) - 1. ) ;
                     // 3. update u1
                     ( *u1_np1_z_pml )( i, j, k ) = ( sigma_prime_z_p[k]*kappa_z_p[k] - 3*kappa_prime_z_p[k]*sigma_z_p[k] ) * dA_over_dz ;
                     ( *u1_np1_z_pml )( i, j, k ) = ( *u1_np1_z_pml )( i, j, k ) + 2.*sigma_z_p[k]*kappa_z_p[k]*d2A_over_dz2 ;
-                    ( *u1_np1_z_pml )( i, j, k ) = ( *u1_np1_z_pml )( i, j, k ) - pow(kappa_z_p[k],3)*0.5*( ( *u2_np1_z_pml )( i, j, k ) + ( *u2_nm1_z_pml )( i, j, k ) ) ;
-                    ( *u1_np1_z_pml )( i, j, k ) = ( *u1_np1_z_pml )( i, j, k ) / pow(kappa_z_p[k],4) ;
+                    ( *u1_np1_z_pml )( i, j, k ) = ( *u1_np1_z_pml )( i, j, k ) - (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k])*0.5*( ( *u2_np1_z_pml )( i, j, k ) + ( *u2_nm1_z_pml )( i, j, k ) ) ;
+                    ( *u1_np1_z_pml )( i, j, k ) = ( *u1_np1_z_pml )( i, j, k ) / (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]) ;
                     // time operation on u1 : Be carefull, u1 has to be considered like an envelop * a carrier wave
                     ( *u1_np1_z_pml )( i, j, k ) = ( ( *u1_np1_z_pml )( i, j, k ) - ( *u1_nm1_z_pml )( i, j, k )*( 1. + 0.5*dt*( i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k] ) ) / dt ) *dt / ( 0.5*dt*(i1*k0 + alpha_z_p[k]+sigma_z_p[k]/kappa_z_p[k]) - 1. ) ;
                     // ----
                     // Envelop udpate with correction/source terms
                     // ----
                     // 4.a update A : Correction/source terms
-                    source_term_x = ( kappa_x_p[i] - pow(kappa_x_p[i],3) )*d2A_over_dx2 ;
+                    source_term_x = ( kappa_x_p[i] - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) )*d2A_over_dx2 ;
                     source_term_x = source_term_x - kappa_prime_x_p[i]*dA_over_dx ;
-                    source_term_x = source_term_x - pow(kappa_x_p[i],3)*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
-                    source_term_x = dt*dt*source_term_x / pow(kappa_x_p[i],3) ;
+                    source_term_x = source_term_x - (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i])*0.5*( ( *u1_np1_x_pml )( i, j, k ) + ( *u1_nm1_x_pml )( i, j, k ) ) ;
+                    source_term_x = dt*dt*source_term_x / (kappa_x_p[i]*kappa_x_p[i]*kappa_x_p[i]) ;
                     // ----
-                    source_term_y = ( kappa_y_p[j] - pow(kappa_y_p[j],3) )*d2A_over_dy2 ;
+                    source_term_y = ( kappa_y_p[j] - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) )*d2A_over_dy2 ;
                     source_term_y = source_term_y - kappa_prime_y_p[j]*dA_over_dy ;
-                    source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j, k ) + ( *u1_nm1_y_pml )( i, j, k ) ) ;
-                    source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
+                    source_term_y = source_term_y - (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j])*0.5*( ( *u1_np1_y_pml )( i, j, k ) + ( *u1_nm1_y_pml )( i, j, k ) ) ;
+                    source_term_y = dt*dt*source_term_y / (kappa_y_p[j]*kappa_y_p[j]*kappa_y_p[j]) ;
                     // ----
-                    source_term_z = ( kappa_z_p[k] - pow(kappa_z_p[k],3) )*d2A_over_dz2 ;
+                    source_term_z = ( kappa_z_p[k] - (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]) )*d2A_over_dz2 ;
                     source_term_z = source_term_z - kappa_prime_z_p[k]*dA_over_dz ;
-                    source_term_z = source_term_z - pow(kappa_z_p[k],3)*0.5*( ( *u1_np1_z_pml )( i, j, k ) + ( *u1_nm1_z_pml )( i, j, k ) ) ;
-                    source_term_z = dt*dt*source_term_z / pow(kappa_z_p[k],3) ;
+                    source_term_z = source_term_z - (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k])*0.5*( ( *u1_np1_z_pml )( i, j, k ) + ( *u1_nm1_z_pml )( i, j, k ) ) ;
+                    source_term_z = dt*dt*source_term_z / (kappa_z_p[k]*kappa_z_p[k]*kappa_z_p[k]) ;
                     // ----
                     ( *A_np1_pml )( i, j, k ) = 1.*source_term_x + 1.*source_term_y + 1.*source_term_z - dt*dt*( *A_n_pml )( i, j, k )*( *Chi_n_pml )(i, j, k) ;
                     // ( *A_np1_pml )( i, j, k ) = 0;

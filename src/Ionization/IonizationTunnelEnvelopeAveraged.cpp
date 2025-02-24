@@ -40,8 +40,8 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
         double cst      = ( ( double )Z+1.0 ) * sqrt( 2.0/Potential[Z] );
         alpha_tunnel[Z] = cst-1.0; // 2(n^*)-1
         beta_tunnel[Z]  = pow( 2, alpha_tunnel[Z] ) * ( 8.*Azimuthal_quantum_number[Z]+4.0 ) / ( cst*tgamma( cst ) ) * Potential[Z] * au_to_w0;
-        gamma_tunnel[Z] = 2.0 * pow( 2.0*Potential[Z], 1.5 );   // 2*(2I_p)^{3/2}
-        Ip_times2_to_minus3ov4[Z] = pow(2.*Potential[Z],-0.75); // (2I_p)^{-3/4}
+        gamma_tunnel[Z] = 2.0 * sqrt( 2.0*Potential[Z] * 2.0*Potential[Z] * 2.0*Potential[Z] );   // 2*(2I_p)^{3/2}
+        Ip_times2_to_minus3ov4[Z] = 1.0 / sqrt(sqrt((2.*Potential[Z] * 2.*Potential[Z] * 2.*Potential[Z]))); // (2I_p)^{-3/4}
     }
     
     ellipticity         = params.envelope_ellipticity;
@@ -82,13 +82,14 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
     
         // Absolute value of the electric field |E_plasma| (from the plasma) normalized in atomic units
-        E_sq    = pow(EC_to_au,2) * (pow( *( Ex+ipart-ipart_ref ), 2 )
-                                    +pow( *( Ey+ipart-ipart_ref ), 2 )
-                                    +pow( *( Ez+ipart-ipart_ref ), 2 ) );
+        E_sq    = (EC_to_au * EC_to_au) * ( ( *( Ex+ipart-ipart_ref ) ) * ( *( Ex+ipart-ipart_ref ) )
+                                    + ( *( Ey+ipart-ipart_ref ) ) * ( *( Ey+ipart-ipart_ref ) )
+                                    + ( *( Ez+ipart-ipart_ref ) ) * ( *( Ez+ipart-ipart_ref ) ) );
         // Laser envelope electric field normalized in atomic units, using both transverse and longitudinal components:
         // |E_envelope|^2 = |Env_E|^2 + |Env_Ex|^2
 
-        EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) ) + pow(EC_to_au,2)*( pow( *( Ex_env+ipart-ipart_ref ), 2 ) );
+        EnvE_sq = (EC_to_au * EC_to_au) * ( *( E_env+ipart-ipart_ref )) * ( *( E_env+ipart-ipart_ref ) ) + (EC_to_au * EC_to_au) * 
+                   ( *( Ex_env+ipart-ipart_ref ) ) * ( *( Ex_env+ipart-ipart_ref ) );
 
         // Effective electric field for ionization:
         // |E| = sqrt(|E_plasma|^2+|E_envelope|^2)
@@ -109,7 +110,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
         // Corrections on averaged ionization rate given by the polarization ellipticity  
         if( ellipticity==0. ){ // linear polarization
-            coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/delta*2.,0.5);
+            coeff_ellipticity_in_ionization_rate = sqrt((3./M_PI)/delta*2.);
         } else if( ellipticity==1. ){ // circular polarization
             coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
         }
@@ -145,8 +146,8 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
                 // Corrections on averaged ionization rate given by the polarization ellipticity  
                 if( ellipticity==0. ){ // linear polarization
-                    //coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.,0.5);
-                    coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/delta*2.,0.5);
+                    //coeff_ellipticity_in_ionization_rate = sqrt((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.);
+                    coeff_ellipticity_in_ionization_rate = sqrt((3./M_PI)/delta*2.);
                 } else if( ellipticity==1. ){ // circular polarization
                     coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
                 }

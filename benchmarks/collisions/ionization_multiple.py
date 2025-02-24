@@ -22,7 +22,7 @@ for elm in ["C", "Al", "Zn", "Sn", "Au"]:
 		
 		timestep2 = int(np.double(S2.namelist.Main.timestep))
 		D += [
-			S2.ParticleBinning(0,sum={"ekin":[0,1]}, linestyle="", marker=".", color=color )
+			S2.ParticleBinning(0,sum={"ekin":[0,1]}, linestyle="", marker=".", color=color, label=elm )
 		]
 
 

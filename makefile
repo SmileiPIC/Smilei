@@ -260,17 +260,7 @@ ifneq (,$(call parse_config,no_mpi_tm))
 	CXXFLAGS += -D_NO_MPI_TM
 endif
 
-# Use OpenMP tasks
-ifneq (,$(call parse_config,omptasks))
-	CXXFLAGS += -D_OMPTASKS
-endif
-
-ifneq (,$(call parse_config,part_event_tracing_tasks_on))
-	CXXFLAGS += -D_OMPTASKS
-	CXXFLAGS += -D_PARTEVENTTRACING
-endif
-
-ifneq (,$(call parse_config,part_event_tracing_tasks_off))
+ifneq (,$(call parse_config,part_event_tracing))
 	CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
@@ -311,9 +301,7 @@ header:
 	@if [ $(call parse_config,opt-report) ]; then echo "- Optimization report requested"; fi;
 	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
-	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
-	@if [ $(call parse_config,part_event_tracing_tasks_on) ]; then echo "- Compiled particle events tracing, with tasks"; fi;
-	@if [ $(call parse_config,part_event_tracing_tasks_off) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
+	@if [ $(call parse_config,part_event_tracing) ]; then echo "- Compiled with particle events tracing"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
@@ -509,12 +497,6 @@ help:
 	@echo '    advisor                      : to compile for Intel Advisor analysis'
 	@echo '    vtune                        : to compile for Intel Vtune analysis'
 	@echo '    inspector                    : to compile for Intel Inspector analysis'
-#    @echo '    omptasks                     : to compile with OpenMP tasks'
-#    @echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
-#    @echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
-#    @echo '    omptasks                     : to compile with OpenMP tasks'
-#    @echo '    part_event_tracing_tasks_on  : to compile particle event tracing and OpenMP tasks'
-#    @echo '    part_event_tracing_tasks_off : to compile particle event tracing without OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

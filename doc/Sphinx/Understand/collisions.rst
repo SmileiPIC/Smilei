@@ -311,20 +311,37 @@ the ion:
   \sum\limits_{p=0}^{k-1} R^{i+k}_{i+p} \left(\bar{P}^{i+k} - \bar{P}^{i+p}\right)
   \prod\limits_{j=0,j\ne p}^{k-1} R^{i+p}_{i+j}
   &
-  \quad\mathrm{if}\quad 0<k<k_\mathrm{max}
+  \quad\mathrm{if}\quad 0<k<Z-Z^\star
+  \end{array}
+  \right.
+
+..
   \\
   \sum\limits_{p=0}^{k-1} \left[ 1+R^{i+k}_{i+p}\left(\frac{W_{i+k}}{W_{i+p}}\bar{P}^{i+p} - \bar{P}^{i+k}\right) \right]
   \prod\limits_{j=0,j\ne p}^{k-1} R^{i+p}_{i+j}
   &
   \quad\mathrm{if}\quad k=k_\mathrm{max}
-  \end{array}
-  \right.
 
-where :math:`k_\mathrm{max} = Z-Z^\star`.
+
+To simplify the calculation of :math:`P^i_k` (in particular the second case in the
+equation above) we use the following equivalent expression:
+
+.. math::
+  
+  P^i_k = A_{k-1} \sum\limits_{p=0}^{k-1}  \left(\bar{P}^{i+k} - \bar{P}^{i+p}\right)
+  / B_k^p
+  \quad\mathrm{if}\quad 0<k<Z-Z^\star
+
+where :math:`A_k = \prod\limits_{j=0}^{k} W_{i+j}` and
+:math:`B_k^p = \prod\limits_{j=0,j\ne p}^{k} (W_{i+j}-W_{i+p})`.
+These two quantities can be computed recursively for each :math:`k`.
+
 
 The cumulative probability :math:`F^i_k = \sum_{j=0}^{k} P^i_j` provides an efficient
 way to pick when the ionization stops: we pick a random number :math:`U\in [0,1]` and
 loop from :math:`k=0` to :math:`k_\mathrm{max}`. We stop ionizing when :math:`F^i_k>U`.
+
+
 
 ----
 
