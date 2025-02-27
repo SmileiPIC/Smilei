@@ -263,7 +263,7 @@ inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double 
 
 // Tong&Ling: 1
 template <>
-inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
+inline double IonizationTunnel<1>::ionizationRate(const int Z, const double E)
 {
     const double delta = gamma_tunnel[Z] / E;
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta) - E * lambda_tunnel[Z]);
@@ -271,7 +271,7 @@ inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 
 // BSI: 2
 template <>
-inline double IonizationTunnel<3>::ionizationRate(const int Z, const double E)
+inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 {
     constexpr double IH = 13.598434005136;
     double ratio_of_IPs = IH / IonizationTables::ionization_energy(atomic_number_, Z);
