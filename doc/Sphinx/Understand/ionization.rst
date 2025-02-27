@@ -138,7 +138,7 @@ regime. This is achieved by introducing the empirical factor in :eq:`ionizationR
 
 .. math::
 
-  \Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp \left(-2\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}\right),
+  \Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp \left(-\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}\right),
 
 where :math:`\alpha_{TL}` is an emprirical constant with value typically from 6 to 9. The actual value
 should be guessed from empirical data. When such data is
