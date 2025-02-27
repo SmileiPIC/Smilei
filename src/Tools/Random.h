@@ -45,7 +45,7 @@ public:
         xorshift32_state = seed;
         // zero is not acceptable for xorshift
         if( xorshift32_state==0 ) {
-            xorshift32_state = -1;
+            xorshift32_state = 4294967295;
         }
     }
     
@@ -58,7 +58,7 @@ public:
         xorshift32_state += n;
         // zero is not acceptable for xorshift
         if( xorshift32_state==0 ) {
-            xorshift32_state = -1;
+            xorshift32_state = 4294967295;
         }
     }
     
