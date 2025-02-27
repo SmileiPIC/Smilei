@@ -80,8 +80,7 @@ In :program:`Smilei`, four models are available to compute the ionization rate o
 
 .. _ppt_adk:
 
-PPT-ADK model
-""""""""""""""""
+*PPT-ADK model*
 
 In the classical model, the ionization rate of :eq:`ionizationRate1`
 is computed for :math:`\vert m \vert=0` only.
@@ -110,8 +109,7 @@ greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
 
 .. _full_ppt_adk:
 
-PPT-ADK model with account for :math:`m\neq 0`
-""""""""""""""""""""""""""""""""""""""""""""""
+*PPT-ADK model with account for* :math:`m\neq 0`
 
 In this model, dependence on the magnetic quantum number :math:`m` is added. 
 
@@ -128,13 +126,21 @@ With this algorithm, by knowing the atomic number A, we can assign a unique set 
 quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
 order during successive ionization. 
 
+
+.. _barrier_suppression:
+
+Barrier Suppression Ionization
+"""""""""""""""""""""""""""""""
+
+When the electric field applied on a bound electron is greater than a certain threshold, that electron is able to classically escape from the atom, without tunneling through the potential barrier. To properly describe the ionisation rates in these regimes, and the transition regime from tunneling to barrier suppression, Smilei implements two ways to extend the tunneling ionisation rate to the barrier-suppression regime.
+
+
 .. _tong_lin:
 
-Barrier Suppression Ionization (Tong & Lin)
-""""""""""""""""""""""""""""""""""""""""""""""
+*Tong & Lin*
 
-The formula proposed by Tong and Lin [Tong2005]_ extends the tunnelling ionization rate to the barrier-suppression
-regime. This is achieved by introducing the empirical factor in :eq:`ionizationRate1`:
+The formula proposed by Tong and Lin [Tong2005]_ extends the tunneling ionization rate to the barrier-suppression
+regime. This is achieved by introducing an empirical factor in :eq:`ionizationRate1`:
 
 .. math::
 
@@ -147,8 +153,7 @@ ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce t
 
 .. _ouatu:
 
-Barrier Suppression Ionization (Ouatu)
-"""""""""""""""""""""""""""""""""""""""""""
+*Ouatu*
 
 This is a piecewise function implemented by [Ouatu2022]_ as follows:
 
