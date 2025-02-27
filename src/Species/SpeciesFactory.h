@@ -763,7 +763,7 @@ public:
                         LINK_NAMELIST + std::string("#species") );
                 }
 
-                if( (model == "tunnel") || (model == "tunnel_BSI") || (model == "tunnel_TL") || (model == "tunnel_full_PPT") ){
+                if( (model == "tunnel") || (model == "tunnel_full_PPT") ){
                     if (params.Laser_Envelope_model){
                         ERROR_NAMELIST("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name,
                         LINK_NAMELIST + std::string("#species"));
@@ -812,6 +812,13 @@ public:
 
             }
 
+            PyTools::extract( "bsi_model", this_species->bsi_model_, "Species", ispec );
+            if (model=="none" && this_species->bsi_model_!="none") {
+                ERROR_NAMELIST(
+                    "For species '" << species_name
+                    << ": cannot use barrier suppression without ionization_model",
+                    LINK_NAMELIST + std::string("#species") );
+            }
         }
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
@@ -1038,6 +1045,7 @@ public:
             Py_INCREF( new_species->ionization_rate_ );
         }
         new_species->ionization_model_                        = species->ionization_model_;
+        new_species->bsi_model_                               = species->bsi_model_;
         new_species->geometry                                 = species->geometry;
         new_species->Nbins                                    = species->Nbins;
         new_species->size_proj_buffer_Jx                      = species->size_proj_buffer_Jx;

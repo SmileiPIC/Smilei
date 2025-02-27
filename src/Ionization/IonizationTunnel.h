@@ -13,6 +13,16 @@
 
 class Particles;
 
+// std::string species->tunneling_model_ : choice of the tunneling model 
+//                       "tunnel" - for the ADK (l* = n*-1) model with the magnetic quantum number m set to 0 for all electrons
+//                       "tunnel_full_PPT" - for the PPT model, in which A_nl is given by the Hartree formula and m can be non-zero for p-, d-, ... states
+//
+// int Model             : the choice of the barrier suppression ionization model
+//                       0 for no barrier suppression (the tunneling formula is used)
+//                       1 - Tong-Lin exponential suppression formula
+//                       2 - Kostyukov-Artemenko-Golovanov model
+//                       All BSI models can be combined with different tunneling formulas switched by Tunneling_Model
+
 template <int Model>
 class IonizationTunnel : public Ionization
 {
@@ -38,8 +48,15 @@ template <int Model>
 IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Ionization(params, species)
 {
     DEBUG("Creating the Tunnel Ionizaton class");
-    double abs_m = 0;
-    double ionization_tl_parameter_;
+    double abs_m         = 0;
+    double g_factor      = 1;
+    double Anl           = 4.;  // the initial value is set to 4 on purpose, 
+                                // as A_nl = 4*C_nl^2, where C_nl are 
+                                // the Hartree coefficients; C_nl is set 
+                                // to 1 for a neutral atom
+    double Blm           = 1.;
+    double ionization_tl_parameter;
+    std::string tunneling_model = species->ionization_model_;
 
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     atomic_number_ = species->atomic_number_;
@@ -50,8 +67,8 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
     beta_tunnel.resize(atomic_number_);
     gamma_tunnel.resize(atomic_number_);
 
-    if (Model == 2) {
-        ionization_tl_parameter_ = species->ionization_tl_parameter_;  // species->ionization_tl_parameter_ is
+    if (Model == 1) {
+        ionization_tl_parameter = species->ionization_tl_parameter_;  // species->ionization_tl_parameter_ is
                                                                        // double Varies from 6 to 9. This is
                                                                        // the alpha parameter in Tong-Lin
                                                                        // exponential, see Eq. (6) in [M F
@@ -63,27 +80,45 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
     for (unsigned int Z = 0; Z < atomic_number_; Z++) {
         DEBUG("Z : " << Z);
 
-        if (Model == 1) {
+        if (tunneling_model == "tunnel_full_PPT") {
             abs_m = abs(IonizationTables::magnetic_atomic_number(atomic_number_, Z));
-        }
+            g_factor = IonizationTables::magnetic_degeneracy_atomic_number(atomic_number_, Z);
+        } 
 
         Potential[Z] = IonizationTables::ionization_energy(atomic_number_, Z) * eV_to_au;
         Azimuthal_quantum_number[Z] = IonizationTables::azimuthal_atomic_number(atomic_number_, Z);
 
         DEBUG("Potential: " << Potential[Z] << " Az.q.num: " << Azimuthal_quantum_number[Z]);
 
+        Blm      = ( 2.*Azimuthal_quantum_number[Z]+1.0 ) * \
+                   tgamma(Azimuthal_quantum_number[Z]+abs_m+1) / \
+                   ( pow( 2, abs_m )*tgamma(abs_m+1)*tgamma(Azimuthal_quantum_number[Z]-abs_m+1) );
+
         double cst = ((double)Z + 1.0) * sqrt(2.0 / Potential[Z]);
+        if(tunneling_model == "tunnel") {
+            Anl = pow( 2, cst+1.0 ) / \
+                ( cst*tgamma( cst ) );
+        } else {
+            if( Z>0 ) {
+                Anl = pow( 2, cst+1.0 ) / \
+                                ( cst*tgamma( cst/2.0+Azimuthal_quantum_number[Z]+1 )*tgamma( cst/2.0-Azimuthal_quantum_number[Z]) );
+            }
+        }
+
         alpha_tunnel[Z] = cst - 1.0 - abs_m;
-        beta_tunnel[Z] = pow(2, alpha_tunnel[Z]) * (8. * Azimuthal_quantum_number[Z] + 4.0) / (cst * tgamma(cst)) *
-                         Potential[Z] * au_to_w0 * tgamma(Azimuthal_quantum_number[Z] + abs_m + 1) /
-                         (tgamma(abs_m + 1) * tgamma(Azimuthal_quantum_number[Z] - abs_m + 1));
+        beta_tunnel[Z] = g_factor*Anl*Blm * Potential[Z] * au_to_w0;
+        // beta_tunnel[Z] = pow(2, alpha_tunnel[Z]) * (8. * Azimuthal_quantum_number[Z] + 4.0) / (cst * tgamma(cst)) *
+        //                  Potential[Z] * au_to_w0 * tgamma(Azimuthal_quantum_number[Z] + abs_m + 1) /
+        //                  (tgamma(abs_m + 1) * tgamma(Azimuthal_quantum_number[Z] - abs_m + 1));
         gamma_tunnel[Z] = 2.0 * sqrt(2.0 * Potential[Z] * 2.0 * Potential[Z] * 2.0 * Potential[Z]);
-        if (Model == 2) {
-            lambda_tunnel[Z] = ionization_tl_parameter_ * cst * cst / gamma_tunnel[Z];
+        if (Model == 1) {
+            lambda_tunnel[Z] = ionization_tl_parameter * cst * cst / gamma_tunnel[Z];
         }
     }
 
     DEBUG("Finished Creating the Tunnel Ionizaton class");
+
+
 }
 
 template <int Model>
@@ -226,7 +261,7 @@ inline double IonizationTunnel<Model>::ionizationRate(const int Z, const double 
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta));
 }
 
-// Tong&Ling: 2
+// Tong&Ling: 1
 template <>
 inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 {
@@ -234,7 +269,7 @@ inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
     return beta_tunnel[Z] * exp(-delta * one_third + alpha_tunnel[Z] * log(delta) - E * lambda_tunnel[Z]);
 }
 
-// BSI: 3
+// BSI: 2
 template <>
 inline double IonizationTunnel<3>::ionizationRate(const int Z, const double E)
 {

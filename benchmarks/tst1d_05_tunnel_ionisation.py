@@ -48,10 +48,13 @@ DiagFields(
 	fields = ["Ex", "Ey", "Ez"]
 )
 
+bsi_models=["none", "none", "Tong_Lin", "KAG"]
+tunnel_models=["tunnel", "tunnel_full_PPT", "tunnel", "tunnel"]
 for i, model in enumerate(["tunnel", "tunnel_full_PPT", "tunnel_TL", "tunnel_BSI"]):
     Species(
         name = 'hydrogen_'+model,
-        ionization_model = model,
+        ionization_model = tunnel_models[i],
+        bsi_model = bsi_models[i],
         ionization_electrons = 'electron_'+model,
         atomic_number = 1,
         position_initialization = 'regular',

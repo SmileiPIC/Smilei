@@ -17,11 +17,18 @@ class IonizationFactory
     {
         Ionization *Ionize = NULL;
         std::string model = species->ionization_model_;
+        std::string bsi_model = species->bsi_model_;
 
-        if( model == "tunnel" ) {
+        if( model == "tunnel" || model == "tunnel_full_PPT") {
             checkMaxCharge(species);
             checkNotLaserEnvelopeModel(params);
-            Ionize = new IonizationTunnel<0>( params, species ); // The original model included in Smilei
+            if (bsi_model == "none") {
+                Ionize = new IonizationTunnel<0>( params, species ); // The original model included in Smilei
+            } else if (bsi_model == "Tong_Lin") {
+                Ionize = new IonizationTunnel<1>( params, species ); // Tong&Lin
+            } else if (bsi_model == "KAG") {
+                Ionize = new IonizationTunnel<2>( params, species ); // KAG
+            }
             
         } else if( model == "tunnel_envelope_averaged" ) {
             checkMaxCharge(species);
@@ -38,19 +45,6 @@ class IonizationFactory
             }
 
             Ionize = new IonizationFromRate( params, species );
-
-        } else if (model == "tunnel_full_PPT") {  
-            checkMaxCharge(species);
-            checkNotLaserEnvelopeModel(params);
-            Ionize = new IonizationTunnel<1>(params, species); // FullPPT
-        } else if (model == "tunnel_TL") {  
-            checkMaxCharge(species);
-            checkNotLaserEnvelopeModel(params);
-            Ionize = new IonizationTunnel<2>(params, species); // Tong&Lin
-        } else if (model == "tunnel_BSI") {  
-            checkMaxCharge(species);
-            checkNotLaserEnvelopeModel(params);
-            Ionize = new IonizationTunnel<3>(params, species); // BSI
         }
 
         return Ionize;

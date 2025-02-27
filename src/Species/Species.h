@@ -116,8 +116,11 @@ public:
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
 
-    //! Ionization model per Specie (tunnel)
+    //! Ionization model per Species ("tunnel" or "tunnel_full_PPT" or "tunnel_envelope_averaged" or "from_rate")
     std::string ionization_model_;
+
+    //! Barrier suppression ionization model per Species
+    std::string bsi_model_;
 
     //! Type of density profile ("nb" or "charge")
     std::string density_profile_type_;
