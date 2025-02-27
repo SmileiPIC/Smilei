@@ -70,7 +70,8 @@ for i, model in enumerate(["tunnel", "tunnel_full_PPT", "tunnel_TL", "tunnel_BSI
 
     Species(
         name = 'carbon_'+model,
-        ionization_model = model,
+        ionization_model = tunnel_models[i],
+        bsi_model = bsi_models[i],
         ionization_electrons = 'electron_'+model,
         atomic_number = 6,
         position_initialization = 'regular',
