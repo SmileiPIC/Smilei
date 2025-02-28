@@ -417,7 +417,7 @@ References
 
 .. [Schroeder2014] `C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans, Phys. Rev. ST Accel. Beams 17, 101301 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301>`_
 
-.. [Gibbon] P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)
+.. [Gibbon] `P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005) <https://doi.org/10.1142/p116>`_
 
 .. [Tong2005] `Tong X. M., Lin C. D., J. Phys. B: At. Mol. Opt. Phys. 38 2593 (2005) <https://iopscience.iop.org/article/10.1088/0953-4075/38/15/001>`_
 
