@@ -164,7 +164,7 @@ When the electric field applied on a bound electron is greater than a certain th
 
 ``Kostyukov Artemenko Golovanov``
 
-    This is a piecewise function, first proposed by Kostyukov, Artmenko and Golovanov (KAG) in [Artmenko2017]_ and [Kostyukov2018]_,  and published in [Ouatu]_ as follows:
+    This is a piecewise function, first proposed by Kostyukov, Artemenko and Golovanov (KAG) in [Artemenko2017]_ and [Kostyukov2018]_,  and published in [Ouatu2022]_ as follows:
 
     .. math::
        \Gamma_{KAG} =
@@ -174,7 +174,7 @@ When the electric field applied on a bound electron is greater than a certain th
            \Gamma_{BSI}, & E > E_2 
        \end{cases}
 
-    where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Artmenko2017]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
+    where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Artemenko2017]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
 
 
 
@@ -429,5 +429,7 @@ References
 
 .. [Bauer1999] `D. Bauer, P. Mulser, Phys. Rev. A 59, 569 (1999) <https://doi.org/10.1103/PhysRevA.59.569>`_
 
-.. [Mironov2025] `A. A. Mironov and E. G. Gelfer and I. I. Tupitsin and M. Jirka and O. Klimo and S. Meuren and T. Smorodnikova and R. Taïeb and S. Weber and C. Riconda and M. Grech and S. V. Popruzhenko, arXiV 2501, 11672 (2025) <https://arxiv.org/abs/2501.11672>`
+.. [Ouatu2022] `I. Ouatu et al, Phys. Rev. E 106, 015205 (2022) <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015205>`_
+
+.. [Mironov2025] `A. A. Mironov et al., arXiV 2501, 11672 (2025) <https://arxiv.org/abs/2501.11672>`_
 
