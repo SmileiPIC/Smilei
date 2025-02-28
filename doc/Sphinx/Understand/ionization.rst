@@ -141,7 +141,7 @@ In :program:`Smilei`, four models are available to compute the ionization rate o
 Barrier Suppression Ionization
 """""""""""""""""""""""""""""""
 
-When the electric field applied on a bound electron is greater than a certain threshold, that electron is able to classically escape from the atom, without tunneling through the potential barrier. To properly describe the ionisation rates in these regimes, and the transition regime from tunneling to barrier suppression, Smilei implements two ways to extend the tunneling ionisation rate to the barrier-suppression regime.
+When the electric field applied on a bound electron is greater than a certain threshold, that electron is able to classically escape from the atom, without tunneling through the potential barrier. To properly describe the ionisation rates in these regimes, and the transition regime from tunneling to barrier suppression, Smilei implements two ways to extend the tunneling ionization rate to the barrier-suppression regime.
 
 
 .. _tong_lin:
@@ -164,17 +164,17 @@ When the electric field applied on a bound electron is greater than a certain th
 
 ``Kostyukov Artemenko Golovanov``
 
-    This is a piecewise function implemented by [Artemenko2017]_ as follows:
+    This is a piecewise function, first proposed by Kostyukov, Artmenko and Golovanov (KAG) in [Artmenko2017]_ and [Kostyukov2018]_,  and published in [Ouatu]_ as follows:
 
     .. math::
-       \Gamma_{Ouatu} =
+       \Gamma_{KAG} =
        \begin{cases}
            \Gamma_{qs,|m|=0}, & E < E_1 \\
            \Gamma_{BM}, & E_1 < E < E_2 \\
            \Gamma_{BSI}, & E > E_2 
        \end{cases}
 
-    where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Kostyukov2018]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
+    where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Artmenko2017]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
 
 
 
