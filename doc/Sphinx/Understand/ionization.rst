@@ -113,7 +113,7 @@ In :program:`Smilei`, four models are available to compute the ionization rate o
 .. _full_ppt_adk:
 
 ``PPT-ADK model with account for`` :math:`m\neq 0` |exp|
-    In this model, dependence on the magnetic quantum number :math:`m` is added. 
+    In this model, first implemented in [Mironov2025]_, dependence on the magnetic quantum number :math:`m` is added. 
 
     :math:`m` is attributed to each electron in accordance with the following rules:
 
@@ -126,15 +126,14 @@ In :program:`Smilei`, four models are available to compute the ionization rate o
 
     With this algorithm, by knowing the atomic number A, we can assign a unique set of
     quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
-    order during successive ionization. The assignment of unique quantum numbers also means that the 
-    degeneracy factor is taken into account for the ionization rate.
+    order during successive ionization. The ionization rate also accounts for multiple electrons having the same energy levels via the degeneracy factor.
 
     .. WARNING::
-       Although this model applies some correction to the base :ref:`PPT-ADK <ppt_adk>` model, [Mironov2025]_ 
-       shows that the effect of these corrections is completely overshadowed by choosing the most probable
-       ionisation path for the atom, as opposed to the default sequential ionisation of the outermost electron.
-       A reference implementation of non-sequential ionisation is provided in the paper. This warning is the 
-       reason for the experimental tag.
+       Although this model uses less assumptions than the :ref:`PPT-ADK <ppt_adk>` model, [Mironov2025]_ 
+       shows that these corrections introduce a dependency on the
+       ionization path chosen for the atom and may actually lead to less accurate results than the default ADK model.
+       A non-sequential ionization path is necessary for this model to be accurate and will be proposed in a later version of the code hence the experimental tag.
+       A reference implementation of non-sequential ionization is provided in [Mironov2025]_.
 
 
 .. _barrier_suppression:
