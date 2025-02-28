@@ -739,6 +739,9 @@ public:
 
             this_species->maximum_charge_state_ = 0;
             PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec);
+    
+            this_species->ionization_tl_parameter_ = 6;
+            PyTools::extract( "ionization_tl_parameter", this_species->ionization_tl_parameter_, "Species", ispec);
 
             std::string model;
             PyTools::extract( "ionization_model", model, "Species", ispec );
@@ -760,7 +763,7 @@ public:
                         LINK_NAMELIST + std::string("#species") );
                 }
 
-                if( model == "tunnel" ){
+                if( (model == "tunnel") || (model == "tunnel_full_PPT") ){
                     if (params.Laser_Envelope_model){
                         ERROR_NAMELIST("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name,
                         LINK_NAMELIST + std::string("#species"));
@@ -809,6 +812,13 @@ public:
 
             }
 
+            PyTools::extract( "bsi_model", this_species->bsi_model_, "Species", ispec );
+            if ( (model!="tunnel" || model!="tunnel_full_PPT") && this_species->bsi_model_!="none") {
+                ERROR_NAMELIST(
+                    "For species '" << species_name
+                    << ": cannot use barrier suppression without ionization_model \"tunnel\" or \"tunnel_full_PPT\"",
+                    LINK_NAMELIST + std::string("#species") );
+            }
         }
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
@@ -1029,11 +1039,13 @@ public:
         new_species->thermal_momentum_                         = species->thermal_momentum_;
         new_species->atomic_number_                            = species->atomic_number_;
         new_species->maximum_charge_state_                     = species->maximum_charge_state_;
+        new_species->ionization_tl_parameter_                  = species->ionization_tl_parameter_;
         new_species->ionization_rate_                          = species->ionization_rate_;
         if( new_species->ionization_rate_!=Py_None ) {
             Py_INCREF( new_species->ionization_rate_ );
         }
         new_species->ionization_model_                        = species->ionization_model_;
+        new_species->bsi_model_                               = species->bsi_model_;
         new_species->geometry                                 = species->geometry;
         new_species->Nbins                                    = species->Nbins;
         new_species->size_proj_buffer_Jx                      = species->size_proj_buffer_Jx;

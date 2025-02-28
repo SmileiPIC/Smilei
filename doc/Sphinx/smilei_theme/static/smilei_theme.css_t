@@ -795,6 +795,19 @@ ul.experimental p:first-of-type::after
 	line-height: normal;
 }
 
+.exp-label {
+    display: inline-block;
+    background: red;
+    color: white;
+    margin: 0 5px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    font-family: "BPreplay";
+    font-weight: bold;
+    line-height: normal;
+}
+
 /* --------------------------------------------------------------------*/
 /* Logos and icons */
 img.logo {
