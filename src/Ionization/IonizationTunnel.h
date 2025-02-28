@@ -67,6 +67,7 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
     beta_tunnel.resize(atomic_number_);
     gamma_tunnel.resize(atomic_number_);
 
+    // TODO: Change into if constexpr
     if (Model == 1) {
         ionization_tl_parameter = species->ionization_tl_parameter_;  // species->ionization_tl_parameter_ is
                                                                        // double Varies from 6 to 9. This is
@@ -108,6 +109,7 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
         alpha_tunnel[Z] = cst - 1.0 - abs_m;
         beta_tunnel[Z] = g_factor*Anl*Blm * Potential[Z] * au_to_w0;
         gamma_tunnel[Z] = 2.0 * sqrt(2.0 * Potential[Z] * 2.0 * Potential[Z] * 2.0 * Potential[Z]);
+        // TODO: Change into if constexpr
         if (Model == 1) {
             lambda_tunnel[Z] = ionization_tl_parameter * cst * cst / gamma_tunnel[Z];
         }
