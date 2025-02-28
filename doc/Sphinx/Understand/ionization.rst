@@ -72,7 +72,7 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
 .. math::
   :label: ADKrate
 
-  \Gamma_{\rm ADK, AC} = \sqrt{\frac{3}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
+  \Gamma_{\rm ADK, AC} = \sqrt{\frac{6}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
 

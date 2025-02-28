@@ -356,7 +356,7 @@ Following is the distribution of these topics in the listed publications up to N
 .. [Krishnamurthy2023]
 
     S. Krishnamurthy, S. Chintalwad, A. P. L. Robinson, R. M. G. M. Trines, and B. Ramakrishna,
-    `Observation of proton modulations in laser–solid interaction`,
+    `Observation of proton modulations in laser-solid interaction`,
     `Plasma Physics and Controlled Fusion 65 085020 (2023) <https://doi.org/10.1088/1361-6587/ace4f1>`_
             
 .. [Gao2023b]
