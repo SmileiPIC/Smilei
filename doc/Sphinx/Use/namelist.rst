@@ -1,3 +1,7 @@
+.. |exp| raw:: html
+
+   <span class="exp-label">experimental</span>
+
 Write a namelist
 ----------------
 
@@ -983,7 +987,7 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK <ppt_adk>` (requires species with an :py:data:`atomic_number`)
-  * ``"tunnel_full_PPT"`` for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_full_PPT"`` |exp| for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
   * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
@@ -994,7 +998,7 @@ Each species has to be defined in a ``Species`` block::
   The extension to barrier suppression, requires ``ionization_model`` = ``"tunnel"`` or ``tunnel_full_PPT``:
 
   * ``"Tong_Lin"`` for :ref:`Tong and Lin <tong_lin>`'s rate.
-  * ``"KAG"`` for :ref:`Ouatu <ouatu>`'s rate. 
+  * ``"KAG"`` for :ref:`Kostyukov Artemenko Golovanov <KAG>`'s rate. 
 
 .. py:data:: ionization_rate
 
