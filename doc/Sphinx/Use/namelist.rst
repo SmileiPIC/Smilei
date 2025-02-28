@@ -984,10 +984,10 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for ionization:
+  The model for :ref:`field ionization <field_ionization>`:
 
-  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK <ppt_adk>` (requires species with an :py:data:`atomic_number`)
-  * ``"tunnel_full_PPT"`` |exp| for :ref:`field ionization <field_ionization>` using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel"`` for tunnel ionization using :ref:`PPT-ADK <ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_full_PPT"`` |exp| for tunnel ionization using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
   * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
@@ -995,7 +995,9 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The extension to barrier suppression, requires ``ionization_model`` = ``"tunnel"`` or ``tunnel_full_PPT``:
+  Apply the :ref:`Barrier Suppression Ionization <barrier_suppression>` correction for ionization in strong fields.
+  This correction is supported only for ``ionization_model`` = ``"tunnel"`` or ``tunnel_full_PPT``.
+  The available BSI models are:
 
   * ``"Tong_Lin"`` for :ref:`Tong and Lin <tong_lin>`'s rate.
   * ``"KAG"`` for :ref:`Kostyukov Artemenko Golovanov <KAG>`'s rate. 
