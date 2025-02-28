@@ -107,9 +107,6 @@ IonizationTunnel<Model>::IonizationTunnel(Params &params, Species *species) : Io
 
         alpha_tunnel[Z] = cst - 1.0 - abs_m;
         beta_tunnel[Z] = g_factor*Anl*Blm * Potential[Z] * au_to_w0;
-        // beta_tunnel[Z] = pow(2, alpha_tunnel[Z]) * (8. * Azimuthal_quantum_number[Z] + 4.0) / (cst * tgamma(cst)) *
-        //                  Potential[Z] * au_to_w0 * tgamma(Azimuthal_quantum_number[Z] + abs_m + 1) /
-        //                  (tgamma(abs_m + 1) * tgamma(Azimuthal_quantum_number[Z] - abs_m + 1));
         gamma_tunnel[Z] = 2.0 * sqrt(2.0 * Potential[Z] * 2.0 * Potential[Z] * 2.0 * Potential[Z]);
         if (Model == 1) {
             lambda_tunnel[Z] = ionization_tl_parameter * cst * cst / gamma_tunnel[Z];
@@ -283,7 +280,7 @@ inline double IonizationTunnel<2>::ionizationRate(const int Z, const double E)
 
     if (BSI_rate_quadratic >= BSI_rate_linear) {
         return BSI_rate_linear;
-    } else if (std::min(Tunnel_rate, BSI_rate_quadratic) == BSI_rate_quadratic) {
+    } else if (Tunnel_rate >= BSI_rate_quadratic) {
         return BSI_rate_quadratic;
     } else {
         return Tunnel_rate;
