@@ -813,7 +813,7 @@ public:
             }
 
             PyTools::extract( "bsi_model", this_species->bsi_model_, "Species", ispec );
-            if ( (model!="tunnel" || model!="tunnel_full_PPT") && this_species->bsi_model_!="none") {
+            if ( (model!="tunnel" && model!="tunnel_full_PPT") && this_species->bsi_model_!="none") {
                 ERROR_NAMELIST(
                     "For species '" << species_name
                     << ": cannot use barrier suppression without ionization_model \"tunnel\" or \"tunnel_full_PPT\"",
