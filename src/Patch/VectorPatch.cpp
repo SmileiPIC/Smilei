@@ -60,9 +60,7 @@ void VectorPatch::close( SmileiMPI *smpiData )
 {
     // Close collision debug files
     for( unsigned int icoll = 0; icoll < patches_[0]->vecBPs.size(); icoll++ ) {
-        if( patches_[0]->vecBPs[icoll]->debug_file_ ) {
-            delete patches_[0]->vecBPs[icoll]->debug_file_;
-        }
+        delete patches_[0]->vecBPs[icoll]->debug_file_;
     }
 
     // Close diagnostics
@@ -3912,7 +3910,7 @@ void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timer
     if( BinaryProcesses::debye_length_required_ ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            BinaryProcesses::calculate_debye_length( params, patches_[ipatch] );
+            patches_[ipatch]->vecBPs[0]->calculate_debye_length( params, patches_[ipatch] );
         }
     }
 
@@ -4261,10 +4259,10 @@ void VectorPatch::moveWindow(
     // Bring all particles and field grids to the Host (except species grids)
     // This part can be optimized by copying only the patch to be destructed
 
-#if defined( SMILEI_ACCELERATOR_GPU)
+#if defined( SMILEI_ACCELERATOR_GPU )
     if( simWindow->isMoving( time_dual ) || itime == simWindow->getAdditionalShiftsIteration() ) {
-        copyParticlesFromDeviceToHost();
-        copyFieldsFromDeviceToHost();
+        //copyParticlesFromDeviceToHost();
+        //copyFieldsFromDeviceToHost();
         //copyDeviceStateToHost(true,false);
     }
 #endif

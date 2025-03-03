@@ -548,10 +548,8 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     // Manage some collisions parameters
     std::vector<double> rate_multiplier( patch->vecBPs.size() );
     for( unsigned int icoll = 0; icoll < patch->vecBPs.size(); icoll++ ) {
-        for( unsigned int iBP = 0; iBP < patch->vecBPs[icoll]->processes_.size(); iBP++ ) {
-            if( CollisionalNuclearReaction * NR = dynamic_cast<CollisionalNuclearReaction*>(patch->vecBPs[icoll]->processes_[iBP]) ) {
-                rate_multiplier[icoll] =  NR->rate_multiplier_;
-            }
+        if( CollisionalNuclearReaction * NR = patch->vecBPs[icoll]->nuclear_reactions_ ) {
+            rate_multiplier[icoll] =  NR->rate_multiplier_;
         }
     }
     g.vect( "nuclear_reaction_multiplier", rate_multiplier );
@@ -978,10 +976,8 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         std::vector<double> rate_multiplier;
         g.vect( "nuclear_reaction_multiplier", rate_multiplier, true );
         for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
-            for( unsigned int iBP = 0; iBP < patch->vecBPs[icoll]->processes_.size(); iBP++ ) {
-                if( CollisionalNuclearReaction * NR = dynamic_cast<CollisionalNuclearReaction*>(patch->vecBPs[icoll]->processes_[iBP]) ) {
-                    NR->rate_multiplier_ = rate_multiplier[icoll];
-                }
+            if( CollisionalNuclearReaction * NR = patch->vecBPs[icoll]->nuclear_reactions_ ) {
+                NR->rate_multiplier_ = rate_multiplier[icoll];
             }
         }
     }

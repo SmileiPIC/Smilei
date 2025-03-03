@@ -21,6 +21,7 @@ Projector1D2OrderGPU::Projector1D2OrderGPU( Params &parameters, Patch *a_patch )
     Projector1D::i_domain_begin_ = a_patch->getCellStartingGlobalIndex( 0 );
 
     not_spectral_  = !parameters.is_pxr;
+    cell_sorting_ = parameters.cell_sorting_;
     dts2_ = parameters.timestep / 2.0;
     dts4_ = dts2_ / 2.0;
 #if defined( SMILEI_ACCELERATOR_GPU ) 
@@ -58,7 +59,8 @@ currentDepositionKernel1DOnDevice( double *__restrict__ host_Jx,
                          double dx_inv_,
                          double dx_ov_dt_,
                          int    i_domain_begin_,
-                         int    not_spectral_ )
+                         int    not_spectral_,
+                         bool   cell_sorting )
 {
     cudahip1d::currentDepositionKernel1D( host_Jx, host_Jy, host_Jz,
                                  Jx_size, Jy_size, Jz_size,
@@ -74,7 +76,8 @@ currentDepositionKernel1DOnDevice( double *__restrict__ host_Jx,
                                  dx_inv_,
                                  dx_ov_dt_,
                                  i_domain_begin_,
-                                 not_spectral_ );
+                                 not_spectral_,
+                                 cell_sorting );
 }
 
 
@@ -103,7 +106,8 @@ currentAndDensityDepositionKernel1DOnDevice( double *__restrict__ host_Jx,
                                    double dx_inv_,
                                    double dx_ov_dt_,
                                    int    i_domain_begin_,
-                                   int    not_spectral_ )
+                                   int    not_spectral_,
+                                   bool   cell_sorting )
 {
     cudahip1d::currentAndDensityDepositionKernel1D( host_Jx, host_Jy, host_Jz, host_rho,
                                            Jx_size, Jy_size, Jz_size, rho_size,
@@ -119,7 +123,8 @@ currentAndDensityDepositionKernel1DOnDevice( double *__restrict__ host_Jx,
                                            dx_inv_,
                                            dx_ov_dt_,
                                            i_domain_begin_,
-                                           not_spectral_ );
+                                           not_spectral_,
+                                           cell_sorting );
 }
 #endif
 
@@ -234,7 +239,8 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                             dx_inv_,
                             dx_ov_dt_,
                             i_domain_begin_,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting_ );
 
 #else
         SMILEI_ASSERT( false );
@@ -262,7 +268,8 @@ void Projector1D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                     dx_inv_,
                     dx_ov_dt_,
                     i_domain_begin_,
-                    not_spectral_ );
+                    not_spectral_,
+                    cell_sorting_ );
 #else
         SMILEI_ASSERT( false );
 #endif

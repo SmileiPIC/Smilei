@@ -5,6 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 
+fig2 = plt.figure(2)
+fig2.clf()
+ax2 = fig2.add_subplot(1,1,1)
+
 for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 
 	sim = happi.Open(path)
@@ -93,29 +97,22 @@ for path in ["thermalisation_ei1","thermalisation_ei2","thermalisation_ei3"]:
 		Te -= nu0*(Te-Ti)* dt*1e-15
 		Ti += nu0*(Te-Ti)* dt*1e-15
 	
-	
-	fig = plt.figure(2)
-	#fig.clf()
-	fig.set_facecolor('w')
-	
-	ax = fig.add_subplot(1,1,1)
-	
 	#ax.plot(times[:-1], np.diff(e_T_mean)/np.diff(times)*511, 'b', label='electrons')
 	#ax.plot(times[:-1], np.diff(i_T_mean)/np.diff(times)*511, 'r', label='ions')
 	#ax.plot(t[:-1], np.diff(Te_theory)/np.diff(t)*511,'k')
 	#ax.plot(t[:-1], np.diff(Ti_theory)/np.diff(t)*511,'k')
 	#ax.set_xlabel('time in fs')
 	
-	ax.plot(times, e_T_mean*511, 'b', label='electrons')
-	ax.plot(times, i_T_mean*511, 'r', label='ions')
-	ax.plot(t, Te_theory*511,'k')
-	ax.plot(t, Ti_theory*511,'k')
+	ax2.plot(times, e_T_mean*511, 'b', label='electrons')
+	ax2.plot(times, i_T_mean*511, 'r', label='ions')
+	ax2.plot(t, Te_theory*511,'k')
+	ax2.plot(t, Ti_theory*511,'k')
 	#ax.set_ylim(temperature_ion*511,temperature_electron*511)
-	ax.set_xlabel('time in fs')
-	ax.set_ylabel('Temperature [keV]')
+	ax2.set_xlabel('time in fs')
+	ax2.set_ylabel('Temperature [keV]')
 
 	
-	if not ax.legend_: ax.legend()
+	if not ax2.legend_: ax2.legend()
 	
 	plt.show()
 

@@ -61,7 +61,8 @@ protected:
     double dt;
     double dts2;
     double dts4;
-    int    not_spectral_;
+    int not_spectral_;
+    bool cell_sorting_;
     unsigned int x_dimension_bin_count_;
     unsigned int y_dimension_bin_count_;
     unsigned int z_dimension_bin_count_;

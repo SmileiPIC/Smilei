@@ -793,25 +793,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         
         // Cell sorting not defined by the user
-        if (!defined_cell_sort) {
-            if (vectorization_mode == "off") {
-                cell_sorting_ = false;
-            } else {
-                cell_sorting_ = true;
-            }
-        }
-
+        if( !defined_cell_sort ) {
+            cell_sorting_ = ! ( vectorization_mode == "off" );
+        
         // Cell sorting explicitely defined by the user
-	    if (defined_cell_sort){
+        } else {
             // cell sorting explicitely set on
-            if (cell_sorting_) {
-                if (vectorization_mode == "off") {
-                    WARNING(" Cell sorting `cell_sorting` cannot be used when vectorization is off for the moment. Vectorization is automatically activated.")
+            if( cell_sorting_ ) {
+                if( vectorization_mode == "off" ) {
+                    WARNING("`cell_sorting` cannot be used when vectorization is off for the moment. Vectorization is automatically activated.")
                 }
             // cell sorting explicitely set off
             } else {
-                if (!( vectorization_mode == "off")) {
-                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",
+                if( !( vectorization_mode == "off" ) ) {
+                    ERROR_NAMELIST("`cell_sorting` must be allowed in order to use vectorization.",
                         LINK_NAMELIST + std::string("#vectorization"))
                 }
             }
@@ -826,10 +821,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
 
         // get parameter "every" which describes a timestep selection
-        if( ! adaptive_vecto_time_selection )
+        if( ! adaptive_vecto_time_selection ) {
             adaptive_vecto_time_selection = new TimeSelection(
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
+        }
     }
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main" );
@@ -855,7 +851,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
-        if (defined_cell_sort && cell_sorting_ == false){
+        if( defined_cell_sort && cell_sorting_ == false ) {
             ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
 
@@ -919,8 +915,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     // Force adaptive vectorization in scalar mode if cell_sorting requested
-    if ( cell_sorting_ ) {
-
+    if( cell_sorting_ && ! gpu_computing ) {
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR_NAMELIST( "Cell sorting (required by Collision or Merging) is incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#vectorization") );
         } else if ( vectorization_mode == "off" ) {
@@ -1274,7 +1269,7 @@ void Params::compute()
 
 
     // Verify that cluster_width_ divides patch_size_[0] or patch_size_[n] in GPU mode
-#if defined( SMILEI_ACCELERATOR_GPU_OMP ) || defined( SMILEI_ACCELERATOR_GPU_OACC )
+#if defined( SMILEI_ACCELERATOR_GPU )
     const int kClusterWidth = getGPUClusterWidth();
 
     if( kClusterWidth < 0 ) {
@@ -1284,7 +1279,7 @@ void Params::compute()
     } else {
         for( std::size_t dimension_id = 0; dimension_id < nDim_particle; ++dimension_id ) {
             if( ( patch_size_[dimension_id] % kClusterWidth ) != 0 ) {
-                ERROR_NAMELIST( "The parameter `cluster_width`==" << kClusterWidth << " must divide the number of cells in a patch, in all dimensions.",
+                ERROR_NAMELIST( "On GPU, the number of cells in one patch must be a multiple of " << kClusterWidth << " (in all axes).",
                                 LINK_NAMELIST + std::string( "#main-variables" ) );
             }
         }

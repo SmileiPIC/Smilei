@@ -887,8 +887,11 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0
 
-  The atomic number of the particles, required only for ionization.
-  It must be lower than 101.
+  The atomic number of the particles (must be below 101).
+  It is required for ionization and nuclear reactions.
+  It has an effect on collisions by accounting for the atomic screening
+  (if not defined, or set to 0 for ions, screening is discarded as if
+  the ion was fully ionized).
 
 .. py:data:: maximum_charge_state
 
@@ -2198,6 +2201,13 @@ They are specified by one or several ``Collisions`` blocks::
   #      nuclear_reaction = [],
   )
 
+.. note::
+
+  The screening from bound electrons, which is important when
+  the atom is neutral or partially ionized, is accounted for only in the
+  case of e-i collisions. To activate it, atom species **must have**
+  their :py:data:`atomic_number` defined and non-zero.
+
 
 .. py:data:: species1
              species2
@@ -2258,7 +2268,6 @@ They are specified by one or several ``Collisions`` blocks::
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
   * If :math:`< 0`, collisions are not treated (but other reactions may happen).
-
 
 .. py:data:: coulomb_log_factor
 

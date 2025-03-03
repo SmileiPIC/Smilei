@@ -110,4 +110,87 @@ for ion_nppc, eon_nppc in [[200, 200], [200, 20], [20, 200]]:
 	i += 1
 
 
+# Test collisions with a combination of species
+ions = []
+eons = []
+for ion_nppc, eon_nppc in [[200, 200], [200, 20], [20, 200]]:
+	
+	ion = "ion"+str(i)
+	eon = "eon"+str(i)
+	
+	ions += [ion]
+	eons += [eon]
+	
+	Species(
+		name = ion,
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell = ion_nppc,
+		mass = 10., #1836.0,
+		charge = 1.0,
+		number_density = 10.,
+		mean_velocity = [0., 0., 0.],
+		temperature = [0.00002],
+		time_frozen = 100000000.0,
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+	)
+	
+	Species(
+		name = eon,
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell= eon_nppc,
+		mass = 1.0,
+		charge = -1.0,
+		number_density = 10.,
+		mean_velocity = [0.05, 0., 0.],
+		temperature = [0.0000002],
+		time_frozen = 100000000.0,
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+	)
+	
+	i += 1
 
+
+Collisions(
+	species1 = eons,
+	species2 = ions,
+	coulomb_log = 3
+)
+
+DiagParticleBinning(
+	deposited_quantity = "weight",
+	every = 4,
+	time_average = 1,
+	species = eons,
+	axes = [
+			["x",    0*L0,    Main.grid_length[0],   10],
+			["vx",  -0.1,  0.1,    1000]
+	]
+)
+
+DiagParticleBinning(
+	deposited_quantity = "weight",
+	every = 4,
+	time_average = 1,
+	species = eons,
+	axes = [
+			["x",    0*L0,    Main.grid_length[0],   10],
+			["vperp2",  0,  0.01,    1000]
+	]
+)
+
+DiagParticleBinning(
+	deposited_quantity = "weight",
+	every = 4,
+	time_average = 1,
+	species = ions,
+	axes = [
+			["x",    0*L0,    Main.grid_length[0],   10],
+			["vx",  -0.1,  0.1,  1000]
+	]
+)

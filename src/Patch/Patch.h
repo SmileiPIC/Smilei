@@ -198,17 +198,21 @@ public:
     //! Allocate and copy all the field grids on device
     void allocateAndCopyFieldsOnDevice();
 
-    //! Allocate all field grids on device
+    //! Allocate all fields on device
     void allocateFieldsOnDevice();
 
-    //! Copy All field grids from device to host
+    //! Copy All fields from device to host
     void copyFieldsFromDeviceToHost();
 
     //! Copy All fields from host to device
     void copyFieldsFromHostToDevice();
 
-    //! Deallocate field grids on device
+    //! Deallocate fields on device
     void deleteFieldsOnDevice();
+
+    //! Reset fields on device
+    //Not used for the moment
+    //void ResetFieldsOnDevice();
 #endif
 
     //! init comm / sum densities
@@ -412,10 +416,6 @@ public:
     {
         return min_local_;
     }
-    
-    //! Return the volume (or surface or length depending on simulation dimension)
-    //! of one cell at the position of a given particle
-    virtual double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) = 0;
     
     //! Given several arrays (x,y,z for instance), return indices of points in patch
     virtual std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) = 0;

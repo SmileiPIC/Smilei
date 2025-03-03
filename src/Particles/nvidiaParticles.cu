@@ -77,20 +77,20 @@ namespace detail {
         using DifferenceType = int;
 
     public:
-        //! Compute the cell key for all the particles (not only a subset).
+        //! Compute the cluster / cell key for all the particles (not only a subset).
         //!
         static inline void
-        computeParticleClusterKey( nvidiaParticles& particle_container,
-                                   const Params&    parameters,
-                                   const Patch&     a_parent_patch );
-
+        computeParticleKey( nvidiaParticles& particle_container,
+                            const Params&    parameters,
+                            const Patch&     a_parent_patch );
+        
         //! precondition:
         //!     - nvidia_cell_keys_ shall be sorted in non decreasing order
         //!     - last_index.data() is a pointer mapped to GPU via
         //!       HostDeviceMemoryManagement
         //!
         static inline void
-        computeBinIndex( nvidiaParticles& particle_container );
+        computeBinIndex( nvidiaParticles& particle_container, bool cell_sorting );
 
         //! Sorting by cluster and binning
         //!
@@ -110,10 +110,10 @@ namespace detail {
         template <typename InputIterator,
                   typename ClusterType>
         static void
-        doComputeParticleClusterKey( InputIterator first,
-                                     InputIterator last,
-                                     ClusterType   cluster_type );
-
+        doComputeParticleKey( InputIterator first,
+                              InputIterator last,
+                              ClusterType   cluster_type,
+                              bool          cell_sorting );
     };
 
     template <Cluster::DifferenceType kClusterWidth>
@@ -124,18 +124,22 @@ namespace detail {
                    SizeType local_x_dimension_in_cell,
         int CellStartingGlobalIndex_for_x);
 
-        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
-        //! zipiterator).
-        //! The first value of a_particle is the cell key value, the other values are
-        //! the positions x 
+        //! Compute the cluster key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
         template <typename Tuple>
         __host__ __device__ IDType
-        Index( const Tuple& a_particle ) const;
+        ClusterKey( const Tuple& a_particle ) const;
+
+        //! Compute the cell key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
+        template <typename Tuple>
+        __host__ __device__ IDType
+        CellKey( const Tuple& a_particle ) const;
 
         //! Compute the cell key of a particle range.
         //!
         static void
-        computeParticleClusterKey( nvidiaParticles& particle_container,
+        computeParticleKey( nvidiaParticles& particle_container,
                                    const Params&    parameters,
                                    const Patch&     a_parent_patch );
 
@@ -154,21 +158,23 @@ namespace detail {
                    int CellStartingGlobalIndex_for_x,
                    int CellStartingGlobalIndex_for_y);
 
-        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
-        //! zipiterator).
-        //! The first value of a_particle is the cell key value, the other values are
-        //! the positions x and y.
-        //!
+        //! Compute the cluster key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
         template <typename Tuple>
         __host__ __device__ IDType
-        Index( const Tuple& a_particle ) const;
+        ClusterKey( const Tuple& a_particle ) const;
 
-        //! Compute the cell key of a particle range.
-        //!
+        //! Compute the cell key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
+        template <typename Tuple>
+        __host__ __device__ IDType
+        CellKey( const Tuple& a_particle ) const;
+
+        //! Compute the cluster / cell key of a particle range.
         static void
-        computeParticleClusterKey( nvidiaParticles& particle_container,
-                                   const Params&    parameters,
-                                   const Patch&     a_parent_patch );
+        computeParticleKey( nvidiaParticles& particle_container,
+                            const Params&    parameters,
+                            const Patch&     a_parent_patch );
 
     public:
         double   inverse_of_x_cell_dimension_;
@@ -192,21 +198,24 @@ namespace detail {
                    int CellStartingGlobalIndex_for_y,
                    int CellStartingGlobalIndex_for_z);
 
-        //! Compute the cell key of a_particle. a_particle shall be a tuple (from a
-        //! zipiterator).
-        //! The first value of a_particle is the cell key value, the other values are
-        //! the positions x and y.
-        //!
+        //! Compute the cluster key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
         template <typename Tuple>
         __host__ __device__ IDType
-        Index( const Tuple& a_particle ) const;
+        ClusterKey( const Tuple& a_particle ) const;
 
-        //! Compute the cell key of a particle range.
+        //! Compute the cell key of a_particle.
+        //! a_particle: a tuple (from a zipiterator) containing keys as the first iterator.
+        template <typename Tuple>
+        __host__ __device__ IDType
+        CellKey( const Tuple& a_particle ) const;
+
+        //! Compute the cluster / cell key of a particle range.
         //!
         static void
-        computeParticleClusterKey( nvidiaParticles& particle_container,
-                                   const Params&    parameters,
-                                   const Patch&     a_parent_patch );
+        computeParticleKey( nvidiaParticles& particle_container,
+                            const Params&    parameters,
+                            const Patch&     a_parent_patch );
 
     public:
         double   inverse_of_x_cell_dimension_;
@@ -220,7 +229,7 @@ namespace detail {
     };
 
 
-    //! This functor assign a cluster key to a_particle.
+    //! This functor assigns a cluster key to a_particle.
     //!
     template <typename ClusterType>
     class AssignClusterIndex
@@ -235,7 +244,32 @@ namespace detail {
         __host__ __device__ void
         operator()( Tuple& a_particle ) const
         {
-            thrust::get<0>( a_particle ) = cluster_type_.Index( a_particle ); //cluster key 
+            thrust::get<0>( a_particle ) /* cluster key */ = cluster_type_.ClusterKey( a_particle );
+        }
+
+    protected:
+        ClusterType cluster_type_;
+    };
+
+
+    //! This functor assigns a cell key to a_particle.
+    //!
+    template <typename ClusterType>
+    class AssignCellIndex
+    {
+    public:
+    public:
+        AssignCellIndex( ClusterType cluster_type )
+            : cluster_type_{ cluster_type }
+        {
+            // EMPTY
+        }
+
+        template <typename Tuple>
+        __host__ __device__ void
+        operator()( Tuple& a_particle ) const
+        {
+            thrust::get<0>( a_particle ) /* cell key */ = cluster_type_.CellKey( a_particle );
         }
 
     protected:
@@ -248,30 +282,30 @@ namespace detail {
     ////////////////////////////////////////////////////////////////////////////////
 
     inline void
-    Cluster::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                        const Params&    parameters,
-                                        const Patch&     a_parent_patch )
+    Cluster::computeParticleKey( nvidiaParticles& particle_container,
+                                 const Params&    parameters,
+                                 const Patch&     a_parent_patch )
     {
         // This is where we do a runtime dispatch depending on the simulation's
         // dimensions.
-
+        
         switch( particle_container.dimension() ) {
             case 1: {
-                Cluster1D<Params::getGPUClusterWidth( 1 )>::computeParticleClusterKey( particle_container,
-                                                                                                parameters,
-                                                                                                a_parent_patch );
+                Cluster1D<Params::getGPUClusterWidth( 1 )>::computeParticleKey( particle_container,
+                                                                                parameters,
+                                                                                a_parent_patch );
                 break;
             }
             case 2: {
-                Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleClusterKey( particle_container,
-                                                                                                parameters,
-                                                                                                a_parent_patch );
+                Cluster2D<Params::getGPUClusterWidth( 2 )>::computeParticleKey( particle_container,
+                                                                                parameters,
+                                                                                a_parent_patch );
                 break;
             }
             case 3: {
-                Cluster3D<Params::getGPUClusterWidth( 3 )>::computeParticleClusterKey( particle_container,
-                                                                                                parameters,
-                                                                                                a_parent_patch );
+                Cluster3D<Params::getGPUClusterWidth( 3 )>::computeParticleKey( particle_container,
+                                                                                parameters,
+                                                                                a_parent_patch );
                 break;
             }
             default:
@@ -280,13 +314,38 @@ namespace detail {
                 break;
         }
     }
-
+    
+    template<int a, int b>
+    struct affine_function : public thrust::unary_function<int,int> {
+        __host__ __device__ int operator()( int x ) const {
+            return a * x + b;
+        }
+    };
+    
+    template<int N>
+    void pickEveryN( int * input, int * output, int size ) {
+        
+        thrust::counting_iterator<int> first_cluster( 0 );
+        thrust::counting_iterator<int> last_cluster( size / N );
+        const auto last_in_cluster = affine_function<N, N-1>();
+        thrust::gather( thrust::device,
+                        thrust::make_transform_iterator( first_cluster, last_in_cluster ),
+                        thrust::make_transform_iterator( last_cluster , last_in_cluster ),
+                        input,
+                        output );
+        
+    }
+    
     inline void
-    Cluster::computeBinIndex( nvidiaParticles& particle_container )
+    Cluster::computeBinIndex( nvidiaParticles& particle_container, bool cell_sorting )
     {
         SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( particle_container.last_index.data() );
-
-        Cluster::IDType* bin_upper_bound = smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( particle_container.last_index.data() );
+        
+        // kClusterwidth should not be hard coded here
+        const int kClusterwidth = 4;
+        
+        IDType* last_index = particle_container.getPtrLastIndex();
+        const IDType * cell_keys = particle_container.getPtrCellKeys();
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
@@ -302,13 +361,46 @@ namespace detail {
 
         // NOTE: A particle is in a bin if the index of the bin is the same integer value as the particle's cell key.
         // The particles are sorted by cell key. We can do a simple binary search to find the upper bound of a bin.
-        //
-        thrust::upper_bound( thrust::device,
-                             static_cast<const IDType*>( particle_container.getPtrCellKeys() ),
-                             static_cast<const IDType*>( particle_container.getPtrCellKeys() ) + particle_container.deviceSize(),
-                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( 0 ) },
-                             thrust::counting_iterator<Cluster::IDType>{ static_cast<Cluster::IDType>( particle_container.last_index.size() ) },
-                             bin_upper_bound );
+        
+        const SizeType n_cluster = particle_container.last_index.size();
+        const SizeType ncells = n_cluster * pow( kClusterwidth, particle_container.dimension() );
+        
+        if( cell_sorting ) {
+            
+            // When there is cell sorting, we first get the cells indices
+            particle_container.cell_last_index_.resize( ncells );
+            auto cell_last_index = particle_container.getPtrCellLastIndex();
+            thrust::upper_bound( thrust::device,
+                                cell_keys,
+                                cell_keys + particle_container.deviceSize(),
+                                thrust::counting_iterator<SizeType>{ static_cast<SizeType>( 0 ) },
+                                thrust::counting_iterator<SizeType>{ ncells },
+                                cell_last_index );
+            
+            // Then deduce the cluster indices (at positions icluster * kClusterwidth - 1)
+            thrust::counting_iterator<int> first_cluster( 0 );
+            thrust::counting_iterator<int> last_cluster( n_cluster );
+            if( particle_container.dimension() == 1 ) {
+                pickEveryN<kClusterwidth>( cell_last_index, last_index, ncells );
+            } else if( particle_container.dimension() == 2 ) {
+                pickEveryN<kClusterwidth * kClusterwidth>( cell_last_index, last_index, ncells );
+            } else if( particle_container.dimension() == 3 ) {
+                pickEveryN<kClusterwidth * kClusterwidth * kClusterwidth>( cell_last_index, last_index, ncells );
+            } else {
+                SMILEI_ASSERT( false );
+            }
+            
+        } else {
+            // When there is no cell sorting, the keys are the cluster keys
+            // so we don't need a particular predicate to differentiate clusters
+            thrust::upper_bound( thrust::device,
+                                cell_keys,
+                                cell_keys + particle_container.deviceSize(),
+                                thrust::counting_iterator<SizeType>{ static_cast<SizeType>( 0 ) },
+                                thrust::counting_iterator<SizeType>{ n_cluster },
+                                last_index );
+        }
+
 
         // SMILEI_ASSERT( thrust::is_sorted( thrust::device,
         //                                   bin_upper_bound,
@@ -351,7 +443,7 @@ namespace detail {
         }
         
         // Compute keys of particles
-        computeParticleClusterKey( particle_container, parameters, a_parent_patch );
+        computeParticleKey( particle_container, parameters, a_parent_patch );
         
         // Sort particles by keys 
         // using particle_to_inject as a buffer (it is swapped with particle_container after sorting)
@@ -360,19 +452,26 @@ namespace detail {
         particle_container.sortParticleByKey( particle_to_inject );
         
         // Recompute bin locations
-        computeBinIndex( particle_container );
+        computeBinIndex( particle_container, parameters.cell_sorting_ );
     }
 
     template <typename InputIterator,
               typename ClusterType>
     void
-    Cluster::doComputeParticleClusterKey( InputIterator first,
-                                          InputIterator last,
-                                          ClusterType   cluster_type )
+    Cluster::doComputeParticleKey( InputIterator first,
+                                   InputIterator last,
+                                   ClusterType   cluster_type,
+                                   bool          cell_sorting )
     {
-        thrust::for_each( thrust::device,
-                          first, last,
-                          AssignClusterIndex<ClusterType>{ cluster_type } );
+        if( cell_sorting ) {
+            thrust::for_each( thrust::device,
+                              first, last,
+                              AssignCellIndex<ClusterType>{ cluster_type } );
+        } else {
+            thrust::for_each( thrust::device,
+                              first, last,
+                              AssignClusterIndex<ClusterType>{ cluster_type } );
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -425,11 +524,40 @@ namespace detail {
     template <Cluster::DifferenceType kClusterWidth>
     template <typename Tuple>
     __host__ __device__ typename Cluster1D<kClusterWidth>::IDType
-    Cluster1D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    Cluster1D<kClusterWidth>::ClusterKey( const Tuple& a_particle ) const
     {
-        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
-                                                                                    inverse_of_x_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_x_;
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+
+        const SizeType cluster_ix = cell_ix / kClusterWidth;
+
+        return static_cast<IDType>( cluster_ix );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ typename Cluster1D<kClusterWidth>::IDType
+    Cluster1D<kClusterWidth>::CellKey( const Tuple& a_particle ) const
+    {
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+
+        return static_cast<IDType>( cell_ix );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
+    Cluster2D<kClusterWidth>::ClusterKey( const Tuple& a_particle ) const
+    {
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+        const SizeType cell_iy = static_cast<SizeType>( thrust::get<2>( a_particle ) *
+                                                        inverse_of_y_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_y_;
 
         // These divisions will be optimized.
         // The integer division rounding behavior is expected.
@@ -437,62 +565,55 @@ namespace detail {
         // NOTE: Flat tiles have been studied but were not as efficient for the
         // projection. The square provides the minimal perimeter (and thus ghost
         // cell amount) for a given area.
-        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
-
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
-
-        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster;
-
+        // We assume same kClusterWidth in all dimensions
+        const SizeType cluster_ix = cell_ix / kClusterWidth;
+        const SizeType cluster_iy = cell_iy / kClusterWidth;
+        
+        // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+        const SizeType cluster_index = cluster_ix * local_y_dimension_in_cluster_
+                                       + cluster_iy;
+        
         return static_cast<IDType>( cluster_index );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
     template <typename Tuple>
     __host__ __device__ typename Cluster2D<kClusterWidth>::IDType
-    Cluster2D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    Cluster2D<kClusterWidth>::CellKey( const Tuple& a_particle ) const
     {
-        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
-                                                                                    inverse_of_x_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_x_;
-        const SizeType local_y_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<2>( a_particle ) *
-                                                                                    inverse_of_y_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_y_;
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+        const SizeType cell_iy = static_cast<SizeType>( thrust::get<2>( a_particle ) *
+                                                        inverse_of_y_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_y_;
+        
+        const SizeType cluster_ix = cell_ix / kClusterWidth;
+        const SizeType cluster_iy = cell_iy / kClusterWidth;
+        const SizeType cluster_index = cluster_ix * local_y_dimension_in_cluster_
+                                       + cluster_iy;
 
-        // These divisions will be optimized.
-        // The integer division rounding behavior is expected.
+        const SizeType cell_index = cluster_index * ( kClusterWidth * kClusterWidth )
+                                    + kClusterWidth * (cell_ix % kClusterWidth) 
+                                    + cell_iy % kClusterWidth;
 
-        // NOTE: Flat tiles have been studied but were not as efficient for the
-        // projection. The square provides the minimal perimeter (and thus ghost
-        // cell amount) for a given area.
-        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
-        static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
-
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
-
-        const SizeType y_stride = local_y_dimension_in_cluster_;
-
-        // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * y_stride +
-                                       local_y_particle_cluster_coordinate_in_cluster;
-
-        return static_cast<IDType>( cluster_index );
+        return static_cast<IDType>( cell_index );
     }
     
     template <Cluster::DifferenceType kClusterWidth>
     template <typename Tuple>
     __host__ __device__ typename Cluster3D<kClusterWidth>::IDType
-    Cluster3D<kClusterWidth>::Index( const Tuple& a_particle ) const
+    Cluster3D<kClusterWidth>::ClusterKey( const Tuple& a_particle ) const
     {
-        const SizeType local_x_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<1>( a_particle ) *
-                                                                                    inverse_of_x_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_x_;
-        const SizeType local_y_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<2>( a_particle ) *
-                                                                                    inverse_of_y_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_y_;
-        const SizeType local_z_particle_coordinate_in_cell = static_cast<SizeType>( thrust::get<3>( a_particle ) *
-                                                                                    inverse_of_z_cell_dimension_ ) -
-                                                             CellStartingGlobalIndex_for_z_;
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+        const SizeType cell_iy = static_cast<SizeType>( thrust::get<2>( a_particle ) *
+                                                        inverse_of_y_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_y_;
+        const SizeType cell_iz = static_cast<SizeType>( thrust::get<3>( a_particle ) *
+                                                        inverse_of_z_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_z_;
 
         // These divisions will be optimized.
         // The integer division rounding behavior is expected.
@@ -500,46 +621,69 @@ namespace detail {
         // NOTE: Flat tiles have been studied but were not as efficient for the
         // projection. The square provides the minimal perimeter (and thus ghost
         // cell amount) for a given area.
-        static constexpr SizeType x_cluster_dimension_in_cell = kClusterWidth;
-        static constexpr SizeType y_cluster_dimension_in_cell = kClusterWidth;
-        static constexpr SizeType z_cluster_dimension_in_cell = kClusterWidth;
-
-        const SizeType local_x_particle_cluster_coordinate_in_cluster = local_x_particle_coordinate_in_cell / x_cluster_dimension_in_cell;
-        const SizeType local_y_particle_cluster_coordinate_in_cluster = local_y_particle_coordinate_in_cell / y_cluster_dimension_in_cell;
-        const SizeType local_z_particle_cluster_coordinate_in_cluster = local_z_particle_coordinate_in_cell / z_cluster_dimension_in_cell;
-
-        const SizeType y_stride = local_y_dimension_in_cluster_;
-        const SizeType z_stride = local_z_dimension_in_cluster_;
+        const SizeType cluster_ix = cell_ix / kClusterWidth;
+        const SizeType cluster_iy = cell_iy / kClusterWidth;
+        const SizeType cluster_iz = cell_iz / kClusterWidth;
 
         // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-        const SizeType cluster_index = local_x_particle_cluster_coordinate_in_cluster * z_stride * y_stride +
-                                       local_y_particle_cluster_coordinate_in_cluster * z_stride +
-                                       local_z_particle_cluster_coordinate_in_cluster;
+        const SizeType cluster_index = cluster_ix * local_z_dimension_in_cluster_ * local_y_dimension_in_cluster_ +
+                                       cluster_iy * local_z_dimension_in_cluster_ +
+                                       cluster_iz;
 
         return static_cast<IDType>( cluster_index );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
+    template <typename Tuple>
+    __host__ __device__ typename Cluster3D<kClusterWidth>::IDType
+    Cluster3D<kClusterWidth>::CellKey( const Tuple& a_particle ) const
+    {
+        const SizeType cell_ix = static_cast<SizeType>( thrust::get<1>( a_particle ) *
+                                                        inverse_of_x_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_x_;
+        const SizeType cell_iy = static_cast<SizeType>( thrust::get<2>( a_particle ) *
+                                                        inverse_of_y_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_y_;
+        const SizeType cell_iz = static_cast<SizeType>( thrust::get<3>( a_particle ) *
+                                                        inverse_of_z_cell_dimension_ ) -
+                                 CellStartingGlobalIndex_for_z_;
+
+        const SizeType cluster_ix = cell_ix / kClusterWidth;
+        const SizeType cluster_iy = cell_iy / kClusterWidth;
+        const SizeType cluster_iz = cell_iz / kClusterWidth;
+        const SizeType cluster_index = cluster_ix * local_z_dimension_in_cluster_ * local_y_dimension_in_cluster_ +
+                                       cluster_iy * local_z_dimension_in_cluster_ +
+                                       cluster_iz;
+        
+        const SizeType cell_index = cluster_index * ( kClusterWidth*kClusterWidth*kClusterWidth )
+                                    + kClusterWidth * kClusterWidth * (cell_ix % kClusterWidth) 
+                                    +                 kClusterWidth * (cell_iy % kClusterWidth)
+                                    +                                  cell_iz % kClusterWidth;
+        
+        return static_cast<IDType>( cell_index );
+    }
+
+    template <Cluster::DifferenceType kClusterWidth>
     void
-    Cluster1D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                                         const Params&    parameters,
-                                                         const Patch&     a_parent_patch )
+    Cluster1D<kClusterWidth>::computeParticleKey( nvidiaParticles& particle_container,
+                                                  const Params&    parameters,
+                                                  const Patch&     a_parent_patch )
     {
         const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ) ) );
         const auto last  = first + particle_container.deviceSize();
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
-        doComputeParticleClusterKey( first, last,
-                                     Cluster1D<Params::getGPUClusterWidth( 1 )>{ parameters.res_space[0],
-                                                                                          parameters.patch_size_[0],
-                                                                                          CellStartingGlobalIndex_for_x} );
+        auto cluster = Cluster1D<Params::getGPUClusterWidth( 1 )>{ parameters.res_space[0],
+                                                                   parameters.patch_size_[0],
+                                                                   CellStartingGlobalIndex_for_x };
+        doComputeParticleKey( first, last, cluster, parameters.cell_sorting_ );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
     void
-    Cluster2D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                                         const Params&    parameters,
-                                                         const Patch&     a_parent_patch )
+    Cluster2D<kClusterWidth>::computeParticleKey( nvidiaParticles& particle_container,
+                                                  const Params&    parameters,
+                                                  const Patch&     a_parent_patch )
     {
         const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
@@ -547,20 +691,20 @@ namespace detail {
         const auto last  = first + particle_container.deviceSize();
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
-        doComputeParticleClusterKey( first, last,
-                                     Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.res_space[0],
-                                                                                          parameters.res_space[1],
-                                                                                          parameters.patch_size_[0],
-                                                                                          parameters.patch_size_[1],
-                                                                                          CellStartingGlobalIndex_for_x,
-                                                                                          CellStartingGlobalIndex_for_y } );
+        auto cluster = Cluster2D<Params::getGPUClusterWidth( 2 )>{ parameters.res_space[0],
+                                                                   parameters.res_space[1],
+                                                                   parameters.patch_size_[0],
+                                                                   parameters.patch_size_[1],
+                                                                   CellStartingGlobalIndex_for_x,
+                                                                   CellStartingGlobalIndex_for_y };
+        doComputeParticleKey( first, last, cluster, parameters.cell_sorting_ );
     }
 
     template <Cluster::DifferenceType kClusterWidth>
     void
-    Cluster3D<kClusterWidth>::computeParticleClusterKey( nvidiaParticles& particle_container,
-                                                         const Params&    parameters,
-                                                         const Patch&     a_parent_patch )
+    Cluster3D<kClusterWidth>::computeParticleKey( nvidiaParticles& particle_container,
+                                                  const Params&    parameters,
+                                                  const Patch&     a_parent_patch )
     {
         const auto first = thrust::make_zip_iterator( thrust::make_tuple( particle_container.getPtrCellKeys(),
                                                                           static_cast<const double*>( particle_container.getPtrPosition( 0 ) ),
@@ -570,16 +714,16 @@ namespace detail {
         int CellStartingGlobalIndex_for_x = a_parent_patch.getCellStartingGlobalIndex_noGC(0);
         int CellStartingGlobalIndex_for_y = a_parent_patch.getCellStartingGlobalIndex_noGC(1);
         int CellStartingGlobalIndex_for_z = a_parent_patch.getCellStartingGlobalIndex_noGC(2);
-        doComputeParticleClusterKey( first, last,
-                                     Cluster3D<Params::getGPUClusterWidth( 3 )>{ parameters.res_space[0],
-                                                                                          parameters.res_space[1],
-                                                                                          parameters.res_space[2],
-                                                                                          parameters.patch_size_[0],
-                                                                                          parameters.patch_size_[1],
-                                                                                          parameters.patch_size_[2],
-                                                                                          CellStartingGlobalIndex_for_x,
-                                                                                          CellStartingGlobalIndex_for_y,
-                                                                                          CellStartingGlobalIndex_for_z } );
+        auto cluster = Cluster3D<Params::getGPUClusterWidth( 3 )>{ parameters.res_space[0],
+                                                                   parameters.res_space[1],
+                                                                   parameters.res_space[2],
+                                                                   parameters.patch_size_[0],
+                                                                   parameters.patch_size_[1],
+                                                                   parameters.patch_size_[2],
+                                                                   CellStartingGlobalIndex_for_x,
+                                                                   CellStartingGlobalIndex_for_y,
+                                                                   CellStartingGlobalIndex_for_z };
+        doComputeParticleKey( first, last, cluster, parameters.cell_sorting_ );
     }
 
 } // namespace detail
@@ -761,13 +905,16 @@ void nvidiaParticles::initializeDataOnDevice()
         
         // At this point, a copy of the host particles and last_index is on the
         // device and we know we support the space dimension.
-        detail::Cluster::computeParticleClusterKey( *this, *parameters_, *parent_patch_ );
+
+        // Compute the cluster key (never the cell key)
+        detail::Cluster::computeParticleKey( *this, *parameters_, *parent_patch_ );
 
         // The particles are not correctly sorted when created.
         sortParticleByKey();
 
-        detail::Cluster::computeBinIndex( *this );
+        detail::Cluster::computeBinIndex( *this, parameters_->cell_sorting_ );
         setHostBinIndex();
+        
     }
 }
 
@@ -1152,10 +1299,6 @@ int nvidiaParticles::prepareBinIndex()
     SMILEI_ASSERT( !smilei::tools::gpu::HostDeviceMemoryManagement::IsHostPointerMappedOnDevice( last_index.data() ) );
 
     // We'll need last_index to be on the GPU.
-
-    // TODO(Etienne M): FREE. If we have load balancing or other patch
-    // creation/destruction available (which is not the case on GPU ATM),
-    // we should be taking care of freeing this GPU memory.
     smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( last_index );
 
     return 0;

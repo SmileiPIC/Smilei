@@ -25,6 +25,8 @@ Changes made in the repository (not released)
 
 * **Features**:
 
+  * Electron-ion collisions now include screening from bound electrons,
+    thus supporting electron-neutral collisions.
   * Prescribed fields in AM geometry.
   * Particle reflective boundary conditions at Rmax in AM geometry.
   * 1st order Ruyten shape function in AM geometry.

@@ -2,7 +2,6 @@
 #define BINARYPROCESSESFACTORY_H
 
 #include "BinaryProcesses.h"
-#include "BinaryProcess.h"
 #include "Collisions.h"
 #include "CollisionalIonization.h"
 #include "CollisionalFusionDD.h"
@@ -51,6 +50,17 @@ public:
             intra = false;
         }
         
+        // Figure out if there should be atomic screening (Thomas-Fermi)
+        // If all electrons, or all ions, or all unknown, there is no screening
+        bool anyZ0 = any_of( sgroup[0].begin(), sgroup[0].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
+        bool anyZ1 = any_of( sgroup[1].begin(), sgroup[1].end(), [vecSpecies]( unsigned int i ) { return vecSpecies[i]->atomic_number_ > 0; } );
+        int screening_group = 0; // no screening
+        if( anyZ0 && !anyZ1 ) {
+            screening_group = 1;
+        } else if( !anyZ0 && anyZ1 ) {
+            screening_group = 2;
+        }
+        
         // Number of timesteps between each binary processes
         int every = 1; // default
         PyTools::extract( "every", every, "Collisions", n_binary_processes );
@@ -64,11 +74,11 @@ public:
         PyTools::extract( "time_frozen", time_frozen, "Collisions", n_binary_processes );
         
         // Now make all the binary processes
-        std::vector<BinaryProcess*> processes;
+        CollisionalNuclearReaction * collisional_nuclear_reaction = nullptr;
+        CollisionalIonization * collisional_ionization = nullptr;
         
         // Nuclear reactions
         PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_binary_processes );
-        std::string nuclear_reaction_name = "";
         // If fusion, verify parameters
         if( py_nuclear_reaction != Py_None ) {
             
@@ -124,9 +134,7 @@ public:
                 std::vector<std::string> name = {"helium3", "neutron"};
                 findProducts( vecSpecies, products, Z, A, name, product_species, n_binary_processes );
                 
-                processes.push_back( new CollisionalFusionDD( params, product_species, rate_multiplier ) );
-                
-                nuclear_reaction_name = "D-D fusion";
+                collisional_nuclear_reaction = new CollisionalFusionDD( params, product_species, rate_multiplier );
                 
             // Unknown types
             } else {
@@ -154,7 +162,6 @@ public:
                     LINK_NAMELIST + std::string("#collisions-reactions") );
             }
             
-            processes.push_back( new Collisions( params, clog, clog_factor ) );
         }
         
         // Collisional ionization
@@ -247,40 +254,15 @@ public:
             ionization_particles = vecSpecies[ionization_electrons]->particles;
             
             // Create the ionization object
-            processes.push_back( new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles ) );
+            collisional_ionization = new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles );
             
-        }
-        
-        // Print Binary processes parameters
-        std::ostringstream t;
-        t << "(" << sgroup[0][0];
-        for( unsigned int rs=1 ; rs<sgroup[0].size() ; rs++ ) {
-            t << " " << sgroup[0][rs];
-        }
-        MESSAGE("");
-        if( intra ) {
-            MESSAGE( 1, "Binary processes #" << n_binary_processes << " within species " << t.str() << ")" );
-        } else {
-            t << ") and (" << sgroup[1][0];
-            for( unsigned int rs=1 ; rs<sgroup[1].size() ; rs++ ) {
-                t << " " << sgroup[1][rs];
-            }
-            MESSAGE( 1, "Binary processes #" << n_binary_processes << " between species " << t.str() << ")" );
-        }
-        
-        for( unsigned int iBP=0; iBP<processes.size(); iBP++ ) {
-            MESSAGE( 2, (iBP+1)<<". "<<processes[iBP]->name() );
-        }
-        
-        if( debug_every>0 ) {
-            MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
         }
         
         // If debugging log requested
         std::string filename;
         if( debug_every>0 ) {
             // Build the file name
-            t.str( "" );
+            std::ostringstream t;
             t << "BinaryProcesses" << n_binary_processes << ".h5";
             filename = t.str();
             std::ifstream file( filename );
@@ -308,17 +290,58 @@ public:
             }
         }
         
-        return new BinaryProcesses( 
+        BinaryProcesses * BPs = new BinaryProcesses( 
             params,
             sgroup[0],
             sgroup[1],
             intra,
-            processes,
+            screening_group,
+            collisional_nuclear_reaction,
+            clog,
+            clog_factor,
+            collisional_ionization,
             every,
             debug_every,
             time_frozen,
             filename
         );
+        
+        // Print Binary processes parameters
+        std::ostringstream t;
+        t << "(" << sgroup[0][0];
+        for( unsigned int rs=1 ; rs<sgroup[0].size() ; rs++ ) {
+            t << " " << sgroup[0][rs];
+        }
+        MESSAGE("");
+        if( intra ) {
+            MESSAGE( 1, "Binary processes #" << n_binary_processes << " within species " << t.str() << ")" );
+        } else {
+            t << ") and (" << sgroup[1][0];
+            for( unsigned int rs=1 ; rs<sgroup[1].size() ; rs++ ) {
+                t << " " << sgroup[1][rs];
+            }
+            MESSAGE( 1, "Binary processes #" << n_binary_processes << " between species " << t.str() << ")" );
+        }
+        
+        int number = 1;
+        if( collisional_nuclear_reaction ) {
+            MESSAGE( 2, number << ". "<< collisional_nuclear_reaction->name() );
+            number++;
+        }
+        if( BPs->collisions_ ) {
+            MESSAGE( 2, number << ". "<< BPs->collisions_.name() );
+            number++;
+        }
+        if( collisional_ionization ) {
+            MESSAGE( 2, number << ". "<< collisional_ionization->name() );
+            number++;
+        }
+        
+        if( debug_every>0 ) {
+            MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
+        }
+        
+        return BPs;
     }
     
     

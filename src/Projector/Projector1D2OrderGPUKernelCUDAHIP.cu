@@ -478,7 +478,8 @@ namespace cudahip1d {
                                          ComputeFloat dx_inv,
                                          ComputeFloat dx_ov_dt,
                                          int          i_domain_begin,
-                                         int          not_spectral_ )
+                                         int          not_spectral_,
+                                         bool         cell_sorting )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -528,14 +529,26 @@ namespace cudahip1d {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            // The loop order is different depending on cell sorting
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                // With cell sorting, each thread should process close-by particles
+                // to reduce atomics. This uses more cache, but is still better
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                // Without cell sorting, we keep the standard loops as particles
+                // are not ordered so that atomics are naturally rare
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
@@ -659,7 +672,8 @@ namespace cudahip1d {
                                             ComputeFloat dx_inv,
                                             ComputeFloat dx_ov_dt,
                                             int          i_domain_begin,
-                                            int          not_spectral_ )
+                                            int          not_spectral_,
+                                            bool         cell_sorting )
         {
             // TODO(Etienne M): refactor this function. Break it into smaller
             // pieces (lds init/store, coeff computation, deposition etc..)
@@ -710,14 +724,22 @@ namespace cudahip1d {
 
             const unsigned int particle_count = device_bin_index[bin_count - 1];
 
-            // This workgroup has to process distance(last_particle,
-            // first_particle) particles
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            for( unsigned int particle_index = first_particle + thread_index_offset;
-                 particle_index < last_particle;
-                 particle_index += loop_stride ) {
+            unsigned int stride, start_thread, stop_thread;
+            if( cell_sorting ) {
+                const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
+                start_thread = first_particle + threadIdx.x * npart_thread;
+                stop_thread = std::min( { start_thread + npart_thread, last_particle } );
+                stride  = 1;
+            } else {
+                start_thread = first_particle + threadIdx.x;
+                stop_thread = last_particle;
+                stride = workgroup_size;
+            }
+            
+            for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat                  invgf = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__        iold = &device_iold_[particle_index];
                 const double *const __restrict__ deltaold = &device_deltaold_[particle_index];
@@ -881,7 +903,8 @@ namespace cudahip1d {
                              double dx_inv,
                              double dx_ov_dt,
                              int    i_domain_begin,
-                             int    not_spectral_ )
+                             int    not_spectral_,
+                             bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 1 /* 1D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
@@ -928,7 +951,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
@@ -956,7 +980,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
-                            not_spectral_
+                            not_spectral_,
+                            cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
@@ -986,7 +1011,8 @@ namespace cudahip1d {
                                        double dx_inv,
                                        double dx_ov_dt,
                                        int    i_domain_begin,
-                                       int    not_spectral_ )
+                                       int    not_spectral_,
+                                       bool cell_sorting )
     {
         // & because one  1D ; 2 because of 2nd order interpolation
         SMILEI_ASSERT( Params::getGPUClusterWidth( 1 ) != -1 && 
@@ -1030,38 +1056,40 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
-                            not_spectral_ );
+                            not_spectral_,
+                            cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
-        KernelFunction <<<                                                                                                             
-                            kGridDimension,                                                                                            
-                            kBlockDimension,                                                                                           
-                            0, // Shared memory                                                                                        
-                            0 // Stream                                                                                                
-                       >>>                                                                                                             
-                       (                                                                                                               
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),                               
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),                               
+        KernelFunction <<<
+                            kGridDimension,
+                            kBlockDimension,
+                            0, // Shared memory
+                            0 // Stream
+                       >>>
+                       (
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_rho ),
                             Jx_size, Jy_size, Jz_size, rho_size,
-                            device_particle_position_x,                                                                                
-                            device_particle_momentum_y,                                                                                
-                            device_particle_momentum_z,                                                                                
-                            device_particle_charge,                                                                                    
-                            device_particle_weight,                                                                                    
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),                        
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),                           
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),                            
-                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),                        
-                            inv_cell_volume,                                                                                           
-                            dx_inv,                                                                                           
-                            dx_ov_dt,                                                                                       
-                            i_domain_begin,                                                                                              
-                            not_spectral_                                                                                               
-                       );                                                                                                              
-        checkHIPErrors( ::cudaDeviceSynchronize() );  
+                            device_particle_position_x,
+                            device_particle_momentum_y,
+                            device_particle_momentum_z,
+                            device_particle_charge,
+                            device_particle_weight,
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_bin_index ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
+                            smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
+                            inv_cell_volume,
+                            dx_inv,
+                            dx_ov_dt,
+                            i_domain_begin,
+                            not_spectral_,
+                            cell_sorting
+                       );
+        checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif 
     }
 

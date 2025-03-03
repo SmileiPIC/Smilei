@@ -98,7 +98,14 @@ public:
     uint64_t * getPtrId() override {
         return thrust::raw_pointer_cast( nvidia_id_.data() );
     };
-
+    
+    int * getPtrLastIndex() override {
+        return smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( last_index.data() );
+    };
+    int * getPtrCellLastIndex() override {
+        return thrust::raw_pointer_cast( cell_last_index_.data() );
+    };
+    
     // -----------------------------------------------------------------------------
     //! Move leaving particles to the buffers
     // -----------------------------------------------------------------------------
@@ -137,6 +144,9 @@ public:
     void sortParticleByKey( nvidiaParticles& buffer );
 
     void scatterParticles( nvidiaParticles &particles_to_import, const thrust::device_vector<int> &index );
+
+    //! index of the last particle each cell
+    thrust::device_vector<int> cell_last_index_;
 
 protected:
     //! Redefine first_index and last_index according to the binning algorithm
