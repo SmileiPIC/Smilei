@@ -122,13 +122,13 @@ private:
         return xorshift32_state;
     }
     //! Inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax = 1./4294967295.;
+    static constexpr double xorshift32_invmax = 1./4294967296.;
     //! Almost inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967295.;
+    static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
     //! Twice inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax2 = 2./4294967295.;
+    static constexpr double xorshift32_invmax2 = 2./4294967296.;
      //! two pi * inverse of the maximum value of the random number generator
-    static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967295.;
+    static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967296.;
     
 };
 #ifdef SMILEI_ACCELERATOR_OMP
