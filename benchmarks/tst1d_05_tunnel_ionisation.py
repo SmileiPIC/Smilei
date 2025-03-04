@@ -5,8 +5,8 @@
 import math
 l0 = 2.0*math.pi	# wavelength in normalized units
 t0 = l0				# optical cycle in normalized units
-rest = 6000.0		# nb of timestep in 1 optical cycle
-resx = 4000.0		# nb cells in 1 wavelength
+rest = 9000.0		# nb of timestep in 1 optical cycle
+resx = 8000.0		# nb cells in 1 wavelength
 Lsim = 0.01*l0	    # simulation length
 Tsim = 0.2*t0		# duration of the simulation
 
@@ -19,7 +19,7 @@ Main(
 	cell_length = [l0/resx],
 	grid_length  = [Lsim],
 	
-	number_of_patches = [ 4 ],
+	number_of_patches = [ 8 ],
 	
 	timestep = t0/rest,
 	simulation_time = Tsim,
@@ -58,7 +58,7 @@ for i, tunnel_model in enumerate(["tunnel", "tunnel_full_PPT"]):
             atomic_number = 1,
             position_initialization = 'regular',
             momentum_initialization = 'cold',
-            particles_per_cell = 40,
+            particles_per_cell = 1000,
             mass = 1836.0*1000.,
             charge = 0.0,
             number_density = 0.1,
@@ -75,7 +75,7 @@ for i, tunnel_model in enumerate(["tunnel", "tunnel_full_PPT"]):
             atomic_number = 6,
             position_initialization = 'regular',
             momentum_initialization = 'cold',
-            particles_per_cell = 40,
+            particles_per_cell = 1000,
             mass = 1836.0*1000.,
             charge = 0.0,
             number_density = 0.1,
