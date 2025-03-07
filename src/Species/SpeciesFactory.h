@@ -78,8 +78,14 @@ public:
             ERROR_NAMELIST("For species #" << ispec << ", name cannot start  with `m_`",
             LINK_NAMELIST + std::string("#name"));
         }
+        if( find_if( species_name.begin(),
+                     species_name.end(),
+                     [](char c) { return !( isalnum(c) || c == '_' ); } ) != species_name.end() ) {
+            ERROR_NAMELIST("For species #" << ispec << ", name must contain only alphanumeric characters",
+            LINK_NAMELIST + std::string("#name"));
+        }
         this_species->name_ = species_name;
-
+        
         // Get mass
         double mass;
         PyTools::extract( "mass", mass, "Species", ispec );
