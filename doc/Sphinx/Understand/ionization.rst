@@ -5,7 +5,7 @@
 Ionization
 ----------------------------------
 
-Three types of ionization have been introduced in Smilei (4 if you count field ionization with a laser envelope as a separate type).
+Four types of ionization have been introduced in Smilei: collisional ionization, field ionization, envelope ionization (time average field) or custom ionization using user defined rates.
 
 ----
 
@@ -79,7 +79,7 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
 We note that the initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
 This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.
 
-In :program:`Smilei`, four models are available to compute the ionization rate of :eq:`ionizationRate1`.
+In :program:`Smilei`, two models are available to compute the ionization rate of :eq:`ionizationRate1`.
 
 
 .. _ppt_adk:
@@ -403,13 +403,13 @@ Super-imposed (in red) is the corresponding theoretical prediction.
 References
 ^^^^^^^^^^
 
-.. [Ammosov1986] `M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986) <http://www.jetp.ac.ru/cgi-bin/dn/e_064_06_1191.pdf>`_
+.. [Ammosov1986] `M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986) <http://www.jetp.ras.ru/cgi-bin/dn/e_064_06_1191.pdf>`_
 
 .. [Nuter2011] `R. Nuter et al., Phys. of Plasmas 19, 033107 (2011) <http://dx.doi.org/10.1063/1.3559494>`_
 
-.. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ac.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
+.. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ras.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
 
-.. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
+.. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ras.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
 
 .. [Chen2013] `M. Chen, E. Cormier-Michel, C. G. R. Geddes, D. L. Bruwhiler, L. L. Yu, E. Esarey, C. B. Schroeder, W. P. Leemans, Journ. Comput. Phys. 236, 220 (2013) <https://doi.org/10.1016/j.jcp.2012.11.029>`_
 
