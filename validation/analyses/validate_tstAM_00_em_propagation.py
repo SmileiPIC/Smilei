@@ -14,9 +14,9 @@ Validate("Ey field subgrid at iteration 1700", Ey, 0.01)
 
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5", "r") as f:
-	dt = f["data/0000000000"].attrs["dt"]
-	dx = f["data/0000000000/Er_mode_0"].attrs["gridSpacing"]
-	patchSize = f["data/0000000000"].attrs["patchSize"]
+	dt = f["data/0"].attrs["dt"]
+	dx = f["data/0/Er_mode_0"].attrs["gridSpacing"]
+	patchSize = f["data/0"].attrs["patchSize"]
 Validate("Value of the timestep" , dt, 1e-6)
 Validate("Value of the grid step", dx, 1e-6)
 Validate("Patch size", patchSize)
