@@ -414,6 +414,15 @@ public:
         return d;
     }
     
+    //! Make a soft link to some path
+    void softlink( std::string name, std::string path )
+    {
+        hid_t lcpl = H5Pcreate( H5P_LINK_CREATE );
+        hid_t lapl = H5Pcreate( H5P_LINK_ACCESS );
+        H5Lcreate_soft( path.c_str(), id_, name.c_str(), lcpl, lapl );
+        H5Pclose( lcpl );
+        H5Pclose( lapl );
+    }
 };
 
 class H5Read : public H5
