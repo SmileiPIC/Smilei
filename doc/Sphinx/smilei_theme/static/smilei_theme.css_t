@@ -127,7 +127,6 @@ div.footer > div {
 #themebutton:active { filter: opacity(1.2); }
 
 div.logo {
-	height: 10mm;
 	text-align: left;
 	margin: 1mm 2em 1mm 1mm;
 	padding: 0 2mm;

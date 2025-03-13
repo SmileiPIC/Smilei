@@ -130,7 +130,7 @@ class SmileiSimulation(object):
 				def __init__(self, **kwargs):
 					for k,v in kwargs.items():
 						setattr(self, k, v)
-			with shelve.open(path+self._os.sep+'info.shelf') as f:
+			with shelve.open(path+self._os.sep+'info.shelf','r') as f:
 				for k in f:
 					if k == "_singletons":
 						for singletonName, singletonDict in f[k].items():

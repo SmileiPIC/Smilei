@@ -36,8 +36,6 @@ extensions = [
 #    'rst2pdf.pdfbuilder'
 ]
 
-pdf_documents = [('index', u'rst2pdf', u'Sample rst2pdf doc', u'Your Name'),]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -54,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Smilei'
-copyright = u'2019'
+copyright = u'2025'
 author = u''
 
 # The version info for the project you're documenting, acts as replacement for
@@ -68,7 +66,6 @@ try:
 	version = check_output('git describe --tags --abbrev=0', shell=True).decode().strip('v\n')
 except :
 	version = " unknown" 
-    
 
 # The full version, including alpha/beta/rc tags.
 release = version
