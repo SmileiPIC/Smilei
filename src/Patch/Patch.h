@@ -140,12 +140,7 @@ public:
 
 #ifdef __DETAILED_TIMERS
     inline void __attribute__((always_inline)) startFineTimer(unsigned int index) {
-#ifdef _OMPTASKS
-        const int ithread = Tools::getOMPThreadNum();
-        patch_tmp_timers_[index * number_of_threads_ + ithread] = MPI_Wtime();
-#else
-        patch_tmp_timers_[index] = MPI_Wtime();
-#endif
+    patch_tmp_timers_[index] = MPI_Wtime();
 #else
     inline void __attribute__((always_inline)) startFineTimer(unsigned int) {
 #endif
@@ -153,12 +148,7 @@ public:
     
 #ifdef  __DETAILED_TIMERS
     inline void __attribute__((always_inline)) stopFineTimer(unsigned int index) {
-#ifdef _OMPTASKS
-        const int ithread = Tools::getOMPThreadNum();   
-        patch_timers_[index * number_of_threads_ + ithread] += MPI_Wtime() - patch_tmp_timers_[index * number_of_threads_ + ithread];
-#else
-        patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
-#endif
+    patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
 #else
     inline void __attribute__((always_inline)) stopFineTimer(unsigned int) {
 #endif
