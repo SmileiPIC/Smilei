@@ -78,6 +78,10 @@ public:
     inline double uniform1() {
         return xorshift32() * xorshift32_invmax1;
     }
+    //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1-10^-6
+    inline float uniform1f() {
+        return xorshift32() * xorshift32_invmax1f;
+    }
     //! Uniform rand from xorshift32 generator, between -1. (excluded) and 1. (included)
     inline double uniform2() {
         return xorshift32() * xorshift32_invmax2 - 1.;
@@ -125,6 +129,7 @@ private:
     static constexpr double xorshift32_invmax = 1./4294967296.;
     //! Almost inverse of the maximum value of the random number generator
     static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
+    static constexpr float xorshift32_invmax1f = (1.-1e-6)/4294967296.;
     //! Twice inverse of the maximum value of the random number generator
     static constexpr double xorshift32_invmax2 = 2./4294967296.;
      //! two pi * inverse of the maximum value of the random number generator

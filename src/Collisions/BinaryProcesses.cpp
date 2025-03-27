@@ -246,7 +246,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         for( size_t i = 0; i < sg.size(); i++ ) {
             screening_Z[i] = (double) patch->vecSpecies[sg[i]]->atomic_number_;
             lTF[i] = 3.1255e-19 // (9*pi^2/16)^(1/3) * a0 /c
-                *params.reference_angular_frequency_SI * pow( screening_Z[i], -1/3 );
+                *params.reference_angular_frequency_SI / cbrt( screening_Z[i] );
         }
     }
     screening_Z.push_back( 0. ); // placeholder for no screening
@@ -382,7 +382,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         #endif
         for( uint32_t ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
             uint32_t start = ibin == 0 ? 0 : last_index1_ptr[ispec1][ibin-1];
-            for( uint32_t i = start; i < last_index1_ptr[ispec1][ibin]; i++ ) {
+            for( uint32_t i = start; i < ( uint32_t ) last_index1_ptr[ispec1][ibin]; i++ ) {
                 n1 += weight1_ptr[ispec1][i];
             }
         }
@@ -393,7 +393,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
         #endif
         for( uint32_t ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
             uint32_t start = ibin == 0 ? 0 : last_index2_ptr[ispec2][ibin-1];
-            for( uint32_t i = start; i < last_index2_ptr[ispec2][ibin]; i++ ) {
+            for( uint32_t i = start; i < ( uint32_t ) last_index2_ptr[ispec2][ibin]; i++ ) {
                 n2 += weight2_ptr[ispec2][i];
             }
         }
@@ -461,7 +461,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             // Get screening length & Z
             if( screening_group_ == 0 ) {
                 SMILEI_ACCELERATOR_LOOP_VECTOR
-                for( uint32_t i = 0; i<n; i++ ) {
+                for( uint32_t i = 0; i<n; i++ ) { // = no screening
                     D.lTF[i] = lTF_ptr[screening_group_size - 1];
                     D.Z1Z2[i] = screening_Z_ptr[screening_group_size - 1];
                 }

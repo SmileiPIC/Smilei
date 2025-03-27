@@ -156,7 +156,7 @@ public:
         // we made a new fit (faster and more accurate)
         SMILEI_ACCELERATOR_LOOP_SEQ
         for( uint32_t i = 0; i<n; i++ ) {
-            D.buffer3[i] = random->uniform();
+            D.buffer3[i] = random->uniform1f();
             D.buffer4[i] = random->uniform_2pi();
         }
         SMILEI_ACCELERATOR_LOOP_VECTOR
