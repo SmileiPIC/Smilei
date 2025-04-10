@@ -4849,7 +4849,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) || diag_flag ) {
+            if( ( *this )( ipatch )->vecSpecies[ispec]->isDynamic( time_dual, simWindow ) || diag_flag ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, 
                                 emfields( ipatch ),
