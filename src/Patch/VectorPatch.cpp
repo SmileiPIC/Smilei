@@ -389,7 +389,7 @@ void VectorPatch::projectionForDiags( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+            if( ( *this )( ipatch )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) || diag_flag ) {
                 species( ipatch, ispec )->projectionForDiags( ispec,
                         emfields( ipatch ),
                         params, diag_flag,
@@ -405,7 +405,7 @@ void VectorPatch::projectionForDiags( Params &params,
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->restartEnvChi();
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+                if( ( *this )( ipatch )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) || diag_flag ) {
                     species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual,
                              emfields( ipatch ),
                              params,
@@ -422,7 +422,7 @@ void VectorPatch::initExchParticles( Params &params, SmileiMPI *smpi, SimWindow 
 {
     timers.syncPart.restart();
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( species( 0, ispec )->isProj( time_dual, simWindow ) ) {
+        if( species( 0, ispec )->hasMoved( time_dual, simWindow ) ) {
             SyncVectorPatch::initExchParticles( *this, ispec, params, smpi );
         }
     }
@@ -442,7 +442,7 @@ void VectorPatch::finalizeExchParticlesAndSort( Params &params, SmileiMPI *smpi,
     // ----------------------------------------
 
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
+        if( ( *this )( 0 )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) ) {
             SyncVectorPatch::finalizeExchParticlesAndSort( ( *this ), ispec, params, smpi ); // Included sortParticles
         }
 
@@ -455,7 +455,7 @@ void VectorPatch::finalizeExchParticlesAndSort( Params &params, SmileiMPI *smpi,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // Particle importation for all species
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+            if( ( *this )( ipatch )->vecSpecies[ispec]->isDynamic( time_dual, simWindow ) || diag_flag ) {
                 species( ipatch, ispec )->dynamicsImportParticles( time_dual, params, ( *this )( ipatch ), localDiags );
             }
         }
@@ -821,7 +821,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     bool some_particles_are_moving = false;
     unsigned int n_species( ( *this )( 0 )->vecSpecies.size() );
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
+        if( ( *this )( 0 )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
             break;
         }
@@ -899,7 +899,7 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     bool some_particles_are_moving = false;
     unsigned int n_species( ( *this )( 0 )->vecSpecies.size() );
     for( unsigned int ispec=0 ; ispec < n_species ; ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
+        if( ( *this )( 0 )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) ) {
             some_particles_are_moving = true;
         }
     }
@@ -4788,7 +4788,7 @@ void VectorPatch::dynamicsWithoutTasks( Params &params,
                     continue;
                 }
 
-                if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
+                if( spec->isDynamic( time_dual, simWindow ) || diag_flag ) {
 
 #if defined( SMILEI_ACCELERATOR_GPU )
                     if (diag_flag) {
@@ -4849,7 +4849,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentumWithoutTasks( Para
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+            if( ( *this )( ipatch )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) || diag_flag ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, 
                                 emfields( ipatch ),
@@ -4888,7 +4888,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrentsWithoutTasks( Params &pa
     #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+                if( ( *this )( ipatch )->vecSpecies[ispec]->hasMoved( time_dual, simWindow ) || diag_flag ) {
                     if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
                         species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                emfields( ipatch ),
