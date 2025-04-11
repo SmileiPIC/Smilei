@@ -44,6 +44,8 @@ OpenPMDparams::OpenPMDparams( Params &p ):
         Wr=1.;
     }
     for( unsigned int unit_type=0; unit_type<SMILEI_NUNITS; unit_type++ ) {
+        // The following define the exponents of units in terms of
+        // > length, mass, time, current, temperature, amount, intensity
         if( unit_type == SMILEI_UNIT_NONE ) {         // dimensionless
             unitDimension[unit_type] = { 0., 0., 0., 0., 0., 0., 0. };
             unitSI[unit_type] = 1.;
@@ -58,7 +60,7 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             unitSI[unit_type] = 1.5092041114e-14 * Wr*Wr; // e0 * me * c * Wr^2 / e
         } else if( unit_type == SMILEI_UNIT_DENSITY ) {
             unitDimension[unit_type] = { -3., 0., 1., 1., 0., 0., 0. };
-            unitSI[unit_type] = 5.034163 * Wr*Wr; // e0 * me * Wr^2 / e
+            unitSI[unit_type] = 5.034163e-23 * Wr*Wr; // e0 * me * Wr^2 / e
         } else if( unit_type == SMILEI_UNIT_POSITION ) {
             unitDimension[unit_type] = { 1., 0., 0., 0., 0., 0., 0. };
             unitSI[unit_type] = 299792458. / Wr; // c / Wr
@@ -76,8 +78,8 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             unitSI[unit_type] = 8.187104382e-14; // me * c^2
         } else if( unit_type == SMILEI_UNIT_WEIGHT ) {
             const auto &n = params->nDim_particle;
-            unitDimension[unit_type] = { -3. + n, 0., 1., 1., 0., 0., 0. };
-            unitSI[unit_type] = 5.034163 * Wr*Wr * pow( 299792458. / Wr, n ); // Nr * Lr^n
+            unitDimension[unit_type] = { -3. + n, 0., 0., 0., 0., 0., 0. };
+            unitSI[unit_type] = 3.142077564e-4 * Wr*Wr * pow( 299792458. / Wr, n ); // Nr * Lr^n
         }
     }
     
