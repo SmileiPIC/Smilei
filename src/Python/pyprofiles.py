@@ -636,8 +636,8 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         cy = cos(incidence_angle[0]); sy = sin(incidence_angle[0])
         cz = cos(incidence_angle[1]); sz = sin(incidence_angle[1])
         cycz = cy*cz; cysz = cy*sz; sycz = sy*cz; sysz = sy*sz
-        amplitudeY = sysz * amplitudeZ + cy * amplitudeY
-        amplitudeZ *= cz
+        amplitudeZ = sysz * amplitudeY + cy * amplitudeZ
+        amplitudeY *= cz
         def spatial(y,z):
             X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
             Y = invW  * ( focus[0]*sz   + (y-focus[1])*cz                     )

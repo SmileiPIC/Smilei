@@ -1,11 +1,14 @@
-import math
+from math import pi, cos, sin
 
-l0 = 2.0*math.pi              # laser wavelength
+l0 = 2.0*pi              # laser wavelength
 t0 = l0                       # optical cicle
 Lsim = [7.*l0,10.*l0,10.*l0]  # length of the simulation
 Tsim = 8.*t0                 # duration of the simulation
 resx = 16.                    # nb of cells in one laser wavelength
 rest = 30.                    # nb of timesteps in one optical cycle 
+
+angle1 = 0.2
+angle2 = 0.1
 
 Main(
     geometry = "3Dcartesian",
@@ -21,6 +24,11 @@ Main(
     simulation_time = Tsim,
     
     EM_boundary_conditions = [ ['silver-muller'] ],
+    EM_boundary_conditions_k = [
+        [cos(angle1)*cos(angle2), sin(angle2), -sin(angle1)*cos(angle2)],
+        [-cos(angle1)*cos(angle2), -sin(angle2), sin(angle1)*cos(angle2)],
+        [0., 1., 0.],[0., -1., 0.],
+        [0., 0., 1.],[0., 0., -1.],],
 )
 
 LaserGaussian3D(
@@ -28,7 +36,7 @@ LaserGaussian3D(
     omega           = 1.,
     focus           = [0.9*Lsim[0], 0.6*Lsim[1], 0.3*Lsim[2]],
     waist           = l0,
-    incidence_angle = [0.2, 0.1],
+    incidence_angle = [angle1, angle2],
 #    time_envelope   = tgaussian()
 )
 
