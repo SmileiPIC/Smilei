@@ -42,7 +42,8 @@ Changes made in the repository (not released)
   * Species-specific diagnostics in AM geometry with vectorization.
   * Frozen particles in AM geometry with adaptive vectorization.
   * Happi's ``average`` argument would sometimes be missing the last bin.
-  * 1D projector on GPU without diagnostics
+  * 1D projector on GPU without diagnostics.
+  * Fix a bug which would give false results when ionization was activated with vectorization and frozen species.
 
 
 ----
