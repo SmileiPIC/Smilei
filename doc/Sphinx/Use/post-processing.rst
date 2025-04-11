@@ -670,8 +670,10 @@ Obtain the data
       mean_px = sum_px / npart
 
 .. py:method:: Field.getXmoved( timestep )
+.. py:method:: Probe.getXmoved( timestep )
+.. py:method:: TrackParticles.getXmoved( timestep )
 
-  Specific to Field diagnostics, this method returns the displacement of the moving
+  This method returns the displacement of the moving
   window at the required ``timestep``.
 
 ----
