@@ -402,6 +402,7 @@ class SmileiSimulation(object):
 		probeName = diag_names[i]
 		
 		fields = []
+		verifications = None
 		for path in self._results_path:
 			file = path+self._os.sep+"Probes"+str(probeNumber)+".h5"
 			try:

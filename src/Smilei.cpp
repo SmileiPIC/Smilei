@@ -58,14 +58,18 @@ using namespace std;
            set by Slurm, as MPI_Comm_rank cannot be used here because this routine
            is used BEFORE the initialisation of MPI*/
         local_rank_env = getenv("SLURM_LOCALID");
-
-        if (local_rank_env) {
-            local_rank = atoi(local_rank_env);
+        // Second try on a PBS cluster
+        if( ! local_rank_env ) {
+            local_rank_env = getenv("PMI_LOCAL_RANK");
+        }
+        
+        if( local_rank_env ) {
+            local_rank = atoi( local_rank_env );
             // Define the GPU to use via OpenACC
-            acc_set_device_num(local_rank, acc_get_device_type());
+            acc_set_device_num( local_rank, acc_get_device_type() );
         } else {
-            printf("Error : impossible to determine the local rank of MPI process.\n");
-            exit(1);
+            printf( "Error : impossible to determine the local rank of MPI process.\n" );
+            exit( 1 );
         }
     }
     #endif
