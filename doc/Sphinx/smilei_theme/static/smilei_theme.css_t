@@ -88,6 +88,10 @@ div.document {
 	width:100%;
 }
 
+* {
+	scroll-margin-top: {{ theme_head_height }}mm;
+}
+
 div.documentwrapper {
 	max-width: {{ theme_page_width }}mm;
 	margin: {{ theme_head_height }}mm auto 0 auto;

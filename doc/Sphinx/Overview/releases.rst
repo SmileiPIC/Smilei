@@ -23,6 +23,10 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* **Ported to GPU**:
+
+  * Collisions (without ionization or nuclear reaction)
+
 * **Features**:
 
   * Electron-ion collisions now include screening from bound electrons,
@@ -44,6 +48,8 @@ Changes made in the repository (not released)
   * Happi's ``average`` argument would sometimes be missing the last bin.
   * 1D projector on GPU without diagnostics.
   * Fix a bug which would give false results when ionization was activated with vectorization and frozen species.
+  * OpenPMD compatibility: fixed units of density and weight.
+  * ``LaserGaussian3D`` was giving slightly wrong amplitude with large incidence angle.
 
 
 ----
@@ -56,7 +62,6 @@ Ongoing projects
   * Particle merging
   * Nuclear reactions
   * Perfectly Matched Layers
-  * NewParticles diagnostic
 
 * In preparation:
 

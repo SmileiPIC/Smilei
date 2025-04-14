@@ -152,19 +152,23 @@ be included in the next release of :program:`Smilei`.
 
 ----
 
+.. _compilationgpu:
+
 Compilation for GPU accelerated nodes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On GPU, two compilers are used: a C++ compiler for the main code
-(defined by the variable ``$SMILEICXX``) and a compiler for 
-``.cu`` CUDA files (defined by the variable ``$GPU_COMPILER``).
-For NVIDIA, it is recommended to use the ``nvhpc`` software kit
+On GPU, two compilers are used:
+
+* for ``.cpp`` files, a GPU-aware C++ compiler defined by the variable ``$SMILEICXX``,
+* and for ``.cu`` files, a CUDA compiler defined by the variable ``$GPU_COMPILER``.
+
+For nVidia GPUs, it is recommended to use the ``nvhpc`` software kit
 which includes the compilers ``nvc++`` and ``nvcc``.
-For AMD, the equivalent ``ROCm`` software kit includes ``clang`` and ``hipcc``.
+For AMD GPUs, the equivalent ``ROCm`` software kit includes ``clang`` and ``hipcc``.
 
 Generally, several flags must be supplied to these compilers in order
 to target properly your system architecture. They must
-be supplied in ``$CXXFLAGS`` and ``$GPU_COMPILER_FLAGS``.
+be supplied in ``$CXXFLAGS`` and ``$GPU_COMPILER_FLAGS``, respectively.
 Please refer to the system administrators to find available compilers
 and the required flags for your machine, as well as the commands
 needed to load the correct environment.
@@ -179,17 +183,20 @@ Two examples are provided as guidance:
   make -j 12 machine="adastra" config="gpu_amd"              # example for AMD GPU
 
 In these cases, the environment variables were included in *machine files* that
-you can find in ``scripts/compile_tools/machine/``.
+you can find in the folder ``scripts/compile_tools/machine/``.
 Typically ``CXXFLAGS += -ta=tesla:cc80`` for ``nvhpc`` <23.4 and
 ``CXXFLAGS += -gpu=cc80 -acc`` for the more recent versions of ``nvhpc``.
 
 .. warning::
   
-  * The hdf5 module should be compiled with the nvidia/cray compiler;
-    openmpi as well, but depending on the nvhpc module it might not be needed as it can be included in the nvhpc module.
+  The biggest challenge to execute Smilei on an accelerator is the correct
+  installation of the MPI and HDF5 libraries. They must be compiled with the GPU-aware c++
+  compiler  after configuring (ie. ``./configure --options``) with the appropriate
+  options specific to your system.
 
 For testing purposes, Smilei can be run on a linux PC with a good
 GPU. As a guidance, read these :doc:`instructions for GPU on linux<install_linux_GPU>`.
+
 
 ----
 
