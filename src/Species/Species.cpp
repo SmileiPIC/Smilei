@@ -1989,29 +1989,15 @@ void Species::removeTaggedParticles(
 //} // End updateMvWinLimits
 
 
-//Do we have to project this species ?
-bool Species::isProj( double time_dual, SimWindow *simWindow )
+//Must this species enter dynamics or trigger import particles from dynamic processes
+bool Species::isDynamic( double time_dual, SimWindow *simWindow )
 {
-
     return time_dual > time_frozen_  || ( simWindow->isMoving( time_dual ) || Ionize ) ;
-
-    //Recompute frozen particles density if
-    //moving window is activated, actually moving at this time step, and we are not in a density slope.
-    /*    bool isproj =(time_dual > species_param.time_frozen_  ||
-                 (simWindow && simWindow->isMoving(time_dual) &&
-                     (species_param.species_geometry == "gaussian" ||
-                         (species_param.species_geometry == "trapezoidal" &&
-                            //Before end of density ramp up.
-                            (simWindow->getXmoved() < species_param.vacuum_length[0] + species_param.dens_length_x[1] + oversize[0]*cell_length[0] ||
-                            //After begining of density ramp down.
-                            simWindow->getXmoved() +  simWindow->getNspace_win_x()*cell_length[0] > species_param.vacuum_length[0] + species_param.dens_length_x[1]+ species_param.dens_length_x[0]
-                            )
-                        )
-                    )
-                )
-            );
-            return isproj;*/
-    //return time_dual > species_param.time_frozen_  || (simWindow && simWindow->isMoving(time_dual)) ;
+}
+//! Method to know if this species must project diagnostic or trigger exchanges of particles.
+bool Species::hasMoved( double time_dual, SimWindow *simWindow )
+{
+    return time_dual > time_frozen_  || ( simWindow->isMoving( time_dual ) ) ;
 }
 
 void Species::disableXmax()

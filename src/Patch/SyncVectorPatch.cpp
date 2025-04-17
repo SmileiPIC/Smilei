@@ -57,37 +57,6 @@ void SyncVectorPatch::finalizeExchParticlesAndSort( VectorPatch &vecPatches, int
         vecPatches( ipatch )->importAndSortParticles( ispec, params );
     }
 
-
-    /*
-    // Debugging
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-    {
-        unsigned int npart = vecPatches(ipatch)->vecSpecies[ispec]->particles->size();
-        for( unsigned int i=0; i<npart; i++ ) {
-            if (vecPatches(ipatch)->vecSpecies[ispec]->particles->position(0,i)< vecPatches(ipatch)->getDomainLocalMin(0)
-             || vecPatches(ipatch)->vecSpecies[ispec]->particles->position(0,i) > vecPatches(ipatch)->getDomainLocalMax(0)
-             || vecPatches(ipatch)->vecSpecies[ispec]->particles->position(1,i) < vecPatches(ipatch)->getDomainLocalMin(1)
-             || vecPatches(ipatch)->vecSpecies[ispec]->particles->position(1,i) > vecPatches(ipatch)->getDomainLocalMax(1))
-             {
-            cerr << setprecision(12)
-                 << " Patch: " << ipatch << "/" << vecPatches.size()-1
-                 << " Species: " << ispec
-                 << " ipart: " << i
-                 << " " << vecPatches(ipatch)->vecSpecies[ispec]->particles->weight(i)
-                 << " " << vecPatches(ipatch)->vecSpecies[ispec]->particles->charge(0)
-                 << " " << vecPatches(ipatch)->getDomainLocalMin(0)
-                 << "<" << vecPatches(ipatch)->vecSpecies[ispec]->particles->position(0,i)
-                 << "<" << vecPatches(ipatch)->getDomainLocalMax(0)
-                 << " " << vecPatches(ipatch)->getDomainLocalMin(1)
-                 << "<" << vecPatches(ipatch)->vecSpecies[ispec]->particles->position(1,i)
-                 << "<" << vecPatches(ipatch)->getDomainLocalMax(1)
-                 << " " << vecPatches(ipatch)->vecSpecies[ispec]->particles->momentum(0,i)
-                 << " " << vecPatches(ipatch)->vecSpecies[ispec]->particles->momentum(1,i)
-                 << std::endl;
-            }
-        }
-    }*/
-
 }
 
 void SyncVectorPatch::initExchParticlesAlongDimension( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi )

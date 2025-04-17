@@ -47,6 +47,7 @@ Changes made in the repository (not released)
   * Frozen particles in AM geometry with adaptive vectorization.
   * Happi's ``average`` argument would sometimes be missing the last bin.
   * 1D projector on GPU without diagnostics.
+  * Fix a bug which would give false results when ionization was activated with vectorization and frozen species.
   * OpenPMD compatibility: fixed units of density and weight.
   * ``LaserGaussian3D`` was giving slightly wrong amplitude with large incidence angle.
 

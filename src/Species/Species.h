@@ -519,8 +519,10 @@ public:
         particles->last_index[particles->last_index.size()-1]++;
     }
 
-    //! Method to know if we have to project this species or not.
-    bool  isProj( double time_dual, SimWindow *simWindow );
+    //! Method to know if this species must enter dynamics or trigger import from dynamic processes.
+    bool  isDynamic( double time_dual, SimWindow *simWindow );
+    //! Method to know if this species must project diagnostic or trigger exchanges of particles.
+    bool  hasMoved( double time_dual, SimWindow *simWindow );
 
     inline double computeEnergy()
     {
