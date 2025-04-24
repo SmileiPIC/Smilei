@@ -14,6 +14,7 @@ install_gpu:
   tags:
     - ruche-ci-gpu
   only: 
+    - develop
     - ci_gpu
   script:
     - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh
@@ -27,7 +28,8 @@ test_gpu:
   stage: run_default
   tags:
     - ruche-ci-gpu
-  only: 
+  only:
+    - develop 
     - ci_gpu
   script:
     - source /gpfs/users/prouveurc/myhdf5_env_smilei.sh
