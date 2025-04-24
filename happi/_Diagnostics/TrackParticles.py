@@ -379,7 +379,15 @@ class TrackParticles(ParticleList):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		return self._alltimesteps
-
+	
+	# get the value of x_moved for a requested timestep
+	def getXmoved(self, t):
+		# Verify that the timestep is valid
+		if t not in self._XmovedForTime:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		return self._XmovedForTime[t]
+	
 	# Make the particles ordered by Id in the file, in case they are not
 	def _orderFiles( self, fileOrdered, chunksize, sort ):
 		if self._verbose:

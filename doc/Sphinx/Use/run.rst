@@ -127,10 +127,12 @@ administrators.
 
 ----
 
+.. _rungpu:
+
 Running on GPU-equiped nodes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On a supercomputer equipped with GPUs it is necessary to use a binding script.
+On a supercomputer equipped with GPUs it is often necessary to use a binding script.
 Here are two examples: 
 
 With Nvidia GPUs:
@@ -140,14 +142,8 @@ With AMD GPUs using cray on Adastra:
 ``srun --cpu-bind=none --mem-bind=none --mpi=cray_shasta --kill-on-bad-exit=1 -- ./bind ./smilei input.py``
 
 For the binding scripts themselves, as it depends completely on the node
-architecture, please contact your admin support team.
- 
-Binding script for adastra can be found here: https://github.com/SmileiPIC/Smilei/issues/672#issuecomment-1820677606 with the example of a slurm script.
-it can be used as a template for other AMD GPUs based supercomputers/clusters.
-
-Be aware that GPU support is in development and not all features are currently available.
-Please refer to the list of current supported features.
-
+architecture, please contact your admin support team
+(see `this example for the adastra cluster <https://github.com/SmileiPIC/Smilei/issues/672#issuecomment-1820677606>`_).
 
 ----
 

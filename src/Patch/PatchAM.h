@@ -22,28 +22,6 @@ public:
     //! Destructor for Patch
     ~PatchAM() override  final;
     
-    //! Return the volume (or surface or length depending on simulation dimension)
-    //! of one cell at the position of a given particle
-    double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
-    {
-        double factor = 1.;
-        
-        double halfcell = 0.5 * params.cell_length[0];
-        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell
-         || getDomainLocalMax(0) - p->position(0,ipart) < halfcell ) {
-             factor *= 0.5;
-        }
-        
-        halfcell = 0.5 * params.cell_length[1];
-        double radius = sqrt(p->position(1,ipart)*p->position(1,ipart) + p->position(2,ipart)*p->position(2,ipart));
-        if( radius - getDomainLocalMin(1) < halfcell
-          || getDomainLocalMax(1) - radius < halfcell ) {
-             factor *= 0.5;
-        }
-
-        return factor * cell_volume * radius;
-    };
-    
     //! Given several arrays (x,y,z), return indices of points in patch
     std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) override
     {

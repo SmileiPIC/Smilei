@@ -45,23 +45,6 @@ public:
                                     int          icell     = 0,
                                     int          ipart_ref = 0 ) override;
 
-    //!Wrapper for task-based implementation of Smilei
-    void currentsAndDensityWrapperOnBuffers( double *   /*b_Jx*/,
-                                             double *   /*b_Jy*/,
-                                             double *   /*b_Jz*/,
-                                             double *   /*b_rho*/,
-                                             int        /*bin_width*/,
-                                             Particles &/*particles*/,
-                                             SmileiMPI */*smpi*/,
-                                             int        /*istart*/,
-                                             int        /*iend*/,
-                                             int        /*ithread*/,
-                                             bool       /*diag_flag*/,
-                                             bool       /*is_spectral*/,
-                                             int        /*ispec*/,
-                                             int        /*icell*/ = 0,
-                                             int        /*ipart_ref*/ = 0 ) override {};
-
     /// Project susceptibility, used as source term in envelope equation
     ///
     void susceptibility( ElectroMagn *EMfields,
@@ -78,7 +61,8 @@ protected:
     double dt;
     double dts2;
     double dts4;
-    int    not_spectral_;
+    int not_spectral_;
+    bool cell_sorting_;
     unsigned int x_dimension_bin_count_;
     unsigned int y_dimension_bin_count_;
     unsigned int z_dimension_bin_count_;

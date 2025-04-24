@@ -26,6 +26,7 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &parameters, Patch *a_patch )
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
     not_spectral_  = !parameters.is_pxr;
+    cell_sorting_ = parameters.cell_sorting_;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
     dts4 = dts2 / 2.0;
@@ -83,7 +84,8 @@ currentDeposition3DOnDevice( double *__restrict__ Jx,
                          int    k_domain_begin,
                          int    nprimy,
                          int    nprimz,
-                         int    not_spectral );
+                         int    not_spectral,
+                         bool   cell_sorting );
 
 extern "C" void
 densityDeposition3DOnDevice( 
@@ -114,7 +116,8 @@ densityDeposition3DOnDevice(
                          int    k_domain_begin,
                          int    nprimy, 
                          int    nprimz,
-                         int    not_spectral );
+                         int    not_spectral,
+                         bool   cell_sorting );
 #endif
 
 namespace { // Unnamed namespace == static == internal linkage == no exported symbols
@@ -150,7 +153,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int    nprimy, 
               int    nprimz,
               double,
-              int not_spectral )
+              int not_spectral,
+              bool cell_sorting )
     {
         currentDeposition3DOnDevice( Jx,
                                      Jy,
@@ -182,13 +186,14 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                      j_domain_begin,
                                      k_domain_begin,
                                      nprimy, nprimz,
-                                     not_spectral );
+                                     not_spectral,
+                                     cell_sorting );
     }
 #else
     currents( double *__restrict__ , double *__restrict__ , double *__restrict__ , int, int, int,
               Particles   &, unsigned int , unsigned int , unsigned int , const double *__restrict__ ,
               const int    *__restrict__ , const double *__restrict__ , double , double , double , double ,
-              double , double , double , int    , int    , int    , int    ,  int    , double, int )
+              double , double , double , int    , int    , int    , int    ,  int    , double, int, bool )
     {
         SMILEI_ASSERT( false );
     }
@@ -221,7 +226,8 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
         int    nprimy,
         int    nprimz,
         double,
-        int not_spectral )
+        int not_spectral,
+        bool cell_sorting )
     {
         densityDeposition3DOnDevice( 
                                  rho,
@@ -250,13 +256,14 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  k_domain_begin,
                                  nprimy, nprimz,
-                                 not_spectral );
+                                 not_spectral,
+                                 cell_sorting );
     }
 #else
     density( double *__restrict__ , int , Particles   &, unsigned int , unsigned int , unsigned int ,
              const double *__restrict__ , const int *__restrict__ , const double *__restrict__ ,
              double , double , double , double , double , double , double ,
-             int, int, int, int, int, double, int )
+             int, int, int, int, int, double, int, bool )
     {
         SMILEI_ASSERT( false );
     }
@@ -414,7 +421,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral_ );
+                not_spectral_,
+                cell_sorting_ );
 
         double *const __restrict__ b_rho  = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->data() : EMfields->rho_->data();
         unsigned int rho_size             = EMfields->rho_s[ispec] ? EMfields->rho_s[ispec]->size() : EMfields->rho_->size();
@@ -429,7 +437,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                   i_domain_begin_, j_domain_begin_, k_domain_begin_,
                   nprimy, nprimz,
                   one_third,
-                  not_spectral_ );
+                  not_spectral_,
+                  cell_sorting_ );
 
     // If requested performs then the charge density deposition
     } else {
@@ -453,7 +462,8 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                 i_domain_begin_, j_domain_begin_, k_domain_begin_,
                 nprimy, nprimz,
                 one_third,
-                not_spectral_ );
+                not_spectral_,
+                cell_sorting_ );
     }
 
         // TODO(Etienne M): DIAGS. Find a way to get rho. We could:

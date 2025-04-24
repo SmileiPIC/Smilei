@@ -88,6 +88,10 @@ div.document {
 	width:100%;
 }
 
+* {
+	scroll-margin-top: {{ theme_head_height }}mm;
+}
+
 div.documentwrapper {
 	max-width: {{ theme_page_width }}mm;
 	margin: {{ theme_head_height }}mm auto 0 auto;
@@ -127,7 +131,6 @@ div.footer > div {
 #themebutton:active { filter: opacity(1.2); }
 
 div.logo {
-	height: 10mm;
 	text-align: left;
 	margin: 1mm 2em 1mm 1mm;
 	padding: 0 2mm;
@@ -793,6 +796,19 @@ ul.experimental p:first-of-type::after
 	font-family: "BPreplay";
 	font-weight: bold;
 	line-height: normal;
+}
+
+.exp-label {
+    display: inline-block;
+    background: red;
+    color: white;
+    margin: 0 5px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    font-family: "BPreplay";
+    font-weight: bold;
+    line-height: normal;
 }
 
 /* --------------------------------------------------------------------*/

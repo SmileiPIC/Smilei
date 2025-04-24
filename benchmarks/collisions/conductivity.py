@@ -55,25 +55,24 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	
 	fig = plt.figure(2)
 	#fig.clf()
-	fig.set_facecolor('w')
-	
-	ax = fig.add_subplot(1,1,1)
+	# fig.set_facecolor('w')
+	# ax = fig.add_subplot(1,1,1)
 	
 	
 	for k in range(ncases):
-		ax.plot(times, vx_mean[k,:], style[path], label='electrons $v_x$  #' + str(k))
-		ax.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
+		plt.plot(times, vx_mean[k,:], style[path], label='electrons $v_x$  #' + str(k))
+		plt.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
 		
 		velocity.append(v0[path][k])
 		temperature.append( np.double(S.namelist.Species["electron"+str(k+1)].temperature))
 		density    .append( np.double(S.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
 	
-	ax.set_xlabel('time in fs')
-	ax.set_ylabel('$v_x / c$')
-	#if not ax.legend_: ax.legend()
-	
-	plt.show()
-	
+plt.xlabel('time in fs')
+plt.ylabel('$v_x / c$')
+#if not ax.legend_: ax.legend()
+
+plt.show()
+
 
 
 velocity    = np.double(velocity)

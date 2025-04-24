@@ -58,14 +58,18 @@ using namespace std;
            set by Slurm, as MPI_Comm_rank cannot be used here because this routine
            is used BEFORE the initialisation of MPI*/
         local_rank_env = getenv("SLURM_LOCALID");
-
-        if (local_rank_env) {
-            local_rank = atoi(local_rank_env);
+        // Second try on a PBS cluster
+        if( ! local_rank_env ) {
+            local_rank_env = getenv("PMI_LOCAL_RANK");
+        }
+        
+        if( local_rank_env ) {
+            local_rank = atoi( local_rank_env );
             // Define the GPU to use via OpenACC
-            acc_set_device_num(local_rank, acc_get_device_type());
+            acc_set_device_num( local_rank, acc_get_device_type() );
         } else {
-            printf("Error : impossible to determine the local rank of MPI process.\n");
-            exit(1);
+            printf( "Error : impossible to determine the local rank of MPI process.\n" );
+            exit( 1 );
         }
     }
     #endif
@@ -425,11 +429,7 @@ int main( int argc, char *argv[] )
         TITLE( "Running diags at time t = 0" );
         #pragma omp parallel shared( smpi, params, vecPatches, simWindow )
         {
-#ifdef _OMPTASKS
-            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
-#else
             vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-#endif
         }
         vecPatches.rebootDiagTimers();
     }
@@ -661,11 +661,7 @@ int main( int argc, char *argv[] )
             }
 
             // Call the various diagnostics
-#ifdef _OMPTASKS
-            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
-#else
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-#endif
 
             // Move window
             vecPatches.moveWindow( params, &smpi, region, simWindow, time_dual, timers, itime );

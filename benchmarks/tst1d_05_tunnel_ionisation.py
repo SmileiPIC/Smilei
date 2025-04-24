@@ -5,8 +5,8 @@
 import math
 l0 = 2.0*math.pi	# wavelength in normalized units
 t0 = l0				# optical cycle in normalized units
-rest = 6000.0		# nb of timestep in 1 optical cycle
-resx = 4000.0		# nb cells in 1 wavelength
+rest = 9000.0		# nb of timestep in 1 optical cycle
+resx = 8000.0		# nb cells in 1 wavelength
 Lsim = 0.01*l0	    # simulation length
 Tsim = 0.2*t0		# duration of the simulation
 
@@ -19,7 +19,7 @@ Main(
 	cell_length = [l0/resx],
 	grid_length  = [Lsim],
 	
-	number_of_patches = [ 4 ],
+	number_of_patches = [ 8 ],
 	
 	timestep = t0/rest,
 	simulation_time = Tsim,
@@ -30,56 +30,10 @@ Main(
 	
 )
 
-Species(
-	name = 'hydrogen',
-	ionization_model = 'tunnel',
-	ionization_electrons = 'electron',
-	atomic_number = 1,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'carbon',
-	ionization_model = 'tunnel',
-	ionization_electrons = 'electron',
-	atomic_number = 6,
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 40,
-	mass = 1836.0*1000.,
-	charge = 0.0,
-	number_density = 0.1,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-)
-
-Species(
-	name = 'electron',
-	position_initialization = 'regular',
-	momentum_initialization = 'cold',
-	particles_per_cell = 0,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-	],
-	keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
-)
-
 def By(t):
 	return 1e-7 * math.sin(t)
 def Bz(t):
-	return 0.1 * math.sin(t)
+	return 1.0 * math.sin(t)
 
 Laser(
 	box_side = "xmin",
@@ -94,32 +48,85 @@ DiagFields(
 	fields = ["Ex", "Ey", "Ez"]
 )
 
-DiagParticleBinning(
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["hydrogen"],
-	axes = [
-		["charge",  -0.5, 1.5, 2]
-	]
-)
+for i, tunnel_model in enumerate(["tunnel", "tunnel_full_PPT"]):
+    for j, bsi_model in enumerate(["none", "Tong_Lin", "KAG"]):
+        Species(
+            name = 'hydrogen_'+tunnel_model+'_'+bsi_model,
+            ionization_model = tunnel_model,
+            bsi_model = bsi_model,
+            ionization_electrons = 'electron_'+tunnel_model+'_'+bsi_model,
+            atomic_number = 1,
+            position_initialization = 'regular',
+            momentum_initialization = 'cold',
+            particles_per_cell = 1000,
+            mass = 1836.0*1000.,
+            charge = 0.0,
+            number_density = 0.1,
+            boundary_conditions = [
+                ["remove", "remove"],
+            ],
+        )
 
-DiagParticleBinning(
-	deposited_quantity = "weight",
-	every = 20,
-	species = ["carbon"],
-	axes = [
-		["charge",  -0.5, 6.5, 7]
-	]
-)
+        Species(
+            name = 'carbon_'+tunnel_model+'_'+bsi_model,
+            ionization_model = tunnel_model,
+            bsi_model = bsi_model,
+            ionization_electrons = 'electron_'+tunnel_model+'_'+bsi_model,
+            atomic_number = 6,
+            position_initialization = 'regular',
+            momentum_initialization = 'cold',
+            particles_per_cell = 1000,
+            mass = 1836.0*1000.,
+            charge = 0.0,
+            number_density = 0.1,
+            boundary_conditions = [
+                ["remove", "remove"],
+            ],
+        )
 
-DiagTrackParticles(
-	species = "electron",
-	every = [1,1000,30],
-	attributes = ["x","px","py","pz","w","Wy"]
-)
+        Species(
+            name = 'electron_'+tunnel_model+'_'+bsi_model,
+            position_initialization = 'regular',
+            momentum_initialization = 'cold',
+            particles_per_cell = 0,
+            mass = 1.0,
+            charge = -1.0,
+            charge_density = 0.0,
+            boundary_conditions = [
+                ["remove", "remove"],
+            ],
+            keep_interpolated_fields = ["Ex", "Ey", "Ez", "Wx", "Wy", "Wz"],
+        )
 
-DiagNewParticles(
-	species = "electron",
-	every = 100,
-	attributes = ["x","py","w","q"],
-)
+        DiagParticleBinning(
+            name = "hydrogen_"+tunnel_model+'_'+bsi_model,
+            deposited_quantity = "weight",
+            every = 20,
+            species = ["hydrogen_"+tunnel_model+'_'+bsi_model],
+            axes = [
+                ["charge",  -0.5, 1.5, 2]
+            ]
+        )
+
+        DiagParticleBinning(
+            name = "carbon_"+tunnel_model+'_'+bsi_model,
+            deposited_quantity = "weight",
+            every = 20,
+            species = ["carbon_"+tunnel_model+'_'+bsi_model],
+            axes = [
+                ["charge",  -0.5, 6.5, 7]
+            ]
+        )
+
+        DiagTrackParticles(
+            species = "electron_"+tunnel_model+'_'+bsi_model,
+            every = [1,1000,30],
+            attributes = ["x","px","py","pz","w","Wy"]
+        )
+
+        DiagNewParticles(
+            species = "electron_"+tunnel_model+'_'+bsi_model,
+            every = 100,
+            attributes = ["x","py","w","q"],
+        )
+

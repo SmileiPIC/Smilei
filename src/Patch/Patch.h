@@ -140,12 +140,7 @@ public:
 
 #ifdef __DETAILED_TIMERS
     inline void __attribute__((always_inline)) startFineTimer(unsigned int index) {
-#ifdef _OMPTASKS
-        const int ithread = Tools::getOMPThreadNum();
-        patch_tmp_timers_[index * number_of_threads_ + ithread] = MPI_Wtime();
-#else
-        patch_tmp_timers_[index] = MPI_Wtime();
-#endif
+    patch_tmp_timers_[index] = MPI_Wtime();
 #else
     inline void __attribute__((always_inline)) startFineTimer(unsigned int) {
 #endif
@@ -153,12 +148,7 @@ public:
     
 #ifdef  __DETAILED_TIMERS
     inline void __attribute__((always_inline)) stopFineTimer(unsigned int index) {
-#ifdef _OMPTASKS
-        const int ithread = Tools::getOMPThreadNum();   
-        patch_timers_[index * number_of_threads_ + ithread] += MPI_Wtime() - patch_tmp_timers_[index * number_of_threads_ + ithread];
-#else
-        patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
-#endif
+    patch_timers_[index] += MPI_Wtime() - patch_tmp_timers_[index];
 #else
     inline void __attribute__((always_inline)) stopFineTimer(unsigned int) {
 #endif
@@ -198,17 +188,21 @@ public:
     //! Allocate and copy all the field grids on device
     void allocateAndCopyFieldsOnDevice();
 
-    //! Allocate all field grids on device
+    //! Allocate all fields on device
     void allocateFieldsOnDevice();
 
-    //! Copy All field grids from device to host
+    //! Copy All fields from device to host
     void copyFieldsFromDeviceToHost();
 
     //! Copy All fields from host to device
     void copyFieldsFromHostToDevice();
 
-    //! Deallocate field grids on device
+    //! Deallocate fields on device
     void deleteFieldsOnDevice();
+
+    //! Reset fields on device
+    //Not used for the moment
+    //void ResetFieldsOnDevice();
 #endif
 
     //! init comm / sum densities
@@ -412,10 +406,6 @@ public:
     {
         return min_local_;
     }
-    
-    //! Return the volume (or surface or length depending on simulation dimension)
-    //! of one cell at the position of a given particle
-    virtual double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) = 0;
     
     //! Given several arrays (x,y,z for instance), return indices of points in patch
     virtual std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) = 0;

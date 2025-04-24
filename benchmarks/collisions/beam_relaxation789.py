@@ -83,21 +83,20 @@ for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 	#fig.clf()
 	fig.set_facecolor('w')
 	
-	ax = fig.add_subplot(1,1,1)
-	ax.plot(times, e_vx_mean, 'b', label='electrons $v_x$')
-	ax.plot(times, np.sqrt(e_vperp2),'--b', label='electrons $v_\perp$')
-	ax.plot(times, i_vx_mean, 'r', label='ions')
-	ax.plot(t, ve_theory, '-k')
-	ax.plot(t, np.sqrt(vperp2_theory), '--k')
+	plt.plot(times, e_vx_mean, 'b', label='electrons $v_x$')
+	plt.plot(times, np.sqrt(e_vperp2),'--b', label='electrons $v_\perp$')
+	plt.plot(times, i_vx_mean, 'r', label='ions')
+	plt.plot(t, ve_theory, '-k')
+	plt.plot(t, np.sqrt(vperp2_theory), '--k')
 	#ax.plot(times, ve_theory, '--k')
 	#ax.plot(times, vi_theory, '--k')
-	ax.set_xlim(0.,0.06)
-	ax.set_ylim(0.,velocity_electron)
-	ax.set_xlabel('time in fs')
-	ax.set_ylabel('$v_x / c$')
-	if not ax.legend_: ax.legend(loc='lower right')
-	
-	plt.show()
+plt.xlim(0.,0.06)
+plt.ylim(0.,velocity_electron)
+plt.xlabel('time in fs')
+plt.ylabel('$v_x / c$')
+plt.legend(loc='lower right')
+
+plt.show()
 	
 	
 	

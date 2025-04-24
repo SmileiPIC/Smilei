@@ -69,7 +69,8 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                            int    k_domain_begin,
                            int    nprimy,
                            int    nprimz,
-                           int    not_spectral )
+                           int    not_spectral,
+                           bool   cell_sorting )
 {
     //#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
@@ -96,7 +97,8 @@ currentDeposition3DOnDevice( double *__restrict__ host_Jx,
                                    dx_ov_dt, dy_ov_dt, dz_ov_dt,
                                    i_domain_begin, j_domain_begin, k_domain_begin,
                                    nprimy, nprimz,
-                                   not_spectral );
+                                   not_spectral,
+                                   cell_sorting );
 }
 
 
@@ -131,7 +133,8 @@ densityDeposition3DOnDevice(
                                      int    k_domain_begin,
                                      int    nprimy,
                                      int    nprimz,
-                                     int    not_spectral )
+                                     int    not_spectral,
+                                     bool   cell_sorting )
 {
     	//#if defined( PRIVATE_SMILEI_USE_OPENMP_PROJECTION_IMPLEMENTATION )
     //acc:: // OpenMP or OpenACC version serves as a reference along with the CPU version
@@ -158,7 +161,8 @@ densityDeposition3DOnDevice(
                                     dx_ov_dt, dy_ov_dt, dz_ov_dt,
                                     i_domain_begin, j_domain_begin, k_domain_begin,
                                     nprimy, nprimz,
-                                    not_spectral );
+                                    not_spectral,
+                                    cell_sorting );
 }
 
 #endif

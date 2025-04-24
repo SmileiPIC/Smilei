@@ -1,7 +1,11 @@
+.. |exp| raw:: html
+
+   <span class="exp-label">experimental</span>
+
 Ionization
 ----------------------------------
 
-Three types of ionization have been introduced in Smilei (4 if you count field ionization with a laser envelope as a separate type).
+Four types of ionization have been introduced in Smilei: collisional ionization, field ionization, envelope ionization (time average field) or custom ionization using user defined rates.
 
 ----
 
@@ -68,36 +72,110 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
 .. math::
   :label: ADKrate
 
-  \Gamma_{\rm ADK, AC} = \sqrt{\frac{3}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
+  \Gamma_{\rm ADK, AC} = \sqrt{\frac{6}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
 
-In :program:`Smilei`, following [Nuter2011]_, the ionization rate of :eq:`ionizationRate1`
-is computed for :math:`\vert m \vert=0` only.
-Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
-computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
-
-.. math::
-
-  R = \frac{\Gamma_{{\rm qs},\vert m \vert = 0}}{\Gamma_{{\rm qs},\vert m \vert = 1}}
-  =  2\frac{(2\,I_p)^{3/2}}{\vert E\vert}
-  \simeq 7.91\,10^{-3} \,\,\frac{(I_p[\rm eV])^{3/2}}{a_0\,\hbar\omega_0[\rm eV]}\,,
-
-where, in the practical units formulation, we have considered ionization
-by a laser with normalized vector potential :math:`a_0=e\vert E\vert /(m_e c \omega_0)`,
-and photon energy :math:`\hbar\omega_0` in eV.
-Typically, ionization by a laser with wavelength :math:`1~{\rm \mu m}`
-(correspondingly :math:`\hbar \omega_0 \sim 1~{\rm eV}`) occurs for values
-of :math:`a_0\ll 1` (even for large laser intensities for which ionization
-would occur during the rising time of the pulse) while the ionization potential
-ranges from a couple of eV (for electrons on the most external shells)
-up to a few tens of thousands of eV (for electrons on the internal shell
-of high-Z atoms). As a consequence, :math:`R\gg1`, and the probability
-of ionization of an electron with magnetic quantum number :math:`\vert m \vert=0`
-greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
-
-The initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
+We note that the initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
 This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.
+
+In :program:`Smilei`, two models are available to compute the ionization rate of :eq:`ionizationRate1`.
+
+
+.. _ppt_adk:
+
+``PPT-ADK model``
+    In the classical model, the ionization rate of :eq:`ionizationRate1`
+    is computed for :math:`\vert m \vert=0` only.
+    Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
+    computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
+
+    .. math::
+
+      R = \frac{\Gamma_{{\rm qs},\vert m \vert = 0}}{\Gamma_{{\rm qs},\vert m \vert = 1}}
+      =  2\frac{(2\,I_p)^{3/2}}{\vert E\vert}
+      \simeq 7.91\,10^{-3} \,\,\frac{(I_p[\rm eV])^{3/2}}{a_0\,\hbar\omega_0[\rm eV]}\,,
+
+    where, in the practical units formulation, we have considered ionization
+    by a laser with normalized vector potential :math:`a_0=e\vert E\vert /(m_e c \omega_0)`,
+    and photon energy :math:`\hbar\omega_0` in eV.
+    Typically, ionization by a laser with wavelength :math:`1~{\rm \mu m}`
+    (correspondingly :math:`\hbar \omega_0 \sim 1~{\rm eV}`) occurs for values
+    of :math:`a_0\ll 1` (even for large laser intensities for which ionization
+    would occur during the rising time of the pulse) while the ionization potential
+    ranges from a couple of eV (for electrons on the most external shells)
+    up to a few tens of thousands of eV (for electrons on the internal shell
+    of high-Z atoms). As a consequence, :math:`R\gg1`, and the probability
+    of ionization of an electron with magnetic quantum number :math:`\vert m \vert=0`
+    greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
+
+
+.. _full_ppt_adk:
+
+``PPT-ADK model with account for`` :math:`m\neq 0` |exp|
+    In this model, first implemented in [Mironov2025]_, dependence on the magnetic quantum number :math:`m` is added. 
+
+    :math:`m` is attributed to each electron in accordance with the following rules:
+
+        1. Since :math:`\Gamma_z(m=0)>\Gamma_z(m=1)>\Gamma_z(m=2)>...` we assume that for electrons
+        with the same azimuthal quantum number :math:`l`, the states with the lowest value of
+        :math:`|m|` are ionized first.
+
+        2. Electrons with the same azimuthal quantum number :math:`l` occupy the sub-shells in the
+        order of increasing :math:`|m|` and for the same :math:`|m|` in the order of increasing :math:`m`. 
+
+    With this algorithm, by knowing the atomic number A, we can assign a unique set of
+    quantum numbers :math:`nlm` to each electron on the atomic sub-shells and identify their extraction
+    order during successive ionization. The ionization rate also accounts for multiple electrons having the same energy levels via the degeneracy factor.
+
+    .. WARNING::
+       Although this model uses less assumptions than the :ref:`PPT-ADK <ppt_adk>` model, [Mironov2025]_ 
+       shows that these corrections introduce a dependency on the
+       ionization path chosen for the atom and may actually lead to less accurate results than the default ADK model.
+       A non-sequential ionization path is necessary for this model to be accurate and will be proposed in a later version of the code hence the experimental tag.
+       A reference implementation of non-sequential ionization is provided in [Mironov2025]_.
+
+
+.. _barrier_suppression:
+
+Barrier Suppression Ionization
+"""""""""""""""""""""""""""""""
+
+When the electric field applied on a bound electron is greater than a certain threshold, that electron is able to classically escape from the atom, without tunneling through the potential barrier. To properly describe the ionisation rates in these regimes, and the transition regime from tunneling to barrier suppression, Smilei implements two ways to extend the tunneling ionization rate to the barrier-suppression regime.
+
+
+.. _tong_lin:
+
+``Tong & Lin``
+
+    The formula proposed by Tong and Lin [Tong2005]_ extends the tunneling ionization rate to the barrier-suppression
+    regime. This is achieved by introducing an empirical factor in :eq:`ionizationRate1`:
+
+    .. math::
+
+      \Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp \left(-\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}\right),
+
+    where :math:`\alpha_{TL}` is an emprirical constant with value typically from 6 to 9. The actual value
+    should be guessed from empirical data. When such data is
+    not available, the formula can be used for qualitative analysis of the barrier-suppression
+    ionization (BSI), e.g. see [Ciappina2020]_. The module was tested to reproduce the results from this paper.
+
+.. _KAG:
+
+``Kostyukov Artemenko Golovanov``
+
+    This is a piecewise function, first proposed by Kostyukov, Artemenko and Golovanov (KAG) in [Artemenko2017]_ and [Kostyukov2018]_,  and published in [Ouatu2022]_ as follows:
+
+    .. math::
+       \Gamma_{KAG} =
+       \begin{cases}
+           \Gamma_{qs,|m|=0}, & E < E_1 \\
+           \Gamma_{BM}, & E_1 < E < E_2 \\
+           \Gamma_{BSI}, & E > E_2 
+       \end{cases}
+
+    where :math:`\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2` is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes [Bauer1999]_ and :math:`\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}` is the barrier suppression ionisation rate [Artemenko2017]_, :math:`E_1` and :math:`E_2` are the intersection points of :math:`\Gamma_{ADK}` with :math:`\Gamma_{BM}` and :math:`\Gamma_{BM}` with :math:`\Gamma_{BSI}` respectively, such that the function is continuous, and :math:`I_H` is the ionisation potential of hydrogen.
+
 
 
 Monte-Carlo scheme
@@ -325,13 +403,13 @@ Super-imposed (in red) is the corresponding theoretical prediction.
 References
 ^^^^^^^^^^
 
-.. [Ammosov1986] `M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986) <http://www.jetp.ac.ru/cgi-bin/dn/e_064_06_1191.pdf>`_
+.. [Ammosov1986] `M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986) <http://www.jetp.ras.ru/cgi-bin/dn/e_064_06_1191.pdf>`_
 
 .. [Nuter2011] `R. Nuter et al., Phys. of Plasmas 19, 033107 (2011) <http://dx.doi.org/10.1063/1.3559494>`_
 
-.. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ac.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
+.. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ras.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
 
-.. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
+.. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ras.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
 
 .. [Chen2013] `M. Chen, E. Cormier-Michel, C. G. R. Geddes, D. L. Bruwhiler, L. L. Yu, E. Esarey, C. B. Schroeder, W. P. Leemans, Journ. Comput. Phys. 236, 220 (2013) <https://doi.org/10.1016/j.jcp.2012.11.029>`_
 
@@ -339,4 +417,19 @@ References
 
 .. [Schroeder2014] `C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans, Phys. Rev. ST Accel. Beams 17, 101301 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301>`_
 
-.. [Gibbon] P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)
+.. [Gibbon] `P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005) <https://doi.org/10.1142/p116>`_
+
+.. [Tong2005] `Tong X. M., Lin C. D., J. Phys. B: At. Mol. Opt. Phys. 38 2593 (2005) <https://iopscience.iop.org/article/10.1088/0953-4075/38/15/001>`_
+
+.. [Ciappina2020] `M. F. Ciappina, S. V. Popruzhenko., Laser Phys. Lett. 17 025301 (2020) <https://iopscience.iop.org/article/10.1088/1612-202X/ab6559>`_
+
+.. [Kostyukov2018] `I. Yu. Kostyukov, A. A. Golovanov, Phys. Rev. A 98, 043407 (2018) <https://journals.aps.org/pra/abstract/10.1103/PhysRevA.98.043407>`_
+
+.. [Artemenko2017] `I. I. Artemenko, I. Yu. Kostyukov, Phys. Rev. A 96, 032106 (2017) <https://link.aps.org/doi/10.1103/PhysRevA.96.032106>`_
+
+.. [Bauer1999] `D. Bauer, P. Mulser, Phys. Rev. A 59, 569 (1999) <https://doi.org/10.1103/PhysRevA.59.569>`_
+
+.. [Ouatu2022] `I. Ouatu et al, Phys. Rev. E 106, 015205 (2022) <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015205>`_
+
+.. [Mironov2025] `A. A. Mironov et al., arXiV 2501, 11672 (2025) <https://arxiv.org/abs/2501.11672>`_
+

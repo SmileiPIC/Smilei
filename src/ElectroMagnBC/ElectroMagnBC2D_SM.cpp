@@ -43,9 +43,10 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
         B_val[axis1_].resize( n_p[axis1_], 0. ); // primal in the other direction
         B_val[2     ].resize( n_d[axis1_], 0. ); // dual in the other direction
 
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[0].data(), B_val[0].size() );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[1].data(), B_val[1].size() );
-        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocate( B_val[2].data(), B_val[2].size() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( B_val[0].data(), B_val[0].size() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( B_val[1].data(), B_val[1].size() );
+        smilei::tools::gpu::HostDeviceMemoryManagement::DeviceAllocateAndCopyHostToDevice( B_val[2].data(), B_val[2].size() );
+
     }
     
     // -----------------------------------------------------

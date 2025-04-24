@@ -34,6 +34,9 @@ namespace Random_namespace // in order to use the random functions without havin
     }
 }
 
+#ifdef SMILEI_ACCELERATOR_OMP
+#pragma omp declare target
+#endif
 class Random
 {
 public:
@@ -42,10 +45,23 @@ public:
         xorshift32_state = seed;
         // zero is not acceptable for xorshift
         if( xorshift32_state==0 ) {
-            xorshift32_state = 1073741824;
+            xorshift32_state = 4294967295;
         }
     }
-
+    
+    Random( Random * rand ) {
+        xorshift32_state = rand->xorshift32_state;
+    }
+    
+    //! add n to the seed
+    inline void add( uint32_t n ) {
+        xorshift32_state += n;
+        // zero is not acceptable for xorshift
+        if( xorshift32_state==0 ) {
+            xorshift32_state = 4294967295;
+        }
+    }
+    
     //! random integer
     inline uint32_t integer() {
         return xorshift32();
@@ -61,6 +77,10 @@ public:
     //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1-10^-11
     inline double uniform1() {
         return xorshift32() * xorshift32_invmax1;
+    }
+    //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1-10^-6
+    inline float uniform1f() {
+        return xorshift32() * xorshift32_invmax1f;
     }
     //! Uniform rand from xorshift32 generator, between -1. (excluded) and 1. (included)
     inline double uniform2() {
@@ -109,12 +129,16 @@ private:
     static constexpr double xorshift32_invmax = 1./4294967296.;
     //! Almost inverse of the maximum value of the random number generator
     static constexpr double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
+    static constexpr float xorshift32_invmax1f = (1.-1e-6)/4294967296.;
     //! Twice inverse of the maximum value of the random number generator
     static constexpr double xorshift32_invmax2 = 2./4294967296.;
      //! two pi * inverse of the maximum value of the random number generator
     static constexpr double xorshift32_invmax_2pi = 2.*M_PI/4294967296.;
     
 };
+#ifdef SMILEI_ACCELERATOR_OMP
+#pragma omp end declare target
+#endif
 
 
 #endif

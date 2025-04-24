@@ -6,10 +6,14 @@ S = happi.Open(["./restart*"], verbose=False)
 
 
 
-for i in range(3):
-	ion = "ion"+str(i)
-	eon = "eon"+str(i)
-	ion_mass = S.namelist.Species[ion].mass
+for i in range(4):
+	if i < 3:
+		ion = "ion"+str(i)
+		eon = "eon"+str(i)
+		ion_mass = S.namelist.Species[ion].mass
+	else:
+		ion = "combined ions"
+		eon = "combined eons"
 	
 	times = np.double(S.ParticleBinning(0).getAvailableTimesteps())
 	ones = np.ones_like(times)

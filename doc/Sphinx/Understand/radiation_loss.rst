@@ -298,7 +298,7 @@ Continuous, Landau-Lifshitz-like models
 """""""""""""""""""""""""""""""""""""""
 
 Two models of continuous radiation friction force are available in :program:`Smilei`:
-(i) the approximation for high-math:`\gamma` of the Landau-Lifshitz equation (taking :math:`g(\chi)=1` in Eq. :eq:`correctedLLforce`),
+(i) the approximation for high-:math:`\gamma` of the Landau-Lifshitz equation (taking :math:`g(\chi)=1` in Eq. :eq:`correctedLLforce`),
 and (ii) the corrected Landau-Lifshitz equation Eq. :eq:`correctedLLforce`.
 The modelS are accessible in the species configuration under the name
 ``Landau-Lifshitz`` (equiv. ``LL``) and ``corrected-Landau-Lifshitz`` (equiv. 'cLL').

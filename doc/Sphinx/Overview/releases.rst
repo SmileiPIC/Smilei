@@ -23,12 +23,21 @@ You can find older, `unsupported versions here <https://github.com/SmileiPIC/Smi
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* **Ported to GPU**:
+
+  * Collisions (without ionization or nuclear reaction)
+
 * **Features**:
 
+  * Electron-ion collisions now include screening from bound electrons,
+    thus supporting electron-neutral collisions.
   * Prescribed fields in AM geometry.
   * Particle reflective boundary conditions at Rmax in AM geometry.
   * 1st order Ruyten shape function in AM geometry.
   * Support for collisions in single mode AM geometry.
+  * Remove experimental support for task parallelization.
+  * Low dispersion Maxwell solver ``"Terzani"`` from `this article <https://doi.org/10.1016/j.cpc.2019.04.007>`_ in ``"AMcylindrical"`` geometry.
+  * Tunnel ionization supports fullPPT model and 2 BSI models.
 
 * **Bug fixes**:
 
@@ -37,7 +46,10 @@ Changes made in the repository (not released)
   * Species-specific diagnostics in AM geometry with vectorization.
   * Frozen particles in AM geometry with adaptive vectorization.
   * Happi's ``average`` argument would sometimes be missing the last bin.
-  * 1D projector on GPU without diagnostics
+  * 1D projector on GPU without diagnostics.
+  * Fix a bug which would give false results when ionization was activated with vectorization and frozen species.
+  * OpenPMD compatibility: fixed units of density and weight.
+  * ``LaserGaussian3D`` was giving slightly wrong amplitude with large incidence angle.
 
 
 ----
@@ -50,7 +62,6 @@ Ongoing projects
   * Particle merging
   * Nuclear reactions
   * Perfectly Matched Layers
-  * NewParticles diagnostic
 
 * In preparation:
 

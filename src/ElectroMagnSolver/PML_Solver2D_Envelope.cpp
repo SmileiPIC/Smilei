@@ -20,13 +20,13 @@ PML_Solver2D_Envelope::PML_Solver2D_Envelope( Params &params )
     power_pml_alpha_x = 1.;
     alpha_cx = std::complex<double>( 0.0, +1. ) ;
     // Y-PML
-    kappa_y_max = 1.0 ;
-    sigma_y_max = 3.0 ; // 3.0 with dx = 0.5, dy = 4.0, dt = 0.8*dx and 16 PML cells OK ;
+    kappa_y_max = 60.0 ;
+    sigma_y_max = 40.0 ; // 3.0 with dx = 0.5, dy = 4.0, dt = 0.8*dx and 16 PML cells OK ;
     alpha_y_max = 0.0 ;
-    power_pml_kappa_y = 3.;
+    power_pml_kappa_y = 2.;
     power_pml_sigma_y = 2.;
     power_pml_alpha_y = 1.;
-    alpha_cy = 0.00 ; // 0.00 seems to be stable for 20000 dt and dx = 0.5, dy = 4.0, dt = 0.8*dx and 16 PML cells ;
+    alpha_cy = 6.28/512 ; // 0.00 seems to be stable for 20000 dt and dx = 0.5, dy = 4.0, dt = 0.8*dx and 16 PML cells ;
 }
 
 PML_Solver2D_Envelope::~PML_Solver2D_Envelope()
@@ -537,12 +537,12 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                 } // end y loop
             } // end x loop
 
-            for( unsigned int i=solvermin ; i<solvermax; i++ ) { // x loop
-                for( unsigned int j=1 ; j < ny_p-1 ; j++ ) { // y loop
-                    // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
-                    ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
-                 }
-            }
+            // for( unsigned int i=solvermin ; i<solvermax; i++ ) { // x loop
+            //     for( unsigned int j=1 ; j < ny_p-1 ; j++ ) { // y loop
+            //         // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
+            //         ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
+            //      }
+            // }
 
             for( unsigned int i=0 ; i<nx_p ; i++ ) { // x loop
                 for( unsigned int j=0 ; j < ny_p ; j++ ) { // y loop
@@ -702,12 +702,12 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                 } // end y loop
             } // end x loop
 
-            for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
-                for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
-                    // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
-                    ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
-                 }
-            }
+            // for( unsigned int i=2 ; i<nx_p-2; i++ ) { // x loop
+            //     for( unsigned int j=solvermin ; j < solvermax ; j++ ) { // y loop
+            //         // An_f = An + nu/2.*(1.*Anm1-2.*An+1.*Anp1)
+            //         ( *A_n_pml )( i, j ) += (0.02/2.)*(( *A_nm1_pml )( i, j ) - 2.*( *A_n_pml )( i, j ) + ( *A_np1_pml )( i, j ) );
+            //      }
+            // }
 
             for( unsigned int i=0 ; i<nx_p ; i++ ) { // x loop
                 for( unsigned int j=0 ; j < ny_p ; j++ ) { // y loop

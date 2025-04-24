@@ -658,38 +658,3 @@ void Projector2D2OrderV::susceptibility( ElectroMagn *, Particles &, double , Sm
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry" );
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Wrapper for projection for Tasks
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, 
-        int bin_shift, Particles &particles, SmileiMPI *smpi, 
-        int istart, int iend, int ithread, bool diag_flag, 
-        bool is_spectral, int /*ispec*/, int scell, int ipart_ref )
-{
-    if( istart == iend ) {
-        return;    //Don't treat empty cells.
-    }
-    
-    //Independent of cell. Should not be here
-    //{
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    //}
-    int iold[2];
-    iold[0] = scell/nscelly_+oversize[0];
-    iold[1] = ( scell%nscelly_ )+oversize[1];
-    
-    // If no field diagnostics this timestep, then the projection is done directly on the total arrays
-    if( !diag_flag ) {
-        if( !is_spectral ) {
-            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref, bin_shift  );
-        } else {
-            ERROR( "TO DO with rho" );
-        }
-
-        // Otherwise, the projection may apply to the species-specific arrays
-    } else {
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref, bin_shift  );
-    }
-}

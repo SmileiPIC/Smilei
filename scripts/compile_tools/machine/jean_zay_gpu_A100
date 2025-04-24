@@ -10,7 +10,7 @@ SMILEICXX_DEPS = g++
 #GPU_COMPILER = nvcc
 
 CXXFLAGS += -w
-CXXFLAGS += -tp=zen3 -ta=tesla:cc80 -std=c++14  -lcurand -Mcudalib=curand
+CXXFLAGS += -tp=zen3 -gpu=cc80 -std=c++14
 CXXFLAGS += -Minfo=accel # what is offloaded/copied
 # CXXFLAGS += -Minfo=all   # very verbose output
 CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1 
@@ -18,4 +18,4 @@ CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_80
 GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
 
-LDFLAGS += -ta=tesla:cc80 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda #-L/gpfslocalsys/cuda/11.2/lib64/
+LDFLAGS += -acc=gpu -gpu=cc80 -std=c++14 -lcurand -lcudart

@@ -645,7 +645,7 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int, std::vector<unsigned int
     for( unsigned int ix=0 ; ix<dimDual[0]-1 ; ix++ ) {
         ( *Jx1D )( ix )  = ( ( *Jx1D )( ix ) + ( *Jx1D )( ix+1 ) ) * 0.5 ;
     }
-    for( unsigned int ix=1 ; ix<dimDual[0]-1 ; ix++ ) {
+    for( unsigned int ix=dimDual[0]-2 ; ix>0 ; ix-- ) {
         ( *Jx1D )( ix )  = ( ( *Jx1D )( ix-1 ) + ( *Jx1D )( ix ) ) * 0.5 ;
     }
     ( *Jx1D )( 0 ) = temp0;
@@ -659,8 +659,8 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int, std::vector<unsigned int
     for( unsigned int ix=0 ; ix<dimPrim[0]-1 ; ix++ ) {
         ( *Jy1D )( ix )  = ( ( *Jy1D )( ix ) + ( *Jy1D )( ix+1 ) ) * 0.5 ;
     }
-    for( unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++ ) {
-        ( *Jy1D )( ix )  = ( ( *Jy1D )( ix ) + ( *Jy1D )( ix+1 ) ) * 0.5 ;
+    for( unsigned int ix=dimDual[0]-2 ; ix>0 ; ix-- ) {
+        ( *Jy1D )( ix )  = ( ( *Jy1D )( ix-1 ) + ( *Jy1D )( ix ) ) * 0.5 ;
     }
     //delete tmp;
 
@@ -675,8 +675,8 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int, std::vector<unsigned int
     for( unsigned int ix=0 ; ix<dimPrim[0]-1 ; ix++ ) {
         ( *Jz1D )( ix )  = ( ( *Jz1D )( ix ) + ( *Jz1D )( ix+1 ) ) * 0.5 ;
     }
-    for( unsigned int ix=1 ; ix<dimPrim[0]-1 ; ix++ ) {
-        ( *Jz1D )( ix )  = ( ( *Jz1D )( ix ) + ( *Jz1D )( ix+1 ) ) * 0.5 ;
+    for( unsigned int ix=dimDual[0]-2 ; ix>0 ; ix-- ) {
+        ( *Jz1D )( ix )  = ( ( *Jz1D )( ix-1 ) + ( *Jz1D )( ix ) ) * 0.5 ;
     }
     //delete tmp;
     ( *Jz1D )( 0 ) = temp0;

@@ -352,8 +352,9 @@ class Operation(object):
 		self.variables = []
 		self.imports = {}
 		
-		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b)(?![\['])", operation)
+		full_op = re.split(r"(#[0-9]+|\b[a-zA-Z]\w*\b|\{[^\}]+\})(?![\['])", operation)
 		title = full_op.copy()
+		full_op = [a.lstrip("{").rstrip("}") for a in full_op]
 		
 		# Special case: only 1 variable and nothing else
 		if len(full_op) == 3 and full_op[0] == full_op[-1] == "":

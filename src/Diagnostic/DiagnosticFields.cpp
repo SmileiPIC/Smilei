@@ -232,7 +232,7 @@ void DiagnosticFields::openFile( Params &, SmileiMPI *smpi )
     file_->attr( "name", diag_name_ );
     
     // Attributes for openPMD
-    openPMD_->writeRootAttributes( *file_, "", "no_particles" );
+    openPMD_->writeRootAttributes( *file_, ".", "no_particles" );
     
     // Make main "data" group where everything will be stored (required by openPMD)
     data_group_ = new H5Write( file_, "data" );
@@ -300,7 +300,8 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         
         // Create group for this iteration
         ostringstream name_t;
-        name_t << setfill( '0' ) << setw( 10 ) << itime;
+        // name_t << setfill( '0' ) << setw( 10 ) << itime;
+        name_t << itime;
         status = data_group_->has( name_t.str() );
         if( ! status ) {
             iteration_group_ = new H5Write( data_group_, name_t.str() );

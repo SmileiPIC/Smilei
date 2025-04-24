@@ -29,8 +29,6 @@ public:
                                     int          icell     = 0,
                                     int          ipart_ref = 0 ) override;
 
-    void currentsAndDensityWrapperOnBuffers( double *, double *, double *, double *, int , Particles &, SmileiMPI *, int, int, int, bool, bool, int, int = 0, int = 0 ) override final {};
-
     void susceptibility( ElectroMagn *EMfields,
                          Particles   &particles,
                          double       species_mass,
@@ -53,6 +51,7 @@ protected:
     double dts2_;
     double dts4_;
     int    not_spectral_;
+    bool cell_sorting_;
     unsigned int x_dimension_bin_count_;
 };
 

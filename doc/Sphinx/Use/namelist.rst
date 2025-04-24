@@ -1,3 +1,7 @@
+.. |exp| raw:: html
+
+   <span class="exp-label">experimental</span>
+
 Write a namelist
 ----------------
 
@@ -236,10 +240,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
-  .. warning::
-
-    The size of clusters becomes particularly important when :doc:`/Understand/task_parallelization` is used.
-
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
@@ -248,10 +248,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` are available for ``3DCartesian``.
-  ``"Lehe"`` is available for ``AMcylindrical``.
+  ``"Lehe"`` and ``"Terzani"`` are available for ``AMcylindrical``.
   The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
-  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
+  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_.
+  The Terzani solver is described in `this paper <https://doi.org/10.1016/j.cpc.2019.04.007>`_.
 
 .. py:data:: solve_poisson
 
@@ -886,8 +887,11 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0
 
-  The atomic number of the particles, required only for ionization.
-  It must be lower than 101.
+  The atomic number of the particles (must be below 101).
+  It is required for ionization and nuclear reactions.
+  It has an effect on collisions by accounting for the atomic screening
+  (if not defined, or set to 0 for ions, screening is discarded as if
+  the ion was fully ionized).
 
 .. py:data:: maximum_charge_state
 
@@ -983,11 +987,23 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for ionization:
+  The model for :ref:`field ionization <field_ionization>`:
 
-  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel"`` for tunnel ionization using :ref:`PPT-ADK <ppt_adk>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_full_PPT"`` |exp| for tunnel ionization using :ref:`PPT-ADK with account for magnetic number<ppt_adk>` (requires species with an :py:data:`atomic_number`)
   * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
+
+.. py:data:: bsi_model
+
+  :default: ``"none"``
+
+  Apply the :ref:`Barrier Suppression Ionization <barrier_suppression>` correction for ionization in strong fields.
+  This correction is supported only for ``ionization_model`` = ``"tunnel"`` or ``tunnel_full_PPT``.
+  The available BSI models are:
+
+  * ``"Tong_Lin"`` for :ref:`Tong and Lin <tong_lin>`'s rate.
+  * ``"KAG"`` for :ref:`Kostyukov Artemenko Golovanov <KAG>`'s rate. 
 
 .. py:data:: ionization_rate
 
@@ -2185,6 +2201,13 @@ They are specified by one or several ``Collisions`` blocks::
   #      nuclear_reaction = [],
   )
 
+.. note::
+
+  The screening from bound electrons, which is important when
+  the atom is neutral or partially ionized, is accounted for only in the
+  case of e-i collisions. To activate it, atom species **must have**
+  their :py:data:`atomic_number` defined and non-zero.
+
 
 .. py:data:: species1
              species2
@@ -2245,7 +2268,6 @@ They are specified by one or several ``Collisions`` blocks::
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
   * If :math:`< 0`, collisions are not treated (but other reactions may happen).
-
 
 .. py:data:: coulomb_log_factor
 
@@ -2969,7 +2991,7 @@ for instance::
 
   :default: 1
 
-  The number of time-steps during which the data is averaged before output.
+  The number of time-steps during which the data is averaged. The data is averaged over `time_average` consecutive iterations after the selected time.
 
 
 .. py:data:: species

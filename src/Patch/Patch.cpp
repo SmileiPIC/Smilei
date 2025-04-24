@@ -1363,4 +1363,39 @@ void Patch::deleteFieldsOnDevice()
 
 } // END deleteFieldsOnDevice
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Set fields on device to zero.
+// ---------------------------------------------------------------------------------------------------------------------
+// Not used for the moment
+//void Patch::ResetFieldsOnDevice()
+//{
+//    // Currents -----------------------------
+//
+//    EMfields->Jx_->put_to( 0. );
+//    EMfields->Jy_->put_to( 0. );
+//    EMfields->Jz_->put_to( 0. );
+//
+//    // Rho (charge density) ----------------
+//
+//    EMfields->rho_->put_to( 0. );
+//
+//
+//    // Electric field ----------------------
+//
+//    EMfields->Ex_->put_to( 0. );
+//    EMfields->Ey_->put_to( 0. );
+//    EMfields->Ez_->put_to( 0. );
+//
+//    // Magnetic field ----------------------
+//
+//    EMfields->Bx_->put_to( 0. );
+//    EMfields->By_->put_to( 0. );
+//    EMfields->Bz_->put_to( 0. );
+//
+//    EMfields->Bx_m->put_to( 0. );
+//    EMfields->By_m->put_to( 0. );
+//    EMfields->Bz_m->put_to( 0. );
+//
+//} // END allocateAndCopyFieldsOnDevice
+
 #endif

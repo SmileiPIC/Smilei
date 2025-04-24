@@ -44,7 +44,8 @@ void currentDepositionKernel2D( double *__restrict__ host_Jx,
                                int    i_domain_begin,
                                int    j_domain_begin,
                                int    nprimy,
-                               int    not_spectral_ );
+                               int    not_spectral_,
+                               bool cell_sorting );
 
 //static 
 void currentAndDensityDepositionKernel2D(
@@ -75,7 +76,8 @@ void currentAndDensityDepositionKernel2D(
                                 int    i_domain_begin,
                                 int    j_domain_begin,
                                 int    nprimy,
-                                int    not_spectral_ );
+                                int    not_spectral_,
+                                bool cell_sorting );
 
 } // namespace cudahip2d
 

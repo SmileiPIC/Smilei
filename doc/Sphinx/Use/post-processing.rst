@@ -633,10 +633,12 @@ Obtain the data
 
   * ``axis``: the name of the requested axis.
 
-    * For ``Field``: this is ``"x"``, ``"y"`` or ``"z"``
-    * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
+    * For ``Field``: this is ``"x"``, ``"y"`` or ``"z"``.
+    * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``.
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
-      defined in the namelist
+      defined in the namelist. In case of a user defined axis, the name is ``"user_function"``
+      followed by the number of the function (starting from 0 for the first one).
+      The names of the axes can be checked by printing the diagnostic. 
 
   * ``timestep``: The timestep at which the axis is obtained. Only matters in
     ``ParticleBinning``, ``Screen`` and ``RadiationSpectrum`` when ``auto`` axis
@@ -668,8 +670,10 @@ Obtain the data
       mean_px = sum_px / npart
 
 .. py:method:: Field.getXmoved( timestep )
+.. py:method:: Probe.getXmoved( timestep )
+.. py:method:: TrackParticles.getXmoved( timestep )
 
-  Specific to Field diagnostics, this method returns the displacement of the moving
+  This method returns the displacement of the moving
   window at the required ``timestep``.
 
 ----
