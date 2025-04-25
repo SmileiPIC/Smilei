@@ -31,7 +31,7 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of March 2025, at least 238 papers have been published covering a broad range of topics:
+As of April 2025, at least 245 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
@@ -51,6 +51,47 @@ Following is the distribution of these topics in the listed publications up to N
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
    You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
 
+.. [Oudin2025]
+
+    A. Oudin, Y. Lalaire, G. Bouchard, A. Debayle, A. Fusaro, P. Loiseau, C. Ruyer, D. Benisti,
+    `Theory and simulations of cross-beam energy transfer between speckled laser beams`,
+    `Physics of Plasmas 32, 042706 (2025) <https://doi.org/10.1063/5.0240578>`_
+       
+.. [Yao2025]
+
+     W. Yao, R. Lelièvre, I. Cohen, T. Waltenspiel, A. Allaoua, P. Antici, Y. Ayoul, A. Beck, A. Beluze, C. Blancard, D. Cavanna, M. Chabanis, S. N. Chen, E. Cohen, P. Cossé, Q. Ducasse, M. Dumergue, F. El Hai, C. Evrard, E. Filippov, A. Freneaux, D. C. Gautier, F. Gobert, F. Goupille, M. Grech, L. Gremillet, Y. Heller, E. d'Humières, H. Lahmar, L. Lancia, N. Lebas, L. Lecherbourg, S. Marchand, D. Mataja, G. Meyniel, D. Michaeli, D. Papadopoulos, F. Perez, S. Pikuz, I. Pomerantz, P. Renaudin, L. Romagnani, F. Trompier, E. Veuillot, T. Vinchon, F. Mathieu and J. Fuchs,
+     `Characterization and performance of the Apollon main short-pulse laser beam following its commissioning at 2 PW level`,
+     `Physical of Plasmas 32, 043106 (2025) <https://doi.org/10.1063/5.0252874>`_
+
+.. [Pouyez2025]
+
+     M. Pouyez, T. Grismayer, M. Grech and C. Riconda,
+     `Kinetic Structure of Strong-Field QED Showers in Crossed Electromagnetic Fields`,
+     `Physical Review Letters 134, 135001 (2025) <https://doi.org/10.1103/PhysRevLett.134.135001>`_
+
+.. [Miethlinger2025]
+
+    T. Miethlinger, M. Bussmann, U. Schramm and T. Kluge,
+    `MLP-Based Adaptive Sampling and Optimization of Laser-Ion Acceleration with Ultra-Short Laser Pulses`,
+    `Parallel Processing and Applied Mathematics, 142–156 (2025) <https://doi.org/10.1007/978-3-031-85703-4_10>`_
+
+.. [Charbonnet2025]
+
+    K. J. Charbonnet, E. C. Nelson, T. Reutershan and C. P. J. Barty,
+    `Computational methods for focused arbitrary laser fields in plasma simulations`,
+    `Physics of Plasmas 32, 043901 (2025) <https://doi.org/10.1063/5.0250718>`_
+       
+.. [Do2025]
+
+    H. T. B. Do, G. K. Ngirmang, L. Wu and M. Bosman,
+    `Nonlinear optical resonances from ballistic electron funnelling`,
+    `ACS Nano (2025) <https://doi.org/10.1021/acsnano.5c00169>`_
+
+.. [Lytova2025]
+
+    M. Lytova, F. Fillion-Gourdeau, S. Vallières, S. Fourmaux, S. Payeur, J. Powell, F. Légaré and S. MacLean,
+    `Electron acceleration in ambient air using tightly focused ultrashort infrared laser beams`,
+    `Physical Review E 111, 035210 (2025) <https://doi.org/10.1103/PhysRevE.111.035210>`_
 
 .. [Drobniak2025]
 
