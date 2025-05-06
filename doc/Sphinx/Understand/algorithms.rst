@@ -251,7 +251,7 @@ All schemes compute the new particle momentum and position according to
 
 .. math::
 
-  \mathbf{u}_p^{n+\tfrac{1}{2}}=\mathbf{v}_p^{n-\tfrac{1}{2}} + r_s \Delta t \, \left[ E_p^{(n)} + \frac{\mathbf{v}_p^{(n+\tfrac{1}{2})}+\mathbf{v}_p^{(n-\tfrac{1}{2})}}{2} \times B_p^{(n)}\right],
+  \mathbf{u}_p^{n+\tfrac{1}{2}}=\mathbf{u}_p^{n-\tfrac{1}{2}} + r_s \Delta t \, \left[ E_p^{(n)} + \frac{\mathbf{v}_p^{(n+\tfrac{1}{2})}+\mathbf{v}_p^{(n-\tfrac{1}{2})}}{2} \times B_p^{(n)}\right],
 
 .. math::
 
