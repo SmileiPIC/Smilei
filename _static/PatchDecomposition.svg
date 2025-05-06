@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 205">
+  <defs>
+    <pattern id="pattern1" width="0.02098" height="0.05085">
+      <rect style="fill:#969696;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="pattern21" width="0.168" height="0.203">
+      <rect style="fill:#969696;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="pattern22" width="0.126" height="0.254">
+      <rect style="fill:url(#pattern21);" width="18" height="15" x="0" y="0" />
+    </pattern>
+    <pattern id="patternY" width="0.168" height="0.203">
+      <rect style="fill:#ffca29;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternG" width="0.168" height="0.203">
+      <rect style="fill:#75dc09;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternB" width="0.168" height="0.203">
+      <rect style="fill:#15adf3;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternR" width="0.168" height="0.203">
+      <rect style="fill:#ff5050;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternP" width="0.168" height="0.203">
+      <rect style="fill:#d377ea;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+  </defs>
+  <g>
+    <rect style="fill:url(#pattern1);" width="143" height="59" x="5" y="5" />
+    <rect style="fill:url(#pattern22);" width="151" height="63" x="4" y="68" />
+  </g>
+  <g style="fill:url(#patternY)">
+    <rect width="18" height="15" x="4" y="151" />
+    <rect width="18" height="15" x="4" y="167" />
+    <rect width="18" height="15" x="4" y="183" />
+    <rect width="18" height="15" x="23" y="167" />
+    <rect width="18" height="15" x="23" y="183" />
+  </g>
+  <g style="fill:url(#patternG)">
+    <rect width="18" height="15" x="4" y="135" />
+    <rect width="18" height="15" x="23" y="135" />
+    <rect width="18" height="15" x="23" y="151" />
+    <rect width="18" height="15" x="42" y="135" />
+    <rect width="18" height="15" x="42" y="151" />
+    <rect width="18" height="15" x="42" y="167" />
+    <rect width="18" height="15" x="42" y="183" />
+    <rect width="18" height="15" x="61" y="135" />
+    <rect width="18" height="15" x="61" y="151" />
+    <rect width="18" height="15" x="61" y="167" />
+  </g>
+  <g style="fill:url(#patternB)">
+    <rect width="18" height="15" x="61" y="183" />
+    <rect width="18" height="15" x="80" y="135" />
+    <rect width="18" height="15" x="80" y="151" />
+    <rect width="18" height="15" x="80" y="167" />
+    <rect width="18" height="15" x="80" y="183" />
+    <rect width="18" height="15" x="99" y="167" />
+    <rect width="18" height="15" x="99" y="183" />
+  </g>
+  <g style="fill:url(#patternR)">
+    <rect width="18" height="15" x="99" y="135" />
+    <rect width="18" height="15" x="99" y="151" />
+    <rect width="18" height="15" x="118" y="135" />
+    <rect width="18" height="15" x="118" y="151" />
+    <rect width="18" height="15" x="137" y="135" />
+    <rect width="18" height="15" x="137" y="151" />
+  </g>
+  <g style="fill:url(#patternP)">
+    <rect width="18" height="15" x="118" y="167" />
+    <rect width="18" height="15" x="118" y="183" />
+    <rect width="18" height="15" x="137" y="167" />
+    <rect width="18" height="15" x="137" y="183" />
+  </g>
+  <g style="font: 10px sans-serif;">
+    <text x="170" y="40">960 cells</text>
+    <text x="170" y="105">32 patches</text>
+    <text x="170" y="170">5 MPI patch <br/>collections</text>
+  </g>
+</svg>
