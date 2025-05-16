@@ -7,6 +7,7 @@
 #SBATCH --ntasks-per-node=1          # nombre de tache MPI par noeud (= nombre de GPU par noeud)
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpua100 #_test
+#SBATCH --exclude='ruche-gpu16','ruche-gpu17'
 
 # Load necessary modules
 #source /gpfs/users/prouveurc/env_smilei.sh
