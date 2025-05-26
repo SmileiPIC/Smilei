@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Multiphoton Breit-Wheeler pair creation &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Advanced numerical techniques" href="numerical_techniques.html" />
+    <link rel="prev" title="High-energy photon emission &amp; radiation reaction" href="radiation_loss.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Multiphoton Breit-Wheeler pair creation</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Multiphoton Breit-Wheeler pair creation</a><ul>
+<li><a class="reference internal" href="#physical-model">Physical model</a></li>
+<li><a class="reference internal" href="#stochastic-scheme">Stochastic scheme</a></li>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#tables">Tables</a></li>
+<li><a class="reference internal" href="#benchmarks">Benchmarks</a><ul>
+<li><a class="reference internal" href="#synchrotron-2d">Synchrotron, 2D</a></li>
+<li><a class="reference internal" href="#counter-propagating-plane-wave-1d">Counter-propagating plane wave, 1D</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="multiphoton-breit-wheeler-pair-creation">
+<span id="multiphotonbreitwheelerpage"></span><h1>Multiphoton Breit-Wheeler pair creation<a class="headerlink" href="#multiphoton-breit-wheeler-pair-creation" title="Link to this heading">¶</a></h1>
+<p>The multiphoton Breit-Wheeler (<span class="math notranslate nohighlight">\(\gamma + n\omega \rightarrow e^- + e^+\)</span>),
+also referred to as
+the nonlinear Breit-Wheeler, corresponds to the decay of a
+high-energy photon into a pair of electron-positron
+when interacting with a strong electromagnetic field.</p>
+<p>In the vacuum, the electromagnetic field becomes nonlinear from the Schwinger
+electric field <span class="math notranslate nohighlight">\(E_s = 1.3 \times 10^{18}\ \mathrm{V/m}\)</span> corresponding
+to an intensity of <span class="math notranslate nohighlight">\(10^{29}\ \mathrm{Wcm^{-2}}\)</span> for
+<span class="math notranslate nohighlight">\(\lambda = 1\ \mu m\)</span>. In such a field, spontaneous apparitions of electron-positron pairs from
+the nonlinear vacuum are possible. If this field is not reachable in the laboratory
+frame, it will be very close in the boosted frame of highly-accelerated electrons. At
+<span class="math notranslate nohighlight">\(10^{24}\ \mathrm{Wcm^{-2}}\)</span>, a Lorentz factor of <span class="math notranslate nohighlight">\(\gamma \sim 10^5\)</span>
+is required to reach the Schwinger limit.
+This is the reason why quantum electrodynamics effects and in particular strong-
+field pair generation is accessible with the extreme-intensity lasers (multipetawatt lasers).</p>
+<p>As for electrons or positrons, the strength of QED effects depends
+on the photon quantum parameter:</p>
+<div class="math notranslate nohighlight" id="equation-photonquantumparameter1">
+<span class="eqno">(35)<a class="headerlink" href="#equation-photonquantumparameter1" title="Link to this equation">¶</a></span>\[\chi_\gamma = \frac{\gamma_\gamma}{E_s} \sqrt{ \left( \mathbf{E}_\perp
++ \mathbf{c} \times \mathbf{B} \right)^2 }\]</div>
+<p>where
+<span class="math notranslate nohighlight">\(\gamma_\gamma = \varepsilon_\gamma / m_e c^2\)</span> is the photon normalized energy,
+<span class="math notranslate nohighlight">\(m_e\)</span> the electron mass,
+<span class="math notranslate nohighlight">\(c\)</span> the speed of light in vacuum,
+<span class="math notranslate nohighlight">\(\mathbf{E}_\perp\)</span> is the electric field orthogonal to
+the propagation direction of the photon,
+<span class="math notranslate nohighlight">\(\mathbf{B}\)</span> the magnetic field.</p>
+<hr class="docutils" />
+<section id="physical-model">
+<h2>Physical model<a class="headerlink" href="#physical-model" title="Link to this heading">¶</a></h2>
+<p>The energy distribution of the production rate of pairs by a hard photon
+is given by the Ritus formulae</p>
+<div class="math notranslate nohighlight" id="equation-bwenergydistribution">
+<span class="eqno">(36)<a class="headerlink" href="#equation-bwenergydistribution" title="Link to this equation">¶</a></span>\[\frac{d^2N_{BW}}{d \chi_{\pm} dt} = \frac{\alpha_f m_e^2 c^4}{\pi \sqrt{3} \hbar \varepsilon_\gamma \chi_\gamma}
+\int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2} \right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }\]</div>
+<p>where <span class="math notranslate nohighlight">\(x = \left( \chi_\gamma / (\chi_{-} \chi_{+}) \right)^{2/3}\)</span>.
+The parameters <span class="math notranslate nohighlight">\(\chi_{-}\)</span> and <span class="math notranslate nohighlight">\(\chi_{+}\)</span> are the respective Lorentz
+invariant of the electron and the positron after pair creation.
+Furthermore, one has <span class="math notranslate nohighlight">\(\chi_- = \chi_\gamma - \chi_+\)</span> meaning that <span class="math notranslate nohighlight">\(\chi_-\)</span>
+and <span class="math notranslate nohighlight">\(\chi_+\)</span> can be interchanged.</p>
+<p>The total production rate of pairs can be written</p>
+<div class="math notranslate nohighlight" id="equation-bwproductionrate">
+<span class="eqno">(37)<a class="headerlink" href="#equation-bwproductionrate" title="Link to this equation">¶</a></span>\[\frac{dN_{BW}}{dt} = \frac{\alpha_f m_e^2 c^4}{ \hbar \varepsilon_\gamma} \chi_\gamma T \left( \chi_\gamma \right)\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-bwtfunction">
+<span class="eqno">(38)<a class="headerlink" href="#equation-bwtfunction" title="Link to this equation">¶</a></span>\[T \left( \chi_\gamma \right) = \frac{1}{\pi \sqrt{3} \chi_\gamma^2 }
+\int_{0}^{+\infty}{\int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2}
+\right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }} d\chi_-\]</div>
+<p>A photon of energy <span class="math notranslate nohighlight">\(\varepsilon_\gamma\)</span> traveling in a constant electric field <span class="math notranslate nohighlight">\(E\)</span> has a Lorentz
+parameter equal to <span class="math notranslate nohighlight">\(\chi_\gamma = \varepsilon_\gamma E / (E_s m_e c^2)\)</span>.</p>
+<p>We consider the case where photon interact in a constant uniform electric field.
+For a field of amplitude <span class="math notranslate nohighlight">\(E = 500 m_e \omega c / e\)</span>, the energy
+distribution and the production rate of pair creation as a function of <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> are
+plotted in <a class="reference internal" href="#synchrotron-pairs-dndt"><span class="std std-numref">Fig. 38</span></a>. It shows that the total production
+rate of electron-positron pairs rises rapidly to reach a peak around
+<span class="math notranslate nohighlight">\(\chi_\gamma = 10\)</span> with almost a pair generated per femtosecond.
+Under <span class="math notranslate nohighlight">\(\chi_\gamma = 0.1\)</span>, the production rate is very weak with
+less than a pair after 100 picoseconds of interaction.
+Above <span class="math notranslate nohighlight">\(\chi_\gamma = 10\)</span>, the production decreases slowly with
+<span class="math notranslate nohighlight">\(\chi_\gamma\)</span>.</p>
+<p>The right subplot in <a class="reference internal" href="#synchrotron-pairs-dndt"><span class="std std-numref">Fig. 38</span></a> gives the probability
+for a photon to decay into a pair as a function of the energy given to the electron
+(using approximation <span class="math notranslate nohighlight">\(\chi_\gamma / \chi_- = \gamma_\gamma / \gamma_-\)</span>)
+for a field of amplitude <span class="math notranslate nohighlight">\(E = 500 m_e \omega c / e\)</span>.
+It can also be seen as the pair creation energy distribution.
+The distribution is symmetric with respect to <span class="math notranslate nohighlight">\(\chi_- / \chi_\gamma = 1/2\)</span>.
+Below <span class="math notranslate nohighlight">\(\chi_\gamma = 10\)</span>, The maximum probability corresponds to
+equal electron-positron energies <span class="math notranslate nohighlight">\(\chi_- = \chi_+ = \chi_\gamma / 2\)</span>.
+Above this threshold, the energy dispersion increases with <span class="math notranslate nohighlight">\(\chi_\gamma\)</span>.</p>
+<figure class="align-default" id="id4">
+<span id="synchrotron-pairs-dndt"></span><a class="reference internal image-reference" href="../_images/synchrotron_pairs_dNdt.png"><img alt="../_images/synchrotron_pairs_dNdt.png" src="../_images/synchrotron_pairs_dNdt.png" style="width: 18cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 38 </span><span class="caption-text">(left) - Normalized total pair production distribution given by Eq. <a class="reference internal" href="#equation-bwproductionrate">(37)</a>.
+(right) - Normalized pair creation <span class="math notranslate nohighlight">\(\chi\)</span> distribution given by Eq. <a class="reference internal" href="#equation-bwenergydistribution">(36)</a>.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<hr class="docutils" />
+</section>
+<section id="stochastic-scheme">
+<span id="bwstochasticschemesection"></span><h2>Stochastic scheme<a class="headerlink" href="#stochastic-scheme" title="Link to this heading">¶</a></h2>
+<p>The Multiphoton Breit-Wheeler is treated with a Monte-Carlo process similar
+to the nonlinear inverse Compton Scattering
+(see <a class="reference internal" href="radiation_loss.html#radiationreactionpage"><span class="std std-ref">the radiation reaction page</span></a>).
+It is close to what has been done in
+<a class="reference internal" href="radiation_loss.html#duclous2011" id="id1"><span>[Duclous2011]</span></a>, <a class="reference internal" href="radiation_loss.html#lobet2013" id="id2"><span>[Lobet2013]</span></a>, <a class="reference internal" href="radiation_loss.html#lobet2015" id="id3"><span>[Lobet2015]</span></a>.</p>
+<p>The first preliminary step consists
+on introducing the notion of macro-photon. Macro-photons are simply the equivalent of
+macro-particles (see <a class="reference internal" href="algorithms.html#quasiparticlessection"><span class="std std-ref">the macro-particle section</span></a>)
+extended to photons.
+There are defined by a charge and a mass equal to 0. The momentum is substituted
+by the photon momentum <span class="math notranslate nohighlight">\(\mathbf{p}_\gamma = \hbar \mathbf{k}\)</span> where
+<span class="math notranslate nohighlight">\(\mathbf{k}\)</span> is the wave vector.
+The momentum contains the photon energy so that
+<span class="math notranslate nohighlight">\(\mathbf{p}_\gamma = \gamma_\gamma m_e \mathbf{c}\)</span>.
+The definition of the photon Lorentz factor is therefore also slightly different
+than particles.</p>
+<p>1. An incremental optical depth <span class="math notranslate nohighlight">\(\tau\)</span>, initially set to 0, is assigned to the macro-photon.
+Decay into pairs occurs when it reaches the final optical depth <span class="math notranslate nohighlight">\(\tau_f\)</span>
+sampled from <span class="math notranslate nohighlight">\(\tau_f = -\log{(\xi)}\)</span> where <span class="math notranslate nohighlight">\(\xi\)</span> is a random number in <span class="math notranslate nohighlight">\(\left]0,1\right]\)</span>.</p>
+<p>2. The optical depth <span class="math notranslate nohighlight">\(\tau\)</span> evolves according to the photon quantum parameter
+following:</p>
+<div class="math notranslate nohighlight" id="equation-mbw-mcdtaudt">
+<span class="eqno">(39)<a class="headerlink" href="#equation-mbw-mcdtaudt" title="Link to this equation">¶</a></span>\[\frac{d\tau}{dt} = \frac{dN_{BW}}{dt}\left( \chi_\gamma \right)\]</div>
+<p>that is also the production rate of pairs
+(integration of Eq. <a class="reference internal" href="#equation-bwenergydistribution">(36)</a>).</p>
+<p>3. The emitted electron’s quantum parameter <span class="math notranslate nohighlight">\(\chi_-\)</span> is computed by
+inverting the cumulative distribution function:</p>
+<div class="math notranslate nohighlight" id="equation-mbw-cumulativedistr">
+<span class="eqno">(40)<a class="headerlink" href="#equation-mbw-cumulativedistr" title="Link to this equation">¶</a></span>\[P(\chi_-,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_-}{
+\frac{d^2N_{BW}}{d \chi dt} d\chi}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{d^2N_{BW}}{d \chi dt} d\chi}}}\]</div>
+<p>The inversion of  <span class="math notranslate nohighlight">\(P(\chi_-,\chi_\gamma)=\xi'\)</span> is done after drawing
+a second random number
+<span class="math notranslate nohighlight">\(\xi' \in \left[ 0,1\right]\)</span> to find <span class="math notranslate nohighlight">\(\chi_-\)</span>.
+The positron quantum parameter is <span class="math notranslate nohighlight">\(\chi_+ = \chi_\gamma - \chi_-\)</span>.</p>
+<p>4. The energy of the emitted electron is then computed:
+<span class="math notranslate nohighlight">\(\varepsilon_- = mc^2 \gamma_- = mc^2 \left[ 1 + \left(\gamma_\gamma - 2\right) \chi_- / \chi_\gamma \right]\)</span>.
+If <span class="math notranslate nohighlight">\(\gamma_\gamma &lt; 2\)</span>, the pair creation is not possible since the photon
+energy is below the rest mass of the particles.</p>
+<p>5. The photon momentum is then updated.
+Propagation direction is the same as for the photon. Pairs are created at the
+same position as for the photon. The weight is conserved. It is possible to
+create more than a macro-electron or a macro-positron in order to improve
+the phenomenon statistics. In this case, the weight of each macro-particle is
+the photon weight divided by the number of emissions.</p>
+</section>
+<hr class="docutils" />
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
+<p>C++ classes for the multiphoton Breit-Wheeler process are located
+in the directory <code class="docutils literal notranslate"><span class="pre">src/MultiphotonBreitWheeler</span></code>.
+In <strong class="program">Smilei</strong>, the multiphoton Breit-Wheeler process is not incorporated
+in the photon pusher in order to preserve vector performance of the latter one.</p>
+<p>Description of the files:</p>
+<ul class="simple">
+<li><p>Class <code class="docutils literal notranslate"><span class="pre">MultiphotonBreitWheelerTables</span></code>: This class initializes and manages the
+multiphoton Breit-Wheeler parameters.
+It contains the methods to read the tables and data structures to store them.
+It also contains default embebded tables.
+Then, it provides several methods to look for values in the tables for the Monte-Carlo process
+and compute different parameters used by this physical mechanism.</p></li>
+<li><p>Class <code class="docutils literal notranslate"><span class="pre">MultiphotonBreitWheeler</span></code>: this class contains the methods to
+perform the Breit-Wheeler Monte-Carlo process described in <a class="reference internal" href="#bwstochasticschemesection"><span class="std std-ref">the previous section</span></a>).</p></li>
+<li><p>Class <code class="docutils literal notranslate"><span class="pre">MultiphotonBreitWheelerFactory</span></code>: this class is supposed to
+manage the different Breit-Wheeler algorithms.
+For the moment, only one model is implemented.</p></li>
+</ul>
+<p>If the multiphoton Breit-Wheeler is activated for a photon species, the factory
+will initialize the instance <code class="docutils literal notranslate"><span class="pre">Multiphoton_Breit_Wheeler_process</span></code> of
+the class <code class="docutils literal notranslate"><span class="pre">MultiphotonBreitWheeler</span></code>
+declared in the corresponding <code class="docutils literal notranslate"><span class="pre">species</span></code> (see <code class="docutils literal notranslate"><span class="pre">species.cpp</span></code>).</p>
+<p>The multiphoton Breit-Wheeler Monte-Carlo process is performed in the method <code class="docutils literal notranslate"><span class="pre">dynamics</span></code> of <code class="docutils literal notranslate"><span class="pre">species</span></code>.
+It is called after the particle field interpolation (field gathering),
+after ionization and radiation reaction and before the particle pusher.
+At this stage, the new particles are stored in a temporary buffer called <code class="docutils literal notranslate"><span class="pre">new_pair</span></code>.
+This is an array of two instances of <code class="docutils literal notranslate"><span class="pre">Particles</span></code>.
+It is declared in <code class="docutils literal notranslate"><span class="pre">Multiphoton_Breit_Wheeler_process</span></code>.
+Particles are imported in the main species particle arrays
+(<code class="docutils literal notranslate"><span class="pre">particles</span></code> object in <code class="docutils literal notranslate"><span class="pre">species</span></code>) only after the current deposition
+and before the boundary conditions using the method <code class="docutils literal notranslate"><span class="pre">importParticles</span></code>
+of the class <code class="docutils literal notranslate"><span class="pre">Particles</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="tables">
+<h2>Tables<a class="headerlink" href="#tables" title="Link to this heading">¶</a></h2>
+<p>External tables can be generated using an external tools called <strong class="program">smilei_tables</strong>.
+More information can be found in <a class="reference internal" href="../Use/tables.html"><span class="doc">Generation of the external tables</span></a>.</p>
+</section>
+<hr class="docutils" />
+<section id="benchmarks">
+<h2>Benchmarks<a class="headerlink" href="#benchmarks" title="Link to this heading">¶</a></h2>
+<section id="synchrotron-2d">
+<h3>Synchrotron, 2D<a class="headerlink" href="#synchrotron-2d" title="Link to this heading">¶</a></h3>
+<p>In this configuration, a mono-energetic bunch of photons is initialized
+in a constant uniform strong magnetic field.
+The photons decay into pairs via the multiphoton Breit-Wheeler progressively.
+In this particular case, the generated electrons and positrons do not radiate
+in order to capture the emission energy spectrum.
+Two cases are simulated with different
+initial quantum parameters:</p>
+<ul class="simple">
+<li><p>Case 1: <span class="math notranslate nohighlight">\(\chi_{\gamma,0} = 1\)</span>, <span class="math notranslate nohighlight">\(B = 270\)</span>, <span class="math notranslate nohighlight">\(\gamma_{\gamma,0} = 1500\)</span></p></li>
+<li><p>Case 2: <span class="math notranslate nohighlight">\(\chi_{\gamma,0} = 20\)</span>, <span class="math notranslate nohighlight">\(B = 1000\)</span>, <span class="math notranslate nohighlight">\(\gamma_{\gamma,0} = 8125\)</span></p></li>
+</ul>
+<p>The results of the first case are shown in
+<a class="reference internal" href="#synchrotron-pairs-energy-spectra-chi1"><span class="std std-numref">Fig. 39</span></a>. The two first figures
+represent respectively the electron (left) and the positron energy (center) spectrum at the end
+of the simulation when all photons have been converted into pairs.
+The last one on the right is the time evolution of the photon (green), electron (blue),
+positron (orange) and total (black) kinetic energy.
+The quantum parameter of all photons is initially equal to
+<span class="math notranslate nohighlight">\(\chi_{\gamma,0} = 1\)</span>. According to <a class="reference internal" href="#synchrotron-pairs-dndt"><span class="std std-numref">Fig. 38</span></a>,
+we are located in an area of the energy distribution where electrons and
+positrons are more likely to be created with almost the same energy
+(<span class="math notranslate nohighlight">\(\chi_{+} = \chi_{-} =\chi_{\gamma,0} /2\)</span>).
+This is confirmed in <a class="reference internal" href="#synchrotron-pairs-energy-spectra-chi1"><span class="std std-numref">Fig. 39</span></a>.
+Electron and positron energy spectra are well similar, symmetric and centered
+at half the initial photon energy equal to <span class="math notranslate nohighlight">\(\gamma = 750\)</span>.
+The energy balance (right figure) shows that positron and electron kinetic energies
+have the same behaviors and converge to half the initial photon energy
+at the end of the simulation.
+The total energy is well constant and conserved in time.</p>
+<figure class="align-default" id="id5">
+<span id="synchrotron-pairs-energy-spectra-chi1"></span><a class="reference internal image-reference" href="../_images/synchrotron_pairs_energy_spectra_chi1.png"><img alt="../_images/synchrotron_pairs_energy_spectra_chi1.png" src="../_images/synchrotron_pairs_energy_spectra_chi1.png" style="width: 18cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 39 </span><span class="caption-text">(left) - Electron energy spectrum at the end of the run.
+(middle) - Positron energy spectrum at the end of the run.
+(right) - Time evolution of the photon (green), electron (blue), positron
+(orange) and total (black) normalized energy <span class="math notranslate nohighlight">\(U / U_{tot}\)</span>.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The results of the second case are shown in
+<a class="reference internal" href="#synchrotron-pairs-energy-spectra-chi20"><span class="std std-numref">Fig. 40</span></a> as for the first case.
+Here, the quantum parameter of all photons is initially equal to
+<span class="math notranslate nohighlight">\(\chi_{\gamma,0} = 20\)</span>. This means that contrary to the previous case,
+the probability to generate electrons and positrons of similar energy
+is not the most significant.
+As in <a class="reference internal" href="#synchrotron-pairs-dndt"><span class="std std-numref">Fig. 38</span></a>, the energy spectra exhibit two maximums.
+This maximums are located approximately at 10% and 90% of the initial photon
+energy of <span class="math notranslate nohighlight">\(\gamma_{\gamma,0} = 8125\)</span>.
+Electron and positron spectra are nonetheless similar and symmetric in respect
+to half the initial photon energy.
+Again, the energy balance (right figure) shows that positron and electron kinetic energies
+have the same behaviors and converge to half the initial photon energy
+at the end of the simulation.
+The total energy is well constant and conserved in time.</p>
+<figure class="align-default" id="id6">
+<span id="synchrotron-pairs-energy-spectra-chi20"></span><a class="reference internal image-reference" href="../_images/synchrotron_pairs_energy_spectra_chi20.png"><img alt="../_images/synchrotron_pairs_energy_spectra_chi20.png" src="../_images/synchrotron_pairs_energy_spectra_chi20.png" style="width: 18cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 40 </span><span class="caption-text">(left) - Electron energy spectrum at the end of the run.
+(middle) - Positron energy spectrum at the end of the run.
+(right) - Time evolution of the photon (green), electron (blue)
+and positron (orange)
+normalized energy <span class="math notranslate nohighlight">\(U / U_{tot}\)</span>.</span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The benchmark <code class="docutils literal notranslate"><span class="pre">tst2d_10_multiphoton_Breit_Wheeler</span></code> is very close to
+the second case presented here.</p>
+</section>
+<section id="counter-propagating-plane-wave-1d">
+<h3>Counter-propagating plane wave, 1D<a class="headerlink" href="#counter-propagating-plane-wave-1d" title="Link to this heading">¶</a></h3>
+<p>In this test case, a bunch of electrons is initialized at the right side
+of the domain with an initial energy of 4 GeV. The bunch is made to collide head-on
+with a laser plane wave injected from the left side of the domain.
+The laser has a maximal intensity of <span class="math notranslate nohighlight">\(10^{23}\ \mathrm{Wcm^{-2}}\)</span>.
+It is circularly polarized and has a temporal Gaussian profile with a
+FWHM (full width at half maximum) of 10 periods
+(approximately corresponding to 33 fs).
+A wavelength of <span class="math notranslate nohighlight">\(1\ \mathrm{\mu m}\)</span> is considered.</p>
+<p>This configuration is one of the most efficient to trigger QED effects
+since it maximizes the particle and photon quantum parameters.</p>
+<p>By interacting with the laser pulse, the high-energy electron will first
+radiate high-energy gamma photons that will be generated as macro-photons by the code
+via the nonlinear Compton scattering.
+These photons are generated in the same direction of the electrons with an energy up
+to almost the electron kinetic energy.
+Then, the macro-photons interact in turn with the laser field and can decay
+into electron-positron pairs via the multiphoton Breit-Wheeler process.</p>
+<p>The first plot on left of <a class="reference internal" href="#counter-pair-smilei"><span class="std std-numref">Fig. 41</span></a> shows the energy
+balance of the simulation.
+The second plot on the center of <a class="reference internal" href="#counter-pair-smilei"><span class="std std-numref">Fig. 41</span></a> shows the
+time evolution of the number of macro-electrons, macro-positrons and macro-photons.
+The electron bunch energy rapidly drops
+after entering the laser field around <span class="math notranslate nohighlight">\(t = 240 \omega_r^{-1}\)</span>.
+At the same time, many macro-photons are generated by the particle number evolution
+as shown in <a class="reference internal" href="#counter-pair-smilei"><span class="std std-numref">Fig. 41</span></a>. The photon energy therefore rapidly rises
+as the electron energy decreases.</p>
+<figure class="align-default" id="id7">
+<span id="counter-pair-smilei"></span><a class="reference internal image-reference" href="../_images/counter_pair_smilei.png"><img alt="../_images/counter_pair_smilei.png" src="../_images/counter_pair_smilei.png" style="width: 18cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 41 </span><span class="caption-text">(left) - Energy balance of the simulation. In the legend, <strong>Photon</strong> represents the macro-photon
+energy and <strong>Radiation</strong> represents the radiated energy excluding the macro-photons.
+(center) - Time evolution of the number of macro-electrons (blue),
+macro-positrons (orange) and macro-photons (green) in the simulation.
+(right) - Final energy spectrum of the electrons (blue), positrons (orange),
+and photons (green).</span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The multiphoton Breit-Wheeler generation of electron-positron starts latter
+when emitted macro-photons enters the high-intensity region of the laser.
+This is revealed by the yield of macro-positron.
+When electrons and positrons have lost sufficient energy, they can not produce
+macro-photons anymore and radiated energy is therefore added directly
+in the energy balance.
+This is shown by the red curve of the energy balance of <a class="reference internal" href="#counter-pair-smilei"><span class="std std-numref">Fig. 41</span></a>.
+The radiated energy rises after the main phase of the macro-photon generation after
+<span class="math notranslate nohighlight">\(t = 250 \omega_r^{-1}\)</span>. The radiated energy contains the energy from
+the continuous radiation reaction model and from the discontinuous Monte-Carlo
+if the energy of the emitted photon is below <span class="math notranslate nohighlight">\(\gamma = 2\)</span>.
+Under this threshold, the photon can not decay into electron-positron pair.
+It is therefore useless and costly to generated a macro-photon.</p>
+<p>The final electron, positron and photon energy spectra are shown in
+the right plot of <a class="reference internal" href="#counter-pair-smilei"><span class="std std-numref">Fig. 41</span></a>. At the end of the simulation,
+the photon spectrum is a broad decreasing profile ranging from 1 MeV to 1 GeV.
+This is the consequence of two main facts:</p>
+<ul class="simple">
+<li><p>The highest is the photon energy, more important is the probability to decay into pairs.</p></li>
+<li><p>As electron and positron lose energy, they continue to radiate smaller ans smaller photon energy.</p></li>
+</ul>
+<p>Electron and positron spectra are very similar ranging from 20 MeV
+to mainly 200 MeV.
+Few particles have an energy above this threshold up to 1 GeV.</p>
+<p>This corresponds to the benchmark <code class="docutils literal notranslate"><span class="pre">benchmark/tst1d_10_pair_electron_laser_collision.py</span></code>.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Publications &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Partners" href="partners.html" />
+    <link rel="prev" title="Licence" href="licence.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="licence.html">Licence</a>
+            </li>
+        </ul>
+                <ul>
+<li><a class="reference internal" href="#">Publications</a><ul>
+<li><a class="reference internal" href="#reference-article">Reference article</a></li>
+<li><a class="reference internal" href="#papers-involving-smilei">Papers involving Smilei</a></li>
+</ul>
+</li>
+</ul>
+
+        <ul id="smallScreenMenuAfterTOC">
+            <li class="outer">
+                <a href="partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Publications</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Publications</a><ul>
+<li><a class="reference internal" href="#reference-article">Reference article</a></li>
+<li><a class="reference internal" href="#papers-involving-smilei">Papers involving Smilei</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            style="font-weight:bold"
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="licence.html">Licence</a>
+                        </li>
+                        <li >
+                            <a href="#">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="bigcitation" id="publications">
+<h1>Publications<a class="headerlink" href="#publications" title="Link to this heading">¶</a></h1>
+<p class="emphlink">Tip: <a class="reference internal" href="licence.html#howtocite"><span class="std std-ref">How should I cite Smilei in my publication?</span></a></p>
+<p class="emphlink">Tip: <a class="reference internal" href="../Use/contribute.html#howtolistmypaper"><span class="std std-ref">How can I add my publication to this list?</span></a></p>
+<hr class="docutils" />
+<section id="reference-article">
+<h2>Reference article<a class="headerlink" href="#reference-article" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="derouillat2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Derouillat2018<span class="fn-bracket">]</span></span>
+<p>J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda and M. Grech,
+<cite>SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation</cite>,
+<a class="reference external" href="https://doi.org/10.1016/j.cpc.2017.09.024">Comput. Phys. Commun. 222, 351-373 (2018)</a>,
+<a class="reference external" href="https://arxiv.org/abs/1702.05128">arXiv:1702.05128</a></p>
+</div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="papers-involving-smilei">
+<h2>Papers involving Smilei<a class="headerlink" href="#papers-involving-smilei" title="Link to this heading">¶</a></h2>
+<p>Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see <a class="reference external" href="https://scholar.google.com/scholar?hl=fr&amp;as_sdt=2005&amp;sciodt=0,5&amp;cites=17416460455672944837&amp;scipsc=&amp;q=&amp;scisbd=1">Google Scholar</a>).
+As of April 2025, at least 245 papers have been published covering a broad range of topics:</p>
+<ul class="simple">
+<li><p>laser-plasma interaction (LPI) / inertial fusion (FCI)</p></li>
+<li><p>ultra-high intensity (UHI) applications</p></li>
+<li><p>quantum electrodynamics (QED) processes in plasmas</p></li>
+<li><p>astrophysical and space plasmas</p></li>
+<li><p>high-performance computing (HPC)</p></li>
+</ul>
+<p>Following is the distribution of these topics in the listed publications up to November 2021:</p>
+<figure class="align-default" id="fig-paper-topics">
+<a class="reference internal image-reference" href="../_images/paper_topics.png"><img alt="../_images/paper_topics.png" src="../_images/paper_topics.png" style="width: 50%;" /></a>
+</figure>
+<div role="list" class="citation-list">
+<div class="citation" id="oudin2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Oudin2025<span class="fn-bracket">]</span></span>
+<p>A. Oudin, Y. Lalaire, G. Bouchard, A. Debayle, A. Fusaro, P. Loiseau, C. Ruyer, D. Benisti,
+<cite>Theory and simulations of cross-beam energy transfer between speckled laser beams</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0240578">Physics of Plasmas 32, 042706 (2025)</a></p>
+</div>
+<div class="citation" id="yao2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2025<span class="fn-bracket">]</span></span>
+<p>W. Yao, R. Lelièvre, I. Cohen, T. Waltenspiel, A. Allaoua, P. Antici, Y. Ayoul, A. Beck, A. Beluze, C. Blancard, D. Cavanna, M. Chabanis, S. N. Chen, E. Cohen, P. Cossé, Q. Ducasse, M. Dumergue, F. El Hai, C. Evrard, E. Filippov, A. Freneaux, D. C. Gautier, F. Gobert, F. Goupille, M. Grech, L. Gremillet, Y. Heller, E. d’Humières, H. Lahmar, L. Lancia, N. Lebas, L. Lecherbourg, S. Marchand, D. Mataja, G. Meyniel, D. Michaeli, D. Papadopoulos, F. Perez, S. Pikuz, I. Pomerantz, P. Renaudin, L. Romagnani, F. Trompier, E. Veuillot, T. Vinchon, F. Mathieu and J. Fuchs,
+<cite>Characterization and performance of the Apollon main short-pulse laser beam following its commissioning at 2 PW level</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0252874">Physical of Plasmas 32, 043106 (2025)</a></p>
+</div>
+<div class="citation" id="pouyez2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pouyez2025<span class="fn-bracket">]</span></span>
+<p>M. Pouyez, T. Grismayer, M. Grech and C. Riconda,
+<cite>Kinetic Structure of Strong-Field QED Showers in Crossed Electromagnetic Fields</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.134.135001">Physical Review Letters 134, 135001 (2025)</a></p>
+</div>
+<div class="citation" id="miethlinger2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Miethlinger2025<span class="fn-bracket">]</span></span>
+<p>T. Miethlinger, M. Bussmann, U. Schramm and T. Kluge,
+<cite>MLP-Based Adaptive Sampling and Optimization of Laser-Ion Acceleration with Ultra-Short Laser Pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1007/978-3-031-85703-4_10">Parallel Processing and Applied Mathematics, 142–156 (2025)</a></p>
+</div>
+<div class="citation" id="charbonnet2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Charbonnet2025<span class="fn-bracket">]</span></span>
+<p>K. J. Charbonnet, E. C. Nelson, T. Reutershan and C. P. J. Barty,
+<cite>Computational methods for focused arbitrary laser fields in plasma simulations</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0250718">Physics of Plasmas 32, 043901 (2025)</a></p>
+</div>
+<div class="citation" id="do2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Do2025<span class="fn-bracket">]</span></span>
+<p>H. T. B. Do, G. K. Ngirmang, L. Wu and M. Bosman,
+<cite>Nonlinear optical resonances from ballistic electron funnelling</cite>,
+<a class="reference external" href="https://doi.org/10.1021/acsnano.5c00169">ACS Nano (2025)</a></p>
+</div>
+<div class="citation" id="lytova2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Lytova2025<span class="fn-bracket">]</span></span>
+<p>M. Lytova, F. Fillion-Gourdeau, S. Vallières, S. Fourmaux, S. Payeur, J. Powell, F. Légaré and S. MacLean,
+<cite>Electron acceleration in ambient air using tightly focused ultrashort infrared laser beams</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.111.035210">Physical Review E 111, 035210 (2025)</a></p>
+</div>
+<div class="citation" id="drobniak2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Drobniak2025<span class="fn-bracket">]</span></span>
+<p>P. Drobniak, E. Baynard, A. Beck, J. Demailly, D. Douillet, A. Gonnin, G. Iaquaniello, G. Kane, S. Kazamias, V. Kubytskyi, M. Lenivenko, N. Lericheux, B. Lucas, B. Mercier, Y. Peinaud, M. Pittman, J. Serhal, and K. Cassou,
+<cite>Two-chamber gas target for laser-plasma electron source</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0226055">Review of Scientific Instruments 96, 033304 (2025)</a></p>
+</div>
+<div class="citation" id="mercuri-baron2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mercuri-Baron2025<span class="fn-bracket">]</span></span>
+<p>A. Mercuri-Baron, A. A. Mironov, C. Riconda, A. Grassi and M. Grech,
+<cite>Growth Rate of Self-Sustained QED Cascades Induced by Intense Lasers</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevX.15.011062">Physical Review X 15, 011062 (2025)</a></p>
+</div>
+<div class="citation" id="polanco-rodriguez2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Polanco-Rodríguez2025<span class="fn-bracket">]</span></span>
+<p>F. J. Polanco-Rodríguez, C. Krafft, and P. Savoini,
+<cite>Decay of Turbulent Upper-hybrid Waves in Weakly Magnetized Solar Wind Plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.3847/2041-8213/adba64">The Astrophysical Journal Letters 982:L24 (2025)</a></p>
+</div>
+<div class="citation" id="liu2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Liu2025<span class="fn-bracket">]</span></span>
+<p>B. Liu, K. Zhu;  J. Shu;  Q. Li, J. Yang, J. Xia and X. Yan,
+<cite>Generating high-current quasi-monoenergetic MeV ions via laser-driven TNSA-based dechirp</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0241345">Physics of Plasmas 32, 033104 (2025)</a></p>
+</div>
+<div class="citation" id="bukharskii2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bukharskii2025<span class="fn-bracket">]</span></span>
+<p>N. Bukharskii and Ph. Korneev,
+<cite>Formation of propagating current pulses on extended surfaces under grazing irradiation with relativistically intense ultrashort laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0239403">Physics of Plasmas 32, 032106 (2025)</a></p>
+</div>
+<div class="citation" id="guo2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Guo2025<span class="fn-bracket">]</span></span>
+<p>A. Guo, Q. Lu, S. Lu, X. Gao and Z. Yang,
+<cite>Electron Beams Generated by the Electron Kelvin‐Helmholtz Instability at a Quasi‐Perpendicular Shock</cite>,
+<a class="reference external" href="https://doi.org/10.1029/2024GL114425">Geophysical Research Letters, 52, e2024GL114425 (2025)</a></p>
+</div>
+<div class="citation" id="yu2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yu2025<span class="fn-bracket">]</span></span>
+<p>Q. Yu, Y. Zhang, Q. Kong and S. Kawata,
+<cite>Step-like concave retroreflector for single pulse Compton backscattering</cite>,
+<a class="reference external" href="https://doi.org/10.1364/OE.542382">Optics Express 33, 5, 10660-10673 (2025)</a></p>
+</div>
+<div class="citation" id="boudriga2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Boudriga2025<span class="fn-bracket">]</span></span>
+<p>O. Budrigă, E. d’Humières, A. Budrigă and K. A. Tanaka,
+<cite>Reaching extreme laser intensities using multi-petawatt lasers interacting with micro-cones</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/adb78a">Plasma Physics and Controlled Fusion 67 035027 (2025)</a></p>
+</div>
+<div class="citation" id="kim2025a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kim2025a<span class="fn-bracket">]</span></span>
+<p>H. Kim, C. M. Kim, K. H. Pae and K. T. Kim,
+<cite>Isolated attosecond pulses generated from a relativistic plasma mirror via noncollinear gating</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.7.013216">Physical Review Research 7, 013216 (2025)</a></p>
+</div>
+<div class="citation" id="ueyama2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ueyama2025<span class="fn-bracket">]</span></span>
+<p>Y. Ueyama, H. Nagatomo, T. Johzaki, H. Sakagami, H. Habara,
+<cite>Fast electron collimation by self-generated magnetic fields at resistivity gradient in imploded plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1016/j.hedp.2025.101176">High Energy Density Physics (2025)</a></p>
+</div>
+<div class="citation" id="kim2025b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kim2025b<span class="fn-bracket">]</span></span>
+<p>J. Kim , R. Rajawat , T. Wang and G. Shvets,
+<cite>Acceleration and focusing of multispecies ion beam using a converging laser-driven shock</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.111.025203">Physical Review E 111, 025203 (2025)</a></p>
+</div>
+<div class="citation" id="shou2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shou2025<span class="fn-bracket">]</span></span>
+<p>Y. Shou, X. Wu, K. H. Pae, G.-E. Ahn, S. Y. Kim, S. H. Kim, J. W. Yoon, J. H. Sung, S. K. Lee, Z. Gong, X. Yan, I. W. Choi and C. H. Nam,
+<cite>Laser-driven proton acceleration beyond 100 MeV by radiation pressure and Coulomb repulsion in a conduction-restricted plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41467-025-56667-3">Nature Communications 16, 1487 (2025)</a></p>
+</div>
+<div class="citation" id="batani2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Batani2025<span class="fn-bracket">]</span></span>
+<p>K. L. Batani, M. R. D. Rodrigues, A. Bonasera, M. Cipriani, F. Consoli, F. Filippi, M. Scisciò, L. Giuffrida, V. Kantarelou, S. Stancek, R. Lera, J.A. Pérez-Hernández, L. Volpe, E. TurcuX, M. Passoni, D. Vavassori, D. Dellasega, A. Maffini, M. Huault, H. Larreur, L. Sayo, T. Carriere, P. Nicolai, D. Raffestin, D. Singappuli and D. Batani,
+<cite>Generation of radioisotopes for medical applications using high-repetition, high-intensity lasers</cite>,
+<a class="reference external" href="https://doi.org/10.1017/hpl.2024.92">High Power Laser Science and Engineering (2025)</a></p>
+</div>
+<div class="citation" id="vladisavlevici2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vladisavlevici2025<span class="fn-bracket">]</span></span>
+<p>I.-M. Vladisavlevici, M. Ehret, E. Filippov, E. García-García, C. Mendez, M. O. Ruíz, Ó. Varela, L. Volpe, and J. A. Pérez-Hernández,
+<cite>Theoretical Study of the Pre-Plasma Density Scale Length’s Influence on the Absorption Efficiency in Laser–Solid Interaction at Relativistic Laser Intensities for PW-Class Lasers</cite>,
+<a class="reference external" href="https://doi.org/10.3390/photonics12010071">Photonics 12, 71 (2025)</a></p>
+</div>
+<div class="citation" id="luo2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Luo2025<span class="fn-bracket">]</span></span>
+<p>M. Luo, C. Riconda, A. Grassi, N. Wang, J.S. Wurtele, T. Fülöp, I. Pusztai,
+<cite>Evolution of autoresonant plasma wave excitation in two-dimensional particle-in-cell simulations</cite>,
+<a class="reference external" href="https://doi.org/10.1017/S0022377824001582">Journal of Plasma Physics 91, E31 (2025)</a></p>
+</div>
+<div class="citation" id="tsymbalov2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tsymbalov2025<span class="fn-bracket">]</span></span>
+<p>I. Tsymbalov, D. Gorlova, K. Ivanov, E. Starodubtseva, R. Volkov1, I. Tsygvintsev, Yu. Kochetkov, Ph. Korneev, A. Polonski, and A. Savel’ev,
+<cite>All-Optical Blast-Wave Control of Laser Wakefield Acceleration in a Near-Critical Plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.134.025101">Phys. Rev. Lett. 134, 025101 (2025)</a></p>
+</div>
+<div class="citation" id="huault2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Huault2025<span class="fn-bracket">]</span></span>
+<p>M. Huault, T. Carrière;  H. Larreur, Ph. Nicolaï, D. Raffestin, D. Singappuli, E. D’Humieres, D. Dubresson, K. Batani, M. Cipriani, F. Filippi,
+M. Scisciò. C. Verona, L. Giuffrida, V. Kantarelou, S. Stancek, N. Boudjema, R. Lera, J. A. Pérez-Hernández, L. Volpe, M. D. Rodríguez Frías, A. Bonasera,
+M. R. D. Rodrigues, D. Ramirez Chavez, F. Consoli, and D. Batani,
+<cite>Experimental and computational evaluation of alpha particle production from laser-driven proton–boron nuclear reaction in hole-boring scheme</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0238029">Physics of Plasmas 32, 013102 (2025)</a></p>
+</div>
+<div class="citation" id="ospina-bohorquez2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ospina-Bohorquez2024<span class="fn-bracket">]</span></span>
+<p>Valeria Ospina-Bohórquez, Xavier Vaisseau,
+<cite>Scaling and Performance Analysis of Smilei in Hemispherical Foil Target Simulations for Inertial Fusion Energy</cite>,
+<a class="reference external" href="https://doi.org/10.1016/j.procs.2025.02.266">Procedia Computer Science, 255, 112-121 (2024)</a></p>
+</div>
+<div class="citation" id="wu2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Wu2024<span class="fn-bracket">]</span></span>
+<p>Y. Wu, J. Zhao, X. Tao, L. Dai,
+<cite>Particle Simulation Study of Obliquely Propagating Whistler Waves in Low‐Beta Plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1029/2024JA033035">Journal of Geophysical Research: Space Physics, 129, e2024JA033035 (2024)</a></p>
+</div>
+<div class="citation" id="tang2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tang2024<span class="fn-bracket">]</span></span>
+<p>X. Tang , J. Hao , and Y. Shi,
+<cite>Electron injection and acceleration in a twisted laser driven by the light fan</cite>,
+<a class="reference external" href="https://doi.org/10.1017/hpl.2024.56">High Power Laser Science and Engineering 12, e86 (2024)</a></p>
+</div>
+<div class="citation" id="eckey2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Eckey2024<span class="fn-bracket">]</span></span>
+<p>A. Eckey, A. Golub, F. C. Salgado, S. Villalba-Chávez, A. B. Voitkiv, M. Zepf and C. Müller,
+<cite>Impact of laser focusing and radiation reaction on particle spectra from nonlinear Breit-Wheeler pair production in the nonperturbative regime</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevA.110.043113">Physical Review A 110, 043113 (2024)</a></p>
+</div>
+<div class="citation" id="blackman2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Blackman2024<span class="fn-bracket">]</span></span>
+<p>D. R. Blackman, V. Tikhonchuk, Ondrej Klimo and Stefan Weber,
+<cite>Impact of electron trapping on stimulated Raman scattering under incoherent broadband laser light in homogeneous plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.110.065207">Physical Review E 110, 065207, (2024)</a></p>
+</div>
+<div class="citation" id="pouyez2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pouyez2024<span class="fn-bracket">]</span></span>
+<p>M. Pouyez, A. A. Mironov, T. Grismayer, A. Mercuri-Baron, F. Perez, M. Vranic, C. Riconda, and M. Grech,
+<cite>Multiplicity of electron- and photon-seeded electromagnetic showers at multipetawatt laser facilities</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.110.065208">Physical Review E 110, 065208, (2024)</a></p>
+</div>
+<div class="citation" id="zhang2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zhang2024<span class="fn-bracket">]</span></span>
+<p>J.-Y. Zhang, D. Wu, H.-Y. Lan, H.-G. Lu, J.-X. Liu, J.-F. Lv, M.-Z. Wang, and X.-Q. Yan,
+<cite>Generation of medical isotopes</cite> <span class="math notranslate nohighlight">\(~^{47}\)</span> <cite>Sc,</cite> <span class="math notranslate nohighlight">\(^{67}\)</span> <cite>Cu through laser-induced (</cite> <span class="math notranslate nohighlight">\(\gamma\)</span>, <cite>p) reaction</cite>,
+<a class="reference external" href="https://link.springer.com/article/10.1007/s41365-024-01550-x">Nuclear Science and Techniques 35, 206, (2024)</a></p>
+</div>
+<div class="citation" id="yoon2024b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2024b<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon, T. E. Moore, D. E. Wendel , M. Laishram, and G. S. Yun,
+<cite>Enablement or Suppression of Collisionless Magnetic Reconnection by the Background Plasma Beta and Guide Field</cite>,
+<a class="reference external" href="https://doi.org/10.1029/2024GL112126">Geophysical Research Letters, 51, e2024GL112126 (2024)</a></p>
+</div>
+<div class="citation" id="romansky2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Romansky2024<span class="fn-bracket">]</span></span>
+<p>V. I. Romansky, A. M. Bykov, S.M. Osipov,
+<cite>Cosmic ray acceleration and non-thermal emission from fast luminous optical transient sources</cite>,
+<a class="reference external" href="https://doi.org/10.1016/j.asr.2024.02.018">Advances in Space Research 74, 9 (2024)</a></p>
+</div>
+<div class="citation" id="guo2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Guo2024<span class="fn-bracket">]</span></span>
+<p>A. Guo, Q. Lu, S. Lu, Z. Yang, and X. Gao,
+<cite>Electron Shock Drift Acceleration at a Low-Mach-number, Low-plasma-beta Quasi-perpendicular Shock</cite>,
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/ad6c46">The Astrophysical Journal 974, 57 (2024)</a></p>
+</div>
+<div class="citation" id="jirka2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Jirka2024<span class="fn-bracket">]</span></span>
+<p>M. Jirka and S. V. Bulanov,
+<cite>Effects of Colliding Laser Pulses Polarization on e- e+ Cascade Development in Extreme Focusing</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.133.125001">Physical Review Letters 133, 125001 (2024)</a></p>
+</div>
+<div class="citation" id="plotnikov2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Plotnikov2024<span class="fn-bracket">]</span></span>
+<p>I. Plotnikov, A. J. van Marle, C. Guépin, A. Marcowith and Pierrick Martin,
+<cite>Kinetic simulations of electron–positron induced streaming instability in the context of gamma-ray halos around pulsars</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1051/0004-6361/202449661">Astronomy &amp; Astrophysics 688, A134 (2024)</a></p>
+</div>
+<div class="citation" id="mukherjee2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mukherjee2024<span class="fn-bracket">]</span></span>
+<p>A. Mukherjee and Daniel Seipt,
+<cite>Laser polarization control of ionization-injected electron beams and x-ray radiation in laser wakefield accelerators</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ad5379">Plasma Physics and Controlled Fusion 66, 085001 (2024)</a></p>
+</div>
+<div class="citation" id="yao2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2024<span class="fn-bracket">]</span></span>
+<p>W. Yao, R. Lelièvre, T. Waltenspiel, I. Cohen, A. Allaoua, P. Antici, A. Beck, E. Cohen, X. Davoine, E. d’Humières, Q. Ducasse, E. Filippov, C. Gautier, L. Gremillet, P. Koseoglou, D. Michaeli, D. Papadopoulos, S. Pikuz, I. Pomerantz, F. Trompier, Y. Yuan, F. Mathieu and Julien Fuchs,
+<cite>Enhanced Energy, Conversion Efficiency and Collimation of Protons Driven by High-Contrast and Ultrashort Laser Pulses</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3390/app14146101">Applied Sciences 14, 6101 (2024)</a></p>
+</div>
+<div class="citation" id="dmitriev2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dmitriev2024<span class="fn-bracket">]</span></span>
+<p>E. Dmitriev and Ph. Korneev,
+<cite>Angular momentum gain by electrons under the action of intense structured light</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevA.110.013514">Physical Review A 110, 013514 (2024)</a></p>
+</div>
+<div class="citation" id="yu2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yu2024<span class="fn-bracket">]</span></span>
+<p>H. Yu, Q. Xia and Jun Fang,
+<cite>Nonthermal Acceleration of Electrons, Positrons, and Protons at a Nonrelativistic Quasi-parallel Collisionless Shock</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/1538-4357/ad5181">The Astrophysical Journal 969, 13 (2024)</a></p>
+</div>
+<div class="citation" id="liu2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Liu2024<span class="fn-bracket">]</span></span>
+<p>B. Liu, B. Lei, Y. Gao, M. Wen, and K. Zhu,
+<cite>Plasma opacity induced by laser-driven movement of background ions</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ad797f">Plasma Physics and Controlled Fusion 66, 115004  (2024)</a></p>
+</div>
+<div class="citation" id="martin2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Martin2024<span class="fn-bracket">]</span></span>
+<p>H. Martin, R. W. Paddock, M. W. von der Leyen, V. Eliseev, R. T. Ruskov, R. Timmis, J. J. Lee, A. James, and P. A. Norreys,
+<cite>Electrothermal filamentation of igniting plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.110.035205">Physical Review E 110, 035205 (2024)</a></p>
+</div>
+<div class="citation" id="horny2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Horny2024<span class="fn-bracket">]</span></span>
+<p>V. Horný, P. G. Bleotu, D. Ursescu, V. Malka, and P. Tomassini,
+<cite>Efficient laser wakefield accelerator in pump depletion dominated bubble regime</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.110.035202">Physical Review E 110, 035202 (2024)</a></p>
+</div>
+<div class="citation" id="deandres2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>DeAndres2024<span class="fn-bracket">]</span></span>
+<p>A. De Andres, S. Bhadoria, J. T. Marmolejo, A. Muschet, P. Fischer, H. R. Barzegar, T. Blackburn, A. Gonoskov, D. Hanstorp, M. Marklund and L. Veisz,
+<cite>Unforeseen advantage of looser focusing in vacuum laser acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s42005-024-01781-9">Nature Communications Physics 7, 293 (2024)</a></p>
+</div>
+<div class="citation" id="yoon2024a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2024a<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon, M. Laishram, T. E. Moore, and G. S. Yun,
+<cite>Non-equilibrium formation and relaxation of magnetic flux ropes at kinetic scales</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s42005-024-01784-6">Nature Communications Physics 7, 297 (2024)</a></p>
+</div>
+<div class="citation" id="laishram2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Laishram2024<span class="fn-bracket">]</span></span>
+<p>M. Laishram, G. S. Yun, and Y. D. Yoon,
+<cite>Magnetogenesis via the canonical battery effect</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.6.L032052">Physical Review Research 6, L032052 (2024)</a></p>
+</div>
+<div class="citation" id="kang2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kang2024<span class="fn-bracket">]</span></span>
+<p>H. L. Kang, Y. D. Yoon, M.-H. Cho and G. S. Yun,
+<cite>Fast nonlinear scattering of runaway electron beams through resonant interactions with plasma waves</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1741-4326/ad6ce6">Nuclear Fusion 64, 10 (2024)</a></p>
+</div>
+<div class="citation" id="gonzalez-izquierdo2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gonzalez-Izquierdo2024<span class="fn-bracket">]</span></span>
+<p>B. Gonzalez-Izquierdo, P. Fischer, M. Touati, J. Hartmann, M. Speicher, V. Scutelnic, G. Bodini, A. Fazzini, M. M. Guenther, A. K. Haerle, K. Kenney, E. Schork, S. Bruce, M. Spinks, H. J. Quevedo, A. Helal, M. Medina, E. Gaul, H. Ruhl, M. Schollmeier, S. Steinke, and G. Korn,
+<cite>Efficient laser-driven proton acceleration from a petawatt contrast-enhanced second harmonic mixed-glass laser system</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0191366">Physics of Plasmas 31, 083105 (2024)</a></p>
+</div>
+<div class="citation" id="ma2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ma2024<span class="fn-bracket">]</span></span>
+<p>Z. Ma, Y. Wang, Y. Yang, Y. Wang, K. Zhao, Y. Li, C. Fu, W. He, Y. Ma,
+<cite>Simulation of nuclear isomer production in laser-induced plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0212163">Matter and Radiation at Extremes 9, 055201 (2024)</a></p>
+</div>
+<div class="citation" id="kleij2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kleij2024<span class="fn-bracket">]</span></span>
+<p>P. S. Kleij, S. Marini, M. Caetano de Sousa, M. Grech, C. Riconda, M. Raynaud,
+<cite>Photon emission and radiation reaction effects in surface plasma waves in ultra-high intensities</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0209316">Physics of Plasmas 31, 072111 (2024)</a></p>
+</div>
+<div class="citation" id="ghizzo2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ghizzo2024<span class="fn-bracket">]</span></span>
+<p>A. Ghizzo, D. Del Sarto, H. Betar,
+<cite>Collisionless heating in Vlasov plasma and turbulence-driven filamentation aspects</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0205253">Physics of Plasmas 31, 072109 (2024)</a></p>
+</div>
+<div class="citation" id="gelfer2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gelfer2024<span class="fn-bracket">]</span></span>
+<p>E. G. Gelfer, A. M. Fedotov, O. Klimo, and S. Weber,
+<cite>Coherent radiation of an electron bunch colliding with an intense laser pulse</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.6.L032013">Physical Review Research 6, L032013 (2024)</a></p>
+</div>
+<div class="citation" id="zagidullin2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zagidullin2024<span class="fn-bracket">]</span></span>
+<p>R. Zagidullin, V. Zorina, J. W. Wang, S. G. Rykovanov,
+<cite>Polarization control of attosecond pulses from laser-nanofoil interactions using an external magnetic field</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0213592">Physics of Plasmas 31, 073303 (2024)</a></p>
+</div>
+<div class="citation" id="marini2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marini2024<span class="fn-bracket">]</span></span>
+<p>S. Marini, D. F. G. Minenna, F. Massimo, L. Batista, V. Bencini, A. Chancé, N. Chauvin, S. Doebert, J. Farmer, E. Gschwendtner, I. Moulanier, P. Muggli, D. Uriot, B. Cros, and P. A. P. Nghiem,
+<cite>Beam physics studies for a high charge and high beam quality laser-plasma accelerator</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevAccelBeams.27.063401">Physical Review Accelerators and Beams 27, 063401 (2024)</a></p>
+</div>
+<div class="citation" id="sikorski2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sikorski2024<span class="fn-bracket">]</span></span>
+<p>P. Sikorski, A. G. R. Thomas, S. S. Bulanov, M. Zepf and D. Seipt,
+<cite>Novel signatures of radiation reaction in electron–laser sidescattering</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1367-2630/ad4f06">New Journal of Physics 26 063011 (2024)</a></p>
+</div>
+<div class="citation" id="ivanov2024b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ivanov2024b<span class="fn-bracket">]</span></span>
+<p>K. A. Ivanov, S. A. Shulyapov, D. A. Gorlova, I. P. Tsygvintsev, M. S. Krivokorytov, I. N. Tsymbalov, R. V. Volkov and A. B. Savelev,
+<cite>Laser-accelerated MeV-scale collimated electron bunch from a near-critical plasma of a liquid jet target</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1612-202X/ad4bb8">Laser Physics Letters 21, 7 (2024)</a></p>
+</div>
+<div class="citation" id="malik2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Malik2024<span class="fn-bracket">]</span></span>
+<p>H. K. Malik, S. Kumar, and D. K. Singh,
+<cite>Effect of trapezoidal plasma density region in bubble wakefield acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1402-4896/ad4fe7">Physica Scripta 99, 075601 (2024)</a></p>
+</div>
+<div class="citation" id="krafft2024b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2024b<span class="fn-bracket">]</span></span>
+<p>C. Krafft, P. Savoini, and F. J. Polanco-Rodríguez,
+<cite>Mechanisms of Fundamental Electromagnetic Wave Radiation in the Solar Wind</cite>,
+<a class="reference external" href="https://doi.org/10.3847/2041-8213/ad47b5">The Astrophysical Journal Letters 967, 2 (2024)</a></p>
+</div>
+<div class="citation" id="salgado2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Salgado2024<span class="fn-bracket">]</span></span>
+<p>F. C. Salgado, A. Kozan, D. Seipt, D. Hollatz, P. Hilz, M. Kaluza, A. Sävert, A. Seidel, D. Ullmann, Y. Zhao, and M. Zepf,
+<cite>All-optical source size and emittance measurements of laser-accelerated electron beams</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevAccelBeams.27.052803">Physical Review Accelerators and Beams 27, 052803 (2024)</a></p>
+</div>
+<div class="citation" id="ivanov2024a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ivanov2024a<span class="fn-bracket">]</span></span>
+<p>K. A. Ivanov, D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev, S. A. Shulyapov, R. V. Volkov, and A. B. Savel’ev,
+<cite>Laser-driven pointed acceleration of electrons with preformed plasma lens</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-024-61041-2">Physical Review Accelerators and Beams 27, 051301 (2024)</a></p>
+</div>
+<div class="citation" id="timmis2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Timmis2024<span class="fn-bracket">]</span></span>
+<p>R. J. L. Timmis, R. W. Paddock, I. Ouatu, J. Lee, S. Howard, E. Atonga, R. T. Ruskov, H. Martin, R. H. W. Wang, R. Aboushelbaya, M. W. von der Leyen, E. Gumbrell and P. A. Norreys,
+<cite>Attosecond and nano‐Coulomb electron bunches via the Zero Vector Potential mechanism</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-024-61041-2">Scientific Reports volume 14, 10805 (2024)</a></p>
+</div>
+<div class="citation" id="azamoum2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Azamoum2024<span class="fn-bracket">]</span></span>
+<p>Y. Azamoum, G. A. Becker, S. Keppler, G. Duchateau, S. Skupin, M. Grech, F. Catoire, S. Hell, I. Tamer, M. Hornung, M. Hellwing, A. Kessler, F. Schorcht, and M. C. Kaluza,
+<cite>Optical probing of ultrafast laser-induced solid-to-overdense-plasma transitions</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41377-024-01444-y">Light: Science &amp; Applications 13, 109 (2024)</a></p>
+</div>
+<div class="citation" id="pan2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pan2024<span class="fn-bracket">]</span></span>
+<p>Z. Pan, J. Liu, P. Wang, Z. Mei, Z. Cao, D. Kong, S. Xu, Z. Liu, Y. Liang, Z. Peng, T. Xu, T. Song, X. Chen, Q. Wu, Y. Zhang, Q. Han, H. Chen, J. Zhao, Y. Gao, S. Chen, Y. Zhao, X. Yan, Y. Shou, W. Ma,
+<cite>Electron acceleration and x-ray generation from near-critical-density carbon nanotube foams driven by moderately relativistic lasers</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0202843">Physics of Plasmas 31, 043108 (2024)</a></p>
+</div>
+<div class="citation" id="id1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2024<span class="fn-bracket">]</span></span>
+<p>W. Yao, M. Nakatsutsumi, S. Buffechoux, P. Antici, M. Borghesi, A. Ciardi, S. N. Chen, E. d’Humières, L. Gremillet, R. Heathcote, V. Horný, P. McKenna, M. N. Quinn, L. Romagnani, R. Royle,  G. Sarri, Y. Sentoku, H.-P. Schlenvoigt, T. Toncian, O. Tresca, L. Vassura, O. Willi, J. Fuchs,
+<cite>Optimizing laser coupling, matter heating, and particle acceleration from solids using multiplexed ultraintense lasers</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0184919">Matter and Radiation at Extremes 9, 047202 (2024)</a></p>
+</div>
+<div class="citation" id="luo2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Luo2024<span class="fn-bracket">]</span></span>
+<p>M. Luo, C. Riconda, I. Pusztai, A. Grassi, J. S. Wurtele, and T. Fülöp,
+<cite>Control of autoresonant plasma beat-wave wakefield excitation</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.6.013338">Physical Review Research 6, 013338 (2024)</a></p>
+</div>
+<div class="citation" id="krafft2024a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2024a<span class="fn-bracket">]</span></span>
+<p>C. Krafft and P. Savoini,
+<cite>Electrostatic Wave Decay in the Randomly Inhomogeneous Solar Wind</cite>,
+<a class="reference external" href="https://doi.org/10.3847/2041-8213/ad3449">The Astrophysical Journal Letters, 964, L30 (2024)</a></p>
+</div>
+<div class="citation" id="id2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yu2024<span class="fn-bracket">]</span></span>
+<p>J. Yu, J. Zhong, Y. Ping, and W. An,
+<cite>Numerical study of the suppression of magnetic reconnection onset with injected plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0186879">Physics of Plasmas 31, 032111 (2024)</a></p>
+</div>
+<div class="citation" id="kumar2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kumar2024<span class="fn-bracket">]</span></span>
+<p>R. Y. Kumar, R. Sabui, R. Gopal, F. Li, S. Sarkar, W. Trickey, M. Anand, J. Pasley, Z.-M. Sheng, R. M. G. M. Trines, R. H. H. Scott, A. P. L. Robinson, V. Sharma, and M. Krishnamurthy,
+<cite>Tailored mesoscopic plasma accelerates electrons exploiting parametric instability</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1367-2630/ad2ffc">New Journal of Physics 26, 033027 (2024)</a></p>
+</div>
+<div class="citation" id="ehret2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ehret2024<span class="fn-bracket">]</span></span>
+<p>M. Ehret, J. Cikhardt, P. Bradford, I.-M. Vladisavlevici, T. Burian, D. de Luis, J. L. Henares, R. H. Martín, J. I. Apinaniz, R. Lera, J. A. Pérez-Hernández, J. J. Santos, and G. Gatti,
+<cite>High-repetition-rate source of nanosecond duration kA-current pulses driven by relativistic laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1017/hpl.2024.14">High Power Laser Science and Engineering (2024)</a></p>
+</div>
+<div class="citation" id="cai2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Cai2024<span class="fn-bracket">]</span></span>
+<p>W. Cai, L. Zhang, X. Geng, X. Zhang, B. Shen, L. Ji,
+<cite>Harmonic generation and modulation based on intense x-ray interaction with crystal-like structures</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0189617">Physics of Plasmas 31, 033107 (2024)</a></p>
+</div>
+<div class="citation" id="mondal2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mondal2024<span class="fn-bracket">]</span></span>
+<p>A. Mondal, R. Sabui, S. Tata, R. M. G. M. Trines, S. V. Rahul, F. Li, S. Sarkar, W. Trickey, R. Y. Kumar, D. Rajak, J. Pasley, Z. Sheng, J. Jha, M. Anand, R. Gopal, A. P. L. Robinson and M. Krishnamurthy,
+<cite>Shaped liquid drops generate MeV temperature electron beams with millijoule class laser</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s42005-024-01550-8">Nature Communications Physics 7, 85 (2024)</a></p>
+</div>
+<div class="citation" id="psikal2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Psikal2024<span class="fn-bracket">]</span></span>
+<p>J. Psikal,
+<cite>Effect of the rising edge of ultrashort laser pulse on the target normal sheath acceleration of ions</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ad268d">Plasma Physics and Controlled Fusion 66 045007 (2024)</a></p>
+</div>
+<div class="citation" id="rezaeipandari2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>RezaeiPandari2024<span class="fn-bracket">]</span></span>
+<p>M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, A. R. Niknam, R. Massudi, K.-Y. Kim, and C. H. Nam,
+<cite>Investigation of terahertz radiation generation from laser-wakefield acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0187339">AIP Advances 14, 025347 (2024)</a></p>
+</div>
+<div class="citation" id="su2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Su2024<span class="fn-bracket">]</span></span>
+<p>W. Su, X. Cao, C. Ma, Y. Wang and G. Zhang,
+<cite>Multi-layer phenomena in petawatt laser-driven acceleration of heavy ions</cite>,
+<a class="reference external" href="https://doi.org/10.1088/2058-6272/ad0c97">Plasma Science and Technology 26, 025202 (2024)</a></p>
+</div>
+<div class="citation" id="vladisavlevici2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vladisavlevici2024<span class="fn-bracket">]</span></span>
+<p>I.-M. Vladisavlevici, X. Ribeyre, D. Vizman and E. d’Humières,
+<cite>Investigation of γ-photon sources using near-critical density targets towards the optimization of the linear Breit–Wheeler process</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ad20f7">Plasma Physics and Controlled Fusion 66, 035009 (2024)</a></p>
+</div>
+<div class="citation" id="gorlova2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gorlova2024<span class="fn-bracket">]</span></span>
+<p>D. A. Gorlova, I. N. Tsymbalov, I. P. Tsygvintsev and A. B. Savelev,
+<cite>THz transition radiation of electron bunches laser-accelerated in long-scale near-critical-density plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1612-202X/ad21ed">Laser Physics Letters 21, 035001 (2024)</a></p>
+</div>
+<div class="citation" id="seidel2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Seidel2024<span class="fn-bracket">]</span></span>
+<p>A. Seidel, B. Lei, C. Zepter, M. C. Kaluza, A. Sävert, M. Zepf, and D. Seipt,
+<cite>Polarization and CEP dependence of the transverse phase space in laser driven accelerators</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.6.013056">Physical Review Research 6, 013056 (2024)</a></p>
+</div>
+<div class="citation" id="krishnamurthy2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krishnamurthy2023<span class="fn-bracket">]</span></span>
+<p>S. Krishnamurthy, S. Chintalwad, A. P. L. Robinson, R. M. G. M. Trines, and B. Ramakrishna,
+<cite>Observation of proton modulations in laser-solid interaction</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ace4f1">Plasma Physics and Controlled Fusion 65 085020 (2023)</a></p>
+</div>
+<div class="citation" id="gao2023b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gao2023b<span class="fn-bracket">]</span></span>
+<p>X. Gao,
+<cite>Anisotropic field ionization in nanoclusters mediated by a Brunel-electron-driven plasma wave</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevA.108.033109">Physical Review A 108, 033109 (2023)</a></p>
+</div>
+<div class="citation" id="yoon2023b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2023b<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon, P. M. Bellan and G. S. Yun,
+<cite>Phase-space Analysis of Ordered and Disordered Nonthermal Ion Energization during Magnetic Reconnection</cite>,
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/acf1f5">The Astrophysical Journal, 956:105 (2023)</a></p>
+</div>
+<div class="citation" id="bhadoria2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bhadoria2023<span class="fn-bracket">]</span></span>
+<p>S. Bhadoria, M. Marklund and C. H. Keitel,
+<cite>Energy enhancement of laser-driven ions by radiation reaction and Breit-Wheeler pair production in the ultra-relativistic transparency regime</cite>,
+<a class="reference external" href="https://www.cambridge.org/core/journals/high-power-laser-science-and-engineering/article/energy-enhancement-of-laserdriven-ions-by-radiation-reaction-and-breitwheeler-pair-production-in-the-ultrarelativistic-transparency-regime/EE3DB62B65E6AABFD1801875C20C2DFD">High Power Laser Science and Engineering (2023)</a></p>
+</div>
+<div class="citation" id="diab2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Diab2023<span class="fn-bracket">]</span></span>
+<p>R. Diab,  S.-G. Baek,  P. Bonoli,  T. G. Jenkins,  M. Ono and D. Smithe,
+<cite>Particle-in-cell simulations of parasitic electrostatic wave excitation in the ion cyclotron range of frequencies and high harmonic fast wave regimes</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0164928">AIP Conference Proceedings 2984, 080001 (2023)</a></p>
+</div>
+<div class="citation" id="sladkov2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sladkov2023<span class="fn-bracket">]</span></span>
+<p>A. D. Sladkov and A. V. Korzhimanov,
+<cite>Cherenkov Radiation of an Ultrashort Laser Pulse Propagating in a Strongly Magnetized Plasma at Various Intensities and Directions of the Magnetic Field</cite>,
+<a class="reference external" href="https://doi.org/10.1007/s11141-023-10265-9">Radiophysics and Quantum Electronics 65, 888–896 (2023)</a></p>
+</div>
+<div class="citation" id="montefiori2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Montefiori2023<span class="fn-bracket">]</span></span>
+<p>S. Montefiori and M. Tamburini
+<cite>SFQEDtoolkit: A high-performance library for the accurate modeling of strong-field QED processes in PIC and Monte Carlo codes</cite>,
+<a class="reference external" href="https://doi.org/10.1016/j.cpc.2023.108855">Computer Physics Communications 292, 108855 (2023)</a></p>
+</div>
+<div class="citation" id="shekhanov2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shekhanov2023<span class="fn-bracket">]</span></span>
+<p>S. Shekhanov, A. Gintrand, L. Hudec, R. Liska, J. Limpouch, S. Weber and V. Tikhonchuk
+<cite>Kinetic modeling of laser absorption in foams</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0131786">Physics of Plasmas 30, 012708 (2023)</a></p>
+</div>
+<div class="citation" id="yu2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yu2023<span class="fn-bracket">]</span></span>
+<p>J. Yu, J. Zhong, Y. Ping and W. An
+<cite>Electron acceleration in a coil target-driven low-β magnetic reconnection simulation</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0149259">Matter and Radiation at Extremes 8, 064003 (2023)</a></p>
+</div>
+<div class="citation" id="zagidullin2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zagidullin2023<span class="fn-bracket">]</span></span>
+<p>R. Zagidullin, S. Tietze, M. Zepf, J. Wang and S. Rykovanov
+<cite>Density-dependent carrier-envelope phase shift in attosecond pulse generation from relativistically oscillating mirrors</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0155957">Matter and Radiation at Extremes 8, 064004 (2023)</a></p>
+</div>
+<div class="citation" id="cai2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Cai2023<span class="fn-bracket">]</span></span>
+<p>J. Cai, Y. Shou, Y. Geng, L. Han, X. Xu, S. Wen, B. Shen, J. Yu and X. Yan
+<cite>Extremely powerful and frequency-tunable terahertz pulses from a table-top laser-plasma wiggler</cite>,
+<a class="reference external" href="https://www.cambridge.org/core/journals/high-power-laser-science-and-engineering/article/extremely-powerful-and-frequencytunable-terahertz-pulses-from-a-tabletop-laserplasma-wiggler/4E93CDD2F494C44A799266AB3E62277F">High Power Laser Science and Engineering (2023)</a></p>
+</div>
+<div class="citation" id="jirka2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Jirka2023<span class="fn-bracket">]</span></span>
+<p>M. Jirka and H. Kladecová
+<cite>Pair production in an electron collision with a radially polarized laser pulse</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0168022">Physics of Plasmas 30, 113102 (2023)</a></p>
+</div>
+<div class="citation" id="guo2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Guo2023<span class="fn-bracket">]</span></span>
+<p>A. Guo, Q. Lu, S. Lu, S. Wang and R. Wang,
+<cite>Properties of Electron-scale Magnetic Reconnection at a Quasi-perpendicular Shock</cite>,
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/acec48">The Astrophysical Journal 955, 1 (2023)</a></p>
+</div>
+<div class="citation" id="si2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Si2023<span class="fn-bracket">]</span></span>
+<p>M. Si, Y. Huang, M. Ruan, B. Shen, Z. Xu, T. Yu, X. Wang and Y. Chen,
+<cite>Relativistic-guided stable mode of few-cycle 20 micron level infrared radiation</cite>,
+<a class="reference external" href="https://doi.org/10.1364/OE.503814">Optics Express 31, 24, 40202-40209 (2023)</a></p>
+</div>
+<div class="citation" id="vallieres2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vallieres2023<span class="fn-bracket">]</span></span>
+<p>S. Vallières, J. Powell, T. Connell, M. Evans, M. Lytova, F. Fillion-Gourdeau, S. Fourmaux, S. Payeur, P. Lassonde, S. MacLean, and F. Légaré,
+<cite>High Dose-Rate MeV Electron Beam from a Tightly-Focused Femtosecond IR Laser in Ambient Air</cite>,
+<a class="reference external" href="https://doi.org/10.1002/lpor.202300078">Laser and Photonics Review 23000782300078 (2023)</a></p>
+</div>
+<div class="citation" id="starodubtseva2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Starodubtseva2023<span class="fn-bracket">]</span></span>
+<p>E. Starodubtseva, I. Tsymbalov, D. Gorlova, K. Ivanov, and A. Savel’ev,
+<cite>Low energy electron injection for direct laser acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0155196">Physics of Plasmas 30, 083105 (2023)</a></p>
+</div>
+<div class="citation" id="maffini2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Maffini2023<span class="fn-bracket">]</span></span>
+<p>A. Maffini, F. Mirani, M. Galbiati, K. Ambrogioni, F. Gatti, M. S. G. De Magistris, D. Vavassori, D. Orecchia, D. Dellasega, V. Russo, M. Zavelani-Rossi and M. Passoni,
+<cite>Towards compact laser-driven accelerators: exploring the potential of advanced double-layer targets</cite>,
+<a class="reference external" href="https://doi.org/10.1140/epjti/s40485-023-00102-8">EPJ Techniques and Instrumentation 10, 15 (2023)</a></p>
+</div>
+<div class="citation" id="guskov2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Guskov2023<span class="fn-bracket">]</span></span>
+<p>S. Yu. Gus’kov, Ph. Korneev, and M. Murakami,
+<cite>Laser-driven electrodynamic implosion of fast ions in a thin shell</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0156113">Matter and Radiation at Extremes 8, 056602 (2023)</a></p>
+</div>
+<div class="citation" id="rezaeipandari2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>RezaeiPandari2023<span class="fn-bracket">]</span></span>
+<p>M. Rezaei-Pandari, M. Mirzaie, C. I. Hojbota, T. G. Pak, S. B. Kim, G. W. Lee, R. Massudi, A. R. Niknam, S. K. Lee, K.-Y. Kim, and C. H. Nam,
+<cite>Laser Wakefield Electron Acceleration with Polarization-Dependent Ionization Injection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevApplied.20.034026">Physical Review Applied 20, 034026 (2023)</a></p>
+</div>
+<div class="citation" id="jonnerby2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Jonnerby2023<span class="fn-bracket">]</span></span>
+<p>J. Jonnerby, A. von Boetticher, J. Holloway, L. Corner, A. Picksley, A. J. Ross, R. J. Shalloo , C. Thornton, N. Bourgeois, R. Walczak, and S. M. Hooker,
+<cite>Measurement of the decay of laser-driven linear plasma wakefields</cite>,
+<a class="reference external" href="https://link.aps.org/doi/10.1103/PhysRevE.108.055211">Physical Review E 108, 055211  (2023)</a></p>
+</div>
+<div class="citation" id="drobniak2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Drobniak2023<span class="fn-bracket">]</span></span>
+<p>P. Drobniak, E. Baynard, C. Bruni, K. Cassou, C. Guyot, G. Kane, S. Kazamias, V. Kubytskyi, N. Lericheux, B. Lucas, M. Pittman, F. Massimo, A. Beck, A. Specka, P. Nghiem, and D. Minenna,
+<cite>Random scan optimization of a laser-plasma electron injector based on fast particle-in-cell simulations</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevAccelBeams.26.091302">Physical Review Accelerators and Beams 26, 091302 (2023)</a></p>
+</div>
+<div class="citation" id="bukharskii2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bukharskii2023<span class="fn-bracket">]</span></span>
+<p>N. Bukharskii and Ph. Korneev,
+<cite>Intense widely controlled terahertz radiation from laser-driven wires</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0142083">Matter and Radiation at Extremes 8, 044401 (2023)</a></p>
+</div>
+<div class="citation" id="schmitz2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Schmitz2023<span class="fn-bracket">]</span></span>
+<p>B. Schmitz, D. Kreuter, and O. Boine-Frankenheim,
+<cite>Modeling of a Liquid Leaf Target TNSA Experiment Using Particle-In-Cell Simulations and Deep Learning</cite>,
+<a class="reference external" href="https://doi.org/10.1155/2023/2868112">Laser and Particle Beams, 2868112 (2023)</a></p>
+</div>
+<div class="citation" id="paschke-bruehl2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Paschke_Bruehl2023<span class="fn-bracket">]</span></span>
+<p>F. Paschke-Bruehl, M. Banjafar, M. Garten, L. G. Huang, B. E. Marré, M. Nakatsutsumi, L. Randolph, T. E. Cowan, U. Schramm and T. Kluge,
+<cite>Heating in multi-layer targets at ultra-high intensity laser irradiation and the impact of density oscillation</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1367-2630/accdfa">New Journal of Physics 25 (2023)</a></p>
+</div>
+<div class="citation" id="vladisavlevici2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vladisavlevici2023<span class="fn-bracket">]</span></span>
+<p>I. M. Vladisavlevici, D. Vizman and E. d’Humières,
+<cite>Theoretical investigation of the interaction of ultra-high intensity laser pulses with near critical density plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/acbe63">Plasma Physics and Controlled Fusion 65, 4 (2023)</a></p>
+</div>
+<div class="citation" id="gao2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gao2023<span class="fn-bracket">]</span></span>
+<p>X. Gao,
+<cite>Ionization dynamics of sub-micrometer-sized clusters in intense ultrafast laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0143356">Physics of Plasmas 30, 052102 (2023)</a></p>
+</div>
+<div class="citation" id="krafft2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2023<span class="fn-bracket">]</span></span>
+<p>C. Krafft and P. Savoini,
+<cite>Dynamics of Two-dimensional Type III Electron Beams in Randomly Inhomogeneous Solar Wind Plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/acc1e4">The Astrophysical Journal 949,  1 (2023)</a></p>
+</div>
+<div class="citation" id="hadjikyriacou2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Hadjikyriacou2023<span class="fn-bracket">]</span></span>
+<p>A. Hadjikyriacou, J. Psikal, L. Giuffrida and M. Kucharik,
+<cite>Novel approach to TNSA enhancement using multi-layered targets—a numerical study</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/acdc51">Plasma Physics and Controlled Fusion 65, 8 (2023)</a></p>
+</div>
+<div class="citation" id="ghizzo2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ghizzo2023<span class="fn-bracket">]</span></span>
+<p>A. Ghizzo, D. Del Sarto, and H. Betar,
+<cite>Collisionless Heating Driven by Vlasov Filamentation in a Counterstreaming Beams Configuration</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.131.035101">Physical Review Letters 131, 035101 (2023)</a></p>
+</div>
+<div class="citation" id="yang2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yang2023<span class="fn-bracket">]</span></span>
+<p>T. Yang, Z. Guo, Y. Yan, M. Wu, Y. Xia, Q. He, H. Cheng, Y. Li, Y. Fang, Y. Zhao, X. Yan and C. Lin,
+<cite>Measurements of Plasma Density Profile Evolutions with Channel-guided Laser</cite>,
+<a class="reference external" href="https://doi.org/10.1017/hpl.2023.50">High Power Laser Science and Engineering pp. 1-15 (2023)</a></p>
+</div>
+<div class="citation" id="yao2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2023<span class="fn-bracket">]</span></span>
+<p>W. Yao, A. Fazzini, S.N. Chen, K. Burdonov, J. Béard, M. Borghesi, A. Ciardi, M. Miceli, S. Orlando, X. Ribeyre, E. d’Humières and J. Fuchs,
+<cite>Investigating particle acceleration dynamics in interpenetrating magnetized collisionless super-critical shocks</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S002237782300003X">Journal of Plasma Physics 89, 915890101 (2023)</a></p>
+</div>
+<div class="citation" id="pak2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pak2023<span class="fn-bracket">]</span></span>
+<p>T. Pak, M. Rezaei-Pandari, S. B. Kim, G. Lee, D. H. Wi, C. I. Hojbota, M. Mirzaie, H. Kim, J. H. Sung, S. K. Lee, C. Kang and K.-Y. Kim,
+<cite>Multi-millijoule terahertz emission from laser-wakefield-accelerated electrons</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41377-022-01068-0">Light: Science and Applications 12, 37 (2023)</a></p>
+</div>
+<div class="citation" id="istokskaia2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Istokskaia2023<span class="fn-bracket">]</span></span>
+<p>V. Istokskaia, M. Tosca, L. Giuffrida, J. Psikal, F. Grepl, V. Kantarelou, S. Stancek, S. Di Siena, A. Hadjikyriacou, A. McIlvenny, Y. Levy, J. Huynh, M. Cimrman, P. Pleskunov, D. Nikitin, A. Choukourov, F. Belloni, A. Picciotto, S. Kar, M. Borghesi, A. Lucianetti, T. Mocek and D. Margarone,
+<cite>A multi-MeV alpha particle source via proton-boron fusion driven by a 10-GW tabletop laser</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s42005-023-01135-x">Nature Communications Physics 6, 27 (2023)</a></p>
+</div>
+<div class="citation" id="yoon2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2023<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon, D. E. Wendel and G. S. Yun,
+<cite>Equilibrium selection via current sheet relaxation and guide field amplification</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41467-023-35821-9">Nature Communications 14, 139 (2023)</a></p>
+</div>
+<div class="citation" id="galbiati2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Galbiati2023<span class="fn-bracket">]</span></span>
+<p>M. Galbiati, A. Formenti, M. Grech and M. Passoni,
+<cite>Numerical investigation of non-linear inverse Compton scattering in double-layer targets</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3389/fphy.2023.1117543">Frontiers in Physics 11, fphy.2023.1117543 (2023)</a></p>
+</div>
+<div class="citation" id="sakai2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sakai2023<span class="fn-bracket">]</span></span>
+<p>K. Sakai, T. Nishimoto, S. Isayama, S. Matsukiyo and Y. Kuramitsu,
+<cite>Ion-acoustic feature of collective Thomson scattering in non-equilibrium two-stream plasmas</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0117812">Physics of Plasmas 30, 012105 (2023)</a></p>
+</div>
+<div class="citation" id="golovanov2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Golovanov2023<span class="fn-bracket">]</span></span>
+<p>A. Golovanov, I. Yu. Kostyukov, A. Pukhov and V. Malka,
+<cite>Energy-Conserving Theory of the Blowout Regime of Plasma Wakefield</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.130.105001">Physical Review Letters 130, 105001 (2023)</a></p>
+</div>
+<div class="citation" id="miethlinger2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Miethlinger2023<span class="fn-bracket">]</span></span>
+<p>T. Miethlinger, N. Hoffmann and T. Kluge,
+<cite>Acceptance Rates of Invertible Neural Networks on Electron Spectra from Near-Critical Laser-Plasmas: A Comparison</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1007/978-3-031-30445-3_23">Parallel Processing and Applied Mathematics, 273-284 (2023)</a></p>
+</div>
+<div class="citation" id="zepter2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zepter2023<span class="fn-bracket">]</span></span>
+<p>C. Zepter, A. Seidel, M. Zepf, M. C. Kaluza and A. Sävert,
+<cite>Role of spatiotemporal couplings in stimulated Raman side scattering</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevResearch.5.L012023">Physical Review Research 5, L012023 (2023)</a></p>
+</div>
+<div class="citation" id="marini2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marini2023<span class="fn-bracket">]</span></span>
+<p>S. Marini, M. Grech, P. S. Kleij, M. Raynaud and C. Riconda,
+<cite>Electron acceleration by laser plasma wedge interaction</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevResearch.5.013115">Physical Review Research 5, 013115 (2023)</a></p>
+</div>
+<div class="citation" id="miloshevsky2023" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Miloshevsky2023<span class="fn-bracket">]</span></span>
+<p>G. Miloshevsky,
+<cite>Particle-in-Cell Modeling of Omega Experiments on Ablation of Plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1109/TPS.2022.3220184">IEEE Transactions on Plasma Science 51, 4 (2023)</a></p>
+</div>
+<div class="citation" id="blackman2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Blackman2022<span class="fn-bracket">]</span></span>
+<p>D. R. Blackman, Y. Shi, S. R. Klein, M. Cernaianu, D. Doria, P. Ghenuche and A. Arefiev
+<cite>Electron acceleration from transparent targets irradiated by ultra-intense helical laser beams</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s42005-022-00894-3">Communications Physics 5, 116 (2022)</a></p>
+</div>
+<div class="citation" id="siminos2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Siminos2022<span class="fn-bracket">]</span></span>
+<p>E. Siminos  and I. Thiele
+<cite>Parametric study of laser wakefield driven generation of intense sub-cycle pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ac4311">Plasma Physics and Controlled Fusion 64, 034006 (2022)</a></p>
+</div>
+<div class="citation" id="pchen2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>PChen2022<span class="fn-bracket">]</span></span>
+<p>P. Chen, G. Mourou, M. Besancon, Y. Fukuda, J.-F. Glicenstein, J. Nam, C.-E. Lin, K.-N. Lin, S.-X. Liu, Y.-K. Liu, M. Kando, K. Kondo, S. Paganis, A. Pirozhkov, H. Takabe, B. Tuchming, W.-P. Wang, N. Watamura, J. Wheeler and H.-Y. Wu on behalf of the AnaBHEL Collaboration,
+<cite>AnaBHEL (Analog Black Hole Evaporation via Lasers) Experiment: Concept, Design, and Status</cite>,
+<a class="reference external" href="https://doi.org/10.3390/photonics9121003">Photonics 9(12), 1003 (2022)</a></p>
+</div>
+<div class="citation" id="bukharskii2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bukharskii2022<span class="fn-bracket">]</span></span>
+<p>N. Bukharskii, Iu. Kochetkov and Ph. Korneev,
+<cite>Terahertz annular antenna driven with a short intense laser pulse</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0076700">Applied Physics Letters 120, 014102 (2022)</a></p>
+</div>
+<div class="citation" id="jirka2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Jirka2022<span class="fn-bracket">]</span></span>
+<p>M. Jirka, P. Sasorov and S. V. Bulanov,
+<cite>New and old physics in the interaction of a radiating electron with the extreme electromagnetic field</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevD.105.113004">Physical Review D 105, 113004 (2022)</a></p>
+</div>
+<div class="citation" id="geng2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Geng2022<span class="fn-bracket">]</span></span>
+<p>X. Geng, L. Ji and B. Shen,
+<cite>Quasimonochromatic Bright Gamma-ray Generation from Synchronized Compton Scattering via Azimuthal Spatial-Temporal Coupling</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevApplied.17.024055">Physical Review Applied 17, 024055 (2022)</a></p>
+</div>
+<div class="citation" id="yan2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yan2022<span class="fn-bracket">]</span></span>
+<p>X. Yan, Y. Wu, X. Geng, H. Zhang, B. Shen and L. Ji,
+<cite>Generation of polarized proton beams with gaseous targets from CO2-laser-driven collisionless shock acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0084870">Physics of Plasmas 29, 053101 (2022)</a></p>
+</div>
+<div class="citation" id="chen2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Chen2022<span class="fn-bracket">]</span></span>
+<p>Q. Chen, D. Maslarova, J. Wang, S. X. Lee, V. Horný and D. Umstadter,
+<cite>Transient Relativistic Plasma Grating to Tailor High-Power Laser Fields, Wakefield Plasma Waves, and Electron Injection</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.128.164801">Physical Review Letters 128, 164801 (2022)</a></p>
+</div>
+<div class="citation" id="glek2022b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Glek2022b<span class="fn-bracket">]</span></span>
+<p>P. B. Glek and A. M. Zheltikov,
+<cite>Enhanced coherent transition radiation from midinfrared‐laser‐driven microplasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-022-10614-0">Scientific Reports 12, 7660 (2022)</a></p>
+</div>
+<div class="citation" id="margarone2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Margarone2022<span class="fn-bracket">]</span></span>
+<p>D. Margarone, J. Bonvalet, L. Giuffrida, A. Morace, V. Kantarelou, M. Tosca, D. Raffestin, P. Nicolai, A. Picciotto, Y. Abe, Y. Arikawa, S. Fujioka, Y. Fukuda, Y. Kuramitsu, H. Habara and D. Batani,
+<cite>In-Target Proton–Boron Nuclear Fusion Using a PW-Class Laser</cite>,
+<a class="reference external" href="https://doi.org/10.3390/app12031444">Appled Sciences 12(3), 1444 (2022)</a></p>
+</div>
+<div class="citation" id="kochetkov2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kochetkov2022<span class="fn-bracket">]</span></span>
+<p>Iu. V. Kochetkov, N. D. Bukharskii, M. Ehret, Y. Abe, K. F. F. Law,V. Ospina‐Bohorquez, J. J. Santos, S. Fujioka, G. Schaumann, B. Zielbauer, A. Kuznetsov and Ph. Korneev,
+<cite>Neural network analysis of quasistationary magnetic fields in microcoils driven by short laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-022-17202-2">Scientific Reports 12, 13734 (2022)</a></p>
+</div>
+<div class="citation" id="oudin2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Oudin2022<span class="fn-bracket">]</span></span>
+<p>A. Oudin, A. Debayle, C. Ruyer, D. Benisti,
+<cite>Cross-beam energy transfer between spatially smoothed laser beams</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0109511">Physics of Plasmas 29, 112112 (2022)</a></p>
+</div>
+<div class="citation" id="id4" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Chen2022<span class="fn-bracket">]</span></span>
+<p>Q. Chen, D. Maslarova, J. Wang, S. Li, and D. Umstadter,
+<cite>Injection of electron beams into two laser wakefields and generation of electron rings</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.106.055202">Physical Review E 106, 055202 (2022)</a></p>
+</div>
+<div class="citation" id="ku2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ku2022<span class="fn-bracket">]</span></span>
+<p>S. Ku., R. Dhawan, D.K. Singh and H. K. Malik,
+<cite>Diagnostic of laser wakefield acceleration with ultra – Short laser pulse by using SMILEI PIC code</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.matpr.2022.04.028">Materials Today: Proceedings 62, 3203-3207 (2022)</a></p>
+</div>
+<div class="citation" id="kumar2022a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kumar2022a<span class="fn-bracket">]</span></span>
+<p>S. Kumar, D. K. Singh and H. K. Malik,
+<cite>Comparative study of ultrashort single-pulse and multi-pulse driven laser wakefield acceleration</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1612-202X/aca978">Laser Physics Letters 20, 026001 (2022)</a></p>
+</div>
+<div class="citation" id="zhang2022b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zhang2022b<span class="fn-bracket">]</span></span>
+<p>Y. Zhang, F. Wang, J. Liu and J. Sun,
+<cite>Simulation of the inverse bremsstrahlung absorption by plasma plume in laser penetration welding</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.cplett.2022.139434">Chemical Physics Letters 793, 139434 (2022)</a></p>
+</div>
+<div class="citation" id="vladisavlevici2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vladisavlevici2022<span class="fn-bracket">]</span></span>
+<p>I.-M. Vladisavlevici, D. Vizman and E. d’Humières,
+<cite>Laser Driven Electron Acceleration from Near-Critical Density Targets towards the Generation of High Energy γ-Photons</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3390/photonics9120953">Photonics 9, 953 (2022)</a></p>
+</div>
+<div class="citation" id="ouatu2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ouatu2022<span class="fn-bracket">]</span></span>
+<p>I. Ouatu, B. T. Spiers, R. Aboushelbaya, Q. Feng, M. W. von der Leyen, R. W. Paddock, R. Timmis, C. Ticos, K. M. Krushelnick and P. A. Norreys,
+<cite>Ionization states for the multipetawatt laser-QED regime</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.106.015205">Physical Review E 106, 015205 (2022)</a></p>
+</div>
+<div class="citation" id="beth2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Beth2022<span class="fn-bracket">]</span></span>
+<p>A. Beth, H. Gunell, C. Simon Wedlund, C. Goetz, H. Nilsson and M. Hamrin,
+<cite>First investigation of the diamagnetic cavity boundary layer with a 1D3V PIC simulation</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1051/0004-6361/202243209">Astronomy &amp; Astrophysics 667, A143 (2022)</a></p>
+</div>
+<div class="citation" id="guo2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Guo2022<span class="fn-bracket">]</span></span>
+<p>Y. Guo, X. Geng, L. Ji, B. Shen and R. Li,
+<cite>Improving the accuracy of hard photon emission by sigmoid sampling of the quantum-electrodynamic table in particle-in-cell Monte Carlo simulations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.105.025309">Physical Review E 105, 025309 (2022)</a></p>
+</div>
+<div class="citation" id="pae2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pae2022<span class="fn-bracket">]</span></span>
+<p>K. H. Pae, C. M. Kim, V. B. Pathak, C.-M. Ryu and C. H. Nam,
+<cite>Direct laser acceleration of electrons from a plasma mirror by an intense few-cycle Laguerre–Gaussian laser and its dependence on the carrier-envelope phase</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac5a0a">Plasma Physics and Controlled Fusion 64, 055013 (2022)</a></p>
+</div>
+<div class="citation" id="zhang2022a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zhang2022a<span class="fn-bracket">]</span></span>
+<p>C.-W. Zhang, Y.-X. Zhu, J.-F. Lu and B.-S. Xie,
+<cite>Simulation Study of a Bright Attosecond γ-ray Source Generation by Irradiating an Intense Laser on a Cone Target</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3390/app12094361">Applied Sciences 12, 4361 (2022)</a></p>
+</div>
+<div class="citation" id="han2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Han2022<span class="fn-bracket">]</span></span>
+<p>Q. Han, X. Geng, B. Shen, Z. Xu and L. Ji,
+<cite>Ultra-fast polarization of a thin electron layer in the rotational standing-wave field driven by double ultra-intense laser pulses</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1367-2630/ac740f">New Journal of Physics 24, 063013 (2022)</a></p>
+</div>
+<div class="citation" id="gothel2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gothel2022<span class="fn-bracket">]</span></span>
+<p>I. Göthel, C. Bernert, M. Bussmann, M. Garten, T. Miethlinger, M. Rehwald, K. Zeil, T. Ziegler, T. E. Cowan, U. Schramm and T. Kluge,
+<cite>Optimized laser ion acceleration at the relativistic critical density surface</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac4e9f">Plasma Physics and Controlled Fusion 64, 044010 (2022)</a></p>
+</div>
+<div class="citation" id="fazzini2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Fazzini2022<span class="fn-bracket">]</span></span>
+<p>A. Fazzini, W. Yao, K. Burdonov, J. Béard, S. N. Chen, A. Ciardi, E. d’Humières, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, S. Orlando, S. Pikuz, X. Ribeyre, M. Starodubtsev, R. Zemskov and J. Fuchs,
+<cite>Particle energization in colliding subcritical collisionless shocks investigated in the laboratory</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1051/0004-6361/202243277">Astronomy &amp; Astrophysics 665, A87 (2022)</a></p>
+</div>
+<div class="citation" id="bykov2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bykov2022<span class="fn-bracket">]</span></span>
+<p>A. M. Bykov, S. M. Osipov and V. I. Romanskii,
+<cite>Acceleration of Cosmic Rays to Energies above 1015 eV by Transrelativistic Shocks</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1134/S1063776122040161">Journal of Experimental and Theoretical Physics 134, 487-497 (2022)</a></p>
+</div>
+<div class="citation" id="sundstrom2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sundstrom2022<span class="fn-bracket">]</span></span>
+<p>A. Sundström, M. Grech, I. Pusztai and C. Riconda,
+<cite>Stimulated-Raman-scattering amplification of attosecond XUV pulses with pulse-train pumps and application to local in-depth plasma-density measurement</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.106.045208">Physical Review E 106, 045208 (2022)</a></p>
+</div>
+<div class="citation" id="krafft2022b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2022b<span class="fn-bracket">]</span></span>
+<p>C. Krafft and P. Savoini,
+<cite>Third and Fourth Harmonics of Electromagnetic Emissions by a Weak Beam in a Solar Wind Plasma with Random Density Fluctuations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/2041-8213/ac7f28">The Astrophysical Journal Letters 934, L28 (2022)</a></p>
+</div>
+<div class="citation" id="krafft2022a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2022a<span class="fn-bracket">]</span></span>
+<p>C. Krafft and P. Savoini,
+<cite>Fundamental Electromagnetic Emissions by a Weak Electron Beam in Solar Wind Plasmas with Density Fluctuations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/2041-8213/ac46a7">The Astrophysical Journal Letters 924, L24 (2022)</a></p>
+</div>
+<div class="citation" id="kong2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kong2022<span class="fn-bracket">]</span></span>
+<p>D. Kong, G. Zhang, Y. Shou, S. Xu, Z. Mei, Z. Cao, Z. Pan, P. Wang, G. Qi, Y. Lou, Z. Ma, H. Lan, W. Wang, Y. Li, P. Rubovic, M. Veselsky, A. Bonasera, J. Zhao, Y. Geng, Y. Zhao, C. Fu, W. Luo, Y. Ma, X. Yan and W. Ma,
+<cite>High-energy-density plasma in femtosecond-laser-irradiated nanowire-array targets for nuclear reactions</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0120845">Matter and Radiation at Extremes 7, 064403 (2022)</a></p>
+</div>
+<div class="citation" id="davidson2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Davidson2022<span class="fn-bracket">]</span></span>
+<p>C. Davidson, Z.-M. Sheng, T. Wilson and P. McKenna,
+<cite>Theoretical and computational studies of the Weibel instability in several beam–plasma interaction configurations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S0022377822000253">Journal of Plasma Physics 88, 905880206 (2022)</a></p>
+</div>
+<div class="citation" id="glek2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Glek2022<span class="fn-bracket">]</span></span>
+<p>P. B. Glek and A. M. Zheltikov,
+<cite>Subcycle terahertz field waveforms clocked by attosecond high-harmonic pulses from relativistic laser plasmas</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0070670">Journal of Applied Physics 131, 103104 (2022)</a></p>
+</div>
+<div class="citation" id="massimo2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Massimo2022<span class="fn-bracket">]</span></span>
+<p>F. Massimo, M. Lobet, J. Derouillat, A. Beck, G. Bouchard, M. Grech, F. Pérez, T. Vinci,
+<cite>A Task Programming Implementation for the Particle in Cell Code Smilei</cite>,
+<a class="reference external" href="https://doi.org/10.1145/3539781.3539788">PASC ‘22: Proceedings of the Platform for Advanced Scientific Computing Conference 5, 1 (2022)</a>,
+<a class="reference external" href="https://arxiv.org/abs/2204.12837">arXiv:2204.12837</a></p>
+</div>
+<div class="citation" id="yao2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2022<span class="fn-bracket">]</span></span>
+<p>W. Yao, A. Fazzini, S. N. Chen, K. Burdonov, P. Antici, J. Béard, S. Bolaños, A. Ciardi, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, V. Nastasa, S. Orlando, S. Pikuz, D. C. Popescu, G. Revet, X. Ribeyre, E. d’Humières and J. Fuchs,
+<cite>Detailed characterization of a laboratory magnetized supercritical collisionless shock and of the associated proton energization</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0055071">Matter and Radiation at Extremes 7, 014402 (2022)</a></p>
+</div>
+<div class="citation" id="singh2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Singh2022<span class="fn-bracket">]</span></span>
+<p>P. K. Singh, F.-Y. Li, C.-K. Huang, A. Moreau, R. Hollinger, A. Junghans, A. Favalli, C. Calvi, S. Wang, Y. Wang, H. Song, J. J. Rocca, R. E. Reinovsky and S. Palaniyappan,
+<cite>Vacuum laser acceleration of super-ponderomotive electrons using relativistic transparency injection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41467-021-27691-w">Nature Communications 13, 54 (2022)</a></p>
+</div>
+<div class="citation" id="lobet2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Lobet2022<span class="fn-bracket">]</span></span>
+<p>M. Lobet, F. Massimo, A. Beck, G. Bouchard, F. Perez, T. Vinci, and M. Grech.
+<cite>Simple adaptations to speed-up the Particle-In-Cell code Smilei on the ARM-based Fujitsu A64FX processor.</cite>,
+<a class="reference external" href="http://doi.org/10.1145/3503470.3503475">In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop).
+Association for Computing Machinery, New York, NY, USA, 40–48. (2022)</a></p>
+</div>
+<div class="citation" id="romansky2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Romansky2021<span class="fn-bracket">]</span></span>
+<p>V. I. Romansky, A. M. Bykov and S. M. Osipov,
+<cite>On electron acceleration by mildly-relativistic shocks: PIC simulations</cite>,
+<a class="reference external" href="https://dx.doi.org/10.1088/1742-6596/2103/1/012009">Journal of Physics: Conference Series 2103 012009 (2021)</a></p>
+</div>
+<div class="citation" id="tiwary2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tiwary2021<span class="fn-bracket">]</span></span>
+<p>S. Tiwary and N. Kumar,
+<cite>Particle jets in colliding two ultraintense laser pulses of varying frequencies</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevResearch.3.043190">Physical Review Research 3, 043190 (2021)</a></p>
+</div>
+<div class="citation" id="spiers2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Spiers2021<span class="fn-bracket">]</span></span>
+<p>B. T. Spiers, R. Aboushelbaya, Q. Feng, M. W. Mayr, I. Ouatu, R. W. Paddock, R. Timmis, R. H.-W. Wang  and P. A. Norreys,
+<cite>Methods for extremely sparse-angle proton tomography</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.104.045201">Physical Review E 104, 045201 (2021)</a></p>
+</div>
+<div class="citation" id="tomassini2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tomassini2021<span class="fn-bracket">]</span></span>
+<p>P. Tomassini, F. Massimo, L. Labate and L. A. Gizzi,
+<cite>Accurate electron beam phase-space theory for ionization-injection schemes driven by laser pulses</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/hpl.2021.56">High Power Laser Science and Engineering 10, e15 (2021)</a></p>
+</div>
+<div class="citation" id="meinhold2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Meinhold2021<span class="fn-bracket">]</span></span>
+<p>T. A. Meinhold and N. Kumar,
+<cite>Radiation pressure acceleration of protons from structured thin-foil targets</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S0022377821001070">Journal of Plasma Physics 87, 905870607 (2021)</a></p>
+</div>
+<div class="citation" id="bonvalet2021b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bonvalet2021b<span class="fn-bracket">]</span></span>
+<p>J. Bonvalet, P. Loiseau, J.-R. Marquès, E. Atukpor, E. d’Humières, J. Domange, P. Forestier-Colleoni, F. Hannachi, L. Lancia, D. Raffestin, M. Tarisien, V. Tikhonchuk and Ph. Nicolaï,
+<cite>Laser-driven collisionless shock acceleration of protons from gas jets tailored by one or two nanosecond beams</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0062503">Physics of Plasmas 28, 113102 (2021)</a></p>
+</div>
+<div class="citation" id="shi2021b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shi2021b<span class="fn-bracket">]</span></span>
+<p>Y. Shi, D. R. Blackman and A. Arefiev,
+<cite>Electron acceleration using twisted laser wavefronts</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac318d">Plasma Physics and Controlled Fusion 63, 125032 (2021)</a></p>
+</div>
+<div class="citation" id="kumar2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Kumar2021<span class="fn-bracket">]</span></span>
+<p>N. Kumar and B. Reville,
+<cite>Nonthermal Particle Acceleration at Highly Oblique Nonrelativistic Shocks</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/2041-8213/ac30e0">The Astrophysical Journal Letters 921, L14 (2021)</a></p>
+</div>
+<div class="citation" id="ghaith2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ghaith2021<span class="fn-bracket">]</span></span>
+<p>A. Ghaith, M.-E. Couprie, D. Oumbarek-Espinos, I.A. Andriyash, F. Massimo, J.A. Clarke, M. Courthold, V. Bayliss, A. Bernhard, M. Trunk, M. Valléau, O. Marcouillé, A. Chancé, S. Licciardi, V. Malka, F. Nguyen and G. Dattoli,
+<cite>Undulator design for a laser-plasma-based free-electron-laser</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.physrep.2021.09.001">Physics Reports 937, 1-73 (2021)</a></p>
+</div>
+<div class="citation" id="horny2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Horny2021<span class="fn-bracket">]</span></span>
+<p>V. Horný and L. Veisz,
+<cite>Generation of single attosecond relativistic electron bunch from intense laser interaction with a nanosphere</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac2996">Plasma Physics and Controlled Fusion 63, 125025 (2021)</a></p>
+</div>
+<div class="citation" id="krafft2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Krafft2021<span class="fn-bracket">]</span></span>
+<p>C. Krafft and P. Savoini,
+<cite>Second Harmonic Electromagnetic Emissions by an Electron Beam in Solar Wind Plasmas with Density Fluctuations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/2041-8213/ac1795">The Astrophysical Journal Letters 917, L23 (2021)</a></p>
+</div>
+<div class="citation" id="khalilzadeh2021c" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Khalilzadeh2021c<span class="fn-bracket">]</span></span>
+<p>E. Khalilzadeh, M. J. Jafari and A. Chakhmachi,
+<cite>Stochastic heating of electrons due to Raman backscatter radiations in interaction of intense laser pulse with nitrogen atoms</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0055169">Physics of Plasmas 28, 072304 (2021)</a></p>
+</div>
+<div class="citation" id="marini2021b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marini2021b<span class="fn-bracket">]</span></span>
+<p>S. Marini, P. S. Kleij, F. Amiranoff, M. Grech, C. Riconda and M. Raynaud,
+<cite>Key parameters for surface plasma wave excitation in the ultra-high intensity regime</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0052599">Physics of Plasmas 28, 073104 (2021)</a></p>
+</div>
+<div class="citation" id="sladkov2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sladkov2021<span class="fn-bracket">]</span></span>
+<p>A. Sladkov, R. Smets, N. Aunai and A. Korzhimanov,
+<cite>Numerical study of non-gyrotropic electron pressure effects in collisionless magnetic reconnection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0052003">Physics of Plasmas 28, 072108 (2021)</a></p>
+</div>
+<div class="citation" id="shou2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shou2021<span class="fn-bracket">]</span></span>
+<p>Y. Shou, D. Wang, P. Wang, J. Liu, Z. Cao, Z. Mei, S. Xu, Z. Pan, D. Kong, G. Qi, Z. Liu, Y. Liang, Z. Peng, Y. Gao, S. Chen, J. Zhao, Y. Zhao, H. Xu, J. Zhao, Y. Wu, X. Yan and W. Ma,
+<cite>High-efficiency generation of narrowband soft x rays from carbon nanotube foams irradiated by relativistic femtosecond lasers</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1364/OL.432817">Optics Letters 46, 3969 (2021)</a></p>
+</div>
+<div class="citation" id="khalilzadeh2021b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Khalilzadeh2021b<span class="fn-bracket">]</span></span>
+<p>E. Khalilzadeh, A. Chakhmachi, Z. Dehghani, S. Rezaei and M. J. Jafari,
+<cite>Electron energy spectrum in the field‐ionized plasma</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1002/ctpp.202000219">Contributions to Plasma Physics 61, ctpp.202000219 (2021)</a></p>
+</div>
+<div class="citation" id="hosseinkhani2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Hosseinkhani2021<span class="fn-bracket">]</span></span>
+<p>H. Hosseinkhani, M. Pishdast, J. Yazdanpanah and S. A. Ghasemi,
+<cite>Investigation of the classical and quantum radiation reaction effect on interaction of ultra high power laser with near critical plasma</cite>,
+<a class="reference external" href="http://dx.doi.org/10.24200/nst.2021.1197">Journal of Nuclear Science, Engineering and Technology 42, 27-35 (2021)</a></p>
+</div>
+<div class="citation" id="mercuribaron2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>MercuriBaron2021<span class="fn-bracket">]</span></span>
+<p>A. Mercuri-Baron, M. Grech, F. Niel, A. Grassi, M. Lobet, A. Di Piazza and C. Riconda,
+<cite>Impact of the laser spatio-temporal shape on Breit–Wheeler pair production</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1367-2630/ac1975">New Journal of Physics 23, 085006 (2021)</a></p>
+</div>
+<div class="citation" id="peng2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Peng2021<span class="fn-bracket">]</span></span>
+<p>H. Peng, C. Riconda, S. Weber, C.T. Zhou and S.C. Ruan,
+<cite>Frequency Conversion of Lasers in a Dynamic Plasma Grating</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevApplied.15.054053">Physical Review Applied 15, 054053 (2021)</a></p>
+</div>
+<div class="citation" id="shi2021a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shi2021a<span class="fn-bracket">]</span></span>
+<p>Y. Shi, D. Blackman, D. Stutman and A. Arefiev,
+<cite>Generation of Ultrarelativistic Monoenergetic Electron Bunches via a Synergistic Interaction of Longitudinal Electric and Magnetic Fields of a Twisted Laser</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.126.234801">Physical Review Letters 126, 234801 (2021)</a></p>
+</div>
+<div class="citation" id="bonvalet2021a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Bonvalet2021a<span class="fn-bracket">]</span></span>
+<p>J. Bonvalet, Ph. Nicolaï, D. Raffestin, E. D’humieres, D. Batani, V. Tikhonchuk, V. Kantarelou, L. Giuffrida, M. Tosca, G. Korn, A. Picciotto, A. Morace, Y. Abe, Y. Arikawa, S. Fujioka, Y. Fukuda, Y. Kuramitsu, H. Habara and D. Margarone,
+<cite>Energetic α-particle sources produced through proton-boron reactions by high-energy high-intensity laser beams</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.103.053202">Physical Review E 103, 053202 (2021)</a></p>
+</div>
+<div class="citation" id="shekhanov2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Shekhanov2021<span class="fn-bracket">]</span></span>
+<p>S. A. Shekhanov and V. T. Tikhonchuk,
+<cite>SRS-SBS competition and nonlinear laser energy absorption in a high temperature plasma</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac2614">Plasma Physics and Controlled Fusion 63, 115016 (2021)</a></p>
+</div>
+<div class="citation" id="psikal2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Psikal2021<span class="fn-bracket">]</span></span>
+<p>J. Psikal,
+<cite>Laser-driven ion acceleration from near-critical Gaussian plasma density profile</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/abf448">Plasma Physics and Controlled Fusion 63, 064002 (2021)</a></p>
+</div>
+<div class="citation" id="yoon2021b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2021b<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon, G. S. Yun, D. E. Wendel and J. L. Burch,
+<cite>Collisionless relaxation of a disequilibrated current sheet and implications for bifurcated structures</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41467-021-24006-x">Nature Communications 12, 3774 (2021)</a></p>
+</div>
+<div class="citation" id="lavorenti2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Lavorenti2021<span class="fn-bracket">]</span></span>
+<p>F. Lavorenti, P. Henri, F. Califano, S. Aizawa and N. André,
+<cite>Electron acceleration driven by the lower-hybrid-drift instability. An extended quasilinear model</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1051/0004-6361/202141049">Astronomy &amp; Astrophysics 652, 202141049 (2021)</a></p>
+</div>
+<div class="citation" id="golovanov2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Golovanov2021<span class="fn-bracket">]</span></span>
+<p>A. A. Golovanov, I. Y. Kostyukov, L. Reichwein, J. Thomas and A. Pukhov,
+<cite>Excitation of strongly nonlinear plasma wakefield by electron bunches</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ac0352">Plasma Physics and Controlled Fusion 63, 085004 (2021)</a></p>
+</div>
+<div class="citation" id="jirka2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Jirka2021<span class="fn-bracket">]</span></span>
+<p>M. Jirka, P. Sasorov, S. S. Bulanov, G. Korn, B. Rus and S. V. Bulanov,
+<cite>Reaching high laser intensity by a radiating electron</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevA.103.053114">Physical Review A 103, 053114 (2021)</a></p>
+</div>
+<div class="citation" id="marques2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marques2021<span class="fn-bracket">]</span></span>
+<p>J.-R. Marquès, P. Loiseau, J. Bonvalet, M. Tarisien, E. d’Humières, J. Domange, F. Hannachi, L. Lancia, O. Larroche, P. Nicolaï, P. Puyuelo-Valdes, L. Romagnani, J. J. Santos and V. Tikhonchuk,
+<cite>Over-critical sharp-gradient plasma slab produced by the collision of laser-induced blast-waves in a gas jet: Application to high-energy proton acceleration</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0031313">Physics of Plasmas 28, 023103 (2021)</a></p>
+</div>
+<div class="citation" id="do2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Do2021<span class="fn-bracket">]</span></span>
+<p>H. T. B. Do, D. W. Jun, Z. Mahfoud, W. Lin and M. Bosman,
+<cite>Electron dynamics in plasmons</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1039/D0NR07025D">Nanoscale 13, 2801-2810 (2021)</a></p>
+</div>
+<div class="citation" id="khalilzadeh2021a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Khalilzadeh2021a<span class="fn-bracket">]</span></span>
+<p>E. Khalilzadeh, M.J. Jafari, S. Rezaei and Z. Dehghani,
+<cite>The effect of the laser pulse shape on the wakefield generation in field-ionized plasma</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.cjph.2021.02.010">Chinese Journal of Physics 71, 212-223 (2021)</a></p>
+</div>
+<div class="citation" id="babjak2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Babjak2021<span class="fn-bracket">]</span></span>
+<p>R. Babjak and J. Psikal,
+<cite>The role of standing wave in the generation of hot electrons by femtosecond laser beams incident on dense ionized target</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0031555">Physics of Plasmas 28, 023107 (2021)</a></p>
+</div>
+<div class="citation" id="cantono2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Cantono2021<span class="fn-bracket">]</span></span>
+<p>G. Cantono, A. Permogorov, J. Ferri, E. Smetanina, A. Dmitriev, A. Persson, T. Fülöp and C.-G. Wahlström,
+<cite>Laser-driven proton acceleration from ultrathin foils with nanoholes</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41598-021-84264-z">Scientific Reports 11, 5006 (2021)</a></p>
+</div>
+<div class="citation" id="perez2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Perez2021<span class="fn-bracket">]</span></span>
+<p>F. Pérez, F. Amiranoff, C. Briand, S. Depierreux, M. Grech, L. Lancia, P. Loiseau, J.-R. Marquès, C. Riconda and T. Vinci,
+<cite>Numerical study of Langmuir wave coalescence in laser-plasma interaction</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0037028">Physics of Plasmas 28, 043102 (2021)</a></p>
+</div>
+<div class="citation" id="yoon2021a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2021a<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon and P. M. Bellan,
+<cite>How Hall electric fields intrinsically chaotize and heat ions during collisionless magnetic reconnection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/5.0040374">Physics of Plasmas 28, 022113 (2021)</a></p>
+</div>
+<div class="citation" id="sampath2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sampath2021<span class="fn-bracket">]</span></span>
+<p>A. Sampath, X. Davoine, S. Corde, L. Gremillet, M. Gilljohann, M. Sangal, C. H. Keitel, R. Ariniello, J. Cary, H. Ekerfelt, C. Emma, F. Fiuza, H. Fujii, M. Hogan, C. Joshi, A. Knetsch, O. Kononenko, V. Lee, M. Litos, K. Marsh, Z. Nie, B. O’Shea, J. R. Peterson, P. San Miguel Claveria, D. Storey, Y. Wu, X. Xu, C. Zhang and M. Tamburini,
+<cite>Extremely Dense Gamma-Ray Pulses in Electron Beam-Multifoil Collisions</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.126.064801">Physical Review Letters 126, 064801 (2021)</a></p>
+</div>
+<div class="citation" id="marini2021a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marini2021a<span class="fn-bracket">]</span></span>
+<p>S. Marini, P. S. Kleij, F. Pisani, F. Amiranoff, M. Grech, A. Macchi, M. Raynaud and C. Riconda,
+<cite>Ultrashort high energy electron bunches from tunable surface plasma waves driven with laser wavefront rotation</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.103.L021201">Physical Review E 103, L021201 (2021)</a></p>
+</div>
+<div class="citation" id="yao2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yao2021<span class="fn-bracket">]</span></span>
+<p>W. Yao, A. Fazzini, S. N. Chen, K. Burdonov, P. Antici, J. Béard, S. Bolaños, A. Ciardi, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, V. Nastasa, S. Orlando, S. Pikuz, D. C. Popescu, G. Revet, X. Ribeyre, E. d’Humières and J. Fuchs,
+<cite>Laboratory evidence for proton energization by collisionless shock surfing</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1038/s41567-021-01325-w">Nature Physics 17, 1177-1182 (2021)</a></p>
+</div>
+<div class="citation" id="gelfer2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gelfer2021<span class="fn-bracket">]</span></span>
+<p>E. G. Gelfer, A. M, Fedotov and S. Weber,
+<cite>Radiation induced acceleration of ions in a laser irradiated transparent foil</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1367-2630/ac1a97">New Journal of Physics 23, 095002 (2021)</a>
+<a class="reference external" href="https://arxiv.org/abs/1907.02621">arXiv:1907.02621</a></p>
+</div>
+<div class="citation" id="siminos2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Siminos2021<span class="fn-bracket">]</span></span>
+<p>E. Siminos, I. Thiele and C. Olofsson,
+<cite>Laser Wakefield Driven Generation of Isolated Carrier-Envelope-Phase Tunable Intense Subcycle Pulses</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.126.044801">Physical Review Letters 126, 044801 (2021)</a>
+<a class="reference external" href="https://arxiv.org/abs/1902.05014">arXiv:1902.05014</a></p>
+</div>
+<div class="citation" id="budriga2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Budriga2020<span class="fn-bracket">]</span></span>
+<p>O. Budriga, L. E. Ionel, D. Tatomirescu and K. A. Tanaka,
+<cite>Enhancement of laser-focused intensity greater than 10 times through a re-entrant cone in the petawatt regime</cite>,
+<a class="reference external" href="https://doi.org/10.1364/OL.395316">Optics Letters 45, 3454 (2020)</a></p>
+</div>
+<div class="citation" id="nghiem2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Nghiem2020<span class="fn-bracket">]</span></span>
+<p>P. A. P. Nghiem, R. Assmann, A. Beck et al.,
+<cite>Toward a plasma-based accelerator at high beam energy with high beam charge and high beam quality</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevAccelBeams.23.031301">Physical Review Accelerators and Beams 23, 031301 (2020)</a></p>
+</div>
+<div class="citation" id="pisarczyk2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pisarczyk2020<span class="fn-bracket">]</span></span>
+<p>T. Pisarczyk, M. Kalal, S. Yu. Gus’kov et al.,
+<cite>Hot electron retention in laser plasma created under terawatt subnanosecond irradiation of Cu targets</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/abb74b">Plasma Physics and Controlled Fusion 62, 115020 (2020)</a></p>
+</div>
+<div class="citation" id="pagano2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pagano2020<span class="fn-bracket">]</span></span>
+<p>I. Pagano, J. Brooks, A. Bernstein, R. Zgadzaj, J. Leddy, J. Cary and M. C. Downer,
+<cite>Low Density Plasma Waveguides Driven by Ultrashort (30 fs) and Long (300 ps) Pulses for Laser Wakefield Acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1109/AAC.2018.8659410">2018 IEEE Advanced Accelerator Concepts Workshop (AAC), 1</a></p>
+</div>
+<div class="citation" id="ruyer2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ruyer2020<span class="fn-bracket">]</span></span>
+<p>C. Ruyer, A. Debayle, P. Loiseau, M. Casanova and P. E. Masson-Laborde,
+<cite>Kinetic analytical modeling of Gaussian pulse beam-bending including the transient regime</cite>,
+<a class="reference external" href="https://doi.org/10.1063/5.0016214">Physics of Plasmas 27, 102105 (2020)</a></p>
+</div>
+<div class="citation" id="peng2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Peng2020<span class="fn-bracket">]</span></span>
+<p>H. Peng, C. Riconda, M. Grech, C.-T. Zhou and S. Weber,
+<cite>Dynamical aspects of plasma gratings driven by a static ponderomotive potential</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/abb3aa">Plasma Physics and Controlled Fusion 62, 115015 (2020)</a></p>
+</div>
+<div class="citation" id="glek2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Glek2020<span class="fn-bracket">]</span></span>
+<p>P. B. Glek, A. A. Voronin, V. Ya. Panchenko and A. M. Zheltikov,
+<cite>Relativistic electron bunches locked to attosecond optical field waveforms: an attosecond light–matter bound state</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1612-202X/ab7827">Laser Physics Letters 17 055401 (2020)</a></p>
+</div>
+<div class="citation" id="margarone2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Margarone2020<span class="fn-bracket">]</span></span>
+<p>D. Margarone, A. Morace, J. Bonvalet et al.,
+<cite>Generation of α-Particle Beams With a Multi-kJ, Peta-Watt Class Laser System</cite>,
+<a class="reference external" href="https://doi.org/10.3389/fphy.2020.00343">Frontiers in Physics 8, 343 (2020)</a></p>
+</div>
+<div class="citation" id="sinha2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sinha2020<span class="fn-bracket">]</span></span>
+<p>U. Sinha and N. Kumar,
+<cite>Pair-beam propagation in a magnetized plasma for modeling the polarized radiation emission from gamma-ray bursts in laboratory astrophysics experiments</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.101.063204">Physical Review E 101, 063204 (2020)</a></p>
+</div>
+<div class="citation" id="mitrofanov2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mitrofanov2020<span class="fn-bracket">]</span></span>
+<p>A. V. Mitrofanov, D. A. Sidorov-Biryukov, P. B. Glek, M. V. Rozhko, E. A. Stepanov, A. D. Shutov, S. V. Ryabchuk, A. A. Voronin, A. B. Fedotov, and A. M. Zheltikov,
+<cite>Chirp-controlled high-harmonic and attosecond-pulse generation via coherent-wake plasma emission driven by mid-infrared laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1364/OL.45.000750">Optics Letters 45, 750 (2020)</a></p>
+</div>
+<div class="citation" id="spiers2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Spiers2020<span class="fn-bracket">]</span></span>
+<p>B. T. Spiers, M. P. Hill, C. Brown, L. Ceurvorst, N. Ratan, A. F. Savin, P. Allan, E. Floyd, J. Fyrth, L. Hobbs, S. James, J. Luis, M. Ramsay, N. Sircombe, J. Skidmore, R. Aboushelbaya, M. W. Mayr, R. Paddock, R. H. W. Wang and P. A. Norreys,
+<cite>Whole-beam self-focusing in fusion-relevant plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1098/rsta.2020.0159">Philosophical Transactions of the Royal Society A379, 20200159</a></p>
+</div>
+<div class="citation" id="derouillat2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Derouillat2020<span class="fn-bracket">]</span></span>
+<p>J. Derouillat and A. Beck,
+<cite>Single Domain Multiple Decompositions for Particle-in-Cell simulations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1742-6596/1596/1/012052">Journal of Physics: Conference Series 1596, 012052 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/1912.04064">arXiv:1912.04064</a></p>
+</div>
+<div class="citation" id="zemzemi2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Zemzemi2020<span class="fn-bracket">]</span></span>
+<p>I. Zemzemi, F. Massimo and A. Beck,
+<cite>Azimuthal decomposition study of a realistic laser profile for efficient modeling of Laser WakeField Acceleration</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1742-6596/1596/1/012054">Journal of Physics: Conference Series 1596, 012055 (2020)</a></p>
+</div>
+<div class="citation" id="massimo2020b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Massimo2020b<span class="fn-bracket">]</span></span>
+<p>F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
+<cite>Efficient cylindrical envelope modeling for laser wakefield acceleration</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1742-6596/1596/1/012055">Journal of Physics: Conference Series 1596, 012054 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/1912.04674">arXiv:1912.04674</a></p>
+</div>
+<div class="citation" id="massimo2020a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Massimo2020a<span class="fn-bracket">]</span></span>
+<p>F. Massimo, A. Beck, J. Derouillat, I. Zemzemi and A. Specka,
+<cite>Numerical modeling of laser tunneling ionization in particle-in-cell codes with a laser envelope model</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.102.033204">Physical Review E 102, 033204 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/2006.04433">arXiv:2006.04433</a></p>
+</div>
+<div class="citation" id="marcowith2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marcowith2020<span class="fn-bracket">]</span></span>
+<p>A. Marcowith, G. Ferrand, M. Grech, Z. Meliani, I. Plotnikov and R. Walder,
+<cite>Multi-scale simulations of particle acceleration in astrophysical systems</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1007/s41115-020-0007-6">Living Reviews in Computational Astrophysics 6, 1 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/2002.09411">arXiv:2002.09411</a></p>
+</div>
+<div class="citation" id="dargent2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dargent2020<span class="fn-bracket">]</span></span>
+<p>J. Dargent, N. Aunai, B. Lavraud, S. Toledo‐Redondo and F. Califano,
+<cite>Simulation of Plasmaspheric Plume Impact on Dayside Magnetic Reconnection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1029/2019GL086546">Geophysical Research Letters 47, 2019GL086546 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/2002.02243">arXiv:2002.02243</a></p>
+</div>
+<div class="citation" id="sundstrom2020b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sundström2020b<span class="fn-bracket">]</span></span>
+<p>A. Sundström, L. Gremillet, E. Siminos and I. Pusztai,
+<cite>Collisional effects on the electrostatic shock dynamics in thin-foil targets driven by an ultraintense short pulse laser</cite>,
+<a class="reference external" href="https://doi.org/10.1088/1361-6587/ab9a62">Plasma Physics and Controlled Fusion 62, 085015 (2020)</a></p>
+</div>
+<div class="citation" id="sundstrom2020a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sundström2020a<span class="fn-bracket">]</span></span>
+<p>A. Sundström, L. Gremillet, E. Siminos and I. Pusztai,
+<cite>Fast collisional electron heating and relaxation in thin foils driven by a circularly polarized ultraintense short-pulse laser</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S0022377820000264">Journal of Plasma Physics 86, 755860201 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/1911.09562">arXiv:1911.09562</a></p>
+</div>
+<div class="citation" id="gelfer2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gelfer2020<span class="fn-bracket">]</span></span>
+<p>E. G. Gelfer, A. M. Fedotov, O. Klimo and S. Weber,
+<cite>Absorption and opacity threshold for a thin foil in a strong circularly polarized laser field</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.101.033204">Physical Review E 101, 033204 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/1906.05902">arXiv:1906.05902</a></p>
+</div>
+<div class="citation" id="ferri2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ferri2020<span class="fn-bracket">]</span></span>
+<p>J. Ferri, I. Thiele, E. Siminos, L. Gremillet, E. Smetanina, A. Dmitriev, G. Cantono, C.-G. Wahlström and T. Fülöp,
+<cite>Enhancement of laser-driven ion acceleration in non-periodic nanostructured targets</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S0022377819000898">Journal of Plasma Physics 86, 905860101 (2020)</a>
+<a class="reference external" href="https://arxiv.org/abs/1905.11131">arXiv:1905.11131</a></p>
+</div>
+<div class="citation" id="marques2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Marques2019<span class="fn-bracket">]</span></span>
+<p>J.-R. Marquès, L. Lancia, T. Gangolf, M. Blecher, S. Bolaños, J. Fuchs, O. Willi, F. Amiranoff, R. L. Berger, M. Chiaramello, S. Weber, and C. Riconda,
+<cite>Joule-Level High-Efficiency Energy Transfer to Subpicosecond Laser Pulses by a Plasma-Based Amplifier</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevX.9.021008">Physical Review X 9, 021008 (2019)</a></p>
+</div>
+<div class="citation" id="plotnikov2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Plotnikov2019<span class="fn-bracket">]</span></span>
+<p>I. Plotnikov and L. Sironi,
+<cite>The synchrotron maser emission from relativistic shocks in Fast Radio Bursts: 1D PIC simulations of cold pair plasmas</cite>,
+<a class="reference external" href="https://doi.org/10.1093/mnras/stz640">Monthly Notices of the Royal Astronomical Society 485, 3816 (2019)</a></p>
+</div>
+<div class="citation" id="dargent2019b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dargent2019b<span class="fn-bracket">]</span></span>
+<p>J. Dargent, N. Aunai, B. Lavraud, S. Toledo-Redondo and F. Califano,
+<cite>Signatures of Cold Ions in a Kinetic Simulation of the Reconnecting Magnetopause</cite>,
+<a class="reference external" href="https://doi.org/10.1029/2018JA026343">Journal of Geophysical Research: Space Physics, 124, 2497 (2019)</a></p>
+</div>
+<div class="citation" id="dargent2019a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dargent2019a<span class="fn-bracket">]</span></span>
+<p>J. Dargent, F. Lavorenti, F. Califano, P. Henri, F. Pucci and S. S. Cerri,
+<cite>Interplay between Kelvin–Helmholtz and lower-hybrid drift instabilities</cite>,
+<a class="reference external" href="https://doi.org/10.1017/S0022377819000758">Journal of Plasma Physics 85, 805850601</a></p>
+</div>
+<div class="citation" id="geng2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Geng2019<span class="fn-bracket">]</span></span>
+<p>X. S. Geng, L. L. Ji, B. F. Shen et al.,
+<cite>Quantum reflection above the classical radiation-reaction barrier in the quantum electro-dynamics regime</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s42005-019-0164-2">Communications Physics 2, 66 (2019)</a></p>
+</div>
+<div class="citation" id="sinha2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Sinha2019<span class="fn-bracket">]</span></span>
+<p>U. Sinha, C. H. Keitel, and N. Kumar,
+<cite>Polarized Light from the Transportation of a Matter-Antimatter Beam in a Plasma</cite>,
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.122.204801">Physical Review Letters 122, 204801 (2019)</a></p>
+</div>
+<div class="citation" id="malko2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Malko2019<span class="fn-bracket">]</span></span>
+<p>S. Malko, X. Vaisseau, F. Perez, D. Batani, A. Curcio, M. Ehret, J. Honrubia, K. Jakubowska, A. Morace, J. J. Santos and L. Volpe,
+<cite>Enhanced relativistic-electron beam collimation using two consecutive laser pulses</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-019-50401-y">Scientific Reports 9, 14061 (2019)</a></p>
+</div>
+<div class="citation" id="peng2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Peng2019<span class="fn-bracket">]</span></span>
+<p>H. Peng, C. Riconda, M. Grech, J.-Q. Su and S. Weber,
+<cite>Nonlinear dynamics of laser-generated ion-plasma gratings: A unified description</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.100.061201">Physical Review E 100, 061201 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1911.03440">arXiv:1911.03440</a></p>
+</div>
+<div class="citation" id="fang2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Fang2019<span class="fn-bracket">]</span></span>
+<p>J. Fang, C.-Y. Lu, J.-W. Yan and H. Yu,
+<cite>Early acceleration of electrons and protons at the nonrelativistic quasiparallel shocks with different obliquity angles</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1674-4527/19/12/182">Research in Astronomy and Astrophysics 19, 182 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1908.08170">arXiv:1908.08170</a></p>
+</div>
+<div class="citation" id="yoon2019b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2019b<span class="fn-bracket">]</span></span>
+<p>Y. Yoon and P. M. Bellan,
+<cite>Kinetic Verification of the Stochastic Ion Heating Mechanism in Collisionless Magnetic Reconnection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.3847/2041-8213/ab5b0a">The Astrophysical Journal Letters 887, L29 (2019)</a></p>
+</div>
+<div class="citation" id="yoon2019a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Yoon2019a<span class="fn-bracket">]</span></span>
+<p>Y. D. Yoon and P. M. Bellan,
+<cite>The electron canonical battery effect in magnetic reconnection: Completion of the electron canonical vorticity framework</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/1.5122225">Physics of Plasmas 26, 100702 (2019)</a></p>
+</div>
+<div class="citation" id="massimo2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Massimo2019<span class="fn-bracket">]</span></span>
+<p>F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A Specka,
+<cite>Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/ab49cf">Plasma Physics and Controlled Fusion 61, 124001 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1912.04127">arXiv:1912.04127</a></p>
+</div>
+<div class="citation" id="beck2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Beck2019<span class="fn-bracket">]</span></span>
+<p>A. Beck, J. Derouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci and M. Grech,
+<cite>Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.cpc.2019.05.001">Computer Physics Communications 244, 246-263 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1810.03949">arXiv:1810.03949</a></p>
+</div>
+<div class="citation" id="perez2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pérez2019<span class="fn-bracket">]</span></span>
+<p>F. Pérez and M. Grech,
+<cite>Oblique-incidence, arbitrary-profile wave injection for electromagnetic simulations</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.99.033307">Physical Review E 99, 033307 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1809.04435">arXiv:1809.04435</a></p>
+</div>
+<div class="citation" id="thiele2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Thiele2019<span class="fn-bracket">]</span></span>
+<p>I. Thiele, E. Siminos and T. Fülöp,
+<cite>Electron Beam Driven Generation of Frequency-Tunable Isolated Relativistic Subcycle Pulses</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.122.104803">Physical Review Letters 122, 104803 (2019)</a>
+<a class="reference external" href="https://arxiv.org/abs/1806.04976">arXiv:1806.04976</a></p>
+</div>
+<div class="citation" id="golovanov2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Golovanov2018<span class="fn-bracket">]</span></span>
+<p>A. A. Golovanov  and I. Yu. Kostyukov,
+<cite>Bubble regime of plasma wakefield in 2D and 3D geometries</cite>,
+<a class="reference external" href="https://doi.org/10.1063/1.5047274">Physics of Plasmas 25, 103107 (2018)</a></p>
+</div>
+<div class="citation" id="toledoredondo2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>ToledoRedondo2018<span class="fn-bracket">]</span></span>
+<p>S. Toledo-Redondo, J. Dargent, N. Aunai, B. Lavraud, M. André, W. Li, B. Giles, P.-A. Lindvist, R. E. Ergun, C. T. Russel and J. L. Burch,
+<cite>Perpendicular Current Reduction Caused by Cold Ions of Ionospheric Origin in Magnetic Reconnection at the Magnetopause: Particle-in-Cell Simulations and Spacecraft Observations</cite>,
+<a class="reference external" href="https://doi.org/10.1029/2018GL079051">Geophysical Research Letters 45, 10,033 (2018)</a></p>
+</div>
+<div class="citation" id="gelfer2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gelfer2018<span class="fn-bracket">]</span></span>
+<p>E. Gelfer, N. Elkina and A. Fedotov,
+<cite>Unexpected impact of radiation friction: enhancing production of longitudinal plasma waves</cite>,
+<a class="reference external" href="https://doi.org/10.1038/s41598-018-24930-x">Scientific Reports 8, 6478 (2018)</a></p>
+</div>
+<div class="citation" id="niel2018b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Niel2018b<span class="fn-bracket">]</span></span>
+<p>F. Niel, C. Riconda, F. Amiranoff, M. Lobet, J. Derouillat, F. Pérez, T. Vinci and M. Grech,
+<cite>From quantum to classical modeling of radiation reaction: a focus on the radiation spectrum</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/aace22">Plasma Physics and Controlled Fusion 60, 094002 (2018)</a>
+<a class="reference external" href="https://arxiv.org/abs/1802.02927">arXiv:1802.02927</a></p>
+</div>
+<div class="citation" id="plotnikov2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Plotnikov2018<span class="fn-bracket">]</span></span>
+<p>I. Plotnikov, A. Grassi and M. Grech,
+<cite>Perpendicular relativistic shocks in magnetized pair plasma</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1093/mnras/sty979">Monthly Notices of the Royal Astronomical Society 477, 5238-5260 (2018)</a>
+<a class="reference external" href="https://arxiv.org/abs/1712.02883">arXiv:1712.02883</a></p>
+</div>
+<div class="citation" id="niel2018a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Niel2018a<span class="fn-bracket">]</span></span>
+<p>F. Niel, C. Riconda, F. Amiranoff, R. Duclous and M. Grech,
+<cite>From quantum to classical modeling of radiation reaction: A focus on stochasticity effects</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.97.043209">Physical Review E 97, 043209 (2018)</a>
+<a class="reference external" href="https://arxiv.org/abs/1707.02618">arXiv:1707.02618</a></p>
+</div>
+<div class="citation" id="grassi2017b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Grassi2017b<span class="fn-bracket">]</span></span>
+<p>A. Grassi, M. Grech, F. Amiranoff, A. Macchi and C. Riconda,
+<cite>Radiation-pressure-driven ion Weibel instability and collisionless shocks</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.96.033204">Physical Review E 96, 033204 (2017)</a>
+<a class="reference external" href="https://arxiv.org/abs/1705.05402">arXiv:1705.05402</a></p>
+</div>
+<div class="citation" id="fedeli2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Fedeli2017<span class="fn-bracket">]</span></span>
+<p>L. Fedeli, A. Formenti, L. Cialfi, A. Sgattoni, G. Cantono and M. Passoni,
+<cite>Structured targets for advanced laser-driven sources</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1088/1361-6587/aa8a54">Plasma Physics and Controlled Fusion 60, 014013 (2017)</a></p>
+</div>
+<div class="citation" id="golovanov2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Golovanov2017<span class="fn-bracket">]</span></span>
+<p>A. A. Golovanov, I. Yu. Kostyukov, J. Thomas and A. Pukhov,
+<cite>Analytic model for electromagnetic fields in the bubble regime of plasma wakefield in non-uniform plasmas</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/1.4996856">Physics of Plasmas 24, 103104 (2017)</a></p>
+</div>
+<div class="citation" id="dargent2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dargent2017<span class="fn-bracket">]</span></span>
+<p>J. Dargent, N. Aunai, B. Lavraud, S. Toledo-Redondo, M. A. Shay, P. A. Cassak and K. Malakit,
+<cite>Kinetic simulation of asymmetric magnetic reconnection with cold ions</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1002/2016JA023831">Journal of Geophysical Research: Space Physics 122, 5290-5306 (2017)</a></p>
+</div>
+<div class="citation" id="grassi2017a" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Grassi2017a<span class="fn-bracket">]</span></span>
+<p>A. Grassi, M. Grech, F. Amiranoff, F. Pegoraro, A. Macchi and C. Riconda,
+<cite>Electron Weibel instability in relativistic counterstreaming plasmas with flow-aligned external magnetic fields</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.95.023203">Physical Review E 95, 023203 (2017)</a></p>
+</div>
+<div class="citation" id="dargent2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Dargent2016<span class="fn-bracket">]</span></span>
+<p>J. Dargent, N. Aunai, G. Belmont, N. Dorville, B. Lavraud and M. Hesse,
+<cite>Full particle-in-cell simulations of kinetic equilibria and the role of the initial current sheet on steady asymmetric magnetic reconnection</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1017/S002237781600057X">Journal of Plasma Physics 82, 905820305 (2016)</a></p>
+</div>
+<div class="citation" id="chiaramello2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Chiaramello2016<span class="fn-bracket">]</span></span>
+<p>M. Chiaramello, C. Riconda, F. Amiranoff, J. Fuchs, M. Grech, L. Lancia, J.-R. Marquès, T. Vinci and S. Weber,
+<cite>Optimization of interaction conditions for efficient short laser pulse amplification by stimulated Brillouin scattering in the strongly coupled regime</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1063/1.4955322">Physics of Plasmas 23, 072103 (2016)</a></p>
+</div>
+<div class="citation" id="beck2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Beck2016<span class="fn-bracket">]</span></span>
+<p>A. Beck, J.T. Frederiksen and J. Dérouillat,
+<cite>Load management strategy for Particle-In-Cell simulations in high energy particle acceleration</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1016/j.nima.2016.03.112">Nuclear Instuments and Methods in Physics Research A 829, 418-421 (2016)</a></p>
+</div>
+<div class="citation" id="lancia2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Lancia2016<span class="fn-bracket">]</span></span>
+<p>L. Lancia, A. Giribono, L. Vassura, M. Chiaramello, C. Riconda, S. Weber, A. Castan, A. Chatelain, A. Frank, T. Gangolf, M. N. Quinn, J. Fuchs and J.-R. Marquès,
+<cite>Signatures of the Self-Similar Regime of Strongly Coupled Stimulated Brillouin Scattering for Efficient Short Laser Pulse Amplification</cite>,
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevLett.116.075001">Physical Review Letters 116, 075001 (2016)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

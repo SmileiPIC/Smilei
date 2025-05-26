@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Vectorization &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="GPU offloading" href="GPU_offloading.html" />
+    <link rel="prev" title="Single-domain multiple decompositions" href="SDMD.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Vectorization</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Vectorization</a><ul>
+<li><a class="reference internal" href="#notion-of-single-instruction-multiple-data-simd-vectorization">Notion of Single Instruction Multiple Data (SIMD) Vectorization</a></li>
+<li><a class="reference internal" href="#simd-vectorization-of-the-particle-operators">SIMD vectorization of the particle operators</a></li>
+<li><a class="reference internal" href="#vectorization-performance">Vectorization Performance</a></li>
+<li><a class="reference internal" href="#adaptive-vectorization">Adaptive vectorization</a></li>
+<li><a class="reference internal" href="#large-scale-simulations">Large-scale simulations</a><ul>
+<li><a class="reference internal" href="#mildly-relativistic-collisionless-shock">Mildly-relativistic collisionless shock</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="vectorization">
+<h1>Vectorization<a class="headerlink" href="#vectorization" title="Link to this heading">¶</a></h1>
+<p>For enhanced performances on most recent CPUs, <strong class="program">Smilei</strong> exploits
+efficiently vectorization using refactored and optimized operators.</p>
+<p>Vectorization optimizations are published in <a class="reference internal" href="../Overview/material.html#beck2019" id="id1"><span>[Beck2019]</span></a>.</p>
+<hr class="docutils" />
+<section id="notion-of-single-instruction-multiple-data-simd-vectorization">
+<h2>Notion of Single Instruction Multiple Data (SIMD) Vectorization<a class="headerlink" href="#notion-of-single-instruction-multiple-data-simd-vectorization" title="Link to this heading">¶</a></h2>
+<p>Single Instruction Multiple Data (SIMD) vectorization consists on performing on
+a contiguous set of data, usually called vector, the same operation(s)
+in a single instruction.
+On modern Computational Processing Units (CPU), vector registers have a length 512 kb
+that corresponds to 8 double precision floats (on Intel Skylake processors for
+instance and future ARM architecture).
+Each processing unit can perform a Fused Multiply Add instruction (FMA) that
+combines an addition and a multiplication.
+If-conditions can be handled using mask registers.
+Modern SIMD vectorization is described in <a class="reference internal" href="#simd-fig"><span class="std std-numref">Fig. 8</span></a>.</p>
+<figure class="align-center" id="id3">
+<span id="simd-fig"></span><a class="reference internal image-reference" href="../_images/SIMD.png"><img alt="../_images/SIMD.png" src="../_images/SIMD.png" style="width: 90%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 8 </span><span class="caption-text">Single Instruction Multiple Data (SIMD) vectorization</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>On SIMD CPUs, an application has to use SIMD vectorization to reach the maximum
+of the core computational peak performance. A scalar code without FMA
+uses less than 7% of the core computational power.
+This affirmation can nonetheless be mitigated on Intel Skylake processors that
+adapt their frequency on the used vectorization instruction set.</p>
+</section>
+<hr class="docutils" />
+<section id="simd-vectorization-of-the-particle-operators">
+<h2>SIMD vectorization of the particle operators<a class="headerlink" href="#simd-vectorization-of-the-particle-operators" title="Link to this heading">¶</a></h2>
+<p>Optimization efforts have been recently done to vectorize efficiently the
+particle operators of <strong class="program">Smilei</strong>.</p>
+<p>A new sorting method has been first implemented in order to then make
+the particle operator vectorization easier.
+This method, referred to as cycle sort, minimizes the number of data movements
+by performing successive permutation.</p>
+<p>The most expensive operators and most difficult to vectorize are the current projection
+(deposition) and the field interpolation (gathering) steps where
+there is an interpolation between the grids and the macro-particles.
+These two steps have been vectorized taking advantage of the cycle sort.</p>
+</section>
+<hr class="docutils" />
+<section id="vectorization-performance">
+<h2>Vectorization Performance<a class="headerlink" href="#vectorization-performance" title="Link to this heading">¶</a></h2>
+<p>Vectorization is not always the most efficient choice.
+It depends on the number of macro-particles per cell.
+To demonstrate this, we have evaluated in <a class="reference internal" href="../Overview/material.html#beck2019" id="id2"><span>[Beck2019]</span></a> the performance with a series of tests on different architectures: Intel Cascade
+Lake, Intel Skylake, Intel Knights Landing, Intel Haswell, Intel Broadwell.
+The Cascade Lake processor is not in the original study and has been added after.
+We have used the 3D homogeneous Maxwellian benchmark available <a class="reference external" href="_static/vecto_maxwellian_plasma_3d.py">here</a>.
+The number of macro-particles per cell is varied from 1 to 512.
+This study has been focused on the particle operators (interpolator, pusher, projector, sorting) and discards the
+computational costs of the Maxwell solver and of the communications between processes.
+Each run has been performed on a single node with both the scalar and the vectorized operators..
+Since the number of cores varies from an architecture
+to another, the runs were conducted so that the load per core
+(i.e. OpenMP thread) is constant.
+The number of patches per core also remains the same for all cores throughout the whole simulation since the imbalance
+in this configuration is never high enough to trigger patch exchanges.
+The patch size is kept constant at 8 × 8 × 8 cells.
+The total number of patches for each architecture is determined so that each core has 8 patches to handle.
+The numerical parameters are given in <a class="reference internal" href="#vecto-numerical-parameters"><span class="std std-numref">Table 1</span></a>.</p>
+<span id="vecto-numerical-parameters"></span><table class="docutils align-default" id="id4">
+<caption><span class="caption-number">Table 1 </span><span class="caption-text">Numerical parameters for vectorization</span><a class="headerlink" href="#id4" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Cluster</p></th>
+<th class="head"><p>Architecture</p></th>
+<th class="head"><p>Number of patches</p></th>
+<th class="head"><p>Configuration</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Jean Zay, IDRIS, France</p></td>
+<td><p>2 x Cascade Lake (Intel® Xeon® Gold 6248, 20 cores)</p></td>
+<td><p>5 x 8 x 8</p></td>
+<td><p>Intel 19, IntelMPI 19</p></td>
+</tr>
+<tr class="row-odd"><td><p>Irene Joliot-Curie, TGCC, France</p></td>
+<td><p>2 x skylake (Intel® Skylake 8168, 24 cores)</p></td>
+<td><p>6 x 8 x 8</p></td>
+<td><p>Intel 18, IntelMPI 18</p></td>
+</tr>
+<tr class="row-even"><td><p>Frioul, Cines, France</p></td>
+<td><p>2 x Knights Landing (Intel® Xeon® Phi 7250, 68 cores)</p></td>
+<td><p>8 x 8 x 8</p></td>
+<td><p>Intel 18, IntelMPI 18</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tornado, LPP, France</p></td>
+<td><p>2 x Broadwell (Intel® Xeon® E5-2697 v4, 16 cores)</p></td>
+<td><p>4 x 8 x 8</p></td>
+<td><p>Intel 17, openMPI 1.6.5</p></td>
+</tr>
+<tr class="row-even"><td><p>Jureca, Juelich, Germany</p></td>
+<td><p>2 x Haswell (Intel® Xeon® E5-2680 v3, 12 cores)</p></td>
+<td><p>3 x 8 x 8</p></td>
+<td><p>Intel 18, IntelMPI 18</p></td>
+</tr>
+</tbody>
+</table>
+<p>The results of the simulation tests (shape factor of order 2) for both scalar and vectorized versions are
+shown in <a class="reference internal" href="#vecto-particle-times-o2-all"><span class="std std-numref">Fig. 9</span></a>.
+Contrary to the scalar mode, the vectorized operators efficiency depends strongly on the number of particles per cell.
+It shows improved efficiency, compared to the scalar mode, above a certain number of particles per cell denoted <em>inversion point</em>.</p>
+<figure class="align-default" id="id5">
+<span id="vecto-particle-times-o2-all"></span><a class="reference internal image-reference" href="../_images/vecto_particle_times_o2_all.png"><img alt="../_images/vecto_particle_times_o2_all.png" src="../_images/vecto_particle_times_o2_all.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 9 </span><span class="caption-text">Particle computational cost as a function of the number of particles per cell. Vectorized
+operators are compared to their scalar versions on various cluster
+architectures. Note that the Skylake compilations accepts both AVX512 and AVX2
+instruction sets.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The lower performances of the vectorized operators at low particles per cell can be easily understood:</p>
+<ol class="arabic simple">
+<li><p>The complexity of vectorized algorithms is higher than their scalar counter-parts.</p></li>
+<li><p>New schemes with additional loops and local buffers induced an overhead that is onmy compensated when the number of particles is large enough.</p></li>
+<li><p>SIMD instructions are not efficient if not fulfilled</p></li>
+<li><p>SIMD instructions operate at a lower clock frequency than scalar ones on recent architectures</p></li>
+</ol>
+<p>The location of the inversion point of the speed-ups brought by vectorization depends on the architecture.
+The performance results are summarized in <a class="reference internal" href="#vecto-performance-results"><span class="std std-numref">Table 2</span></a>.</p>
+<span id="vecto-performance-results"></span><table class="docutils align-default" id="id6">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Vectorization performance</span><a class="headerlink" href="#id6" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Architecture (Cluster)</p></th>
+<th class="head"><p>Inversion point (particles per cell)</p></th>
+<th class="head"><p>Vectorization speed-up</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Cascade lake (Jean Zay)</p></td>
+<td><p>8 particles per cell</p></td>
+<td><p>x2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Skylake (Irene Joliot-Curie)</p></td>
+<td><p>10 particles per cell (most advanced instruction set)</p></td>
+<td><p>x2.1</p></td>
+</tr>
+<tr class="row-even"><td><p>KNL (Frioul)</p></td>
+<td><p>12 particles per cell</p></td>
+<td><p>x2.8</p></td>
+</tr>
+<tr class="row-odd"><td><p>Broadwell (LLR)</p></td>
+<td><p>10 particles per cell</p></td>
+<td><p>x1.9</p></td>
+</tr>
+<tr class="row-even"><td><p>Haswell (Jureca)</p></td>
+<td><p>10 particles per cell</p></td>
+<td><p>x1.9</p></td>
+</tr>
+</tbody>
+</table>
+<p>Vectorization efficiency increases with the number of particles per cell above the inversion point.
+It tends to stabilize far from the inversion point above 256 particles per cell.</p>
+</section>
+<hr class="docutils" />
+<section id="adaptive-vectorization">
+<h2>Adaptive vectorization<a class="headerlink" href="#adaptive-vectorization" title="Link to this heading">¶</a></h2>
+<p>Adaptive vectorization consists on switching localy between scalar and
+vectorized operators during the simulation, choosing the most efficient one
+in the region of interest.
+The concept has been successfully implemented at the lower granularity of the code.
+Every given number of time steps, for each
+patch, and for each species, the most efficient set of operator is determined
+from the number of particles per cell.
+The concept is schematically described in <a class="reference internal" href="#fig-vecto-domain-decomposition"><span class="std std-numref">Fig. 10</span></a>.</p>
+<figure class="align-default" id="id7">
+<span id="fig-vecto-domain-decomposition"></span><a class="reference internal image-reference" href="../_images/vecto_domain_decomposition.png"><img alt="../_images/vecto_domain_decomposition.png" src="../_images/vecto_domain_decomposition.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 10 </span><span class="caption-text">Description of the adaptive vectorization withn the multi-stage domain decomposition.
+Patches with many macro-particles per cell are faster in with vectorized operators whereas with few macro-particles per cell, scalar operators are more efficient.</span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>An advanced empirical criterion has been developed.
+It is computed from the parametric studies presented in <a class="reference internal" href="#vecto-particle-times-o2-all"><span class="std std-numref">Fig. 9</span></a>
+summarizes their results and indicates, for a given species in a given patch, the approximate time to compute the particle
+operators using both the scalar and the vectorized operator.
+The computation times have been normalized to that of the scalar operator for a single particle.
+The comparision of all normalized curves is presented in <a class="reference internal" href="#fig-vecto-efficiency-o2-all-mc"><span class="std std-numref">Fig. 11</span></a>.</p>
+<figure class="align-default" id="id8">
+<span id="fig-vecto-efficiency-o2-all-mc"></span><a class="reference internal image-reference" href="../_images/vecto_efficiency_o2_all_mc.png"><img alt="../_images/vecto_efficiency_o2_all_mc.png" src="../_images/vecto_efficiency_o2_all_mc.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 11 </span><span class="caption-text">Normalized time per particle spent for all particle operators in
+the scalar and vectorized modes with various architectures, and 2nd-order
+interpolation shape functions.</span><a class="headerlink" href="#id8" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The outcomes from different architectures appear sufficiently similar to consider an average between their results.
+A linear regression of the average between all is applied on the scalar results to have a fit function to implement in the code.
+It writes:</p>
+<div class="math notranslate nohighlight" id="equation-fit-scalar">
+<span class="eqno">(6)<a class="headerlink" href="#equation-fit-scalar" title="Link to this equation">¶</a></span>\[S(N) = -1.11 \times 10^{-2} \log{\left( N \right)} + 9.56 \times 10^{-1}\]</div>
+<p>S is the computation time per particle normalized to that with 1 PPC, and N is the number of PPC.
+For the average between vectorized results, a fourth-order polynomial regression writes:</p>
+<div class="math notranslate nohighlight" id="equation-vecto-scalar">
+<span class="eqno">(7)<a class="headerlink" href="#equation-vecto-scalar" title="Link to this equation">¶</a></span>\[\begin{split}V(N) = 1.76 \times 10^{ -3 } \log{ \left( N \right)}^4 \\ \nonumber
++ 8.41 \times 10^{ -2 } \log{ \left( N \right)}^3 \\ \nonumber
++ 1.45 \times 10^{ -2 } \log{ \left( N \right)}^2 \\ \nonumber
+-1.19 \log{ \left( N \right) } \\ \nonumber
++ 2.86\end{split}\]</div>
+<p>The polynomial regressions are shown in <a class="reference internal" href="#vecto-efficiency-o2-all-fit"><span class="std std-numref">Fig. 12</span></a>.</p>
+<figure class="align-default" id="id9">
+<span id="vecto-efficiency-o2-all-fit"></span><a class="reference internal image-reference" href="../_images/vecto_efficiency_o2_all_fit.png"><img alt="../_images/vecto_efficiency_o2_all_fit.png" src="../_images/vecto_efficiency_o2_all_fit.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 12 </span><span class="caption-text">Averages of the curves of <a class="reference internal" href="#fig-vecto-efficiency-o2-all-mc"><span class="std std-numref">Fig. 11</span></a> , and polynomial regressions.</span><a class="headerlink" href="#id9" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>These functions are implemented in the code to determine approximately the normalized single-particle cost.
+Assuming every particle takes the same amount of time, the total time to advance a species in a given patch can then be simply evaluated with a
+sum on all cells within the patch as:</p>
+<div class="math notranslate nohighlight" id="equation-adaptive-vecto-time-evaluation">
+<span class="eqno">(8)<a class="headerlink" href="#equation-adaptive-vecto-time-evaluation" title="Link to this equation">¶</a></span>\[T_{\rm s,v} = \sum_{c \ \in\ patch\ cells} N(c) \times F\!\left(N(c)\right)\]</div>
+<p>where F is either S or V.
+Comparing <span class="math notranslate nohighlight">\(T_s\)</span> and <span class="math notranslate nohighlight">\(T_v\)</span> determines which of the scalar or vectorized operators should be locally selected.
+This operation is repeated every given number of time steps to adapt to the evolving plasma distribution. Note that similar
+approximations may be computed for specific processors instead of using a general rule.
+In Smilei, other typical processors have been included, requiring an additional compilation flag automatically included in the machine files for <code class="docutils literal notranslate"><span class="pre">make</span></code>.</p>
+<p>The process of computing the faster mode and changing operators accordingly is called reconfiguration</p>
+</section>
+<section id="large-scale-simulations">
+<h2>Large-scale simulations<a class="headerlink" href="#large-scale-simulations" title="Link to this heading">¶</a></h2>
+<p>Adaptive vectorization has been validated on large-scale simulations with
+different benchmarks.
+The following video enables to visualize on different scenarii the behavior of the adaptive vectorization.</p>
+<video style="display:block; margin: 0 auto; width: 100%;" controls src="https://mdls.fr/wp-content/uploads/2022/04/vecto_study_3d.mp4" width="100%">
+</video><section id="mildly-relativistic-collisionless-shock">
+<h3>Mildly-relativistic collisionless shock<a class="headerlink" href="#mildly-relativistic-collisionless-shock" title="Link to this heading">¶</a></h3>
+<p>One of the case was the simulation of Mildly-relativistic collisionless shock.
+The effect of the adaptive vectorization mode is illustrated by <a class="reference internal" href="#fig-weibel-3d-ne-vecto-it510"><span class="std std-numref">Fig. 13</span></a>.
+The electron density is shown in the volume rendering of the top.
+The volume rendering at the bottom shows and patch computational state for the electron species.</p>
+<figure class="align-center" id="id10">
+<span id="fig-weibel-3d-ne-vecto-it510"></span><a class="reference external image-reference" href="https://youtu.be/-ENUekyE_A4"><img alt="../_images/Weibel_3d_ne_vecto_it510.jpg" src="../_images/Weibel_3d_ne_vecto_it510.jpg" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 13 </span><span class="caption-text">Mildly-relativistic collisionless shock: On the top, volume rendering of the normalized
+electron density <span class="math notranslate nohighlight">\(n_e /n_c\)</span> (<span class="math notranslate nohighlight">\(n_c\)</span> the critical density) at
+time <span class="math notranslate nohighlight">\(t = 34 \omega^{-1}\)</span> (<span class="math notranslate nohighlight">\(\omega\)</span> the laser frequency) after the beginning of the collision.
+On the bottom, patches in vectorized
+mode for the electron species at the same time.
+An animated version of these can be viewed by clicking on this image.</span><a class="headerlink" href="#id10" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Thanks to the adaptive vectorization, high-density regions that contains many macro-particles per cell corresponds to the patches in vectorized mode.
+Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
+The following video shows how the patches are dynamically switched in vectorized or scalar mode.</p>
+<video style="display:block; margin: 0 auto; width: 100%;" controls src="https://mdls.fr/wp-content/uploads/2022/04/weibel_interp.mp4" width="100%">
+</video><p>For this specific benchmark, the speed-up obtained with vectorization is of x2.
+Adaptive vectorization brinds a small additional speed-up in some cases.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

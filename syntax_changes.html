@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Syntax changes &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/smilei_theme.css?v=3908db80" />
+    <script src="_static/documentation_options.js?v=4af8989d"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Implementation" href="implementation.html" />
+    <link rel="prev" title="Optimization and vectorization compilation options" href="Use/optimization_flags.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Syntax changes</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Syntax changes</a><ul>
+<li><a class="reference internal" href="#in-the-namelist">In the namelist</a></li>
+<li><a class="reference internal" href="#in-the-post-processing-module">In the post-processing module</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="index.html">
+                <img class="logo" src="_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="syntax-changes">
+<h1>Syntax changes<a class="headerlink" href="#syntax-changes" title="Link to this heading">¶</a></h1>
+<p>A number of changes in the syntax have been brought in Smilei’s version 3.3.
+Most changes only affect keywords names.</p>
+<hr class="docutils" />
+<section id="in-the-namelist">
+<h2>In the namelist<a class="headerlink" href="#in-the-namelist" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old</p></th>
+<th class="head"><p>New</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;1d3v&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;2d3v&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;3d3v&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;1Dcartesian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;2Dcartesian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;3Dcartesian&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">maxwell_sol</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#maxwell_solver" title="maxwell_solver"><code class="xref py py-data docutils literal notranslate"><span class="pre">maxwell_solver</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sim_length</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#grid_length" title="grid_length"><code class="xref py py-data docutils literal notranslate"><span class="pre">grid_length</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sim_time</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#simulation_time" title="simulation_time"><code class="xref py py-data docutils literal notranslate"><span class="pre">simulation_time</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bc_em_type_*</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#EM_boundary_conditions" title="EM_boundary_conditions"><code class="xref py py-data docutils literal notranslate"><span class="pre">EM_boundary_conditions</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">referenceAngularFrequency_SI</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#reference_angular_frequency_SI" title="reference_angular_frequency_SI"><code class="xref py py-data docutils literal notranslate"><span class="pre">reference_angular_frequency_SI</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">currentFilter_int</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#currentfilter"><span class="std std-ref">CurrentFilter</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Friedman_filter</span></code>
+<code class="docutils literal notranslate"><span class="pre">Friedman_theta</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#fieldfilter"><span class="std std-ref">FieldFilter</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">poisson_iter_max</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#poisson_max_iteration" title="poisson_max_iteration"><code class="xref py py-data docutils literal notranslate"><span class="pre">poisson_max_iteration</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">poisson_error_max</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#poisson_max_error" title="poisson_max_error"><code class="xref py py-data docutils literal notranslate"><span class="pre">poisson_max_error</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">species_type</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id56" title="name"><code class="xref py py-data docutils literal notranslate"><span class="pre">name</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">initPosition_type</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id11" title="position_initialization"><code class="xref py py-data docutils literal notranslate"><span class="pre">position_initialization</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">initMomentum_type</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id12" title="momentum_initialization"><code class="xref py py-data docutils literal notranslate"><span class="pre">momentum_initialization</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">n_part_per_cell</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id15" title="particles_per_cell"><code class="xref py py-data docutils literal notranslate"><span class="pre">particles_per_cell</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nb_density</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id16" title="number_density"><code class="xref py py-data docutils literal notranslate"><span class="pre">number_density</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bc_part_type_****</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#boundary_conditions" title="boundary_conditions"><code class="xref py py-data docutils literal notranslate"><span class="pre">boundary_conditions</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Particle boundary condition <code class="docutils literal notranslate"><span class="pre">&quot;none&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;periodic&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Particle boundary condition <code class="docutils literal notranslate"><span class="pre">&quot;refl&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;reflective&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Particle boundary condition <code class="docutils literal notranslate"><span class="pre">&quot;supp&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;remove&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">thermT</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#thermal_boundary_temperature" title="thermal_boundary_temperature"><code class="xref py py-data docutils literal notranslate"><span class="pre">thermal_boundary_temperature</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">thermVelocity</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#thermal_boundary_velocity" title="thermal_boundary_velocity"><code class="xref py py-data docutils literal notranslate"><span class="pre">thermal_boundary_velocity</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">isTest</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#is_test" title="is_test"><code class="xref py py-data docutils literal notranslate"><span class="pre">is_test</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dynamics_type</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#pusher" title="pusher"><code class="xref py py-data docutils literal notranslate"><span class="pre">pusher</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">boxSide</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id21" title="box_side"><code class="xref py py-data docutils literal notranslate"><span class="pre">box_side</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">polarizationPhi</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#id25" title="polarization_phi"><code class="xref py py-data docutils literal notranslate"><span class="pre">polarization_phi</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dump_file_sequence</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#keep_n_dumps" title="keep_n_dumps"><code class="xref py py-data docutils literal notranslate"><span class="pre">keep_n_dumps</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">coef_cell</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#cell_load" title="cell_load"><code class="xref py py-data docutils literal notranslate"><span class="pre">cell_load</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">coef_frozen</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#frozen_particle_load" title="frozen_particle_load"><code class="xref py py-data docutils literal notranslate"><span class="pre">frozen_particle_load</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DumpRestart</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#checkpoints"><span class="std std-ref">Checkpoints</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ExtField</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#externalfield"><span class="std std-ref">ExternalField</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">track_******</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#diagtrackparticles"><span class="std std-ref">DiagTrackParticles</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">track_filter</span></code></p></td>
+<td><p>The <a class="reference internal" href="Use/namelist.html#filter" title="filter"><code class="xref py py-data docutils literal notranslate"><span class="pre">filter</span></code></a> function syntax has changed</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DiagParticles</span></code></p></td>
+<td><p><a class="reference internal" href="Use/namelist.html#diagparticlebinning"><span class="std std-ref">DiagParticleBinning</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code> of <code class="docutils literal notranslate"><span class="pre">DiagParticles</span></code></p></td>
+<td><div class="line-block">
+<div class="line"><a class="reference internal" href="Use/namelist.html#id51" title="deposited_quantity"><code class="xref py py-data docutils literal notranslate"><span class="pre">deposited_quantity</span></code></a></div>
+<div class="line">The values of this argument have changed</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="in-the-post-processing-module">
+<h2>In the post-processing module<a class="headerlink" href="#in-the-post-processing-module" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old</p></th>
+<th class="head"><p>New</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">Smilei</span> <span class="pre">import</span> <span class="pre">*</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">S</span> <span class="pre">=</span> <span class="pre">Smilei(&quot;my/simulation/path/&quot;)</span></code></div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">happi</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">S</span> <span class="pre">=</span> <span class="pre">happi.Open(&quot;my/simulation/path/&quot;)</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ParticleDiagnostic()</span></code></p></td>
+<td><p><a class="reference internal" href="Use/post-processing.html#id0" title="ParticleBinning"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ParticleBinning()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">slice</span></code> argument</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">average</span></code> or <code class="docutils literal notranslate"><span class="pre">sum</span></code>, depending on the diagnostic</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">stride</span></code> argument</p></td>
+<td><p>more complete <code class="docutils literal notranslate"><span class="pre">subset</span></code></p></td>
+</tr>
+<tr class="row-even"><td><div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">average</span></code> argument of <a class="reference internal" href="Use/post-processing.html#Probe" title="Probe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Probe()</span></code></a></div>
+<div class="line">used bins indices</div>
+</div>
+</td>
+<td><p>now requires coordinates in code units</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

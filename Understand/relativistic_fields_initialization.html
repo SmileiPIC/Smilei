@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Field initialization for relativistic species &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Perfectly Matched Layers" href="PML.html" />
+    <link rel="prev" title="Particle Injector" href="particle_injector.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Field initialization for relativistic species</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Field initialization for relativistic species</a><ul>
+<li><a class="reference internal" href="#the-relativistic-poisson-s-equation">The relativistic Poisson’s equation</a></li>
+<li><a class="reference internal" href="#recommendations-for-relativistic-species-field-initialization">Recommendations for relativistic species field initialization</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="field-initialization-for-relativistic-species">
+<h1>Field initialization for relativistic species<a class="headerlink" href="#field-initialization-for-relativistic-species" title="Link to this heading">¶</a></h1>
+<p>As explained in <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a>, if a net charge is present at the beginning of the simulation, the initial electromagnetic fields are computed.
+For static charge distributions, the solution of Poisson’s equation will be necessary to find the initial electrostatic field.
+If the initial charge has a non-zero initial speed, in general the electric and magnetic field should be computed solving the full set of Maxwell’s equations or equivalently the potentials equations.
+In some physical setups of interest, one or more relativistic species are injected in a plasma. In these cases, the computation of the initial electromagnetic fields can be reduced to the solution of a modified version of Poisson’s equation.</p>
+<hr class="docutils" />
+<section id="the-relativistic-poisson-s-equation">
+<h2>The relativistic Poisson’s equation<a class="headerlink" href="#the-relativistic-poisson-s-equation" title="Link to this heading">¶</a></h2>
+<p>From the continuity equation <span class="math notranslate nohighlight">\(\partial_t \rho + \nabla \cdot \mathbf{J} = 0\)</span>
+and Maxwell’s equations, it can be shown that the quantities <span class="math notranslate nohighlight">\(\nabla\cdot\mathbf{B}\)</span> and <span class="math notranslate nohighlight">\(\nabla\cdot\mathbf{E}-\rho\)</span> do not change over time:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+\partial_t \left( \nabla\cdot\mathbf{B} \right ) &amp;=&amp; 0, \\
+\partial_t \left( \nabla\cdot\mathbf{E}-\rho \right ) &amp;=&amp; \nabla\cdot\partial_t\mathbf{E}-\partial_t\rho = \nabla\cdot\left(\nabla\times\mathbf{B}-\mathbf{J}\right)-\partial_t\rho = - \left(\nabla\cdot\mathbf{J}+\partial_t \rho\right).
+\end{eqnarray}\end{split}\]</div>
+<p>Thus, if a simulation starts with <span class="math notranslate nohighlight">\(\rho\neq0\)</span>, the electromagnetic fields must be properly initialized.</p>
+<p>In the case of a static charge distribution, i.e. <span class="math notranslate nohighlight">\(\rho\neq0\)</span>, <span class="math notranslate nohighlight">\(\mathbf{J}=0\)</span>, the initial electrostatic potential <span class="math notranslate nohighlight">\(\Phi\)</span> can be computed solving Poisson’s equation:</p>
+<div class="math notranslate nohighlight">
+\[\nabla^2 \Phi = -\rho,\]</div>
+<p>and then be integrated to find the initial electric field: <span class="math notranslate nohighlight">\(\mathbf{E}=-\nabla\Phi\)</span>. The initial magnetic field <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> will be zero.</p>
+<p>In general when the initial current <span class="math notranslate nohighlight">\(\mathbf{J}\)</span> is not zero, the full set of fields equations should be solved to correctly initialize the electromagnetic fields.</p>
+<p>However, if a species is already relativistic when the simulation starts, e.g. a relativistic electron bunch, its initial electromagnetic fields can be computed through a simplified procedure, described in <a class="reference internal" href="#vay2008" id="id1"><span>[Vay2008]</span></a>, <a class="reference internal" href="#londrillo2014" id="id2"><span>[Londrillo2014]</span></a>, <a class="reference internal" href="#massimo2016" id="id3"><span>[Massimo2016]</span></a> and <a class="reference internal" href="#marocchino2018" id="id4"><span>[Marocchino2018]</span></a>.</p>
+<p>An important assumption of this calculation is that the species is highly relativistic, moving in the positive <span class="math notranslate nohighlight">\(x\)</span> direction, with negligible momentum spread. Under this hypothesis, the transverse components of the species current density are neglected and the four-current quadrivector can be written as:</p>
+<div class="math notranslate nohighlight">
+\[\left(\mathbf{J},\rho\right) = \left(\rho \beta_0 , 0, 0, \rho \right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\beta_0\)</span> is the initial mean velocity of the relativistic species. At least locally, the potentials <span class="math notranslate nohighlight">\(\mathbf{A}\)</span>, <span class="math notranslate nohighlight">\(\Phi\)</span> in the laboratory frame will be only function of <span class="math notranslate nohighlight">\(x-\beta_0 t\)</span>, as they are propagating with the species at uniform relativistic velocity.</p>
+<p>In the relativistic species rest frame <span class="math notranslate nohighlight">\(S'\)</span>, the charge distribution is static and the electrostatic potential in that reference frame <span class="math notranslate nohighlight">\(\Phi'\)</span> is related to the charge density in that reference frame <span class="math notranslate nohighlight">\(\rho'\)</span> through Poisson’s equation:</p>
+<div class="math notranslate nohighlight" id="equation-poisson">
+<span class="eqno">(68)<a class="headerlink" href="#equation-poisson" title="Link to this equation">¶</a></span>\[\nabla'^2 \Phi' = -\rho',\]</div>
+<p>where the Laplacian operator is computed in the reference frame <span class="math notranslate nohighlight">\(S'\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\nabla'^2=\partial^2_{x'}+\partial^2_{y'}+\partial^2_{z'}.\]</div>
+<p>The vector potential in the species rest frame can be set to zero: <span class="math notranslate nohighlight">\(\mathbf{A'}=0\)</span>. Through the above mentioned assumptions, it is possible to rewrite Eq. <a class="reference internal" href="#equation-poisson">(68)</a> only in terms of laboratory frame quantities.</p>
+<p>Lorentz transformation of the four-vector <span class="math notranslate nohighlight">\(\left(\mathbf{J},\rho \right)\)</span> yields <span class="math notranslate nohighlight">\(\rho'=\rho/\gamma_0\)</span>, where <span class="math notranslate nohighlight">\(\gamma_0=1/\sqrt{1-\beta^2_0}\)</span> is the average Lorentz factor of the relativistic species.
+Similarly, the potential <span class="math notranslate nohighlight">\(\Phi'\)</span> can be rewritten in terms of the potential in the laboratory frame: <span class="math notranslate nohighlight">\(\Phi'=\Phi/\gamma_0\)</span>. The Lorentz back-transformation of coordinates</p>
+<div class="math notranslate nohighlight">
+\[x=\gamma_0(x'+\beta_0 t'),\quad  t = \gamma_0(t'+\beta_0 x'), \quad y=y', \quad z=z'\]</div>
+<p>allows to transform the derivatives in Eq. <a class="reference internal" href="#equation-poisson">(68)</a> as</p>
+<div class="math notranslate nohighlight">
+\[\partial_{x'}=\gamma_0\left(\partial_x+\beta_0\partial_t\right), \quad \partial_{y'}=\partial_y, \quad \partial_{z'}=\partial_z.\]</div>
+<p>The partial derivative along the <span class="math notranslate nohighlight">\(x'\)</span> direction can be further simplified, through the hypothesis of temporary dependence of all quantities on <span class="math notranslate nohighlight">\(x-\beta_0 t\)</span>, implying <span class="math notranslate nohighlight">\(\partial_t=-\beta_0\partial_x\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\partial_{x'}=\frac{1}{\gamma_0}\partial_x.\]</div>
+<p>Equation <a class="reference internal" href="#equation-poisson">(68)</a> can thus be rewritten as</p>
+<div class="math notranslate nohighlight" id="equation-relpoisson">
+<span class="eqno">(69)<a class="headerlink" href="#equation-relpoisson" title="Link to this equation">¶</a></span>\[\left( \frac{1}{\gamma^2_0}\partial^2_x+\nabla_{\perp}^2\right) \Phi = -\rho,\]</div>
+<p>here informally referred to as the relativistic Poisson’s equation. In <strong class="program">Smilei</strong>, as for Eq. <a class="reference internal" href="#equation-poisson">(68)</a>, the solution of the relativistic Poisson’s equation is performed through the conjugate gradient method.</p>
+<p>Once the potential <span class="math notranslate nohighlight">\(\Phi\)</span> is found, we can compute all the components of the electromagnetic field, using again the relations <span class="math notranslate nohighlight">\(\partial_t=-\beta_0\partial_x\)</span>, <span class="math notranslate nohighlight">\(\Phi'=-\Phi/\gamma_0\)</span> and the Lorentz back-transformation of the vector potential <span class="math notranslate nohighlight">\(\mathbf{A}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[A_x = \gamma_0(A_x'+\beta_0 \Phi')=\gamma_0\beta_0 \Phi'=\beta_0\Phi,\quad A_y = A_y'=0, \quad A_z = A_z'=0.\]</div>
+<p>From all these relations, the electromagnetic field can be computed as usual, through the definitions of potentials <span class="math notranslate nohighlight">\(\mathbf{E}=-\nabla\Phi-\partial_t\mathbf{A}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{B}=-\nabla\times\mathbf{A}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+E_x &amp;=&amp; -\partial_x \Phi - \partial_t A_x = -\partial_x \Phi + \beta_0^2 \partial_x \Phi = -\frac{1}{\gamma_0^2}\partial_x \Phi,\\
+E_y &amp;=&amp; -\partial_y \Phi - \partial_t A_y = -\partial_y \Phi,\\
+E_z &amp;=&amp; -\partial_z \Phi - \partial_t A_z = -\partial_z \Phi,\newline\\
+B_x &amp;=&amp; \partial_y A_z - \partial_z A_y = 0 ,\\
+B_y &amp;=&amp; \partial_z A_x - \partial_x A_z = \partial_z A_x = \beta_0 \partial_z \Phi = - \beta_0 E_z,\\
+B_z &amp;=&amp; \partial_x A_y - \partial_y A_x = - \partial_y A_x = - \beta_0 \partial_y \Phi = \beta_0 E_y,
+\end{eqnarray}\end{split}\]</div>
+<p>or in more compact form: <span class="math notranslate nohighlight">\(\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_x \Phi, -\partial_y \Phi,-\partial_z \Phi \right)\)</span>, <span class="math notranslate nohighlight">\(\mathbf{B}=\beta_0\mathbf{\hat{x}}\times\mathbf{E}\)</span>.</p>
+<p>From the previous equations, it can be inferred that, in a 1D cartesian geometry, the fields computed through this procedure equal those obtained through the standard Poisson’s problem.
+This can also be inferred from the relativistic transformations of fields, which conserve the <span class="math notranslate nohighlight">\(x\)</span> components of the electromagnetic fields for boosts in the <span class="math notranslate nohighlight">\(x\)</span> direction.</p>
+</section>
+<hr class="docutils" />
+<section id="recommendations-for-relativistic-species-field-initialization">
+<h2>Recommendations for relativistic species field initialization<a class="headerlink" href="#recommendations-for-relativistic-species-field-initialization" title="Link to this heading">¶</a></h2>
+<p>In <strong class="program">Smilei</strong>, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfere with the other species’ dynamics.
+The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantaneous unphysical forces by the relativistic species’ fields.</p>
+<p>Remember that the transverse field of a moving charge with relativistic factor <span class="math notranslate nohighlight">\(\gamma\)</span> is greater than the electrostatic transverse field of that charge, by a factor <span class="math notranslate nohighlight">\(\gamma\)</span>.
+This means that for highly relativistic particles, you will need to use a transversely large simulation window to let the field decrease enough to reduce border effects during its propagation.
+A complete absence of boundary effects in this case would be provided by perfectly absorbing boundary conditions, which are not implemented yet in the code.
+If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.</p>
+<p>A relativistic mean velocity in the <span class="math notranslate nohighlight">\(x\)</span> or <span class="math notranslate nohighlight">\(-x\)</span> direction and a negligible energy spread are assumed for each species in the hypotheses of this procedure. In particular it is assumed that all <span class="math notranslate nohighlight">\(p_x\)</span> of the macro-particles of a species are of the same sign. The user must ensure these conditions when defining the species requiring field initialization in the namelist.
+In order to describe a non-monoenergetic species, it is necessary to divide it into into several sub-species for which the assumptions hold.</p>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="vay2008" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Vay2008</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1063/1.2837054">J.-L. Vay, Physics of Plasmas 15, 056701 (2008)</a></p>
+</div>
+<div class="citation" id="londrillo2014" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Londrillo2014</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.nima.2013.10.028">P. Londrillo, C. Gatti and M. Ferrario, Nucl. Instr. and Meth. A 740, 236-241 (2014)</a></p>
+</div>
+<div class="citation" id="massimo2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">Massimo2016</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.nima.2016.02.043">F. Massimo, A. Marocchino and A. R. Rossi, Nucl. Instr. and Meth. A 829, 378-382 (2016)</a></p>
+</div>
+<div class="citation" id="marocchino2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">Marocchino2018</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.nima.2018.02.068">A. Marocchino, E. Chiadroni, M. Ferrario, F. Mira and A.R. Rossi, Nucl. Instr. and Meth. A (2018)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

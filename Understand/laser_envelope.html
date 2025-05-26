@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Laser envelope model &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Particle Merging" href="particle_merging.html" />
+    <link rel="prev" title="Azimuthal modes decomposition" href="azimuthal_modes_decomposition.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Laser envelope model</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Laser envelope model</a><ul>
+<li><a class="reference internal" href="#the-envelope-approximation">The envelope approximation</a></li>
+<li><a class="reference internal" href="#the-envelope-equation">The envelope equation</a></li>
+<li><a class="reference internal" href="#the-ponderomotive-equations-of-motion">The ponderomotive equations of motion</a></li>
+<li><a class="reference internal" href="#the-averaged-electromagnetic-fields">The averaged electromagnetic fields</a></li>
+<li><a class="reference internal" href="#the-ponderomotive-pic-loop">The ponderomotive PIC loop</a><ul>
+<li><a class="reference internal" href="#field-interpolation">Field interpolation</a></li>
+<li><a class="reference internal" href="#susceptibility-deposition">Susceptibility deposition</a></li>
+<li><a class="reference internal" href="#ponderomotive-momentum-push">Ponderomotive momentum push</a></li>
+<li><a class="reference internal" href="#envelope-equation-solution">Envelope equation solution</a></li>
+<li><a class="reference internal" href="#ponderomotive-position-push">Ponderomotive position push</a></li>
+<li><a class="reference internal" href="#current-deposition">Current deposition</a></li>
+<li><a class="reference internal" href="#maxwell-solvers">Maxwell solvers</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#laser-polarization-in-the-envelope-model">Laser polarization in the envelope model</a></li>
+<li><a class="reference internal" href="#computing-the-laser-electric-field-from-the-laser-envelope">Computing the laser electric field from the laser envelope</a></li>
+<li><a class="reference internal" href="#the-numerical-solution-of-the-envelope-equation">The numerical solution of the envelope equation</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="laser-envelope-model">
+<h1>Laser envelope model<a class="headerlink" href="#laser-envelope-model" title="Link to this heading">¶</a></h1>
+<p>In many physical situations, the spatial and temporal scales of interest (e.g. the plasma wavelength <span class="math notranslate nohighlight">\(\lambda_p\)</span>) are much larger than the scales related to the laser central wavelength <span class="math notranslate nohighlight">\(\lambda_0\)</span>.
+In these cases, if the laser pulse is much longer than <span class="math notranslate nohighlight">\(\lambda_0\)</span>, the computation time can be substantially reduced: one only needs to sample the laser envelope instead of <span class="math notranslate nohighlight">\(\lambda_0\)</span>, as depicted in the following figure.</p>
+<figure class="align-default" id="id23">
+<a class="reference internal image-reference" href="../_images/Envelope_Figure.png"><img alt="../_images/Envelope_Figure.png" src="../_images/Envelope_Figure.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 46 </span><span class="caption-text">Blue: laser vector potential component <span class="math notranslate nohighlight">\(\hat{A}\)</span> along the transverse direction. Red: the module of its complex envelope <span class="math notranslate nohighlight">\(|\tilde{A}|\)</span>. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten.</span><a class="headerlink" href="#id23" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation.
+However, a main limit of this technique is the impossibility to model phenomena at the scale of <span class="math notranslate nohighlight">\(\lambda_0\)</span>.</p>
+<p>In the following, the equations of the envelope model are presented, following mainly <a class="reference internal" href="#cowan2011" id="id1"><span>[Cowan2011]</span></a>, <a class="reference internal" href="#terzani" id="id2"><span>[Terzani]</span></a>, <a class="reference internal" href="#massimoppcf2019" id="id3"><span>[MassimoPPCF2019]</span></a> . Their numerical solution is briefly described as well.</p>
+<hr class="docutils" />
+<section id="the-envelope-approximation">
+<h2>The envelope approximation<a class="headerlink" href="#the-envelope-approximation" title="Link to this heading">¶</a></h2>
+<p>The use of envelope models to describe a laser pulse is well known in PIC codes <a class="reference internal" href="#mora1997" id="id4"><span>[Mora1997]</span></a>, <a class="reference internal" href="#quesnel1998" id="id5"><span>[Quesnel1998]</span></a>, <a class="reference internal" href="#gordon2000" id="id6"><span>[Gordon2000]</span></a>, <a class="reference internal" href="#huang2006" id="id7"><span>[Huang2006]</span></a>, <a class="reference internal" href="#cowan2011" id="id8"><span>[Cowan2011]</span></a>, <a class="reference internal" href="#benedetti2012" id="id9"><span>[Benedetti2012]</span></a>. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macro-particles, to take into account their interactions with the laser.
+The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
+The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the macro-particles vary accordingly.
+In <strong class="program">Smilei</strong>, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code <strong class="program">ALaDyn</strong> <a class="reference internal" href="#benedetti2008" id="id10"><span>[Benedetti2008]</span></a>, <a class="reference internal" href="#terzani" id="id11"><span>[Terzani]</span></a> is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.</p>
+<p>The basic assumption of the model is the description of the laser pulse vector potential in the transverse direction <span class="math notranslate nohighlight">\(\mathbf{\hat{A}}(\mathbf{x},t)\)</span> as a slowly varying envelope <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}(\mathbf{x},t)\)</span> modulated by fast oscillations at wavelength <span class="math notranslate nohighlight">\(\lambda_0\)</span>, moving at the speed of light <span class="math notranslate nohighlight">\(c\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-envelope">
+<span class="eqno">(48)<a class="headerlink" href="#equation-envelope" title="Link to this equation">¶</a></span>\[\mathbf{\hat{A}}(\mathbf{x},t)=\textrm{Re}\left[\mathbf{\tilde{A}}(\mathbf{x},t)e^{ik_0(x-ct)}\right],\]</div>
+<p>where <span class="math notranslate nohighlight">\(k_0=2\pi/\lambda_0\)</span>. In the language of signal processing, <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> is the complex envelope of <span class="math notranslate nohighlight">\(\mathbf{\hat{A}}\)</span>. In other words, the spectral content of <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> is given by the positive frequency components of <span class="math notranslate nohighlight">\(\mathbf{\hat{A}}\)</span> around <span class="math notranslate nohighlight">\(k_0\)</span>, but centered around the origin of the frequency <span class="math notranslate nohighlight">\(k\)</span> axis.
+As the laser is the source term of the phenomena of interest, in general any vector <span class="math notranslate nohighlight">\(\mathbf{A}\)</span> will be therefore given by the summation of a slowly varying part <span class="math notranslate nohighlight">\(\mathbf{\bar{A}}\)</span> and a fast oscillating part <span class="math notranslate nohighlight">\(\mathbf{\hat{A}}\)</span> with the same form of Eq. <a class="reference internal" href="#equation-envelope">(48)</a>:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{A}=\mathbf{\bar{A}} + \mathbf{\hat{A}}.\]</div>
+<p>In the envelope model context, “slowly varying” means that the spatial and temporal variations of <span class="math notranslate nohighlight">\(\mathbf{\bar{A}}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> are small enough to be treated perturbatively with respect to the ratio <span class="math notranslate nohighlight">\(\epsilon=\lambda_0/\lambda_p\)</span>, as described in detail in <a class="reference internal" href="#mora1997" id="id12"><span>[Mora1997]</span></a>, <a class="reference internal" href="#quesnel1998" id="id13"><span>[Quesnel1998]</span></a>, <a class="reference internal" href="#cowan2011" id="id14"><span>[Cowan2011]</span></a>. The laser envelope transverse size <span class="math notranslate nohighlight">\(R\)</span> and longitudinal size <span class="math notranslate nohighlight">\(L\)</span> are thus assumed to scale as <span class="math notranslate nohighlight">\(R \approx L \approx \lambda_0 / \epsilon\)</span> <a class="reference internal" href="#mora1997" id="id15"><span>[Mora1997]</span></a>, <a class="reference internal" href="#quesnel1998" id="id16"><span>[Quesnel1998]</span></a>.
+As described thoroughly in the same references, the coupling between the laser envelope and the plasma macro-particles can be modeled through the addiction of a ponderomotive force term in the macro-particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the macro-particles motion over the laser optical cycles.</p>
+<p>Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than <span class="math notranslate nohighlight">\(\lambda_0\)</span>, <span class="math notranslate nohighlight">\(1/\omega_0\)</span>. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density.</p>
+</section>
+<hr class="docutils" />
+<section id="the-envelope-equation">
+<h2>The envelope equation<a class="headerlink" href="#the-envelope-equation" title="Link to this heading">¶</a></h2>
+<p>The evolution of the laser pulse is described by d’Alembert’s equation, which in normalized units reads:</p>
+<div class="math notranslate nohighlight" id="equation-dalembert">
+<span class="eqno">(49)<a class="headerlink" href="#equation-dalembert" title="Link to this equation">¶</a></span>\[\nabla^2 \mathbf{\hat{A}}-\partial^2_t\mathbf{\hat{A}}=-\mathbf{\hat{J}},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{\hat{J}}\)</span> is the fast oscillating part of the current density in the laser polarization direction. Through the assumption given by Eq. <a class="reference internal" href="#equation-envelope">(48)</a>, Eq. <a class="reference internal" href="#equation-dalembert">(49)</a> can be reduced to an envelope equation:</p>
+<div class="math notranslate nohighlight" id="equation-envelope-equation">
+<span class="eqno">(50)<a class="headerlink" href="#equation-envelope-equation" title="Link to this equation">¶</a></span>\[\nabla^2 \mathbf{\tilde{A}}+2i\left(\partial_x \mathbf{\tilde{A}} + \partial_t \mathbf{\tilde{A}}\right)-\partial^2_t\mathbf{\tilde{A}}=\chi \mathbf{\tilde{A}},\]</div>
+<p>which describes the evolution of the laser pulse only in terms of the laser envelope <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span>. The function <span class="math notranslate nohighlight">\(\chi\)</span> represents the plasma susceptibility, which is computed similarly to the charge density (see <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a>) as</p>
+<div class="math notranslate nohighlight" id="equation-susceptibility">
+<span class="eqno">(51)<a class="headerlink" href="#equation-susceptibility" title="Link to this equation">¶</a></span>\[\chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{\bar{x}}_p\big)\,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{\gamma}_p\)</span> is the averaged Lorentz factor of the macro-particle <span class="math notranslate nohighlight">\(p\)</span>. This averaged quantity is computed from the averaged macro-particle momentum <span class="math notranslate nohighlight">\(\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s\)</span> and the envelope <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-gamma-ponderomotive">
+<span class="eqno">(52)<a class="headerlink" href="#equation-gamma-ponderomotive" title="Link to this equation">¶</a></span>\[\bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\mathbf{\tilde{A}}(\mathbf{\bar{x}}_p)|^2}{2}}.\]</div>
+<p>The term at the right hand side of Eq. <a class="reference internal" href="#equation-envelope">(48)</a>, where the plasma susceptibility <span class="math notranslate nohighlight">\(\chi\)</span> appears, allows to describe phenomena where the plasma alters the propagation of the laser pulse, as relativistic self-focusing.</p>
+<p>Note that if in Eq. <a class="reference internal" href="#equation-envelope">(48)</a> the temporal variation of the envelope <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> is neglected, and <span class="math notranslate nohighlight">\(\partial^2_x \mathbf{\tilde{A}} \ll 2i\partial_x \mathbf{\tilde{A}}\)</span> is assumed, the well-known paraxial wave equation is retrieved in vacuum (<span class="math notranslate nohighlight">\(\chi=0\)</span>):</p>
+<div class="math notranslate nohighlight" id="equation-paraxial-wave-equation">
+<span class="eqno">(53)<a class="headerlink" href="#equation-paraxial-wave-equation" title="Link to this equation">¶</a></span>\[\nabla_{\perp}^2 \mathbf{\tilde{A}}+2i\partial_x \mathbf{\tilde{A}}=0.\]</div>
+<p>In <strong class="program">Smilei</strong>, no assumptions on the derivatives are made and the scalar versions of Eq. <a class="reference internal" href="#equation-envelope-equation">(50)</a> is solved (see next sections).</p>
+</section>
+<hr class="docutils" />
+<section id="the-ponderomotive-equations-of-motion">
+<h2>The ponderomotive equations of motion<a class="headerlink" href="#the-ponderomotive-equations-of-motion" title="Link to this heading">¶</a></h2>
+<p>The process of averaging over the time scale of a laser oscillation period yields a simple result for the macro-particles equations of motion.
+The averaged position <span class="math notranslate nohighlight">\(\mathbf{\bar{x}}_p\)</span> and momentum <span class="math notranslate nohighlight">\(\mathbf{\bar{u}}_p\)</span> of the macro-particle <span class="math notranslate nohighlight">\(p\)</span> are related to the averaged electromagnetic fields <span class="math notranslate nohighlight">\(\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)\)</span>, <span class="math notranslate nohighlight">\(\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)\)</span> through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:</p>
+<div class="math notranslate nohighlight" id="equation-ponderomotive-equations-of-motion">
+<span class="eqno">(54)<a class="headerlink" href="#equation-ponderomotive-equations-of-motion" title="Link to this equation">¶</a></span>\[\begin{split}\begin{eqnarray}
+\frac{d\mathbf{\bar{x}}_p}{dt} &amp;=&amp; \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}, \,\\
+\frac{d\mathbf{\bar{u}}_p}{dt} &amp;=&amp; r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\mathbf{\tilde{A}}_p|^2\right),
+\end{eqnarray}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(r_s = q_s/m_s\)</span> is the charge-over-mass ratio (for species <span class="math notranslate nohighlight">\(s\)</span>).
+The presence of the ponderomotive force <span class="math notranslate nohighlight">\(\mathbf{F}_{pond}=-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\mathbf{\tilde{A}}|^2\right)\)</span> and of the ponderomotive potential <span class="math notranslate nohighlight">\(\Phi_{pond}=\frac{|\mathbf{\tilde{A}}|^2}{2}\)</span>
+in the envelope and particle equations is the reason why the envelope model is also called ponderomotive guiding center model <a class="reference internal" href="#gordon2000" id="id17"><span>[Gordon2000]</span></a>.</p>
+</section>
+<hr class="docutils" />
+<section id="the-averaged-electromagnetic-fields">
+<h2>The averaged electromagnetic fields<a class="headerlink" href="#the-averaged-electromagnetic-fields" title="Link to this heading">¶</a></h2>
+<p>In the envelope model, Maxwell’s equations remain unaltered, except for the fact that they describe the evolution of the averaged electromagnetic fields <span class="math notranslate nohighlight">\(\mathbf{\bar{E}}(\mathbf{x},t)\)</span>, <span class="math notranslate nohighlight">\(\mathbf{\bar{B}}(\mathbf{x},t)\)</span> in terms of the averaged charge density <span class="math notranslate nohighlight">\(\bar{\rho}(\mathbf{x},t)\)</span> and averaged current density <span class="math notranslate nohighlight">\(\mathbf{\bar{J}}(\mathbf{x},t)\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-maxwell-envelope">
+<span class="eqno">(55)<a class="headerlink" href="#equation-maxwell-envelope" title="Link to this equation">¶</a></span>\[\begin{split}\begin{eqnarray}
+\nabla \cdot \mathbf{\bar{B}} &amp;=&amp; 0 \,,\\
+\nabla \cdot \mathbf{\bar{E}} &amp;=&amp; \bar{\rho} \,,\\
+\nabla \times \mathbf{\bar{B}} &amp;=&amp; \mathbf{\bar{J}} + \partial_t \mathbf{\bar{E}} \,,\\
+\nabla \times \mathbf{\bar{E}} &amp;=&amp; -\partial_t \mathbf{\bar{B}} \,.
+\end{eqnarray}\end{split}\]</div>
+<p>Note that the averaged electromagnetic fields do not include the laser fields. Thus, also in the diagnostics of <strong class="program">Smilei</strong>, the fields will include only the averaged fields.</p>
+</section>
+<hr class="docutils" />
+<section id="the-ponderomotive-pic-loop">
+<h2>The ponderomotive PIC loop<a class="headerlink" href="#the-ponderomotive-pic-loop" title="Link to this heading">¶</a></h2>
+<p>Since Maxwell’s equations <a class="reference internal" href="#equation-maxwell-envelope">(55)</a> remain unaltered, their solution can employ the same techniques used in a standard PIC code. The main difficulty in the solution of the other equations, namely the envelope equation Eq. <a class="reference internal" href="#equation-envelope-equation">(50)</a> and the macroparticles equations of motion Eqs. <a class="reference internal" href="#equation-ponderomotive-equations-of-motion">(54)</a>, is that the source terms contain the unknown terms.
+For example, in the envelope equations, the source term involves the unknown envelope itself and the susceptibility, which depends on the envelope. Also, the equations of motion contain the term <span class="math notranslate nohighlight">\(\bar{\gamma}\)</span>, which depends on the envelope.
+The PIC loop described in <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a> is thus modified to self-consistently solve the envelope model equations. At each timestep, the code performs the following operations</p>
+<ol class="arabic simple">
+<li><p>interpolating the electromagnetic fields and the ponderomotive potential at the macro-particle positions,</p></li>
+<li><p>projecting the new plasma susceptibility on the grid,</p></li>
+<li><p>computing the new macro-particle velocities,</p></li>
+<li><p>computing the new envelope values on the grid,</p></li>
+<li><p>computing the new macro-particle positions,</p></li>
+<li><p>projecting the new charge and current densities on the grid,</p></li>
+<li><p>computing the new electromagnetic fields on the grid.</p></li>
+</ol>
+<p>Note that the momentum advance and position advance are separated by the envelope equation solution in this modified PIC loop.
+In this section, we describe these steps which advance the time from time-step <span class="math notranslate nohighlight">\((n)\)</span> to time-step <span class="math notranslate nohighlight">\((n+1)\)</span>.</p>
+<section id="field-interpolation">
+<h3>Field interpolation<a class="headerlink" href="#field-interpolation" title="Link to this heading">¶</a></h3>
+<p>The electromagnetic fields and ponderomotive potential interpolation at the macro-particle position at time-step <span class="math notranslate nohighlight">\((n)\)</span> follow the same technique described in <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+\mathbf{\bar{E}}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\bar{E}}^{(n)}(\mathbf{x})\,,\\
+\mathbf{\bar{B}}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\bar{B}}^{(n)}(\mathbf{x})\,,\\
+\mathbf{\Phi}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\Phi}^{(n)}(\mathbf{x})\,,
+\end{eqnarray}\end{split}\]</div>
+<p>where we have used the time-centered magnetic fields
+<span class="math notranslate nohighlight">\(\mathbf{\bar{B}}^{(n)}=\tfrac{1}{2}[\mathbf{\bar{B}}^{(n+1/2) } + \mathbf{\bar{B}}^{(n-1/2)}]\)</span>,
+and <span class="math notranslate nohighlight">\(V_c\)</span> denotes the volume of a cell.</p>
+</section>
+<section id="susceptibility-deposition">
+<h3>Susceptibility deposition<a class="headerlink" href="#susceptibility-deposition" title="Link to this heading">¶</a></h3>
+<p>The macro-particle averaged positions <span class="math notranslate nohighlight">\(\mathbf{\bar{x}}_p^{(n)}\)</span> and averaged momenta <span class="math notranslate nohighlight">\(\mathbf{\bar{p}}_p^{(n)}\)</span>
+and the ponderomotive potential <span class="math notranslate nohighlight">\(\mathbf{\Phi}_p^{(n)}\)</span> are used to compute the ponderomotive Lorentz factor <span class="math notranslate nohighlight">\(\bar{\gamma}_p\)</span> <a class="reference internal" href="#equation-gamma-ponderomotive">(52)</a>
+and deposit the susceptibility on the grid through Eq. <a class="reference internal" href="#equation-susceptibility">(51)</a>.</p>
+</section>
+<section id="ponderomotive-momentum-push">
+<h3>Ponderomotive momentum push<a class="headerlink" href="#ponderomotive-momentum-push" title="Link to this heading">¶</a></h3>
+<p>The momentum push is performed through a modified version of the well-known <a class="reference external" href="https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up">Boris Pusher</a>, derived
+and proposed in <a class="reference internal" href="#terzani" id="id18"><span>[Terzani]</span></a>.
+The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position <span class="math notranslate nohighlight">\(\mathbf{\bar{E}}_p^{(n)}\)</span>,
+<span class="math notranslate nohighlight">\(\mathbf{\bar{B}}_p^{(n)}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{\Phi}_p^{(n)}\)</span> are used to advance the momentum <span class="math notranslate nohighlight">\(\mathbf{\bar{p}}_p^{(n-1/2)}\)</span>
+from time-step <span class="math notranslate nohighlight">\(n−1/2\)</span> to time-step <span class="math notranslate nohighlight">\(n + 1/2\)</span>, solving the momentum equation in Eqs. <a class="reference internal" href="#equation-ponderomotive-equations-of-motion">(54)</a></p>
+</section>
+<section id="envelope-equation-solution">
+<h3>Envelope equation solution<a class="headerlink" href="#envelope-equation-solution" title="Link to this heading">¶</a></h3>
+<p>Now that the averaged susceptibility is known at time-step <span class="math notranslate nohighlight">\(n\)</span>, the envelope can be advanced solving the envelope equation <a class="reference internal" href="#equation-envelope-equation">(50)</a>.
+In the two solver schemes available in the code (see below), the envelope <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> at time-step <span class="math notranslate nohighlight">\(n+1\)</span> is computed from its value
+at timesteps <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(n-1\)</span> and the suceptibility <span class="math notranslate nohighlight">\(\chi\)</span> at time-step <span class="math notranslate nohighlight">\(n\)</span>. The value of the envelope at timestep <span class="math notranslate nohighlight">\(n\)</span> is conserved for the next iteration of the time loop.
+A main advantage of these explicit numerical schemes is their straightforward parallelization in 3D, due to the locality of the operations involved.</p>
+</section>
+<section id="ponderomotive-position-push">
+<h3>Ponderomotive position push<a class="headerlink" href="#ponderomotive-position-push" title="Link to this heading">¶</a></h3>
+<p>The updated ponderomotive potential is interpolated at macro-particle positions to obtain <span class="math notranslate nohighlight">\(\mathbf{\Phi}_p^{(n+1)}\)</span>.
+Afterwards, the temporal interpolation <span class="math notranslate nohighlight">\(\mathbf{\Phi}_p^{(n+1/2)}=\left(\mathbf{\Phi}_p^{(n)}+\mathbf{\Phi}_p^{(n+1)}\right)/2\)</span> is performed.
+The updated ponderomotive Lorentz factor <span class="math notranslate nohighlight">\(\bar{\gamma}_p^{(n+1/2)}\)</span> can be computed and the averaged position of each macro-particle
+can be advanced solving the last of Eqs. <a class="reference internal" href="#equation-ponderomotive-equations-of-motion">(54)</a>:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{\bar{x}}_p^{n+1}=\mathbf{\bar{x}}_p^{n} + \Delta t \, \frac{\mathbf{\bar{p}}_p^{n+\tfrac{1}{2}}}{m_s\bar{\gamma}_p^{(n+1/2)}},\]</div>
+</section>
+<section id="current-deposition">
+<h3>Current deposition<a class="headerlink" href="#current-deposition" title="Link to this heading">¶</a></h3>
+<p>The averaged charge deposition (i.e. charge and current density projection onto the grid) is then
+performed exactly as in the standard PIC loop for the non averaged quantities (see <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a>), using the charge-conserving algorithm
+<a class="reference external" href="https://doi.org/10.1016/S0010-4655(00)00228-9">proposed by Esirkepov</a>.</p>
+</section>
+<section id="maxwell-solvers">
+<h3>Maxwell solvers<a class="headerlink" href="#maxwell-solvers" title="Link to this heading">¶</a></h3>
+<p>Now that the averaged currents are known at time-step <span class="math notranslate nohighlight">\(n+\tfrac{1}{2}\)</span>, the averaged electromagnetic
+fields can be advanced solving Maxwell’s equations <a class="reference internal" href="#equation-maxwell-envelope">(55)</a>. Their solution is identical to the one described in <a class="reference internal" href="algorithms.html"><span class="doc">PIC algorithms</span></a> for the corresponding non-averaged quantities.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="laser-polarization-in-the-envelope-model">
+<h2>Laser polarization in the envelope model<a class="headerlink" href="#laser-polarization-in-the-envelope-model" title="Link to this heading">¶</a></h2>
+<p>In <strong class="program">Smilei</strong>, the envelope model is implemented to take into account either linear or circular polarization
+(<code class="docutils literal notranslate"><span class="pre">ellipticity</span> <span class="pre">=</span> <span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">ellipticity</span> <span class="pre">=</span> <span class="pre">1</span></code> in the input namelist respectively). The default polarization is linear along the <cite>y</cite> direction.
+The envelope of a laser pulse propagating in the positive <code class="docutils literal notranslate"><span class="pre">x</span></code> direction can be written as</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{\tilde{A}} (\mathbf{x},t)= \tilde{A}(\mathbf{x},t) \left[ \eta\thinspace\hat{y} + i(1-\eta^2)^{1/2}\hat{z}   \right] ,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta=1\)</span> or <span class="math notranslate nohighlight">\(\eta=0\)</span> for linear polarization along <code class="docutils literal notranslate"><span class="pre">y</span></code> or <code class="docutils literal notranslate"><span class="pre">z</span></code>, and <span class="math notranslate nohighlight">\(\eta\pm1/\sqrt{2}\)</span> for circular polarization.
+Although Eq. <a class="reference internal" href="#equation-envelope-equation">(50)</a> is a vector equation nonlinear, these two polarizations allow to solve only one scalar equation
+at each timestep, because once the susceptibility at a given timestep is known, the envelope equation can be considered linear.
+Thus, after calculating the susceptibility we can solve the equation:</p>
+<div class="math notranslate nohighlight" id="equation-envelope-equation-scalar">
+<span class="eqno">(56)<a class="headerlink" href="#equation-envelope-equation-scalar" title="Link to this equation">¶</a></span>\[\nabla^2 \tilde{A}+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tilde{A}\)</span> is the nonzero component of <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span> for linear polarization and <span class="math notranslate nohighlight">\(\tilde{A}/\sqrt{2}\)</span> for circular polarization.
+This approach gives accurate results only if the ponderomotive potential <span class="math notranslate nohighlight">\(\Phi_{pond}=\frac{|\mathbf{\tilde{A}}|^2}{2}\)</span> is computed
+accordingly to the vector definition of <span class="math notranslate nohighlight">\(\mathbf{\tilde{A}}\)</span>. This means that <span class="math notranslate nohighlight">\(\Phi_{pond}=\frac{|\tilde{A}|^2}{2}\)</span> for both linear and
+circular polarization.
+Besides, with this approach the absolute value of <span class="math notranslate nohighlight">\(\tilde{A}\)</span> and the derived electric field <span class="math notranslate nohighlight">\(\tilde{E}\)</span> (see next section) are directly comparable with
+standard laser simulations with the same polarization and <span class="math notranslate nohighlight">\(a_0\)</span>.</p>
+</section>
+<hr class="docutils" />
+<section id="computing-the-laser-electric-field-from-the-laser-envelope">
+<h2>Computing the laser electric field from the laser envelope<a class="headerlink" href="#computing-the-laser-electric-field-from-the-laser-envelope" title="Link to this heading">¶</a></h2>
+<p>It is always useful (and recommendable) to compare the results of an envelope simulation and of a standard laser simulation,
+to check if the envelope approximation is suitable for the physical case that is simulated.
+For this purpose, the plasma electromagnetic fields and the charge densities are easily comparable.
+However, in an envelope simulation all the plasma dynamics is written as function of the envelope of the transverse component
+of the vector potential <span class="math notranslate nohighlight">\(\tilde{A}\)</span>, as explained in the previous sections, and not as function of the laser electric field.</p>
+<p>Furthermore, in case of envelope simulations with ionization, the ionization rate formula is computed using the electric field
+(longitudinal and transverse components) of the laser.</p>
+<p>For these two reasons (diagnostic and ionization), in an envelope simulation two additional fields are computed,
+<span class="math notranslate nohighlight">\(\tilde{E}\)</span> and <span class="math notranslate nohighlight">\(\tilde{E_x}\)</span>, which represent respectively the envelope of the transverse component
+and of the longitudinal component of the laser electric field.</p>
+<p>From Eq. <a class="reference internal" href="#equation-envelope">(48)</a>, the laser transverse electric field’s complex envelope <span class="math notranslate nohighlight">\(\tilde{E}\)</span> can be derived.
+In the context of the perturbative treatment, the laser scalar potential can be neglected <a class="reference internal" href="#cowan2011" id="id19"><span>[Cowan2011]</span></a>, yielding:</p>
+<div class="math notranslate nohighlight">
+\[\hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],\]</div>
+<p>which can be expressed, following the definition in Eq. <a class="reference internal" href="#equation-envelope">(48)</a>, also as</p>
+<div class="math notranslate nohighlight">
+\[\hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].\]</div>
+<p>The laser transverse electric field’s complex envelope <span class="math notranslate nohighlight">\(\tilde{E}\)</span> can thus be defined:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t).\]</div>
+<p>In the same theoretical framework, it can be shown that the laser longitudinal electric field’s envelope can be computed through
+a partial derivative along the direction perpendicular to the laser propagation direction:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{E_x} = -\partial_{\perp}\tilde{A}(\mathbf{x},t).\]</div>
+<p>In the diagnostics, the absolute value of the fields <span class="math notranslate nohighlight">\(\tilde{E}\)</span>, <span class="math notranslate nohighlight">\(\tilde{E_x}\)</span> are available, under the names <code class="docutils literal notranslate"><span class="pre">Env_E_abs</span></code> and <code class="docutils literal notranslate"><span class="pre">Env_Ex_abs</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="the-numerical-solution-of-the-envelope-equation">
+<h2>The numerical solution of the envelope equation<a class="headerlink" href="#the-numerical-solution-of-the-envelope-equation" title="Link to this heading">¶</a></h2>
+<p>To solve Eq. <a class="reference internal" href="#equation-envelope-equation-scalar">(56)</a>, two explicit numerical schemes are implemented in the code, first implemented in the PIC code <strong class="program">ALaDyn</strong> <a class="reference internal" href="#benedetti2008" id="id20"><span>[Benedetti2008]</span></a> and described in <a class="reference internal" href="#terzani" id="id21"><span>[Terzani]</span></a>.</p>
+<p>In the first scheme, denoted as <code class="docutils literal notranslate"><span class="pre">&quot;explicit&quot;</span></code> in the input namelist, the well known central finite differences are used to discretize the envelope equation.
+In 1D for example, the spatial and time derivatives of the envelope <span class="math notranslate nohighlight">\(\tilde{A}\)</span> at time-step <span class="math notranslate nohighlight">\(n\)</span> and spatial index <span class="math notranslate nohighlight">\(i\)</span> are thus approximated by:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}D_x\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp;\frac{\tilde{A}^n_{i+1}-\tilde{A}^n_{i-1}}{2\Delta x},\\
+D_t\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp;\frac{\tilde{A}^{n+1}_{i}-\tilde{A}^{n-1}_{i}}{2\Delta t},\\
+D_{xx}\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp;\frac{\tilde{A}^n_{i+1}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-1}}{\Delta x^2},\\
+D_{tt}\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp;\frac{\tilde{A}^{n+1}_{i}-2\tilde{A}^n_{i}+\tilde{A}^{n-1}_{i}}{\Delta t^2},\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta x, \Delta t\)</span> are the cell size in the <cite>x</cite> direction and the integration time-step respectively.</p>
+<p>In the second scheme, denoted as <code class="docutils literal notranslate"><span class="pre">&quot;explicit_reduced_dispersion&quot;</span></code> in the input namelist, the finite difference approximations for the derivatives along
+the propagation direction <cite>x</cite> are substituted by optimized finite differences that reduce the numerical dispersion in that direction (see <a class="reference internal" href="#terzani" id="id22"><span>[Terzani]</span></a> for the derivation).
+Namely, defining <span class="math notranslate nohighlight">\(\nu=\Delta t/\Delta x\)</span>, <span class="math notranslate nohighlight">\(\delta=(1-\nu^2)/3\)</span>, these optimized derivatives can be written as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}D_{x,opt}\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp; (1+\delta)D_x\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-\tilde{A}^n_{i-2}}{4\Delta x}\right),\\
+D_{xx,opt}\tilde{A}\bigg\rvert^{n}_{i}&amp;=&amp; (1+\delta)D_{xx}\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-2}}{4\Delta x^2}\right).\\\end{split}\]</div>
+<p>In both schemes, after substituting the spatial and temporal derivative with the chosen finite differences forms,
+an explicit update of <span class="math notranslate nohighlight">\(\tilde{A}^{n+1}_i\)</span>, function of <span class="math notranslate nohighlight">\(\tilde{A}^{n}_i\)</span>, <span class="math notranslate nohighlight">\(\tilde{A}^{n}_{i-1}\)</span>, <span class="math notranslate nohighlight">\(\tilde{A}^{n}_{i+1}\)</span>, <span class="math notranslate nohighlight">\(\tilde{A}^{n-1}_i\)</span> and <span class="math notranslate nohighlight">\(\chi^{n}_i\)</span> can  be easily found.
+In the reduced dispersion scheme, also the values <span class="math notranslate nohighlight">\(\tilde{A}^{n}_{i-2}\)</span>, <span class="math notranslate nohighlight">\(\tilde{A}^{n}_{i+2}\)</span> are necessary for the update.
+The locality of the abovementioned finite difference stencils allows a parallelization with well known techniques and the extension to the other geometries is straightforward.
+The discretization of the transverse components of the Laplacian in Eq. <a class="reference internal" href="#equation-envelope-equation">(50)</a> in Cartesian geometry uses the central finite differences defined above, applied to the <cite>y</cite> and <cite>z</cite> axes.
+In cylindrical geometry (see <a class="reference internal" href="azimuthal_modes_decomposition.html"><span class="doc">Azimuthal modes decomposition</span></a>), the transverse part of the Laplacian is discretized as:</p>
+<div class="math notranslate nohighlight">
+\[D^2_{\perp, cyl}\tilde{A}\rvert^{n}_{i,j} = \frac{\tilde{A}^n_{i,j+1}-2\tilde{A}^n_{i,j}+\tilde{A}^n_{i,j-1}}{\Delta r^2} + \frac{1}{r_j}\frac{\tilde{A}^n_{i,j+1}-\tilde{A}^n_{i,j-1}}{2\Delta r},\]</div>
+<p>where <span class="math notranslate nohighlight">\(j, r, \Delta r\)</span> are the transverse index, the distance from the propagation axis and the radial cell size respectively.</p>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="mora1997" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mora1997<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id12">2</a>,<a role="doc-backlink" href="#id15">3</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1063/1.872134">P. Mora and T. M. Antonsen Jr, Physics of Plasmas 4, 217 (1997)</a></p>
+</div>
+<div class="citation" id="quesnel1998" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Quesnel1998<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id13">2</a>,<a role="doc-backlink" href="#id16">3</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1103/PhysRevE.58.3719">B. Quesnel and P. Mora, Physics Review E 58, 3719 (1998)</a></p>
+</div>
+<div class="citation" id="gordon2000" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Gordon2000<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id17">2</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1109/27.893300">D. F. Gordon et al.,IEEE Transactions on Plasma Science 28, 4 (2000)</a></p>
+</div>
+<div class="citation" id="huang2006" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">Huang2006</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://stacks.iop.org/1742-6596/46/i=1/a=026">C. Huang et al., Journal of Physics: Conference Series 46, 190 (2006)</a></p>
+</div>
+<div class="citation" id="cowan2011" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Cowan2011<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id8">2</a>,<a role="doc-backlink" href="#id14">3</a>,<a role="doc-backlink" href="#id19">4</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.jcp.2010.09.009">B. M. Cowan et al., Journal of Computational Physics 230, 61 (2011)</a></p>
+</div>
+<div class="citation" id="benedetti2012" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id9">Benedetti2012</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://jacow.org/ICAP2012/papers/thaai2.pdf">C. Benedetti et al., Proceedings of the 11th International Computational Accelerator Physics Conference (ICAP 2012)</a></p>
+</div>
+<div class="citation" id="benedetti2008" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Benedetti2008<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id10">1</a>,<a role="doc-backlink" href="#id20">2</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1109/TPS.2008.927143">C. Benedetti et al., IEEE Transactions on Plasma Science 36, 1790 (2008)</a></p>
+</div>
+<div class="citation" id="terzani" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Terzani<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id11">2</a>,<a role="doc-backlink" href="#id18">3</a>,<a role="doc-backlink" href="#id21">4</a>,<a role="doc-backlink" href="#id22">5</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.cpc.2019.04.007">D. Terzani and P. Londrillo, Computer Physics Communications 242, 49 (2019)</a></p>
+</div>
+<div class="citation" id="massimoppcf2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">MassimoPPCF2019</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://iopscience.iop.org/article/10.1088/1361-6587/ab49cf">F. Massimo et al., Plasma Phys. Control. Fusion (2019)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

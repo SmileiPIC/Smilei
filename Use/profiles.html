@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Profiles &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generation of the external tables" href="tables.html" />
+    <link rel="prev" title="Initialize particles from an array or a file" href="particle_initialization.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Profiles</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Profiles</a><ul>
+<li><a class="reference internal" href="#constant-profiles">Constant profiles</a></li>
+<li><a class="reference internal" href="#python-profiles"><em>Python</em> profiles</a></li>
+<li><a class="reference internal" href="#pre-defined-spatial-profiles">Pre-defined <em>spatial</em> profiles</a><ul>
+<li><a class="reference internal" href="#constant"><code class="docutils literal notranslate"><span class="pre">constant()</span></code></a></li>
+<li><a class="reference internal" href="#trapezoidal"><code class="docutils literal notranslate"><span class="pre">trapezoidal()</span></code></a></li>
+<li><a class="reference internal" href="#gaussian"><code class="docutils literal notranslate"><span class="pre">gaussian()</span></code></a></li>
+<li><a class="reference internal" href="#polygonal"><code class="docutils literal notranslate"><span class="pre">polygonal()</span></code></a></li>
+<li><a class="reference internal" href="#cosine"><code class="docutils literal notranslate"><span class="pre">cosine()</span></code></a></li>
+<li><a class="reference internal" href="#polynomial"><code class="docutils literal notranslate"><span class="pre">polynomial()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pre-defined-temporal-profiles">Pre-defined <em>temporal</em> profiles</a><ul>
+<li><a class="reference internal" href="#tconstant"><code class="docutils literal notranslate"><span class="pre">tconstant()</span></code></a></li>
+<li><a class="reference internal" href="#ttrapezoidal"><code class="docutils literal notranslate"><span class="pre">ttrapezoidal()</span></code></a></li>
+<li><a class="reference internal" href="#tgaussian"><code class="docutils literal notranslate"><span class="pre">tgaussian()</span></code></a></li>
+<li><a class="reference internal" href="#tpolygonal"><code class="docutils literal notranslate"><span class="pre">tpolygonal()</span></code></a></li>
+<li><a class="reference internal" href="#tcosine"><code class="docutils literal notranslate"><span class="pre">tcosine()</span></code></a></li>
+<li><a class="reference internal" href="#tpolynomial"><code class="docutils literal notranslate"><span class="pre">tpolynomial()</span></code></a></li>
+<li><a class="reference internal" href="#tsin2plateau"><code class="docutils literal notranslate"><span class="pre">tsin2plateau()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#extract-the-profile-from-a-file">Extract the profile from a file</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="profiles">
+<h1>Profiles<a class="headerlink" href="#profiles" title="Link to this heading">¶</a></h1>
+<p>Several quantities require the input of a profile: particle charge, particle density,
+external fields, etc. Depending on the case, they can be <em>spatial</em> or <em>temporal</em>
+profiles.</p>
+<hr class="docutils" />
+<section id="constant-profiles">
+<h2>Constant profiles<a class="headerlink" href="#constant-profiles" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Species(</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">charge</span> <span class="pre">=</span> <span class="pre">-3.,</span> <span class="pre">...</span> <span class="pre">)</span></code> defines a species with charge <span class="math notranslate nohighlight">\(Z^\star=3\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species(</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">number_density</span> <span class="pre">=</span> <span class="pre">10.,</span> <span class="pre">...</span> <span class="pre">)</span></code> defines a species with density <span class="math notranslate nohighlight">\(10\,N_r\)</span>.
+You can choose <code class="docutils literal notranslate"><span class="pre">number_density</span></code> or <code class="docutils literal notranslate"><span class="pre">charge_density</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species(</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">mean_velocity</span> <span class="pre">=</span> <span class="pre">[0.05,</span> <span class="pre">0.,</span> <span class="pre">0.],</span> <span class="pre">...</span> <span class="pre">)</span></code> defines a species
+with drift velocity <span class="math notranslate nohighlight">\(v_x = 0.05\,c\)</span> over the whole box.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species(...,</span> <span class="pre">momentum_initialization=&quot;maxwell-juettner&quot;,</span> <span class="pre">temperature=[1e-5],</span> <span class="pre">...)</span></code> defines
+a species with a Maxwell-Jüttner distribution of temperature <span class="math notranslate nohighlight">\(T = 10^{-5}\,m_ec^2\)</span> over the whole box.
+Note that the temperature may be anisotropic: <code class="docutils literal notranslate"><span class="pre">temperature=[1e-5,</span> <span class="pre">2e-5,</span> <span class="pre">2e-5]</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species(</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">particles_per_cell</span> <span class="pre">=</span> <span class="pre">10.,</span> <span class="pre">...</span> <span class="pre">)</span></code> defines a species with 10 particles per cell.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ExternalField(</span> <span class="pre">field=&quot;Bx&quot;,</span> <span class="pre">profile=0.1</span> <span class="pre">)</span></code> defines a constant external field <span class="math notranslate nohighlight">\(B_x = 0.1 B_r\)</span>.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="python-profiles">
+<h2><em>Python</em> profiles<a class="headerlink" href="#python-profiles" title="Link to this heading">¶</a></h2>
+<p>Any <em>python</em> function can be a profile. Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">&lt;</span><span class="mf">1.</span><span class="p">:</span> <span class="k">return</span> <span class="mf">0.</span>
+    <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="mf">1.</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>    <span class="c1"># two variables for 2D simulation</span>
+    <span class="n">twoPI</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span>  <span class="n">twoPI</span> <span class="o">*</span> <span class="n">x</span><span class="o">/</span><span class="mf">3.2</span> <span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.</span>
+</pre></div>
+</div>
+<p>Once the function is created, you have to include it in the block you want,
+for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Species</span><span class="p">(</span> <span class="o">...</span> <span class="p">,</span> <span class="n">charge</span> <span class="o">=</span> <span class="n">f</span><span class="p">,</span> <span class="o">...</span> <span class="p">)</span>
+
+<span class="n">Species</span><span class="p">(</span> <span class="o">...</span> <span class="p">,</span> <span class="n">mean_velocity</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="o">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is possible, for higher performances, to create functions with
+arguments <em>(x, y, etc.)</em> that are actually <em>numpy</em> arrays. If the function returns
+a <em>numpy</em> array of the same size, it will automatically be considered as a profile
+acting on arrays instead of single floats. Currently, this feature is only available
+on Species’ profiles.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pre-defined-spatial-profiles">
+<h2>Pre-defined <em>spatial</em> profiles<a class="headerlink" href="#pre-defined-spatial-profiles" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="constant">
+<span class="sig-name descname"><span class="pre">constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#constant" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – the magnitude</p></li>
+<li><p><strong>xvacuum</strong> – vacuum region before the start of the profile.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trapezoidal">
+<span class="sig-name descname"><span class="pre">trapezoidal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xplateau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xslope1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xslope2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yplateau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yslope1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yslope2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#trapezoidal" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max</strong> – maximum value</p></li>
+<li><p><strong>xvacuum</strong> – empty length before the ramp up</p></li>
+<li><p><strong>xplateau</strong> – length of the plateau (default is <a class="reference internal" href="namelist.html#grid_length" title="grid_length"><code class="xref py py-data docutils literal notranslate"><span class="pre">grid_length</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">xvacuum</span></code>)</p></li>
+<li><p><strong>xslope1</strong> – length of the ramp up</p></li>
+<li><p><strong>xslope2</strong> – length of the ramp down</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gaussian">
+<span class="sig-name descname"><span class="pre">gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xfwhm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yfwhm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ycenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gaussian" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max</strong> – maximum value</p></li>
+<li><p><strong>xvacuum</strong> – empty length before starting the profile</p></li>
+<li><p><strong>xlength</strong> – length of the profile (default is <a class="reference internal" href="namelist.html#grid_length" title="grid_length"><code class="xref py py-data docutils literal notranslate"><span class="pre">grid_length</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">xvacuum</span></code>)</p></li>
+<li><p><strong>xfwhm</strong> – gaussian FWHM (default is <code class="docutils literal notranslate"><span class="pre">xlength/3.</span></code>)</p></li>
+<li><p><strong>xcenter</strong> – gaussian center position (default is in the middle of <code class="docutils literal notranslate"><span class="pre">xlength</span></code>)</p></li>
+<li><p><strong>xorder</strong> – order of the gaussian.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Note<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">yorder</span></code> equals 0, then the profile is constant over <span class="math notranslate nohighlight">\(y\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="polygonal">
+<span class="sig-name descname"><span class="pre">polygonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xpoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#polygonal" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xpoints</strong> – list of the positions of the points</p></li>
+<li><p><strong>xvalues</strong> – list of the values of the profile at each point</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosine">
+<span class="sig-name descname"><span class="pre">cosine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xvacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xphi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xnumber</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cosine" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> – offset of the profile value</p></li>
+<li><p><strong>amplitude</strong> – amplitude of the cosine</p></li>
+<li><p><strong>xvacuum</strong> – empty length before starting the profile</p></li>
+<li><p><strong>xlength</strong> – length of the profile (default is <a class="reference internal" href="namelist.html#grid_length" title="grid_length"><code class="xref py py-data docutils literal notranslate"><span class="pre">grid_length</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">xvacuum</span></code>)</p></li>
+<li><p><strong>xphi</strong> – phase offset</p></li>
+<li><p><strong>xnumber</strong> – number of periods within <code class="docutils literal notranslate"><span class="pre">xlength</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="polynomial">
+<span class="sig-name descname"><span class="pre">polynomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0=0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0=0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0=0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order0=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order1=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#polynomial" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x0</strong><strong>,</strong><strong>y0</strong> – The reference position(s)</p></li>
+<li><p><strong>order0</strong> – Coefficient for the 0th order</p></li>
+<li><p><strong>order1</strong> – Coefficient for the 1st order (2 coefficients in 2D)</p></li>
+<li><p><strong>order2</strong> – Coefficient for the 2nd order (3 coefficients in 2D)</p></li>
+<li><p><strong>etc</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>Creates a polynomial of the form</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+&amp;\sum_i a_i(x-x_0)^i &amp; \quad\mathrm{in\, 1D}\\
+&amp;\sum_i \sum_j a_{ij}(x-x0)^{i-j}(y-y0)^j &amp; \quad\mathrm{in\, 2D}\\
+&amp;\sum_i \sum_j \sum_k a_{ijk}(x-x0)^{i-j-k}(y-y0)^j(z-z0)^k &amp; \quad\mathrm{in\, 3D}
+\end{eqnarray}\end{split}\]</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">orderi</span></code> is a coefficient (or list of coefficents) associated to the order <code class="docutils literal notranslate"><span class="pre">i</span></code>.
+In 1D, there is only one coefficient per order. In 2D, each <code class="docutils literal notranslate"><span class="pre">orderi</span></code> is a list
+of <code class="docutils literal notranslate"><span class="pre">i+1</span></code> coefficients. For instance, the second order has three coefficients
+associated to <span class="math notranslate nohighlight">\(x^2\)</span>, <span class="math notranslate nohighlight">\(xy\)</span> and <span class="math notranslate nohighlight">\(y^2\)</span>, respectively.
+In 3D, each <code class="docutils literal notranslate"><span class="pre">orderi</span></code> is a list of <code class="docutils literal notranslate"><span class="pre">(i+1)*(i+2)/2</span></code> coefficients. For instance,
+the second order has 6 coefficients associated to <span class="math notranslate nohighlight">\(x^2\)</span>, <span class="math notranslate nohighlight">\(xy\)</span>, <span class="math notranslate nohighlight">\(xz\)</span>,
+<span class="math notranslate nohighlight">\(y^2\)</span>, <span class="math notranslate nohighlight">\(yz\)</span> and <span class="math notranslate nohighlight">\(z^2\)</span>, respectively.</p>
+</dd></dl>
+
+<p><strong>Examples</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Species</span><span class="p">(</span> <span class="o">...</span> <span class="p">,</span> <span class="n">density</span> <span class="o">=</span> <span class="n">gaussian</span><span class="p">(</span><span class="mf">10.</span><span class="p">,</span> <span class="n">xfwhm</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">xcenter</span><span class="o">=</span><span class="mf">0.8</span><span class="p">),</span> <span class="o">...</span> <span class="p">)</span>
+
+<span class="n">ExternalField</span><span class="p">(</span> <span class="o">...</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">constant</span><span class="p">(</span><span class="mf">2.2</span><span class="p">),</span> <span class="o">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Illustrations of the pre-defined spatial profiles</p>
+<img alt="../_images/pythonprofiles.png" src="../_images/pythonprofiles.png" />
+</section>
+<hr class="docutils" />
+<section id="pre-defined-temporal-profiles">
+<h2>Pre-defined <em>temporal</em> profiles<a class="headerlink" href="#pre-defined-temporal-profiles" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tconstant">
+<span class="sig-name descname"><span class="pre">tconstant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tconstant" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>start</strong> – starting time</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ttrapezoidal">
+<span class="sig-name descname"><span class="pre">ttrapezoidal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plateau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ttrapezoidal" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – starting time</p></li>
+<li><p><strong>plateau</strong> – duration of the plateau (default is <a class="reference internal" href="namelist.html#simulation_time" title="simulation_time"><code class="xref py py-data docutils literal notranslate"><span class="pre">simulation_time</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">start</span></code>)</p></li>
+<li><p><strong>slope1</strong> – duration of the ramp up</p></li>
+<li><p><strong>slope2</strong> – duration of the ramp down</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tgaussian">
+<span class="sig-name descname"><span class="pre">tgaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwhm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tgaussian" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – starting time</p></li>
+<li><p><strong>duration</strong> – duration of the profile (default is <a class="reference internal" href="namelist.html#simulation_time" title="simulation_time"><code class="xref py py-data docutils literal notranslate"><span class="pre">simulation_time</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">start</span></code>)</p></li>
+<li><p><strong>fwhm</strong> – gaussian FWHM (default is <code class="docutils literal notranslate"><span class="pre">duration/3.</span></code>)</p></li>
+<li><p><strong>center</strong> – gaussian center time (default is in the middle of <code class="docutils literal notranslate"><span class="pre">duration</span></code>)</p></li>
+<li><p><strong>order</strong> – order of the gaussian</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tpolygonal">
+<span class="sig-name descname"><span class="pre">tpolygonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tpolygonal" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> – list of times</p></li>
+<li><p><strong>values</strong> – list of the values at each time</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tcosine">
+<span class="sig-name descname"><span class="pre">tcosine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tcosine" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> – offset of the profile value</p></li>
+<li><p><strong>amplitude</strong> – amplitude of the cosine</p></li>
+<li><p><strong>start</strong> – starting time</p></li>
+<li><p><strong>duration</strong> – duration of the profile (default is <a class="reference internal" href="namelist.html#simulation_time" title="simulation_time"><code class="xref py py-data docutils literal notranslate"><span class="pre">simulation_time</span></code></a> <span class="math notranslate nohighlight">\(-\)</span> <code class="docutils literal notranslate"><span class="pre">start</span></code>)</p></li>
+<li><p><strong>phi</strong> – phase offset</p></li>
+<li><p><strong>freq</strong> – frequency</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tpolynomial">
+<span class="sig-name descname"><span class="pre">tpolynomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0=0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order0=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order1=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tpolynomial" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t0</strong> – The reference position</p></li>
+<li><p><strong>order0</strong> – Coefficient for the 0th order</p></li>
+<li><p><strong>order1</strong> – Coefficient for the 1st order</p></li>
+<li><p><strong>order2</strong> – Coefficient for the 2nd order</p></li>
+<li><p><strong>etc</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>Creates a polynomial of the form <span class="math notranslate nohighlight">\(\sum_i a_i(t-t_0)^i\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tsin2plateau">
+<span class="sig-name descname"><span class="pre">tsin2plateau</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwhm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plateau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">fwhm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">slope1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tsin2plateau" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> – Profile is 0 before start</p></li>
+<li><p><strong>fwhm</strong> – Full width half maximum of the profile</p></li>
+<li><p><strong>plateau</strong> – Length of the plateau</p></li>
+<li><p><strong>slope1</strong> – Duration of the ramp up of the profil</p></li>
+<li><p><strong>slope2</strong> – Duration of the ramp down of the profil</p></li>
+</ul>
+</dd>
+</dl>
+<p>Creates a sin squared profil with a plateau in the middle if needed. If slope1 and 2 are used, fwhm is overwritten.</p>
+</dd></dl>
+
+<p><strong>Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Antenna</span><span class="p">(</span> <span class="o">...</span> <span class="p">,</span> <span class="n">time_profile</span> <span class="o">=</span> <span class="n">tcosine</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="mf">0.01</span><span class="p">),</span> <span class="o">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Illustrations of the pre-defined temporal profiles</p>
+<img alt="../_images/pythonprofiles_t.png" src="../_images/pythonprofiles_t.png" />
+</section>
+<hr class="docutils" />
+<section id="extract-the-profile-from-a-file">
+<h2>Extract the profile from a file<a class="headerlink" href="#extract-the-profile-from-a-file" title="Link to this heading">¶</a></h2>
+<p>The following profiles may be given directly as an HDF5 file:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.charge_density</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.number_density</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.particles_per_cell</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.charge</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.mean_velocity</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Species.temperature</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ExternalField.profile</span></code> except when complex (cylindrical geometry)</p></li>
+</ul>
+<p>You must provide the path to the file, and the path to the dataset
+inside the file.
+For instance <code class="docutils literal notranslate"><span class="pre">charge_density</span> <span class="pre">=</span> <span class="pre">&quot;myfile.h5/path/to/dataset&quot;</span></code>.</p>
+<p>The targeted dataset located in the file must be an array with
+the same dimension and the same number of cells as the simulation grid.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">ExternalField</span></code>, the array size must take into account the
+number of ghost cells in each direction. There is also one extra cell
+in specific directions due to the grid staggering (see <a class="reference internal" href="../Understand/algorithms.html#staggeredgrid"><span class="std std-ref">this doc</span></a>).</p>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Particle Merging &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Particle Injector" href="particle_injector.html" />
+    <link rel="prev" title="Laser envelope model" href="laser_envelope.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Particle Merging</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Particle Merging</a><ul>
+<li><a class="reference internal" href="#understand-the-method">Understand the method</a><ul>
+<li><a class="reference internal" href="#momentum-sub-groups">1. Momentum sub-groups</a></li>
+<li><a class="reference internal" href="#merging-algorithm-for-massive-macro-particles">2. Merging algorithm for massive macro-particles</a></li>
+<li><a class="reference internal" href="#merging-algorithm-for-macro-photons">3. Merging algorithm for macro-photons</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementation-details">Implementation details</a><ul>
+<li><a class="reference internal" href="#cartesian-sub-group-discretization">1. Cartesian sub-group discretization</a></li>
+<li><a class="reference internal" href="#spherical-sub-group-discretization">2. Spherical sub-group discretization</a></li>
+<li><a class="reference internal" href="#solid-angle-correction-in-3d">3. Solid-angle correction in 3D</a></li>
+<li><a class="reference internal" href="#accumulation-effect">4. Accumulation effect</a></li>
+<li><a class="reference internal" href="#logarithmic-scale">5. Logarithmic scale</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simulation-results">Simulation results</a><ul>
+<li><a class="reference internal" href="#d-qed-cascade">1. 3D QED cascade</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="experimental" id="particle-merging">
+<h1>Particle Merging<a class="headerlink" href="#particle-merging" title="Link to this heading">¶</a></h1>
+<blockquote>
+<div><p><span class="red">Be careful when using this module and read
+carefully the documentation.</span></p>
+<p><span class="red">Note that the nomenclature might change</span></p>
+</div></blockquote>
+<p>The ability to merge macro-particles can speed-up the code efficiency
+and reduce the memory footprint in some specific simulation scenarii:</p>
+<ul class="simple">
+<li><p>When macro-particles accumulate in a fraction of the simulation domain
+hence strongly worsening the load imbalance (ex: Weibel collision shocks,
+laser wakefield electron acceleration).</p></li>
+<li><p>When macro-particles are generated in a large quantity due to some
+additional physical mechanisms (ionization, macro-photon emission,
+QED pair production…)</p></li>
+<li><p>When macro-particles travel in large quantities outside interesting
+physical regions.</p></li>
+</ul>
+<p>Smilei’s merging method is inspired from that of M. Vranic
+<a class="reference internal" href="#vranic2005" id="id1"><span>[Vranic2005]</span></a> with some additions.</p>
+<p>Please refer to <a class="reference internal" href="../Use/namelist.html#particle-merging"><span class="std std-ref">that doc</span></a> for
+the definitions in the namelist file.</p>
+<hr class="docutils" id="ref-understand-vranic-method" />
+<section id="understand-the-method">
+<h2>Understand the method<a class="headerlink" href="#understand-the-method" title="Link to this heading">¶</a></h2>
+<p>The method of M. Vranic, illustrated (in 2D) in
+Fig. <a class="reference internal" href="#fig-vranic-particle-merging"><span class="std std-numref">Fig. 47</span></a>, consists in 3 main steps:</p>
+<ol class="arabic simple">
+<li><p>Decompose macro-particles into groups according to their location so that
+they have nearby positions.
+In <strong class="program">Smilei</strong>, macro-particles are sorted by field cells,
+even though, in Vranic <em>et al.</em>, the decomposition can be larger
+than just one cell.</p></li>
+<li><p>Subdivide groups into sub-groups in momentum space so that macro-particles
+share close kinetic properties.</p></li>
+<li><p>Merge macro-particles located in the same sub-group into 2 new
+macro-particles, while conserving charge, energy and momentum.</p></li>
+</ol>
+<figure class="align-default" id="id3">
+<span id="fig-vranic-particle-merging"></span><a class="reference internal image-reference" href="../_images/vranic_particle_merging.png"><img alt="../_images/vranic_particle_merging.png" src="../_images/vranic_particle_merging.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 47 </span><span class="caption-text">Basic description of M. Vranic merging method in 2D geometry.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>This method has several advantages:</p>
+<ul class="simple">
+<li><p>it is relatively easy to understand and implement,</p></li>
+<li><p>it has a relatively low computational cost,</p></li>
+<li><p>it is efficient without impacting significantly the physical results.</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This assumes that the parameters are adequately tuned.
+Otherwise, the macro-particle merging can affect the final simulation results.</p>
+</div>
+<section id="momentum-sub-groups">
+<h3>1. Momentum sub-groups<a class="headerlink" href="#momentum-sub-groups" title="Link to this heading">¶</a></h3>
+<p>The momentum (<span class="math notranslate nohighlight">\(\mathbf p\)</span>) space may be decomposed either in
+cartesian (<span class="math notranslate nohighlight">\(p_x\)</span>, <span class="math notranslate nohighlight">\(p_y\)</span>, <span class="math notranslate nohighlight">\(p_z\)</span>)
+or spherical (<span class="math notranslate nohighlight">\(p\)</span>, <span class="math notranslate nohighlight">\(\theta\)</span>, <span class="math notranslate nohighlight">\(\phi\)</span>) coordinates.</p>
+<p>In each cell, for each coordinate <span class="math notranslate nohighlight">\(\alpha\)</span>:</p>
+<ul class="simple">
+<li><p>we compute the overall limits in momentum space.</p></li>
+<li><p>This space is divided in <span class="math notranslate nohighlight">\(N_{\alpha}\)</span> sub-groups (as prescribed by the
+user) of length <span class="math notranslate nohighlight">\(\Delta_{\alpha}\)</span>.</p></li>
+</ul>
+<figure class="align-default" id="id4">
+<span id="fig-vranic-momentum-discretization"></span><a class="reference internal image-reference" href="../_images/vranic_momentum_discretization.png"><img alt="../_images/vranic_momentum_discretization.png" src="../_images/vranic_momentum_discretization.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 48 </span><span class="caption-text">Cartesian and spherical momentum discretizations, in 2D.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The spherical components are related to the Cartesian momentum components by:</p>
+<div class="math notranslate nohighlight" id="equation-spherical-discretization">
+<span class="eqno">(57)<a class="headerlink" href="#equation-spherical-discretization" title="Link to this equation">¶</a></span>\[\begin{split}p = \sqrt{ p_x^2 + p_y^2 + p_z^2 }\\
+\theta = \arctan{ \left( p_y / p_x \right)}\\
+\phi = \arcsin{\left( p_z / p \right)}\end{split}\]</div>
+<figure class="align-default" id="id5">
+<span id="fig-spherical-coordinates"></span><a class="reference internal image-reference" href="../_images/spherical_coordinates.png"><img alt="../_images/spherical_coordinates.png" src="../_images/spherical_coordinates.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 49 </span><span class="caption-text">Spherical coordinates used for the momentum cell discretization.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Since macro-particle momentum components are defined in Cartesian geometry
+by default, the spherical discretization induces small additional computation.
+However, it makes the merging process more accurate.
+Indeed, in the Cartesian discretization, the maximum angle between the momentum
+directions of two macro-particles located in the same sub-group
+depends on the sub-group.
+For instance, in the cell adjacent to the origin <span class="math notranslate nohighlight">\(p_x = p_y = p_z = 0\)</span>,
+this angle equal up to <span class="math notranslate nohighlight">\(\pi / 2\)</span> whatever the discretization.
+The spherical geometry ensures that the merging accuracy depends
+on the discretization and is similar for all momentum cells.
+The overhead induced by the change of geometry is
+a small fraction of the entire process.</p>
+</section>
+<section id="merging-algorithm-for-massive-macro-particles">
+<h3>2. Merging algorithm for massive macro-particles<a class="headerlink" href="#merging-algorithm-for-massive-macro-particles" title="Link to this heading">¶</a></h3>
+<p>In step 3, for each sub-group containing more than 4 macro-particles,
+the algorithm merges them into 2 macro-particles.
+Let us denote by <span class="math notranslate nohighlight">\(k\)</span> the macro-particles in a given sub-group
+<span class="math notranslate nohighlight">\(\mathrm{M}\)</span>, their weights by <span class="math notranslate nohighlight">\(w_k\)</span>, their energies
+by <span class="math notranslate nohighlight">\(\varepsilon_k\)</span> and their momenta by <span class="math notranslate nohighlight">\(\mathbf{p}_k\)</span>.
+We start by computing total quantities:</p>
+<div class="math notranslate nohighlight" id="equation-total-quantities">
+<span class="eqno">(58)<a class="headerlink" href="#equation-total-quantities" title="Link to this equation">¶</a></span>\[\begin{split}w_t = \sum_{k \in \mathrm{M}}{w_k}\\
+\varepsilon_t = \sum_{k \in \mathrm{M}}{w_k \varepsilon_k}\\
+\mathbf{p}_t = \sum_{k \in \mathrm{M}}{w_k \mathbf{p}_k}\\\end{split}\]</div>
+<p>In spherical geometry, the total angles are also defined:</p>
+<div class="math notranslate nohighlight" id="equation-total-angles">
+<span class="eqno">(59)<a class="headerlink" href="#equation-total-angles" title="Link to this equation">¶</a></span>\[\begin{split}\theta_t = \sum_{k \in \mathrm{M}}{w_k \theta_k}\\
+\phi_t = \sum_{k \in \mathrm{M}}{w_k \phi_k}\end{split}\]</div>
+<p>Merging all the macro-particles into one cannot always conserve weight,
+energy and momentum. Vranic <em>et al.</em> propose to merge into 2 macro-particles:</p>
+<div class="math notranslate nohighlight" id="equation-merged-particle-relation">
+<span class="eqno">(60)<a class="headerlink" href="#equation-merged-particle-relation" title="Link to this equation">¶</a></span>\[\begin{split}w_t = w_a + w_b \\
+\mathbf{p}_t = w_a \mathbf{p}_a + w_b \mathbf{p}_b \\
+\varepsilon_t = w_a \varepsilon_a + w_b \varepsilon_b\end{split}\]</div>
+<p>The following energy-momentum relation has to be satisfied
+for both macro-particles a and b:</p>
+<div class="math notranslate nohighlight" id="equation-energy-momentum-relation">
+<span class="eqno">(61)<a class="headerlink" href="#equation-energy-momentum-relation" title="Link to this equation">¶</a></span>\[\varepsilon^2 = p^2 + 1\]</div>
+<p>To simplify the problem, Vranic <em>et al</em> assume that merged macro-particles
+have the same weight <span class="math notranslate nohighlight">\(w_a = w_b = w_t / 2\)</span>
+and same energy <span class="math notranslate nohighlight">\(\varepsilon_a = \varepsilon_b = \varepsilon_t / w_t\)</span>.</p>
+<figure class="align-default" id="id6">
+<span id="fig-vranic-planar-merging"></span><a class="reference internal image-reference" href="../_images/vranic_planar_merging.png"><img alt="../_images/vranic_planar_merging.png" src="../_images/vranic_planar_merging.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 50 </span><span class="caption-text">View of the plane made by vector <span class="math notranslate nohighlight">\(\mathbf{d}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{p_t}\)</span>.
+The corresponding Cartesian frame is given by <span class="math notranslate nohighlight">\((\mathbf{e_1}, \mathbf{e_2}, \mathbf{e_3})\)</span>.</span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>As illustrated in <a class="reference internal" href="#fig-vranic-planar-merging"><span class="std std-numref">Fig. 50</span></a>, it follows that:</p>
+<div class="math notranslate nohighlight" id="equation-new-momentum-relation">
+<span class="eqno">(62)<a class="headerlink" href="#equation-new-momentum-relation" title="Link to this equation">¶</a></span>\[\begin{split}\mathbf{p}_a +  \mathbf{p}_b = \frac{2 \mathbf{p}_t}{w_t} \\
+\mathbf{p}_{a,\perp} = - \mathbf{p}_{b,\perp} \\
+\mathbf{p}_{a,\parallel} = \mathbf{p}_{b,\parallel} = \mathbf{p_t} / w_t\end{split}\]</div>
+<p>We denote by <span class="math notranslate nohighlight">\(\omega\)</span> the angle between
+<span class="math notranslate nohighlight">\(\mathbf{p_a}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{p_t}\)</span> so that:</p>
+<div class="math notranslate nohighlight" id="equation-angle-omega">
+<span class="eqno">(63)<a class="headerlink" href="#equation-angle-omega" title="Link to this equation">¶</a></span>\[\cos{\omega} = \frac{\mathbf{p_t}}{w_t \mathbf{p_a}}\]</div>
+<p>We denote by <span class="math notranslate nohighlight">\(\mathbf{d}\)</span> the coordinate vector of the sub-group
+where the macro-particles are located.</p>
+<figure class="align-default" id="id7">
+<span id="fig-momentum-cell-vector"></span><a class="reference internal image-reference" href="../_images/vranic_momentum_cell_vector.png"><img alt="../_images/vranic_momentum_cell_vector.png" src="../_images/vranic_momentum_cell_vector.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 51 </span><span class="caption-text">Sub-group coordinate vector in Cartesian and spherical geometries.</span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The plane <span class="math notranslate nohighlight">\((\mathbf{e_1},\mathbf{e_2})\)</span> is the plane made by
+the vectors <span class="math notranslate nohighlight">\(\mathbf{p_t}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{d}\)</span>.
+We choose that it contains <span class="math notranslate nohighlight">\(\mathbf{p_a}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{p_b}\)</span>
+so that we have only one possible solution.</p>
+<p>The vectors <span class="math notranslate nohighlight">\(\mathbf{e_1}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{e_2}\)</span> are given by the
+following formula in the PIC code’s momentum frame:</p>
+<div class="math notranslate nohighlight" id="equation-planar-coordinates-e1">
+<span class="eqno">(64)<a class="headerlink" href="#equation-planar-coordinates-e1" title="Link to this equation">¶</a></span>\[\mathbf{e_1} = \mathbf{p_t} / p_t\]</div>
+<div class="math notranslate nohighlight" id="equation-planar-coordinates-e3">
+<span class="eqno">(65)<a class="headerlink" href="#equation-planar-coordinates-e3" title="Link to this equation">¶</a></span>\[\mathbf{e_3} = \frac{ \mathbf{d} \times \mathbf{e_1} }{d}\]</div>
+<div class="math notranslate nohighlight" id="equation-planar-coordinates-e2">
+<span class="eqno">(66)<a class="headerlink" href="#equation-planar-coordinates-e2" title="Link to this equation">¶</a></span>\[\mathbf{e_2} = \mathbf{e_1} \times \mathbf{e_3}\]</div>
+<p>Finally, the new macro-particle momentums are:</p>
+<div class="math notranslate nohighlight" id="equation-new-macroparticle-momentum">
+<span class="eqno">(67)<a class="headerlink" href="#equation-new-macroparticle-momentum" title="Link to this equation">¶</a></span>\[\begin{split}\mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
+\mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)\end{split}\]</div>
+<figure class="align-default" id="id8">
+<span id="fig-3d-schematic"></span><a class="reference internal image-reference" href="../_images/vranic_3d_schematics.png"><img alt="../_images/vranic_3d_schematics.png" src="../_images/vranic_3d_schematics.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 52 </span><span class="caption-text">3D view of the different vectors involved in the merging method.
+Generated by <a class="reference external" href="_static/vranic_geometry.py">this python script</a>.</span><a class="headerlink" href="#id8" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The new macro-particle positions are assigned the position of one of
+the merged macro-particles.
+We have tested to assign them randomly
+or to the first macro-particles of the merged list and we did
+not observe any difference.</p>
+<p>This algorithm does not work when the total momentum <span class="math notranslate nohighlight">\(\mathbf{p}_t\)</span>
+of the macro-particles to be merged is in the direction of <span class="math notranslate nohighlight">\(\mathbf{d}\)</span>.
+In this case <span class="math notranslate nohighlight">\(|| \mathbf{e_3} || = 0\)</span> and the system cannot be solved.
+In this specific case, the merging is not performed.</p>
+</section>
+<section id="merging-algorithm-for-macro-photons">
+<h3>3. Merging algorithm for macro-photons<a class="headerlink" href="#merging-algorithm-for-macro-photons" title="Link to this heading">¶</a></h3>
+<p>Macro-photons can be merged with the same algorithm, the only difference
+being that the momentum norm is equal to the energy <span class="math notranslate nohighlight">\(\varepsilon = p\)</span>.</p>
+<p>When the total momentum <span class="math notranslate nohighlight">\(\mathbf{p}_t\)</span> is in the direction
+of <span class="math notranslate nohighlight">\(\mathbf{d}\)</span>, macro-photons can be merged into a single one,
+contrary to the massive macro-particles case,
+since <span class="math notranslate nohighlight">\(\varepsilon_t = || \mathbf{p}_t ||\)</span>.
+This specific situation is implemented in the code.</p>
+</section>
+</section>
+<hr class="docutils" id="vranic-implementation" />
+<section id="implementation-details">
+<h2>Implementation details<a class="headerlink" href="#implementation-details" title="Link to this heading">¶</a></h2>
+<p>The Vranic merging method is implemented with both Cartesian
+and the spherical discretizations in the directory <code class="docutils literal notranslate"><span class="pre">src/Merging</span></code>.
+It is considered as a particle operator and the merging algorithm is
+managed with a factory (<code class="docutils literal notranslate"><span class="pre">MergingFactory.h</span></code>) as
+any operator with multiple implementations.
+The Cartesian implementation is done in the class <code class="docutils literal notranslate"><span class="pre">MergingVranicCartesian</span></code>
+and the spherical one in <code class="docutils literal notranslate"><span class="pre">MergingVranicSpherical</span></code>.</p>
+<p>For both methods, the implemented algorithm is very similar.</p>
+<blockquote>
+<div><p>For each cell:</p>
+<ol class="arabic simple">
+<li><p>Initialization of the sub-group discretization</p></li>
+<li><p>Computation of the direction vectors (<span class="math notranslate nohighlight">\(\mathbf{d}\)</span>):
+this step depends on the discretization and
+can be efficiently vectorized.</p></li>
+<li><p>Computation of the sub-group indexes for each macro-particle.
+Efficiently Vectorizable.</p></li>
+<li><p>Computation of the number of particles per sub-group.
+Not vectorizable because of random memory accesses.</p></li>
+<li><p>Computation of the index of each sub-group in the
+sorted array of particles (only the particle indexes are sorted).
+Not vectorizable.</p></li>
+<li><p>Sorting of the macro-particles per sub-groups, the index
+previously computed determines where
+each sub-group starts. Not vectorizable.</p></li>
+</ol>
+<p>Then, for each sub-group:</p>
+<ol class="arabic simple">
+<li><p>Division of the macro-particles of the sub-groupinto
+packets (size depends on the user parameters <code class="docutils literal notranslate"><span class="pre">merge_min_packet_size</span></code>
+and <code class="docutils literal notranslate"><span class="pre">merge_max_packet_size</span></code>)</p></li>
+<li><p>Merge of the packs using the previously described Vranic algorithm.
+Partly vectorized.</p></li>
+<li><p>Creation of the merged macro-particles at the position
+of the previous ones</p></li>
+<li><p>Tag of the macro-particles to be removed</p></li>
+</ol>
+<p>Then, once the merging finished for a given patch:</p>
+<ol class="arabic simple">
+<li><p>Compression of the macro-particle list (remove hole in arrays let
+by removed and tagged particles).
+By cleaning the particle vector at the end, we limit the computational
+impact of this step.</p></li>
+</ol>
+</div></blockquote>
+<section id="cartesian-sub-group-discretization">
+<h3>1. Cartesian sub-group discretization<a class="headerlink" href="#cartesian-sub-group-discretization" title="Link to this heading">¶</a></h3>
+<p>How to discretize momentum space is in fact one of the most important points.
+The user provides <span class="math notranslate nohighlight">\(N_x\)</span>, <span class="math notranslate nohighlight">\(N_y\)</span> and <span class="math notranslate nohighlight">\(N_z\)</span> via the namelist,
+but it may be slightly adjusted for algorithmic reasons:</p>
+<ul class="simple">
+<li><p>If the momentum space is very narrow in one direction, only one
+sub-group may be used.</p></li>
+<li><p>We force the origin (<span class="math notranslate nohighlight">\(p = 0\)</span>) to delimit two sub-groups
+so that a sub-group cannot contain two opposite momenta.
+This may require an extra sub-group to fit the whole momentum space.</p></li>
+</ul>
+</section>
+<section id="spherical-sub-group-discretization">
+<h3>2. Spherical sub-group discretization<a class="headerlink" href="#spherical-sub-group-discretization" title="Link to this heading">¶</a></h3>
+<p>The user provides <span class="math notranslate nohighlight">\(N_p\)</span>, <span class="math notranslate nohighlight">\(N_\theta\)</span> and <span class="math notranslate nohighlight">\(N_\phi\)</span>
+via the namelist, but adjustments may occur:</p>
+<ul class="simple">
+<li><p>If the momentum space is very narrow in one direction, only one
+sub-group may be used.</p></li>
+<li><p>The <span class="math notranslate nohighlight">\(\Delta_{\alpha}\)</span> are modified by a factor 1.01 to
+include the maximum boundary.</p></li>
+</ul>
+</section>
+<section id="solid-angle-correction-in-3d">
+<h3>3. Solid-angle correction in 3D<a class="headerlink" href="#solid-angle-correction-in-3d" title="Link to this heading">¶</a></h3>
+<p>A rudimentary spherical discretization does not ensure that all sub-groups
+span similar solid-angles, as they becomes arbitrarily small at the poles.</p>
+<figure class="align-default" id="id9">
+<span id="fig-spherical-discretization"></span><a class="reference internal image-reference" href="../_images/spherical_discretization.png"><img alt="../_images/spherical_discretization.png" src="../_images/spherical_discretization.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 53 </span><span class="caption-text">Rudimentary spherical discretization (a) and the spherical discretization
+with solid angle correction (b). This figure was generated with the
+following <a class="reference external" href="_static/scripts/vranic_spherical_discretization.py">Python script</a>.</span><a class="headerlink" href="#id9" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>To obtain a solid angle approximately constant, the discretization in
+<span class="math notranslate nohighlight">\(\theta\)</span> is adjusted depending on the value of <span class="math notranslate nohighlight">\(\phi\)</span>.
+Denoting by <span class="math notranslate nohighlight">\(\Omega_{0}\)</span> the solid angle at the smallest <span class="math notranslate nohighlight">\(|\phi|\)</span>,
+the sub-groups length  <span class="math notranslate nohighlight">\(\Delta_\theta\)</span> along <span class="math notranslate nohighlight">\(\theta\)</span> varies to
+satisfy <span class="math notranslate nohighlight">\(\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{0}\)</span>.</p>
+</section>
+<section id="accumulation-effect">
+<span id="vranic-accumulation-effect"></span><h3>4. Accumulation effect<a class="headerlink" href="#accumulation-effect" title="Link to this heading">¶</a></h3>
+<p>In one merging event, the strongest contribution comes from weightiest
+macro-particles, which mostly come from a previous merging event instead
+of the smaller macro-particles.
+Some macro-particles may thus become uncontrollably heavy and dominate
+others with little changes in their kinetic properties.
+This effect may be particularly strong with large sub-groups and broad
+momentum distributions, which are not well conserved.</p>
+<p>To illustrate this phenomenon, let us consider a 3D magnetic shower benchmark:
+the domain is filled with an electron-positron plasma with all macro-particles
+initialized using the same Lorentz factor <span class="math notranslate nohighlight">\(\gamma = 8125\)</span>
+in the same direction.
+They propagate orthogonally to a constant and uniform magnetic field of
+amplitude <span class="math notranslate nohighlight">\(B = 1000 e/(m\omega)\)</span>, corresponding to a quantum parameter
+of <span class="math notranslate nohighlight">\(\chi = 20\)</span> for both electrons and positrons.
+The input script of this simulation is available
+<a class="reference external" href="_static/magnetic_shower_3d_vranic_merging.py">here</a>.</p>
+<p>This accumulation effect creates peaks in the photon energy distribution
+as shown in <a class="reference internal" href="#fig-magnetic-shower-photon-energy-distribution"><span class="std std-numref">Fig. 54</span></a> a).</p>
+<blockquote>
+<div><p>Need to explain the correction.</p>
+</div></blockquote>
+<figure class="align-default" id="id10">
+<span id="fig-magnetic-shower-photon-energy-distribution"></span><a class="reference internal image-reference" href="../_images/magnetic_shower_photon_energy_distribution.png"><img alt="../_images/magnetic_shower_photon_energy_distribution.png" src="../_images/magnetic_shower_photon_energy_distribution.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 54 </span><span class="caption-text">Photon energy distribution at the end of the simulation.</span><a class="headerlink" href="#id10" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id11">
+<span id="fig-magnetic-shower-photon-pxpy-distribution"></span><a class="reference internal image-reference" href="../_images/magnetic_shower_photon_pxpy_distribution.png"><img alt="../_images/magnetic_shower_photon_pxpy_distribution.png" src="../_images/magnetic_shower_photon_pxpy_distribution.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 55 </span><span class="caption-text">Photon px-py momentum distribution at the end of the simulation.</span><a class="headerlink" href="#id11" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p><strong>Warning:</strong> the accumulation correction is not working with the logarithmic discretization.</p>
+</section>
+<section id="logarithmic-scale">
+<span id="vranic-log-scale"></span><h3>5. Logarithmic scale<a class="headerlink" href="#logarithmic-scale" title="Link to this heading">¶</a></h3>
+<p>For the <strong>spherical discretization</strong> only, the momentum norm <span class="math notranslate nohighlight">\(p\)</span>
+discretization may be chosen logarithmically scaled.
+Due to the logarithm computation, this option is slightly slower than the
+linear version.
+Nonetheless, it can handle more appropriately broad momentum distributions.</p>
+<p>On the magnetic shower case presented in the previous section,
+the logarithmic discretization reproduces nicely
+the distribution obtained without merging.</p>
+<figure class="align-default" id="id12">
+<span id="magnetic-shower-gamma-distribution-log"></span><a class="reference internal image-reference" href="../_images/magnetic_shower_gamma_distribution_log.png"><img alt="../_images/magnetic_shower_gamma_distribution_log.png" src="../_images/magnetic_shower_gamma_distribution_log.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 56 </span><span class="caption-text">Photon energy distribution for the 3D magnetic shower benchmark
+at the end of the simulation.</span><a class="headerlink" href="#id12" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p><strong>Warning:</strong> the logarithmic discretization is subject to accumulation
+oscillations but is not compatible with the accumulation correction.</p>
+<hr class="docutils" />
+</section>
+</section>
+<section id="simulation-results">
+<span id="vranic-simulation-results"></span><h2>Simulation results<a class="headerlink" href="#simulation-results" title="Link to this heading">¶</a></h2>
+<section id="d-qed-cascade">
+<h3>1. 3D QED cascade<a class="headerlink" href="#d-qed-cascade" title="Link to this heading">¶</a></h3>
+<p>In this section, the particle merging is tested with a 3D scenario
+of electron-positron pair cascading.
+Like the magnetic shower, a seed of electrons or positrons in a strong
+electromagnetic field generates high-energy photons that, in turn, decay
+into electron-positron pairs.
+The difference is that the seed particles and the newly created ones may
+gain some energy from the fields and participate to the generation of pairs.
+The production of electron-positron pairs can therefore be maintained
+(the <cite>cascade</cite>) as long as there is a source of energy.
+In such a scenario, we can expect an exponential growth of the number of
+particles leading to the creation of an electron-positron plasma.</p>
+<p>A plasma of electrons and positrons (the seed) is initially irradiated
+by two counter-propagating lasers (strong field and source of energy),
+chosen as circularly-polarized plane waves.</p>
+<figure class="align-default" id="id13">
+<span id="fig-qed-pair-cascade"></span><a class="reference internal image-reference" href="../_images/qed_pair_cascade.png"><img alt="../_images/qed_pair_cascade.png" src="../_images/qed_pair_cascade.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 57 </span><span class="caption-text">QED pair cascade configuration with two counter-propagating lasers.</span><a class="headerlink" href="#id13" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>When they collide, the two waves form a steady plane wave of very strong
+amplitude able to trigger strong QED effects.
+Detailed simulation parameters are available
+<a class="reference external" href="_static/scripts/qed_pair_cascade.py">in this namelist</a>.</p>
+<p>An aggressive merging process is performed at every timestep
+with a relatively sparse momentum-space discretization.
+Note that, in 1D and 2D, it could use smaller sub-groups and
+be performed more often as there would be more particles per cell.
+The merging is applied on all species.
+All cases are run during a maximum of 1000 seconds.</p>
+<p>As presented in <a class="reference internal" href="#fig-qed-cascade-scalar"><span class="std std-numref">Fig. 58</span></a>, the merging process
+starts when the number of macro-particles is high enough:
+<span class="math notranslate nohighlight">\(\sim 10^5\)</span> macro-photons.
+Between 10% and 20% more iterations are achieved, compared to the no
+merging case.</p>
+<p>Each merging method does not exactly gives the same kinetic
+energy and weight evolution. As we will see, the merging processes modify
+the momentum distribution and influence the physical processes.</p>
+<figure class="align-default" id="id14">
+<span id="fig-qed-cascade-scalar"></span><a class="reference internal image-reference" href="../_images/QED_cascade_scalar.png"><img alt="../_images/QED_cascade_scalar.png" src="../_images/QED_cascade_scalar.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 58 </span><span class="caption-text">Effect of various merging configurations on the
+number of macro-particles, their total weight, and their total
+kinetic energy.</span><a class="headerlink" href="#id14" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>We now compare energy spectra at time <span class="math notranslate nohighlight">\(t = 39 \omega^{-1}\)</span>
+(nearly when the no merging case saturates)
+in <a class="reference internal" href="#fig-qed-cascade-photon-gamma-spectrum"><span class="std std-numref">Fig. 59</span></a>.
+All merging methods significantly affect the energy distributions,
+and oscillations are most visible in the photon distribution
+due to the accumulation effect.</p>
+<figure class="align-default" id="id15">
+<span id="fig-qed-cascade-photon-gamma-spectrum"></span><a class="reference internal image-reference" href="../_images/QED_cascade_gamma_spectrum.png"><img alt="../_images/QED_cascade_gamma_spectrum.png" src="../_images/QED_cascade_gamma_spectrum.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 59 </span><span class="caption-text">Effect of various merging configurations on energy spectra.</span><a class="headerlink" href="#id15" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p><a class="reference internal" href="#fig-qed-cascade-photon-pxpy-spectrum"><span class="std std-numref">Fig. 60</span></a> shows the
+<span class="math notranslate nohighlight">\(k_x-k_y\)</span> momentum distribution of the photons.
+It clearly shows that, with their level of discretization,
+none of the merging processes can adequately reproduce the
+reference distribution.</p>
+<figure class="align-default" id="id16">
+<span id="fig-qed-cascade-photon-pxpy-spectrum"></span><a class="reference internal image-reference" href="../_images/QED_cascade_photon_px_py_distribution.png"><img alt="../_images/QED_cascade_photon_px_py_distribution.png" src="../_images/QED_cascade_photon_px_py_distribution.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 60 </span><span class="caption-text"><span class="math notranslate nohighlight">\(k_x-k_y\)</span> photon momentum distributions at simulation
+time <span class="math notranslate nohighlight">\(t = 39.5 \omega^{-1}\)</span>
+for the various merging configurations.</span><a class="headerlink" href="#id16" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p><a class="reference internal" href="#fig-qed-cascade-electron-pxpy-spectrum"><span class="std std-numref">Fig. 61</span></a> shows the
+<span class="math notranslate nohighlight">\(p_x-p_y\)</span> momentum distribution of the electrons.</p>
+<figure class="align-default" id="id17">
+<span id="fig-qed-cascade-electron-pxpy-spectrum"></span><a class="reference internal image-reference" href="../_images/QED_cascade_electron_px_py_distribution.png"><img alt="../_images/QED_cascade_electron_px_py_distribution.png" src="../_images/QED_cascade_electron_px_py_distribution.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 61 </span><span class="caption-text"><span class="math notranslate nohighlight">\(p_x-p_y\)</span> electron momentum distributions at simulation
+time <span class="math notranslate nohighlight">\(t = 39.5 \omega^{-1}\)</span>
+for the various merging configurations.</span><a class="headerlink" href="#id17" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>To compare the merging methods in term of performance,
+<a class="reference internal" href="#fig-qed-cascade-iteration-time"><span class="std std-numref">Fig. 62</span></a> shows the CPU time necessary
+to compute a numerical timestep as a function of time.
+The linear spherical discretization is the fastest method because
+the solid angle correction reduces the number of sub-groups.
+The logarithmic spherical discretization has the same advantage
+but it is slowed down by the computation of logarithms, and, in the end,
+similar to the original cartesian method described in <a class="reference internal" href="#vranic2005" id="id2"><span>[Vranic2005]</span></a>.</p>
+<figure class="align-default" id="id18">
+<span id="fig-qed-cascade-iteration-time"></span><a class="reference internal image-reference" href="../_images/QED_cascade_iteration_time.png"><img alt="../_images/QED_cascade_iteration_time.png" src="../_images/QED_cascade_iteration_time.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 62 </span><span class="caption-text">Computation time per iteration as a function of time.</span><a class="headerlink" href="#id18" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The following video illustrates the simulation benchmark
+in the case of a logarithmic spherical discretization.
+Specifically, it shows the time evolution of the electron, the positron
+and the photon densities in the plane <em>x-y</em>, integrating over <em>z</em>.
+It shows and exponential growth of photons and massive particles
+happening first in the <em>y-z</em> plane near the center of the domain
+then expanding longitudinally.</p>
+<video style="display:block; margin: 0 auto; width: 100%;" controls
+src="https://mdls.fr/wp-content/uploads/2022/04/qed_cascade.mp4"
+width="100%">
+</video></section>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="vranic2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Vranic2005<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.cpc.2015.01.020">M. Vranic et al., CPC, 191 65-73 (2015)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

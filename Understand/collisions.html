@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Binary collisions &amp; reactions &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ionization" href="ionization.html" />
+    <link rel="prev" title="Physics modules" href="physics_modules.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Binary collisions &amp; reactions</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Binary collisions &amp; reactions</a><ul>
+<li><a class="reference internal" href="#the-binary-collision-scheme">The binary collision scheme</a></li>
+<li><a class="reference internal" href="#test-cases-for-collisions">Test cases for collisions</a></li>
+<li><a class="reference internal" href="#collisional-ionization">Collisional ionization</a></li>
+<li><a class="reference internal" href="#test-cases-for-ionization">Test cases for ionization</a></li>
+<li><a class="reference internal" href="#bound-electron-screening">Bound electron screening</a></li>
+<li><a class="reference internal" href="#nuclear-reactions">Nuclear reactions</a></li>
+<li><a class="reference internal" href="#collisions-debugging">Collisions debugging</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="binary-collisions-reactions">
+<h1>Binary collisions &amp; reactions<a class="headerlink" href="#binary-collisions-reactions" title="Link to this heading">¶</a></h1>
+<p>Relativistic binary collisions between particles have been implemented in
+<strong class="program">Smilei</strong> following these references:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#perez2012" id="id1"><span>[Perez2012]</span></a>: overview of the technique.</p></li>
+<li><p><a class="reference internal" href="#nanbu1997" id="id2"><span>[Nanbu1997]</span></a> and <a class="reference internal" href="#nanbu1998" id="id3"><span>[Nanbu1998]</span></a>: the original approach.</p></li>
+<li><p><a class="reference internal" href="#sentoku2008" id="id4"><span>[Sentoku2008]</span></a>, <a class="reference internal" href="#lee1984" id="id5"><span>[Lee1984]</span></a> and <a class="reference internal" href="#frankel1979" id="id6"><span>[Frankel1979]</span></a>: additional information.</p></li>
+<li><p>The correction suggested in <a class="reference internal" href="#higginson2020" id="id7"><span>[Higginson2020]</span></a> has been applied since v4.5.</p></li>
+<li><p>[to be published] A correction for the screening of bound electrons.
+This makes a significant difference for weakly-ionized atoms.</p></li>
+</ul>
+<p>This collision scheme can host reactions between the colliding
+macro-particles, when requested:</p>
+<ul class="simple">
+<li><p>Ionization of an atom by collision with an electron.</p></li>
+<li><p>Nuclear reaction between two atoms.</p></li>
+</ul>
+<p>Please refer to <a class="reference internal" href="../Use/namelist.html#collisions"><span class="std std-ref">that doc</span></a> for an explanation of how to add
+collisions in the namelist file.</p>
+<hr class="docutils" />
+<section id="the-binary-collision-scheme">
+<h2>The binary collision scheme<a class="headerlink" href="#the-binary-collision-scheme" title="Link to this heading">¶</a></h2>
+<p>Collisions are calculated at each timestep and for each collision block
+given in the input file:</p>
+<ul class="simple">
+<li><p>Macro-particles that should collide are randomly paired.</p></li>
+<li><p>Average parameters are calculated (densities, etc.).</p></li>
+<li><p>For each pair:</p>
+<ul>
+<li><p>Calculate the momenta in the center-of-mass (COM) frame.</p></li>
+<li><p>Calculate the coulomb log if requested (see <a class="reference internal" href="#perez2012" id="id8"><span>[Perez2012]</span></a>).</p></li>
+<li><p>If the collision corresponds to a nuclear reaction (optional),
+the reaction probability is computed and new particles are created
+if successful.</p></li>
+<li><p>Calculate the collision rate.</p></li>
+<li><p>Randomly pick the deflection angle.</p></li>
+<li><p>Deflect particles in the COM frame and switch back to the laboratory frame.</p></li>
+<li><p>If the collision corresponds to ionization (optional),
+its probability is computed and new electrons are created
+if successful.</p></li>
+</ul>
+</li>
+</ul>
+<p class="rubric">Modifications in Smilei</p>
+<ul>
+<li><p>A typo from <a class="reference internal" href="#perez2012" id="id9"><span>[Perez2012]</span></a> is corrected: in Eq. (22), corresponding to
+the calculation of the Coulomb Logarithm, the last parenthesis is
+written as a squared expression, but should not.</p></li>
+<li><p>The deflection angle distribution given by <a class="reference internal" href="#nanbu1997" id="id10"><span>[Nanbu1997]</span></a>
+(which is basically a fit from Monte-Carlo simulations)
+is modified for better accuracy and performance.
+Given Nanbu’s <span class="math notranslate nohighlight">\(s\)</span> parameter and a random number <span class="math notranslate nohighlight">\(U\in [0,1]\)</span>,
+the deflection angle <span class="math notranslate nohighlight">\(\chi\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\sin^2\frac\chi 2 = \begin{cases}
+\alpha U/\sqrt{1-U + \alpha^2 U} &amp;, s &lt; 4\\
+1-U &amp;, \textrm{otherwise}
+\end{cases}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha = 0.37 s-0.005 s^2-0.0064 s^3\)</span>.</p>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="test-cases-for-collisions">
+<h2>Test cases for collisions<a class="headerlink" href="#test-cases-for-collisions" title="Link to this heading">¶</a></h2>
+<p class="rubric">1. Beam relaxation</p>
+<p>An electron beam with narrow energy spread enters an ion background with <span class="math notranslate nohighlight">\(T_i=10\)</span> eV.
+The ions are of very small mass <span class="math notranslate nohighlight">\(m_i=10 m_e\)</span> to speed-up the calculation.
+Only e-i collisions are calculated.
+The beam gets strong isotropization =&gt; the average velocity relaxes to zero.</p>
+<p>Three figures show the time-evolution of the longitudinal <span class="math notranslate nohighlight">\(\left&lt;v_\|\right&gt;\)</span>
+and transverse velocity <span class="math notranslate nohighlight">\(\sqrt{\left&lt;v_\perp^2\right&gt;}\)</span></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#beam1"><span class="std std-numref">Fig. 14</span></a> : initial velocity = 0.05, ion charge = 1</p></li>
+<li><p><a class="reference internal" href="#beam2"><span class="std std-numref">Fig. 15</span></a> : initial velocity = 0.01, ion charge = 1</p></li>
+<li><p><a class="reference internal" href="#beam3"><span class="std std-numref">Fig. 16</span></a> : initial velocity = 0.01, ion charge = 3</p></li>
+</ul>
+<p>Each of these figures show 3 different blue and red curves which correspond to different
+ratios of particle weights: 0.1, 1, and 10.</p>
+<figure class="align-default" id="id24">
+<span id="beam1"></span><a class="reference internal image-reference" href="../_images/beam_relaxation123.png"><img alt="../_images/beam_relaxation123.png" src="../_images/beam_relaxation123.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 14 </span><span class="caption-text">Relaxation of an electron beam. Initial velocity = 0.05, ion charge = 1.</span><a class="headerlink" href="#id24" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id25">
+<span id="beam2"></span><a class="reference internal image-reference" href="../_images/beam_relaxation456.png"><img alt="../_images/beam_relaxation456.png" src="../_images/beam_relaxation456.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 15 </span><span class="caption-text">Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 1.</span><a class="headerlink" href="#id25" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id26">
+<span id="beam3"></span><a class="reference internal image-reference" href="../_images/beam_relaxation789.png"><img alt="../_images/beam_relaxation789.png" src="../_images/beam_relaxation789.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 16 </span><span class="caption-text">Relaxation of an electron beam. Initial velocity = 0.01, ion charge = 3.</span><a class="headerlink" href="#id26" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The black lines correspond to the theoretical rates taken from the NRL formulary:</p>
+<div class="math notranslate nohighlight">
+\[\nu_\| = -\left(1+\frac{m_e}{m_i}\right)\nu_0
+\quad\textrm{and}\quad
+\nu_\perp = 2\;\nu_0
+\quad\textrm{where}\quad
+\nu_0=\frac{e^4\,Z^{\star 2}\,n_i\,\ln\Lambda } { 4 \pi \epsilon_0^2 \,m_e^2\,v_e^3 }\]</div>
+<p>The distribution is quickly non-Maxwellian so that theory is valid only at the beginning.</p>
+<p class="rubric">2. Thermalization</p>
+<p>A population of electrons has a different temperature from that of the ion population.
+Through e-i collisions, the two temperatures become equal.
+The ions are of very small mass <span class="math notranslate nohighlight">\(m_i=10 m_e\)</span> to speed-up the calculation.
+Three cases are simulated, corresponding to different ratios of weights: 0.2, 1 and 5.
+They are plotted in <a class="reference internal" href="#thermalization"><span class="std std-numref">Fig. 17</span></a>.</p>
+<figure class="align-default" id="id27">
+<span id="thermalization"></span><a class="reference internal image-reference" href="../_images/thermalisation_ei123.png"><img alt="../_images/thermalisation_ei123.png" src="../_images/thermalisation_ei123.png" style="width: 9cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 17 </span><span class="caption-text">Thermalization between two species.</span><a class="headerlink" href="#id27" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The black lines correspond to the theoretical rates taken from the NRL formulary:</p>
+<div class="math notranslate nohighlight">
+\[\nu_\epsilon = \frac{2}{3}\sqrt\frac{2}{\pi}
+\frac{e^4\,Z^{\star 2} \sqrt{m_em_i}\,n_i\,\ln\Lambda }
+{ 4 \pi\epsilon_0^2 \,\left(m_eT_e+m_iT_i\right)^{3/2} }\]</div>
+<p class="rubric">3. Temperature isotropization</p>
+<p>Electrons have a longitudinal temperature different from their transverse temperature.
+They collide only with themselves (intra-collisions) and the anisotropy disappears
+as shown in <a class="reference internal" href="#temperature-isotropization"><span class="std std-numref">Fig. 18</span></a>.</p>
+<figure class="align-default" id="id28">
+<span id="temperature-isotropization"></span><a class="reference internal image-reference" href="../_images/temperature_isotropization1.png"><img alt="../_images/temperature_isotropization1.png" src="../_images/temperature_isotropization1.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 18 </span><span class="caption-text">Temperature isotropization of an electron population.</span><a class="headerlink" href="#id28" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The black lines correspond to the theoretical rates taken from the NRL formulary:</p>
+<div class="math notranslate nohighlight">
+\[\nu_T=\frac{e^4 \,n_e\,\ln\Lambda } { 8\pi^{3/2} \epsilon_0^2 \,m_e^{1/2}T_\|^{3/2} }
+A^{-2} \left[-3+(3-A)\frac{\rm{arctanh}(\sqrt{A})}{\sqrt{A}}\right]
+\quad \rm{where}\quad A=1-\frac{T_\perp}{T_\|}\]</div>
+<p class="rubric">4. Maxwellianization</p>
+<p>Electrons start with zero temperature along <span class="math notranslate nohighlight">\(y\)</span> and <span class="math notranslate nohighlight">\(z\)</span>.
+Their velocity distribution along <span class="math notranslate nohighlight">\(x\)</span> is rectangular.
+They collide only with themselves and the rectangle becomes a maxwellian
+as shown in <a class="reference internal" href="#maxwellianization"><span class="std std-numref">Fig. 19</span></a>.</p>
+<figure class="align-default" id="id29">
+<span id="maxwellianization"></span><a class="reference internal image-reference" href="../_images/Maxwellianization1.png"><img alt="../_images/Maxwellianization1.png" src="../_images/Maxwellianization1.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 19 </span><span class="caption-text">Maxwellianization of an electron population.
+Each blue curve is the distribution at a given time.
+The red curve is an example of a gaussian function.</span><a class="headerlink" href="#id29" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p class="rubric">5. Stopping power</p>
+<p>Test electrons (very low density) collide with background electrons of density
+<span class="math notranslate nohighlight">\(10\,n_c\)</span> and <span class="math notranslate nohighlight">\(T_e=5\)</span> keV.
+Depending on their initial velocity, they are slowed down at different rates,
+as shown in <a class="reference internal" href="#stoppingpower"><span class="std std-numref">Fig. 20</span></a>.</p>
+<figure class="align-default" id="id30">
+<span id="stoppingpower"></span><a class="reference internal image-reference" href="../_images/Stopping_power123.png"><img alt="../_images/Stopping_power123.png" src="../_images/Stopping_power123.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 20 </span><span class="caption-text">Stopping power of test electrons into a background electron population.
+Each point is one simulation. The black line is Frankel’s theory <a class="reference internal" href="#frankel1979" id="id11"><span>[Frankel1979]</span></a>.</span><a class="headerlink" href="#id30" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p class="rubric">6. Conductivity</p>
+<p>Solid-density Cu is simulated at different temperatures (e-i equilibrium) with only
+e-i collisions. An electric field of <span class="math notranslate nohighlight">\(E=3.2\)</span> GV/m (0.001 in code units) is
+applied using two charged layers on each side of the solid Cu.
+The electron velocity increases until a limit value <span class="math notranslate nohighlight">\(v_f\)</span>.
+The resulting conductivity <span class="math notranslate nohighlight">\(\sigma=en_ev_f/E\)</span> is compared in
+<a class="reference internal" href="#conductivity"><span class="std std-numref">Fig. 21</span></a> to the models in <a class="reference internal" href="#lee1984" id="id12"><span>[Lee1984]</span></a> and <a class="reference internal" href="#perez2012" id="id13"><span>[Perez2012]</span></a>.</p>
+<figure class="align-default" id="id31">
+<span id="conductivity"></span><a class="reference internal image-reference" href="../_images/conductivity.png"><img alt="../_images/conductivity.png" src="../_images/conductivity.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 21 </span><span class="caption-text">Conductivity of solid-density copper. Each point is one simulation.</span><a class="headerlink" href="#id31" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<hr class="docutils" />
+</section>
+<section id="collisional-ionization">
+<span id="collionization"></span><h2>Collisional ionization<a class="headerlink" href="#collisional-ionization" title="Link to this heading">¶</a></h2>
+<p>The binary collisions can also be ionizing if they are <strong>electron-ion</strong> collisions.
+The approach is almost the same as that provided in <a class="reference internal" href="#perez2012" id="id14"><span>[Perez2012]</span></a>.</p>
+<p>When ionization is requested by setting <code class="docutils literal notranslate"><span class="pre">ionizing=True</span></code>, a few additional operations
+are executed:</p>
+<ul class="simple">
+<li><p>At the beginning of the run, cross-sections are calculated from tabulated binding
+energies (available for ions up to atomic number 100). These cross-sections are then
+tabulated for each requested ion species.</p></li>
+<li><p>Each timestep, the particle density <span class="math notranslate nohighlight">\(n = n_e n_i/n_{ei}\)</span>
+(similar to the densities above for collisions) is calculated.</p></li>
+<li><p>During each collision, a probability for ionization is computed. If successful,
+the ion charge is increased, the incident electron is slowed down, and a new electron
+is created.</p></li>
+</ul>
+<p class="rubric">Warnings</p>
+<ul class="simple">
+<li><p>This scheme does not account for recombination, which would balance ionization
+over long time scales.</p></li>
+</ul>
+<p class="rubric">Relativistic change of frame</p>
+<p>A modification has been added to the theory of <a class="reference internal" href="#perez2012" id="id15"><span>[Perez2012]</span></a> in order to account for the
+laboratory frame being different from the ion frame. Considering <span class="math notranslate nohighlight">\(\overrightarrow{p_e}\)</span>
+and <span class="math notranslate nohighlight">\(\overrightarrow{p_i}\)</span> the electron and ion momenta in the laboratory frame,
+and their associated Lorentz factors <span class="math notranslate nohighlight">\(\gamma_e\)</span> and <span class="math notranslate nohighlight">\(\gamma_i\)</span>, we define
+<span class="math notranslate nohighlight">\(\overrightarrow{q_e}=\overrightarrow{p_e}/(m_e c)\)</span> and
+<span class="math notranslate nohighlight">\(\overrightarrow{q_i}=\overrightarrow{p_i}/(m_i c)\)</span>.
+The Lorentz factor of the electron in the ion frame is
+<span class="math notranslate nohighlight">\(\gamma_e^\star=\gamma_e\gamma_i-\overrightarrow{q_e}\cdot\overrightarrow{q_i}\)</span>.
+The probability for ionization reads:</p>
+<div class="math notranslate nohighlight">
+\[P = 1-\exp\left( - v_e \sigma n \Delta t \right) = 1-\exp\left( -V^\star \sigma^\star n \Delta t \right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(v_e\)</span> is the electron velocity in the laboratory frame,
+<span class="math notranslate nohighlight">\(\sigma\)</span> is the cross-section in the laboratory frame, <span class="math notranslate nohighlight">\(\sigma^\star\)</span>
+is the cross-section in the ion frame, and
+<span class="math notranslate nohighlight">\(V^\star=c\sqrt{\gamma_e^{\star\,2}-1}/(\gamma_e\gamma_i)\)</span>.</p>
+<p>The loss of energy <span class="math notranslate nohighlight">\(m_ec^2 \delta\gamma\)</span> of the incident electron translates into a change in momentum
+<span class="math notranslate nohighlight">\({q_e^\star}' = \alpha_e q_e^\star\)</span> in the ion frame, with
+<span class="math notranslate nohighlight">\(\alpha_e=\sqrt{(\gamma_e^\star-\delta\gamma)^2-1}/\sqrt{\gamma_e^{\star2}-1}\)</span>.
+In the laboratory frame, it becomes
+<span class="math notranslate nohighlight">\(\overrightarrow{q_e'}=\alpha_e\overrightarrow{q_e}+((1-\alpha_e)\gamma_e^\star-\delta\gamma)\overrightarrow{q_i}\)</span>.</p>
+<p>A similar operation is done for defining the momentum of the new electron in the lab frame.
+It is created with energy <span class="math notranslate nohighlight">\(m_ec^2 (\gamma_w-1)\)</span> and its momentum is
+<span class="math notranslate nohighlight">\(q_w^\star = \alpha_w q_e^\star\)</span> in the ion frame, with
+<span class="math notranslate nohighlight">\(\alpha_w=\sqrt{\gamma_w^2-1}/\sqrt{\gamma_e^{\star 2}-1}\)</span>.
+In the laboratory frame, it becomes
+<span class="math notranslate nohighlight">\(\overrightarrow{q_w}=\alpha_w\overrightarrow{q_e}+(\gamma_w-\alpha_w\gamma_e^\star)\overrightarrow{q_i}\)</span>.</p>
+<p class="rubric">Multiple ionization</p>
+<p>A modification has been added to the theory of <a class="reference internal" href="#perez2012" id="id16"><span>[Perez2012]</span></a> in order to account for
+multiple ionization in a single timestep. The approach for field ionization
+by <a class="reference external" href="http://dx.doi.org/10.1063/1.3559494">Nuter et al</a>
+has been adapted to calculate the successive impact ionization probabilities
+when an ion is ionized several times in a row.</p>
+<p>Writing the probability to not ionize an ion already ionized <span class="math notranslate nohighlight">\(i\)</span> times as
+<span class="math notranslate nohighlight">\(\bar{P}^i = \exp\left( -W_i\Delta t\right)\)</span>, and defining
+<span class="math notranslate nohighlight">\(R^m_n = (1-W_m/W_n)^{-1}\)</span>, we can calculate the probability to ionize <span class="math notranslate nohighlight">\(k\)</span> times
+the ion:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}P^i_k = \left\{
+\begin{array}{ll}
+\bar{P}^i
+&amp;
+\quad\mathrm{if}\quad k=0
+\\
+\sum\limits_{p=0}^{k-1} R^{i+k}_{i+p} \left(\bar{P}^{i+k} - \bar{P}^{i+p}\right)
+\prod\limits_{j=0,j\ne p}^{k-1} R^{i+p}_{i+j}
+&amp;
+\quad\mathrm{if}\quad 0&lt;k&lt;Z-Z^\star
+\end{array}
+\right.\end{split}\]</div>
+<p>To simplify the calculation of <span class="math notranslate nohighlight">\(P^i_k\)</span> (in particular the second case in the
+equation above) we use the following equivalent expression:</p>
+<div class="math notranslate nohighlight">
+\[P^i_k = A_{k-1} \sum\limits_{p=0}^{k-1}  \left(\bar{P}^{i+k} - \bar{P}^{i+p}\right)
+/ B_k^p
+\quad\mathrm{if}\quad 0&lt;k&lt;Z-Z^\star\]</div>
+<p>where <span class="math notranslate nohighlight">\(A_k = \prod\limits_{j=0}^{k} W_{i+j}\)</span> and
+<span class="math notranslate nohighlight">\(B_k^p = \prod\limits_{j=0,j\ne p}^{k} (W_{i+j}-W_{i+p})\)</span>.
+These two quantities can be computed recursively for each <span class="math notranslate nohighlight">\(k\)</span>.</p>
+<p>The cumulative probability <span class="math notranslate nohighlight">\(F^i_k = \sum_{j=0}^{k} P^i_j\)</span> provides an efficient
+way to pick when the ionization stops: we pick a random number <span class="math notranslate nohighlight">\(U\in [0,1]\)</span> and
+loop from <span class="math notranslate nohighlight">\(k=0\)</span> to <span class="math notranslate nohighlight">\(k_\mathrm{max}\)</span>. We stop ionizing when <span class="math notranslate nohighlight">\(F^i_k&gt;U\)</span>.</p>
+</section>
+<hr class="docutils" />
+<section id="test-cases-for-ionization">
+<h2>Test cases for ionization<a class="headerlink" href="#test-cases-for-ionization" title="Link to this heading">¶</a></h2>
+<p class="rubric">1. Ionization rate</p>
+<p>A cold plasma of <span class="math notranslate nohighlight">\(\mathrm{Al}^{3+}\)</span> is set with density <span class="math notranslate nohighlight">\(n_e=10^{21} \mathrm{cm}^{-3}\)</span>
+and with all electrons drifting at a velocity <span class="math notranslate nohighlight">\(v_e=0.03\,c\)</span>. The charge state of ions
+versus time is shown in <a class="reference internal" href="#ionizationrate"><span class="std std-numref">Fig. 22</span></a> where the three dotted curves correspond
+to three different weight ratios between electrons and ions.</p>
+<figure class="align-default" id="id32">
+<span id="ionizationrate"></span><a class="reference internal image-reference" href="../_images/ionization_rate.png"><img alt="../_images/ionization_rate.png" src="../_images/ionization_rate.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 22 </span><span class="caption-text">Ionization of an aluminium plasma by drifting electrons.</span><a class="headerlink" href="#id32" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The theoretical curve (in black) corresponds to <span class="math notranslate nohighlight">\(1-\exp\left(v_en_e\sigma t\right)\)</span>
+where <span class="math notranslate nohighlight">\(\sigma\)</span> is the ionization cross section of <span class="math notranslate nohighlight">\(\mathrm{Al}^{3+}\)</span> at the
+right electron energy. The discrepancy at late time is due to the changing velocity
+distributions and to the next level starting to ionize.</p>
+<p class="rubric">2. Inelastic stopping power</p>
+<p>A cold, non-ionized Al plasma is set with density <span class="math notranslate nohighlight">\(n_e=10^{21} \mathrm{cm}^{-3}\)</span>.
+Electrons of various initial velocities are slowed down by ionizing collisions and their
+energy loss is recorded as a function of time.</p>
+<p>A few examples are given in the left graph of <a class="reference internal" href="#ionizationstoppinpower"><span class="std std-numref">Fig. 23</span></a>.
+The theoretical curve is obtained from <a class="reference internal" href="#rohrlich1954" id="id17"><span>[Rohrlich1954]</span></a>. Note that this theory does not
+work below a certain average ionization energy, in our case <span class="math notranslate nohighlight">\(\sim 200\)</span> eV.</p>
+<figure class="align-default" id="id33">
+<span id="ionizationstoppinpower"></span><a class="reference internal image-reference" href="../_images/ionization_stopping_power.png"><img alt="../_images/ionization_stopping_power.png" src="../_images/ionization_stopping_power.png" style="width: 14cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 23 </span><span class="caption-text">Left: ionization slowing down versus time, for electrons injected at various
+initial energies into cold Al. Right: corresponding stopping power versus initial
+electron energy.</span><a class="headerlink" href="#id33" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>In the same figure, the graph on the right-hand-side provides the stopping power value
+in the same context, at different electron energies. It is compared to the same theory.</p>
+<p class="rubric">3. Multiple ionization</p>
+<p>If the timestep is large, multiple ionization can occur, especially with cold high-Z
+material and high-energy electrons. The multiple ionization algorithm is not perfect,
+as it does not shuffle the particles for each ionization. Thus, good statistical
+sampling is reached after several timesteps. To test the potential error,
+we ran simulations of electrons at 1 MeV incident on cold atoms. The evolution of the
+secondary electron density is monitored versus time in <a class="reference internal" href="#ionizationmultiple"><span class="std std-numref">Fig. 24</span></a>.</p>
+<figure class="align-default" id="id34">
+<span id="ionizationmultiple"></span><a class="reference internal image-reference" href="../_images/ionization_multiple.png"><img alt="../_images/ionization_multiple.png" src="../_images/ionization_multiple.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 24 </span><span class="caption-text">Secondary electron density <em>vs</em> time, for cold plasmas traversed by a 1 MeV electron beam.</span><a class="headerlink" href="#id34" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The solid lines correspond to a very-well resolved ionization, whereas the dashed lines
+correspond to a large timestep. A difference is visible initially, but decreases
+quickly as the statistical sampling increases and as the subsequent ionization
+cross-sections decrease.</p>
+<p class="rubric">3. Effect of neglecting recombination</p>
+<p>As recombination is not accounted for, we can expect excess ionization to occur indefinitely
+without being balanced to equilibrium. However, in many cases, the recombination rate
+is small and can be neglected over the duration of the simulation. We provide an example
+that is relevant to picosecond-scale laser-plasma interaction. Plasmas initially at
+a density of 10 times the critical density are given various initial temperatures.
+Ionization initially increases while the temperature decreases, until, after a while,
+their charge state stagnates (it still increases, but very slowly).
+In <a class="reference internal" href="#ionizationrecombination"><span class="std std-numref">Fig. 25</span></a>, these results are compared to a Thomas-Fermi model
+from <a class="reference internal" href="#desjarlais2001" id="id18"><span>[Desjarlais2001]</span></a>.</p>
+<figure class="align-default" id="id35">
+<span id="ionizationrecombination"></span><a class="reference internal image-reference" href="../_images/ionization_recombination.png"><img alt="../_images/ionization_recombination.png" src="../_images/ionization_recombination.png" style="width: 12cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 25 </span><span class="caption-text">Final charge state of various plasmas at various temperatures.</span><a class="headerlink" href="#id35" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The model does not account for detailed ionization potentials. It provides a rough
+approximation, and is particularly questionable for low temperatures or high Z.
+We observe that Smilei’s approach for impact ionization provides decent estimates
+of the ionization state. Detailed comparison to atomic codes has not been done yet.</p>
+<hr class="docutils" />
+</section>
+<section id="bound-electron-screening">
+<span id="boundelectronscreening"></span><h2>Bound electron screening<a class="headerlink" href="#bound-electron-screening" title="Link to this heading">¶</a></h2>
+<p>The Coulomb potential that is assumed in the collision theory of Nanbu does not
+correctly apply to neutral atoms or weakly-ionized ions. Indeed, in addition
+to the screening caused by free electrons (Debye screening), the potential
+must account for the bound-electron screening.</p>
+<p>In Smilei, a simple model is available in the case of electron-ion collisions.
+It relies on the Thomas-Fermi characteristic length
+<span class="math notranslate nohighlight">\(\lambda_{TF} = (9\pi^2/16Z)^{1/3}a_0\)</span>,
+where <span class="math notranslate nohighlight">\(a_0\)</span> is the Bohr radius, to describe the extent of the screening
+aroud the nucleus. With a few approximations, the model suggests to replace,
+in the collisional frequency, the term <span class="math notranslate nohighlight">\(Z^{\star 2}\ln\Lambda_D\)</span> by</p>
+<div class="math notranslate nohighlight">
+\[Z^2\ln\Lambda_{TFD} = Z^{\star 2} \ln\Lambda_D + (Z^2-Z^{\star 2})\ln\Lambda_{TF}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\ln\Lambda_D\)</span> is the usual (Debye-screening) Coulomb logarithm,
+and <span class="math notranslate nohighlight">\(\Lambda_{TF} = \lambda_{TF}\Lambda_D /\lambda_D\)</span>. This approach is
+basic but captures the essential trend. Little data for comparison is available
+for weakly-ionized atoms, but the collision cross-sections are well-known
+for neutral atoms. <a class="reference internal" href="#elsepatest"><span class="std std-numref">Fig. 26</span></a> shows a comparison between the model
+implemented in Smilei and the theoretical cross-sections calculated by the code
+ELSEPA <a class="reference internal" href="#salvat2005" id="id19"><span>[Salvat2005]</span></a>.</p>
+<figure class="align-default" id="id36">
+<span id="elsepatest"></span><a class="reference internal image-reference" href="../_images/elsepa.png"><img alt="../_images/elsepa.png" src="../_images/elsepa.png" style="width: 14cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 26 </span><span class="caption-text">Average deflection angle vs. time for collisions between electrons and neutral
+atoms. The lines correspond to Smilei simulations with various electron
+beam energy, and the dots are calculated from the theoretical code ELSEPA.</span><a class="headerlink" href="#id36" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<hr class="docutils" />
+</section>
+<section class="experimental" id="nuclear-reactions">
+<span id="collnuclearreactions"></span><h2>Nuclear reactions<a class="headerlink" href="#nuclear-reactions" title="Link to this heading">¶</a></h2>
+<p>Nuclear reactions may occur during collisions when requested. The reaction
+scheme is largely inspired from <a class="reference internal" href="#higginson2019" id="id20"><span>[Higginson2019]</span></a>.</p>
+<p class="rubric">1. Outline of the nuclear reaction process</p>
+<p>We take advantage of the
+relativistic kinematics calculations of the binary collision scheme
+to introduce the nuclear reactions in the COM frame:</p>
+<ul class="simple">
+<li><p>The cross-section <span class="math notranslate nohighlight">\(\sigma\)</span> (tabulated for some reactions)
+is interpolated, given the kinetic energies.</p></li>
+<li><p>The probability for the reaction to occur is calculated.</p></li>
+<li><p>This probability is randomly sampled and, if successful:</p>
+<ul>
+<li><p>New macro-particles (the reaction products) are created.</p></li>
+<li><p>Their angle is sampled from a tabulated distribution.</p></li>
+<li><p>Their mpmenta are calculated from the conservation of total energy and momentum.</p></li>
+<li><p>Their momenta are boosted back to the simulation frame.</p></li>
+</ul>
+</li>
+<li><p>Otherwise: the collision process proceeds as usual.</p></li>
+</ul>
+<p class="rubric">2. Nuclear reaction probability</p>
+<p>The probability for the reaction to occur is calculated as
+<span class="math notranslate nohighlight">\(P=1-\exp(R\, v\, n\, \sigma\, \Delta t)\)</span> where <em>v</em> is the relative
+velocity, <em>n</em> is a corrected density (see <a class="reference internal" href="#higginson2020" id="id21"><span>[Higginson2020]</span></a>), and <em>R</em> is
+a <em>rate multiplier</em> (see <a class="reference internal" href="#higginson2019" id="id22"><span>[Higginson2019]</span></a>).</p>
+<p>This factor <em>R</em> is of great importance for most applications, because
+almost no reactions would occur when <span class="math notranslate nohighlight">\(R=1\)</span>. This factor artificially
+increases the number of reactions to ensure enough statistics. The weights
+of the products are adjusted accordingly, and the reactants are not destroyed
+in the process: we simply decrease their weight by the same amount.</p>
+<p>In Smilei, this factor <em>R</em> can be forced by the user to some value, but by
+default, it is automatically adjusted so that the final number of created particles
+approches the initial number of pairs.</p>
+<p class="rubric">3. Creation of the reaction products</p>
+<p>Special care must be taken when creating new charged particles while
+conserving Poisson’s equation. Following Ref. [Higginson2019], we choose to
+create two macro-particles of each type. To explain in detail, let us write
+the following reaction:</p>
+<div class="math notranslate nohighlight">
+\[1 + 2 \rightarrow 3 + 4\]</div>
+<p>Two particles of species 3 are created: one at the position of particle 1,
+the other at the position of particle 2. Two particles of species 4 are also
+created. To conserve the charge at each position, the weights of the new
+particles must be:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}W_3^{&#64;1} = w \frac{q_1}{q_1+q_2} q_3\\
+W_3^{&#64;2} = w \frac{q_2}{q_1+q_2} q_3\\
+W_4^{&#64;1} = w \frac{q_1}{q_1+q_2} q_4\\
+W_4^{&#64;2} = w \frac{q_2}{q_1+q_2} q_4\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(w\)</span> is the products’ weight, and the <span class="math notranslate nohighlight">\(q_i\)</span> are the charges.</p>
+<p class="rubric">4. Calculation of the resulting momenta</p>
+<p>The conservation of energy reads:</p>
+<div class="math notranslate nohighlight">
+\[K_1 + K_2 + Q = K_3 + K_4\]</div>
+<p>where the <span class="math notranslate nohighlight">\(K_i\)</span> are kinetic energies, and <span class="math notranslate nohighlight">\(Q\)</span> is the reaction’s
+Q-value. In the COM frame, we have, by definition, equal momenta: <span class="math notranslate nohighlight">\(p_3 = p_4\)</span>.
+Using the relativistic expression <span class="math notranslate nohighlight">\((K_k+m_k)^2=p_k^2+m_k^2\)</span>, we can
+calculate that</p>
+<div class="math notranslate nohighlight">
+\[0=p_4^2-p_3^2=K_4 (K_4 + 2m_4) - K_3(K_3+2m_3)\]</div>
+<p>Substituting for <span class="math notranslate nohighlight">\(K_4\)</span> using the conservation of energy, this translates into</p>
+<div class="math notranslate nohighlight">
+\[0=A_{00} A_{02} - (A_{20}+A_{02})K_3\]</div>
+<p>where we have defined <span class="math notranslate nohighlight">\(A_{ij}=K_1 + K_2 +Q+i\,m_3+j\,m_4\)</span>. We thus obtain</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}K_3 = \frac{A_{00}A_{02}}{A_{20}+A_{02}}\\
+K_3+2m_3 = ... = \frac{A_{20}A_{22}}{A_{20}+A_{02}}\end{split}\]</div>
+<p>Finally,</p>
+<div class="math notranslate nohighlight">
+\[p_3^2 = K_3(K_3+2m_3) = ... = \frac{A_{00}A_{02}A_{20}A_{22}}{(2A_{11})^2}\]</div>
+<p>which expresses the resulting momentum as a function of the initial energies.</p>
+</section>
+<hr class="docutils" />
+<section id="collisions-debugging">
+<h2>Collisions debugging<a class="headerlink" href="#collisions-debugging" title="Link to this heading">¶</a></h2>
+<p>Using the parameter <code class="docutils literal notranslate"><span class="pre">debug_every</span></code> in a <code class="docutils literal notranslate"><span class="pre">Collisions()</span></code> group (see <a class="reference internal" href="../Use/namelist.html#collisions"><span class="std std-ref">Collisions &amp; reactions</span></a>)
+will create a file with info about these collisions.
+These information are stored in the files “Collisions0.h5”, “Collisions1.h5”, etc.</p>
+<dl class="simple">
+<dt>The <em>hdf5</em> files are structured as follows:</dt><dd><p>One HDF5 file contains several groups called <code class="docutils literal notranslate"><span class="pre">&quot;t********&quot;</span></code> where <code class="docutils literal notranslate"><span class="pre">&quot;********&quot;</span></code>
+is the timestep. Each of these groups contains several arrays, which represent
+quantities <em>vs.</em> space.</p>
+</dd>
+</dl>
+<p>The available arrays are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">s</span></code>: defined in <a class="reference internal" href="#perez2012" id="id23"><span>[Perez2012]</span></a>: <span class="math notranslate nohighlight">\(s=N\left&lt;\theta^2\right&gt;\)</span>, where <span class="math notranslate nohighlight">\(N\)</span> is
+the typical number of real collisions during a timestep, and
+<span class="math notranslate nohighlight">\(\left&lt;\theta^2\right&gt;\)</span> is the average square deviation of individual
+real collisions. This quantity somewhat represents the typical amount of angular
+deflection accumulated during one timestep.
+<strong>It is recommended that</strong> <span class="math notranslate nohighlight">\(s&lt;1\)</span> <strong>in order to have realistic collisions.</strong></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">coulomb_log</span></code>: average Coulomb logarithm.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">debyelength</span></code>: Debye length (not provided if all Coulomb logs are manually defined).</p></li>
+</ul>
+</div></blockquote>
+<p>The arrays have the same dimension as the plasma, but each element of these arrays
+is an average over all the collisions occurring in a single <em>patch</em>.</p>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="desjarlais2001" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id18">Desjarlais2001</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P">M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001)</a></p>
+</div>
+<div class="citation" id="frankel1979" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Frankel1979<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id11">2</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1103/PhysRevA.20.2120">N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979)</a></p>
+</div>
+<div class="citation" id="higginson2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Higginson2019<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id20">1</a>,<a role="doc-backlink" href="#id22">2</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.jcp.2019.03.020">D. P. Higginson, A. Link, A. Schmidt, J. Comput. Phys. 388, 439 (2019)</a></p>
+</div>
+<div class="citation" id="higginson2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Higginson2020<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id7">1</a>,<a role="doc-backlink" href="#id21">2</a>)</span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.jcp.2020.109450">D. P. Higginson, I. Holod and A. Link, J. Comput. Phys. 413, 109450 (2020)</a></p>
+</div>
+<div class="citation" id="lee1984" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Lee1984<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id12">2</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1063/1.864744">Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984)</a></p>
+</div>
+<div class="citation" id="nanbu1997" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Nanbu1997<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id10">2</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1103/PhysRevE.55.4642">K. Nanbu, Phys. Rev. E 55, 4642 (1997)</a></p>
+</div>
+<div class="citation" id="nanbu1998" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">Nanbu1998</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://dx.doi.org/10.1006/jcph.1998.6049">K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)</a></p>
+</div>
+<div class="citation" id="perez2012" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Perez2012<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id8">2</a>,<a role="doc-backlink" href="#id9">3</a>,<a role="doc-backlink" href="#id13">4</a>,<a role="doc-backlink" href="#id14">5</a>,<a role="doc-backlink" href="#id15">6</a>,<a role="doc-backlink" href="#id16">7</a>,<a role="doc-backlink" href="#id23">8</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1063/1.4742167">F. Pérez et al., Phys. Plasmas 19, 083104 (2012)</a></p>
+</div>
+<div class="citation" id="rohrlich1954" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id17">Rohrlich1954</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://journals.aps.org/pr/abstract/10.1103/PhysRev.93.38">F. Rohrlich and B. C. Carlson, Phys. Rev. 93, 38 (1954)</a></p>
+</div>
+<div class="citation" id="salvat2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id19">Salvat2005</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.cpc.2004.09.006">F. Salvat, A. Jablonski and C. J. Powell, Comput. Phys. Comm. 165, 157 (2005)</a></p>
+</div>
+<div class="citation" id="sentoku2008" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">Sentoku2008</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://dx.doi.org/10.1016/j.jcp.2008.03.043">Y. Sentoku and A. J. Kemp, J. Comput. Phys. 227, 6846 (2008)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

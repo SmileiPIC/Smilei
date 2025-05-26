@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Laser propagation preprocessing &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sampling a Maxwell-Jüttner distribution" href="maxwell-juttner.html" />
+    <link rel="prev" title="Install on Linux for GPU" href="install_linux_GPU.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Laser propagation preprocessing</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Laser propagation preprocessing</a><ul>
+<li><a class="reference internal" href="#theoretical-background">Theoretical background</a></li>
+<li><a class="reference internal" href="#numerical-process">Numerical process</a></li>
+<li><a class="reference internal" href="#tilted-plane">Tilted plane</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="laser-propagation-preprocessing">
+<h1>Laser propagation preprocessing<a class="headerlink" href="#laser-propagation-preprocessing" title="Link to this heading">¶</a></h1>
+<p>In Smilei, <a class="reference internal" href="namelist.html#lasers"><span class="std std-ref">Lasers</span></a> are provided as oscillating fields at the box boundaries.
+For instance, at the <code class="docutils literal notranslate"><span class="pre">xmin</span></code> boundary of a 3D cartesian box, the user may define the
+<span class="math notranslate nohighlight">\(B_y(y,z,t)\)</span> and <span class="math notranslate nohighlight">\(B_z(y,z,t)\)</span> profiles. But in some cases, the laser field
+only known analytically at some arbitrary plane that does not coincide with the box
+boundary. This appears typically in the case of tightly-focused beams that cannot be
+described with a paraxial approximation.</p>
+<p>At the beginning of the simulation (during the initialization), Smilei is able to perform
+a laser <em>backwards</em> propagation from an arbitrary plane to the box boundary. The
+calculated field is then injected from then boundary like a normal laser. From the user’s
+perspective, this simply requires the definition of the laser profile at some arbitrary
+plane.</p>
+<p>The general technique is taken from <a class="reference internal" href="#thiele2016" id="id1"><span>[Thiele2016]</span></a> but it has been improved for parallel
+computation in both 2D and 3D geometries. Further below, another improvement is presented:
+the propagation towards a tilted plane.</p>
+<hr class="docutils" />
+<section id="theoretical-background">
+<h2>Theoretical background<a class="headerlink" href="#theoretical-background" title="Link to this heading">¶</a></h2>
+<p>The method employed for the propagation preprocessing is similar to the <em>angular spectrum
+method</em>. We illustrate this method on an arbitrary scalar field <span class="math notranslate nohighlight">\(A\)</span>, but it is
+valid for all components of a field satisfying a wave equation:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[c^2 \Delta A(x,y,z,t) = \partial_t^2 A(x,y,z,t)\]</div>
+</div></blockquote>
+<p>The 3D Fourier transform of this equation for the variables <span class="math notranslate nohighlight">\(y\)</span>, <span class="math notranslate nohighlight">\(z\)</span> and
+<span class="math notranslate nohighlight">\(t\)</span> gives:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[(\partial_x^2 + k_x^2) \hat A(x,k_y,k_z,\omega) = 0\]</div>
+</div></blockquote>
+<p>where <span class="math notranslate nohighlight">\(k_y\)</span>, <span class="math notranslate nohighlight">\(k_z\)</span> and <span class="math notranslate nohighlight">\(\omega\)</span> are the conjugate variables in the
+frequency domain, and <span class="math notranslate nohighlight">\(k_x(k_y,k_z,\omega) \equiv \sqrt{\omega^2/c^2-k_y^2-k_z^2}\)</span>.
+This equation has general solutions proportional to <span class="math notranslate nohighlight">\(\exp(-i k_x x)\)</span> for waves
+propagating towards positive <span class="math notranslate nohighlight">\(x\)</span>. This means that, if the profile is known at some
+plane <span class="math notranslate nohighlight">\(x=x_0+\delta\)</span>, the profile at <span class="math notranslate nohighlight">\(x=x_0\)</span> is obtained after multiplying
+<span class="math notranslate nohighlight">\(\hat A\)</span> by <span class="math notranslate nohighlight">\(\exp(i k_x \delta)\)</span>:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\hat A(x_0,k_y,k_z,\omega) = \exp(i k_x \delta) \hat A(x_0+\delta,k_y,k_z,\omega)\]</div>
+</div></blockquote>
+<p>To recover the field profile in real space, a 3D inverse Fourier transform would be
+sufficient. However, storing all values of the <span class="math notranslate nohighlight">\((y,z,t)\)</span> profile would consume too
+much time and disk space.
+Instead, Smilei does only a 2D inverse Fourier transform on <span class="math notranslate nohighlight">\(k_y\)</span> and
+<span class="math notranslate nohighlight">\(k_z\)</span>. This results in a <span class="math notranslate nohighlight">\(\tilde A(y,z,\omega)\)</span> profile, where <span class="math notranslate nohighlight">\(\omega\)</span> are
+the temporal Fourier modes. Keeping only a few of these modes (the most intense ones)
+ensures a reasonable disk space usage.</p>
+<p>The full <span class="math notranslate nohighlight">\(A(y,z,t)\)</span> profile is calculated during the actual PIC simulation, summing
+over the different <span class="math notranslate nohighlight">\(\omega\)</span>.</p>
+</section>
+<hr class="docutils" />
+<section id="numerical-process">
+<h2>Numerical process<a class="headerlink" href="#numerical-process" title="Link to this heading">¶</a></h2>
+<p>Let us summarize how the calculation above is realized numerically. We suppose that the
+grid is 3D cartesian with the number of cells <span class="math notranslate nohighlight">\((N_x, N_y, N_z)\)</span> in the three
+directions, but the same process works in 2D. We write <span class="math notranslate nohighlight">\(N_t\)</span> the total number of
+timesteps.</p>
+<p><strong>The points 1 to 7 are realized during initialization.</strong></p>
+<p class="rubric">1. The user profile <span class="math notranslate nohighlight">\(B(y, z, t)\)</span> is sampled</p>
+<blockquote>
+<div><p>This profile corresponds to the magnetic field at the plane <span class="math notranslate nohighlight">\(x=x_0+\delta\)</span>.
+Smilei calculates an array of size <span class="math notranslate nohighlight">\((N_y, N_z, N_t)\)</span> sampling
+this profile for all points of this plane, and all times of the simulation.</p>
+</div></blockquote>
+<p class="rubric">2. Smilei calculates the 3D Fourier transform along y, z and t</p>
+<blockquote>
+<div><p>Using the FFT capabilities of the <em>numpy</em> python package, a parallel Fourier transform
+is achieved, giving a transformed array of the same size <span class="math notranslate nohighlight">\((N_y, N_z, N_t)\)</span>.
+This array represents <span class="math notranslate nohighlight">\(\hat B(k_y,k_z,\omega)\)</span></p>
+</div></blockquote>
+<p class="rubric">3. Frequencies with the most intense values are selected</p>
+<blockquote>
+<div><p>Summing for all <span class="math notranslate nohighlight">\(k_y\)</span> and <span class="math notranslate nohighlight">\(k_z\)</span> provides a (temporal) spectrum of the wave.
+By default, the 100 frequencies giving the strongest values of this spectrum are kept,
+but this can be changed in the namelist (see <a class="reference internal" href="namelist.html#keep_n_strongest_modes" title="keep_n_strongest_modes"><code class="xref py py-data docutils literal notranslate"><span class="pre">keep_n_strongest_modes</span></code></a>).
+The resulting array is of size <span class="math notranslate nohighlight">\((N_y, N_z, 100)\)</span>.</p>
+</div></blockquote>
+<p class="rubric">4. The array is multiplied by the propagation term</p>
+<blockquote>
+<div><p>This term <span class="math notranslate nohighlight">\(\exp(i k_x \delta)\)</span> depends on the coordinates of the array because
+<span class="math notranslate nohighlight">\(k_x\)</span> is a function of <span class="math notranslate nohighlight">\(k_y\)</span>, <span class="math notranslate nohighlight">\(k_z\)</span> and <span class="math notranslate nohighlight">\(\omega\)</span>.
+Note that the <span class="math notranslate nohighlight">\(\delta\)</span> corresponds to the attribute <a class="reference internal" href="namelist.html#offset" title="offset"><code class="xref py py-data docutils literal notranslate"><span class="pre">offset</span></code></a>.</p>
+</div></blockquote>
+<p class="rubric">5. The inverse 2D Fourier transform is computed</p>
+<blockquote>
+<div><p>This provides an array representing <span class="math notranslate nohighlight">\(\tilde B(y,z,\omega)\)</span></p>
+</div></blockquote>
+<p class="rubric">6. The array is stored in an HDF5 file</p>
+<blockquote>
+<div><p>This file is named <code class="docutils literal notranslate"><span class="pre">LaserOffset0.h5</span></code>, <code class="docutils literal notranslate"><span class="pre">LaserOffset1.h5</span></code>, etc. if there are several
+lasers.</p>
+</div></blockquote>
+<p class="rubric">7. Each patch reads the part of the array that it owns</p>
+<blockquote>
+<div><p>This means that each patch of the PIC mesh will own a distinct portion of the overall
+array.</p>
+</div></blockquote>
+<p><strong>The point 8 is realized at runtime, for each iteration.</strong></p>
+<p class="rubric">8. For each timestep, the laser profile is calculated</p>
+<blockquote>
+<div><p>The 100 selected modes are summed according to</p>
+<div class="math notranslate nohighlight">
+\[B(y,z,t) = f(y,z,t) \sum_\omega \left| \tilde B(y,z,\omega) \right| \sin\left(\omega t + \phi(y,z,\omega)\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\phi\)</span> is the complex argument of <span class="math notranslate nohighlight">\(\tilde B\)</span> and <span class="math notranslate nohighlight">\(f(y,z,t)\)</span> is
+an additional <a class="reference internal" href="namelist.html#extra_envelope" title="extra_envelope"><code class="xref py py-data docutils literal notranslate"><span class="pre">extra_envelope</span></code></a>, defined by the user.
+This envelope helps removing spurious repetitions of the laser pulse that can
+occur due to the limited number of frequencies that are kept.</p>
+</div></blockquote>
+</section>
+<hr class="docutils" />
+<section id="tilted-plane">
+<h2>Tilted plane<a class="headerlink" href="#tilted-plane" title="Link to this heading">¶</a></h2>
+<p>The method above describes a wave propagation between two parallel planes. In Smilei, a
+technique inspired from <a class="reference internal" href="#matsushima2003" id="id2"><span>[Matsushima2003]</span></a> allows for the propagation from a title plane.</p>
+<p>This rotation happens in the Fourier space: wave vectors <span class="math notranslate nohighlight">\(k_x\)</span> and <span class="math notranslate nohighlight">\(k_y\)</span> are
+rotated around <span class="math notranslate nohighlight">\(k_z\)</span> by an angle <span class="math notranslate nohighlight">\(\theta\)</span>, according to</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+  k_x &amp; = &amp; k_x^\prime \cos\theta  - k_y^\prime \sin\theta \\
+  k_y &amp; = &amp; k_x^\prime \sin\theta  + k_y^\prime \cos\theta \\
+  k_z &amp; = &amp; k_z^\prime
+\end{array}\end{split}\]</div>
+<p>This transforms <span class="math notranslate nohighlight">\(\hat A(x,k_y,k_z,\omega)\)</span> into
+<span class="math notranslate nohighlight">\(\hat A^\prime(x,k_y^\prime,k_z,\omega)\)</span>, thus the operation is merely a change of one
+variable (<span class="math notranslate nohighlight">\(k_y\)</span>).</p>
+<p>Numerically, the process is not that straightforward because <span class="math notranslate nohighlight">\(\hat A^\prime\)</span> is an
+array in which the axis <span class="math notranslate nohighlight">\(k_y^\prime\)</span> is linearly sampled, but the corresponding
+values <span class="math notranslate nohighlight">\(k_y\)</span> do not match this linear sampling. We developed an interpolation method
+to obtain the transformed values at any point.</p>
+<p>In the end, the prescribed laser profile lies in a plane located at a distance
+<span class="math notranslate nohighlight">\(\delta\)</span> and rotated around <span class="math notranslate nohighlight">\(z\)</span> by an angle <span class="math notranslate nohighlight">\(\theta\)</span>, according to the
+following figure.</p>
+<figure class="align-default" id="id3">
+<a class="reference internal image-reference" href="../_images/LaserOffsetAngle.png"><img alt="../_images/LaserOffsetAngle.png" src="../_images/LaserOffsetAngle.png" style="width: 9cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 63 </span><span class="caption-text">The position of the plane where the laser profile is defined, with respect to the box.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="matsushima2003" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Matsushima2003</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1364/JOSAA.20.001755">K. Matsushima et al., J. Opt. Soc. Am. A 20, 1755 (2003)</a></p>
+</div>
+<div class="citation" id="thiele2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Thiele2016</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.jcp.2016.06.004">I. Thiele et al., J. Comput. Phys. 321, 1110 (2016)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

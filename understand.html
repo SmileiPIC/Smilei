@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Understand &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/smilei_theme.css?v=3908db80" />
+    <script src="_static/documentation_options.js?v=4af8989d"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Units" href="Understand/units.html" />
+    <link rel="prev" title="Partners" href="Overview/partners.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Understand</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Understand</a></li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="index.html">
+                <img class="logo" src="_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="#">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="understand">
+<h1>Understand<a class="headerlink" href="#understand" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Understand/units.html">Units</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#basic-reference-quantities">Basic reference quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#arbitrary-reference-quantities">Arbitrary reference quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#tips-for-the-namelist">Tips for the namelist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#problems-requiring-explicit-units">Problems requiring explicit units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#quantities-integrated-over-the-grid">Quantities integrated over the grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/units.html#macro-particle-weights">Macro-particle weights</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Understand/algorithms.html">PIC algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#the-maxwell-vlasov-model">The Maxwell-Vlasov model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#quasi-particles">Quasi-particles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#time-and-space-discretization">Time and space discretization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#initialization-of-the-simulation">Initialization of the simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#the-pic-loop">The PIC loop</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/algorithms.html#field-interpolation">Field interpolation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/algorithms.html#particle-push">Particle push</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/algorithms.html#current-deposition">Current deposition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/algorithms.html#maxwell-solvers">Maxwell solvers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#boundary-conditions">Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#multi-pass-filtering-of-the-current-densities">Multi-pass filtering of the current densities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#friedman-filter-on-the-electric-field">Friedman filter on the electric field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/algorithms.html#b-translated-interpolation-scheme-version-3">B-translated interpolation scheme version 3</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Understand/performances.html">Parallelization &amp; optimization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Understand/parallelization.html">Parallelization basics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#nodes-cores-processes-and-threads">Nodes, cores, processes and threads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#managing-processes-and-threads">Managing processes and threads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#decomposition-of-the-whole-domain">Decomposition of the whole domain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#load-balancing-between-mpi-patch-collections">Load balancing between MPI patch collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#practical-setup">Practical setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/parallelization.html#mpi-patch-collections-forming-rectangular-areas">MPI patch collections forming rectangular areas</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/SDMD.html">Single-domain multiple decompositions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/vectorization.html">Vectorization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/vectorization.html#notion-of-single-instruction-multiple-data-simd-vectorization">Notion of Single Instruction Multiple Data (SIMD) Vectorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/vectorization.html#simd-vectorization-of-the-particle-operators">SIMD vectorization of the particle operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/vectorization.html#vectorization-performance">Vectorization Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/vectorization.html#adaptive-vectorization">Adaptive vectorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/vectorization.html#large-scale-simulations">Large-scale simulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/vectorization.html#mildly-relativistic-collisionless-shock">Mildly-relativistic collisionless shock</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/GPU_offloading.html">GPU offloading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/GPU_offloading.html#supported-features">Supported features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/GPU_offloading.html#guidelines">Guidelines</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Understand/physics_modules.html">Physics modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Understand/collisions.html">Binary collisions &amp; reactions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#the-binary-collision-scheme">The binary collision scheme</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#test-cases-for-collisions">Test cases for collisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#collisional-ionization">Collisional ionization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#test-cases-for-ionization">Test cases for ionization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#bound-electron-screening">Bound electron screening</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#nuclear-reactions">Nuclear reactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#collisions-debugging">Collisions debugging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/collisions.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/ionization.html">Ionization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/ionization.html#collisional-ionization">Collisional ionization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/ionization.html#field-ionization">Field ionization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/ionization.html#physical-model-for-field-ionization">Physical model for field ionization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/ionization.html#barrier-suppression-ionization">Barrier Suppression Ionization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/ionization.html#monte-carlo-scheme">Monte-Carlo scheme</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/ionization.html#benchmarks">Benchmarks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/ionization.html#field-ionization-with-a-laser-envelope">Field ionization with a laser envelope</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/ionization.html#user-defined-ionization-rate">User-defined ionization rate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/ionization.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/radiation_loss.html">High-energy photon emission &amp; radiation reaction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/radiation_loss.html#inverse-compton-scattering">Inverse Compton scattering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#assumptions">Assumptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#rate-of-photon-emission-and-associated-quantities">Rate of photon emission and associated quantities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#regimes-of-radiation-reaction">Regimes of radiation reaction</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="Understand/radiation_loss.html#for-arbitrary-values-of-the-electron-quantum-parameter-chi-but-mandatory-in-the-quantum-regime-chi-gtrsim-1">For arbitrary values of the electron quantum parameter <span class="math notranslate nohighlight">\(\chi\)</span> (but mandatory in the quantum regime <span class="math notranslate nohighlight">\(\chi \gtrsim 1\)</span>)</a></li>
+<li class="toctree-l5"><a class="reference internal" href="Understand/radiation_loss.html#intermediate-moderately-quantum-regime-chi-lesssim-1">Intermediate, moderately quantum regime <span class="math notranslate nohighlight">\(\chi \lesssim 1\)</span></a></li>
+<li class="toctree-l5"><a class="reference internal" href="Understand/radiation_loss.html#the-classical-regime-chi-ll-1">The classical regime <span class="math notranslate nohighlight">\(\chi \ll 1\)</span></a></li>
+<li class="toctree-l5"><a class="reference internal" href="Understand/radiation_loss.html#choosing-the-good-model-for-your-simulation">Choosing the good model for your simulation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/radiation_loss.html#implementation">Implementation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#continuous-landau-lifshitz-like-models">Continuous, Landau-Lifshitz-like models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#fokker-planck-stochastic-model-of-niel-et-al">Fokker-Planck stochastic model of Niel <em>et al</em>.</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#monte-carlo-full-quantum-model">Monte-Carlo full-quantum model</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/radiation_loss.html#benchmarks">Benchmarks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#radiation-emission-by-ultra-relativistic-electrons-in-a-constant-magnetic-field">Radiation emission by ultra-relativistic electrons in a constant magnetic field</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#counter-propagating-plane-wave-1d">Counter-propagating plane wave, 1D</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#synchrotron-2d">Synchrotron, 2D</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/radiation_loss.html#thin-foil-2d">Thin foil, 2D</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/radiation_loss.html#performances">Performances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/radiation_loss.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html">Multiphoton Breit-Wheeler pair creation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#physical-model">Physical model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#stochastic-scheme">Stochastic scheme</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#implementation">Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#tables">Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#benchmarks">Benchmarks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#synchrotron-2d">Synchrotron, 2D</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/multiphoton_Breit_Wheeler.html#counter-propagating-plane-wave-1d">Counter-propagating plane wave, 1D</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Understand/numerical_techniques.html">Advanced numerical techniques</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html">Azimuthal modes decomposition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#mathematical-definition">Mathematical definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#decomposition-of-vector-fields">Decomposition of vector fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#maxwell-s-equations-in-cylindrical-geometry">Maxwell’s equations in cylindrical geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#interaction-with-the-macro-particles">Interaction with the macro-particles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#tips">Tips</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#conventions-for-the-namelist">Conventions for the namelist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#classical-and-relativistic-poisson-s-equation">Classical and relativistic Poisson’s equation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#the-envelope-model-in-cylindrical-coordinates">The envelope model in cylindrical coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#on-axis-boundary-conditions-in-fdtd">On-Axis boundary conditions in FDTD</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#primal-and-dual-grids">Primal and Dual grids</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#cancellation-on-axis">Cancellation on axis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#transverse-field-on-axis">Transverse field on axis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#longitudinal-field-on-axis">Longitudinal field on axis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#below-axis">Below axis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/azimuthal_modes_decomposition.html#currents-near-axis">Currents near axis</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/laser_envelope.html">Laser envelope model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-envelope-approximation">The envelope approximation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-envelope-equation">The envelope equation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-ponderomotive-equations-of-motion">The ponderomotive equations of motion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-averaged-electromagnetic-fields">The averaged electromagnetic fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-ponderomotive-pic-loop">The ponderomotive PIC loop</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#field-interpolation">Field interpolation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#susceptibility-deposition">Susceptibility deposition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#ponderomotive-momentum-push">Ponderomotive momentum push</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#envelope-equation-solution">Envelope equation solution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#ponderomotive-position-push">Ponderomotive position push</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#current-deposition">Current deposition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/laser_envelope.html#maxwell-solvers">Maxwell solvers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#laser-polarization-in-the-envelope-model">Laser polarization in the envelope model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#computing-the-laser-electric-field-from-the-laser-envelope">Computing the laser electric field from the laser envelope</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#the-numerical-solution-of-the-envelope-equation">The numerical solution of the envelope equation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/laser_envelope.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/particle_merging.html">Particle Merging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_merging.html#understand-the-method">Understand the method</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#momentum-sub-groups">1. Momentum sub-groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#merging-algorithm-for-massive-macro-particles">2. Merging algorithm for massive macro-particles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#merging-algorithm-for-macro-photons">3. Merging algorithm for macro-photons</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_merging.html#implementation-details">Implementation details</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#cartesian-sub-group-discretization">1. Cartesian sub-group discretization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#spherical-sub-group-discretization">2. Spherical sub-group discretization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#solid-angle-correction-in-3d">3. Solid-angle correction in 3D</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#accumulation-effect">4. Accumulation effect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#logarithmic-scale">5. Logarithmic scale</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_merging.html#simulation-results">Simulation results</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Understand/particle_merging.html#d-qed-cascade">1. 3D QED cascade</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_merging.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/particle_injector.html">Particle Injector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_injector.html#the-method-implemented-in-smilei">The method implemented in Smilei</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_injector.html#recommendation">Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/particle_injector.html#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Understand/relativistic_fields_initialization.html">Field initialization for relativistic species</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Understand/relativistic_fields_initialization.html#the-relativistic-poisson-s-equation">The relativistic Poisson’s equation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/relativistic_fields_initialization.html#recommendations-for-relativistic-species-field-initialization">Recommendations for relativistic species field initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Understand/relativistic_fields_initialization.html#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Understand/PML.html">Perfectly Matched Layers</a></li>
+</ul>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

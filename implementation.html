@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Implementation &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/smilei_theme.css?v=3908db80" />
+    <script src="_static/documentation_options.js?v=4af8989d"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Syntax changes" href="syntax_changes.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Implementation</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Implementation</a><ul>
+<li><a class="reference internal" href="#i-introduction">I. Introduction</a></li>
+<li><a class="reference internal" href="#ii-general-concept-and-vocabulary">II. General concept and vocabulary</a><ul>
+<li><a class="reference internal" href="#notion-of-data-container">Notion of data container</a></li>
+<li><a class="reference internal" href="#notion-of-operators">Notion of operators</a></li>
+<li><a class="reference internal" href="#notion-of-domain-parts">Notion of domain parts</a></li>
+<li><a class="reference internal" href="#notion-of-factory">Notion of factory</a></li>
+<li><a class="reference internal" href="#other">Other</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#iii-domain-decomposition-and-parallelism">III. Domain decomposition and parallelism</a></li>
+<li><a class="reference internal" href="#iv-coding-and-community-rules">IV. Coding and community rules</a><ul>
+<li><a class="reference internal" href="#coding-style-rules">Coding style rules</a><ul>
+<li><a class="reference internal" href="#line-and-indentation-style">Line and indentation style</a></li>
+<li><a class="reference internal" href="#variables">Variables</a></li>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#if-statement">If-statement</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-and-output-management">ERROR and OUTPUT management</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v-data-structures-and-main-classes">V. Data structures and main classes</a><ul>
+<li><a class="reference internal" href="#class-vectorpatch">Class <code class="docutils literal notranslate"><span class="pre">VectorPatch</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv411VectorPatch"><code class="docutils literal notranslate"><span class="pre">VectorPatch</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N11VectorPatch8patches_E"><code class="docutils literal notranslate"><span class="pre">VectorPatch::patches_</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-patch">Class <code class="docutils literal notranslate"><span class="pre">Patch</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv45Patch"><code class="docutils literal notranslate"><span class="pre">Patch</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N5Patch10vecSpeciesE"><code class="docutils literal notranslate"><span class="pre">Patch::vecSpecies</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N5Patch8EMfieldsE"><code class="docutils literal notranslate"><span class="pre">Patch::EMfields</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-species">class <code class="docutils literal notranslate"><span class="pre">Species</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv47Species"><code class="docutils literal notranslate"><span class="pre">Species</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N7Species9particlesE"><code class="docutils literal notranslate"><span class="pre">Species::particles</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-particles">class <code class="docutils literal notranslate"><span class="pre">Particles</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv49Particles"><code class="docutils literal notranslate"><span class="pre">Particles</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N9Particles8PositionE"><code class="docutils literal notranslate"><span class="pre">Particles::Position</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles8MomentumE"><code class="docutils literal notranslate"><span class="pre">Particles::Momentum</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles6WeightE"><code class="docutils literal notranslate"><span class="pre">Particles::Weight</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles3ChiE"><code class="docutils literal notranslate"><span class="pre">Particles::Chi</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles3TauE"><code class="docutils literal notranslate"><span class="pre">Particles::Tau</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles6ChargeE"><code class="docutils literal notranslate"><span class="pre">Particles::Charge</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles2IdE"><code class="docutils literal notranslate"><span class="pre">Particles::Id</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N9Particles9cell_keysE"><code class="docutils literal notranslate"><span class="pre">Particles::cell_keys</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-electromagn">class <code class="docutils literal notranslate"><span class="pre">ElectroMagn</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv411ElectroMagn"><code class="docutils literal notranslate"><span class="pre">ElectroMagn</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N11ElectroMagn3Ex_E"><code class="docutils literal notranslate"><span class="pre">ElectroMagn::Ex_</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#class-field">class <code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv45Field"><code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N5Field5data_E"><code class="docutils literal notranslate"><span class="pre">Field::data_</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#smilei-mpi">Smilei MPI</a><ul>
+<li><a class="reference internal" href="#_CPPv49SmileiMPI"><code class="docutils literal notranslate"><span class="pre">SmileiMPI</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#vi-the-smilei-pic-loop-implementation">VI. The <strong class="program">Smilei</strong> PIC loop implementation</a><ul>
+<li><a class="reference internal" href="#particle-dynamics">Particle Dynamics</a></li>
+<li><a class="reference internal" href="#pusher">Pusher</a><ul>
+<li><a class="reference internal" href="#boris-pusher-for-cpu">Boris pusher for CPU</a></li>
+<li><a class="reference internal" href="#boris-pusher-for-gpu">Boris pusher for GPU</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#nonlinear-inverse-compton-radiation-operator">Nonlinear Inverse Compton radiation operator</a><ul>
+<li><a class="reference internal" href="#landau-lifshift">Landau-Lifshift</a></li>
+<li><a class="reference internal" href="#corrected-landau-lifshift">Corrected Landau-Lifshift</a></li>
+<li><a class="reference internal" href="#niel">Niel</a></li>
+<li><a class="reference internal" href="#monte-carlo">Monte-Carlo</a></li>
+<li><a class="reference internal" href="#radiation-tables">Radiation Tables</a></li>
+<li><a class="reference internal" href="#radiation-tools">Radiation Tools</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#particle-event-tracing">Particle Event Tracing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="index.html">
+                <img class="logo" src="_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="implementation">
+<h1>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h1>
+<section id="i-introduction">
+<h2>I. Introduction<a class="headerlink" href="#i-introduction" title="Link to this heading">¶</a></h2>
+<p>Smilei is a C++ code that uses relatively simple C++ features for modularity
+and conveniency for non-advanced C++ users.</p>
+<p>The repository is composed of the following directories:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Licence</span></code>: contains code licence information</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">doc</span></code>: contains the Sphinx doc files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src</span></code>: contains all source files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">happi</span></code>: contains the sources of the happi Python tool for visualization</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">benchmarks</span></code>: contains the benchmarks used by the validation process, these benchmarks are also examples for users.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scripts</span></code>: contains multiple tool scripts for compilation and more</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">compile_tools</span></code>: contains scripts and machine files used by the makefile for compilation</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools</span></code>: contains some additional programs for Smilei</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validation</span></code>: contains the python scripts used by the validation process</p></li>
+</ul>
+<p>The source files directory is as well composed of several sub-directories to organise the <cite>.cpp</cite> and <cite>.h</cite> files by related thematics.
+The main is the file <cite>Smilei.cpp</cite>.
+There is always only one class definition per file and the file name corresponds to the class name.</p>
+<p>The general implementation is later summarized in <a class="reference internal" href="#smilei-main-loop"><span class="std std-numref">Fig. 80</span></a></p>
+</section>
+<hr class="docutils" />
+<section id="ii-general-concept-and-vocabulary">
+<h2>II. General concept and vocabulary<a class="headerlink" href="#ii-general-concept-and-vocabulary" title="Link to this heading">¶</a></h2>
+<p>This section presents some implicit notions to understand the philosophy of the code.</p>
+<section id="notion-of-data-container">
+<h3>Notion of data container<a class="headerlink" href="#notion-of-data-container" title="Link to this heading">¶</a></h3>
+<p>Data containers are classes (or sometime just structures) used to store a specific type of data,
+often considered as raw data such as particles or fields.
+Some methods can be implemented in a data container for managing or accessing the data.</p>
+<figure class="align-default" id="id2">
+<span id="datacontainer"></span><a class="reference internal image-reference" href="_images/data_container.png"><img alt="_images/data_container.png" src="_images/data_container.png" style="width: 8cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 71 </span><span class="caption-text">Data container.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="notion-of-operators">
+<h3>Notion of operators<a class="headerlink" href="#notion-of-operators" title="Link to this heading">¶</a></h3>
+<p>An operator is a class that operates on input data to provide a processed information.
+Input data can be parameters and data containers.
+Output data can be processed data from data containers or updated data containers.
+An operator is a class functor (overloading of the <code class="docutils literal notranslate"><span class="pre">()</span></code> ).
+Sometime, operator provides additional methods called wrappers to provide different simplified or adapted interfaces.
+An operator do not store data or temporarily.
+for instance, the particle interpolation, push and protection are operators.</p>
+<figure class="align-default" id="id3">
+<span id="operator"></span><a class="reference internal image-reference" href="_images/operator.png"><img alt="_images/operator.png" src="_images/operator.png" style="width: 10cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 72 </span><span class="caption-text">Operator.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="notion-of-domain-parts">
+<h3>Notion of domain parts<a class="headerlink" href="#notion-of-domain-parts" title="Link to this heading">¶</a></h3>
+<p>Domain parts are classes that represents some specific levels of the domain decomposition.
+They can be seen as high-level data container or container of data container.
+They contain some methods to handle, manage and access the local data.
+For instance, patches and <code class="docutils literal notranslate"><span class="pre">Species</span></code> are domain parts:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Species</span></code> contains the particles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Patch</span></code> contains <code class="docutils literal notranslate"><span class="pre">Species</span></code> and <code class="docutils literal notranslate"><span class="pre">Fields</span></code>.</p></li>
+</ul>
+</section>
+<section id="notion-of-factory">
+<h3>Notion of factory<a class="headerlink" href="#notion-of-factory" title="Link to this heading">¶</a></h3>
+<p>Some objects such as operators or data containers have several variations.
+For this we use inheritance.
+A base class is used for common parameters and methods and derived classes are used for all variations.
+The factory uses user-defined input parameters to determine the right derived class to choose and initiate them as shown in <a class="reference internal" href="#factory"><span class="std std-numref">Fig. 73</span></a>.
+For instance, there are several <code class="docutils literal notranslate"><span class="pre">push</span></code> operators implemented all derived from a base <code class="docutils literal notranslate"><span class="pre">push</span></code> class.
+The <code class="docutils literal notranslate"><span class="pre">push</span></code> factory will determine the right one to use.</p>
+<figure class="align-default" id="id4">
+<span id="factory"></span><a class="reference internal image-reference" href="_images/factories.png"><img alt="_images/factories.png" src="_images/factories.png" style="width: 15cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 73 </span><span class="caption-text">Description of the factory concept.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="other">
+<h3>Other<a class="headerlink" href="#other" title="Link to this heading">¶</a></h3>
+<p>Some classes are used for specific actions in the code such as the initialization process.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="iii-domain-decomposition-and-parallelism">
+<h2>III. Domain decomposition and parallelism<a class="headerlink" href="#iii-domain-decomposition-and-parallelism" title="Link to this heading">¶</a></h2>
+<p>The simulation domain is divided multiple times following a succession of decomposition levels.
+The whole domain is the superimposition of different grids for each electromagnetic field component
+and macro-particles.
+Let us represent schematically the domain as an array of cells as in Fig. <a class="reference internal" href="#full-domain"><span class="std std-numref">Fig. 74</span></a>.
+Each cell contains a certain population of particles (that can differ from cell to cell).</p>
+<figure class="align-default" id="id5">
+<span id="full-domain"></span><a class="reference internal image-reference" href="_images/domain.png"><img alt="_images/domain.png" src="_images/domain.png" style="width: 20cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 74 </span><span class="caption-text">Example of a full domain with 960 cells.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>In <strong class="program">smilei</strong>, the cells are first reorganized into small group so-called patches.
+The domain becomes a collection of patches as shown in <a class="reference internal" href="#patch-domain-decomposition"><span class="std std-numref">Fig. 75</span></a>.</p>
+<figure class="align-default" id="id6">
+<span id="patch-domain-decomposition"></span><a class="reference internal image-reference" href="_images/patch_domain_decomposition.png"><img alt="_images/patch_domain_decomposition.png" src="_images/patch_domain_decomposition.png" style="width: 20cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 75 </span><span class="caption-text">The domain in <strong class="program">Smilei</strong> is a collection of patches.</span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>A patch is an independent piece of the whole simulation domain.
+It therefore owns the local electromagnetic grids and list of macro-particles.
+Electromagnetic grids have ghost cells that represent the information located in the neighboring patches (not shown in <a class="reference internal" href="#patch-domain-decomposition"><span class="std std-numref">Fig. 75</span></a>).
+All patches have the same spatial size .i.e. the same number of cells.
+The size of a patch is calculated so that all local field grids (ghost cells included) can fit in L2 cache.</p>
+<p>Patches are then distributed among MPI processes in so-called MPI patch collections.
+The distribution can be ensured in an equal cartesian way or using a load balancing strategy based on the Hilbert curve.</p>
+<figure class="align-default" id="id7">
+<span id="mpi-patch-collection"></span><a class="reference internal image-reference" href="_images/mpi_patch_collection.png"><img alt="_images/mpi_patch_collection.png" src="_images/mpi_patch_collection.png" style="width: 20cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 76 </span><span class="caption-text">Patches are then distributed among MPI processes in so-called MPI patch collections.</span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Inside MPI patch collection, OpenMP loop directives are used to distribute the computation of the patches among the available threads.
+Since each patch has a different number of particles, this approach enables a dynamic scheduling depending on the specified OpenMP scheduler.
+As shown in <a class="reference internal" href="#smilei-main-loop"><span class="std std-numref">Fig. 80</span></a>, a synchronization step is required to exchange grid ghost cells and particles traveling from patch to patch.</p>
+<p>The patch granularity is used for:</p>
+<ul class="simple">
+<li><p>creating more parallelism for OpenMP</p></li>
+<li><p>enabling a load balancing capability through OpenMP scheduling</p></li>
+<li><p>ensuring a good cache memory efficiency at L3 and L2 levels.</p></li>
+</ul>
+<p>The patch is not the smaller decomposition grain-size.
+The patch can be decomposed into bins as shown in <a class="reference internal" href="#bin-decomposition"><span class="std std-numref">Fig. 77</span></a>.</p>
+<figure class="align-default" id="id8">
+<span id="bin-decomposition"></span><a class="reference internal image-reference" href="_images/bin_decomposition.png"><img alt="_images/bin_decomposition.png" src="_images/bin_decomposition.png" style="width: 12cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 77 </span><span class="caption-text">Bin decomposition.</span><a class="headerlink" href="#id8" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Contrary to patch, a bin is not an independent data structure with its own arrays.
+It represents a smaller portion of the patch grids through specific start and end indexes.
+For the macro-particles, a sorting algorithm is used to ensure that in the macro-particles
+located in the same bin are grouped and contiguous in memory.</p>
+<p>Finally, the decomposition levels are summarized in <a class="reference internal" href="#decomposition-summary"><span class="std std-numref">Fig. 78</span></a>.</p>
+<figure class="align-default" id="id9">
+<span id="decomposition-summary"></span><a class="reference internal image-reference" href="_images/decomposition_summary.png"><img alt="_images/decomposition_summary.png" src="_images/decomposition_summary.png" style="width: 15cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 78 </span><span class="caption-text">Domain decomposition summary.</span><a class="headerlink" href="#id9" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<hr class="docutils" />
+<section id="iv-coding-and-community-rules">
+<h2>IV. Coding and community rules<a class="headerlink" href="#iv-coding-and-community-rules" title="Link to this heading">¶</a></h2>
+<section id="coding-style-rules">
+<h3>Coding style rules<a class="headerlink" href="#coding-style-rules" title="Link to this heading">¶</a></h3>
+<section id="line-and-indentation-style">
+<h4>Line and indentation style<a class="headerlink" href="#line-and-indentation-style" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>A line should be no more than 140 characters.</p></li>
+<li><p>The code should not have some characters outside [0,127] in the ASCII table</p></li>
+<li><p>There should be no more than 2 empty successive lines.</p></li>
+<li><p>Only 1 statement per line is allowed.</p></li>
+<li><p>An indentation block is only composed of 4 spaces, no tab is permitted.</p></li>
+<li><p>If possible, keep trailing spaces in empty lines to respect indentation</p></li>
+</ul>
+<p>For instance, this line is not correct:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a1</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">d1</span><span class="p">;</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">b2</span> <span class="o">+</span> <span class="n">c2</span><span class="o">*</span><span class="n">d2</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>and should be replaced by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a1</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">d1</span><span class="p">;</span>
+<span class="n">a2</span> <span class="o">=</span> <span class="n">b2</span> <span class="o">+</span> <span class="n">c2</span><span class="o">*</span><span class="n">d2</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="variables">
+<h4>Variables<a class="headerlink" href="#variables" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Variable names (public, protected, private, local) should be composed of lowercase and underscore between words.</p></li>
+<li><p>The lowercase rule does not apply on acronyms and people names</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">number_of_elements</span><span class="p">;</span>
+<span class="nb">int</span> <span class="n">lignes_of_Smilei</span><span class="p">;</span>
+<span class="nb">int</span> <span class="n">age_of_GNU</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="classes">
+<h4>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>A class name starts with a capital letter</p></li>
+<li><p>A capital letter is used between each word that composes the class name</p></li>
+<li><p>No underscore</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyClassIsGreat</span>
+<span class="p">{</span>
+    <span class="n">public</span><span class="p">:</span>
+    <span class="nb">int</span> <span class="n">public_integer_</span><span class="p">;</span>
+    <span class="n">private</span><span class="p">:</span>
+    <span class="nb">int</span> <span class="n">private_integer_</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>A class variable respects the rules of variables previously described.</p></li>
+<li><p>A variable member has an underscore at the end of the name</p></li>
+</ul>
+</section>
+<section id="functions">
+<h4>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Functions and member functions should start with a lowercase letter.</p></li>
+<li><p>No underscore.</p></li>
+<li><p>Each word starts with a capital letter.</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">myGreatFunction</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Names should be explicit as much as possible.</p></li>
+<li><p>Avoid using shortened expression.</p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">computeParticlePosition</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>instead of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">computePartPos</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="if-statement">
+<h4>If-statement<a class="headerlink" href="#if-statement" title="Link to this heading">¶</a></h4>
+<p>Any if-statement should have curly brackets.</p>
+<p>For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span> <span class="n">condition</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span><span class="o">*</span><span class="n">d</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-and-output-management">
+<h3>ERROR and OUTPUT management<a class="headerlink" href="#error-and-output-management" title="Link to this heading">¶</a></h3>
+<p>Developers should use the dedicated error our output macro definition
+located in the file <cite>src/Tools.h</cite>.</p>
+<ul class="simple">
+<li><p><cite>ERROR</cite>: this function is the default one used to throw a SIGABRT error with a simple messages.</p></li>
+<li><p><cite>ERROR_NAMELIST</cite>: this function should be used for namelist error. It takes in argument a simple message and a link to the documentation. It throws as well a SIGABRT signal.</p></li>
+<li><p><cite>MESSAGE</cite>: this function should be used to output an information message (it uses <cite>std::cout</cite>).</p></li>
+<li><p><cite>DEBUG</cite> : should be used for debugging messages (for the so-called DEBUG mode)</p></li>
+<li><p><cite>WARNING</cite> : should be used to thrown a warning. A warning alerts the users of a possible issue or to be careful with some parameters without stopping the program.</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="v-data-structures-and-main-classes">
+<h2>V. Data structures and main classes<a class="headerlink" href="#v-data-structures-and-main-classes" title="Link to this heading">¶</a></h2>
+<p>This section describes the main classes and the tree-like smilei data structure.
+The whole picture is shown in <a class="reference internal" href="#data-structure"><span class="std std-numref">Fig. 79</span></a>.</p>
+<figure class="align-default" id="id10">
+<span id="data-structure"></span><a class="reference internal image-reference" href="_images/data_structure.png"><img alt="_images/data_structure.png" src="_images/data_structure.png" style="width: 20cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 79 </span><span class="caption-text">General of the main tree-like data structure of Smilei.</span><a class="headerlink" href="#id10" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<section id="class-vectorpatch">
+<h3>Class <code class="docutils literal notranslate"><span class="pre">VectorPatch</span></code><a class="headerlink" href="#class-vectorpatch" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">VectorPatch</span></code> represents the MPI Patch collection described above and is the highest structure level.
+The class description (<code class="docutils literal notranslate"><span class="pre">vectorPatch.h</span></code> and <code class="docutils literal notranslate"><span class="pre">vectorPatch.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Patch">src/Patch</a>.
+Among the data components stored in this class, one of the most important is the list of patches.
+By definition, each MPI process has therefore only one declared <code class="docutils literal notranslate"><span class="pre">vectorPatch</span></code> object.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv411VectorPatch">
+<span id="_CPPv311VectorPatch"></span><span id="_CPPv211VectorPatch"></span><span id="VectorPatch"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VectorPatch</span></span></span><a class="headerlink" href="#_CPPv411VectorPatch" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N11VectorPatch8patches_E">
+<span id="_CPPv3N11VectorPatch8patches_E"></span><span id="_CPPv2N11VectorPatch8patches_E"></span><span id="VectorPatch::patches___std::vector:PatchP:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv45Patch" title="Patch"><span class="n"><span class="pre">Patch</span></span></a><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patches_</span></span></span><a class="headerlink" href="#_CPPv4N11VectorPatch8patches_E" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>List of patches located in this MPI patch collection.</em></p>
+</dd></dl>
+
+<p>The class <code class="docutils literal notranslate"><span class="pre">VectorPatch</span></code> contains the methods directly called in the PIC time loop in <code class="docutils literal notranslate"><span class="pre">smilei.cpp</span></code>.</p>
+</section>
+<section id="class-patch">
+<h3>Class <code class="docutils literal notranslate"><span class="pre">Patch</span></code><a class="headerlink" href="#class-patch" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Patch</span></code> is an advanced data container that represents a single patch.
+The base class description (<code class="docutils literal notranslate"><span class="pre">Patch.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Patch.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Patch">src/Patch</a>.
+From this base class can be derived several versions (marked as <code class="docutils literal notranslate"><span class="pre">final</span></code>) depending on the geometry dimension:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Patch1D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Patch2D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Patch3D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PatchAM</span></code> for the AM geometry</p></li>
+</ul>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Patch</span></code> has a list of object <code class="docutils literal notranslate"><span class="pre">Species</span></code> called <code class="docutils literal notranslate"><span class="pre">vecSpecies</span></code>.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv45Patch">
+<span id="_CPPv35Patch"></span><span id="_CPPv25Patch"></span><span id="Patch"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Patch</span></span></span><a class="headerlink" href="#_CPPv45Patch" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N5Patch10vecSpeciesE">
+<span id="_CPPv3N5Patch10vecSpeciesE"></span><span id="_CPPv2N5Patch10vecSpeciesE"></span><span id="Patch::vecSpecies__std::vector:SpeciesP:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv47Species" title="Species"><span class="n"><span class="pre">Species</span></span></a><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vecSpecies</span></span></span><a class="headerlink" href="#_CPPv4N5Patch10vecSpeciesE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>List of species in the patch</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N5Patch8EMfieldsE">
+<span id="_CPPv3N5Patch8EMfieldsE"></span><span id="_CPPv2N5Patch8EMfieldsE"></span><span id="Patch::EMfields__ElectroMagnP"></span><a class="reference internal" href="#_CPPv411ElectroMagn" title="ElectroMagn"><span class="n"><span class="pre">ElectroMagn</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">EMfields</span></span></span><a class="headerlink" href="#_CPPv4N5Patch8EMfieldsE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Electromagnetic fields and densities (E, B, J, rho) of the current Patch</em></p>
+</dd></dl>
+
+</section>
+<section id="class-species">
+<h3>class <code class="docutils literal notranslate"><span class="pre">Species</span></code><a class="headerlink" href="#class-species" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Species</span></code> is an advanced data container that represents a single species.
+The base class description (<code class="docutils literal notranslate"><span class="pre">Species.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Species.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Species">src/Species</a>.
+From this base class can be derived several versions (marked as <code class="docutils literal notranslate"><span class="pre">final</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SpeciesNorm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpeciesNormV</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpeciesV</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpeciesVAdaptive</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpeciesVAdaptiveMixedSort</span></code></p></li>
+</ul>
+<p>The correct species object is initialized using the species factory implemented in the file <code class="docutils literal notranslate"><span class="pre">speciesFactory.h</span></code>.</p>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Species</span></code> owns the particles through the object <code class="docutils literal notranslate"><span class="pre">particles</span></code> of class <code class="docutils literal notranslate"><span class="pre">Particles*</span></code>.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv47Species">
+<span id="_CPPv37Species"></span><span id="_CPPv27Species"></span><span id="Species"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Species</span></span></span><a class="headerlink" href="#_CPPv47Species" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N7Species9particlesE">
+<span id="_CPPv3N7Species9particlesE"></span><span id="_CPPv2N7Species9particlesE"></span><span id="Species::particles__ParticlesP"></span><a class="reference internal" href="#_CPPv49Particles" title="Particles"><span class="n"><span class="pre">Particles</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">particles</span></span></span><a class="headerlink" href="#_CPPv4N7Species9particlesE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Vector containing all Particles of the considered Speciesh</em></p>
+</dd></dl>
+
+</section>
+<section id="class-particles">
+<h3>class <code class="docutils literal notranslate"><span class="pre">Particles</span></code><a class="headerlink" href="#class-particles" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Particles</span></code> is a data container that contains the particle properties.
+The base class description (<code class="docutils literal notranslate"><span class="pre">Particles.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Particles.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Particles">src/Particles</a>.
+It contains several arrays storing the particles properties such as the positions, momenta, weight and others.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv49Particles">
+<span id="_CPPv39Particles"></span><span id="_CPPv29Particles"></span><span id="Particles"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Particles</span></span></span><a class="headerlink" href="#_CPPv49Particles" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles8PositionE">
+<span id="_CPPv3N9Particles8PositionE"></span><span id="_CPPv2N9Particles8PositionE"></span><span id="Particles::Position__std::vector:std::vector:double::"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Position</span></span></span><a class="headerlink" href="#_CPPv4N9Particles8PositionE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Array containing the particle position</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles8MomentumE">
+<span id="_CPPv3N9Particles8MomentumE"></span><span id="_CPPv2N9Particles8MomentumE"></span><span id="Particles::Momentum__std::vector:std::vector:double::"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Momentum</span></span></span><a class="headerlink" href="#_CPPv4N9Particles8MomentumE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Array containing the particle moments</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles6WeightE">
+<span id="_CPPv3N9Particles6WeightE"></span><span id="_CPPv2N9Particles6WeightE"></span><span id="Particles::Weight__std::vector:double:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Weight</span></span></span><a class="headerlink" href="#_CPPv4N9Particles6WeightE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Containing the particle weight: equivalent to a charge density</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles3ChiE">
+<span id="_CPPv3N9Particles3ChiE"></span><span id="_CPPv2N9Particles3ChiE"></span><span id="Particles::Chi__std::vector:double:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Chi</span></span></span><a class="headerlink" href="#_CPPv4N9Particles3ChiE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>containing the particle quantum parameter</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles3TauE">
+<span id="_CPPv3N9Particles3TauE"></span><span id="_CPPv2N9Particles3TauE"></span><span id="Particles::Tau__std::vector:double:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Tau</span></span></span><a class="headerlink" href="#_CPPv4N9Particles3TauE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Incremental optical depth for the Monte-Carlo process</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles6ChargeE">
+<span id="_CPPv3N9Particles6ChargeE"></span><span id="_CPPv2N9Particles6ChargeE"></span><span id="Particles::Charge__std::vector:short:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">short</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Charge</span></span></span><a class="headerlink" href="#_CPPv4N9Particles6ChargeE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Charge state of the particle (multiples of e&gt;0)</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles2IdE">
+<span id="_CPPv3N9Particles2IdE"></span><span id="_CPPv2N9Particles2IdE"></span><span id="Particles::Id__std::vector:uint64_t:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">uint64_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Id</span></span></span><a class="headerlink" href="#_CPPv4N9Particles2IdE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>Id of the particle</em></p>
+<dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N9Particles9cell_keysE">
+<span id="_CPPv3N9Particles9cell_keysE"></span><span id="_CPPv2N9Particles9cell_keysE"></span><span id="Particles::cell_keys__std::vector:i:"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">cell_keys</span></span></span><a class="headerlink" href="#_CPPv4N9Particles9cell_keysE" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>cell_keys of the particle</em></p>
+</dd></dl>
+
+<p>Many of the methods implemented in <code class="docutils literal notranslate"><span class="pre">Particles</span></code> are used to access or manage the data.</p>
+</section>
+<section id="class-electromagn">
+<h3>class <code class="docutils literal notranslate"><span class="pre">ElectroMagn</span></code><a class="headerlink" href="#class-electromagn" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">ElectroMagn</span></code> is a high-level data container that contains the electromagnetic fields and currents.
+The base class description (<code class="docutils literal notranslate"><span class="pre">ElectroMagn.h</span></code> and <code class="docutils literal notranslate"><span class="pre">ElectroMagn.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/ElectroMagn">src/ElectroMagn</a>.
+From this base class can be derived several versions (marked as <code class="docutils literal notranslate"><span class="pre">final</span></code>) based on the dimension:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ElectroMagn1D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ElectroMagn2D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ElectroMagn3D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ElectroMagnAM</span></code></p></li>
+</ul>
+<p>The correct final class is determined using the factory <code class="docutils literal notranslate"><span class="pre">ElectroMagnFactory.h</span></code>.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv411ElectroMagn">
+<span id="_CPPv311ElectroMagn"></span><span id="_CPPv211ElectroMagn"></span><span id="ElectroMagn"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ElectroMagn</span></span></span><a class="headerlink" href="#_CPPv411ElectroMagn" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N11ElectroMagn3Ex_E">
+<span id="_CPPv3N11ElectroMagn3Ex_E"></span><span id="_CPPv2N11ElectroMagn3Ex_E"></span><span id="ElectroMagn::Ex___FieldP"></span><a class="reference internal" href="#_CPPv45Field" title="Field"><span class="n"><span class="pre">Field</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">Ex_</span></span></span><a class="headerlink" href="#_CPPv4N11ElectroMagn3Ex_E" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>x-component of the electric field</em></p>
+</dd></dl>
+
+</section>
+<section id="class-field">
+<h3>class <code class="docutils literal notranslate"><span class="pre">Field</span></code><a class="headerlink" href="#class-field" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">Field</span></code> is a data-container that represent a field grid for a given component.
+The base class description (<code class="docutils literal notranslate"><span class="pre">Field.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Field.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Field">src/Field</a>.
+It contains a linearized allocatable array to store all grid nodes whatever the dimension.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv45Field">
+<span id="_CPPv35Field"></span><span id="_CPPv25Field"></span><span id="Field"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><a class="headerlink" href="#_CPPv45Field" title="Link to this definition">¶</a><br /></dt>
+<dd><dl class="cpp member">
+<dt class="sig sig-object cpp" id="_CPPv4N5Field5data_E">
+<span id="_CPPv3N5Field5data_E"></span><span id="_CPPv2N5Field5data_E"></span><span id="Field::data___doubleP"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data_</span></span></span><a class="headerlink" href="#_CPPv4N5Field5data_E" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><em>pointer to the linearized field array</em></p>
+<p>From this base class can be derived several versions (marked as <code class="docutils literal notranslate"><span class="pre">final</span></code>) based on the dimension:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Field1D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Field2D</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Field3D</span></code></p></li>
+</ul>
+</dd></dl>
+
+<p>The correct final class is determined using the factory <code class="docutils literal notranslate"><span class="pre">FieldFactory.h</span></code>.</p>
+</section>
+<section id="smilei-mpi">
+<h3>Smilei MPI<a class="headerlink" href="#smilei-mpi" title="Link to this heading">¶</a></h3>
+<p>The class <code class="docutils literal notranslate"><span class="pre">SmileiMPI</span></code> is a specific class that contains interfaces and advanced methods for the custom and adapted use of MPI within Smilei.
+The base class description (<code class="docutils literal notranslate"><span class="pre">SmileiMPI.h</span></code> and <code class="docutils literal notranslate"><span class="pre">SmileiMPI.cpp</span></code>) is located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/SmileiMPI">src/SmileiMPI</a>.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv49SmileiMPI">
+<span id="_CPPv39SmileiMPI"></span><span id="_CPPv29SmileiMPI"></span><span id="SmileiMPI"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">SmileiMPI</span></span></span><a class="headerlink" href="#_CPPv49SmileiMPI" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+<hr class="docutils" />
+<section id="vi-the-smilei-pic-loop-implementation">
+<h2>VI. The <strong class="program">Smilei</strong> PIC loop implementation<a class="headerlink" href="#vi-the-smilei-pic-loop-implementation" title="Link to this heading">¶</a></h2>
+<p>The initialization and the main loop are explicitely done in the main file <code class="docutils literal notranslate"><span class="pre">Smilei.cpp</span></code>.
+The time loop is schematically described in <a class="reference internal" href="#smilei-main-loop"><span class="std std-numref">Fig. 80</span></a>.</p>
+<figure class="align-default" id="id11">
+<span id="smilei-main-loop"></span><a class="reference internal image-reference" href="_images/smilei_main_loop.png"><img alt="_images/smilei_main_loop.png" src="_images/smilei_main_loop.png" style="width: 20cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 80 </span><span class="caption-text">Smilei main loop implementation (click on the figure for more details).</span><a class="headerlink" href="#id11" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The time loop is explicitely written step by step in the main
+file <code class="docutils literal notranslate"><span class="pre">Smilei.cpp</span></code> thought calls to different <code class="docutils literal notranslate"><span class="pre">vecPatches</span></code> methods.</p>
+<ul class="simple">
+<li><p><strong>Patch reconfiguration</strong>: if adaptive vectorization is activated, then the patch may be
+reconfigured for scalar or vectorized mode.</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">reconfiguration</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Collision</strong>: particle collisions are performed before the particle dynamics part</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">applyBinaryProcesses</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Relativistic poisson solver</strong>: …</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">runRelativisticModule</span><span class="p">(</span><span class="w"> </span><span class="n">time_prim</span><span class="p">,</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w">  </span><span class="n">timers</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Charge</strong>: reset global charge and currents densities to zero and computes rho old before moving particles</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">computeCharge</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Particle dynamics</strong>: this step processes the full particle dynamics
+including field interpolation, advanced physical operators (radiation, ionization…),
+boundary condition pre-processing and projection</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">dynamics</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="n">radiation_tables_</span><span class="p">,</span>
+<span class="w">                                 </span><span class="n">MultiphotonBreitWheelerTables</span><span class="p">,</span>
+<span class="w">                                 </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Envelope module</strong>: …</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">runEnvelopeModule</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Sum of currents and densities</strong>: current et charge reduction from different species
+and perform the synchronization step with communication</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">sumDensities</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Maganement of the antenna</strong>: apply currents from antennas</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">applyAntennas</span><span class="p">(</span><span class="w"> </span><span class="n">time_dual</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Maxwell solvers</strong>: solve Maxwell</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">solveMaxwell</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Particle communication</strong>: finalize particle exchanges and sort particles</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">finalizeExchParticlesAndSort</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span>
+<span class="w">                                             </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Particle merging</strong>: merging process for particles (still experimental)</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">mergeParticles</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Particle injection</strong>: injection of particles from the boundaries</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">injectParticlesFromBoundaries</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Cleaning</strong>:  Clean buffers and resize arrays</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">cleanParticlesOverhead</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Field synchronization</strong>: Finalize field synchronization and exchanges</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">finalizeSyncAndBCFields</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Diagnostics</strong>: call the various diagnostics</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">vecPatches</span><span class="p">.</span><span class="n">runAllDiags</span><span class="p">(</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">timers</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Moving window</strong>: manage the shift of the moving window</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="n">timers</span><span class="p">.</span><span class="n">movWindow</span><span class="p">.</span><span class="n">restart</span><span class="p">();</span>
+<span class="linenos">2</span><span class="n">simWindow</span><span class="o">-&gt;</span><span class="n">shift</span><span class="p">(</span><span class="w"> </span><span class="n">vecPatches</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">region</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">3</span>
+<span class="linenos">4</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">itime</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">simWindow</span><span class="o">-&gt;</span><span class="n">getAdditionalShiftsIteration</span><span class="p">()</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">5</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">adjust</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">simWindow</span><span class="o">-&gt;</span><span class="n">isMoving</span><span class="p">(</span><span class="n">time_dual</span><span class="p">)</span><span class="o">?</span><span class="mi">0</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">6</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">simWindow</span><span class="o">-&gt;</span><span class="n">getNumberOfAdditionalShifts</span><span class="p">()</span><span class="o">-</span><span class="n">adjust</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span>
+<span class="linenos">7</span><span class="w">        </span><span class="n">simWindow</span><span class="o">-&gt;</span><span class="n">shift</span><span class="p">(</span><span class="w"> </span><span class="n">vecPatches</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">region</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">8</span><span class="p">}</span>
+<span class="linenos">9</span><span class="n">timers</span><span class="p">.</span><span class="n">movWindow</span><span class="p">.</span><span class="n">update</span><span class="p">();</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>Checkpointing</strong>: manage the checkoints</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">checkpoint</span><span class="p">.</span><span class="n">dump</span><span class="p">(</span><span class="w"> </span><span class="n">vecPatches</span><span class="p">,</span><span class="w"> </span><span class="n">region</span><span class="p">,</span><span class="w"> </span><span class="n">itime</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">smpi</span><span class="p">,</span><span class="w"> </span><span class="n">simWindow</span><span class="p">,</span><span class="w"> </span><span class="n">params</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<section id="particle-dynamics">
+<h3>Particle Dynamics<a class="headerlink" href="#particle-dynamics" title="Link to this heading">¶</a></h3>
+<p>The particle dynamics is the large step in the time loop that performs the particle movement computation:</p>
+<ul class="simple">
+<li><p>Field interpolation</p></li>
+<li><p>Radiation loss</p></li>
+<li><p>Ionization</p></li>
+<li><p>Pair creation</p></li>
+<li><p>Push</p></li>
+<li><p>Detection of leaving particles at patch boundaries</p></li>
+<li><p>Charge and current projection</p></li>
+</ul>
+<p>This step is performed in the method <code class="docutils literal notranslate"><span class="pre">vecPatches::dynamics</span></code>.
+We first loop on the patches and then the species of
+each patch <code class="docutils literal notranslate"><span class="pre">ipatch</span></code>: <code class="docutils literal notranslate"><span class="pre">(*this</span> <span class="pre">)(</span> <span class="pre">ipatch</span> <span class="pre">)-&gt;vecSpecies.size()</span></code>.
+For each species, the method <code class="docutils literal notranslate"><span class="pre">Species::dynamics</span></code> is called to perform the
+dynamic step of the respective particles.
+The OpenMP parallelism is explicitly applied in <code class="docutils literal notranslate"><span class="pre">vecPatches::dynamics</span></code> on the patch loop as shown
+in the following pieces of code.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="cp">#pragma omp for schedule(runtime)</span>
+<span class="linenos"> 2</span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ipatch</span><span class="o">=</span><span class="mi">0</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ipatch</span><span class="o">&lt;</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ipatch</span><span class="o">++</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="c1">// ...</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ispec</span><span class="o">=</span><span class="mi">0</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ispec</span><span class="o">&lt;</span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="k">this</span><span class="w"> </span><span class="p">)(</span><span class="w"> </span><span class="n">ipatch</span><span class="w"> </span><span class="p">)</span><span class="o">-&gt;</span><span class="n">vecSpecies</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ispec</span><span class="o">++</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="n">Species</span><span class="w"> </span><span class="o">*</span><span class="n">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">species</span><span class="p">(</span><span class="w"> </span><span class="n">ipatch</span><span class="p">,</span><span class="w"> </span><span class="n">ispec</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="c1">// ....</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="w">        </span><span class="n">spec</span><span class="o">-&gt;</span><span class="n">Species</span><span class="o">::</span><span class="n">dynamics</span><span class="p">(</span><span class="w"> </span><span class="n">time_dual</span><span class="p">,</span><span class="w"> </span><span class="n">ispec</span><span class="p">,</span>
+<span class="linenos">12</span><span class="w">                                 </span><span class="n">emfields</span><span class="p">(</span><span class="w"> </span><span class="n">ipatch</span><span class="w"> </span><span class="p">),</span>
+<span class="linenos">13</span><span class="w">                                 </span><span class="n">params</span><span class="p">,</span><span class="w"> </span><span class="n">diag_flag</span><span class="p">,</span><span class="w"> </span><span class="n">partwalls</span><span class="p">(</span><span class="w"> </span><span class="n">ipatch</span><span class="w"> </span><span class="p">),</span>
+<span class="linenos">14</span><span class="w">                                 </span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="k">this</span><span class="w"> </span><span class="p">)(</span><span class="w"> </span><span class="n">ipatch</span><span class="w"> </span><span class="p">),</span><span class="w"> </span><span class="n">smpi</span><span class="p">,</span>
+<span class="linenos">15</span><span class="w">                                 </span><span class="n">RadiationTables</span><span class="p">,</span>
+<span class="linenos">16</span><span class="w">                                 </span><span class="n">MultiphotonBreitWheelerTables</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="w">        </span><span class="c1">// ...</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">21</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="pusher">
+<span id="pusherimplementation"></span><h3>Pusher<a class="headerlink" href="#pusher" title="Link to this heading">¶</a></h3>
+<p>The pusher is the operator that moves the macro-particles using the equations of movement.
+The operator implementation is
+located in the directory  <a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Pusher">src/Pusher</a>.
+The base class is <code class="docutils literal notranslate"><span class="pre">Pusher</span></code> implemented in <code class="docutils literal notranslate"><span class="pre">Pusher.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Pusher.cpp</span></code>.
+From this base class can be derived several versions (marked as <code class="docutils literal notranslate"><span class="pre">final</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherBoris</span></code>: pusher of Boris</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherBorisNR</span></code>: non-relativistic Boris pusher</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherBorisV</span></code>: vectorized Boris pusher</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherVay</span></code>: pusher of J. L. Vay</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherHigueraCary</span></code>: pusher of Higuera and Cary</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PusherPhoton</span></code>: pusher of photons (ballistic movement)</p></li>
+</ul>
+<p>A factory called <code class="docutils literal notranslate"><span class="pre">PusherFactory</span></code> is used to select the requested pusher for each patch and each species.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Whatever the mode on CPU, the pusher is always vectorized.</p>
+</div>
+<section id="boris-pusher-for-cpu">
+<span id="pusherboriscpuimplementation"></span><h4>Boris pusher for CPU<a class="headerlink" href="#boris-pusher-for-cpu" title="Link to this heading">¶</a></h4>
+<p>The pusher implementation is one of the most simple algorithm of the PIC loop.
+In the initialization part of the functor, we use pointers to simplify the access to the different arrays.
+The core of the pusher is then composed of a single vectorized loop (<code class="docutils literal notranslate"><span class="pre">omp</span> <span class="pre">simd</span></code>) over a group of macro-particles.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="w">        </span><span class="n">is_device_ptr</span><span class="p">(</span><span class="w"> </span><span class="cm">/* tofrom: */</span><span class="w">                                          </span>\
+<span class="linenos"> 2</span><span class="w">                       </span><span class="n">momentum_x</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="p">,</span><span class="w">             </span>\
+<span class="linenos"> 3</span><span class="w">                       </span><span class="n">momentum_y</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="p">,</span><span class="w">             </span>\
+<span class="linenos"> 4</span><span class="w">                       </span><span class="n">momentum_z</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="p">,</span><span class="w">             </span>\
+<span class="linenos"> 5</span><span class="w">                       </span><span class="n">position_x</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="p">,</span><span class="w">             </span>\
+<span class="linenos"> 6</span><span class="w">                       </span><span class="n">position_y</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="p">,</span><span class="w">             </span>\
+<span class="linenos"> 7</span><span class="w">                       </span><span class="n">position_z</span><span class="w"> </span><span class="cm">/* [istart:particle_number] */</span><span class="w"> </span><span class="p">)</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="cp">#pragma omp teams distribute parallel for</span>
+<span class="linenos"> 9</span><span class="cp">#elif defined(SMILEI_ACCELERATOR_GPU_OACC)</span>
+<span class="linenos">10</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">istart_offset</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">istart</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ipart_buffer_offset</span><span class="p">;</span>
+<span class="linenos">11</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">particle_number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iend</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">istart</span><span class="p">;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="w">    </span><span class="cp">#pragma acc parallel present(Ex [0:nparts],    \</span>
+<span class="linenos">14</span><span class="cp">                                 Ey [0:nparts],    \</span>
+<span class="linenos">15</span><span class="cp">                                 Ez [0:nparts],    \</span>
+<span class="linenos">16</span><span class="cp">                                 Bx [0:nparts],    \</span>
+<span class="linenos">17</span><span class="cp">                                 By [0:nparts],    \</span>
+<span class="linenos">18</span><span class="cp">                                 Bz [0:nparts],    \</span>
+<span class="linenos">19</span><span class="cp">                                 invgf [0:nparts]) \</span>
+<span class="linenos">20</span><span class="cp">        deviceptr(position_x,                                           \</span>
+<span class="linenos">21</span><span class="cp">                  position_y,                                           \</span>
+<span class="linenos">22</span><span class="cp">                  position_z,                                           \</span>
+<span class="linenos">23</span><span class="cp">                  momentum_x,                                           \</span>
+<span class="linenos">24</span><span class="cp">                  momentum_y,                                           \</span>
+<span class="linenos">25</span><span class="cp">                  momentum_z,                                           \</span>
+<span class="linenos">26</span><span class="cp">                  charge)</span>
+<span class="linenos">27</span><span class="w">    </span><span class="cp">#pragma acc loop gang worker vector</span>
+<span class="linenos">28</span><span class="cp">#else</span>
+<span class="linenos">29</span><span class="w">    </span><span class="cp">#pragma omp simd</span>
+<span class="linenos">30</span><span class="cp">#endif</span>
+<span class="linenos">31</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ipart</span><span class="o">=</span><span class="n">istart</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">&lt;</span><span class="n">iend</span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">++</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ipart2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ipart</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ipart_buffer_offset</span><span class="p">;</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">charge_over_mass_dts2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="p">)(</span><span class="w"> </span><span class="n">charge</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">)</span><span class="o">*</span><span class="n">one_over_mass_</span><span class="o">*</span><span class="n">dts2</span><span class="p">;</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="w">        </span><span class="c1">// init Half-acceleration in the electric field</span>
+<span class="linenos">38</span><span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">pxsm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">charge_over_mass_dts2</span><span class="o">*</span><span class="p">(</span><span class="w"> </span><span class="n">Ex</span><span class="p">[</span><span class="n">ipart2</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">39</span><span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">pysm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">charge_over_mass_dts2</span><span class="o">*</span><span class="p">(</span><span class="w"> </span><span class="n">Ey</span><span class="p">[</span><span class="n">ipart2</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">40</span><span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">pzsm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">charge_over_mass_dts2</span><span class="o">*</span><span class="p">(</span><span class="w"> </span><span class="n">Ez</span><span class="p">[</span><span class="n">ipart2</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span><span class="w">        </span><span class="c1">//(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);</span>
+<span class="linenos">43</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">umx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pxsm</span><span class="p">;</span>
+<span class="linenos">44</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">umy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pysm</span><span class="p">;</span>
+<span class="linenos">45</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">umz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pzsm</span><span class="p">;</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="w">        </span><span class="c1">// Rotation in the magnetic field</span>
+</pre></div>
+</div>
+</section>
+<section id="boris-pusher-for-gpu">
+<h4>Boris pusher for GPU<a class="headerlink" href="#boris-pusher-for-gpu" title="Link to this heading">¶</a></h4>
+<p>On GPU, the <code class="docutils literal notranslate"><span class="pre">omp</span> <span class="pre">simd</span></code> directives is simply changed for the <code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">acc</span> <span class="pre">loop</span> <span class="pre">gang</span> <span class="pre">worker</span> <span class="pre">vector</span></code>.
+The macro-particles are distributed on the GPU threads (<code class="docutils literal notranslate"><span class="pre">vector</span></code> level).</p>
+</section>
+</section>
+<section id="nonlinear-inverse-compton-radiation-operator">
+<span id="radiationreactionimplementation"></span><h3>Nonlinear Inverse Compton radiation operator<a class="headerlink" href="#nonlinear-inverse-compton-radiation-operator" title="Link to this heading">¶</a></h3>
+<p>The physical details of this module are given in the page <a class="reference internal" href="Understand/radiation_loss.html#radiationreactionpage"><span class="std std-ref">High-energy photon emission &amp; radiation reaction</span></a>.
+The implementation for this operator and the related files are located in the directory
+<a class="reference external" href="https://github.com/SmileiPIC/Smilei/tree/master/src/Radiation">src/Radiation</a>.
+The base class used to derive the different versions of this operator is called <code class="docutils literal notranslate"><span class="pre">Radiation</span></code>
+and is implemented in the files <code class="docutils literal notranslate"><span class="pre">Radiation.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Radiation.cpp</span></code>.</p>
+<p>A factory called <code class="docutils literal notranslate"><span class="pre">RadiationFactory</span></code> is used to select the requested radiation model for each patch and species.</p>
+<p>The different radiation model implementation details are given in the following sections.</p>
+<section id="landau-lifshift">
+<span id="landaulifshitzimplementation"></span><h4>Landau-Lifshift<a class="headerlink" href="#landau-lifshift" title="Link to this heading">¶</a></h4>
+<p>The derived class that correspponds to the Landau-Lifshift model is called <code class="docutils literal notranslate"><span class="pre">RadiationLandauLifshitz</span></code> and
+is implemented in the corresponding files.
+The implementation is relatively simple and is similar to what is done in the <code class="docutils literal notranslate"><span class="pre">Pusher</span></code>
+since this radiation model is an extension of the classical particle push.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="w">    </span><span class="c1">// _______________________________________________________________</span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="c1">// Computation</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="cp">#ifndef SMILEI_ACCELERATOR_GPU_OACC</span>
+<span class="linenos"> 5</span><span class="w">        </span><span class="cp">#pragma omp simd aligned(rad_norm_energy:64)</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="cp">#else</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">np</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iend</span><span class="o">-</span><span class="n">istart</span><span class="p">;</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="cp">#pragma acc parallel \</span>
+<span class="linenos"> 9</span><span class="cp">            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\</span>
+<span class="linenos">10</span><span class="cp">            Bx[istart:np],By[istart:np],Bz[istart:np]) \</span>
+<span class="linenos">11</span><span class="cp">            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) \</span>
+<span class="linenos">12</span><span class="cp">            reduction(+:radiated_energy_loc)</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="cp">#pragma acc loop reduction(+:radiated_energy_loc) gang worker vector private(rad_norm_energy)</span>
+<span class="linenos">15</span><span class="w">    </span><span class="cp">#endif</span>
+<span class="linenos">16</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ipart</span><span class="o">=</span><span class="n">istart</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">&lt;</span><span class="n">iend</span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">++</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">17</span><span class="w">        </span>
+<span class="linenos">18</span><span class="w">        </span><span class="c1">// charge / m^2</span>
+<span class="linenos">19</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">charge_over_mass_square</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="p">)(</span><span class="w"> </span><span class="n">charge</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">)</span><span class="o">*</span><span class="n">one_over_mass_square</span><span class="p">;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="w">        </span><span class="c1">// Gamma</span>
+<span class="linenos">22</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gamma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sqrt</span><span class="p">(</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span>
+<span class="linenos">23</span><span class="w">                      </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span>
+<span class="linenos">24</span><span class="w">                      </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="w">        </span><span class="c1">// Computation of the Lorentz invariant quantum parameter</span>
+<span class="linenos">27</span><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">particle_chi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Radiation</span><span class="o">::</span><span class="n">computeParticleChi</span><span class="p">(</span><span class="w"> </span><span class="n">charge_over_mass_square</span><span class="p">,</span>
+<span class="linenos">28</span><span class="w">                       </span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">],</span><span class="w"> </span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">],</span><span class="w"> </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">],</span>
+<span class="linenos">29</span><span class="w">                       </span><span class="n">gamma</span><span class="p">,</span>
+<span class="linenos">30</span><span class="w">                       </span><span class="n">Ex</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">],</span><span class="w"> </span><span class="n">Ey</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">],</span><span class="w"> </span><span class="n">Ez</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">]</span><span class="w"> </span><span class="p">,</span>
+<span class="linenos">31</span><span class="w">                       </span><span class="n">Bx</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">],</span><span class="w"> </span><span class="n">By</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">],</span><span class="w"> </span><span class="n">Bz</span><span class="p">[</span><span class="n">ipart</span><span class="o">-</span><span class="n">ipart_ref</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">        </span><span class="c1">// Effect on the momentum</span>
+<span class="linenos">34</span><span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">gamma</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">particle_chi</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">minimum_chi_continuous</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="w">            </span><span class="c1">// Radiated energy during the time step</span>
+<span class="linenos">37</span><span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">temp</span><span class="w"> </span><span class="o">=</span>
+<span class="linenos">38</span><span class="w">                </span><span class="n">radiation_tables</span><span class="p">.</span><span class="n">getClassicalRadiatedEnergy</span><span class="p">(</span><span class="w"> </span><span class="n">particle_chi</span><span class="p">,</span><span class="w"> </span><span class="n">dt_</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gamma</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">gamma</span><span class="o">*</span><span class="n">gamma</span><span class="mf">-1.</span><span class="w"> </span><span class="p">);</span>
+</pre></div>
+</div>
+<p>It is composed of a vectorized loop on a group of particles using the <code class="docutils literal notranslate"><span class="pre">istart</span></code> and <code class="docutils literal notranslate"><span class="pre">iend</span></code> indexes
+given as argument parameters to perform the following steps:</p>
+<ul class="simple">
+<li><p>Commputation of the particle Lorentz factor</p></li>
+<li><p>Commputation of the particle quantum parameter (<code class="docutils literal notranslate"><span class="pre">particle_chi</span></code>)</p></li>
+<li><p>Update of the momentum: we use the function <code class="docutils literal notranslate"><span class="pre">getClassicalRadiatedEnergy</span></code> implemented in the class <code class="docutils literal notranslate"><span class="pre">RadiationTables</span></code> to
+get the classical radiated energy for the given particle.</p></li>
+<li><p>Computation of the radiated energy: this energy is first stored
+per particle in the local array <code class="docutils literal notranslate"><span class="pre">rad_norm_energy</span></code></p></li>
+</ul>
+<p>The second loop performs a vectorized reduction of the radiated energy for the current thread.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="w">            </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">temp</span><span class="o">*</span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">];</span>
+<span class="linenos">2</span><span class="w">                                              </span>
+<span class="linenos">3</span><span class="w">    </span><span class="c1">// _______________________________________________________________</span>
+<span class="linenos">4</span><span class="w">    </span><span class="c1">// Computation of the thread radiated energy</span>
+<span class="linenos">5</span><span class="w">                                              </span>
+<span class="linenos">6</span><span class="cp">#ifndef SMILEI_ACCELERATOR_GPU_OACC</span>
+</pre></div>
+</div>
+<p>The third vectorized loop compute again the quantum parameters based on the new momentum
+and this time the result is stored in the dedicated array <code class="docutils literal notranslate"><span class="pre">chi[ipart]</span></code> to be used in
+the following part of the time step.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="w">                                              </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+<span class="linenos"> 2</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="cp">#pragma omp simd reduction(+:radiated_energy_loc)</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ipart</span><span class="o">=</span><span class="mi">0</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">&lt;</span><span class="n">iend</span><span class="o">-</span><span class="n">istart</span><span class="p">;</span><span class="w"> </span><span class="n">ipart</span><span class="o">++</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="n">radiated_energy_loc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">weight</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">rad_norm_energy</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">;</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 9</span><span class="cp">#else</span>
+<span class="linenos">10</span><span class="w">            </span><span class="n">radiated_energy_loc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">weight</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">gamma</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="w"> </span><span class="mf">1.0</span>
+<span class="linenos">11</span><span class="w">                                              </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_x</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span>
+<span class="linenos">12</span><span class="w">                                              </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_y</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span>
+<span class="linenos">13</span><span class="w">                                              </span><span class="o">+</span><span class="w"> </span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="o">*</span><span class="n">momentum_z</span><span class="p">[</span><span class="n">ipart</span><span class="p">]</span><span class="w"> </span><span class="p">));</span>
+<span class="linenos">14</span><span class="cp">#endif</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">    </span><span class="c1">// _______________________________________________________________</span>
+</pre></div>
+</div>
+</section>
+<section id="corrected-landau-lifshift">
+<h4>Corrected Landau-Lifshift<a class="headerlink" href="#corrected-landau-lifshift" title="Link to this heading">¶</a></h4>
+<p>The derived class that correspponds to the corrected Landau-Lifshift model is called <code class="docutils literal notranslate"><span class="pre">RadiationCorrLandauLifshitz</span></code> and
+is implemented in the corresponding files.</p>
+</section>
+<section id="niel">
+<h4>Niel<a class="headerlink" href="#niel" title="Link to this heading">¶</a></h4>
+<p>The derived class that correspponds to the Nield model is called <code class="docutils literal notranslate"><span class="pre">RadiationNiel</span></code> and
+is implemented in the corresponding files.</p>
+</section>
+<section id="monte-carlo">
+<h4>Monte-Carlo<a class="headerlink" href="#monte-carlo" title="Link to this heading">¶</a></h4>
+<p>The derived class that correspponds to the Monte-Carlo model is called <code class="docutils literal notranslate"><span class="pre">RadiationMonteCarlo</span></code> and
+is implemented in the corresponding files.</p>
+</section>
+<section id="radiation-tables">
+<h4>Radiation Tables<a class="headerlink" href="#radiation-tables" title="Link to this heading">¶</a></h4>
+<p>The class <code class="docutils literal notranslate"><span class="pre">RadiationTables</span></code> is used to store and manage the different tabulated functions
+used by some of the radiation models.</p>
+</section>
+<section id="radiation-tools">
+<h4>Radiation Tools<a class="headerlink" href="#radiation-tools" title="Link to this heading">¶</a></h4>
+<p>The class <code class="docutils literal notranslate"><span class="pre">RadiationTools</span></code> contains some function tools for the radiation.
+Some methods provide function fit from tabulated values obtained numerically.</p>
+</section>
+</section>
+<section id="particle-event-tracing">
+<h3>Particle Event Tracing<a class="headerlink" href="#particle-event-tracing" title="Link to this heading">¶</a></h3>
+<p>To visualize the scheduling of operations, an macro-particle
+event tracing diagnostic saves the time when each OpenMP thread executes one of these
+operations and the involved thread’s number. The PIC operators (and the advanced ones like
+Ionization, Radiation) acting on each <code class="docutils literal notranslate"><span class="pre">ipatch-ispec-ibin</span></code> combination are
+included in this diagnostic.
+This way, the macro-particle operations executed by each OpenMP thread in each
+MPI process can be visualized. The information of which bin, <code class="docutils literal notranslate"><span class="pre">Species</span></code>, patch
+is involved is not stored, since it would be difficult to visualize this level of
+detail. However it can be added to this diagnostic in principle.</p>
+<p>This visualization becomes clearer when a small number of patches, <code class="docutils literal notranslate"><span class="pre">Species</span></code>,
+bins is used. In other cases the plot may become unreadable.</p>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

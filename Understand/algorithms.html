@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>PIC algorithms &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Parallelization &amp; optimization" href="performances.html" />
+    <link rel="prev" title="Units" href="units.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+        </ul>
+                <ul>
+<li><a class="reference internal" href="#">PIC algorithms</a><ul>
+<li><a class="reference internal" href="#the-maxwell-vlasov-model">The Maxwell-Vlasov model</a></li>
+<li><a class="reference internal" href="#quasi-particles">Quasi-particles</a></li>
+<li><a class="reference internal" href="#time-and-space-discretization">Time and space discretization</a></li>
+<li><a class="reference internal" href="#initialization-of-the-simulation">Initialization of the simulation</a></li>
+<li><a class="reference internal" href="#the-pic-loop">The PIC loop</a><ul>
+<li><a class="reference internal" href="#field-interpolation">Field interpolation</a></li>
+<li><a class="reference internal" href="#particle-push">Particle push</a></li>
+<li><a class="reference internal" href="#current-deposition">Current deposition</a></li>
+<li><a class="reference internal" href="#maxwell-solvers">Maxwell solvers</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#boundary-conditions">Boundary conditions</a></li>
+<li><a class="reference internal" href="#multi-pass-filtering-of-the-current-densities">Multi-pass filtering of the current densities</a></li>
+<li><a class="reference internal" href="#friedman-filter-on-the-electric-field">Friedman filter on the electric field</a></li>
+<li><a class="reference internal" href="#b-translated-interpolation-scheme-version-3">B-translated interpolation scheme version 3</a></li>
+</ul>
+</li>
+</ul>
+
+        <ul id="smallScreenMenuAfterTOC">
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">PIC algorithms</a></div>
+                <ul>
+<li><a class="reference internal" href="#">PIC algorithms</a><ul>
+<li><a class="reference internal" href="#the-maxwell-vlasov-model">The Maxwell-Vlasov model</a></li>
+<li><a class="reference internal" href="#quasi-particles">Quasi-particles</a></li>
+<li><a class="reference internal" href="#time-and-space-discretization">Time and space discretization</a></li>
+<li><a class="reference internal" href="#initialization-of-the-simulation">Initialization of the simulation</a></li>
+<li><a class="reference internal" href="#the-pic-loop">The PIC loop</a><ul>
+<li><a class="reference internal" href="#field-interpolation">Field interpolation</a></li>
+<li><a class="reference internal" href="#particle-push">Particle push</a></li>
+<li><a class="reference internal" href="#current-deposition">Current deposition</a></li>
+<li><a class="reference internal" href="#maxwell-solvers">Maxwell solvers</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#boundary-conditions">Boundary conditions</a></li>
+<li><a class="reference internal" href="#multi-pass-filtering-of-the-current-densities">Multi-pass filtering of the current densities</a></li>
+<li><a class="reference internal" href="#friedman-filter-on-the-electric-field">Friedman filter on the electric field</a></li>
+<li><a class="reference internal" href="#b-translated-interpolation-scheme-version-3">B-translated interpolation scheme version 3</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            style="font-weight:bold"
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li >
+                            <a href="#">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pic-algorithms">
+<h1>PIC algorithms<a class="headerlink" href="#pic-algorithms" title="Link to this heading">¶</a></h1>
+<p>This document describes the theoretical basis with which <strong class="program">Smilei</strong> simulates
+the behaviour of plasmas. Note that all quantities are expressed in terms of the
+<a class="reference internal" href="units.html"><span class="doc">reference units</span></a>.</p>
+<hr class="docutils" />
+<section id="the-maxwell-vlasov-model">
+<h2>The Maxwell-Vlasov model<a class="headerlink" href="#the-maxwell-vlasov-model" title="Link to this heading">¶</a></h2>
+<p>The kinetic description of a collisionless plasma relies on the so-called Vlasov-Maxwell
+system of equations. In this description, the different species of particles constituting
+the plasma are described by their respective distribution functions
+<span class="math notranslate nohighlight">\(f_s(t,\mathbf{x},\mathbf{p})\)</span>, where <span class="math notranslate nohighlight">\(s\)</span> denotes a given species consisting
+of particles of charge <span class="math notranslate nohighlight">\(q_s\)</span>, mass <span class="math notranslate nohighlight">\(m_s\)</span>, and <span class="math notranslate nohighlight">\(\mathbf{x}\)</span> and
+<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> denote the position and momentum of a phase-space element.
+The distribution <span class="math notranslate nohighlight">\(f_s\)</span> satisfies Vlasov’s equation:</p>
+<div class="math notranslate nohighlight" id="equation-vlasov">
+<span class="eqno">(1)<a class="headerlink" href="#equation-vlasov" title="Link to this equation">¶</a></span>\[\left(\partial_t + \frac{\mathbf{p}}{m_s \gamma} \cdot \nabla + \mathbf{F}_L \cdot \nabla_{\mathbf{p}} \right) f_s = 0\,,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\gamma = \sqrt{1+\mathbf{p}^2/m_s^2}\)</span> is the (relativistic) Lorentz factor,</p>
+<div class="math notranslate nohighlight" id="equation-lorentzforce">
+<span class="eqno">(2)<a class="headerlink" href="#equation-lorentzforce" title="Link to this equation">¶</a></span>\[\mathbf{F}_L = q_s\,(\mathbf{E} + \mathbf{v} \times \mathbf{B})\]</div>
+<p>is the Lorentz force acting on the particles.
+This force follows from the existence, in the plasma, of collective (macroscopic)
+electric [<span class="math notranslate nohighlight">\(\mathbf{E}(t,\mathbf{x})\)</span>] and magnetic [<span class="math notranslate nohighlight">\(\mathbf{B}(t,\mathbf{x})\)</span>]
+fields satisfying Maxwell’s equations:</p>
+<div class="math notranslate nohighlight" id="equation-maxwell">
+<span class="eqno">(3)<a class="headerlink" href="#equation-maxwell" title="Link to this equation">¶</a></span>\[\begin{split}\begin{eqnarray}
+\nabla \cdot \mathbf{B} &amp;=&amp; 0 \,,\\
+\nabla \cdot \mathbf{E} &amp;=&amp; \rho \,,\\
+\nabla \times \mathbf{B} &amp;=&amp; \mathbf{J} + \partial_t \mathbf{E} \,,\\
+\nabla \times \mathbf{E} &amp;=&amp; -\partial_t \mathbf{B} \,.
+\end{eqnarray}\end{split}\]</div>
+<p>The Vlasov-Maxwell system of equations <a class="reference internal" href="#equation-vlasov">(1)</a>–<a class="reference internal" href="#equation-maxwell">(3)</a> describes the
+self-consistent dynamics of the plasma which consistuents are subject to the Lorentz force,
+and in turn modify the collective electric and magnetic fields through their charge and
+current densities:</p>
+<div class="math notranslate nohighlight" id="equation-rhoj">
+<span class="eqno">(4)<a class="headerlink" href="#equation-rhoj" title="Link to this equation">¶</a></span>\[\begin{split}\begin{eqnarray}
+\rho(t,\mathbf{x}) &amp;=&amp; \sum_s q_s\int\!d^3\!p f_s(t,\mathbf{x},\mathbf{p})\,,\\
+\mathbf{J}(t,\mathbf{x}) &amp;=&amp; \sum_s q_s\int\! d^3\!p\,\mathbf{v} f_s(t,\mathbf{x},\mathbf{p})\,,
+\end{eqnarray}\end{split}\]</div>
+<p>where we have introduced the velocity <span class="math notranslate nohighlight">\(\mathbf{v} = \mathbf{p}/(m_s\,\gamma)\)</span>.</p>
+<hr class="docutils" />
+</section>
+<section id="quasi-particles">
+<span id="quasiparticlessection"></span><h2>Quasi-particles<a class="headerlink" href="#quasi-particles" title="Link to this heading">¶</a></h2>
+<p>The <em>Particle-In-Cell</em> method owes its name to the discretization of the distribution
+function <span class="math notranslate nohighlight">\(f_s\)</span> as a sum of <span class="math notranslate nohighlight">\(N_s\)</span> <em>quasi-particles</em> (also referred to as
+<em>super-particles</em> or <em>macro-particles</em>):</p>
+<div class="math notranslate nohighlight" id="equation-fs-discretized">
+<span class="eqno">(5)<a class="headerlink" href="#equation-fs-discretized" title="Link to this equation">¶</a></span>\[f_s(t,\mathbf{x},\mathbf{p}) =
+  \sum_{p=1}^{N_s}\,\frac{w_p}{V_c}\,\,S\big(\mathbf{x}-\mathbf{x}_p(t)\big)\,\delta\big(\mathbf{p}-\mathbf{p}_p(t)\big)\,,\]</div>
+<p>where <span class="math notranslate nohighlight">\(w_p\)</span> is a quasi-particle <em>weight</em>, <span class="math notranslate nohighlight">\(\mathbf{x}_p\)</span> is its position,
+<span class="math notranslate nohighlight">\(\mathbf{p}_p\)</span> is its momentum, <span class="math notranslate nohighlight">\(V_c\)</span> is the hypervolume of the cell,
+<span class="math notranslate nohighlight">\(S\)</span> is the shape-function of all quasi-particles,
+and <span class="math notranslate nohighlight">\(\delta\)</span> is the Dirac distribution.</p>
+<p>In PIC codes, Vlasov’s equation <a class="reference internal" href="#equation-vlasov">(1)</a> is integrated along the continuous trajectories
+of these quasi-particles, while Maxwell’s equations <a class="reference internal" href="#equation-maxwell">(3)</a> are solved on a
+discrete spatial grid, the spaces between consecutive grid points being referred to as
+<em>cells</em>. Injecting the discrete distribution function of
+Eq. <a class="reference internal" href="#equation-fs-discretized">(5)</a> in Vlasov’s equation <a class="reference internal" href="#equation-vlasov">(1)</a>, multiplying the result by
+<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> and integrating over all <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> and over the volume of
+the quasi-particles, leads to the relativistic equations of motion of individual
+quasi-particles:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+\frac{d\mathbf{x}_p}{dt} &amp;=&amp; \frac{\mathbf{u}_p}{\gamma_p}\,\\
+\frac{d\mathbf{u}_p}{dt} &amp;=&amp; r_s \, \left( \mathbf{E}_p + \frac{\mathbf{u}_p}{\gamma_p} \times \mathbf{B}_p \right),
+\end{eqnarray}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(r_s = q_s/m_s\)</span> is the charge-over-mass ratio (for species <span class="math notranslate nohighlight">\(s\)</span>),
+<span class="math notranslate nohighlight">\(\mathbf{u}_p = \mathbf{p}_p/m_s\)</span> is the reduced momentum and
+<span class="math notranslate nohighlight">\(\gamma_p=\sqrt{1+\mathbf{u}_p^2}\)</span> is the Lorentz factor.</p>
+<hr class="docutils" />
+</section>
+<section id="time-and-space-discretization">
+<span id="staggeredgrid"></span><h2>Time and space discretization<a class="headerlink" href="#time-and-space-discretization" title="Link to this heading">¶</a></h2>
+<p>Maxwell’s equations are solved here using
+the <a class="reference external" href="https://doi.org/10.1016/B978-012170960-0/50046-3">Finite Difference Time Domain (FDTD) approach</a>
+as well as <a class="reference external" href="https://doi.org/10.1140/epjd/e2014-50162-y">refined methods based on this algorithm</a>.
+In these methods, the electromagnetic
+fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
+spatial-centering of the discretized curl operators in Maxwell’s equations.
+The following figure summarizes at which points of the Yee-grid are defined the
+electromagnetic fields as well as charge and density currents.</p>
+<a class="reference internal image-reference" href="../_images/figYee.png"><img alt="../_images/figYee.png" src="../_images/figYee.png" style="width: 13cm;" /></a>
+<p>Similarly, the time-centering
+of the time-derivative in Maxwell’s equations is ensured by considering the electric fields
+as defined at integer time-steps <span class="math notranslate nohighlight">\((n)\)</span> and magnetic fields at half-integer
+time-steps <span class="math notranslate nohighlight">\((n+\tfrac{1}{2})\)</span>. Time-centering of the magnetic fields is however
+necessary for diagnostic purposes, and most importantly when computing the Lorentz force
+acting on the quasi-particles.</p>
+<p>A <em>leap-frog</em> scheme is used to advance the particles in time, so that the particle positions
+and velocities are defined at integer <span class="math notranslate nohighlight">\((n)\)</span> and half-integer <span class="math notranslate nohighlight">\((n-\tfrac{1}{2})\)</span>
+time-steps, respectively.</p>
+</section>
+<hr class="docutils" />
+<section id="initialization-of-the-simulation">
+<h2>Initialization of the simulation<a class="headerlink" href="#initialization-of-the-simulation" title="Link to this heading">¶</a></h2>
+<p>The initialization of a PIC simulation is a three-step process consisting in</p>
+<ol class="arabic simple">
+<li><p>loading particles,</p></li>
+<li><p>computing the initial total charge and current densities on the grid,</p></li>
+<li><p>computing the initial electric and magnetic field at the grid points.</p></li>
+</ol>
+<p>In <strong class="program">Smilei</strong>, all three steps can be done either as a restart of a previous simulation
+(in which case the particles, charge and current densities and electromagnetic fields are
+directly copied from a file generated at the end of a previous simulation), or from a
+user-defined input file. In that case, the user defines the initial conditions of the
+particle, charge and current densities as well as the initial electromagnetic fields
+over the whole simulation domain.</p>
+<p>In particular, the number density <span class="math notranslate nohighlight">\(n_s(\mathbf{x})\)</span>, mean velocity
+<span class="math notranslate nohighlight">\(\mathbf{v}_s(\mathbf{x})\)</span> and temperature <span class="math notranslate nohighlight">\(T_s(\mathbf{x})\)</span> of all species
+<span class="math notranslate nohighlight">\(s\)</span> in a given cell (located at position <span class="math notranslate nohighlight">\(\mathbf{x}\)</span>) at time <span class="math notranslate nohighlight">\(t=0\)</span>
+have to be prescribed. The particle loading then consists in creating, in each cell,
+<span class="math notranslate nohighlight">\(N_s\)</span> particles with positions <span class="math notranslate nohighlight">\(\mathbf{x}_p\)</span> (either randomly chosen or
+regularly spaced) such that particles are uniformly distributed within the cell,
+and momentum <span class="math notranslate nohighlight">\(\mathbf{p}_p\)</span> randomly chosen such that the particle distribution
+follows a Maxwell-Jüttner distribution with mean-velocity <span class="math notranslate nohighlight">\(\mathbf{v}_s(\mathbf{x})\)</span>
+and temperature <span class="math notranslate nohighlight">\(T_s(\mathbf{x})\)</span>.</p>
+<p>In <strong class="program">Smilei</strong>, a weight is assigned to each particle depending on the density associated
+to the cell it originates from:</p>
+<div class="math notranslate nohighlight">
+\[w_p = \frac{n_s\big(\mathbf{x}_p(t=0)\big)}{N_s} V_c\,.\]</div>
+<p>This variable weighting is particularly beneficial when considering initially
+highly-inhomogeneous density distributions.</p>
+<p>Once all particles in the simulation domain have been created, the total charge and
+current densities <span class="math notranslate nohighlight">\(\rho(t=0,\mathbf{x})\)</span> and <span class="math notranslate nohighlight">\(\mathbf{J}(t=0,\mathbf{x})\)</span>
+are computed on the grid using a simple projection technique:</p>
+<div class="math notranslate nohighlight">
+\[\rho(t=0,\mathbf{x}) = \sum_s\,\sum_p\,W_p\,S\big(\mathbf{x}-\mathbf{x}_p(t=0)\big)\,,\]</div>
+<p>where <span class="math notranslate nohighlight">\(W_p = q_s w_p / V_c\)</span>.</p>
+<p>Then, the initial electric fields are computed from <span class="math notranslate nohighlight">\(\rho(t=0,\mathbf{x})\)</span>
+by solving Poisson’s equation. In <strong class="program">Smilei</strong>, this is done using the conjugate gradient
+method. This iterative method is particularly interesting
+as it is easily implemented on massively parallel computers and requires mainly
+local information exchange between adjacent processes.</p>
+<p>External (divergence-free) electric and/or magnetic fields can then be added to the
+resulting electrostatic fields, provided they fullfill Maxwell’s equations <a class="reference internal" href="#equation-maxwell">(3)</a>,
+and in particular Gauss’ and Poisson’s.</p>
+<p>Note that a relativistically drifting plasma needs <a class="reference internal" href="relativistic_fields_initialization.html"><span class="doc">special treatment</span></a>.</p>
+</section>
+<hr class="docutils" />
+<section id="the-pic-loop">
+<h2>The PIC loop<a class="headerlink" href="#the-pic-loop" title="Link to this heading">¶</a></h2>
+<p>At the end of the initialization stage [time-step <span class="math notranslate nohighlight">\((n=0)\)</span>], all quasi-particles
+in the simulation have been loaded and the electromagnetic fields have been computed
+over the whole simulation grid. The PIC loop is then started over <span class="math notranslate nohighlight">\(N\)</span> time-steps
+each consisting in</p>
+<ol class="arabic simple">
+<li><p>interpolating the electromagnetic fields at the particle positions,</p></li>
+<li><p>computing the new particle velocities and positions,</p></li>
+<li><p>projecting the new charge and current densities on the grid,</p></li>
+<li><p>computing the new electromagnetic fields on the grid.</p></li>
+</ol>
+<p>In this section, we describe these four steps which advance the time from
+time-step <span class="math notranslate nohighlight">\((n)\)</span> to time-step <span class="math notranslate nohighlight">\((n+1)\)</span>.</p>
+<section id="field-interpolation">
+<h3>Field interpolation<a class="headerlink" href="#field-interpolation" title="Link to this heading">¶</a></h3>
+<p>At the beginning of time-step <span class="math notranslate nohighlight">\((n)\)</span>, the particles velocity and position are known
+at time-step <span class="math notranslate nohighlight">\((n-\tfrac{1}{2})\)</span> and <span class="math notranslate nohighlight">\((n)\)</span>, respectively. For each particle
+<span class="math notranslate nohighlight">\(p\)</span>, the electromagnetic fields [at time-step <span class="math notranslate nohighlight">\((n)\)</span>] are computed at the
+particle position using a simple interpolation technique:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+\mathbf{E}_p^{(n)} = V_c^{-1} \int d^3\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{E}^{(n)}(\mathbf{x})\,,\\
+\mathbf{B}_p^{(n)} = V_c^{-1} \int d^3\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{B}^{(n)}(\mathbf{x})\,,
+\end{eqnarray}\end{split}\]</div>
+<p>where we have used the time-centered magnetic fields
+<span class="math notranslate nohighlight">\(\mathbf{B}^{(n)}=\tfrac{1}{2}[\mathbf{B}^{(n+1/2) } + \mathbf{B}^{(n-1/2)}]\)</span>.</p>
+</section>
+<section id="particle-push">
+<h3>Particle push<a class="headerlink" href="#particle-push" title="Link to this heading">¶</a></h3>
+<p>Knowing, for each quasi-particle, the electromagnetic fields at its position, the new
+particle momentum and position are computed using a (second order) leap-frog integrator.</p>
+<p>In <strong class="program">Smilei</strong>, different schemes have been implemented:
+the well-known <a class="reference external" href="https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up">Boris pusher</a>
+both in the classical and relativistic form,
+the <a class="reference external" href="https://doi.org/10.1063/1.2837054">pusher developed by J.-L. Vay</a>,
+and the <a class="reference external" href="https://arxiv.org/abs/1701.05605">pusher of Higuera and Cary</a>.</p>
+<p>All schemes compute the new particle momentum and position according to</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u}_p^{n+\tfrac{1}{2}}=\mathbf{u}_p^{n-\tfrac{1}{2}} + r_s \Delta t \, \left[ E_p^{(n)} + \frac{\mathbf{v}_p^{(n+\tfrac{1}{2})}+\mathbf{v}_p^{(n-\tfrac{1}{2})}}{2} \times B_p^{(n)}\right],\]</div>
+<div class="math notranslate nohighlight">
+\[\mathbf{x}_p^{n+1}=\mathbf{x}_p^{n} + \Delta t \, \frac{\mathbf{u}_p^{n+\tfrac{1}{2}}}{\gamma_p},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta t\)</span> denotes the duration of a time-step.</p>
+</section>
+<section id="current-deposition">
+<h3>Current deposition<a class="headerlink" href="#current-deposition" title="Link to this heading">¶</a></h3>
+<p>Charge deposition (i.e. charge and current density projection onto the grid) is then
+performed using the charge-conserving algorithm
+<a class="reference external" href="https://doi.org/10.1016/S0010-4655(00)00228-9">proposed by Esirkepov</a>.
+The current densities along the dimensions of the grid
+(i.e., the <span class="math notranslate nohighlight">\(x\)</span>-direction for 1D3V simulations,
+both <span class="math notranslate nohighlight">\(x\)</span>- and <span class="math notranslate nohighlight">\(y\)</span>-directions for 2D3V simulations,
+and all three <span class="math notranslate nohighlight">\(x\)</span>-, <span class="math notranslate nohighlight">\(y\)</span>- and <span class="math notranslate nohighlight">\(z\)</span>-directions for 3D3V simulations)
+are computed from the charge flux through the cell borders
+(hence ensuring charge conservation) while the current densities along the other
+dimensions are performed using a simple projection.</p>
+<p>To illustrate this point, we take the example of current deposition in a 2D3V simulation.
+The current densities in the <span class="math notranslate nohighlight">\(x\)</span>- and <span class="math notranslate nohighlight">\(y\)</span>-directions associated to a particle
+with charge <span class="math notranslate nohighlight">\(q\)</span> are computed as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{eqnarray}
+(J_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} = (J_x)_{i-\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} + W_p\,\frac{\Delta x}{\Delta t}\,(W_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})}\,\\
+(J_y)_{i,j+\tfrac{1}{2}}^{(n+\tfrac{1}{2})} = (J_y)_{i,j-\tfrac{1}{2}}^{(n+\tfrac{1}{2})} + W_p\,\frac{\Delta y}{\Delta t}\,(W_y)_{j,i+\tfrac{1}{2}}^{(n+\tfrac{1}{2})}\,
+\end{eqnarray}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\((W_x)^{(n+\tfrac{1}{2})}\)</span> and <span class="math notranslate nohighlight">\((W_y)^{(n+\tfrac{1}{2})}\)</span> are quantities computed
+from the particle current and former positions <span class="math notranslate nohighlight">\(x_p^{(n+1)}\)</span> and <span class="math notranslate nohighlight">\(x_p^{(n)}\)</span>,
+respectively, using the method developed by Esirkepov.
+The particle current in the <span class="math notranslate nohighlight">\(z\)</span>-direction (not a dimension of the grid) is,
+in this geometry, computed using a simple projection:</p>
+<div class="math notranslate nohighlight">
+\[(J_z)_{i,j} = W_r \mathbf{v}_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p)\,.\]</div>
+<p>In all cases, the charge density deposited by the particle is obtained using the simple
+projection:</p>
+<div class="math notranslate nohighlight">
+\[(\rho)_{i,j}^{(n+1)} = W_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p^{(n+1)})\,.\]</div>
+<p>The total charge and current densities henceforth gather the contributions of all
+quasi-particles of all species. It is worth noting that, within a charge-conserving
+framework, charge densities are only projected on the grid for diagnostics purposes
+(as we will see in the next paragraph, it is not used to advance the electromagnetic fields).</p>
+</section>
+<section id="maxwell-solvers">
+<h3>Maxwell solvers<a class="headerlink" href="#maxwell-solvers" title="Link to this heading">¶</a></h3>
+<p>Now that the currents are known at time-step <span class="math notranslate nohighlight">\(n+\tfrac{1}{2}\)</span>, the electromagnetic
+fields can be advanced solving Maxwell’s equations <a class="reference internal" href="#equation-maxwell">(3)</a>.</p>
+<p>First, Maxwell-Ampère is solved, giving the advanced electric fields</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{E}^{(n+1)} = \mathbf{E}^{(n)} + \Delta t\, \left[\left(\nabla \times \mathbf{B}\right)^{(n+\tfrac{1}{2})} - \mathbf{J}^{(n+\tfrac{1}{2})} \right]\,.\]</div>
+<p>Then, Maxwell-Faraday is computed, leading to the advanced magnetic fields</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{B}^{(n+\tfrac{3}{2})} = \mathbf{B}^{(n+\tfrac{1}{2})} - \Delta t\, \left(\nabla \times \mathbf{E}\right)^{(n+1)}\,.\]</div>
+<p>The discretization of the curl-operator is not detailed here.</p>
+<p>It is worth
+noting that computing the two previous equations is sufficient to get a complete description
+of the new electromagnetic fields. Indeed, it can be shown that this conserves a
+divergence-free magnetic field if Gauss’ equation is satisfied at time <span class="math notranslate nohighlight">\(t=0\)</span>.
+Similarly, Poisson’s equation is verified as long as it is satisfied
+at time <span class="math notranslate nohighlight">\(t=0\)</span>, if the charge deposition algorithm fulfills the charge conservation
+equation:</p>
+<div class="math notranslate nohighlight">
+\[\partial_t \rho + \nabla \cdot \mathbf{J} = 0\]</div>
+<p>(this motivated the use of Esirkepov’s projection scheme discussed in the previous paragraph).</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="boundary-conditions">
+<h2>Boundary conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h2>
+<p>After new quasi-particle positions and velocities have been computed, boundary conditions (BCs)
+are applied to each quasi-particle that may be located in a ghost cell,
+i.e. outside of the ‘real’ grid.
+Quasi-particle species may have a different BC for each boundary of the simulation box:
+the quasi-particles can either loop around the box (periodic),
+be stopped (momentum set to zero),
+suppressed (removed from memory),
+reflected (momentum and position follow specular reflection rules)
+or thermalized.
+In the latter case, the quasi-particle is set back inside the simulation box,
+and its new momentum is randomly sampled in a Maxwellian distribution
+with a given temperature and drift velocity, both specified by the user.</p>
+<p>BCs are applied to the electromagnetic fields after Maxwell’s equations have been solved.
+Each boundary of the simulation box can feature a different BC.
+First, injecting/absorbing BCs inspired from the Silver-Müller BC
+are able to inject an electromagnetic wave (e.g. a laser) and/or
+to absorb outgoing electromagnetic waves.
+In contrast, the reflective electromagnetic BC will reflect any outgoing
+electromagnetic wave reaching the simulation boundary.
+Lastly, periodic BCs correspond to applying the fields from the opposite boundary.</p>
+<hr class="docutils" />
+</section>
+<section id="multi-pass-filtering-of-the-current-densities">
+<span id="multipassbinomialfilter"></span><h2>Multi-pass filtering of the current densities<a class="headerlink" href="#multi-pass-filtering-of-the-current-densities" title="Link to this heading">¶</a></h2>
+<p>A multi-pass filter on the current densities is available in <strong class="program">Smilei</strong>.
+The user can choose a simple 3-points FIR binomial filter,
+which implementation follows that presented by
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999111002270?via%3Dihub">Vay et al. (2011)</a>,
+or a N-point kernel FIR filter.
+Each pass consists in a N-point spatial averaging (in one or all spatial dimensions)
+of the current densities, so that the filtered current density (here defined
+at location i on a one-dimensional grid) is recomputed as:</p>
+<div class="math notranslate nohighlight">
+\[J_{f,i} = \sum_{n=-(N-1)/2}^{+(N-1)/2} K_{(N-1)/2+n}J_{i+n}\]</div>
+<p>In particular, the binomial filter uses a kernel <em>K = [0.25,0.5,0.25]</em> resulting in</p>
+<div class="math notranslate nohighlight">
+\[J_{f,i} = \frac{1}{2} J_i + \frac{J_{i+1}+J_{i-1}}{4}\]</div>
+<p>A user-provided FIR kernel must be of length <em>N</em> with an odd number of coefficients
+(symmetrical to avoid phase effects).
+The number of ghost cells must be greater than <em>(N-1)/2</em>.
+Moreover, the sum of the kernel’s coefficients must be equal to one.
+This <a class="reference external" href="https://fiiir.com/">online tool</a> is handy to design a custom filter.</p>
+<p>Current filtering, if requested by the user, is applied before solving
+Maxwell’s equation, and the number of passes is an <a class="reference internal" href="../Use/namelist.html#currentfilter"><span class="std std-ref">input parameter</span></a>
+defined by the user.</p>
+<hr class="docutils" />
+</section>
+<section id="friedman-filter-on-the-electric-field">
+<span id="efieldfilter"></span><h2>Friedman filter on the electric field<a class="headerlink" href="#friedman-filter-on-the-electric-field" title="Link to this heading">¶</a></h2>
+<p>A method for temporal filtering of the electric field is also available in <strong class="program">Smilei</strong>.
+It is the so-called Friedman filter detailed in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999104002608?via%3Dihub">Greenwood et al. (2004)</a>.
+This method consists in computing the filtered electric field at time-step <span class="math notranslate nohighlight">\(n\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[{\bf E}_f^{(n)} = \left(1+\frac{\theta}{2}\right) {\bf E}^{(n)} - \theta \left(1-\frac{\theta}{2}\right) {\bf E}^{(n-1)} + \frac{1}{2} \theta \big(1-\theta\big)^2 \bar{\bf E}^{(n-2)},\]</div>
+<p>where:</p>
+<div class="math notranslate nohighlight">
+\[\bar{\bf E}^{(n-2)} = {\bf E}^{(n-2)} + \theta \bar{\bf E}^{(n-3)},\]</div>
+<p>and <span class="math notranslate nohighlight">\(\theta \in [0,1[\)</span> is an <a class="reference internal" href="../Use/namelist.html#fieldfilter"><span class="std std-ref">input parameter</span></a> defined by the user.
+Note that the filtered field <span class="math notranslate nohighlight">\(E_f\)</span> is not used to push particles, but is used when solving the Maxwell-Faraday equation.
+Also note that, as underlined in <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999104002608?via%3Dihub">Greenwood et al. (2004)</a>,
+using this particular filter modifies the CFL condition of the Maxwell solver.
+A simple trick to ensure that this condition is still verified is to use (for <span class="math notranslate nohighlight">\(\Delta x = \Delta y = \Delta z\)</span>) the
+magic time-step <span class="math notranslate nohighlight">\(\Delta t = \Delta x/2\)</span> whenever the Friedman filter is employed.</p>
+<p>Both filters on the <a class="reference internal" href="#multipassbinomialfilter"><span class="std std-ref">currents</span></a> and <a class="reference internal" href="#efieldfilter"><span class="std std-ref">electric fields</span></a> can be used together or
+separately. They can be used, e.g., to mitigate the numerical Cherenkov instability that plagues PIC simulations dealing with
+relativistically drifting flows.
+An exemple of their use to mitigate this effect is highlighted in the work by <a class="reference external" href="https://arxiv.org/abs/1712.02883">Plotnikov et al. (2017)</a>.</p>
+<hr class="docutils" />
+</section>
+<section id="b-translated-interpolation-scheme-version-3">
+<span id="btis3"></span><h2>B-translated interpolation scheme version 3<a class="headerlink" href="#b-translated-interpolation-scheme-version-3" title="Link to this heading">¶</a></h2>
+<p>This interpolation scheme, called B-TIS3 and described in detail in <a class="reference external" href="https://doi.org/10.1017/S0022377823000223">P.-L. Bourgeois, X. Davoine (2023)</a>, mitigates some numerical artifacts
+that arise when macro-particles at relativistic velocities are present in the simulation:</p>
+<ul class="simple">
+<li><p>inaccurate <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> interpolation due to the time and space staggering of <span class="math notranslate nohighlight">\(\mathbf{E}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> in the Yee grid. The associated errors are particularly detrimental for the accuracy of simulations with relativistic particles;</p></li>
+<li><p>Numerical Cherenkov radiation (see e.g. <a class="reference external" href="https://link.aps.org/doi/10.1103/PhysRevSTAB.16.021301">R. Lehe et al. (2013)</a>) that arises with the interaction of relativistic particles and the numerical dispersion of Finite Difference methods used to solve Maxwell’s Equations. As explained in the same reference, this numerical artefact can increase the divergence and emittance of relativistic particle beams.</p></li>
+</ul>
+<p>The B-TIS3 interpolation scheme can give a more accurate computation of the force acting on particles in presence of
+fields that move at speed close to the speed of light in the <cite>x</cite> direction, which is the underlying hypothesis where this scheme can be used safely.
+This hypothesis is also partially satisfied by Numerical Cherenkov radiation, as shown in <a class="reference external" href="https://doi.org/10.1016/j.jcp.2020.109426">P.-L. Bourgeois, X. Davoine (2020)</a>.
+Please note that this scheme does not remove this numerical artifact (which will remain visible e.g. in <code class="docutils literal notranslate"><span class="pre">Field</span></code> diagnostics), but it mitigates its effects on the macro-particles. Instead, the effects of this interpolation scheme on the force acting on the macro-particles can be seen also through <code class="docutils literal notranslate"><span class="pre">Probes</span></code> showing the associated B-TIS3 fields. This because <code class="docutils literal notranslate"><span class="pre">Probes</span></code> act as macro-particles interpolating the fields from the grid as if they were plasma macro-particles.</p>
+<p>As described in <a class="reference external" href="https://doi.org/10.1017/S0022377823000223">P.-L. Bourgeois, X. Davoine (2023)</a>, the correction given by the B-TIS3 scheme on force interpolation (compared to the usual
+interpolation of the magnetic field) is effective only when the normalized integration timestep <span class="math notranslate nohighlight">\(\Delta t\)</span> is near to the value <span class="math notranslate nohighlight">\(\Delta x\)</span> of the
+grid cell size along the <cite>x</cite> direction.</p>
+<p>As explained before, in a typical PIC code using a Yee scheme to solve Maxwell’s equations, the magnetic field interpolated on the macro-particles’
+positions is often linearly interpolated in time. For example, for the <span class="math notranslate nohighlight">\(B_z\)</span> component of the magnetic field:</p>
+<div class="math notranslate nohighlight">
+\[B_{z,i-1/2}^{(n)}=\tfrac{1}{2}[B_{z,i-1/2}^{(n+1/2) } + B_{z,i-1/2}^{(n-1/2)}].\]</div>
+<p>The B-TIS3 scheme tries to reduce the errors associated to this temporal interpolation and to the staggering of the electric and magnetic fields in the Yee cell,
+interpolating a magnetic field defined at the same <cite>x</cite> spatial indices of the electric field when necessary.</p>
+<p>For example, in the <cite>y</cite> component of the Lorentz force, the electric field component <span class="math notranslate nohighlight">\(E_y\)</span> is defined on the primal grid in the <cite>x</cite> direction,
+but <span class="math notranslate nohighlight">\(B_z\)</span> is defined on the dual grid in the <cite>x</cite> direction.</p>
+<p>Thus, in the B-TIS3 scheme a translated interpolation scheme is used for <span class="math notranslate nohighlight">\(B_z\)</span> in the Lorentz force:</p>
+<div class="math notranslate nohighlight">
+\[B_{z,i}^{(n), B-TIS3}=\tfrac{1}{2}[B_{z,i-1/2}^{(n-1/2) } + B_{z,i+1/2}^{(n+1/2)}].\]</div>
+<p>As explained in the B-TIS3 reference, for <span class="math notranslate nohighlight">\(\mathbf{B}\)</span> fields moving near to the speed of light in the <cite>x</cite> direction and for <span class="math notranslate nohighlight">\(c\Delta t\)</span> near to the value <span class="math notranslate nohighlight">\(\Delta x\)</span>,
+this choice is more accurate than the usual linear temporal intepolation of the magnetic fields.</p>
+<p>Note that in the <cite>x</cite> component of the Lorentz force the electric field <span class="math notranslate nohighlight">\(E_x\)</span> is defined on the
+dual grid in the <cite>x</cite> direction, thus the usual Yee-centered and linearly interpolated <span class="math notranslate nohighlight">\(B_z\)</span> (also defined on the
+dual grid in the <cite>x</cite> direction) is maintained.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

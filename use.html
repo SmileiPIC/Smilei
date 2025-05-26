@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Use &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/smilei_theme.css?v=3908db80" />
+    <script src="_static/documentation_options.js?v=4af8989d"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Install" href="Use/installation.html" />
+    <link rel="prev" title="Perfectly Matched Layers" href="Understand/PML.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Use</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Use</a></li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="index.html">
+                <img class="logo" src="_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="#">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="use">
+<h1>Use<a class="headerlink" href="#use" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Use/installation.html">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#install-the-dependencies">Install the dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#download-the-smilei-source">Download the Smilei source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#setup-environment-variables-for-compilation">Setup environment variables for compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#compile-smilei">Compile Smilei</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#advanced-compilation-options">Advanced compilation options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#compilation-for-gpu-accelerated-nodes">Compilation for GPU accelerated nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#optimization-and-vectorization-options-explained">Optimization and vectorization options explained</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#create-the-documentation">Create the documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#install-the-happi-module">Install the happi module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/installation.html#install-the-smilei-tables-tool">Install the <code class="docutils literal notranslate"><span class="pre">smilei_tables</span></code> tool</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://smileipic.github.io/tutorials">Smilei tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Use/namelist.html">Write a namelist</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#general-rules">General rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#python-workflow">Python workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#main-variables">Main variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#geometry"><code class="docutils literal notranslate"><span class="pre">geometry</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#interpolation_order"><code class="docutils literal notranslate"><span class="pre">interpolation_order</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#interpolator"><code class="docutils literal notranslate"><span class="pre">interpolator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#grid_length"><code class="docutils literal notranslate"><span class="pre">grid_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_cells"><code class="docutils literal notranslate"><span class="pre">number_of_cells</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#cell_length"><code class="docutils literal notranslate"><span class="pre">cell_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#simulation_time"><code class="docutils literal notranslate"><span class="pre">simulation_time</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_timesteps"><code class="docutils literal notranslate"><span class="pre">number_of_timesteps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#timestep"><code class="docutils literal notranslate"><span class="pre">timestep</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#timestep_over_CFL"><code class="docutils literal notranslate"><span class="pre">timestep_over_CFL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#gpu_computing"><code class="docutils literal notranslate"><span class="pre">gpu_computing</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_patches"><code class="docutils literal notranslate"><span class="pre">number_of_patches</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#patch_arrangement"><code class="docutils literal notranslate"><span class="pre">patch_arrangement</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#cluster_width"><code class="docutils literal notranslate"><span class="pre">cluster_width</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#maxwell_solver"><code class="docutils literal notranslate"><span class="pre">maxwell_solver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#solve_poisson"><code class="docutils literal notranslate"><span class="pre">solve_poisson</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#poisson_max_iteration"><code class="docutils literal notranslate"><span class="pre">poisson_max_iteration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#poisson_max_error"><code class="docutils literal notranslate"><span class="pre">poisson_max_error</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#solve_relativistic_poisson"><code class="docutils literal notranslate"><span class="pre">solve_relativistic_poisson</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#relativistic_poisson_max_iteration"><code class="docutils literal notranslate"><span class="pre">relativistic_poisson_max_iteration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#relativistic_poisson_max_error"><code class="docutils literal notranslate"><span class="pre">relativistic_poisson_max_error</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#EM_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">EM_boundary_conditions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#EM_boundary_conditions_k"><code class="docutils literal notranslate"><span class="pre">EM_boundary_conditions_k</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_pml_cells"><code class="docutils literal notranslate"><span class="pre">number_of_pml_cells</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#pml_sigma"><code class="docutils literal notranslate"><span class="pre">pml_sigma</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#pml_kappa"><code class="docutils literal notranslate"><span class="pre">pml_kappa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_fields_frozen"><code class="docutils literal notranslate"><span class="pre">time_fields_frozen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#reference_angular_frequency_SI"><code class="docutils literal notranslate"><span class="pre">reference_angular_frequency_SI</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#print_every"><code class="docutils literal notranslate"><span class="pre">print_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#print_expected_disk_usage"><code class="docutils literal notranslate"><span class="pre">print_expected_disk_usage</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#random_seed"><code class="docutils literal notranslate"><span class="pre">random_seed</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_AM"><code class="docutils literal notranslate"><span class="pre">number_of_AM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_AM_classical_Poisson_solver"><code class="docutils literal notranslate"><span class="pre">number_of_AM_classical_Poisson_solver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_AM_relativistic_field_initialization"><code class="docutils literal notranslate"><span class="pre">number_of_AM_relativistic_field_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#use_BTIS3_interpolation"><code class="docutils literal notranslate"><span class="pre">use_BTIS3_interpolation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#custom_oversize"><code class="docutils literal notranslate"><span class="pre">custom_oversize</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#load-balancing">Load Balancing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#initial_balance"><code class="docutils literal notranslate"><span class="pre">initial_balance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#every"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#cell_load"><code class="docutils literal notranslate"><span class="pre">cell_load</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#frozen_particle_load"><code class="docutils literal notranslate"><span class="pre">frozen_particle_load</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#multiple-decomposition-of-the-domain">Multiple decomposition of the domain</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#region_ghost_cells"><code class="docutils literal notranslate"><span class="pre">region_ghost_cells</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#vectorization">Vectorization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#mode"><code class="docutils literal notranslate"><span class="pre">mode</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#reconfigure_every"><code class="docutils literal notranslate"><span class="pre">reconfigure_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#initial_mode"><code class="docutils literal notranslate"><span class="pre">initial_mode</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#moving-window">Moving window</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_start"><code class="docutils literal notranslate"><span class="pre">time_start</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#velocity_x"><code class="docutils literal notranslate"><span class="pre">velocity_x</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_additional_shifts"><code class="docutils literal notranslate"><span class="pre">number_of_additional_shifts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#additional_shifts_time"><code class="docutils literal notranslate"><span class="pre">additional_shifts_time</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#current-filtering">Current filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#model"><code class="docutils literal notranslate"><span class="pre">model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#passes"><code class="docutils literal notranslate"><span class="pre">passes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#kernelFIR"><code class="docutils literal notranslate"><span class="pre">kernelFIR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#field-filtering">Field filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id0"><code class="docutils literal notranslate"><span class="pre">model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#theta"><code class="docutils literal notranslate"><span class="pre">theta</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#species">Species</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#name"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#position_initialization"><code class="docutils literal notranslate"><span class="pre">position_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#regular_number"><code class="docutils literal notranslate"><span class="pre">regular_number</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#momentum_initialization"><code class="docutils literal notranslate"><span class="pre">momentum_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#particles_per_cell"><code class="docutils literal notranslate"><span class="pre">particles_per_cell</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#mass"><code class="docutils literal notranslate"><span class="pre">mass</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#atomic_number"><code class="docutils literal notranslate"><span class="pre">atomic_number</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#maximum_charge_state"><code class="docutils literal notranslate"><span class="pre">maximum_charge_state</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_density"><code class="docutils literal notranslate"><span class="pre">number_density</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#charge_density"><code class="docutils literal notranslate"><span class="pre">charge_density</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#charge"><code class="docutils literal notranslate"><span class="pre">charge</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#mean_velocity"><code class="docutils literal notranslate"><span class="pre">mean_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#mean_velocity_AM"><code class="docutils literal notranslate"><span class="pre">mean_velocity_AM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#temperature"><code class="docutils literal notranslate"><span class="pre">temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#boundary_conditions"><code class="docutils literal notranslate"><span class="pre">boundary_conditions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#thermal_boundary_temperature"><code class="docutils literal notranslate"><span class="pre">thermal_boundary_temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#thermal_boundary_velocity"><code class="docutils literal notranslate"><span class="pre">thermal_boundary_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_frozen"><code class="docutils literal notranslate"><span class="pre">time_frozen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#ionization_model"><code class="docutils literal notranslate"><span class="pre">ionization_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#bsi_model"><code class="docutils literal notranslate"><span class="pre">bsi_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#ionization_rate"><code class="docutils literal notranslate"><span class="pre">ionization_rate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#ionization_electrons"><code class="docutils literal notranslate"><span class="pre">ionization_electrons</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#is_test"><code class="docutils literal notranslate"><span class="pre">is_test</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#pusher"><code class="docutils literal notranslate"><span class="pre">pusher</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#radiation_model"><code class="docutils literal notranslate"><span class="pre">radiation_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#radiation_photon_species"><code class="docutils literal notranslate"><span class="pre">radiation_photon_species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#radiation_photon_sampling"><code class="docutils literal notranslate"><span class="pre">radiation_photon_sampling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#radiation_max_emissions"><code class="docutils literal notranslate"><span class="pre">radiation_max_emissions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#radiation_photon_gamma_threshold"><code class="docutils literal notranslate"><span class="pre">radiation_photon_gamma_threshold</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#relativistic_field_initialization"><code class="docutils literal notranslate"><span class="pre">relativistic_field_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#multiphoton_Breit_Wheeler"><code class="docutils literal notranslate"><span class="pre">multiphoton_Breit_Wheeler</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#multiphoton_Breit_Wheeler_sampling"><code class="docutils literal notranslate"><span class="pre">multiphoton_Breit_Wheeler_sampling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#keep_interpolated_fields"><code class="docutils literal notranslate"><span class="pre">keep_interpolated_fields</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#particle-injector">Particle Injector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id9"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id10"><code class="docutils literal notranslate"><span class="pre">species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#box_side"><code class="docutils literal notranslate"><span class="pre">box_side</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_envelope"><code class="docutils literal notranslate"><span class="pre">time_envelope</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id11"><code class="docutils literal notranslate"><span class="pre">position_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id12"><code class="docutils literal notranslate"><span class="pre">momentum_initialization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id13"><code class="docutils literal notranslate"><span class="pre">mean_velocity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id14"><code class="docutils literal notranslate"><span class="pre">temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id15"><code class="docutils literal notranslate"><span class="pre">particles_per_cell</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id16"><code class="docutils literal notranslate"><span class="pre">number_density</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id17"><code class="docutils literal notranslate"><span class="pre">charge_density</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id18"><code class="docutils literal notranslate"><span class="pre">regular_number</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#particle-merging">Particle Merging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merging_method"><code class="docutils literal notranslate"><span class="pre">merging_method</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_every"><code class="docutils literal notranslate"><span class="pre">merge_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#min_particles_per_cell"><code class="docutils literal notranslate"><span class="pre">min_particles_per_cell</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_min_packet_size"><code class="docutils literal notranslate"><span class="pre">merge_min_packet_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_max_packet_size"><code class="docutils literal notranslate"><span class="pre">merge_max_packet_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_momentum_cell_size"><code class="docutils literal notranslate"><span class="pre">merge_momentum_cell_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_discretization_scale"><code class="docutils literal notranslate"><span class="pre">merge_discretization_scale</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_min_momentum"><code class="docutils literal notranslate"><span class="pre">merge_min_momentum</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_min_momentum_cell_length"><code class="docutils literal notranslate"><span class="pre">merge_min_momentum_cell_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#merge_accumulation_correction"><code class="docutils literal notranslate"><span class="pre">merge_accumulation_correction</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#lasers">Lasers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id21"><code class="docutils literal notranslate"><span class="pre">box_side</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#space_time_profile"><code class="docutils literal notranslate"><span class="pre">space_time_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#space_time_profile_AM"><code class="docutils literal notranslate"><span class="pre">space_time_profile_AM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#omega"><code class="docutils literal notranslate"><span class="pre">omega</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#chirp_profile"><code class="docutils literal notranslate"><span class="pre">chirp_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id22"><code class="docutils literal notranslate"><span class="pre">time_envelope</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#space_envelope"><code class="docutils literal notranslate"><span class="pre">space_envelope</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#phase"><code class="docutils literal notranslate"><span class="pre">phase</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#delay_phase"><code class="docutils literal notranslate"><span class="pre">delay_phase</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#a0"><code class="docutils literal notranslate"><span class="pre">a0</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#polarization_phi"><code class="docutils literal notranslate"><span class="pre">polarization_phi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#ellipticity"><code class="docutils literal notranslate"><span class="pre">ellipticity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#phase_offset"><code class="docutils literal notranslate"><span class="pre">phase_offset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#focus"><code class="docutils literal notranslate"><span class="pre">focus</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#waist"><code class="docutils literal notranslate"><span class="pre">waist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#incidence_angle"><code class="docutils literal notranslate"><span class="pre">incidence_angle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id23"><code class="docutils literal notranslate"><span class="pre">space_time_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#offset"><code class="docutils literal notranslate"><span class="pre">offset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#extra_envelope"><code class="docutils literal notranslate"><span class="pre">extra_envelope</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#keep_n_strongest_modes"><code class="docutils literal notranslate"><span class="pre">keep_n_strongest_modes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#angle"><code class="docutils literal notranslate"><span class="pre">angle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#fft_time_window"><code class="docutils literal notranslate"><span class="pre">fft_time_window</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#fft_time_step"><code class="docutils literal notranslate"><span class="pre">fft_time_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number_of_processes"><code class="docutils literal notranslate"><span class="pre">number_of_processes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#file"><code class="docutils literal notranslate"><span class="pre">file</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#laser-envelope-model">Laser envelope model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id24"><code class="docutils literal notranslate"><span class="pre">omega</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#envelope_profile"><code class="docutils literal notranslate"><span class="pre">envelope_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#envelope_solver"><code class="docutils literal notranslate"><span class="pre">envelope_solver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#Envelope_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Envelope_boundary_conditions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id25"><code class="docutils literal notranslate"><span class="pre">polarization_phi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id26"><code class="docutils literal notranslate"><span class="pre">ellipticity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id27"><code class="docutils literal notranslate"><span class="pre">time_envelope</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id28"><code class="docutils literal notranslate"><span class="pre">waist</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#external-fields">External fields</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#field"><code class="docutils literal notranslate"><span class="pre">field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#profile"><code class="docutils literal notranslate"><span class="pre">profile</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#prescribed-fields">Prescribed fields</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id29"><code class="docutils literal notranslate"><span class="pre">field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id30"><code class="docutils literal notranslate"><span class="pre">profile</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#antennas">Antennas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id32"><code class="docutils literal notranslate"><span class="pre">field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#space_profile"><code class="docutils literal notranslate"><span class="pre">space_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_profile"><code class="docutils literal notranslate"><span class="pre">time_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id33"><code class="docutils literal notranslate"><span class="pre">space_time_profile</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#walls">Walls</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#kind"><code class="docutils literal notranslate"><span class="pre">kind</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#x"><code class="docutils literal notranslate"><span class="pre">x</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#y"><code class="docutils literal notranslate"><span class="pre">y</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#z"><code class="docutils literal notranslate"><span class="pre">z</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#collisions-reactions">Collisions &amp; reactions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#species1"><code class="docutils literal notranslate"><span class="pre">species1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#species2"><code class="docutils literal notranslate"><span class="pre">species2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id34"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#debug_every"><code class="docutils literal notranslate"><span class="pre">debug_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id35"><code class="docutils literal notranslate"><span class="pre">time_frozen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#coulomb_log"><code class="docutils literal notranslate"><span class="pre">coulomb_log</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#coulomb_log_factor"><code class="docutils literal notranslate"><span class="pre">coulomb_log_factor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#ionizing"><code class="docutils literal notranslate"><span class="pre">ionizing</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#nuclear_reaction"><code class="docutils literal notranslate"><span class="pre">nuclear_reaction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#nuclear_reaction_multiplier"><code class="docutils literal notranslate"><span class="pre">nuclear_reaction_multiplier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#radiation-reaction">Radiation reaction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#minimum_chi_continuous"><code class="docutils literal notranslate"><span class="pre">minimum_chi_continuous</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#minimum_chi_discontinuous"><code class="docutils literal notranslate"><span class="pre">minimum_chi_discontinuous</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#table_path"><code class="docutils literal notranslate"><span class="pre">table_path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#Niel_computation_method"><code class="docutils literal notranslate"><span class="pre">Niel_computation_method</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#multiphoton-breit-wheeler">Multiphoton Breit-Wheeler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id36"><code class="docutils literal notranslate"><span class="pre">table_path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#scalar-diagnostics"><em>Scalar</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id37"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#vars"><code class="docutils literal notranslate"><span class="pre">vars</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#precision"><code class="docutils literal notranslate"><span class="pre">precision</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#fields-diagnostics"><em>Fields</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id38"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id39"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#flush_every"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_average"><code class="docutils literal notranslate"><span class="pre">time_average</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#fields"><code class="docutils literal notranslate"><span class="pre">fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#subgrid"><code class="docutils literal notranslate"><span class="pre">subgrid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#datatype"><code class="docutils literal notranslate"><span class="pre">datatype</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#probe-diagnostics"><em>Probe</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id40"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id41"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id42"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#origin"><code class="docutils literal notranslate"><span class="pre">origin</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#corners"><code class="docutils literal notranslate"><span class="pre">corners</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#vectors"><code class="docutils literal notranslate"><span class="pre">vectors</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#number"><code class="docutils literal notranslate"><span class="pre">number</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id43"><code class="docutils literal notranslate"><span class="pre">fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#time_integral"><code class="docutils literal notranslate"><span class="pre">time_integral</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id44"><code class="docutils literal notranslate"><span class="pre">datatype</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#particlebinning-diagnostics"><em>ParticleBinning</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id45"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#deposited_quantity"><code class="docutils literal notranslate"><span class="pre">deposited_quantity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id46"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id47"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id48"><code class="docutils literal notranslate"><span class="pre">time_average</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id49"><code class="docutils literal notranslate"><span class="pre">species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#axes"><code class="docutils literal notranslate"><span class="pre">axes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#screen-diagnostics"><em>Screen</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id50"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#shape"><code class="docutils literal notranslate"><span class="pre">shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#point"><code class="docutils literal notranslate"><span class="pre">point</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#vector"><code class="docutils literal notranslate"><span class="pre">vector</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#direction"><code class="docutils literal notranslate"><span class="pre">direction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id51"><code class="docutils literal notranslate"><span class="pre">deposited_quantity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id52"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id53"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id54"><code class="docutils literal notranslate"><span class="pre">species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id55"><code class="docutils literal notranslate"><span class="pre">axes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#radiationspectrum-diagnostics"><em>RadiationSpectrum</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id56"><code class="docutils literal notranslate"><span class="pre">name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id57"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id58"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id59"><code class="docutils literal notranslate"><span class="pre">time_average</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id60"><code class="docutils literal notranslate"><span class="pre">species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#photon_energy_axis"><code class="docutils literal notranslate"><span class="pre">photon_energy_axis</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id61"><code class="docutils literal notranslate"><span class="pre">axes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#trackparticles-diagnostics"><em>TrackParticles</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id62"><code class="docutils literal notranslate"><span class="pre">species</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id63"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id64"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#filter"><code class="docutils literal notranslate"><span class="pre">filter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#attributes"><code class="docutils literal notranslate"><span class="pre">attributes</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#newparticles-diagnostics"><em>NewParticles</em> diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#performances-diagnostics"><em>Performances</em> diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id66"><code class="docutils literal notranslate"><span class="pre">every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#id67"><code class="docutils literal notranslate"><span class="pre">flush_every</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#patch_information"><code class="docutils literal notranslate"><span class="pre">patch_information</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#time-selections">Time selections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#checkpoints">Checkpoints</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#dump_step"><code class="docutils literal notranslate"><span class="pre">dump_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#dump_minutes"><code class="docutils literal notranslate"><span class="pre">dump_minutes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#exit_after_dump"><code class="docutils literal notranslate"><span class="pre">exit_after_dump</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#keep_n_dumps"><code class="docutils literal notranslate"><span class="pre">keep_n_dumps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#file_grouping"><code class="docutils literal notranslate"><span class="pre">file_grouping</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#dump_deflate"><code class="docutils literal notranslate"><span class="pre">dump_deflate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#restart_dir"><code class="docutils literal notranslate"><span class="pre">restart_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#restart_number"><code class="docutils literal notranslate"><span class="pre">restart_number</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/namelist.html#variables-defined-by-smilei">Variables defined by Smilei</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#smilei_mpi_rank"><code class="docutils literal notranslate"><span class="pre">smilei_mpi_rank</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#smilei_mpi_size"><code class="docutils literal notranslate"><span class="pre">smilei_mpi_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#smilei_omp_threads"><code class="docutils literal notranslate"><span class="pre">smilei_omp_threads</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/namelist.html#smilei_total_cores"><code class="docutils literal notranslate"><span class="pre">smilei_total_cores</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Use/run.html">Run</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#the-smilei-executable">The <code class="docutils literal notranslate"><span class="pre">smilei</span></code> executable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#running-in-test-mode">Running in <em>test mode</em></a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#directory-management">Directory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#using-the-provided-script">Using the provided script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#running-on-large-clusters">Running on large clusters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#running-on-gpu-equiped-nodes">Running on GPU-equiped nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#debugging">Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/run.html#known-issues">Known issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Use/post-processing.html">Post-process</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-simulation">Open a simulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#happi.Open"><code class="docutils literal notranslate"><span class="pre">happi.Open()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#extract-namelist-information">Extract namelist information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#obtain-diagnostic-information">Obtain diagnostic information</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#getDiags"><code class="docutils literal notranslate"><span class="pre">getDiags()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#getScalars"><code class="docutils literal notranslate"><span class="pre">getScalars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#getTrackSpecies"><code class="docutils literal notranslate"><span class="pre">getTrackSpecies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#fieldInfo"><code class="docutils literal notranslate"><span class="pre">fieldInfo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#probeInfo"><code class="docutils literal notranslate"><span class="pre">probeInfo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#performanceInfo"><code class="docutils literal notranslate"><span class="pre">performanceInfo()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-scalar-diagnostic">Open a Scalar diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar"><code class="docutils literal notranslate"><span class="pre">Scalar()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-field-diagnostic">Open a Field diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field"><code class="docutils literal notranslate"><span class="pre">Field()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-probe-diagnostic">Open a Probe diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe"><code class="docutils literal notranslate"><span class="pre">Probe()</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Use/post-processing.html#Probe.changeField"><code class="docutils literal notranslate"><span class="pre">Probe.changeField()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-particlebinning-diagnostic">Open a ParticleBinning diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning"><code class="docutils literal notranslate"><span class="pre">ParticleBinning()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-screen-diagnostic">Open a Screen diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen"><code class="docutils literal notranslate"><span class="pre">Screen()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-radiationspectrum-diagnostic">Open a RadiationSpectrum diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#id0"><code class="docutils literal notranslate"><span class="pre">ParticleBinning()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-trackparticles-diagnostic">Open a TrackParticles diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles"><code class="docutils literal notranslate"><span class="pre">TrackParticles()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-newparticles-diagnostic">Open a NewParticles diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#NewParticles"><code class="docutils literal notranslate"><span class="pre">NewParticles()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#open-a-performances-diagnostic">Open a Performances diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Performances"><code class="docutils literal notranslate"><span class="pre">Performances()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#specifying-units">Specifying units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#other-arguments-for-diagnostics">Other arguments for diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#obtain-the-data">Obtain the data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.getData"><code class="docutils literal notranslate"><span class="pre">Scalar.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.getData"><code class="docutils literal notranslate"><span class="pre">Field.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.getData"><code class="docutils literal notranslate"><span class="pre">Probe.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.getData"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.getData"><code class="docutils literal notranslate"><span class="pre">Screen.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.getData"><code class="docutils literal notranslate"><span class="pre">TrackParticles.getData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.getTimesteps"><code class="docutils literal notranslate"><span class="pre">Scalar.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.getTimesteps"><code class="docutils literal notranslate"><span class="pre">Field.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.getTimesteps"><code class="docutils literal notranslate"><span class="pre">Probe.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.getTimesteps"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.getTimesteps"><code class="docutils literal notranslate"><span class="pre">Screen.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.getTimesteps"><code class="docutils literal notranslate"><span class="pre">TrackParticles.getTimesteps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.getTimes"><code class="docutils literal notranslate"><span class="pre">Scalar.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.getTimes"><code class="docutils literal notranslate"><span class="pre">Field.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.getTimes"><code class="docutils literal notranslate"><span class="pre">Probe.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.getTimes"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.getTimes"><code class="docutils literal notranslate"><span class="pre">Screen.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.getTimes"><code class="docutils literal notranslate"><span class="pre">TrackParticles.getTimes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.getAxis"><code class="docutils literal notranslate"><span class="pre">Scalar.getAxis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.getAxis"><code class="docutils literal notranslate"><span class="pre">Field.getAxis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.getAxis"><code class="docutils literal notranslate"><span class="pre">Probe.getAxis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.getAxis"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.getAxis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.getAxis"><code class="docutils literal notranslate"><span class="pre">Screen.getAxis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.iterParticles"><code class="docutils literal notranslate"><span class="pre">TrackParticles.iterParticles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.getXmoved"><code class="docutils literal notranslate"><span class="pre">Field.getXmoved()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.getXmoved"><code class="docutils literal notranslate"><span class="pre">Probe.getXmoved()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.getXmoved"><code class="docutils literal notranslate"><span class="pre">TrackParticles.getXmoved()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#export-2d-or-3d-data-to-vtk">Export 2D or 3D data to VTK</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.toVTK"><code class="docutils literal notranslate"><span class="pre">Field.toVTK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.toVTK"><code class="docutils literal notranslate"><span class="pre">Probe.toVTK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.toVTK"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.toVTK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Performances.toVTK"><code class="docutils literal notranslate"><span class="pre">Performances.toVTK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.toVTK"><code class="docutils literal notranslate"><span class="pre">Screen.toVTK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.toVTK"><code class="docutils literal notranslate"><span class="pre">TrackParticles.toVTK()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#plot-the-data-at-one-timestep">Plot the data at one timestep</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.plot"><code class="docutils literal notranslate"><span class="pre">Scalar.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.plot"><code class="docutils literal notranslate"><span class="pre">Field.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.plot"><code class="docutils literal notranslate"><span class="pre">Probe.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.plot"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.plot"><code class="docutils literal notranslate"><span class="pre">TrackParticles.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.plot"><code class="docutils literal notranslate"><span class="pre">Screen.plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#plot"><code class="docutils literal notranslate"><span class="pre">plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#plot-the-data-streaked-over-time">Plot the data streaked over time</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.streak"><code class="docutils literal notranslate"><span class="pre">Scalar.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.streak"><code class="docutils literal notranslate"><span class="pre">Field.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.streak"><code class="docutils literal notranslate"><span class="pre">Probe.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.streak"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.streak"><code class="docutils literal notranslate"><span class="pre">TrackParticles.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.streak"><code class="docutils literal notranslate"><span class="pre">Screen.streak()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#streak"><code class="docutils literal notranslate"><span class="pre">streak()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#animated-plot">Animated plot</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.animate"><code class="docutils literal notranslate"><span class="pre">Scalar.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.animate"><code class="docutils literal notranslate"><span class="pre">Field.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.animate"><code class="docutils literal notranslate"><span class="pre">Probe.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.animate"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.animate"><code class="docutils literal notranslate"><span class="pre">TrackParticles.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.animate"><code class="docutils literal notranslate"><span class="pre">Screen.animate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#animate"><code class="docutils literal notranslate"><span class="pre">animate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#plot-with-a-slider">Plot with a slider</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.slide"><code class="docutils literal notranslate"><span class="pre">Scalar.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.slide"><code class="docutils literal notranslate"><span class="pre">Field.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.slide"><code class="docutils literal notranslate"><span class="pre">Probe.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.slide"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#TrackParticles.slide"><code class="docutils literal notranslate"><span class="pre">TrackParticles.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.slide"><code class="docutils literal notranslate"><span class="pre">Screen.slide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#slide"><code class="docutils literal notranslate"><span class="pre">slide()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#simultaneous-plotting-of-multiple-diagnostics">Simultaneous plotting of multiple diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#happi.multiPlot"><code class="docutils literal notranslate"><span class="pre">happi.multiPlot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#happi.multiSlide"><code class="docutils literal notranslate"><span class="pre">happi.multiSlide()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#advanced-plotting-options">Advanced plotting options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#update-the-plotting-options">Update the plotting options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Scalar.set"><code class="docutils literal notranslate"><span class="pre">Scalar.set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Field.set"><code class="docutils literal notranslate"><span class="pre">Field.set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Probe.set"><code class="docutils literal notranslate"><span class="pre">Probe.set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#ParticleBinning.set"><code class="docutils literal notranslate"><span class="pre">ParticleBinning.set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#Screen.set"><code class="docutils literal notranslate"><span class="pre">Screen.set()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Use/post-processing.html#other-tools-in-happi">Other tools in <code class="docutils literal notranslate"><span class="pre">happi</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/post-processing.html#happi.openNamelist"><code class="docutils literal notranslate"><span class="pre">happi.openNamelist()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Use/contribute.html">Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/contribute.html#add-my-publication-to-the-list-on-smilei-s-website">Add my publication to the list on Smilei’s website</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/contribute.html#write-documentation">Write documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/contribute.html#validate-your-changes">Validate your changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Use/contribute.html#Validate"><code class="docutils literal notranslate"><span class="pre">Validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Use/troubleshoot.html">Troubleshoot</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Use/troubleshoot.html#simulation-not-starting-error-running-a-simulation">Simulation not starting / Error running a simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/troubleshoot.html#new-simulation-does-not-run">New simulation does not run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/troubleshoot.html#postprocessing-error">Postprocessing error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/troubleshoot.html#physical-error-in-the-results">Physical error in the results.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Use/troubleshoot.html#performances-issues">Performances issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Use/GPU_version.html">GPU version</a></li>
+</ul>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

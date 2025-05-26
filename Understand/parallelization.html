@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Parallelization basics &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Single-domain multiple decompositions" href="SDMD.html" />
+    <link rel="prev" title="Parallelization &amp; optimization" href="performances.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Parallelization basics</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Parallelization basics</a><ul>
+<li><a class="reference internal" href="#nodes-cores-processes-and-threads">Nodes, cores, processes and threads</a></li>
+<li><a class="reference internal" href="#managing-processes-and-threads">Managing processes and threads</a></li>
+<li><a class="reference internal" href="#decomposition-of-the-whole-domain">Decomposition of the whole domain</a></li>
+<li><a class="reference internal" href="#load-balancing-between-mpi-patch-collections">Load balancing between MPI patch collections</a></li>
+<li><a class="reference internal" href="#practical-setup">Practical setup</a></li>
+<li><a class="reference internal" href="#mpi-patch-collections-forming-rectangular-areas">MPI patch collections forming rectangular areas</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="parallelization-basics">
+<h1>Parallelization basics<a class="headerlink" href="#parallelization-basics" title="Link to this heading">¶</a></h1>
+<p>For high performances, <strong class="program">Smilei</strong> uses parallel computing,
+and it is important to understand the basics of this technology. Parallel simply
+means that many processors can run the simulation at the same time, but there is
+much more than that.</p>
+<hr class="docutils" />
+<section id="nodes-cores-processes-and-threads">
+<h2>Nodes, cores, processes and threads<a class="headerlink" href="#nodes-cores-processes-and-threads" title="Link to this heading">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The terminology of <em>nodes, cores, processes and threads</em> is not universal.
+Depending on the computer, software (etc.), they can have various meanings.
+Typical examples: <em>socket</em> instead of <em>node</em>; <em>cpu</em> instead of <em>core</em>;
+<em>task</em> instead of <em>process</em>.</p>
+</div>
+<p>Supercomputers have complex architectures, mainly due to their processors
+capability to <strong>work together on the same memory space</strong>. More precisely,
+the smallest computing units, called <em>cores</em>,
+are grouped in <em>nodes</em>. All the cores in one node share the same memory space.
+In other terms, the cores of the same node can operate on the same data, at the
+same time; no need for sending the data back and forth.
+This hardware architecture is summarized in <a class="reference internal" href="#nodescoresthreads"><span class="std std-numref">Fig. 2</span></a>.</p>
+<figure class="align-default" id="id1">
+<span id="nodescoresthreads"></span><a class="reference internal image-reference" href="../_images/NodesCoresThreads.png"><img alt="../_images/NodesCoresThreads.png" src="../_images/NodesCoresThreads.png" style="width: 11cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Simplified super-computer architecture.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>This same figure shows how the software is structured.
+A <em>thread</em> is essentially the sequence of instructions from the program.
+It is executed by one core, and a given core can operate only one thread at a time
+(if two threads are associated with one core, they are handled one after the other).
+A <em>process</em> refers to a group of threads which are assigned to a single (shared)
+memory space: one process will not handle the memory of another process. The
+<em>process</em> provides the communication between its threads so that they can work
+on their memory space without conflicts.</p>
+<p>The association between the software <em>threads</em> and the hardware <em>cores</em> can be more
+complicated. <a class="reference internal" href="#nodewith2processes"><span class="std std-numref">Fig. 3</span></a> shows an example where two processes share the
+same node. In this case, we illustrate the memory of this node as split in two parts because
+the two processes cannot access to the same memory.</p>
+<figure class="align-default" id="id2">
+<span id="nodewith2processes"></span><a class="reference internal image-reference" href="../_images/NodeWith2Processes.png"><img alt="../_images/NodeWith2Processes.png" src="../_images/NodeWith2Processes.png" style="width: 6cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">An example where two processes share the same node.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Note that many computer architectures have a different meaning for <em>nodes</em>.
+Indeed, their <em>nodes</em> have a memory space that is already split into several
+<em>sockets</em>. In this situation, one process is associated with one socket.</p>
+</section>
+<hr class="docutils" />
+<section id="managing-processes-and-threads">
+<h2>Managing processes and threads<a class="headerlink" href="#managing-processes-and-threads" title="Link to this heading">¶</a></h2>
+<p>Although two processes do not share their memory, they must sometimes synchronize their
+advance in the execution of the program, or communicate data between each other.
+For instance, to calculate the total energy in the simulation, they must communicate
+their contribution to the others and compute the sum.
+In <strong class="program">Smilei</strong>, these tasks are accomplished by the Message Passing Interface (MPI) protocol.</p>
+<p>At the thread level, the communications do not work in the same manner because threads
+already share their data. However, they need synchronization and management to decide
+which core handles which thread. In <strong class="program">Smilei</strong>, this is accomplished by the <em>OpenMP</em> protocol.</p>
+<p>An illustration of the roles of MPI and OpenMP is provided in <a class="reference internal" href="#mpiandopenmp"><span class="std std-numref">Fig. 4</span></a></p>
+<figure class="align-default" id="id3">
+<span id="mpiandopenmp"></span><a class="reference internal image-reference" href="../_images/MPIandOpenMP.png"><img alt="../_images/MPIandOpenMP.png" src="../_images/MPIandOpenMP.png" style="width: 9cm;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">MPI handles process-to-process communications, while OpenMP manages threads in a given process.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<hr class="docutils" />
+<section id="decomposition-of-the-whole-domain">
+<h2>Decomposition of the whole domain<a class="headerlink" href="#decomposition-of-the-whole-domain" title="Link to this heading">¶</a></h2>
+<p>Traditionally, PIC codes would
+split the spatial grid into <span class="math notranslate nohighlight">\(N\)</span> portions, where <span class="math notranslate nohighlight">\(N\)</span> is the number
+of cores. Each core would manage its own portion on a separate memory space,
+and information is communicated between cores using the MPI protocol.
+<strong class="program">Smilei</strong> proposes a different approach:
+portions are much smaller so that each core handle many portions.</p>
+<p>Let us explain this difference in details.
+<a class="reference internal" href="#patchdecomposition"><span class="std std-numref">Fig. 5</span></a> gives an example of a grid containing 960 cells.
+It is decomposed in <span class="math notranslate nohighlight">\(4\times8 = 32\)</span> portions, called <strong>patches</strong>.
+Each patch has <span class="math notranslate nohighlight">\(5\times6\)</span> cells.
+This patch size is actually reasonable for <strong class="program">Smilei</strong>, whereas
+traditional PIC codes would have much larger portions.</p>
+<p>The issue is now to decide where these patches will be stored in the memory,
+and to choose which cores should handle which patches.
+Recall that all the cores handled by one process share the same memory:
+we will refer to this memory as an <em>MPI patch collection</em>.
+This means that one process manages one exclusive MPI patch collection.
+<a class="reference internal" href="#patchdecomposition"><span class="std std-numref">Fig. 5</span></a> shows an example with the 32 patches split
+in 5 collections recognized by their different colors.
+Note that these collections are connex, but not necessarily rectangular.</p>
+<figure class="align-default" id="id4">
+<span id="patchdecomposition"></span><a class="reference internal image-reference" href="../_images/PatchDecomposition.svg"><img alt="../_images/PatchDecomposition.svg" src="../_images/PatchDecomposition.svg" width="600" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Decomposition of a grid in <em>patches</em> and <em>MPI patch collections</em>.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Each MPI patch collection is handled by all the threads of the process. For example, if there are
+4 threads in the process that handles the patch collection colored in green, this means the
+4 threads will handle 10 patches. The 4 threads will work in parallel, patch by patch,
+until all patches are done.</p>
+<figure class="align-default" id="id5">
+<a class="reference internal image-reference" href="../_images/PatchDecompositionNodes.svg"><img alt="../_images/PatchDecompositionNodes.svg" src="../_images/PatchDecompositionNodes.svg" width="700" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Each process handles one collection of patches. Patches are treated one by one by
+the available threads.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The great advantage of this scheme is that, inside one MPI patch collection, the threads do not
+need to wait for their colleagues to go to the next patch; they can continue working on
+the available patches, thus avoiding long waiting times.
+This is a form of <strong>local dynamic load balancing</strong>.</p>
+<hr class="docutils" />
+</section>
+<section id="load-balancing-between-mpi-patch-collections">
+<span id="loadbalancingexplanation"></span><h2>Load balancing between MPI patch collections<a class="headerlink" href="#load-balancing-between-mpi-patch-collections" title="Link to this heading">¶</a></h2>
+<p>As we just explained, threads treat patches asynchronously, thus balancing their computational loads.
+Indeed, some patches may have more particles than others and therefore represent a heavier load.
+In the meantime, other threads can take care of several lighter patches.
+Unfortunately, it may not be sufficient.
+When one MPI patch collection holds more total load than the others, it will take a long
+time to compute, while the other processes have already finished and wait for this one.
+This can cause large delays.</p>
+<p><strong class="program">Smilei</strong> has an algorithm able to reduce this imbalance by exchanging patches
+from one MPI patch collection to another. A process that has too much load will give patches to
+other processes in order to reduce the size of its MPI patch collection. This algorithm is based
+on an ordering of the patches by a <em>Hilbert curve</em>, as drawn in
+<a class="reference internal" href="#patchdecompositionhilbert"><span class="std std-numref">Fig. 7</span></a>. One MPI patch collection contains only patches that contiguously
+follow this curve. If this “portion” of the curve has too much load, it will send
+some patches to the portions ahead or after, along the same curve. By repeating this
+operation every now and then, we ensure that all regions manage an equitable computational load.</p>
+<figure class="align-default" id="id6">
+<span id="patchdecompositionhilbert"></span><a class="reference internal image-reference" href="../_images/PatchDecompositionHilbert.svg"><img alt="../_images/PatchDecompositionHilbert.svg" src="../_images/PatchDecompositionHilbert.svg" width="400" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">The shape of the Hilbert curve which determines the patch order.</span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<hr class="docutils" />
+<section id="practical-setup">
+<h2>Practical setup<a class="headerlink" href="#practical-setup" title="Link to this heading">¶</a></h2>
+<p>The user must choose the number of processes and threads (see <a class="reference internal" href="../Use/run.html"><span class="doc">Run</span></a>).
+Furthermore, they must define how the whole domain is split into patches
+(see <a class="reference internal" href="../Use/namelist.html#number_of_patches" title="number_of_patches"><code class="xref py py-data docutils literal notranslate"><span class="pre">number_of_patches</span></code></a>). Here are a few rules and recommendations
+to help deciding this splitting.</p>
+<ul>
+<li><p>In each direction <span class="math notranslate nohighlight">\(x\)</span>, <span class="math notranslate nohighlight">\(y\)</span>, <span class="math notranslate nohighlight">\(z\)</span>,
+the <strong>number of patches must be a power of 2</strong>.</p></li>
+<li><p>The minimum patch size depends on the order of the <a class="reference internal" href="../Use/namelist.html#interpolation_order" title="interpolation_order"><code class="xref py py-data docutils literal notranslate"><span class="pre">interpolation_order</span></code></a>.
+For the default order 2, the minimum size is 6 cells in each direction.</p></li>
+<li><p><strong>Have reasonably small patches</strong>.
+Small patches are beneficial to efficient load balancing and cache use,
+but they increase the synchronization costs.
+The optimal patch size depends strongly on the type of simulation.
+Use small patches (down to 6x6x6 cells) if your simulation has small regions with many particles.
+Use larger patches (typically 100x100 or 25x25x25 cells) otherwise.</p></li>
+<li><p>For high performances, each process should own more patches than threads.
+And even many more if possible. This means that <strong>the total number of patches
+should be larger than the total number of threads</strong>, at the very least.</p></li>
+<li><p><strong>Have only as many MPI processes as sockets</strong> in order to optimize the memory distribution.
+Less MPI processes is not possible because they cannot be split among separate memory spaces.
+More MPI processes is not recommended because they are not as efficient as OpenMP threads.</p></li>
+<li><p><strong>Have as many threads per process as cores per socket</strong>.
+If you have less threads than cores, you will not be using all your cores.
+Use more threads than cores only if your architecture supports it well.</p></li>
+<li><p>Use dynamic scheduling for the OpenMP protocol, by setting the environment variable:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">OMP_SCHEDULE</span><span class="o">=</span><span class="n">dynamic</span>
+</pre></div>
+</div>
+<p>This affects only the particles treatment, which will be assigned to threads dynamically
+(fields are always assigned statically).</p>
+</li>
+<li><p><strong>Take these recommendations with a pinch of salt</strong>. Do your own tests and send us feedback!</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="mpi-patch-collections-forming-rectangular-areas">
+<h2>MPI patch collections forming rectangular areas<a class="headerlink" href="#mpi-patch-collections-forming-rectangular-areas" title="Link to this heading">¶</a></h2>
+<p>For some plasma shapes, following the hilbert
+curve (as described above) may not be efficient.
+In Smilei, it is possible to use a classical grouping of patches in rectangles
+or cubes.</p>
+<p>In the namelist:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Main</span><span class="p">(</span>
+    <span class="o">...</span>
+    <span class="n">patch_arrangement</span> <span class="o">=</span> <span class="s2">&quot;linearized_XY&quot;</span><span class="p">,</span>  <span class="c1"># 2D</span>
+    <span class="n">patch_arrangement</span> <span class="o">=</span> <span class="s2">&quot;linearized_XYZ&quot;</span><span class="p">,</span> <span class="c1"># 3D</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Those linearized decompositions are oriented to contiguously store patches
+along the innermost direction (<strong>Z</strong>, then <strong>Y</strong>, then <strong>X</strong>).
+The storage order can be modified through following options</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Main</span><span class="p">(</span>
+    <span class="o">...</span>
+    <span class="n">patch_arrangement</span> <span class="o">=</span> <span class="s2">&quot;linearized_YX&quot;</span><span class="p">,</span>  <span class="c1"># 2D</span>
+    <span class="n">patch_arrangement</span> <span class="o">=</span> <span class="s2">&quot;linearized_ZYX&quot;</span><span class="p">,</span> <span class="c1"># 3D</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>These options has several consequences:</p>
+<ul class="simple">
+<li><p>No more restrictions on the number of patches per direction.</p></li>
+<li><p>Load balancing is not available.</p></li>
+<li><p>To use the <a class="reference internal" href="../Use/namelist.html#diagfields"><span class="std std-ref">Fields diagnostics</span></a>, the number of patches per process must allow
+a rectangular tessellation of the simulation box. For instance:</p>
+<ul>
+<li><p>8 x 8 patches on 4 MPI process : <strong>ok</strong>, each process own 2 x 8 patches slice.</p></li>
+<li><p>6 x 8 patches on 4 MPI process : <strong>not ok</strong>, each process owns 12 patches which overlap 2 tiles.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

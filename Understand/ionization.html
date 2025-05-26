@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Ionization &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="High-energy photon emission &amp; radiation reaction" href="radiation_loss.html" />
+    <link rel="prev" title="Binary collisions &amp; reactions" href="collisions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Ionization</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Ionization</a><ul>
+<li><a class="reference internal" href="#collisional-ionization">Collisional ionization</a></li>
+<li><a class="reference internal" href="#field-ionization">Field ionization</a><ul>
+<li><a class="reference internal" href="#physical-model-for-field-ionization">Physical model for field ionization</a></li>
+<li><a class="reference internal" href="#barrier-suppression-ionization">Barrier Suppression Ionization</a></li>
+<li><a class="reference internal" href="#monte-carlo-scheme">Monte-Carlo scheme</a></li>
+<li><a class="reference internal" href="#benchmarks">Benchmarks</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#field-ionization-with-a-laser-envelope">Field ionization with a laser envelope</a></li>
+<li><a class="reference internal" href="#user-defined-ionization-rate">User-defined ionization rate</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="ionization">
+<h1>Ionization<a class="headerlink" href="#ionization" title="Link to this heading">¶</a></h1>
+<p>Four types of ionization have been introduced in Smilei: collisional ionization, field ionization, envelope ionization (time average field) or custom ionization using user defined rates.</p>
+<hr class="docutils" />
+<section id="collisional-ionization">
+<h2>Collisional ionization<a class="headerlink" href="#collisional-ionization" title="Link to this heading">¶</a></h2>
+<p>Ionization may occur during collisions.
+A detailed description is given on the <a class="reference internal" href="collisions.html#collionization"><span class="std std-ref">corresponding page</span></a>.</p>
+<hr class="docutils" />
+</section>
+<section id="field-ionization">
+<span id="id1"></span><h2>Field ionization<a class="headerlink" href="#field-ionization" title="Link to this heading">¶</a></h2>
+<p>Field ionization is a process of particular importance for laser-plasma interaction
+in the ultra-high intensity regime.
+It can affect ion acceleration driven by irradiating a solid target with
+an ultra-intense laser, or can be used to inject electrons through
+the accelerating field in laser wakefield acceleration.
+This process is not described in the standard PIC (Vlasov-Maxwell) formulation,
+and an <em>ad hoc</em> description needs to be implemented.
+A Monte-Carlo module for field ionization has thus been developed in <strong class="program">Smilei</strong>,
+closely following the method proposed in <a class="reference internal" href="#nuter2011" id="id2"><span>[Nuter2011]</span></a>.</p>
+<section id="physical-model-for-field-ionization">
+<h3>Physical model for field ionization<a class="headerlink" href="#physical-model-for-field-ionization" title="Link to this heading">¶</a></h3>
+<p>This scheme relies on the quasi-static rate for tunnel ionization derived in
+<a class="reference internal" href="#perelomov1966" id="id3"><span>[Perelomov1966]</span></a>, <a class="reference internal" href="#perelomov1967" id="id4"><span>[Perelomov1967]</span></a> and <a class="reference internal" href="#ammosov1986" id="id5"><span>[Ammosov1986]</span></a>.
+Considering an ion with atomic number <span class="math notranslate nohighlight">\(Z\)</span> being ionized from charge state
+<span class="math notranslate nohighlight">\(Z^\star-1\)</span> to <span class="math notranslate nohighlight">\(Z^\star \le Z\)</span> in a constant electric field <span class="math notranslate nohighlight">\(\mathbf{E}\)</span>
+of magnitude <span class="math notranslate nohighlight">\(\vert E\vert\)</span>, the ionization rate reads:</p>
+<div class="math notranslate nohighlight" id="equation-ionizationrate1">
+<span class="eqno">(9)<a class="headerlink" href="#equation-ionizationrate1" title="Link to this equation">¶</a></span>\[\Gamma_{\rm ADK, DC} = A_{n^\star,l^\star}\,B_{l,\vert m\vert}\,
+I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -1}\,
+\exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,,\]</div>
+<p>where <span class="math notranslate nohighlight">\(I_p\)</span> is the <span class="math notranslate nohighlight">\(Z^{\star}-1\)</span> ionization potential of the ion,
+<span class="math notranslate nohighlight">\(n^\star=Z^\star/\sqrt{2 I_p}\)</span> and <span class="math notranslate nohighlight">\(l^\star=n^\star-1\)</span> denote
+the effective principal quantum number and angular momentum,
+and <span class="math notranslate nohighlight">\(l\)</span> and <span class="math notranslate nohighlight">\(m\)</span> denote the angular momentum and its projection on
+the laser polarization direction, respectively.
+<span class="math notranslate nohighlight">\(\Gamma_{\rm ADK, DC}\)</span>, <span class="math notranslate nohighlight">\(I_p\)</span> and <span class="math notranslate nohighlight">\(E\)</span> are here expressed in atomic units
+The coefficients <span class="math notranslate nohighlight">\(A_{n^\star,l^\star}\)</span> and <span class="math notranslate nohighlight">\(B_{l,\vert m\vert}\)</span> are given by:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{lll}
+A_{n^\star,l^\star}&amp;=&amp; \frac{2^{2n^\star}}{n^\star\,\Gamma(n^\star+l^\star+1)\,\Gamma(n^\star-l^\star)},\\
+B_{l,\vert m\vert} &amp;=&amp; \frac{(2l+1)(l+\vert m\vert)!}{2^{\vert m\vert} \vert m\vert! (l-\vert m\vert)!}\,,
+\end{array}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Gamma(x)\)</span> is the gamma function.
+Note that considering an electric field <span class="math notranslate nohighlight">\(E=\vert E\vert\,\cos(\omega t)\)</span>
+oscillating in time at the frequency <span class="math notranslate nohighlight">\(\omega\)</span>, averaging Eq. <a class="reference internal" href="#equation-ionizationrate1">(9)</a>
+over a period <span class="math notranslate nohighlight">\(2\pi/\omega\)</span> leads to the well-known cycle-averaged ionization rate:</p>
+<div class="math notranslate nohighlight" id="equation-adkrate">
+<span class="eqno">(10)<a class="headerlink" href="#equation-adkrate" title="Link to this equation">¶</a></span>\[\Gamma_{\rm ADK, AC} = \sqrt{\frac{6}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
+\,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
+\exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.\]</div>
+<p>We note that the initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
+This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.</p>
+<p>In <strong class="program">Smilei</strong>, two models are available to compute the ionization rate of <a class="reference internal" href="#equation-ionizationrate1">(9)</a>.</p>
+<dl id="ppt-adk">
+<dt><code class="docutils literal notranslate"><span class="pre">PPT-ADK</span> <span class="pre">model</span></code></dt><dd><p>In the classical model, the ionization rate of <a class="reference internal" href="#equation-ionizationrate1">(9)</a>
+is computed for <span class="math notranslate nohighlight">\(\vert m \vert=0\)</span> only.
+Indeed, as shown in <a class="reference internal" href="#ammosov1986" id="id6"><span>[Ammosov1986]</span></a>, the ratio <span class="math notranslate nohighlight">\(R\)</span> of the ionization rate
+computed for <span class="math notranslate nohighlight">\(\vert m\vert=0\)</span> by the rate computed for <span class="math notranslate nohighlight">\(\vert m\vert=1\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[R = \frac{\Gamma_{{\rm qs},\vert m \vert = 0}}{\Gamma_{{\rm qs},\vert m \vert = 1}}
+=  2\frac{(2\,I_p)^{3/2}}{\vert E\vert}
+\simeq 7.91\,10^{-3} \,\,\frac{(I_p[\rm eV])^{3/2}}{a_0\,\hbar\omega_0[\rm eV]}\,,\]</div>
+<p>where, in the practical units formulation, we have considered ionization
+by a laser with normalized vector potential <span class="math notranslate nohighlight">\(a_0=e\vert E\vert /(m_e c \omega_0)\)</span>,
+and photon energy <span class="math notranslate nohighlight">\(\hbar\omega_0\)</span> in eV.
+Typically, ionization by a laser with wavelength <span class="math notranslate nohighlight">\(1~{\rm \mu m}\)</span>
+(correspondingly <span class="math notranslate nohighlight">\(\hbar \omega_0 \sim 1~{\rm eV}\)</span>) occurs for values
+of <span class="math notranslate nohighlight">\(a_0\ll 1\)</span> (even for large laser intensities for which ionization
+would occur during the rising time of the pulse) while the ionization potential
+ranges from a couple of eV (for electrons on the most external shells)
+up to a few tens of thousands of eV (for electrons on the internal shell
+of high-Z atoms). As a consequence, <span class="math notranslate nohighlight">\(R\gg1\)</span>, and the probability
+of ionization of an electron with magnetic quantum number <span class="math notranslate nohighlight">\(\vert m \vert=0\)</span>
+greatly exceeds that of an electron with <span class="math notranslate nohighlight">\(\vert m \vert = 1\)</span>.</p>
+</dd>
+</dl>
+<dl id="full-ppt-adk">
+<dt><code class="docutils literal notranslate"><span class="pre">PPT-ADK</span> <span class="pre">model</span> <span class="pre">with</span> <span class="pre">account</span> <span class="pre">for</span></code> <span class="math notranslate nohighlight">\(m\neq 0\)</span> <span class="exp-label">experimental</span></dt><dd><p>In this model, first implemented in <a class="reference internal" href="#mironov2025" id="id7"><span>[Mironov2025]</span></a>, dependence on the magnetic quantum number <span class="math notranslate nohighlight">\(m\)</span> is added.</p>
+<p><span class="math notranslate nohighlight">\(m\)</span> is attributed to each electron in accordance with the following rules:</p>
+<blockquote>
+<div><p>1. Since <span class="math notranslate nohighlight">\(\Gamma_z(m=0)&gt;\Gamma_z(m=1)&gt;\Gamma_z(m=2)&gt;...\)</span> we assume that for electrons
+with the same azimuthal quantum number <span class="math notranslate nohighlight">\(l\)</span>, the states with the lowest value of
+<span class="math notranslate nohighlight">\(|m|\)</span> are ionized first.</p>
+<p>2. Electrons with the same azimuthal quantum number <span class="math notranslate nohighlight">\(l\)</span> occupy the sub-shells in the
+order of increasing <span class="math notranslate nohighlight">\(|m|\)</span> and for the same <span class="math notranslate nohighlight">\(|m|\)</span> in the order of increasing <span class="math notranslate nohighlight">\(m\)</span>.</p>
+</div></blockquote>
+<p>With this algorithm, by knowing the atomic number A, we can assign a unique set of
+quantum numbers <span class="math notranslate nohighlight">\(nlm\)</span> to each electron on the atomic sub-shells and identify their extraction
+order during successive ionization. The ionization rate also accounts for multiple electrons having the same energy levels via the degeneracy factor.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Although this model uses less assumptions than the <a class="reference internal" href="#ppt-adk"><span class="std std-ref">PPT-ADK</span></a> model, <a class="reference internal" href="#mironov2025" id="id8"><span>[Mironov2025]</span></a>
+shows that these corrections introduce a dependency on the
+ionization path chosen for the atom and may actually lead to less accurate results than the default ADK model.
+A non-sequential ionization path is necessary for this model to be accurate and will be proposed in a later version of the code hence the experimental tag.
+A reference implementation of non-sequential ionization is provided in <a class="reference internal" href="#mironov2025" id="id9"><span>[Mironov2025]</span></a>.</p>
+</div>
+</dd>
+</dl>
+</section>
+<section id="barrier-suppression-ionization">
+<span id="barrier-suppression"></span><h3>Barrier Suppression Ionization<a class="headerlink" href="#barrier-suppression-ionization" title="Link to this heading">¶</a></h3>
+<p>When the electric field applied on a bound electron is greater than a certain threshold, that electron is able to classically escape from the atom, without tunneling through the potential barrier. To properly describe the ionisation rates in these regimes, and the transition regime from tunneling to barrier suppression, Smilei implements two ways to extend the tunneling ionization rate to the barrier-suppression regime.</p>
+<p id="tong-lin"><code class="docutils literal notranslate"><span class="pre">Tong</span> <span class="pre">&amp;</span> <span class="pre">Lin</span></code></p>
+<blockquote>
+<div><p>The formula proposed by Tong and Lin <a class="reference internal" href="#tong2005" id="id10"><span>[Tong2005]</span></a> extends the tunneling ionization rate to the barrier-suppression
+regime. This is achieved by introducing an empirical factor in <a class="reference internal" href="#equation-ionizationrate1">(9)</a>:</p>
+<div class="math notranslate nohighlight">
+\[\Gamma_{Z^\star}^{TL} = \Gamma_{Z^\star} \times \exp \left(-\alpha_{TL}n^{\star2}\frac{E}{(2I_p)^{3/2}}\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha_{TL}\)</span> is an emprirical constant with value typically from 6 to 9. The actual value
+should be guessed from empirical data. When such data is
+not available, the formula can be used for qualitative analysis of the barrier-suppression
+ionization (BSI), e.g. see <a class="reference internal" href="#ciappina2020" id="id11"><span>[Ciappina2020]</span></a>. The module was tested to reproduce the results from this paper.</p>
+</div></blockquote>
+<p id="kag"><code class="docutils literal notranslate"><span class="pre">Kostyukov</span> <span class="pre">Artemenko</span> <span class="pre">Golovanov</span></code></p>
+<blockquote>
+<div><p>This is a piecewise function, first proposed by Kostyukov, Artemenko and Golovanov (KAG) in <a class="reference internal" href="#artemenko2017" id="id12"><span>[Artemenko2017]</span></a> and <a class="reference internal" href="#kostyukov2018" id="id13"><span>[Kostyukov2018]</span></a>,  and published in <a class="reference internal" href="#ouatu2022" id="id14"><span>[Ouatu2022]</span></a> as follows:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\Gamma_{KAG} =
+\begin{cases}
+    \Gamma_{qs,|m|=0}, &amp; E &lt; E_1 \\
+    \Gamma_{BM}, &amp; E_1 &lt; E &lt; E_2 \\
+    \Gamma_{BSI}, &amp; E &gt; E_2
+\end{cases}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Gamma_{BM} = 2.4 E^2 (I_H/I_p)^2\)</span> is the rate in the transition regime between the tunnel and barrier suppression ionisation regimes <a class="reference internal" href="#bauer1999" id="id15"><span>[Bauer1999]</span></a> and <span class="math notranslate nohighlight">\(\Gamma_{BSI} = 0.8 E \sqrt{I_H/I_p}\)</span> is the barrier suppression ionisation rate <a class="reference internal" href="#artemenko2017" id="id16"><span>[Artemenko2017]</span></a>, <span class="math notranslate nohighlight">\(E_1\)</span> and <span class="math notranslate nohighlight">\(E_2\)</span> are the intersection points of <span class="math notranslate nohighlight">\(\Gamma_{ADK}\)</span> with <span class="math notranslate nohighlight">\(\Gamma_{BM}\)</span> and <span class="math notranslate nohighlight">\(\Gamma_{BM}\)</span> with <span class="math notranslate nohighlight">\(\Gamma_{BSI}\)</span> respectively, such that the function is continuous, and <span class="math notranslate nohighlight">\(I_H\)</span> is the ionisation potential of hydrogen.</p>
+</div></blockquote>
+</section>
+<section id="monte-carlo-scheme">
+<h3>Monte-Carlo scheme<a class="headerlink" href="#monte-carlo-scheme" title="Link to this heading">¶</a></h3>
+<p>In <strong class="program">Smilei</strong>, tunnel ionization is treated for each species
+(defined by the user as subject to field ionization) right after field interpolation
+and before applying the pusher.
+For all quasi-particles (henceforth referred to as quasi-ion) of the considered species,
+a Monte-Carlo procedure has been implemented that allows to treat multiple ionization
+events in a single timestep. It relies on the cumulative probability derived
+in Ref. <a class="reference internal" href="#nuter2011" id="id17"><span>[Nuter2011]</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[F_k^{Z^{\star}-1} = \sum_{j=0}^k p_j^{Z^{\star}-1}\,,\]</div>
+<p>to ionize from 0 to <span class="math notranslate nohighlight">\(k\)</span> times a quasi-ion with initial charge state
+<span class="math notranslate nohighlight">\(Z^{\star}-1\)</span> during a simulation timestep <span class="math notranslate nohighlight">\(\Delta t\)</span>,
+<span class="math notranslate nohighlight">\(p_j^{Z^{\star}-1}\)</span> being the probability to ionize exactly <span class="math notranslate nohighlight">\(j\)</span> times this ion.</p>
+<p>The Monte-Carlo procedure proceeds as follows.
+A random number <span class="math notranslate nohighlight">\(r\)</span> with uniform distribution between 0 and 1 is picked.
+If <span class="math notranslate nohighlight">\(r\)</span> is smaller than the probability <span class="math notranslate nohighlight">\(p_0^{Z^{\star}-1}\)</span>
+to not ionize the quasi-ion, then the quasi-ion is not ionized during this time step.
+Otherwise, we loop over the number of ionization events <span class="math notranslate nohighlight">\(k\)</span>,
+from <span class="math notranslate nohighlight">\(k=1\)</span> to <span class="math notranslate nohighlight">\(k_{\rm max}=Z-Z^{\star}+1\)</span>
+(for which <span class="math notranslate nohighlight">\(F_{k_{\rm max}}^{Z^{\star}-1}=1\)</span> by construction),
+until <span class="math notranslate nohighlight">\(r&lt;F_k^{Z^{\star}-1}\)</span>. At that point, <span class="math notranslate nohighlight">\(k\)</span> is the number of
+ionization events for the quasi-ion. A quasi-electron is created with
+the numerical weight equal to <span class="math notranslate nohighlight">\(k\)</span> times that of the quasi-ion,
+and with the same velocity as this quasi-ion.
+The quasi-ion charge is also increased by <span class="math notranslate nohighlight">\(k\)</span>.</p>
+<p>Finally, to ensure energy conservation, an ionization current
+<span class="math notranslate nohighlight">\({\bf J}_{\rm ion}\)</span> is projected onto the simulation grid such that</p>
+<div class="math notranslate nohighlight" id="equation-energyconservation">
+<span class="eqno">(11)<a class="headerlink" href="#equation-energyconservation" title="Link to this equation">¶</a></span>\[{\bf J}_{\rm ion} \cdot {\bf E} = \Delta t^{-1}\,\sum_{j=1}^k I_p(Z^{\star}-1+k)\,.\]</div>
+</section>
+<section id="benchmarks">
+<h3>Benchmarks<a class="headerlink" href="#benchmarks" title="Link to this heading">¶</a></h3>
+<p>In what follows, we present two benchmarks of the field ionization model.
+Both benchmarks consist in irradiating a thin (one cell long) neutral material (hydrogen or carbon)
+with a short (few optical-cycle long) laser with wavelength <span class="math notranslate nohighlight">\(\lambda_0 = 0.8~{\mu m}\)</span>.</p>
+<figure class="align-default" id="id23">
+<span id="figfieldionization"></span><img alt="../_images/FieldIonization.png" src="../_images/FieldIonization.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 27 </span><span class="caption-text">Results of two benchmarks for the field ionization Model.
+Top: Average charge state of hydrogen ions as a function of time when irradiated by a laser.
+The red solid line corresponds to PIC results, the dashed line corresponds to
+theoretical predictions using the cycle-averaged ADK growth rate of <a class="reference internal" href="#equation-adkrate">(10)</a>.
+Bottom: Relative distribution of carbon ions for different charge states as a function
+of time. Dashed lines correspond to PIC results, thin gray lines correspond to
+theoretical predictions obtained from <a class="reference internal" href="#equation-rateeqs">(12)</a>. The Gaussian gray shape
+indicates the laser electric field envelope.</span><a class="headerlink" href="#id23" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>In the first benchmark, featuring hydrogen, the laser intensity is kept constant
+at <span class="math notranslate nohighlight">\(I_L = 10^{14}~{\rm W/cm^2}\)</span>, corresponding to a normalized vector
+potential <span class="math notranslate nohighlight">\(a_0 \simeq 6.81 \times 10^{-3}\)</span>, over 10 optical cycles.
+The resulting averaged ion charge in the simulation is presented as a function of
+time in <a class="reference internal" href="#figfieldionization"><span class="std std-numref">Fig. 27</span></a> (left). It is found to be in excellent agreement
+with the theoretical prediction considering the cycle averaged ionization rate
+<span class="math notranslate nohighlight">\(\Gamma_{\rm ADK} \simeq 2.55\times10^{12}~{\rm s^{-1}}\)</span> computed
+from <a class="reference internal" href="#equation-adkrate">(10)</a>.</p>
+<p>The second benchmark features carbon ions. The laser has a peak intensity
+<span class="math notranslate nohighlight">\(I_L = 5 \times 10^{16}~{\rm W/cm^2}\)</span>, corresponding to a normalized
+vector potential <span class="math notranslate nohighlight">\(a_0 \simeq 1.52 \times 10^{-1}\)</span>, and a gaussian time profile
+with FWHM <span class="math notranslate nohighlight">\(\tau_L=5~\lambda_0/c\)</span> (in terms of
+electric field). <a class="reference internal" href="#figfieldionization"><span class="std std-numref">Fig. 27</span></a> (right) shows, as function of time,
+the relative distribution of carbon ions for different charge states
+(from 0 to <span class="math notranslate nohighlight">\(+4\)</span>). These numerical results are shown to be in excellent
+agreement with theoretical predictions obtained by numerically solving the coupled
+rate equations on the population <span class="math notranslate nohighlight">\(N_i\)</span> of each level <span class="math notranslate nohighlight">\(i\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-rateeqs">
+<span class="eqno">(12)<a class="headerlink" href="#equation-rateeqs" title="Link to this equation">¶</a></span>\[\frac{d}{dt}N_i =
+(1-\delta_{i,0}) \, \Gamma_{i-1}\,N_{i-1}  -  (1-\delta_{i,Z})\, \Gamma_{i}\,N_{i}\,,\]</div>
+<p>with <span class="math notranslate nohighlight">\(\delta_{i,j}\)</span> the Kroenecker delta, and <span class="math notranslate nohighlight">\(\Gamma_i\)</span> the ionization
+rate of level <span class="math notranslate nohighlight">\(i\)</span>. Note also that, for this configuration,
+<span class="math notranslate nohighlight">\(\Delta t \simeq 0.04~{\rm fs}\)</span> is about ten times larger than
+the characteristic time <span class="math notranslate nohighlight">\(\Gamma_{\rm ADK}^{-1} \simeq 0.006~{\rm fs}\)</span>
+to ionize <span class="math notranslate nohighlight">\({\rm C}^{2+}\)</span> and <span class="math notranslate nohighlight">\({\rm C}^{3+}\)</span>
+so that multiple ionization from <span class="math notranslate nohighlight">\({\rm C}^{2+}\)</span> to <span class="math notranslate nohighlight">\({\rm C}^{4+}\)</span>
+during a single timestep does occur and is found to be correctly accounted for
+in our simulations.</p>
+<hr class="docutils" />
+</section>
+</section>
+<section id="field-ionization-with-a-laser-envelope">
+<span id="field-ionization-envelope"></span><h2>Field ionization with a laser envelope<a class="headerlink" href="#field-ionization-with-a-laser-envelope" title="Link to this heading">¶</a></h2>
+<p>In a typical PIC simulation, the laser oscillation is sampled frequently in time,
+thus the electric field can be considered static within a single timestep where ionization takes place,
+and the ionization rate in
+DC, i.e. <span class="math notranslate nohighlight">\(\Gamma_{\rm ADK, DC}\)</span> from Eq. <a class="reference internal" href="#equation-ionizationrate1">(9)</a> can be used at
+each timestep.
+Furthermore, if the atom/ion from which the electrons are stripped through ionization is at rest,
+for momentum conservation the new electrons can be initialized with zero momentum.
+If a laser ionized the atom/ion, the new electrons momenta will quickly change due to the Lorentz force.</p>
+<p>Instead, in presence of a laser envelope (see <a class="reference internal" href="laser_envelope.html"><span class="doc">Laser envelope model</span></a>) an ad hoc treatment of the
+ionization process averaged over the scales of the optical cycle is necessary, since the
+integration timestep is much greater than the one used in those typical PIC simulations <a class="reference internal" href="#chen2013" id="id18"><span>[Chen2013]</span></a>.
+Thus, in this case a ionization rate <span class="math notranslate nohighlight">\(\Gamma_{\rm ADK, AC}\)</span> obtained averaging <span class="math notranslate nohighlight">\(\Gamma_{\rm ADK, DC}\)</span> over the laser oscillations
+should be used at each timestep to have a better agreement with a correspondent standard laser simulation.
+Afterwards, the momentum of the newly created electrons must be properly initialized taking into account of the
+averaging process in the definition of the particle-envelope interaction.</p>
+<p>For circular polarization, i.e. <code class="docutils literal notranslate"><span class="pre">ellipticity</span> <span class="pre">=</span> <span class="pre">1</span></code>,
+<span class="math notranslate nohighlight">\(\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}\)</span>, since the field does not change
+its magnitude over the laser oscillations.
+For linear polarization, i.e. <code class="docutils literal notranslate"><span class="pre">ellipticity</span> <span class="pre">=</span> <span class="pre">0</span></code> :</p>
+<div class="math notranslate nohighlight" id="equation-ionizationrate2">
+<span class="eqno">(13)<a class="headerlink" href="#equation-ionizationrate2" title="Link to this equation">¶</a></span>\[\Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\vert E\vert}{(2I_p)^{3/2}}\right)^{1/2}\Gamma_{\rm ADK, DC} .\]</div>
+<p>Normally the laser is intense enough to be the main cause of ionization,
+but to take into account possible high total fields <span class="math notranslate nohighlight">\(E\)</span> not described only by an envelope,
+in <strong class="program">Smilei</strong> a combination <span class="math notranslate nohighlight">\(E=\sqrt{\vert E_{plasma}\vert^{2}+\vert\tilde{E}_{envelope}\vert^{2}}\)</span>
+is used instead of <span class="math notranslate nohighlight">\(E\)</span> in the above formulas. The field <span class="math notranslate nohighlight">\(\tilde{E}_{plasma}\)</span> represents
+the (low frequency) electric field of the plasma, while <span class="math notranslate nohighlight">\(\vert\tilde{E}_{envelope} \vert=\sqrt{\vert\tilde{E}\vert^2+\vert\tilde{E}_x\vert^2}\)</span>
+takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
+(see <a class="reference internal" href="laser_envelope.html"><span class="doc">Laser envelope model</span></a> for details on their calculation).</p>
+<p>After an electron is created through envelope tunnel ionization, its initial transverse momentum <span class="math notranslate nohighlight">\(p_{\perp}\)</span> is assigned as described in <a class="reference internal" href="#tomassini2017" id="id19"><span>[Tomassini2017]</span></a>.
+For circular polarization, in the case of an electron subject to a laser transverse envelope vector potential <span class="math notranslate nohighlight">\(\tilde{A}\)</span>, the magnitude of its initial transverse momentum is set as
+<span class="math notranslate nohighlight">\(\vert p_{\perp}\vert = \vert\tilde{A}\vert\)</span> and its transverse direction is chosen randomly between <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(2\pi\)</span>.
+For linear polarization, the initial transverse momentum along the polarization direction is drawn from a gaussian distribution with
+rms width <span class="math notranslate nohighlight">\(\sigma_{p_{\perp}} = \Delta\vert\tilde{A}\vert\)</span>, to reproduce the residual rms transverse momentum spread of electrons stripped from
+atoms by a linearly polarized laser <a class="reference internal" href="#schroeder2014" id="id20"><span>[Schroeder2014]</span></a>. The parameter <span class="math notranslate nohighlight">\(\Delta\)</span> is defined as [<a class="reference internal" href="#schroeder2014">Schroeder2014</a>]:</p>
+<div class="math notranslate nohighlight" id="equation-ionizationrate3">
+<span class="eqno">(14)<a class="headerlink" href="#equation-ionizationrate3" title="Link to this equation">¶</a></span>\[\Delta = \left(\frac{3}{2} \vert E \vert \right)^{1/2}\left(2I_p\right)^{-3/4}.\]</div>
+<p>This approximation is valid for regimes where <span class="math notranslate nohighlight">\(\Delta\ll 1\)</span>.
+Additionally, in <strong class="program">Smilei</strong> the initial longitudinal momentum of the new electrons is initialized, to recreate the statistical features of the momentum distribution of the
+electrons created through ionization. An electron initially at rest in a plane wave
+with vector potential of amplitude <span class="math notranslate nohighlight">\(\vert\tilde{A}\vert\)</span> propagating along the positive <span class="math notranslate nohighlight">\(x\)</span> direction is subject to a drift in the wave propagation direction <a class="reference internal" href="#gibbon" id="id21"><span>[Gibbon]</span></a>.
+An electron stripped from an atom/ion through envelope ionization by a laser can be approximated locally as in a plane wave, thus averaging over the laser oscillations
+yields a positive momentum in the <span class="math notranslate nohighlight">\(x\)</span> direction.
+Thus, each electron created from envelope tunnel ionization is initialized with <span class="math notranslate nohighlight">\(p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2\)</span> for linear polarization,
+where <span class="math notranslate nohighlight">\(p_{\perp}\)</span> is drawn as described above. For circular polarization, each of these electron is initalized with <span class="math notranslate nohighlight">\(p_x = \vert\tilde{A}\vert^2/2\)</span>.
+This technique allows to take into account the longitudinal effects of the wave on the initial momentum, that start to be significant
+when <span class="math notranslate nohighlight">\(\vert\tilde{A}\vert&gt;1\)</span>, effects which manifest mainly as an initial average longitudinal momentum.
+For relativistic regimes, the longitudinal momentum effects significantly change the relativistic Lorentz factor
+and thus start to significantly influence also the evolution of the transverse momenta.</p>
+<p>If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution
+of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
+provided that the comparison is made after the end of the interaction with the laser.
+Examples of these comparisons and the derivation of the described electron momentum initialization can be found in <a class="reference internal" href="../Overview/material.html#massimo2020a" id="id22"><span>[Massimo2020a]</span></a>.
+A comparison made in a timestep where the interaction with the laser is still taking place would show the effects of the quiver motion in the electron momenta
+in the standard laser simulation (e.g. peaks in the transverse momentum spectrum). These effects would be absent in the envelope simulation.</p>
+<p>Apart from the different ionization rate and the ad hoc momentum initialization of the new electrons,
+the implementation of the field ionization with a laser envelope follows the same procedure
+described in the above section treating the usual field ionization.</p>
+<p>In presence of a laser envelope, an energy conservation equation analogous to <a class="reference internal" href="#equation-energyconservation">(11)</a>
+cannot be written, since the information about the direction of the ionizing field is lost with the envelope
+description. However, in many situations where the envelope approximation is valid the ion current can be
+neglected and the error on energy conservation is negligible.</p>
+<hr class="docutils" />
+</section>
+<section id="user-defined-ionization-rate">
+<span id="rate-ionization"></span><h2>User-defined ionization rate<a class="headerlink" href="#user-defined-ionization-rate" title="Link to this heading">¶</a></h2>
+<p><strong class="program">Smilei</strong> can treat ionization considering a fixed rate prescribed by the user.
+The ionization rates are defined, for a given <code class="docutils literal notranslate"><span class="pre">Species</span></code>, as described <a class="reference internal" href="../Use/namelist.html#species"><span class="std std-ref">here</span></a>.
+The Monte-Carlo procedure behind the treatment of ionization in this case closely follows
+that developed for field ionization.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that, in the case of a user-defined ionization rate, only single ionization event per timestep are possible.</p>
+</div>
+<p>Let us introduce two benchmarks for which the rate of ionization is defined by the user.
+The first benchmark considers an initially neutral species that can be potentially ionized twice.
+To run this case, a constant and uniform ionization rate is considered that depends only on the particle current charge
+state. For this particular case, we have considered a rate <span class="math notranslate nohighlight">\(r_0 = 0.1\)</span> (in code units) for ionization from
+charge state 0 to 1, and a rate <span class="math notranslate nohighlight">\(r_1 = 0.05\)</span> (in code units) for ionization from charge state 1 to 2.
+The simulation results presented in Fig. <a class="reference internal" href="#figfromrateionization"><span class="std std-numref">Fig. 28</span></a> (top panel) shows the time evolution of the
+fraction in each possible charge states (<span class="math notranslate nohighlight">\(Z=0\)</span>, <span class="math notranslate nohighlight">\(Z=1\)</span> and <span class="math notranslate nohighlight">\(Z=2\)</span>).
+Super-imposed (dashed lines) are the corresponding theoretical predictions.</p>
+<p>The second benchmark features an initially neutral species homogeneously distributed in the simulation box.
+The ionization rate is here chosen as a function of the spatial coordinate <span class="math notranslate nohighlight">\(x\)</span>,
+and reads <span class="math notranslate nohighlight">\(r(x) = r_0 \exp(-(x-x_c)^2/2)\)</span> with <span class="math notranslate nohighlight">\(r_0 = 0.02\)</span> the maximum ionization rate and
+<span class="math notranslate nohighlight">\(x_c=5\)</span> the center of the simulation box.
+The simulation results presented in Fig. <a class="reference internal" href="#figfromrateionization"><span class="std std-numref">Fig. 28</span></a> (bottom panel) shows,
+at the end of the simulation <span class="math notranslate nohighlight">\(t=20\)</span>, the electron number density as a function of space.
+Super-imposed (in red) is the corresponding theoretical prediction.</p>
+<figure class="align-default" id="id24">
+<span id="figfromrateionization"></span><img alt="../_images/userDefinedRate.png" src="../_images/userDefinedRate.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 28 </span><span class="caption-text">Results of the two benchmarks for the ionization model using user-defined rates as described above.</span><a class="headerlink" href="#id24" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="ammosov1986" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ammosov1986<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id6">2</a>)</span>
+<p><a class="reference external" href="http://www.jetp.ras.ru/cgi-bin/dn/e_064_06_1191.pdf">M. V. Ammosov, N. B. Delone, and V. P. Krainov, Sov. Phys. JETP 64, 1191 (1986)</a></p>
+</div>
+<div class="citation" id="nuter2011" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Nuter2011<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id17">2</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.1063/1.3559494">R. Nuter et al., Phys. of Plasmas 19, 033107 (2011)</a></p>
+</div>
+<div class="citation" id="perelomov1966" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">Perelomov1966</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://www.jetp.ras.ru/cgi-bin/dn/e_023_05_0924.pdf">A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966)</a></p>
+</div>
+<div class="citation" id="perelomov1967" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">Perelomov1967</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://www.jetp.ras.ru/cgi-bin/dn/e_024_01_0207.pdf">A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967)</a></p>
+</div>
+<div class="citation" id="chen2013" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id18">Chen2013</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1016/j.jcp.2012.11.029">M. Chen, E. Cormier-Michel, C. G. R. Geddes, D. L. Bruwhiler, L. L. Yu, E. Esarey, C. B. Schroeder, W. P. Leemans, Journ. Comput. Phys. 236, 220 (2013)</a></p>
+</div>
+<div class="citation" id="tomassini2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id19">Tomassini2017</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1063/1.5000696">P. Tomassini, S. De Nicola, L. Labate, P. Londrillo, R. Fedele, D. Terzani, and L. A. Gizzi, Physics of Plasmas 24, 103120 (2017)</a></p>
+</div>
+<div class="citation" id="schroeder2014" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id20">Schroeder2014</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301">C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans, Phys. Rev. ST Accel. Beams 17, 101301</a></p>
+</div>
+<div class="citation" id="gibbon" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id21">Gibbon</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1142/p116">P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)</a></p>
+</div>
+<div class="citation" id="tong2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id10">Tong2005</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://iopscience.iop.org/article/10.1088/0953-4075/38/15/001">Tong X. M., Lin C. D., J. Phys. B: At. Mol. Opt. Phys. 38 2593 (2005)</a></p>
+</div>
+<div class="citation" id="ciappina2020" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id11">Ciappina2020</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://iopscience.iop.org/article/10.1088/1612-202X/ab6559">M. F. Ciappina, S. V. Popruzhenko., Laser Phys. Lett. 17 025301 (2020)</a></p>
+</div>
+<div class="citation" id="kostyukov2018" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id13">Kostyukov2018</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://journals.aps.org/pra/abstract/10.1103/PhysRevA.98.043407">I. Yu. Kostyukov, A. A. Golovanov, Phys. Rev. A 98, 043407 (2018)</a></p>
+</div>
+<div class="citation" id="artemenko2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Artemenko2017<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id12">1</a>,<a role="doc-backlink" href="#id16">2</a>)</span>
+<p><a class="reference external" href="https://link.aps.org/doi/10.1103/PhysRevA.96.032106">I. I. Artemenko, I. Yu. Kostyukov, Phys. Rev. A 96, 032106 (2017)</a></p>
+</div>
+<div class="citation" id="bauer1999" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id15">Bauer1999</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://doi.org/10.1103/PhysRevA.59.569">D. Bauer, P. Mulser, Phys. Rev. A 59, 569 (1999)</a></p>
+</div>
+<div class="citation" id="ouatu2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id14">Ouatu2022</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015205">I. Ouatu et al, Phys. Rev. E 106, 015205 (2022)</a></p>
+</div>
+<div class="citation" id="mironov2025" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mironov2025<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id7">1</a>,<a role="doc-backlink" href="#id8">2</a>,<a role="doc-backlink" href="#id9">3</a>)</span>
+<p><a class="reference external" href="https://arxiv.org/abs/2501.11672">A. A. Mironov et al., arXiV 2501, 11672 (2025)</a></p>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

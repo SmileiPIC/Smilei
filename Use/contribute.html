@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Contribute &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Troubleshoot" href="troubleshoot.html" />
+    <link rel="prev" title="Post-process" href="post-processing.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="post-processing.html">Post-process</a>
+            </li>
+        </ul>
+                <ul>
+<li><a class="reference internal" href="#">Contribute</a><ul>
+<li><a class="reference internal" href="#add-my-publication-to-the-list-on-smilei-s-website">Add my publication to the list on Smilei’s website</a></li>
+<li><a class="reference internal" href="#write-documentation">Write documentation</a></li>
+<li><a class="reference internal" href="#validate-your-changes">Validate your changes</a><ul>
+<li><a class="reference internal" href="#Validate"><code class="docutils literal notranslate"><span class="pre">Validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        <ul id="smallScreenMenuAfterTOC">
+            <li class="outer">
+                <a href="troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Contribute</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Contribute</a><ul>
+<li><a class="reference internal" href="#add-my-publication-to-the-list-on-smilei-s-website">Add my publication to the list on Smilei’s website</a></li>
+<li><a class="reference internal" href="#write-documentation">Write documentation</a></li>
+<li><a class="reference internal" href="#validate-your-changes">Validate your changes</a><ul>
+<li><a class="reference internal" href="#Validate"><code class="docutils literal notranslate"><span class="pre">Validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            style="font-weight:bold"
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="post-processing.html">Post-process</a>
+                        </li>
+                        <li >
+                            <a href="#">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="contribute">
+<h1>Contribute<a class="headerlink" href="#contribute" title="Link to this heading">¶</a></h1>
+<p>Contributions to the development of <strong class="program">Smilei</strong> are welcome.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org">Chatroom</a> for discussion and sharing.</p></li>
+<li><p><a class="reference external" href="https://github.com/SmileiPIC/Smilei/issues">GitHub issues</a> for bugs and requests.</p></li>
+<li><p>Develop new features (clone the repository clicking the “fork” button the <a class="reference external" href="https://github.com/SmileiPIC/Smilei">GitHub page</a>  so you can then make a <a class="reference external" href="https://github.com/SmileiPIC/Smilei/pulls">pull request</a> to integrate them in the main repository).</p></li>
+</ul>
+<p>Guidelines for new developments are:</p>
+<ul class="simple">
+<li><p>Write clear, commented code, or self-explanatory.</p></li>
+<li><p>Write the documentation corresponding to the new features, if any.</p></li>
+<li><p>Make validation cases, and reference data, corresponding to the added features.</p></li>
+</ul>
+<hr class="docutils" />
+<section id="add-my-publication-to-the-list-on-smilei-s-website">
+<span id="howtolistmypaper"></span><h2>Add my publication to the list on Smilei’s website<a class="headerlink" href="#add-my-publication-to-the-list-on-smilei-s-website" title="Link to this heading">¶</a></h2>
+<p>You can easily add your paper to the <a class="reference internal" href="../Overview/material.html"><span class="doc">Publications</span></a>.</p>
+<ul>
+<li><p>On GitHub, edit the file
+<a class="reference external" href="https://github.com/SmileiPIC/Smilei/blob/master/doc/Sphinx/material.rst">material.rst</a>.
+and add a few lines such as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.. [MyNameYEAR]
+
+    M. Name, A. Collaborator and B. Collaborator,
+    `Title of my paper`,
+    `Reference of the Paper &lt;https://link/to/the/paper&gt;`_,
+    `arXiv:xxxx.xxxx &lt;https://arxiv.org/abs/xxxx.xxxx&gt;`_
+</pre></div>
+</div>
+</li>
+<li><p>Make a pull request to share your update.</p></li>
+</ul>
+<hr class="docutils" />
+</section>
+<section id="write-documentation">
+<span id="howtowritedoc"></span><h2>Write documentation<a class="headerlink" href="#write-documentation" title="Link to this heading">¶</a></h2>
+<p>The documentation you are currently reading is written in the
+<a class="reference external" href="www.sphinx-doc.org/en/stable/rest.html">reStructuredText</a> (rST) language, and included
+in the main <strong class="program">Smilei</strong> repository. This is a fairly simple markup language. You
+can see examples from the source files, which are located in the
+<code class="docutils literal notranslate"><span class="pre">doc/Sphinx</span></code> folder and have the extension <code class="docutils literal notranslate"><span class="pre">.rst</span></code>.</p>
+<p>To transform it into an <em>html</em> website, it is
+processed using the <a class="reference external" href="www.sphinx-doc.org">sphinx</a> python package that you may have to
+install.
+If you have sphinx installed, you may simply go to the
+main <strong class="program">Smilei</strong> folder from a command line terminal, then run the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>doc
+</pre></div>
+</div>
+<p>This creates a local <em>html</em> website accessible in the <code class="docutils literal notranslate"><span class="pre">build/html/</span></code> folder. Simply
+open the <code class="docutils literal notranslate"><span class="pre">build/html/index.html</span></code> file in your favorite web browser.</p>
+<p>To document a new feature, please modify the file <code class="docutils literal notranslate"><span class="pre">namelist.rst</span></code> to indicate the
+syntax changes in the input file. If the feature requires detailed physical or numerical
+background, you may add a new page in the “Understand” section of the website.
+To do that, create a new <code class="docutils literal notranslate"><span class="pre">.rst</span></code> file, then reference it in the table of contents
+located in <code class="docutils literal notranslate"><span class="pre">index.rst</span></code>.</p>
+<hr class="docutils" />
+</section>
+<section id="validate-your-changes">
+<span id="validation"></span><h2>Validate your changes<a class="headerlink" href="#validate-your-changes" title="Link to this heading">¶</a></h2>
+<p><strong class="program">Smilei</strong> has a system of test cases combined with reference results that must be
+validated, ideally, for every <em>push</em> submitted to the git repository.
+These <strong>test cases</strong> are located in the <code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code> folder.</p>
+<p>Each benchmark has an associated <strong>validation file</strong>, written in <em>python</em>, which contains
+instructions on how to produce an analysis of the results that can validate that particular
+benchmark. The validation files are located in the <code class="docutils literal notranslate"><span class="pre">validation/analyses/</span></code> folder.
+They have the same name as the benchmarks, with the prefix <code class="docutils literal notranslate"><span class="pre">validate_</span></code>.</p>
+<p>Once a benchmark has been run, the corresponding <code class="docutils literal notranslate"><span class="pre">validate_*</span></code> file is run in <em>python</em>
+to compare the analysis results with a <strong>reference file</strong> located in the folder
+<code class="docutils literal notranslate"><span class="pre">validation/references/</span></code>. Note that the analysis produced by the <code class="docutils literal notranslate"><span class="pre">validate_*</span></code> file
+can also be used to generate the reference file the first time.</p>
+<p><strong>When you code a new feature, you must provide a new benchmark, the corresponding
+analysis and reference file</strong></p>
+<p>To make this process easier, a <em>python</em> script is available.</p>
+<p class="rubric">How do I use the <code class="docutils literal notranslate"><span class="pre">validation.py</span></code> script?</p>
+<p>The script <code class="docutils literal notranslate"><span class="pre">validation/validation.py</span></code> can do three things:</p>
+<ul class="simple">
+<li><p>generate validation reference(s) for given benchmark(s)</p></li>
+<li><p>compare benchmark(s) to their reference(s)</p></li>
+<li><p>show visually differences between benchmark(s) and their reference(s)</p></li>
+</ul>
+<p>Usage:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>validation.py<span class="w"> </span><span class="o">[</span>-c<span class="o">]</span><span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>&lt;nOMP&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>&lt;nMPI&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-b<span class="w"> </span>&lt;bench&gt;<span class="w"> </span><span class="o">[</span>-g<span class="w"> </span><span class="p">|</span><span class="w"> </span>-s<span class="o">]]</span><span class="w"> </span><span class="o">[</span>-r<span class="w"> </span>&lt;nRestarts&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="w"> </span>&lt;max_time&gt;<span class="o">]</span>
+</pre></div>
+</div>
+<ul>
+<li><div class="line-block">
+<div class="line">Option <code class="docutils literal notranslate"><span class="pre">-b</span> <span class="pre">&lt;bench&gt;</span></code>:</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">&lt;bench&gt;</span></code> : benchmark(s) to validate. Accepts wildcards.</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">&lt;bench&gt;=?</span></code> : ask input for a benchmark</div>
+<div class="line">DEFAULT : All benchmarks are validated.</div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Option <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">&lt;nOMP&gt;</span></code>:</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">&lt;nOMP&gt;</span></code> : number of OpenMP threads used for the execution</div>
+<div class="line">DEFAULT : 4</div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Option <code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">&lt;nMPI&gt;</span></code>:</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">&lt;nMPI&gt;</span></code> : number of MPI processes used for the execution</div>
+<div class="line">DEFAULT : 4</div>
+</div>
+</li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-g</span></code>: Generation of references only (no validation)</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-s</span></code>: Plot differences with references only (no validation)</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-c</span></code>: Compilation only (no run, no validation)</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-r</span> <span class="pre">&lt;nRrestarts&gt;</span></code>: Force the simulation to be broken in several restarts</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-v</span></code>: Verbose</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-h</span></code>: Help</p></li>
+<li><p>Option <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">&lt;max_time&gt;</span></code>: maximum wall time (format <code class="docutils literal notranslate"><span class="pre">&quot;hh:mm:ss&quot;</span></code>)</p></li>
+</ul>
+</div></blockquote>
+<p>Exit status of the script:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>0  validated</p></li>
+<li><p>1  validation fails</p></li>
+<li><p>2  execution fails</p></li>
+<li><p>3  compilation fails</p></li>
+<li><p>4  bad option</p></li>
+</ul>
+</div></blockquote>
+<p>Examples:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./validation.py<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>Compiles and validates all cases in verbose mode.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./validation.py<span class="w"> </span>-v<span class="w"> </span>-b<span class="w"> </span>tst1d_00_em_propagation.py
+</pre></div>
+</div>
+<p>Validates only the benchmark <code class="docutils literal notranslate"><span class="pre">tst1d_00_em_propagation.py</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./validation.py<span class="w"> </span>-v<span class="w"> </span>-b<span class="w"> </span>tst1d_00_em_propagation.py<span class="w"> </span>-g
+</pre></div>
+</div>
+<p>Generates the reference file for the benchmark <code class="docutils literal notranslate"><span class="pre">tst1d_00_em_propagation.py</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./validation.py<span class="w"> </span>-v<span class="w"> </span>-b<span class="w"> </span>tst1d_00_em_propagation.py<span class="w"> </span>-s
+</pre></div>
+</div>
+<p>Runs the benchmark <code class="docutils literal notranslate"><span class="pre">tst1d_00_em_propagation.py</span></code>, and plots the differences with the reference file.</p>
+</div></blockquote>
+<p class="rubric">What does <code class="docutils literal notranslate"><span class="pre">validation.py</span></code> actually do?</p>
+<p>It creates a new <code class="docutils literal notranslate"><span class="pre">validation/workdirs</span></code> directory (that may be freely deleted later).</p>
+<p>It compiles the code:</p>
+<blockquote>
+<div><p>If the “workdirs” directory lacks a smilei binary, or it is too old,
+then the “workdirs” is backed up, and a new compilation occurs.
+The compilation output is logged in <code class="docutils literal notranslate"><span class="pre">compilation_output</span></code>.
+If compiling errors occur, <code class="docutils literal notranslate"><span class="pre">compilation_errors</span></code> is created and the script exits with status 3.</p>
+</div></blockquote>
+<p>It runs each benchmark:</p>
+<blockquote>
+<div><p>If the directory <code class="docutils literal notranslate"><span class="pre">wd_&lt;benchmark&gt;/&lt;o&gt;/&lt;m&gt;</span></code> does not exist then:</p>
+<ul class="simple">
+<li><p>it is created.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">smilei</span></code> is executed in that directory for the requested benchmark.</p></li>
+<li><p>if execution fails, the script exits with status 2.</p></li>
+</ul>
+</div></blockquote>
+<p>It analyses the results (for each requested benchmark) using the <code class="docutils literal notranslate"><span class="pre">validate_*</span></code> script:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If requested to compare to previous references (default option), the analysis
+is compared to the reference data.</p></li>
+<li><p>If requested to generate references (option <code class="docutils literal notranslate"><span class="pre">-g</span></code>), the analysis is stored
+as reference data.</p></li>
+<li><p>If requested to show differences to previous references (option <code class="docutils literal notranslate"><span class="pre">-s</span></code>),
+the analysis is plotted vs. the reference data.</p></li>
+</ul>
+</div></blockquote>
+<p class="rubric">How should I make the <code class="docutils literal notranslate"><span class="pre">validate_*</span></code> script?</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">validate_*</span></code> script should load the simulation results using whatever means suits
+the benchmark the best. In many cases, the <a class="reference internal" href="post-processing.html"><span class="doc">happi</span></a> module is
+employed to extract diagnostics results.</p>
+<p>Any <em>python</em> instructions may be used to process the simulation results. Once the data
+has been crunched into a meaningful value, string, or array, then it must be passed to the
+following predefined function:</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="Validate">
+<span class="sig-name descname"><span class="pre">Validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Validate" title="Link to this definition">¶</a></dt>
+<dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">description</span></code>: a string describing the data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data</span></code>: a float, a <em>numpy</em> float array, or any other python data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">epsilon</span></code> (optional): acceptable difference between data and reference</p></li>
+</ul>
+</dd></dl>
+
+<p>The <code class="docutils literal notranslate"><span class="pre">data</span></code> passed to this function constitutes the <em>analysis</em> that is compared to previous
+reference files. It is the same analysis that is used to generate those reference files
+in the first place.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

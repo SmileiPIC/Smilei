@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Generation of the external tables &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Optimization and vectorization compilation options" href="optimization_flags.html" />
+    <link rel="prev" title="Profiles" href="profiles.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Understand/units.html">Units</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Generation of the external tables</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Generation of the external tables</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#execution">Execution</a></li>
+<li><a class="reference internal" href="#precomputed-tables">Precomputed tables</a><ul>
+<li><a class="reference internal" href="#points">256 points</a></li>
+<li><a class="reference internal" href="#id1">512 points</a></li>
+<li><a class="reference internal" href="#id2">1024 points</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#python-visualization-scripts">Python visualization scripts</a></li>
+<li><a class="reference internal" href="#detailed-description-of-the-tables">Detailed description of the tables</a><ul>
+<li><a class="reference internal" href="#nonlinear-inverse-compton-scattering">Nonlinear Inverse Compton Scattering</a></li>
+<li><a class="reference internal" href="#multiphoton-breit-wheeler">Multiphoton Breit-Wheeler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Understand/units.html">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Understand/PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="generation-of-the-external-tables">
+<span id="tablepage"></span><h1>Generation of the external tables<a class="headerlink" href="#generation-of-the-external-tables" title="Link to this heading">¶</a></h1>
+<p>By default, <strong class="program">Smilei</strong> embeds tables directly in the sources.
+Nonetheless, a user may want to use different tables.
+For this reason, <strong class="program">Smilei</strong> can read external tables.</p>
+<p>Several physical mechanisms can use external tables to work:</p>
+<ul class="simple">
+<li><p>Radiation loss and photon emission via nonlinear inverse Compton scattering (see <a class="reference internal" href="../Understand/radiation_loss.html"><span class="doc">High-energy photon emission &amp; radiation reaction</span></a>)</p></li>
+<li><p>Electron-positon pair creation via the Multiphoton Breit-Wheeler (see <a class="reference internal" href="../Understand/multiphoton_Breit_Wheeler.html"><span class="doc">Multiphoton Breit-Wheeler pair creation</span></a>)</p></li>
+</ul>
+<p>An external tool called <strong class="program">smilei_tables</strong> is available to generate these tables.</p>
+<hr class="docutils" />
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>The C++ sources of this tool is located in <code class="docutils literal notranslate"><span class="pre">tools/tables</span></code>.</p>
+<p>Required dependencies are the following:</p>
+<ul class="simple">
+<li><p>A C++11 compiler</p></li>
+<li><p>A MPI library</p></li>
+<li><p>HDF5 installed at least in serial</p></li>
+<li><p><a class="reference external" href="https://www.boost.org/">Boost</a></p></li>
+</ul>
+<p>Boost is a C++ library that provides efficient advanced mathematical functions.
+This is the only dependency not required to install <strong class="program">Smilei</strong>.
+This library can be easily installed manually on Linux, MacOS or Windows systems.
+It is also available via different package managers (Debian, Homebrew).
+The environment variable <code class="docutils literal notranslate"><span class="pre">BOOST_ROOT</span></code> must be defined.</p>
+<p>The tool can be then installed using the makefile and the argument <code class="docutils literal notranslate"><span class="pre">tables</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>tables
+</pre></div>
+</div>
+<p>The compilation generates an executable called <strong class="program">smilei_tables</strong> on the root of the repository.</p>
+</section>
+<hr class="docutils" />
+<section id="execution">
+<h2>Execution<a class="headerlink" href="#execution" title="Link to this heading">¶</a></h2>
+<p>The tool works with command line arguments.
+For each physical mechanism, <strong class="program">smilei_tables</strong> generates all the tables for this mechanism.
+The first argument therefore corresponds to the physical mechanism:</p>
+<ul class="simple">
+<li><p>Nonlinear inverse Compton scattering: <code class="docutils literal notranslate"><span class="pre">nics</span></code></p></li>
+<li><p>Multiphoton Breit-Wheeler: <code class="docutils literal notranslate"><span class="pre">mbw</span></code></p></li>
+<li><p>For help: <code class="docutils literal notranslate"><span class="pre">-h</span></code> or <code class="docutils literal notranslate"><span class="pre">`--help</span></code></p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>-h
+</pre></div>
+</div>
+<p>Then, once the physical mechanism is selected, the following arguments are the numerical parameters for the table generation.
+For each physical argument, <code class="docutils literal notranslate"><span class="pre">-h</span></code> or <code class="docutils literal notranslate"><span class="pre">--help</span></code> gives the full list of arguments.</p>
+<p><strong>For Nonlinear inverse Compton Scattering:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>nics<span class="w"> </span>-h
+
+_______________________________________________________________________
+
+Smilei<span class="w"> </span>Tables
+_______________________________________________________________________
+
+You<span class="w"> </span>have<span class="w"> </span>selected<span class="w"> </span>the<span class="w"> </span>creation<span class="w"> </span>of<span class="w"> </span>tables<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>nonlinear<span class="w"> </span>inverse<span class="w"> </span>Compton<span class="w"> </span>scattering.
+
+Help<span class="w"> </span>page<span class="w"> </span>specific<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>nonlinear<span class="w"> </span>inverse<span class="w"> </span>Compton<span class="w"> </span>Scattering:
+
+List<span class="w"> </span>of<span class="w"> </span>available<span class="w"> </span>commands:
+-h,<span class="w"> </span>--help<span class="w">                       </span>print<span class="w"> </span>a<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+-s,<span class="w"> </span>--size<span class="w">       </span>int<span class="w"> </span>int<span class="w">         </span>respective<span class="w"> </span>size<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>particle<span class="w"> </span>and<span class="w"> </span>photon<span class="w"> </span>chi<span class="w"> </span>axis.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="m">128</span><span class="o">)</span>
+-b,<span class="w"> </span>--boundaries<span class="w"> </span>double<span class="w"> </span>double<span class="w">   </span>min<span class="w"> </span>and<span class="w"> </span>max<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>particle<span class="w"> </span>chi<span class="w"> </span>axis.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span>1e-3<span class="w"> </span>1e3<span class="o">)</span>
+-e,<span class="w"> </span>--error<span class="w">      </span>int<span class="w">             </span>compute<span class="w"> </span>error<span class="w"> </span>due<span class="w"> </span>to<span class="w"> </span>discretization<span class="w"> </span>and<span class="w"> </span>use<span class="w"> </span>the<span class="w"> </span>provided<span class="w"> </span>int<span class="w"> </span>as<span class="w"> </span>a<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>draws.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">0</span><span class="o">)</span>
+-t,<span class="w"> </span>--threshold<span class="w">  </span>double<span class="w">          </span>Minimum<span class="w"> </span>targeted<span class="w"> </span>value<span class="w"> </span>of<span class="w"> </span>xi<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>computation<span class="w"> </span>the<span class="w"> </span>minimum<span class="w"> </span>particle<span class="w"> </span>quantum<span class="w"> </span>parameter.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span>1e-3<span class="o">)</span>
+-p,<span class="w"> </span>--power<span class="w">      </span>int<span class="w">             </span>Maximum<span class="w"> </span>decrease<span class="w"> </span><span class="k">in</span><span class="w"> </span>order<span class="w"> </span>of<span class="w"> </span>magnitude<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>search<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>minimum<span class="w"> </span>particle<span class="w"> </span>quantum<span class="w"> </span>parameter.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">4</span><span class="o">)</span>
+-v,<span class="w"> </span>--verbose<span class="w">                    </span>Dump<span class="w"> </span>the<span class="w"> </span>tables
+</pre></div>
+</div>
+<p><strong>For multiphoton Breit-Wheeler:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>mbw<span class="w"> </span>-h
+
+_______________________________________________________________________
+
+Smilei<span class="w"> </span>Tables
+_______________________________________________________________________
+
+You<span class="w"> </span>have<span class="w"> </span>selected<span class="w"> </span>the<span class="w"> </span>creation<span class="w"> </span>of<span class="w"> </span>tables<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>multiphoton<span class="w"> </span>Breit<span class="w"> </span>Wheeler<span class="w"> </span>process.
+
+Help<span class="w"> </span>page<span class="w"> </span>specific<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>multiphoton<span class="w"> </span>Breit-Wheeler:
+
+List<span class="w"> </span>of<span class="w"> </span>available<span class="w"> </span>commands:
+-h,<span class="w"> </span>--help<span class="w">                       </span>print<span class="w"> </span>a<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+-s,<span class="w"> </span>--size<span class="w">       </span>int<span class="w"> </span>int<span class="w">         </span>respective<span class="w"> </span>size<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>photon<span class="w"> </span>and<span class="w"> </span>particle<span class="w"> </span>chi<span class="w"> </span>axis.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="m">128</span><span class="o">)</span>
+-b,<span class="w"> </span>--boundaries<span class="w"> </span>double<span class="w"> </span>double<span class="w">   </span>min<span class="w"> </span>and<span class="w"> </span>max<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>photon<span class="w"> </span>chi<span class="w"> </span>axis.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span>1e-2<span class="w"> </span>1e2<span class="o">)</span>
+-e,<span class="w"> </span>--error<span class="w">      </span>int<span class="w">             </span>compute<span class="w"> </span>error<span class="w"> </span>due<span class="w"> </span>to<span class="w"> </span>discretization<span class="w"> </span>and<span class="w"> </span>use<span class="w"> </span>the<span class="w"> </span>provided<span class="w"> </span>int<span class="w"> </span>as<span class="w"> </span>a<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>draws.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">0</span><span class="o">)</span>
+-t,<span class="w"> </span>--threshold<span class="w">  </span>double<span class="w">          </span>Minimum<span class="w"> </span>targeted<span class="w"> </span>value<span class="w"> </span>of<span class="w"> </span>xi<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>computation<span class="w"> </span>the<span class="w"> </span>minimum<span class="w"> </span>photon<span class="w"> </span>quantum<span class="w"> </span>parameter.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span>1e-3<span class="o">)</span>
+-p,<span class="w"> </span>--power<span class="w">      </span>int<span class="w">             </span>Maximum<span class="w"> </span>decrease<span class="w"> </span><span class="k">in</span><span class="w"> </span>order<span class="w"> </span>of<span class="w"> </span>magnitude<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>search<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>minimum<span class="w"> </span>photon<span class="w"> </span>quantum<span class="w"> </span>parameter.<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="m">4</span><span class="o">)</span>
+-v,<span class="w"> </span>--verbose<span class="w">                    </span>Dump<span class="w"> </span>the<span class="w"> </span>tables
+</pre></div>
+</div>
+<p>The tables are generated where the code is executed using HDF5 with the following names:</p>
+<ul class="simple">
+<li><p>Nonlinear inverse Compton Scattering: <code class="docutils literal notranslate"><span class="pre">radiation_tables.h5</span></code></p></li>
+<li><p>multiphoton Breit-Wheeler: <code class="docutils literal notranslate"><span class="pre">multiphoton_breit_wheeler_tables.h5</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="precomputed-tables">
+<h2>Precomputed tables<a class="headerlink" href="#precomputed-tables" title="Link to this heading">¶</a></h2>
+<p>We have computed some tables with several levels of discretization that you can download here.</p>
+<section id="points">
+<h3>256 points<a class="headerlink" href="#points" title="Link to this heading">¶</a></h3>
+<p>This table size is a good compromise between accuracy and memory cost.
+2D tables can fit in L2 cache although the pressure on the cache will be high.
+This set of tables is the one included by default in the sources of <strong class="program">Smilei</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>nics<span class="w"> </span>-s<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">256</span><span class="w"> </span>-b<span class="w"> </span>1e-4<span class="w"> </span>1e3
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/radiation_tables.h5">tables_256/radiation_tables.h5</a></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>mbw<span class="w"> </span>-s<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">256</span><span class="w"> </span>-b<span class="w"> </span>1e-2<span class="w"> </span>1e2
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_256/multiphoton_Breit_Wheeler_tables.h5">tables_256/multiphoton_breit_wheeler_tables.h5</a></p>
+<p>These tables can be generated on a normal desktop computer in few minutes.</p>
+</section>
+<section id="id1">
+<h3>512 points<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<p>With a size of 512 points in 1D and 512x512 for 2D tables, these tables offer better accuracy at a larger memory cost.
+2D tables of this size are too large to fit in L2 cache but can be contained in L3.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>nics<span class="w"> </span>-s<span class="w"> </span><span class="m">512</span><span class="w"> </span><span class="m">512</span><span class="w"> </span>-b<span class="w"> </span>1e-4<span class="w"> </span>1e3
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_512/radiation_tables.h5">tables_512/radiation_tables.h5</a></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>mbw<span class="w"> </span>-s<span class="w"> </span><span class="m">512</span><span class="w"> </span><span class="m">512</span><span class="w"> </span>-b<span class="w"> </span>1e-2<span class="w"> </span>1e2
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_512/multiphoton_Breit_Wheeler_tables.h5">tables_512/multiphoton_breit_wheeler_tables.h5</a></p>
+</section>
+<section id="id2">
+<h3>1024 points<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>With a size of 1024 points in 1D and 1024x1024 for 2D tables, these tables offer the best accuracy at a high memory cost (around 8.5 Mb per file).
+2D tables of this size are too large to fit in L2 cache and L3 cache.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>nics<span class="w"> </span>-s<span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span>-b<span class="w"> </span>1e-4<span class="w"> </span>1e3
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_1024/radiation_tables.h5">tables_1024/radiation_tables.h5</a></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number<span class="w"> </span>of<span class="w"> </span>processes&gt;<span class="w"> </span>./smilei_tables<span class="w"> </span>mbw<span class="w"> </span>-s<span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="m">1024</span><span class="w"> </span>-b<span class="w"> </span>1e-2<span class="w"> </span>1e2
+</pre></div>
+</div>
+<p><a class="reference external" href="http://mdls.prod.lamp.cnrs.fr/projects/Smilei/uploads/tables_1024/multiphoton_Breit_Wheeler_tables.h5">tables_1024/multiphoton_breit_wheeler_tables.h5</a></p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="python-visualization-scripts">
+<h2>Python visualization scripts<a class="headerlink" href="#python-visualization-scripts" title="Link to this heading">¶</a></h2>
+<p>You can easily visualize the tables provided by our tools using the python scripts located in the <code class="docutils literal notranslate"><span class="pre">tools/tables</span></code> folder:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">show_nonlinear_inverse_Compton_scattering.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show_multiphoton_Breit_Wheeler.py</span></code></p></li>
+</ul>
+<p>For instance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>./tools/tables/show_nonlinear_inverse_Compton_scattering.py<span class="w"> </span>./radiation_tables.h5
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="detailed-description-of-the-tables">
+<h2>Detailed description of the tables<a class="headerlink" href="#detailed-description-of-the-tables" title="Link to this heading">¶</a></h2>
+<section id="nonlinear-inverse-compton-scattering">
+<h3>Nonlinear Inverse Compton Scattering<a class="headerlink" href="#nonlinear-inverse-compton-scattering" title="Link to this heading">¶</a></h3>
+<p>The file <code class="docutils literal notranslate"><span class="pre">radiation_tables.h5</span></code> is used for the nonlinear inverse Compton scattering radiation
+mechanism described in <a class="reference internal" href="../Understand/radiation_loss.html"><span class="doc">the dedicated section</span></a>.</p>
+<p>It first contains the <code class="docutils literal notranslate"><span class="pre">integfochi</span></code> table that represents
+the integration of the synchortron emissivity of Ritus <em>et al</em>:</p>
+<div class="math notranslate nohighlight" id="equation-eq-integfochi">
+<span class="eqno">(72)<a class="headerlink" href="#equation-eq-integfochi" title="Link to this equation">¶</a></span>\[\int_{0}^{\chi_\pm}  \frac{S(\chi_\pm , x)}{x} dx = \int_{0}^{\chi_\pm} \frac{2 x}{ 3 \chi_\pm^2} \left[ \int_{2y}^{+\infty}{K_{1/3(y)}dy} - \frac{2 + 3 x y}{2} K_{2/3}(\nu) \right] dx\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-eq-y">
+<span class="eqno">(73)<a class="headerlink" href="#equation-eq-y" title="Link to this equation">¶</a></span>\[y = \frac{x}{3 \chi_\pm (\chi_\pm - x)}\]</div>
+<p>The <span class="math notranslate nohighlight">\(x\)</span> value corresponds to the photon quantum parameter.
+We integrate the whole spectrum.
+This table is used by the Monte-Carlo method to compute the radiation emission cross-section.</p>
+<figure class="align-default" id="id4">
+<span id="nics-integration-f-over-chi"></span><a class="reference internal image-reference" href="../_images/nics_integration_F_over_chi.png"><img alt="../_images/nics_integration_F_over_chi.png" src="../_images/nics_integration_F_over_chi.png" style="width: 500.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 64 </span><span class="caption-text">Plot of the integfochi table for a particle quantum parameter ranging
+from <span class="math notranslate nohighlight">\(\chi = 10^{-4}\)</span> to <span class="math notranslate nohighlight">\(10^{3}\)</span> using the pre-computed table of 512 points.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The table <code class="docutils literal notranslate"><span class="pre">h</span></code> is used for the Niel stochastic model (<a class="reference internal" href="../Overview/material.html#niel2018a" id="id3"><span>[Niel2018a]</span></a>).
+It is given by the following integration:</p>
+<div class="math notranslate nohighlight" id="equation-eq-h-nielh">
+<span class="eqno">(74)<a class="headerlink" href="#equation-eq-h-nielh" title="Link to this equation">¶</a></span>\[  h \left( \chi \right) = \frac{9 \sqrt{3}}{4 \pi} \int_0^{+\infty}{d\nu
+  \left[ \frac{2\chi^3 \nu^3}{\left( 2 + 3\nu\chi \right)^3} K_{5/3}(\nu)
+  + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}\]</div>
+<figure class="align-default" id="id5">
+<span id="nics-h-for-niel"></span><a class="reference internal image-reference" href="../_images/nics_h_niel.png"><img alt="../_images/nics_h_niel.png" src="../_images/nics_h_niel.png" style="width: 400.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 65 </span><span class="caption-text">Plot of the h table for a particle quantum parameter ranging
+from <span class="math notranslate nohighlight">\(\chi = 10^{-4}\)</span> to <span class="math notranslate nohighlight">\(10^{3}\)</span> using the pre-computed table of 512 points.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The table <code class="docutils literal notranslate"><span class="pre">min_photon_chi_for_xi</span></code> is the minimum boundary used
+by the table <code class="docutils literal notranslate"><span class="pre">xi</span></code> for the photon quantum parameter axis.</p>
+<p>This minimum value <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span> is computed using the following inequality:</p>
+<div class="math notranslate nohighlight" id="equation-eq-nics-min-photon-chi-for-xi">
+<span class="eqno">(75)<a class="headerlink" href="#equation-eq-nics-min-photon-chi-for-xi" title="Link to this equation">¶</a></span>\[  \frac{\displaystyle{\int_0^{\chi_{\gamma,\min}}{S(\chi_\pm, x) / x
+  dx}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, x) / x dx}}} &lt; \varepsilon\]</div>
+<p>We generally use <span class="math notranslate nohighlight">\(\varepsilon = 10^{-3}\)</span>.
+It corresponds to the argument parameter <code class="docutils literal notranslate"><span class="pre">xi_threshold</span></code>.
+We have to determine a minimum photon quantum parameter because
+we cannot have a logarithmic discretization starting from 0.
+It basically means that we ignore the radiated energy below <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span>
+that is less than <span class="math notranslate nohighlight">\(10^{-3}\)</span> of the total radiated energy.
+The parameter <code class="docutils literal notranslate"><span class="pre">xi_power</span></code> is the precision of the <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span> value.
+For instance, a <code class="docutils literal notranslate"><span class="pre">xi_power</span></code> of 4 as used for our tables mean that we look for a precision of 4 digits.</p>
+<figure class="align-default" id="id6">
+<span id="nics-min-photon-chi"></span><a class="reference internal image-reference" href="../_images/nics_min_photon_chi.png"><img alt="../_images/nics_min_photon_chi.png" src="../_images/nics_min_photon_chi.png" style="width: 500.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 66 </span><span class="caption-text">Plot of the minimal photon quantum parameter <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span>
+corresponding to the minimum boundary of the <code class="docutils literal notranslate"><span class="pre">xi</span></code> table
+as a function of the particle quantum parameter <span class="math notranslate nohighlight">\(\chi_\pm\)</span> ranging
+from <span class="math notranslate nohighlight">\(10^{-4}\)</span> to <span class="math notranslate nohighlight">\(10^{3}\)</span>. It corresponds to the pre-computed table of 512 points.</span><a class="headerlink" href="#id6" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The table <code class="docutils literal notranslate"><span class="pre">xi</span></code> corresponds to the following fraction:</p>
+<div class="math notranslate nohighlight" id="equation-eq-nics-xi">
+<span class="eqno">(76)<a class="headerlink" href="#equation-eq-nics-xi" title="Link to this equation">¶</a></span>\[  \xi = \frac{\displaystyle{\int_0^{\chi_{\gamma}}{S(\chi_\pm, x) / x
+  dx}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, x) / x dx}}}\]</div>
+<p>For a given <span class="math notranslate nohighlight">\(\chi_\pm\)</span> and a randomly drawn parameter <span class="math notranslate nohighlight">\(\xi\)</span>,
+we obtain the quantum parameter <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> of the emitted photon.
+This method is used by the Monte-Carlo method to determine the radiated energy of the emitted photon.
+For a given <span class="math notranslate nohighlight">\(\chi_\pm\)</span>, <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> ranges from <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span> to <span class="math notranslate nohighlight">\(\chi_\pm\)</span>.</p>
+<figure class="align-default" id="id7">
+<span id="nics-xi"></span><a class="reference internal image-reference" href="../_images/nics_xi.png"><img alt="../_images/nics_xi.png" src="../_images/nics_xi.png" style="width: 400.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 67 </span><span class="caption-text">Plot of the xi table as a function of the particle quantum parameter <span class="math notranslate nohighlight">\(\chi_\pm\)</span>
+and index for the <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> axis.
+The <span class="math notranslate nohighlight">\(\chi_\pm\)</span> axis ranges from <span class="math notranslate nohighlight">\(10^{-4}\)</span> to <span class="math notranslate nohighlight">\(10^{3}\)</span>.
+The <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> axis ranges from <span class="math notranslate nohighlight">\(\chi_{\gamma,\min}\)</span> to <span class="math notranslate nohighlight">\(\chi_\pm\)</span>.
+It corresponds to the pre-computed table of 512 points.</span><a class="headerlink" href="#id7" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="multiphoton-breit-wheeler">
+<h3>Multiphoton Breit-Wheeler<a class="headerlink" href="#multiphoton-breit-wheeler" title="Link to this heading">¶</a></h3>
+<p>The file <code class="docutils literal notranslate"><span class="pre">multiphoton_breit_wheeler_tables.h5</span></code> is used for the multiphoton Breit-Wheeler process
+described in <a class="reference internal" href="../Understand/multiphoton_Breit_Wheeler.html"><span class="doc">the dedicated section</span></a>.</p>
+<p>It first contains the <code class="docutils literal notranslate"><span class="pre">T</span></code> table that represents
+the following integration:</p>
+<div class="math notranslate nohighlight" id="equation-eq-mbw-t">
+<span class="eqno">(77)<a class="headerlink" href="#equation-eq-mbw-t" title="Link to this equation">¶</a></span>\[T \left( \chi_\gamma \right) =
+\int_{0}^{+\infty}{\int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2}
+\right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }} d\chi_-\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight" id="equation-eq-mbw-x">
+<span class="eqno">(78)<a class="headerlink" href="#equation-eq-mbw-x" title="Link to this equation">¶</a></span>\[x = \left( \chi_\gamma / (\chi_{-} \chi_{+}) \right)^{2/3}\]</div>
+<p>And</p>
+<div class="math notranslate nohighlight" id="equation-eq-mbw-chi">
+<span class="eqno">(79)<a class="headerlink" href="#equation-eq-mbw-chi" title="Link to this equation">¶</a></span>\[\chi_\gamma = \chi_{-} + \chi_{+}.\]</div>
+<p>It is used to compute the production rate of electron-positron pairs
+from a single photon of quantum parameter <span class="math notranslate nohighlight">\(\chi_\gamma\)</span>.
+In the Monte-Carlo algorithm, it is used to determine the photon decay probability.</p>
+<figure class="align-default" id="id8">
+<span id="mbw-t"></span><a class="reference internal image-reference" href="../_images/mbw_T.png"><img alt="../_images/mbw_T.png" src="../_images/mbw_T.png" style="width: 400.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 68 </span><span class="caption-text">Plot of the table <code class="docutils literal notranslate"><span class="pre">T</span></code>
+as a function of the photon quantum parameter <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> ranging
+from <span class="math notranslate nohighlight">\(10^{-2}\)</span> to <span class="math notranslate nohighlight">\(10^{2}\)</span>.
+It corresponds to the pre-computed table size of 512 points.</span><a class="headerlink" href="#id8" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The table <code class="docutils literal notranslate"><span class="pre">min_particle_chi_for_xi</span></code> is the minimum boundary used
+by the table <code class="docutils literal notranslate"><span class="pre">xi</span></code> for the particle quantum parameter axis.
+The particle can be either a positron or an electron.
+The mechanism is symmetric.</p>
+<p>This minimum value <span class="math notranslate nohighlight">\(\chi_{\pm,\min}\)</span> is computed using the following inequality:</p>
+<div class="math notranslate nohighlight" id="equation-eq-mbw-min-particle-chi-for-xi">
+<span class="eqno">(80)<a class="headerlink" href="#equation-eq-mbw-min-particle-chi-for-xi" title="Link to this equation">¶</a></span>\[\frac{\displaystyle{\int_0^{\chi_{\pm,\min}}{\frac{dT}{dx}(\chi_\gamma, x)
+dx}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{dT}{dx}(\chi_\gamma, x) dx}}} &lt; \varepsilon\]</div>
+<p>We use here <span class="math notranslate nohighlight">\(\varepsilon = 10^{-9}\)</span>.
+It corresponds to the argument parameter <code class="docutils literal notranslate"><span class="pre">xi_threshold</span></code>.
+We have to determine a minimum photon quantum parameter because
+we cannot have a logarithmic discretization starting from 0.
+The parameter <code class="docutils literal notranslate"><span class="pre">xi_power</span></code> is the precision of the <span class="math notranslate nohighlight">\(\chi_{\pm,\min}\)</span> value.
+For instance, a <code class="docutils literal notranslate"><span class="pre">xi_power</span></code> of 4 as used for our tables mean that we look for a precision of 4 digits.</p>
+<figure class="align-default" id="id9">
+<span id="mbw-min-particle-chi"></span><a class="reference internal image-reference" href="../_images/mbw_min_particle_chi.png"><img alt="../_images/mbw_min_particle_chi.png" src="../_images/mbw_min_particle_chi.png" style="width: 400.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 69 </span><span class="caption-text">Plot of the minimal particle quantum parameter <span class="math notranslate nohighlight">\(\chi_{\pm,\min}\)</span> corresponding to the minimum boundary of the xi table
+as a function of the photon quantum parameter <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> ranging
+from <span class="math notranslate nohighlight">\(10^{-2}\)</span> to <span class="math notranslate nohighlight">\(10^{2}\)</span>.
+It corresponds to the pre-computed table of 512 points.</span><a class="headerlink" href="#id9" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The table <code class="docutils literal notranslate"><span class="pre">xi</span></code> corresponds to the following fraction:</p>
+<div class="math notranslate nohighlight" id="equation-eq-mbw-xi">
+<span class="eqno">(81)<a class="headerlink" href="#equation-eq-mbw-xi" title="Link to this equation">¶</a></span>\[\xi = \frac{\displaystyle{\int_0^{\chi_{\pm}}{\frac{dT}{dx}(\chi_\gamma, x)
+dx}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{dT}{dx}(\chi_\gamma, x) dx}}}\]</div>
+<p>For a given <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> and a randomly drawn parameter <span class="math notranslate nohighlight">\(\xi\)</span>,
+we obtain the quantum parameter <span class="math notranslate nohighlight">\(\chi_\pm\)</span> of either the generated electron or positron.
+Once we have one, we deduce the second from <span class="math notranslate nohighlight">\(\chi_\gamma = \chi_+ + \chi_-\)</span>
+This method is used by the Monte-Carlo method to determine the energy of the created electron and the positron.
+For a given <span class="math notranslate nohighlight">\(\chi_\gamma\)</span>, <span class="math notranslate nohighlight">\(\chi_\pm\)</span> ranges from <span class="math notranslate nohighlight">\(\chi_{\pm,\min}\)</span> to <span class="math notranslate nohighlight">\(\chi_\gamma\)</span>.</p>
+<figure class="align-default" id="id10">
+<span id="mbw-xi"></span><a class="reference internal image-reference" href="../_images/mbw_xi.png"><img alt="../_images/mbw_xi.png" src="../_images/mbw_xi.png" style="width: 400.0px; height: 300.0px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 70 </span><span class="caption-text">Plot of the xi table as a function of the photon quantum parameter <span class="math notranslate nohighlight">\(\chi_\gamma\)</span>
+and index for the <span class="math notranslate nohighlight">\(\chi_\pm\)</span> axis.
+The <span class="math notranslate nohighlight">\(\chi_\gamma\)</span> axis ranges from <span class="math notranslate nohighlight">\(10^{-2}\)</span> to <span class="math notranslate nohighlight">\(10^{2}\)</span>.
+The <span class="math notranslate nohighlight">\(\chi_\pm\)</span> axis ranges from <span class="math notranslate nohighlight">\(\chi_{\pm,\min}\)</span> to <span class="math notranslate nohighlight">\(\chi_\pm\)</span>.
+It corresponds to the pre-computed table of 512 points.</span><a class="headerlink" href="#id10" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Units &#8212; Smilei 5.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/smilei_theme.css?v=3908db80" />
+    <script src="../_static/documentation_options.js?v=4af8989d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/smileiIcon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PIC algorithms" href="algorithms.html" />
+    <link rel="prev" title="Understand" href="../understand.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      scale: 95,
+      availableFonts: ["TeX"]
+    }
+  });
+  </script>
+   
+  </head><body>
+
+<div id="smallScreenMenu" class="off">
+
+    
+    <div class="toctree-smilei">
+        <ul>
+            <li class="outer">
+                <a href="../Overview/synopsis.html">Synopsis</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/highlights.html">Highlights</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/releases.html">Releases</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/licence.html">Licence</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/material.html">Publications</a>
+            </li>
+            <li class="outer">
+                <a href="../Overview/partners.html">Partners</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+        </ul>
+                <ul>
+<li><a class="reference internal" href="#">Units</a><ul>
+<li><a class="reference internal" href="#basic-reference-quantities">Basic reference quantities</a></li>
+<li><a class="reference internal" href="#arbitrary-reference-quantities">Arbitrary reference quantities</a></li>
+<li><a class="reference internal" href="#tips-for-the-namelist">Tips for the namelist</a></li>
+<li><a class="reference internal" href="#problems-requiring-explicit-units">Problems requiring explicit units</a></li>
+<li><a class="reference internal" href="#quantities-integrated-over-the-grid">Quantities integrated over the grid</a></li>
+<li><a class="reference internal" href="#macro-particle-weights">Macro-particle weights</a></li>
+</ul>
+</li>
+</ul>
+
+        <ul id="smallScreenMenuAfterTOC">
+            <li class="outer">
+                <a href="algorithms.html">PIC algorithms</a>
+            </li>
+            <li class="outer">
+                <a href="performances.html">Parallelization & optimization</a>
+            </li>
+            <li class="outer">
+                <a href="physics_modules.html">Physics modules</a>
+            </li>
+            <li class="outer">
+                <a href="numerical_techniques.html">Advanced numerical techniques</a>
+            </li>
+            <li class="outer">
+                <a href="PML.html">Perfectly Matched Layers</a>
+            </li>
+        </ul>
+        <hr />
+        <ul>
+            <li class="outer">
+                <a href="../Use/installation.html">Install</a>
+            </li>
+            <li class="outer">
+                <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/namelist.html">Write a namelist</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/run.html">Run</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/post-processing.html">Post-process</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/contribute.html">Contribute</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/troubleshoot.html">Troubleshoot</a>
+            </li>
+            <li class="outer">
+                <a href="../Use/GPU_version.html">GPU version</a>
+            </li>
+        </ul>
+        <hr />
+    </div>
+
+</div>
+<div id="hcontainer">
+    <div id="nav_positioner">
+        <div id="nav">
+            <div id="nav_button" onclick="toggleNav()">
+                Sections
+            </div>
+            <div id="nav_list" class="toctree-smilei">
+                <div id="nav_title"><a href="#">Units</a></div>
+                <ul>
+<li><a class="reference internal" href="#">Units</a><ul>
+<li><a class="reference internal" href="#basic-reference-quantities">Basic reference quantities</a></li>
+<li><a class="reference internal" href="#arbitrary-reference-quantities">Arbitrary reference quantities</a></li>
+<li><a class="reference internal" href="#tips-for-the-namelist">Tips for the namelist</a></li>
+<li><a class="reference internal" href="#problems-requiring-explicit-units">Problems requiring explicit units</a></li>
+<li><a class="reference internal" href="#quantities-integrated-over-the-grid">Quantities integrated over the grid</a></li>
+<li><a class="reference internal" href="#macro-particle-weights">Macro-particle weights</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="headercolor">
+    </div>
+    <div class="hpositioner">
+        <div class="header">
+        <div class="logo">
+            <a href="../index.html">
+                <img class="logo" src="../_static/smileiLogo.svg" alt="Logo" />
+            </a>
+            <!--
+            <div style="height:7mm; position: absolute; top:2mm; left:-32mm; padding: 1mm 2mm 0 2mm; border-radius: 2mm; background-color:#C5DCEA; background-color:var(--header_text);">
+                <a href="https://indico.math.cnrs.fr/e/smilei5">
+                    <img src="../_static/workshopLogo.svg" alt="workshop"
+                        style="height:5mm;padding-top: 1mm;" />
+                </a>
+            </div>
+            -->
+        </div>
+        <div class="menu"
+            id="menu_Overview"
+            
+        >
+            <div id="menuButton_Overview" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Overview')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../overview.html">
+                    <span>Overview</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Overview',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Overview/synopsis.html">Synopsis</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/highlights.html">Highlights</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/releases.html">Releases</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/licence.html">Licence</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/material.html">Publications</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Overview/partners.html">Partners</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="menu"
+            id="menu_Understand"
+            style="font-weight:bold"
+        >
+            <div id="menuButton_Understand" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Understand')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../understand.html">
+                    <span>Understand</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Understand',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li >
+                            <a href="#">Units</a>
+                        </li>
+                        <li class="outer">
+                            <a href="algorithms.html">PIC algorithms</a>
+                        </li>
+                        <li class="outer">
+                            <a href="performances.html">Parallelization & optimization</a>
+                        </li>
+                        <li class="outer">
+                            <a href="physics_modules.html">Physics modules</a>
+                        </li>
+                        <li class="outer">
+                            <a href="numerical_techniques.html">Advanced numerical techniques</a>
+                        </li>
+                        <li class="outer">
+                            <a href="PML.html">Perfectly Matched Layers</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="last menu"
+            id="menu_Use"
+            
+        >
+            <div id="menuButton_Use" class="menuButton"
+                 onmouseenter="prepareMenu('menu_Use')"
+                 onmousedown="event.preventDefault()"
+            >
+                <a href="../use.html">
+                    <span>Use</span>
+                </a>
+            </div>
+            <div class="off" onmouseleave="leaveMenu('menu_Use',this)">
+                <div class="toctree-smilei">
+                    <ul>
+                        <li class="outer">
+                            <a href="../Use/installation.html">Install</a>
+                        </li>
+                        <li class="outer">
+                            <a href="https://smileipic.github.io/tutorials">Smilei tutorials</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/namelist.html">Write a namelist</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/run.html">Run</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/post-processing.html">Post-process</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/contribute.html">Contribute</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/troubleshoot.html">Troubleshoot</a>
+                        </li>
+                        <li class="outer">
+                            <a href="../Use/GPU_version.html">GPU version</a>
+                        </li>
+        
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var es=document.getElementsByClassName("menuButton"), i=0;
+            var evt = "ontouchend" in document ? "touchend" : "click";
+            for( var i=0; i<es.length; i+=1 ) {
+                es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
+            }
+        </script>
+        
+        <div id="searchbox" role="search" style="display:none">
+            <form class="search" action="../search.html" method="get">
+              <input type="text" name="q" placeholder="Search" id="searchinput" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+        
+        <div id="searchicon" onclick="openSearch()" style="display:block">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g transform="translate(0,-932.36216)" >
+                <circle
+                   r="25" cy="977.51044" cx="38.078663"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+                <rect
+                   transform="matrix(0.36717877,0.93015039,-0.93427297,0.35655858,0,0)"
+                   rx="4.9996676" ry="7.4995141" x="947.6142" y="316.16959"
+                   height="14.117695" width="46.476151"
+                   style="opacity:1;fill:#ffffff;fill:var(--header_text);fill-opacity:1;stroke:none;" />
+                <path
+                   d="m 41.383282,962.25996 a 15,15 0 0 1 11.660107,11.6355"
+                   style="opacity:1;fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:3;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+              </g>
+            </svg>
+        </div>
+        <div id="closesearchicon" onclick="closeSearch()" style="display:none">
+            <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 80 120">
+              <g
+                 transform="translate(0,-932.36216)"
+                 style="fill:none;stroke:#ffffff;stroke:var(--header_text);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none">
+                <path d="m 10,962.36216 60,60.00004" />
+                <path d="M 70,962.36216 10,1022.3622" />
+              </g>
+            </svg>
+        </div>
+        
+        <div id="smallScreenMenuButton" onclick="event.preventDefault(); toggleSmallScreenMenu(event)">
+            <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+               viewBox="-20 -20 140 140">
+              <g  style="fill:#ffffff; fill:var(--header_text);stroke:none;">
+                <circle cx="15" cy="20" r="5" />
+                <circle cx="35" cy="20" r="5" />
+                <circle cx="85" cy="20" r="5" />
+                <rect width="50" height="10" x="35" y="15" rx="0" ry="0" />
+                <circle cx="15" cy="40" r="5" />
+                <circle cx="35" cy="40" r="5" />
+                <circle cx="85" cy="40" r="5" />
+                <rect width="50" height="10" x="35" y="35" rx="0" ry="0" />
+                <circle cx="15" cy="60" r="5" />
+                <circle cx="35" cy="60" r="5" />
+                <circle cx="85" cy="60" r="5" />
+                <rect width="50" height="10" x="35" y="55" rx="0" ry="0" />
+                <circle cx="15" cy="80" r="5" />
+                <circle cx="35" cy="80" r="5" />
+                <circle cx="85" cy="80" r="5" />
+                <rect width="50" height="10" x="35" y="75" rx="0" ry="0" />
+              </g>
+            </svg>
+        </div>
+        
+    </div>
+    
+</div>
+</div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="units">
+<h1>Units<a class="headerlink" href="#units" title="Link to this heading">¶</a></h1>
+<p>Like many PIC codes, <strong class="program">Smilei</strong> handles only <strong>dimension-less variables</strong>,
+normalized to <em>reference</em> quantities.</p>
+<hr class="docutils" />
+<section id="basic-reference-quantities">
+<h2>Basic reference quantities<a class="headerlink" href="#basic-reference-quantities" title="Link to this heading">¶</a></h2>
+<p>The speed of light, the elementary charge and the electron mass provide the basis
+of the normalizations in <strong class="program">Smilei</strong>:</p>
+<ul class="simple">
+<li><p>Reference electric charge <span class="math notranslate nohighlight">\(Q_r = e\)</span> (the elementary charge)</p></li>
+<li><p>Reference mass <span class="math notranslate nohighlight">\(M_r = m_e\)</span> (the electron mass)</p></li>
+<li><p>Reference velocity <span class="math notranslate nohighlight">\(V_r = c\)</span> (the speed of light)</p></li>
+</ul>
+<p>We can derive from these:</p>
+<ul class="simple">
+<li><p>a reference energy <span class="math notranslate nohighlight">\(K_r = m_e c^2\)</span></p></li>
+<li><p>a reference momentum <span class="math notranslate nohighlight">\(P_r = m_e c\)</span></p></li>
+</ul>
+<p>Even with these normalizations, <strong class="program">Smilei</strong> <strong>does not know the scale of the problem</strong>:
+it lacks a reference distance, or equivalently, a reference time.</p>
+</section>
+<hr class="docutils" />
+<section id="arbitrary-reference-quantities">
+<h2>Arbitrary reference quantities<a class="headerlink" href="#arbitrary-reference-quantities" title="Link to this heading">¶</a></h2>
+<p>Instead of choosing a physical constant (for example, the electron radius) as a reference,
+the scale of the problem is not decided <em>a priori</em>, and the user is free to scale the result
+of the simulation to any value.
+In fact, quantities are proportional an <em>unknown</em> reference frequency
+<span class="math notranslate nohighlight">\(\omega_r\)</span>, which can be scaled by the user <em>a posteriori</em>.</p>
+<p>Usually, <span class="math notranslate nohighlight">\(\omega_r\)</span> will be an important frequency of the problem.
+For example, if there is a laser, it could be the laser frequency.
+Or it could be the electron plasma frequency.</p>
+<p>From this reference frequency <span class="math notranslate nohighlight">\(\omega_r\)</span>, we define:</p>
+<ul class="simple">
+<li><p>a reference time <span class="math notranslate nohighlight">\(T_r = 1/\omega_r\)</span></p></li>
+<li><p>a reference length <span class="math notranslate nohighlight">\(L_r = c/\omega_r\)</span></p></li>
+<li><p>a reference electric field <span class="math notranslate nohighlight">\(E_r = m_e c \omega_r / e\)</span></p></li>
+<li><p>a reference magnetic field <span class="math notranslate nohighlight">\(B_r = m_e \omega_r / e\)</span></p></li>
+<li><p>a reference particle density <span class="math notranslate nohighlight">\(N_r = \varepsilon_0 m_e \omega_r^2 /e^2\)</span></p></li>
+<li><p>a reference current <span class="math notranslate nohighlight">\(J_r = c\, e\, N_r\)</span></p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><span class="math notranslate nohighlight">\(1/N_r\)</span> is a volume, but counter-intuitively, it is <strong>not equal</strong> to <span class="math notranslate nohighlight">\(L_r^{3}\)</span>.</p>
+</div>
+<p>Normalizing all quantities to these references is convenient for resolving Maxwell’s equations,
+and the charges equation of motion, as it converts them into a dimension-less set of equations:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\begin{split}\mathbf{\nabla}\cdot\mathbf{E} = \rho
+\quad\quad
+\nabla\cdot\mathbf{B} &amp; = 0 \\\end{split}\\\nabla\times\mathbf{E} = - \partial_t \mathbf{B}
+\quad\quad
+\nabla\times\mathbf{B} = &amp; \; \mathbf{j} + \partial_t \mathbf{E}\end{aligned}\end{align} \]</div>
+<div class="math notranslate nohighlight">
+\[\partial_t \mathbf{p} = Z \mathbf{E} + Z \mathbf{v}\times\mathbf{B}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{E}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{B}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{j}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{\rho}\)</span>
+are the electric field, magnetic field, current density and charge density, normalized to
+<span class="math notranslate nohighlight">\(E_r\)</span>, <span class="math notranslate nohighlight">\(B_r\)</span>, <span class="math notranslate nohighlight">\(J_r\)</span> and <span class="math notranslate nohighlight">\(Q_r N_r\)</span>, respectively. <span class="math notranslate nohighlight">\(Z\)</span> and
+<span class="math notranslate nohighlight">\(\mathbf p\)</span> are a particle’s charge and momentum, normalized to <span class="math notranslate nohighlight">\(Q_r\)</span> and
+<span class="math notranslate nohighlight">\(P_r\)</span>, respectively. Note that the temporal and spatial derivatives are also
+normalized to <span class="math notranslate nohighlight">\(T_r\)</span> and <span class="math notranslate nohighlight">\(L_r\)</span>, respectively.</p>
+</section>
+<hr class="docutils" />
+<section id="tips-for-the-namelist">
+<h2>Tips for the namelist<a class="headerlink" href="#tips-for-the-namelist" title="Link to this heading">¶</a></h2>
+<p>In the <a class="reference internal" href="../Use/namelist.html"><span class="doc">namelist</span></a>, the user must provide all parameters in units of <span class="math notranslate nohighlight">\(Q_r\)</span>,
+<span class="math notranslate nohighlight">\(M_r\)</span>, <span class="math notranslate nohighlight">\(V_r\)</span>, <span class="math notranslate nohighlight">\(K_r\)</span>, <span class="math notranslate nohighlight">\(P_r\)</span>, <span class="math notranslate nohighlight">\(T_r\)</span>, <span class="math notranslate nohighlight">\(L_r\)</span>, <span class="math notranslate nohighlight">\(E_r\)</span>,
+<span class="math notranslate nohighlight">\(B_r\)</span>, <span class="math notranslate nohighlight">\(N_r\)</span> or <span class="math notranslate nohighlight">\(J_r\)</span>.</p>
+<p>This may be cumbersome if you know your input data in other units.
+However, the namelist is actually a <em>python</em> code that can compute conversions easily.</p>
+<p>For example, let us assume that you know your problem size in units of the wavelength.
+Knowing that the reference wavelength is <span class="math notranslate nohighlight">\(2\pi L_r\)</span>, you can multiply all your
+lengths by <span class="math notranslate nohighlight">\(2\pi\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">pi</span>
+<span class="n">cell_length</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">wavelength</span><span class="p">]</span>
+<span class="n">grid_length</span>  <span class="o">=</span> <span class="p">[</span><span class="mf">100.</span> <span class="o">*</span> <span class="n">wavelength</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="problems-requiring-explicit-units">
+<h2>Problems requiring explicit units<a class="headerlink" href="#problems-requiring-explicit-units" title="Link to this heading">¶</a></h2>
+<p>Sometimes, <strong class="program">Smilei</strong> may be requested to compute other things than Maxwell’s
+equations. That is the case, for example, for computing <a class="reference internal" href="collisions.html"><span class="doc">collisions</span></a> or ionization.
+In these situations, equations cannot be normalized to dimension-less terms, and
+the code must know the value of <span class="math notranslate nohighlight">\(\omega_r\)</span> in physical units. This requires
+defining an <a class="reference internal" href="../Use/namelist.html#reference-angular-frequency-si"><span class="std std-ref">extra parameter in the namelist</span></a>.</p>
+<p>For instance, <code class="docutils literal notranslate"><span class="pre">reference_angular_frequency_SI</span> <span class="pre">=</span> <span class="pre">2.*pi*3e8/1e-6</span></code> means that
+<span class="math notranslate nohighlight">\(L_r = 1\,\mathrm{\mu m} /(2\pi)\)</span>.
+This information will be used only in some specific parts of the code (collisions, ionization, …)
+but not in the main PIC algorithms.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The outputs of the code are not converted to SI.
+They are all kept in the reference units listed above.</p>
+</div>
+<hr class="docutils" />
+</section>
+<section id="quantities-integrated-over-the-grid">
+<span id="integrated-quantities"></span><h2>Quantities integrated over the grid<a class="headerlink" href="#quantities-integrated-over-the-grid" title="Link to this heading">¶</a></h2>
+<p>Special care must be taken when considering local quantities that are spatially
+integrated.</p>
+<p class="rubric">1. The spatially-integrated kinetic energy density</p>
+<p>The particle kinetic energy density is naturally in units of <span class="math notranslate nohighlight">\(K_r N_r\)</span>.
+Integrating over space give different results depending on the simulation dimension.
+In 1D, this space is a length, with units <span class="math notranslate nohighlight">\(L_r\)</span>; in 2D, it is a surface, with units
+<span class="math notranslate nohighlight">\(L_r^2\)</span>; and in 3D, it is a volume, with units <span class="math notranslate nohighlight">\(L_r^3\)</span>.
+Overall, the integrated energy has the units <span class="math notranslate nohighlight">\(K_r N_r L_r^D\)</span>
+where <span class="math notranslate nohighlight">\(D\)</span> is the simulation dimension. Note that we could expect
+to obtain, in 3D, an energy with units <span class="math notranslate nohighlight">\(K_r\)</span>, but counter-intuitively
+it has the units <span class="math notranslate nohighlight">\(K_r N_r L_r^3\)</span>.</p>
+<p>These kinetic energies appear, for instance, in the <a class="reference internal" href="../Use/namelist.html#diagscalar"><span class="std std-ref">Scalar diagnostics</span></a> as
+<code class="docutils literal notranslate"><span class="pre">Ukin</span></code> (and associated quantities).</p>
+<p class="rubric">2. The spatially-integrated electromagnetic energy density</p>
+<p>The electromagnetic energy density has the units <span class="math notranslate nohighlight">\(E_r^2/\varepsilon_0 = K_r N_r\)</span>.
+Consequently, the spatially-integrated electromagnetic energy density has
+the units <span class="math notranslate nohighlight">\(K_r N_r L_r^D\)</span>; the same as the integrated kinetic energy density above.</p>
+<p>These electromagnetic energies appear, for instance, in the <a class="reference internal" href="../Use/namelist.html#diagscalar"><span class="std std-ref">Scalar diagnostics</span></a> as
+<code class="docutils literal notranslate"><span class="pre">Uelm</span></code> (and associated quantities).</p>
+<p class="rubric">3. The space- &amp; time-integrated Poynting flux</p>
+<p>The Poynting flux has the units <span class="math notranslate nohighlight">\(E_r B_r / \mu_0 = V_r K_r N_r\)</span>.
+Consequently, the flux integrated over a boundary, and over time, has the units
+<span class="math notranslate nohighlight">\(V_r K_r N_r L_r^{D-1} T_r = K_r N_r L_r^D\)</span>, which is the same as the
+integrated energy densities above.</p>
+<p>This integrated Poynting flux appears, for instance, in the <a class="reference internal" href="../Use/namelist.html#diagscalar"><span class="std std-ref">Scalar diagnostics</span></a> as
+<code class="docutils literal notranslate"><span class="pre">Uelm_bnd</span></code>, <code class="docutils literal notranslate"><span class="pre">PoyXmin</span></code>, <code class="docutils literal notranslate"><span class="pre">PoyXminInst</span></code> (and associated quantities).</p>
+<hr class="docutils" />
+</section>
+<section id="macro-particle-weights">
+<span id="weights"></span><h2>Macro-particle weights<a class="headerlink" href="#macro-particle-weights" title="Link to this heading">¶</a></h2>
+<p>Macro-particles are assigned a <em>statistical weight</em> which measures
+their contribution to the plasma distribution function.
+In <strong class="program">Smilei</strong>, this weight is defined for each particle at the moment of its creation
+(usually at the beginning of the simulation),
+and is never modified afterwards. Its definition reads:</p>
+<div class="math notranslate nohighlight">
+\[\textrm{macro-particle weight} = \frac
+    {\textrm{species density} \times \textrm{cell hypervolume}}
+    {\textrm{number of macro-particles in cell}}\]</div>
+<p>As the density is in units of <span class="math notranslate nohighlight">\(N_r\)</span> and the cell hypervolume in
+units of <span class="math notranslate nohighlight">\(L_r^D\)</span> (where <span class="math notranslate nohighlight">\(D\)</span> is the simulation dimension),
+then the units of weights is <span class="math notranslate nohighlight">\(N_r L_r^D\)</span>.</p>
+<p>This definition of weights ensures that they do not depend on the
+cell hypervolume, i.e. they can be reused in another simulation, as long as
+<span class="math notranslate nohighlight">\(D\)</span>, <span class="math notranslate nohighlight">\(L_r\)</span> and <span class="math notranslate nohighlight">\(N_r\)</span> are unchanged.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      <div>
+        <input type="button" id="themebutton"  value="" onclick="switchTheme('')" />
+      </div>
+      <div>
+      <a href="site.html">Site index</a>
+      </div>
+      <div>
+        Last updated on May 26, 2025
+      </div>
+      
+      <div>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      </div>
+      
+    </div>
+    
+    <script type="text/javascript">
+        
+        var nav = document.getElementById("nav");
+        var nav_list = document.getElementById("nav_list");
+        var nav_button = document.getElementById("nav_button");
+        var smallScreenMenu = document.getElementById("smallScreenMenu");
+        var smallScreenMenuButton = document.getElementById("smallScreenMenuButton");
+        var searchicon = document.getElementById("searchicon");
+        var searchbox  = document.getElementById("searchbox");
+        var searchinput= document.getElementById("searchinput");
+        var menus = document.getElementsByClassName("menu");
+        for( var i=0; i<menus.length; i++ )
+            menus[i].active = false;
+        
+        // Manage theme
+        var theme="light";
+        function switchTheme(type) {
+            if( type == "dark" || ( ! type && theme == "light" ) ) {
+                theme = "dark";
+                document.documentElement.setAttribute('theme', 'dark');
+                window.name = "dark_theme"
+                localStorage.setItem("_theme","dark")
+            } else {
+                theme = "light";
+                document.documentElement.setAttribute('theme', 'light');
+                window.name = "light_theme"
+                localStorage.setItem("_theme","light")
+            }
+        }
+        if( window.name && window.name == "light_theme" ) {
+            switchTheme("light");
+        } else if ( window.name && window.name == "dark_theme" ) {
+            switchTheme("dark");
+        } else if( stored_theme = localStorage.getItem("_theme") ) {
+            switchTheme(stored_theme);
+        } else if( window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            switchTheme("dark");
+        }
+        
+        var ul = nav_list.getElementsByTagName("ul")[0], li;
+        var keep_nav = false;
+        if( ul ) {
+            li = ul.firstElementChild;
+            if( li ) {
+                if( li.getElementsByTagName("ul").length > 0 ) keep_nav = true;
+            }
+        }
+        if( keep_nav ) {
+            li.removeChild( li.firstElementChild );
+        } else {
+            document.getElementById("nav_positioner").removeChild( document.getElementById("nav") );
+        }
+        
+        function navOff() {
+            nav_list.style.display = "none";
+            nav_button.className = "";
+            nav.style.overflowY = "visible";
+        }
+        
+        function toggleNav() {
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+            if( nav_list.style.display != "inline-block" ) {
+                nav_list.style.display = "inline-block";
+                nav_button.className = "pushed";
+                nav.style.overflowY = "auto";
+            } else {
+                navOff();
+            }
+        }
+        
+        function toggleSmallScreenMenu(e) {
+            if( smallScreenMenu.className != "on" ) {
+                smallScreenMenu.className = "on";
+                smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
+            } else {
+                smallScreenMenu.className = "off";
+                smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
+            }
+        }
+        
+        if (smallScreenMenuAfterTOC = document.getElementById("smallScreenMenuAfterTOC")) {
+            var smallScreenMenuTOC = smallScreenMenuAfterTOC.previousElementSibling
+                .getElementsByTagName("li")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+            for (var i = 0; i < smallScreenMenuTOC.length; i++) {
+                if (smallScreenMenuTOC[i].tagName = "a") {
+                    smallScreenMenuTOC[i].addEventListener("click", function(event){ toggleSmallScreenMenu(event); } );
+                }
+            }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
+        }
+        
+        function menuOn( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            if(nav_list) navOff();
+            divs[1].className = "on";
+            divs[0].className = "menuButton pushed";
+            menu.active = true;
+        }
+        function menuOff( menu ) {
+            var divs = menu.getElementsByTagName("div");
+            divs[1].className = "off";
+            divs[0].className = "menuButton";
+            menu.active = false;
+        }
+        
+        function thisMenuOnly(menu_id) {
+            var menu = document.getElementById(menu_id);
+            for( var i=0; i<menus.length; i++ )
+                if( i!=menu_id )
+                    menuOff( menus[i] );
+            menuOn( menu );
+        }
+        
+        function toggleMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            if( menu.active ) {
+                menuOff( menu );
+            } else {
+                for( var i=0; i<menus.length; i++ )
+                    if( i!=menu_id )
+                        menuOff( menus[i] );
+                menuOn( menu );
+            }
+        }
+        
+        function openSearch() {
+            for( var i=0; i<menus.length; i++ ) {
+                menuOff( menus[i] );
+                menus[i].style.zIndex = "-1";
+            }
+            searchicon.style.display = "none";
+            closesearchicon.style.display = "block";
+            searchbox.style.display = "block";
+            searchinput.focus();
+        }
+        
+        function closeSearch() {
+            searchicon.style.display = "block";
+            closesearchicon.style.display = "none";
+            searchbox .style.display = "none";
+            for( var i=0; i<menus.length; i++ )
+                menus[i].style.zIndex = "0";
+        }
+        
+        
+        var documentDiv = document.getElementsByClassName("document")[0];
+        documentDiv.addEventListener('click', function (event) {
+            if(nav_list) navOff();
+            for( var i=0; i<menus.length; i++ )
+                menuOff( menus[i] );
+        });
+    </script>
+  </body>
+</html>
