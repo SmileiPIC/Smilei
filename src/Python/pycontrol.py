@@ -210,7 +210,7 @@ def writeInfo():
     import shelve
     singletons = {}
     components = {}
-    with shelve.open("info.shelf") as f:
+    with shelve.open("info.shelf", "n") as f:
         for name,var in globals().items():
             if type(var) is type(Main):
                 singletons[name] = {k:v for k,v in var.__dict__.items() if not k.startswith("_") and pickable(v)}
