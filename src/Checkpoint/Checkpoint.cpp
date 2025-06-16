@@ -1093,7 +1093,7 @@ void Checkpoint::restartParticles( H5Read& s, Particles &p )
     s.vect( "Weight", p.Weight );
     s.vect( "Charge", p.Charge );
     
-    if( p.tracked ) {
+    if( p.tracked && s.has( "Id" ) ) {
         s.vect( "Id", p.Id, H5T_NATIVE_UINT64 );
     }
     

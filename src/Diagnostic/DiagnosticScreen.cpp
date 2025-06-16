@@ -282,15 +282,17 @@ void DiagnosticScreen::run( Patch *patch, int, SimWindow *simWindow )
                 double side = 0.;
                 double side_old = 0.;
                 double dtg = dt / s->particles->LorentzFactor( ipart );
-                for( unsigned int idim=0; idim<ndim; idim++ ) {
-                    double u1 = s->particles->Position[(idim+1)%ndim][ipart] - screen_point[(idim+1)%ndim];
-                    double u2 = s->particles->Position[(idim+2)%ndim][ipart] - screen_point[(idim+2)%ndim];
-                    side += ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] ) * 
-                            ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] );
-                    u1 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
-                    u2 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
-                    side_old += ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] ) *
-                                ( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim] );
+                for( size_t idim=0; idim<ndim; idim++ ) {
+                    size_t idim1 = (idim+1)%ndim;
+                    size_t idim2 = (idim+2)%ndim;
+                    double u1 = s->particles->Position[idim1][ipart] - screen_point[idim1];
+                    double u2 = s->particles->Position[idim2][ipart] - screen_point[idim2];
+                    double d = u1 * screen_unitvector[idim2] - u2 * screen_unitvector[idim1];
+                    side += d*d;
+                    u1 -= dtg * s->particles->Momentum[idim1][ipart];
+                    u2 -= dtg * s->particles->Momentum[idim2][ipart];
+                    d = u1 * screen_unitvector[idim2] - u2 * screen_unitvector[idim1];
+                    side_old += d*d;
                 }
                 side     = r2 - side;
                 side_old = r2 - side_old;

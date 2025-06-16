@@ -49,7 +49,8 @@ Changes made in the repository (not released)
   * 1D projector on GPU without diagnostics.
   * Fix a bug which would give false results when ionization was activated with vectorization and frozen species.
   * OpenPMD compatibility: fixed units of density and weight.
-  * ``LaserGaussian3D`` was giving slightly wrong amplitude with large incidence angle.
+  * ``LaserGaussian3D`` was giving wrong amplitude with large incidence angle.
+  * Fix bug in ``Screen`` with a cylindrical shape.
 
 
 ----
