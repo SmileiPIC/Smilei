@@ -122,8 +122,8 @@ The initialized fields will be superimposed to the electromagnetic fields alread
 
 Remember that the transverse field of a moving charge with relativistic factor :math:`\gamma` is greater than the electrostatic transverse field of that charge, by a factor :math:`\gamma`. 
 This means that for highly relativistic particles, you will need to use a transversely large simulation window to let the field decrease enough to reduce border effects during its propagation. 
-A complete absence of boundary effects in this case would be provided by perfectly absorbing boundary conditions, which are not implemented yet in the code. 
-If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
+Perfectly Matched Layer boundary conditions may mitigate this need.
+If the relativistic species propagates in a plasma, these border effects may be partially screened by the plasma.
 
 A relativistic mean velocity in the :math:`x` or :math:`-x` direction and a negligible energy spread are assumed for each species in the hypotheses of this procedure. In particular it is assumed that all :math:`p_x` of the macro-particles of a species are of the same sign. The user must ensure these conditions when defining the species requiring field initialization in the namelist. 
 In order to describe a non-monoenergetic species, it is necessary to divide it into into several sub-species for which the assumptions hold.
