@@ -190,7 +190,21 @@ PyArrayObject *Function_Python4D::valueAt( std::vector<PyArrayObject *> x, doubl
     Py_DECREF( t );
     SMILEI_PY_RELEASE_GIL
     return ret;
-}PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
+}
+PyArrayObject *Function_Python3D::complexValueAt( std::vector<PyArrayObject *> x, double time )
+{
+    PyArrayObject *cvalues;
+    SMILEI_PY_ACQUIRE_GIL
+    PyObject *t = PyFloat_FromDouble( time );
+    PyObject * values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], t, NULL );
+    Py_DECREF( t );
+    cvalues = ( PyArrayObject * )PyObject_CallMethod( values, const_cast<char *>("astype"), const_cast<char *>("s"), const_cast<char *>("complex"), NULL );
+    Py_DECREF( values );
+    SMILEI_PY_RELEASE_GIL
+    return cvalues;
+}
+
+PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
 {
     PyArrayObject *cvalues;
     SMILEI_PY_ACQUIRE_GIL
