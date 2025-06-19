@@ -284,7 +284,7 @@ void Projector3D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     //Locate particle on the grid
     xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
     ypn    = particles.position( 1, ipart ) * dy_inv_; // normalized distance to the first node
-    zpn    = particles.position( 1, ipart ) * dz_inv_; // normalized distance to the first node
+    zpn    = particles.position( 2, ipart ) * dz_inv_; // normalized distance to the first node
 
     // x-primal index
     ip      = round( xpn );                  // x-index of the central node
