@@ -296,7 +296,7 @@ class Validation(object):
                 if date(SMILEI_W) < date(SMILEI_R):
                     # The workdir smilei bin is outdated (recompilation occured), archive the workdir
                     if self.options.verbose:
-                        print(" Achiving the old workdir.")
+                        print(" Archiving the old workdir.")
                     workdir_archiv()
 
             if not exists(SMILEI_W):
