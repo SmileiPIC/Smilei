@@ -647,7 +647,9 @@ public:
                 );
             }
             for( unsigned int ii=0; ii<2; ii++ ) {
-                if( this_species->boundary_conditions_[iDim][ii] == "thermalize" ) {
+                const std::string &bc = this_species->boundary_conditions_[iDim][ii];
+                const bool is_thermalize_like = ( bc == "thermalize" ) || ( bc.rfind( "angle_threshold", 0 ) == 0 );
+                if( is_thermalize_like ) {
                     has_thermalize = true;
                     if( this_species->mass_ == 0 ) {
                         ERROR_NAMELIST(

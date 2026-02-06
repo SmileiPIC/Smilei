@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 #include "Particles.h"
 #include "Species.h"
@@ -70,5 +71,22 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 
 void thermalize_particle_wall( Species *species, int imin, int imax, int direction, double limit_pos, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
 
+// angle_threshold BC (direction-general, 2D example):
+// alpha = atan2(|p_perp|, |p_par|) where
+//   p_par  = momentum[direction]        (normal component)
+//   p_perp = momentum[1-direction]      (tangential component)  // 2D only
+// if alpha < alpha0 -> thermalize
+// else              -> reflect            
+void angle_threshold_particle_inf( Species *species, int imin, int imax, int direction,
+                                   double limit_inf, double dt, std::vector<double> &invgf,
+                                   Random * rand, double &energy_change );
+
+void angle_threshold_particle_sup( Species *species, int imin, int imax, int direction,
+                                   double limit_sup, double dt, std::vector<double> &invgf,
+                                   Random * rand, double &energy_change );
+
+void angle_threshold_particle_wall( Species *species, int imin, int imax, int direction,
+                                    double limit_pos, double dt, std::vector<double> &invgf,
+                                    Random * rand, double &energy_change );
 
 #endif

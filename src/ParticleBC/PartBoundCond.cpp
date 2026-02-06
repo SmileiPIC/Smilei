@@ -116,9 +116,14 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
         }
     } else if( species->boundary_conditions_[0][0] == "periodic" ) {
         // Nothing to do
-    } else {
+    } else if( species->boundary_conditions_[0][0].rfind("angle_threshold", 0) == 0 ) {
+        if( patch->isXmin() ) {
+            bc_xmin = &angle_threshold_particle_inf;
+        } 
+	} else {
         ERROR( "Xmin boundary condition `"<<species->boundary_conditions_[0][0]<<"` unknown" );
     }
+
     
     // Xmax
     bc_xmax = &internal_sup;
@@ -140,6 +145,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
         }
     } else if( species->boundary_conditions_[0][1] == "periodic" ) {
         // Nothing to do
+    } else if( species->boundary_conditions_[0][1].rfind("angle_threshold", 0) == 0 ) {
+        if( patch->isXmax() ) {
+            bc_xmax = &angle_threshold_particle_sup;
+		}
     } else {
         ERROR( "Xmax boundary condition `"<<species->boundary_conditions_[0][1]<<"`  unknown" );
     }
@@ -166,7 +175,11 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
             }
         } else if( species->boundary_conditions_[1][0] == "periodic" ) {
             // Nothing to do
-        } else {
+        } else if( species->boundary_conditions_[1][0].rfind("angle_threshold", 0) == 0 ) {
+            if( patch->isYmin() ) {
+                bc_ymin = &angle_threshold_particle_inf;
+            } 
+		} else {
             ERROR( "Ymin boundary condition `"<< species->boundary_conditions_[1][0] << "` unknown" );
         }
         
@@ -190,7 +203,11 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
             }
         } else if( species->boundary_conditions_[1][1] == "periodic" ) {
             // Nothing to do
-        } else {
+        } else if( species->boundary_conditions_[1][1].rfind("angle_threshold", 0) == 0 ) {
+            if( patch->isYmax() ) {
+                bc_ymax = &angle_threshold_particle_sup;
+			}
+		} else {
             ERROR( "Ymax boundary condition `"<< species->boundary_conditions_[1][1] <<"` undefined" );
         }
         

@@ -7,6 +7,10 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <string>
+#include <algorithm>
+#include <cctype>
+
 #include "BoundaryConditionType.h"
 #include "Params.h"
 #include "userFunctions.h"
@@ -917,6 +921,283 @@ void thermalize_particle_wall( Species *species, int imin, int imax, int directi
             stop_particle( species->particles, ipart, direction, limit_pos, params, energy_change );
             }
             */
+        }
+    }
+}
+
+
+// ==== angle_threshold particle boundary condition ====
+
+namespace {
+
+// Trim whitespace
+inline std::string strip_spaces( std::string s )
+{
+    s.erase(
+        std::remove_if(
+            s.begin(), s.end(),
+            []( unsigned char c ) { return std::isspace( c ); }
+        ),
+        s.end()
+    );
+    return s;
+}
+
+// Parse boundary condition string:
+//   "angle_threshold:3deg"  -> 3 degrees in radians
+//   "angle_threshold:0.05"  -> 0.05 radians (default unit)
+//   "angle_threshold:0.05rad" -> 0.05 radians
+// If no parameter is provided ("angle_threshold"), defaults to pi/2 (≈ always thermalize).
+inline double parse_angle0_rad_from_bc( const std::string &bc )
+{
+    const double pi = std::acos( -1.0 );
+    const double half_pi = 0.5 * pi;
+
+    auto pos = bc.find( ':' );
+    if( pos == std::string::npos ) {
+        return half_pi;
+    }
+
+    std::string s = strip_spaces( bc.substr( pos + 1 ) );
+    bool is_deg = false;
+    bool is_rad = false;
+
+    if( s.size() >= 3 && s.compare( s.size() - 3, 3, "deg" ) == 0 ) {
+        is_deg = true;
+        s = s.substr( 0, s.size() - 3 );
+    } else if( s.size() >= 3 && s.compare( s.size() - 3, 3, "rad" ) == 0 ) {
+        is_rad = true;
+        s = s.substr( 0, s.size() - 3 );
+    }
+
+    double val = std::atof( s.c_str() );
+    if( val < 0.0 ) {
+        val = -val;
+    }
+
+    if( is_deg ) {
+        val *= pi / 180.0;
+    } else if( is_rad ) {
+        // already radians
+    } else {
+        // default: radians
+    }
+
+    // Clamp to [0, pi/2] for sanity
+    if( val < 0.0 ) val = 0.0;
+    if( val > half_pi ) val = half_pi;
+
+    return val;
+}
+
+// Compute alpha = atan2(|p_perp|, |p_par|), where p_par is the momentum component along "direction"
+// and p_perp is the magnitude of the momentum component(s) perpendicular to it.
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+#pragma acc routine seq
+#endif
+#ifdef SMILEI_ACCELERATOR_GPU_OMP
+#pragma omp declare target
+#endif
+
+inline double compute_alpha( int direction,
+                             const double *px, const double *py, const double *pz,
+                             int ipart )
+{
+    // Use full 3-velocity (3V) information even in 1D/2D geometries (e.g., 1D3V, 2D3V).
+    // direction is the boundary normal axis (0:x, 1:y, 2:z).
+    const double p_par =
+        ( direction == 0 ) ? px[ipart] :
+        ( direction == 1 ) ? py[ipart] :
+                             pz[ipart];
+
+    double p_perp2 = 0.0;
+    if( direction != 0 ) p_perp2 += px[ipart]*px[ipart];
+    if( direction != 1 ) p_perp2 += py[ipart]*py[ipart];
+    if( direction != 2 ) p_perp2 += pz[ipart]*pz[ipart];
+
+    return std::atan2( std::sqrt( p_perp2 ), std::fabs( p_par ) );
+}
+#ifdef SMILEI_ACCELERATOR_GPU_OMP
+#pragma omp end declare target
+#endif
+
+
+} // namespace
+
+// angle_threshold BC (domain lower boundary):
+// - if alpha < alpha0 : apply "thermalize" BC
+// - else             : apply "reflective" BC
+void angle_threshold_particle_inf( Species *species, int imin, int imax, int direction,
+                                   double limit_inf, double dt, std::vector<double> &invgf,
+                                   Random * rand, double &energy_change )
+{
+    // Decide alpha0 from the BC string on this side
+    const std::string &bc = species->boundary_conditions_[direction][0];
+    const double alpha0 = parse_angle0_rad_from_bc( bc );
+
+    const int nDim = species->nDim_particle;
+
+    double *pos_dir = species->particles->getPtrPosition( direction );
+    double *p_dir   = species->particles->getPtrMomentum( direction );
+    double *px      = species->particles->getPtrMomentum( 0 );
+    double *py      = species->particles->getPtrMomentum( 1 );
+    double *pz      = species->particles->getPtrMomentum( 2 );
+
+    // First pass: reflect particles that are outside AND alpha >= alpha0
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+    #pragma acc parallel deviceptr(pos_dir,p_dir,px,py,pz)
+    #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr(pos_dir,p_dir,px,py,pz)
+    #pragma omp teams distribute parallel for
+#endif
+    for( int ipart=imin; ipart<imax; ipart++ ) {
+        if( pos_dir[ipart] < limit_inf ) {
+            const double alpha = compute_alpha( direction, px, py, pz, ipart );
+            if( alpha >= alpha0 ) {
+                // Reflect
+                pos_dir[ipart] = 2.0 * limit_inf - pos_dir[ipart];
+                p_dir[ipart]   = -p_dir[ipart];
+            }
+        }
+    }
+
+    // Second pass: remaining outside particles get the standard thermalize BC
+    double thermal_energy_change = 0.0;
+    thermalize_particle_inf( species, imin, imax, direction, limit_inf, dt, invgf, rand, thermal_energy_change );
+    energy_change = thermal_energy_change;
+}
+
+// angle_threshold BC (domain upper boundary):
+// - if alpha < alpha0 : apply "thermalize" BC
+// - else             : apply "reflective" BC
+void angle_threshold_particle_sup( Species *species, int imin, int imax, int direction,
+                                   double limit_sup, double dt, std::vector<double> &invgf,
+                                   Random * rand, double &energy_change )
+{
+    // Decide alpha0 from the BC string on this side
+    const std::string &bc = species->boundary_conditions_[direction][1];
+    const double alpha0 = parse_angle0_rad_from_bc( bc );
+
+    const int nDim = species->nDim_particle;
+
+    double *pos_dir = species->particles->getPtrPosition( direction );
+    double *p_dir   = species->particles->getPtrMomentum( direction );
+    double *px      = species->particles->getPtrMomentum( 0 );
+    double *py      = species->particles->getPtrMomentum( 1 );
+    double *pz      = species->particles->getPtrMomentum( 2 );
+
+    // First pass: reflect particles that are outside AND alpha >= alpha0
+#ifdef SMILEI_ACCELERATOR_GPU_OACC
+    #pragma acc parallel deviceptr(pos_dir,p_dir,px,py,pz)
+    #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target is_device_ptr(pos_dir,p_dir,px,py,pz)
+    #pragma omp teams distribute parallel for
+#endif
+    for( int ipart=imin; ipart<imax; ipart++ ) {
+        if( pos_dir[ipart] >= limit_sup ) {
+            const double alpha = compute_alpha( direction, px, py, pz, ipart );
+            if( alpha >= alpha0 ) {
+                // Reflect (upper boundary is outside the domain -> reflect just before it)
+                pos_dir[ipart] = 2.0 * std::nextafter( limit_sup, 0.0 ) - pos_dir[ipart];
+                p_dir[ipart]   = -p_dir[ipart];
+            }
+        }
+    }
+
+    // Second pass: remaining outside particles get the standard thermalize BC
+    double thermal_energy_change = 0.0;
+    thermalize_particle_sup( species, imin, imax, direction, limit_sup, dt, invgf, rand, thermal_energy_change );
+    energy_change = thermal_energy_change;
+}
+
+// angle_threshold BC for internal walls.
+// Implemented for completeness: it behaves like thermalize_particle_wall for alpha < alpha0,
+// and like reflect_particle_wall for alpha >= alpha0.
+void angle_threshold_particle_wall( Species *species, int imin, int imax, int direction,
+                                    double wall_position, double dt, std::vector<double> &invgf,
+                                    Random * rand, double &energy_change )
+{
+    const int nDim = species->nDim_particle;
+
+    // Try to find an "angle_threshold:..." string on either side; if absent, default pi/2.
+    const std::string &bc0 = species->boundary_conditions_[direction][0];
+    const std::string &bc1 = species->boundary_conditions_[direction][1];
+    double alpha0 = parse_angle0_rad_from_bc( bc0 );
+    if( bc0.rfind( "angle_threshold", 0 ) != 0 ) {
+        alpha0 = parse_angle0_rad_from_bc( bc1 );
+    }
+
+    double *pos_dir = species->particles->getPtrPosition( direction );
+    double *p_dir   = species->particles->getPtrMomentum( direction );
+
+    double *px      = species->particles->getPtrMomentum( 0 );
+    double *py      = species->particles->getPtrMomentum( 1 );
+    double *pz      = species->particles->getPtrMomentum( 2 );
+    double *weight  = species->particles->getPtrWeight();
+
+    energy_change = 0.0;
+
+    for( int ipart=imin; ipart<imax; ipart++ ) {
+
+        const double particle_position     = pos_dir[ipart];
+        const double particle_position_old = particle_position - dt * invgf[ipart] * species->particles->Momentum[direction][ipart];
+
+        // crossing test (same as reflect_particle_wall / thermalize_particle_wall)
+        if( ( wall_position - particle_position_old ) * ( wall_position - particle_position ) < 0.0 ) {
+
+            const double alpha = compute_alpha( direction, px, py, pz, ipart );
+
+            if( alpha >= alpha0 ) {
+                // Pure reflection (no energy loss)
+                pos_dir[ipart] = 2.0 * wall_position - pos_dir[ipart];
+                p_dir[ipart]   = -p_dir[ipart];
+                continue;
+            }
+
+            // Otherwise: use the existing thermalize wall behavior (copied from thermalize_particle_wall),
+            // which may thermalize or reflect depending on v compared to 3*v_th.
+            // --- begin adapted block ---
+            double p2 = px[ipart] * px[ipart] + py[ipart] * py[ipart] + pz[ipart] * pz[ipart];
+            double LorentzFactor = std::sqrt( 1.0 + p2 );
+            double v = std::sqrt( p2 ) / LorentzFactor;
+
+            double initial_energy = LorentzFactor - 1.0;
+
+            if( v > 3.0 * species->thermal_velocity_[0] ) {
+
+                double sign_vel = -1.0;
+                if( std::abs( p_dir[ipart] ) > 0.0 ) {
+                    sign_vel = -p_dir[ipart] / std::abs( p_dir[ipart] );
+                }
+                p_dir[ipart] = sign_vel * species->thermal_momentum_[direction]
+                    * std::sqrt( -std::log( 1.0 - rand->uniform1() ) );
+
+                // tangential component(s)
+                if( nDim > 1 ) {
+                    // choose transverse index as in original code
+                    int i2 = (direction + 1) % nDim;
+                    double *p_t1 = species->particles->getPtrMomentum( i2 );
+                    p_t1[ipart] = species->thermal_momentum_[i2] * perp_rand( rand );
+
+                    if( nDim > 2 ) {
+                        int i3 = (direction + 2) % nDim;
+                        double *p_t2 = species->particles->getPtrMomentum( i3 );
+                        p_t2[ipart] = species->thermal_momentum_[i3] * perp_rand( rand );
+                    }
+                }
+
+            } else {
+                // low velocity: reflect
+                p_dir[ipart] = -p_dir[ipart];
+            }
+
+            pos_dir[ipart] = 2.0 * wall_position - pos_dir[ipart];
+
+            LorentzFactor = std::sqrt( 1.0 + px[ipart] * px[ipart] + py[ipart] * py[ipart] + pz[ipart] * pz[ipart] );
+            energy_change += weight[ipart] * ( initial_energy - LorentzFactor + 1.0 );
+            // --- end adapted block ---
         }
     }
 }
