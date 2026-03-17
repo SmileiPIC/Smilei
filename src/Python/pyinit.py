@@ -423,6 +423,7 @@ class Species(SmileiComponent):
     radiating = False
     relativistic_field_initialization = False
     boundary_conditions = [["periodic"]]
+    threshold_angle = []
     ionization_model = "none"
     bsi_model = "none"
     ionization_electrons = None

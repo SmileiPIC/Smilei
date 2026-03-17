@@ -815,6 +815,320 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
     energy_change = change_in_energy;
 }
 
+// ============================================================= angle_threshold custom BC start =====
+
+void angle_threshold_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
+{
+    int nDim = species->nDim_particle;
+    double* position = species->particles->getPtrPosition(direction);
+    double* momentum = species->particles->getPtrMomentum(direction);
+    double* momentumRefl_2D = species->particles->getPtrMomentum((direction+1)%nDim);
+    double* momentumRefl_3D = species->particles->getPtrMomentum((direction+2)%nDim);
+    double* momentum_x = species->particles->getPtrMomentum(0);
+    double* momentum_y = species->particles->getPtrMomentum(1);
+    double* momentum_z = species->particles->getPtrMomentum(2);
+    double* weight     = species->particles->getPtrWeight();
+#if defined( SMILEI_ACCELERATOR_GPU ) 
+    uint32_t xorshift32_state = rand->xorshift32_state;
+#endif
+    double change_in_energy = 0.0;
+    double thermal_momentum = species->thermal_momentum_[direction];
+    double thermal_momentum1;
+    double thermal_momentum2;
+	const double alpha0 = species->threshold_angle_[direction][0];
+    if (nDim>1) {
+        thermal_momentum1 = species->thermal_momentum_[(direction+1)%nDim];
+        if (nDim>2) {
+            thermal_momentum2 = species->thermal_momentum_[(direction+2)%nDim];
+        }
+    }
+    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz;
+    // mean-velocity
+    vx  = -species->thermal_boundary_velocity_[0];
+    vy  = -species->thermal_boundary_velocity_[1];
+    vz  = -species->thermal_boundary_velocity_[2];
+    v2  = vx*vx + vy*vy + vz*vz;
+    if( v2>0. ) {
+        g   = 1.0/sqrt( 1.0-v2 );
+        gm1 = g - 1.0;
+        // compute the different component of the Matrix block of the Lorentz transformation
+        Lxx = 1.0 + gm1 * vx*vx/v2;
+        Lyy = 1.0 + gm1 * vy*vy/v2;
+        Lzz = 1.0 + gm1 * vz*vz/v2;
+        Lxy = gm1 * vx*vy/v2;
+        Lxz = gm1 * vx*vz/v2;
+        Lyz = gm1 * vy*vz/v2;
+    }
+#if defined( SMILEI_ACCELERATOR_GPU) // GPU
+        const int nchunks = (imax-imin)/32 + 1 ;
+    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target is_device_ptr( position, momentum, momentumRefl_2D, momentumRefl_3D, momentum_x, momentum_y, momentum_z, weight ) map( tofrom : change_in_energy )
+        #pragma omp teams distribute thread_limit(32) reduction( + : change_in_energy )
+    #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
+        #pragma acc parallel loop gang vector_length(32)  reduction(+ : change_in_energy) independent deviceptr(position, momentum, momentumRefl_2D, momentumRefl_3D,momentum_x,momentum_y,momentum_z,weight)
+    #endif
+        for (int ichunk = 0 ; ichunk < nchunks ; ++ichunk ) {
+                int chunk_size = (ichunk==nchunks-1) ? (imax-imin)%32 : 32;
+                uint32_t xorshift32_state_local = xorshift32_state + ichunk;
+                uint32_t xorshift32_state_array[32];
+            #if defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #pragma acc loop seq
+            #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                //#pragma omp single // does not work with rocm
+            #endif        
+                // Fill  xorshift32_state_array[...] with local state
+                for( int i = 0; i < chunk_size; ++i ){
+                    xorshift32_state_array[i] = Random_namespace::xorshift32(xorshift32_state_local);
+                }
+            #if defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #pragma acc loop vector
+            #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                #pragma omp parallel for 
+            #endif
+                for( int i = 0; i < chunk_size ; ++i ){
+                    int ipart = imin + ichunk * 32 + i;
+#else //CPU
+        #pragma omp simd reduction(+ : change_in_energy)
+        for (int ipart = imin ; ipart < imax ; ++ipart ) {
+#endif            
+            if ( position[ ipart ] < limit_inf) {
+                // checking the particle's velocity compared to the thermal one
+				double p_par  = std::abs( momentum[ipart] );
+				double p2     = momentum_x[ipart]*momentum_x[ipart]
+							  + momentum_y[ipart]*momentum_y[ipart]
+							  + momentum_z[ipart]*momentum_z[ipart];
+				double LorentzFactor = sqrt( 1.0 + p2 );
+				double initial_energy = LorentzFactor - 1.0;
+
+				double p_perp2 = p2 - p_par*p_par;
+				if( p_perp2 < 0.0 ) p_perp2 = 0.0;
+				double p_perp = std::sqrt( p_perp2 );
+				double alpha  = std::atan2( p_perp, p_par );
+				
+				if( alpha <= alpha0 ) {
+					double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
+                    #if defined( SMILEI_ACCELERATOR_GPU ) 
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - Random_namespace::uniform1(xorshift32_state_array[i]) ) );
+                    #else
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - rand->uniform1() ) );
+                    #endif
+
+                        // change of momentum in the direction(s) along the reflection plane
+                        if (nDim>1) {
+                            #if defined( SMILEI_ACCELERATOR_GPU ) 
+                                momentumRefl_2D[ ipart ] = thermal_momentum1 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
+                            #else
+                                momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand( rand );
+                            #endif
+                            if (nDim>2) {
+                                #if defined( SMILEI_ACCELERATOR_GPU ) 
+                                    momentumRefl_3D[ ipart ] = thermal_momentum2 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
+                                #else
+                                    momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand( rand );
+                                #endif
+                            }
+                        }  
+                        // Adding the mean velocity (using relativistic composition)
+                        double gp, px, py, pz;
+                        if( v2>0. ) {
+                            // Lorentz transformation of the momentum
+                            gp = sqrt( 1.0 + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );
+                            px = -gp*g*vx + Lxx * momentum_x[ ipart ] + Lxy * momentum_y[ ipart ] + Lxz * momentum_z[ ipart ];
+                            py = -gp*g*vy + Lxy * momentum_x[ ipart ] + Lyy * momentum_y[ ipart ] + Lyz * momentum_z[ ipart ];
+                            pz = -gp*g*vz + Lxz * momentum_x[ ipart ] + Lyz * momentum_y[ ipart ] + Lzz * momentum_z[ ipart ];
+                            momentum_x[ ipart ] = px;
+                            momentum_y[ ipart ] = py;
+                            momentum_z[ ipart ] = pz;
+                        }//ENDif vel != 0    
+				} else {
+					momentum[ ipart ] = -momentum[ ipart ];
+				}
+                position[ ipart ] = 2.*limit_inf - position[ ipart ];
+
+				LorentzFactor = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] );
+				change_in_energy += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
+				
+              
+
+                // HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
+                // double val_min(params.dens_profile.vacuum_length[1]), val_max(params.dens_profile.vacuum_length[1]+params.dens_profile.length_params_y[0]);
+
+                //if ( ( species->particles->position(1,ipart) >= val_min ) && ( species->particles->position(1,ipart) <= val_max ) ) {
+                // nrj computed during diagnostics
+                //species->particles->position(direction, ipart) = limit_pos - species->particles->position(direction, ipart);
+                //species->particles->momentum(direction, ipart) = sqrt(params.thermal_velocity_[direction]) * tabFcts.erfinv( rand->uniform() );
+                //}
+                //else {
+                //stop_particle( species->particles, ipart, direction, limit_pos, params, energy_change );
+                //}
+                
+            }
+        }
+#if defined( SMILEI_ACCELERATOR_GPU ) 
+        } //End for loop on chunks.
+        xorshift32_state += 32;
+        rand->xorshift32_state = xorshift32_state;
+#endif
+        energy_change = change_in_energy;
+
+}
+
+void angle_threshold_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double /*dt*/, std::vector<double> &/*invgf*/, Random * rand, double &energy_change )
+{
+    int nDim = species->nDim_particle;
+    double* position = species->particles->getPtrPosition(direction);
+    double* momentum = species->particles->getPtrMomentum(direction);
+    double* momentumRefl_2D = species->particles->getPtrMomentum((direction+1)%nDim);
+    double* momentumRefl_3D = species->particles->getPtrMomentum((direction+2)%nDim);
+    double* momentum_x = species->particles->getPtrMomentum(0);
+    double* momentum_y = species->particles->getPtrMomentum(1);
+    double* momentum_z = species->particles->getPtrMomentum(2);
+    double* weight     = species->particles->getPtrWeight();
+#if defined( SMILEI_ACCELERATOR_GPU ) 
+    uint32_t xorshift32_state = rand->xorshift32_state;
+#endif
+    double change_in_energy = 0.0;
+    double thermal_momentum = species->thermal_momentum_[direction];
+    double thermal_momentum1;
+    double thermal_momentum2;
+	const double alpha0 = species->threshold_angle_[direction][1];
+    if (nDim>1) {
+        thermal_momentum1 = species->thermal_momentum_[(direction+1)%nDim];
+        if (nDim>2) {
+            thermal_momentum2 = species->thermal_momentum_[(direction+2)%nDim];
+        }
+    }
+    double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz;
+    // mean-velocity
+    vx  = -species->thermal_boundary_velocity_[0];
+    vy  = -species->thermal_boundary_velocity_[1];
+    vz  = -species->thermal_boundary_velocity_[2];
+    v2  = vx*vx + vy*vy + vz*vz;
+    if( v2>0. ) {
+        g   = 1.0/sqrt( 1.0-v2 );
+        gm1 = g - 1.0;
+        // compute the different component of the Matrix block of the Lorentz transformation
+        Lxx = 1.0 + gm1 * vx*vx/v2;
+        Lyy = 1.0 + gm1 * vy*vy/v2;
+        Lzz = 1.0 + gm1 * vz*vz/v2;
+        Lxy = gm1 * vx*vy/v2;
+        Lxz = gm1 * vx*vz/v2;
+        Lyz = gm1 * vy*vz/v2;
+    }
+
+#if defined( SMILEI_ACCELERATOR_GPU) // GPU
+    const int nchunks = (imax-imin)/32 + 1 ;
+    #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target is_device_ptr( position, momentum, momentumRefl_2D, momentumRefl_3D, momentum_x, momentum_y, momentum_z, weight ) map( tofrom : change_in_energy )
+        #pragma omp teams distribute thread_limit(32) reduction( + : change_in_energy )
+    #elif defined( SMILEI_ACCELERATOR_GPU_OACC )
+        #pragma acc parallel loop gang vector_length(32)  reduction(+ : change_in_energy) independent deviceptr(position, momentum, momentumRefl_2D, momentumRefl_3D,momentum_x,momentum_y,momentum_z,weight)
+    #endif
+        for (int ichunk = 0 ; ichunk < nchunks ; ++ichunk ) {
+                int chunk_size = (ichunk==nchunks-1) ? (imax-imin)%32 : 32;
+                uint32_t xorshift32_state_local = xorshift32_state + ichunk;
+                uint32_t xorshift32_state_array[32];
+            #if defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #pragma acc loop seq
+            #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+            //#pragma omp single // does not work with rocm
+            #endif        
+            // Fill  xorshift32_state_array[...] with local state
+                for( int i = 0; i < chunk_size; ++i ){
+                    xorshift32_state_array[i] = Random_namespace::xorshift32(xorshift32_state_local);
+                }
+            #if defined( SMILEI_ACCELERATOR_GPU_OACC )
+                #pragma acc loop vector
+            #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                #pragma omp parallel for 
+            #endif
+                for( int i = 0; i < chunk_size ; ++i ){
+                    int ipart = imin + ichunk * 32 + i;
+#else //CPU
+        #pragma omp simd reduction(+ : change_in_energy)
+        for (int ipart = imin ; ipart < imax ; ++ipart ) {
+#endif            
+            if ( position[ ipart ] >= limit_sup) {
+                // checking the particle's velocity compared to the thermal one
+				double p_par = std::abs( momentum[ipart] );
+				double p2 = momentum_x[ipart] * momentum_x[ipart]
+						  + momentum_y[ipart] * momentum_y[ipart]
+						  + momentum_z[ipart] * momentum_z[ipart];
+				double LorentzFactor = sqrt( 1.0 + p2 );
+				double initial_energy = LorentzFactor - 1.0;
+
+				double p_perp2 = p2 - p_par * p_par;
+				if( p_perp2 < 0.0 ) p_perp2 = 0.0;
+				double p_perp = std::sqrt( p_perp2 );
+				double alpha = std::atan2( p_perp, p_par );
+
+				if( alpha <= alpha0 ) {
+					double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
+                    #if defined( SMILEI_ACCELERATOR_GPU ) 
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - Random_namespace::uniform1(xorshift32_state_array[i]) ) );
+                    #else
+                        momentum[ ipart ] = sign_vel * thermal_momentum * std::sqrt( -std::log( 1.0 - rand->uniform1() ) );
+                    #endif
+
+                        // change of momentum in the direction(s) along the reflection plane
+                        if (nDim>1) {
+                            #if defined( SMILEI_ACCELERATOR_GPU ) 
+                                momentumRefl_2D[ ipart ] = thermal_momentum1 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
+                            #else
+                                momentumRefl_2D[ ipart ] = thermal_momentum1 * perp_rand( rand );
+                            #endif
+                            if (nDim>2) {
+                                #if defined( SMILEI_ACCELERATOR_GPU ) 
+                                    momentumRefl_3D[ ipart ] = thermal_momentum2 * Random_namespace::perp_rand_dp(xorshift32_state_array[i]);
+                                #else
+                                    momentumRefl_3D[ ipart ] = thermal_momentum2 * perp_rand( rand );
+                                #endif
+                            }
+                        }  
+                        // Adding the mean velocity (using relativistic composition)
+                        double gp, px, py, pz;
+                        if( v2>0. ) {
+                            // Lorentz transformation of the momentum
+                            gp = sqrt( 1.0 + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );
+                            px = -gp*g*vx + Lxx * momentum_x[ ipart ] + Lxy * momentum_y[ ipart ] + Lxz * momentum_z[ ipart ];
+                            py = -gp*g*vy + Lxy * momentum_x[ ipart ] + Lyy * momentum_y[ ipart ] + Lyz * momentum_z[ ipart ];
+                            pz = -gp*g*vz + Lxz * momentum_x[ ipart ] + Lyz * momentum_y[ ipart ] + Lzz * momentum_z[ ipart ];
+                            momentum_x[ ipart ] = px;
+                            momentum_y[ ipart ] = py;
+                            momentum_z[ ipart ] = pz;
+                        }//ENDif vel != 0    
+				} else {
+					momentum[ ipart ] = -momentum[ ipart ];
+				}
+                // The upper boundary does not belong to the domain so the reflection is done just before it.
+                position[ ipart ] = 2*std::nextafter(limit_sup, 0) - position[ ipart ];
+
+                // energy lost during thermalization
+                LorentzFactor = sqrt( 1. + momentum_x[ipart] * momentum_x[ipart] + momentum_y[ipart] * momentum_y[ipart] + momentum_z[ipart] * momentum_z[ipart] );
+                change_in_energy += weight[ ipart ] * ( initial_energy - LorentzFactor + 1.0 );
+
+                /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
+                // double val_min(params.dens_profile.vacuum_length[1]), val_max(params.dens_profile.vacuum_length[1]+params.dens_profile.length_params_y[0]);
+
+                if ( ( species->particles->position(1,ipart) >= val_min ) && ( species->particles->position(1,ipart) <= val_max ) ) {
+                // nrj computed during diagnostics
+                species->particles->position(direction, ipart) = limit_pos - species->particles->position(direction, ipart);
+                species->particles->momentum(direction, ipart) = sqrt(params.thermal_velocity_[direction]) * tabFcts.erfinv( rand->uniform() );
+                }
+                else {
+                stop_particle( species->particles, ipart, direction, limit_pos, params, energy_change );
+                }
+                */
+            }
+        }
+#if defined( SMILEI_ACCELERATOR_GPU ) 
+        } //End for loop on chunks.
+        xorshift32_state += 32;
+        rand->xorshift32_state = xorshift32_state;
+#endif
+    energy_change = change_in_energy;
+}
+// ========================================================================= angle_threshold custom BC end =====
 
 void thermalize_particle_wall( Species *species, int imin, int imax, int direction, double wall_position, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
 {

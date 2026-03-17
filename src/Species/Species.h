@@ -115,6 +115,9 @@ public:
 
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions_;
+	
+	//! Angle threshold for angle_threshold particle BCs
+	std::vector<std::vector<double> > threshold_angle_;
 
     //! Ionization model per Species ("tunnel" or "tunnel_full_PPT" or "tunnel_envelope_averaged" or "from_rate")
     std::string ionization_model_;
