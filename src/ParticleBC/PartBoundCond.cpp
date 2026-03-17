@@ -110,20 +110,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
         if( patch->isXmin() ) {
             bc_xmin = &stop_particle_inf;
         }
-    } else if( species->boundary_conditions_[0][0] == "thermalize" ) {
-        if( patch->isXmin() ) {
-            bc_xmin = &thermalize_particle_inf;
-        }
-    } else if( species->boundary_conditions_[0][0] == "periodic" ) {
-        // Nothing to do
-    } else if( species->boundary_conditions_[0][0].rfind("angle_threshold", 0) == 0 ) {
-        if( patch->isXmin() ) {
-            bc_xmin = &angle_threshold_particle_inf;
-        } 
-	} else {
+	} else if( species->boundary_conditions_[0][0] == "thermalize" ) {
+		if( patch->isXmin() ) {
+			bc_xmin = &thermalize_particle_inf;
+		}
+	} else if( species->boundary_conditions_[0][0] == "angle_threshold" ) {
+		if( patch->isXmin() ) {
+			bc_xmin = &angle_threshold_particle_inf;
+		}
+	} else if( species->boundary_conditions_[0][0] == "periodic" ) {
+    } else {
         ERROR( "Xmin boundary condition `"<<species->boundary_conditions_[0][0]<<"` unknown" );
     }
-
     
     // Xmax
     bc_xmax = &internal_sup;
@@ -139,16 +137,15 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
         if( patch->isXmax() ) {
             bc_xmax = &stop_particle_sup;
         }
-    } else if( species->boundary_conditions_[0][1] == "thermalize" ) {
-        if( patch->isXmax() ) {
-            bc_xmax = &thermalize_particle_sup;
-        }
-    } else if( species->boundary_conditions_[0][1] == "periodic" ) {
-        // Nothing to do
-    } else if( species->boundary_conditions_[0][1].rfind("angle_threshold", 0) == 0 ) {
-        if( patch->isXmax() ) {
-            bc_xmax = &angle_threshold_particle_sup;
+	} else if( species->boundary_conditions_[0][1] == "thermalize" ) {
+		if( patch->isXmax() ) {
+			bc_xmax = &thermalize_particle_sup;
 		}
+	} else if( species->boundary_conditions_[0][1] == "angle_threshold" ) {
+		if( patch->isXmax() ) {
+			bc_xmax = &angle_threshold_particle_sup;
+		}
+	} else if( species->boundary_conditions_[0][1] == "periodic" ) {
     } else {
         ERROR( "Xmax boundary condition `"<<species->boundary_conditions_[0][1]<<"`  unknown" );
     }
@@ -169,17 +166,16 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
             if( patch->isYmin() ) {
                 bc_ymin = &stop_particle_inf;
             }
-        } else if( species->boundary_conditions_[1][0] == "thermalize" ) {
-            if( patch->isYmin() ) {
-                bc_ymin = &thermalize_particle_inf;
-            }
-        } else if( species->boundary_conditions_[1][0] == "periodic" ) {
-            // Nothing to do
-        } else if( species->boundary_conditions_[1][0].rfind("angle_threshold", 0) == 0 ) {
-            if( patch->isYmin() ) {
-                bc_ymin = &angle_threshold_particle_inf;
-            } 
-		} else {
+		} else if( species->boundary_conditions_[1][0] == "thermalize" ) {
+			if( patch->isYmin() ) {
+				bc_ymin = &thermalize_particle_inf;
+			}
+		} else if( species->boundary_conditions_[1][0] == "angle_threshold" ) {
+			if( patch->isYmin() ) {
+				bc_ymin = &angle_threshold_particle_inf;
+			}
+		} else if( species->boundary_conditions_[1][0] == "periodic" ) {
+        } else {
             ERROR( "Ymin boundary condition `"<< species->boundary_conditions_[1][0] << "` unknown" );
         }
         
@@ -197,17 +193,16 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
             if( patch->isYmax() ) {
                 bc_ymax = &stop_particle_sup;
             }
-        } else if( species->boundary_conditions_[1][1] == "thermalize" ) {
-            if( patch->isYmax() ) {
-                bc_ymax = &thermalize_particle_sup;
-            }
-        } else if( species->boundary_conditions_[1][1] == "periodic" ) {
-            // Nothing to do
-        } else if( species->boundary_conditions_[1][1].rfind("angle_threshold", 0) == 0 ) {
-            if( patch->isYmax() ) {
-                bc_ymax = &angle_threshold_particle_sup;
+		} else if( species->boundary_conditions_[1][1] == "thermalize" ) {
+			if( patch->isYmax() ) {
+				bc_ymax = &thermalize_particle_sup;
 			}
-		} else {
+		} else if( species->boundary_conditions_[1][1] == "angle_threshold" ) {
+			if( patch->isYmax() ) {
+				bc_ymax = &angle_threshold_particle_sup;
+			}
+		} else if( species->boundary_conditions_[1][1] == "periodic" ) {
+        } else {
             ERROR( "Ymax boundary condition `"<< species->boundary_conditions_[1][1] <<"` undefined" );
         }
         
@@ -226,12 +221,15 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
                 if( patch->isZmin() ) {
                     bc_zmin = &stop_particle_inf;
                 }
-            } else if( species->boundary_conditions_[2][0] == "thermalize" ) {
-                if( patch->isZmin() ) {
-                    bc_zmin = &thermalize_particle_inf;
-                }
-            } else if( species->boundary_conditions_[2][0] == "periodic" ) {
-                // Nothing to do
+			} else if( species->boundary_conditions_[2][0] == "thermalize" ) {
+				if( patch->isZmin() ) {
+					bc_zmin = &thermalize_particle_inf;
+				}
+			} else if( species->boundary_conditions_[2][0] == "angle_threshold" ) {
+				if( patch->isZmin() ) {
+					bc_zmin = &angle_threshold_particle_inf;
+				}
+			} else if( species->boundary_conditions_[2][0] == "periodic" ) {
             } else {
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions_[2][0] << "` unknown" );
             }
@@ -249,12 +247,15 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch )
                 if( patch->isZmax() ) {
                     bc_zmax = &stop_particle_sup;
                 }
-            } else if( species->boundary_conditions_[2][1] == "thermalize" ) {
-                if( patch->isZmax() ) {
-                    bc_zmax = &thermalize_particle_sup;
-                }
-            } else if( species->boundary_conditions_[2][1] == "periodic" ) {
-                // Nothing to do
+			} else if( species->boundary_conditions_[2][1] == "thermalize" ) {
+				if( patch->isZmax() ) {
+					bc_zmax = &thermalize_particle_sup;
+				}
+			} else if( species->boundary_conditions_[2][1] == "angle_threshold" ) {
+				if( patch->isZmax() ) {
+					bc_zmax = &angle_threshold_particle_sup;
+				}
+			} else if( species->boundary_conditions_[2][1] == "periodic" ) {
             } else {
                 ERROR( "Zmax boundary condition `"<< species->boundary_conditions_[2][1] << "` unknown" );
             }

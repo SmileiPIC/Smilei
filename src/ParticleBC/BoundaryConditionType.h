@@ -71,11 +71,11 @@ void thermalize_particle_sup( Species *species, int imin, int imax, int directio
 
 void thermalize_particle_wall( Species *species, int imin, int imax, int direction, double limit_pos, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
 
-// angle_threshold BC (direction-general, 2D example):
-// alpha = atan2(|p_perp|, |p_par|) where
-//   p_par  = momentum[direction]        (normal component)
-//   p_perp = momentum[1-direction]      (tangential component)  // 2D only
-// if alpha < alpha0 -> thermalize
+// angle_threshold BC:
+// alpha = atan2(p_perp, p_par)
+// where p_par is the momentum component normal to the boundary,
+// and p_perp is the magnitude of the tangential momentum.
+// if alpha <= alpha0 -> thermalize
 // else              -> reflect            
 void angle_threshold_particle_inf( Species *species, int imin, int imax, int direction,
                                    double limit_inf, double dt, std::vector<double> &invgf,
