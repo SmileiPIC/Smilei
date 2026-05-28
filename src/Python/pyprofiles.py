@@ -814,7 +814,7 @@ except:
 ####################################################################################################
 
 
-def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, box_side="xmin"):
+def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, lambda_0,omega_0, reference_frequency, box_side="xmin"):
     
     #Reads a Lasy HDF5 file and returns a Smilei Laser object with azimuthal modes.
     
@@ -829,12 +829,13 @@ def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, box_side="xm
     dataB   = data/cst.c
 
     # Physical constants 
-    lambda0 = 0.8e-6
-    omega0 = 2 * np.pi * cst.c / lambda0
-    onel = cst.c / omega0
-    onet = 1. / omega0
-    oneB = cst.m_e*omega0/cst.e #Field
-    onen = cst.epsilon_0*cst.m_e*omega0**2/cst.e**2 #Density
+    #lambda0 = 0.8e-6
+    #omega0 = 2 * np.pi * cst.c / lambda_0
+    omega_ratio = omega_0 / reference_frequency
+    onel = cst.c / omega_0
+    onet = 1. / omega_0
+    oneB = cst.m_e*omega_0/cst.e #Field
+    onen = cst.epsilon_0*cst.m_e*omega_0**2/cst.e**2 #Density
 
     datadt  /= onet
     datadr  /= onel
@@ -984,8 +985,8 @@ def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, box_side="xm
                         ir = round(2*r/dtrans)
 
                         return np.complex128(
-                            Brreal[m, it, ir] * np.cos(t) +
-                            Brimag[m, it, ir] * np.sin(t)
+                            Brreal[m, it, ir] * np.cos(omega_ratio*t) +
+                            Brimag[m, it, ir] * np.sin(omega_ratio*t)
                         )
                     else:
                         return 0.0
@@ -1000,8 +1001,8 @@ def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, box_side="xm
                         ir = round(2*r/dtrans)
 
                         return np.complex128(
-                            Btreal[m, it, ir] * np.cos(t) +
-                            Btimag[m, it, ir] * np.sin(t)
+                            Btreal[m, it, ir] * np.cos(omega_ratio*t) +
+                            Btimag[m, it, ir] * np.sin(omega_ratio*t)
                         )
                     else:
                         return 0.0
