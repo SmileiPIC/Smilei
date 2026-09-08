@@ -819,6 +819,7 @@ void nvidiaParticles::deviceFree()
     }
 
     thrust::device_vector<int>().swap( nvidia_cell_keys_ );
+    thrust::device_vector<int>().swap( nvidia_selection_indices_ );
 
     gpu_nparts_ = 0;
 }
@@ -1045,34 +1046,46 @@ void nvidiaParticles::copyLeavingParticlesToBuffer( Particles* buffer )
 template<typename Predicate>
 void nvidiaParticles::copyParticlesByPredicate( Particles* buffer, Predicate pred )
 {
-    // Count particles satisfying the predicate
     const auto keys = getPtrCellKeys();
-    const int nparts_to_copy = thrust::count_if( thrust::device, keys, keys + gpu_nparts_, pred );
-    
-    // Resize destination buffer (copy_if does not resize)
+
+    // Select the particles satisfying the predicate, once for all properties
+    if( nvidia_selection_indices_.size() < static_cast<size_t>( gpu_nparts_ ) ) {
+        nvidia_selection_indices_.resize( gpu_nparts_ );
+    }
+    const auto selected_end = thrust::copy_if( thrust::device,
+                                               thrust::counting_iterator<int>{0},
+                                               thrust::counting_iterator<int>{ gpu_nparts_ },
+                                               keys,
+                                               nvidia_selection_indices_.begin(),
+                                               pred );
+    const int nparts_to_copy = static_cast<int>( selected_end - nvidia_selection_indices_.begin() );
+
+    // Resize destination buffer (gather does not resize)
     nvidiaParticles* const dest = static_cast<nvidiaParticles*>( buffer );
     dest->deviceResize( nparts_to_copy );
     
     if( nparts_to_copy ) {
-        // Copy the particles to the destination
+        // Gather the selected particles into the destination
+        const auto first = nvidia_selection_indices_.begin();
+        const auto last = first + nparts_to_copy;
         for( int ip = 0; ip < nvidia_double_prop_.size(); ip++ ) {
-            const auto in = nvidia_double_prop_[ip]->begin();
-            const auto out = dest->nvidia_double_prop_[ip]->begin();
-            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
+            thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, first, last,
+                            nvidia_double_prop_[ip]->begin(),
+                            dest->nvidia_double_prop_[ip]->begin() );
         }
         for( int ip = 0; ip < nvidia_short_prop_.size(); ip++ ) {
-            const auto in = nvidia_short_prop_[ip]->begin();
-            const auto out = dest->nvidia_short_prop_[ip]->begin();
-            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
+            thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, first, last,
+                            nvidia_short_prop_[ip]->begin(),
+                            dest->nvidia_short_prop_[ip]->begin() );
         }
         if( tracked ) {
-            const auto in = nvidia_id_.begin();
-            const auto out = dest->nvidia_id_.begin();
-            thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
+            thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, first, last,
+                            nvidia_id_.begin(),
+                            dest->nvidia_id_.begin() );
         }
-        const auto in = nvidia_cell_keys_.begin();
-        const auto out = dest->nvidia_cell_keys_.begin();
-        thrust::copy_if( SMILEI_ACCELERATOR_ASYNC_POLYCY, in, in + gpu_nparts_, keys, out, pred );
+        thrust::gather( SMILEI_ACCELERATOR_ASYNC_POLYCY, first, last,
+                        nvidia_cell_keys_.begin(),
+                        dest->nvidia_cell_keys_.begin() );
         SMILEI_ACCELERATOR_DEVICE_SYNC();
     }
 }

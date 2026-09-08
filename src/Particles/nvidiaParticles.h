@@ -223,6 +223,9 @@ protected:
     //! cell_keys of the particle
     thrust::device_vector<int> nvidia_cell_keys_;
 
+    //! Indices of selected particles in `copyParticlesByPredicate`
+    thrust::device_vector<int> nvidia_selection_indices_;
+
     //! Quantum parameter
     thrust::device_vector<double> nvidia_chi_;
 
