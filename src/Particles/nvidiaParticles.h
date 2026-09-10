@@ -223,6 +223,8 @@ protected:
     //! cell_keys of the particle
     thrust::device_vector<int> nvidia_cell_keys_;
 
+    //! Persistent map used by `sortParticleByKey`
+    thrust::device_vector<int> nvidia_sort_map_;
     //! Indices of selected particles in `copyParticlesByPredicate`
     thrust::device_vector<int> nvidia_selection_indices_;
 
